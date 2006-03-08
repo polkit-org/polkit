@@ -37,7 +37,7 @@
 static void
 usage (int argc, char *argv[])
 {
-	fprintf (stderr, "hal-policy-is-privileged version " PACKAGE_VERSION "\n");
+	fprintf (stderr, "polkit-is-privileged version " PACKAGE_VERSION "\n");
 
 	fprintf (stderr, "\n" "usage : %s -u <uid> -p <policy> [-r <resource>]\n", argv[0]);
 	fprintf (stderr,
@@ -53,7 +53,7 @@ usage (int argc, char *argv[])
 		 "Queries system policy whether a given user is allowed for a given\n"
 		 "policy for a given resource. The resource may be omitted.\n"
 		 "\n"
-		 "System policies are defined in the " PACKAGE_SYSCONF_DIR "/hal/policy directory.\n"
+		 "System policies are defined in the " PACKAGE_SYSCONF_DIR "/PolicyKit/policy directory.\n"
 		 "\n");
 }
 
@@ -113,7 +113,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		case 'V':
-			printf ("hal-policy-is-privileged version " PACKAGE_VERSION "\n");
+			printf ("polkit-is-privileged version " PACKAGE_VERSION "\n");
 			rc = 0;
 			goto out;
 			

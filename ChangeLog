@@ -1,5 +1,9 @@
 2006-03-07  David Zeuthen  <davidz@redhat.com>
 
+	* tools/polkit-is-privileged.c (usage, main): s/hal-policy/polkit/
+
+2006-03-07  David Zeuthen  <davidz@redhat.com>
+
 	* polkit.pc.in: Use simpler names: user, group and txtsrc :-/
 
 2006-03-07  David Zeuthen  <davidz@redhat.com>
