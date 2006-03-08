@@ -1,4 +1,8 @@
 2006-03-07  David Zeuthen  <davidz@redhat.com>
 
+	* polkit.pc.in (Libs): s/-llibpolkit/-lpolkit/
+
+2006-03-07  David Zeuthen  <davidz@redhat.com>
+
 	Initial check-in of PolicyKit
 
