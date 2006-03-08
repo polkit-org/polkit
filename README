@@ -1,0 +1,14 @@
+
+PolicyKit is a framework for defining policy for system-wide components and
+for desktop pieces to configure it. It is used by HAL.
+
+
+See also the file HACKING for notes of interest to developers working 
+on PolicyKit.
+
+See http://www.freedesktop.org/Software/hal for lots of documentation, 
+mailing lists, etc.
+
+
+
+

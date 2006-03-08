@@ -1,0 +1,16 @@
+
+Coding Style
+===
+
+ - Please follow the coding style already used - it's not a must, but it's
+   nice to have consistency.
+
+ - Write docs for all functions and structs and so on. 
+
+ - All external interfaces (network protocols, file formats, etc.)
+   should have documented specifications sufficient to allow an
+   alternative implementation to be written. Our implementation should
+   be strict about specification compliance (should not for example
+   heuristically parse a file and accept not-well-formed
+   data). Avoiding heuristics is also important for security reasons;
+   if it looks funny, ignore it (or exit, or disconnect).

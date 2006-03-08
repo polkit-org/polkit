@@ -1,0 +1,9 @@
+==========
+PolicyKit 0.1 ""
+==========
+
+WRITE ME
+
+Requirements for PolicyKit 0.1 "" (and CVS HEAD)
+
+ - glib             >= 2.6.0
