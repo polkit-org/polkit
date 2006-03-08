@@ -3,9 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-libpoluser=@POLKIT_USER@
-libpolgroup=@POLKIT_GROUP@
-libpoltxtsrc=@sysconfdir@/PolicyKit/policy
+user=@POLKIT_USER@
+group=@POLKIT_GROUP@
+txtsrc=@sysconfdir@/PolicyKit/policy
 
 Name: libpolkit
 Description: library for querying and setting system-wide policy

@@ -1,5 +1,9 @@
 2006-03-07  David Zeuthen  <davidz@redhat.com>
 
+	* polkit.pc.in: Use simpler names: user, group and txtsrc :-/
+
+2006-03-07  David Zeuthen  <davidz@redhat.com>
+
 	* polkit.pc.in: Add libpoluser, libpolgroup and libpoltxtsrc variables
 
 2006-03-07  David Zeuthen  <davidz@redhat.com>
