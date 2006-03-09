@@ -1,3 +1,7 @@
+2006-03-09  David Zeuthen  <davidz@redhat.com>
+
+	* polkit.pc.in (exec_prefix): Use right Cflags
+
 2006-03-07  David Zeuthen  <davidz@redhat.com>
 
 	* tools/polkit-is-privileged.c (usage, main): s/hal-policy/polkit/
