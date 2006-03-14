@@ -1,0 +1,74 @@
+#!/bin/sh
+#
+# PolicyKit:   PolicyKit daemon
+#
+# chkconfig: 345 90 10
+# description:  The PolicyKit maintains a list of privileges and \
+#               provides interfaces for changing it. \
+#               See http://www.freedesktop.org/Software/hal
+#
+# processname: polkitd
+# pidfile: @POLKITD_PID_FILE@
+#
+
+# Sanity checks.
+[ -x @SBINDIR@/polkitd ] || exit 0
+
+# Source function library.
+. @SYSCONFDIR@/rc.d/init.d/functions
+
+# so we can rearrange this easily
+processname=polkitd
+servicename=PolicyKit
+
+RETVAL=0
+
+start() {
+    echo -n $"Starting PolicyKit daemon: "
+    daemon --check $servicename $processname
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch @LOCALSTATEDIR@/lock/subsys/$servicename
+}
+
+stop() {
+    echo -n $"Stopping PolicyKit daemon: "
+
+    killproc $processname -TERM
+    RETVAL=$?
+    echo
+    if [ $RETVAL -eq 0 ]; then
+        rm -f @LOCALSTATEDIR@/lock/subsys/$servicename
+        rm -f @POLKITD_PID_FILE@
+    fi
+}
+
+# See how we were called.
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status $processname
+        RETVAL=$?
+        ;;
+    restart)
+        stop
+	sleep 3
+        start
+        ;;
+    condrestart)
+        if [ -f @LOCALSTATEDIR@/lock/subsys/$servicename ]; then
+            stop
+	    sleep 3
+            start
+        fi
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart}"
+        ;;
+esac
+exit $RETVAL
