@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * polkit-is-privileged.c : Determine if a user has privileges
+ * polkit-list-privileges.c : List privileges possesed by a user
  *
  * Copyright (C) 2006 David Zeuthen, <david@fubar.dk>
  *
@@ -36,25 +36,18 @@
 static void
 usage (int argc, char *argv[])
 {
-	fprintf (stderr, "polkit-is-privileged version " PACKAGE_VERSION "\n");
+	fprintf (stderr, "polkit-list-privileges version " PACKAGE_VERSION "\n");
 
-	fprintf (stderr, 
-		 "\n" 
-		 "usage : %s -u <uid> -p <privilege> [-r <resource>]\n" 
-		 "        [-i <pid>]", argv[0]);
+	fprintf (stderr, "\n" "usage : %s [-u <user>]\n", argv[0]);
 	fprintf (stderr,
 		 "\n"
 		 "Options:\n"
 		 "    -u, --user           Username or user id\n"
-		 "    -i, --pid            Pid of process privilege may be restricted to\n"
-		 "    -r, --resource       Resource\n"
-		 "    -p, --privilege      Privilege to test for\n"
 		 "    -h, --help           Show this information and exit\n"
 		 "    -v, --verbose        Verbose operation\n"
 		 "    -V, --version        Print version number\n"
 		 "\n"
-		 "Queries system policy whether a given user is allowed for a given\n"
-		 "privilege for a given resource. The resource may be omitted.\n"
+		 "Lists privileges for a given user.\n"
 		 "\n");
 }
 
@@ -63,51 +56,34 @@ main (int argc, char *argv[])
 {
 	int rc;
 	char *user = NULL;
-	char *privilege = NULL;
-	char *resource = NULL;
-	pid_t pid = (pid_t) -1;
 	static const struct option long_options[] = {
 		{"user", required_argument, NULL, 'u'},
-		{"pid", required_argument, NULL, 'i'},
-		{"resource", required_argument, NULL, 'r'},
-		{"privilege", required_argument, NULL, 'p'},
 		{"help", no_argument, NULL, 'h'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"version", no_argument, NULL, 'V'},
 		{NULL, 0, NULL, 0}
 	};
 	LibPolKitContext *ctx = NULL;
-	gboolean is_allowed;
-	LibPolKitResult result;
 	gboolean is_verbose = FALSE;
 	DBusError error;
 	DBusConnection *connection;
+	int i;
+	GList *l;
+	GList *privilege_list;
 
 	rc = 1;
 	
 	while (TRUE) {
 		int c;
 		
-		c = getopt_long (argc, argv, "u:r:p:i:hVv", long_options, NULL);
+		c = getopt_long (argc, argv, "u:p:hVv", long_options, NULL);
 
 		if (c == -1)
 			break;
 		
 		switch (c) {
-		case 'i':
-			pid = atoi (optarg);
-			break;
-
 		case 'u':
 			user = g_strdup (optarg);
-			break;
-			
-		case 'r':
-			resource = g_strdup (optarg);
-			break;
-			
-		case 'p':
-			privilege = g_strdup (optarg);
 			break;
 			
 		case 'v':
@@ -120,7 +96,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		case 'V':
-			printf ("polkit-is-privileged version " PACKAGE_VERSION "\n");
+			printf ("polkit-list-privileges version " PACKAGE_VERSION "\n");
 			rc = 0;
 			goto out;
 			
@@ -130,15 +106,12 @@ main (int argc, char *argv[])
 		}
 	}
 
-	if (user == NULL || privilege == NULL) {
-		usage (argc, argv);
-		return 1;
+	if (user == NULL) {
+		user = g_strdup (g_get_user_name ());
 	}
 
 	if (is_verbose) {
-		printf ("user      = '%s'\n", user);
-		printf ("privilege = '%s'\n", privilege);
-		printf ("resource  = '%s'\n", resource);
+		printf ("user     = '%s'\n", user);
 	}
 
 	dbus_error_init (&error);
@@ -155,41 +128,52 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	result = libpolkit_is_uid_allowed_for_privilege (ctx, 
-							 pid,
-							 user,
-							 privilege,
-							 resource,
-							 &is_allowed);
-	switch (result) {
-	case LIBPOLKIT_RESULT_OK:
-		rc = is_allowed ? 0 : 1;
-		break;
-
-	case LIBPOLKIT_RESULT_ERROR:
-		g_warning ("Error determing whether user is privileged.");
-		break;
-
-	case LIBPOLKIT_RESULT_INVALID_CONTEXT:
-		g_print ("Invalid context.\n");
-		goto out;
-
-	case LIBPOLKIT_RESULT_NOT_PRIVILEGED:
-		g_print ("Not privileged.\n");
-
-	case LIBPOLKIT_RESULT_NO_SUCH_PRIVILEGE:
-		g_print ("No such privilege '%s'.\n", privilege);
-		goto out;
-
-	case LIBPOLKIT_RESULT_NO_SUCH_USER:
-		g_print ("No such user '%s'.\n", user);
+	if (libpolkit_get_privilege_list (ctx, &privilege_list) != LIBPOLKIT_RESULT_OK) {
+		g_warning ("Cannot get privilege_list");
 		goto out;
 	}
+	for (l = privilege_list, i = 0; l != NULL; l = g_list_next (l), i++) {
+		const char *privilege;
+		gboolean is_allowed;
+		GList *j;
+		GList *resources;
 
-	if (is_verbose) {
-		printf ("result %d\n", result);
-		printf ("is_allowed %d\n", is_allowed);
+		privilege = (const char *) l->data;
+		if (is_verbose) {
+			g_print ("testing user %s for privilege '%s'\n", user, privilege);
+		}
+
+		if (libpolkit_is_uid_allowed_for_privilege (ctx, 
+							    -1,
+							    user,
+							    privilege,
+							    NULL,
+							    &is_allowed) == LIBPOLKIT_RESULT_OK) {
+			if (is_allowed) {
+				g_print ("privilege %s\n", privilege);
+			} else {
+				if (libpolkit_get_allowed_resources_for_privilege_for_uid (ctx, 
+											   user,
+											   privilege,
+											   &resources) == LIBPOLKIT_RESULT_OK) {
+					for (j = resources; j != NULL; j = g_list_next (j)) {
+						const char *resource;
+						resource = (const char *) j->data;
+						g_print ("resource %s privilege %s\n", resource, privilege);
+					}
+					g_list_foreach (resources, (GFunc) g_free, NULL);
+					g_list_free (resources);
+				}
+			}
+		}
+
+
+
 	}
+	g_list_foreach (privilege_list, (GFunc) g_free, NULL);
+	g_list_free (privilege_list);
+
+	rc = 0;
 
 out:
 	if (ctx != NULL)
@@ -197,4 +181,3 @@ out:
 
 	return rc;
 }
-

@@ -1,5 +1,9 @@
+The PolicyKit daemon and associated command-line tools polkit-* is
+licensed to you under the GNU General Public License version 2.
+
 libpolkit is licensed to you under your choice of the Academic Free
 License version 2.1, or the GNU General Public License version 2.
+
 Both licenses are included here. Some individual source code files 
 and/or binaries may be under the GPL only or under the LGPG.
 

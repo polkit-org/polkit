@@ -1,10 +1,9 @@
 /***************************************************************************
+ * CVSID: $Id$
  *
- * libpolkit-test.c : Test harness for libpolkit
+ * polkitd-test.c : Test harness for PolicyKit daemon
  *
  * Copyright (C) 2006 David Zeuthen, <david@fubar.dk>
- *
- * Licensed under the Academic Free License version 2.1
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,9 +28,7 @@
 
 #include <glib/gstdio.h>
 
-#include "libpolkit.h"
-
-static LibPolKitContext *ctx;
+#include "policy.h"
 
 static char *testdir;
 
@@ -96,14 +93,14 @@ do_check (const char *policy,
 	}
 	gidstring = g_string_free (str, FALSE);
 
-	if (LIBPOLKIT_RESULT_OK != libpolkit_is_uid_gid_allowed_for_policy (
-		    ctx, uid, num_gids, gids, policy, resource, &allowed)) {
+	if (POLICY_RESULT_OK != policy_is_uid_gid_allowed_for_policy (
+		    uid, num_gids, gids, policy, resource, &allowed)) {
 		g_warning ("fail: no policy %s", policy);
 		my_exit (1);
 	}
 	
 	if (allowed != expected) {
-		g_warning ("fail: for uid %d (gids %s) expected %s on policy '%s' for resource '%s' but got %s", 
+		g_warning ("fail: for uid %d (gids %s) expected %s on privilege '%s' for resource '%s' but got %s", 
 			   uid, gidstring, 
 			   expected ? "TRUE" : "FALSE", 
 			   policy, 
@@ -112,7 +109,7 @@ do_check (const char *policy,
 		my_exit (1);
 	}
 	
-	g_print ("pass: uid %d (gids %s) got %s on policy '%s' for resource '%s'\n", 
+	g_print ("pass: uid %d (gids %s) got %s on privilege '%s' for resource '%s'\n", 
 		 uid, gidstring, 
 		 expected ? "TRUE " : "FALSE", 
 		 policy, 
@@ -127,7 +124,7 @@ write_test_policy (const char *policy, const char *allow_rule, const char *deny_
 	char *file;
 	FILE *f;
 
-	file = g_strdup_printf ("%s/%s.policy", testdir, policy);
+	file = g_strdup_printf ("%s/%s.privilege", testdir, policy);
 	f = fopen (file, "w");
 	if (f == NULL) {
 		g_warning ("Cannot created test policy '%s'", file);
@@ -230,7 +227,7 @@ main (int argc, char *argv[])
 	GList *l;
 	GList *policies;
 
-	testdir = g_strdup ("/tmp/libpolkit-test-XXXXXX");
+	testdir = g_strdup ("/tmp/policy-test-XXXXXX");
 	testdir = mkdtemp (testdir);
 	if (testdir == NULL) {
 		g_warning ("Cannot create tmpdir, errno %d (%s)", errno, strerror (errno));
@@ -238,21 +235,13 @@ main (int argc, char *argv[])
 		exit (1);
 	}
 
-	g_message ("libpolkit-test started; using tmpdir=%s", testdir);
+	g_message ("policy-test started; using tmpdir=%s", testdir);
 
-	ctx = libpolkit_new_context ();
-	if (ctx == NULL) {
-		g_message ("Cannot create context");
-		my_exit (1);
-	}
-	if (!libpolkit_context_set_txt_source (ctx, testdir)) {
-		g_message ("Cannot set text source to '%s'", testdir);
-		my_exit (1);
-	}
+	policy_util_set_policy_directory (testdir);
 
 	do_read_tests ();
 
-	if (libpolkit_get_policies (ctx, &policies) != LIBPOLKIT_RESULT_OK) {
+	if (policy_get_policies (&policies) != POLICY_RESULT_OK) {
 		g_message ("Cannot get policies");
 		goto fail;
 	}
@@ -265,12 +254,7 @@ main (int argc, char *argv[])
 	g_list_foreach (policies, (GFunc) g_free, NULL);
 	g_list_free (policies);
 
-	if (!libpolkit_free_context (ctx)) {
-		g_warning ("Cannot free context");
-		goto fail;
-	}
-
-	g_print ("libpolkit-test completed\n");
+	g_print ("policy-test completed\n");
 
 	my_exit (0);
 

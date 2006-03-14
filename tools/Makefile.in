@@ -36,7 +36,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = polkit-is-privileged$(EXEEXT)
+bin_PROGRAMS = polkit-is-privileged$(EXEEXT) \
+	polkit-list-privileges$(EXEEXT) \
+	polkit-grant-privilege$(EXEEXT)
 subdir = tools
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -50,9 +52,17 @@ CONFIG_CLEAN_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
+am_polkit_grant_privilege_OBJECTS = polkit-grant-privilege.$(OBJEXT)
+polkit_grant_privilege_OBJECTS = $(am_polkit_grant_privilege_OBJECTS)
+polkit_grant_privilege_DEPENDENCIES =  \
+	$(top_builddir)/libpolkit/libpolkit.la
 am_polkit_is_privileged_OBJECTS = polkit-is-privileged.$(OBJEXT)
 polkit_is_privileged_OBJECTS = $(am_polkit_is_privileged_OBJECTS)
 polkit_is_privileged_DEPENDENCIES =  \
+	$(top_builddir)/libpolkit/libpolkit.la
+am_polkit_list_privileges_OBJECTS = polkit-list-privileges.$(OBJEXT)
+polkit_list_privileges_OBJECTS = $(am_polkit_list_privileges_OBJECTS)
+polkit_list_privileges_DEPENDENCIES =  \
 	$(top_builddir)/libpolkit/libpolkit.la
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -65,8 +75,12 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(polkit_is_privileged_SOURCES)
-DIST_SOURCES = $(polkit_is_privileged_SOURCES)
+SOURCES = $(polkit_grant_privilege_SOURCES) \
+	$(polkit_is_privileged_SOURCES) \
+	$(polkit_list_privileges_SOURCES)
+DIST_SOURCES = $(polkit_grant_privilege_SOURCES) \
+	$(polkit_is_privileged_SOURCES) \
+	$(polkit_list_privileges_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -75,6 +89,7 @@ AMDEP_FALSE = @AMDEP_FALSE@
 AMDEP_TRUE = @AMDEP_TRUE@
 AMTAR = @AMTAR@
 AR = @AR@
+AUTH_LIBS = @AUTH_LIBS@
 AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
@@ -91,6 +106,10 @@ CXXDEPMODE = @CXXDEPMODE@
 CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DATADIR = @DATADIR@
+DBUS_CFLAGS = @DBUS_CFLAGS@
+DBUS_GLIB_CFLAGS = @DBUS_GLIB_CFLAGS@
+DBUS_GLIB_LIBS = @DBUS_GLIB_LIBS@
+DBUS_LIBS = @DBUS_LIBS@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 DOCDIR = @DOCDIR@
@@ -110,6 +129,9 @@ GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_LIBS = @GLIB_LIBS@
 GTK_DOC_USE_LIBTOOL_FALSE = @GTK_DOC_USE_LIBTOOL_FALSE@
 GTK_DOC_USE_LIBTOOL_TRUE = @GTK_DOC_USE_LIBTOOL_TRUE@
+HAVE_PAM = @HAVE_PAM@
+HAVE_PAM_FALSE = @HAVE_PAM_FALSE@
+HAVE_PAM_TRUE = @HAVE_PAM_TRUE@
 HTML_DIR = @HTML_DIR@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -132,14 +154,21 @@ MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 OBJEXT = @OBJEXT@
+OS_TYPE_RED_HAT_FALSE = @OS_TYPE_RED_HAT_FALSE@
+OS_TYPE_RED_HAT_TRUE = @OS_TYPE_RED_HAT_TRUE@
+OS_TYPE_UNKNOWN_FALSE = @OS_TYPE_UNKNOWN_FALSE@
+OS_TYPE_UNKNOWN_TRUE = @OS_TYPE_UNKNOWN_TRUE@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
+PAM_FILE_INCLUDE = @PAM_FILE_INCLUDE@
+PAM_PREFIX = @PAM_PREFIX@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+POLKITD_PID_FILE = @POLKITD_PID_FILE@
 POLKIT_GROUP = @POLKIT_GROUP@
 POLKIT_USER = @POLKIT_USER@
 RANLIB = @RANLIB@
@@ -201,11 +230,23 @@ INCLUDES = \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-I$(top_srcdir) \
-	@GLIB_CFLAGS@
+	-DDBUS_API_SUBJECT_TO_CHANGE \
+	@GLIB_CFLAGS@ \
+	@DBUS_CFLAGS@
 
 polkit_is_privileged_SOURCES = polkit-is-privileged.c
-polkit_is_privileged_LDADD = @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
-all: all-am
+polkit_is_privileged_LDADD = @DBUS_CFLAGS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+polkit_list_privileges_SOURCES = polkit-list-privileges.c
+polkit_list_privileges_LDADD = @DBUS_CFLAGS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+polkit_grant_privilege_SOURCES = \
+	polkit-grant-privilege.c					\
+					polkit-interface-manager-glue.h \
+					polkit-interface-session-glue.h
+
+polkit_grant_privilege_LDADD = @DBUS_GLIB_LIBS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+BUILT_SOURCES = polkit-interface-manager-glue.h polkit-interface-session-glue.h
+all: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
 .SUFFIXES: .c .lo .o .obj
@@ -266,9 +307,15 @@ clean-binPROGRAMS:
 	  echo " rm -f $$p $$f"; \
 	  rm -f $$p $$f ; \
 	done
+polkit-grant-privilege$(EXEEXT): $(polkit_grant_privilege_OBJECTS) $(polkit_grant_privilege_DEPENDENCIES) 
+	@rm -f polkit-grant-privilege$(EXEEXT)
+	$(LINK) $(polkit_grant_privilege_LDFLAGS) $(polkit_grant_privilege_OBJECTS) $(polkit_grant_privilege_LDADD) $(LIBS)
 polkit-is-privileged$(EXEEXT): $(polkit_is_privileged_OBJECTS) $(polkit_is_privileged_DEPENDENCIES) 
 	@rm -f polkit-is-privileged$(EXEEXT)
 	$(LINK) $(polkit_is_privileged_LDFLAGS) $(polkit_is_privileged_OBJECTS) $(polkit_is_privileged_LDADD) $(LIBS)
+polkit-list-privileges$(EXEEXT): $(polkit_list_privileges_OBJECTS) $(polkit_list_privileges_DEPENDENCIES) 
+	@rm -f polkit-list-privileges$(EXEEXT)
+	$(LINK) $(polkit_list_privileges_LDFLAGS) $(polkit_list_privileges_OBJECTS) $(polkit_list_privileges_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -276,7 +323,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/polkit-grant-privilege.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/polkit-is-privileged.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/polkit-list-privileges.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -385,13 +434,15 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 check-am: all-am
-check: check-am
+check: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) check-am
 all-am: Makefile $(PROGRAMS)
 installdirs:
 	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
-install: install-am
+install: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) install-am
 install-exec: install-exec-am
 install-data: install-data-am
 uninstall: uninstall-am
@@ -415,6 +466,7 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+	-test -z "$(BUILT_SOURCES)" || rm -f $(BUILT_SOURCES)
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
@@ -480,8 +532,14 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 	uninstall-info-am
 
 
+polkit-interface-manager-glue.h: ../polkit-interface-manager.xml Makefile.am
+	dbus-binding-tool --prefix=polkit_manager --mode=glib-client --output=polkit-interface-manager-glue.h ../polkit-interface-manager.xml
+
+polkit-interface-session-glue.h: ../polkit-interface-session.xml Makefile.am
+	dbus-binding-tool --prefix=polkit_session --mode=glib-client --output=polkit-interface-session-glue.h ../polkit-interface-session.xml
+
 clean-local :
-	rm -f *~
+	rm -f *~ $(BUILT_SOURCES)
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

@@ -1,3 +1,78 @@
+2006-03-14  David Zeuthen  <davidz@redhat.com>
+
+	Add a bunch of code; basically a full rewrite moving all queries
+	to the daemon.
+
+	* COPYING:
+	* Makefile.am:
+	* configure.in:
+	* libpolkit/Makefile.am:
+	* libpolkit/libpolkit-test.c:
+	* libpolkit/libpolkit.c: (libpolkit_new_context),
+	(libpolkit_free_context),
+	(libpolkit_get_allowed_resources_for_privilege_for_uid),
+	(libpolkit_is_uid_allowed_for_privilege),
+	(libpolkit_get_privilege_list):
+	* libpolkit/libpolkit.h:
+	* policy-kit.in:
+	* polkit-interface-manager.xml:
+	* polkit-interface-session.xml:
+	* polkit.pc.in:
+	* polkitd/Makefile.am:
+	* polkitd/debug-polkitd.sh:
+	* polkitd/main.c: (usage), (delete_pid), (main):
+	* polkitd/policy.c: (policy_util_set_policy_directory),
+	(policy_element_new), (policy_element_free),
+	(policy_element_free_list), (policy_element_dump),
+	(txt_backend_read_policy), (policy_get_whitelist),
+	(policy_get_blacklist), (policy_get_policies), (afp_process_elem),
+	(policy_get_allowed_resources_for_policy_for_uid_gid),
+	(policy_is_uid_gid_allowed_for_policy), (policy_util_uid_to_name),
+	(policy_util_gid_to_name), (policy_util_name_to_uid),
+	(policy_util_name_to_gid),
+	(policy_get_allowed_resources_for_policy_for_uid),
+	(policy_is_uid_allowed_for_policy), (getgrouplist):
+	* polkitd/policy.h:
+	* polkitd/polkit-manager.c: (caller_info_delete),
+	(polkit_manager_init), (polkit_manager_finalize),
+	(polkit_manager_class_init), (polkit_manager_error_quark),
+	(polkit_manager_error_get_type), (bus_name_owner_changed),
+	(session_remover), (session_finalized), (polkit_manager_new),
+	(uid_from_username), (safe_strcmp),
+	(polkit_manager_get_caller_info),
+	(polkit_manager_initiate_privilege_grant),
+	(polkit_manager_is_user_privileged),
+	(polkit_manager_get_allowed_resources_for_privilege),
+	(polkit_manager_list_privileges),
+	(polkit_manager_add_temporary_privilege),
+	(polkit_manager_remove_temporary_privilege):
+	* polkitd/polkit-manager.h:
+	* polkitd/polkit-marshal.list:
+	* polkitd/polkit-session.c: (polkit_session_init),
+	(polkit_session_finalize), (polkit_session_class_init),
+	(polkit_session_error_quark), (polkit_session_error_get_type),
+	(polkit_session_check_caller), (polkit_session_is_authenticated),
+	(polkit_session_get_auth_denied_reason), (safe_memset),
+	(my_conversation), (write_back_to_parent), (do_pam_auth),
+	(data_from_pam), (polkit_session_get_auth_details),
+	(polkit_session_initiate_auth), (polkit_session_get_questions),
+	(polkit_session_provide_answers), (polkit_session_close),
+	(polkit_session_grant_privilege_temporarily), (polkit_session_new),
+	(polkit_session_initiator_disconnected):
+	* polkitd/polkit-session.h:
+	* polkitd/polkitd-test.c: (my_exit), (do_check),
+	(write_test_policy), (do_read_tests), (main):
+	* polkitd/run-polkitd.sh:
+	* polkitd/valgrind-polkitd.sh:
+	* privileges/Makefile.am:
+	* privileges/desktop-console.privilege:
+	* tools/Makefile.am:
+	* tools/Makefile.in:
+	* tools/polkit-grant-privilege.c: (have_questions_handler),
+	(auth_done_handler), (do_grant_privilege), (usage), (main):
+	* tools/polkit-is-privileged.c: (usage), (main):
+	* tools/polkit-list-privileges.c: (usage), (main):
+
 2006-03-09  David Zeuthen  <davidz@redhat.com>
 
 	* polkit.pc.in (exec_prefix): Use right Cflags

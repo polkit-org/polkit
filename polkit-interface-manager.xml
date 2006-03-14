@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node name="/org/freedesktop/PolicyKit/Manager">
+  <interface name="org.freedesktop.PolicyKit.Manager">
+
+    <method name="InitiatePrivilegeGrant">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="user"            type="s" direction="in"/>
+      <arg name="privilege"       type="s" direction="in"/>
+      <arg name="resource"        type="s" direction="in"/>
+      <arg name="session_objpath" type="o" direction="out"/>
+    </method>
+
+    <method name="IsUserPrivileged">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="pid"           type="i" direction="in"/>
+      <arg name="user"          type="s" direction="in"/>
+      <arg name="privilege"     type="s" direction="in"/>
+      <arg name="resource"      type="s" direction="in"/>
+      <arg name="is_privileged" type="b" direction="out"/>
+    </method>
+
+    <method name="GetAllowedResourcesForPrivilege">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="user"          type="s"  direction="in"/>
+      <arg name="privilege"     type="s"  direction="in"/>
+      <arg name="resource_list" type="as" direction="out"/>
+    </method>
+
+    <method name="ListPrivileges">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="privilege_list" type="as" direction="out"/>
+    </method>
+
+  </interface>
+</node>
