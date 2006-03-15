@@ -330,7 +330,7 @@ privileges/Makefile
 dnl ==========================================================================
 echo "
                   PolicyKit $VERSION
-                  =================
+                =================
 
         prefix:                     ${prefix}
         libdir:                     ${LIBDIR}
@@ -350,7 +350,7 @@ echo "
         group for PolicyKit:        ${POLKIT_GROUP}
         pidfile for polkitd:        ${POLKITD_PID_FILE}
 
-        distribution                ${with_os_type}
+        Distribution/OS:            ${with_os_type}
 
         PAM support:                ${have_pam}
         PAM file auth:              ${PAM_FILE_INCLUDE_AUTH}

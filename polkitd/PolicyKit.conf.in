@@ -4,9 +4,6 @@
 <busconfig>
 
   <!-- Only uid 0 or user @POLKIT_USER@ can own the org.freedesktop.PolicyKit service -->
-  <policy user="@POLKIT_USER@">
-    <allow own="org.freedesktop.PolicyKit"/>
-  </policy>
   <policy user="0">
     <allow own="org.freedesktop.PolicyKit"/>
   </policy>

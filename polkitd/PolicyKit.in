@@ -2,7 +2,7 @@
 #
 # PolicyKit:   PolicyKit daemon
 #
-# chkconfig: 345 90 10
+# chkconfig: 345 98 02
 # description:  The PolicyKit maintains a list of privileges and \
 #               provides interfaces for changing it. \
 #               See http://www.freedesktop.org/Software/hal
