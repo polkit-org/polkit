@@ -25,6 +25,7 @@
 #define _POLKIT_MANAGER_H
 
 #include <unistd.h>
+#include <sys/types.h>
 #include <glib.h>
 #include <glib-object.h>
 #include <dbus/dbus-glib.h>

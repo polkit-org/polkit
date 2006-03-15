@@ -1,3 +1,8 @@
+2006-03-15  David Zeuthen  <davidz@redhat.com>
+
+	* polkitd/polkit-manager.h: Include sys/types.h; fixed fd.o
+	bug #6280. Patch from Wouter Bolsterlee <uws+freedesktop@xs4all.nl>.
+
 2006-03-14  David Zeuthen  <davidz@redhat.com>
 
 	* polkitd/PolicyKit.in: Change priorities from 90 10 to 98 02 to make
