@@ -1,8 +1,8 @@
 #%PAM-1.0
 
-auth       include      @PAM_FILE_INCLUDE@
-account    include      @PAM_FILE_INCLUDE@
-password   include      @PAM_FILE_INCLUDE@
-session    include      @PAM_FILE_INCLUDE@
+auth       include      @PAM_FILE_INCLUDE_AUTH@
+account    include      @PAM_FILE_INCLUDE_ACCOUNT@
+password   include      @PAM_FILE_INCLUDE_PASSWORD@
+session    include      @PAM_FILE_INCLUDE_SESSION@
 
 

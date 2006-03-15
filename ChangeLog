@@ -1,3 +1,10 @@
+2006-03-15  Kay Sievers  <kay.sievers@vrfy.org>
+
+	Add SUSE distro bits.
+
+	* configure.in:
+	* policy-kit.in:
+
 2006-03-14  David Zeuthen  <davidz@redhat.com>
 
 	Add a bunch of code; basically a full rewrite moving all queries

@@ -236,16 +236,22 @@ AC_SUBST(AUTH_LIBS)
 AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat)])
 
 #### Check our operating system (distro-tweaks required)
-operating_system=unknown
-if test -f /etc/redhat-release || test -f SYSCONFDIR/redhat-release ; then
-   operating_system=redhat
+if test "z$with_os_type" = "z"; then
+	AC_CHECK_FILE(/etc/redhat-release,distro_type="redhat")
+	AC_CHECK_FILE(/etc/SuSE-release,distro_type="suse")
+	if test "z$distro_type" = "z"; then
+		echo "Linux distribution autodetection failed, specify the distribution to target using --with-os-type="
+	else
+		operating_system=`echo ${distro_type} | tr '[[:upper:]]' '[[:lower:]]' `
+	fi
 fi
 
 #### Sort out OS (distro-tweaks required)
-
 if test x$with_os_type = x; then
     if test x$operating_system = xredhat ; then
         with_os_type=redhat
+    elif test x$operating_system = xsuse ; then
+        with_os_type=suse
     else
         with_os_type=unknown
     fi
@@ -254,6 +260,7 @@ fi
 # (distro-tweaks required)
 AM_CONDITIONAL(OS_TYPE_UNKNOWN, test x$with_os_type = xunknown, [Running on unknown OS])
 AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red Hat OS'es])
+AM_CONDITIONAL(OS_TYPE_SUSE, test x$with_os_type = xsuse, [Running on SUSE OS'es])
 
 AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>     pid file for polkitd])
 
@@ -261,6 +268,8 @@ AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>     pid file for polkitd])
 if ! test -z "$with_pid_file"; then
    POLKITD_PID_FILE=$with_pid_file
 elif test x$with_os_type = xredhat ; then
+   POLKITD_PID_FILE=${LOCALSTATEDIR}/run/polkitd.pid
+elif test x$with_os_type = xsuse ; then
    POLKITD_PID_FILE=${LOCALSTATEDIR}/run/polkitd.pid
 else
    POLKITD_PID_FILE=${LOCALSTATEDIR}/run/polkitd/pid
@@ -273,15 +282,35 @@ AC_ARG_WITH(pam-include, [  --with-pam-include=<file>  pam file to include])
 
 #### Set up pam file to include (distro-tweaks required)
 if ! test -z "$with_pam_include"; then
-   PAM_FILE_INCLUDE=$with_pam_include
+   PAM_FILE_INCLUDE_AUTH=$with_pam_include
+   PAM_FILE_INCLUDE_ACCOUNT=$with_pam_include
+   PAM_FILE_INCLUDE_PASSWORD=$with_pam_include
+   PAM_FILE_INCLUDE_SESSION=$with_pam_include
 elif test x$with_os_type = xredhat ; then
-   PAM_FILE_INCLUDE=system-auth
+   PAM_FILE_INCLUDE_AUTH=system-auth
+   PAM_FILE_INCLUDE_ACCOUNT=system-auth
+   PAM_FILE_INCLUDE_PASSWORD=system-auth
+   PAM_FILE_INCLUDE_SESSION=system-auth
+elif test x$with_os_type = xsuse ; then
+   PAM_FILE_INCLUDE_AUTH=common-auth
+   PAM_FILE_INCLUDE_ACCOUNT=common-account
+   PAM_FILE_INCLUDE_PASSWORD=common-password
+   PAM_FILE_INCLUDE_SESSION=common-session
 else
-   PAM_FILE_INCLUDE=system-auth
+   PAM_FILE_INCLUDE_AUTH=system-auth
+   PAM_FILE_INCLUDE_ACCOUNT=system-auth
+   PAM_FILE_INCLUDE_PASSWORD=system-auth
+   PAM_FILE_INCLUDE_SESSION=system-auth
 fi
 
-AC_SUBST(PAM_FILE_INCLUDE)
-AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE, "$PAM_FILE_INCLUDE", [pam file to include])
+AC_SUBST(PAM_FILE_INCLUDE_AUTH)
+AC_SUBST(PAM_FILE_INCLUDE_ACCOUNT)
+AC_SUBST(PAM_FILE_INCLUDE_PASSWORD)
+AC_SUBST(PAM_FILE_INCLUDE_SESSION)
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_AUTH, "$PAM_FILE_INCLUDE_AUTH", [pam file auth])
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_ACCOUNT, "$PAM_FILE_INCLUDE_ACCOUNT", [pam file account])
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_PASSWORD, "$PAM_FILE_INCLUDE_PASSWORD", [pam file password])
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_SESSION, "$PAM_FILE_INCLUDE_SESSION", [pam file session])
 
 
 AC_OUTPUT([
@@ -300,7 +329,7 @@ privileges/Makefile
 
 dnl ==========================================================================
 echo "
-                    PolicyKit $VERSION
+                  PolicyKit $VERSION
                   =================
 
         prefix:                     ${prefix}
@@ -321,8 +350,13 @@ echo "
         group for PolicyKit:        ${POLKIT_GROUP}
         pidfile for polkitd:        ${POLKITD_PID_FILE}
 
+        distribution                ${with_os_type}
+
         PAM support:                ${have_pam}
-	PAM file to include:        ${PAM_FILE_INCLUDE}
+        PAM file auth:              ${PAM_FILE_INCLUDE_AUTH}
+        PAM file account:           ${PAM_FILE_INCLUDE_ACCOUNT}
+        PAM file password:          ${PAM_FILE_INCLUDE_PASSWORD}
+        PAM file session:           ${PAM_FILE_INCLUDE_SESSION}
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}
@@ -332,6 +366,8 @@ echo "
 # (distro-tweaks required)
 if test x$with_os_type = xredhat; then
    echo "NOTE: Red Hat style init scripts and pam file will be installed"
+elif test x$with_os_type = xsuse; then
+   echo "NOTE: SUSE style init scripts and pam file will be installed"
 else
    echo "NOTE: You have to install init scripts yourself and tweak your own pam file"
 fi
