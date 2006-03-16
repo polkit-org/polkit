@@ -1,3 +1,9 @@
+2006-03-16  David Zeuthen  <davidz@redhat.com>
+
+	* polkitd/polkit-session.c (data_from_pam): Unref when the child dies
+	(polkit_session_initiate_auth): Ref the object after creating child
+	(polkit_session_initiator_disconnected): Make sure to nuke the kids
+
 2006-03-15  David Zeuthen  <davidz@redhat.com>
 
 	* polkitd/polkit-manager.h: Include sys/types.h; fixed fd.o

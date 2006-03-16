@@ -214,8 +214,12 @@ main (int argc, char *argv[])
 		g_error_free (error);
 		goto out;
 	}
-	
 
+	if (request_name_result != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) {
+		g_warning ("There is already a primary owner of the name org.freedesktop.PolicyKit");
+		goto out;
+	}
+	
 
 	manager = polkit_manager_new (bus, bus_proxy);
 

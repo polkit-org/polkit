@@ -688,6 +688,10 @@ data_from_pam (GIOChannel *source,
 			session->priv->child_pid = 0;
 			waitpid (session->priv->child_pid, &status, 0);
 		}
+
+		/* release the ref we made when creating the child */
+		g_object_unref (session);
+
 		/* remove the source */
 		return FALSE;
 	}
@@ -772,6 +776,9 @@ polkit_session_initiate_auth (PolicyKitSession      *session,
 		session->priv->child_pid = (GPid) pid;
 		session->priv->pam_channel_write = g_io_channel_unix_new (fdsb[1]);
 		session->priv->pam_channel = g_io_channel_unix_new (fds[0]);
+
+		/* ref because we need the object in data_from_pam */
+		g_object_ref (session);
 
 		g_io_add_watch (session->priv->pam_channel, 
 				G_IO_IN | G_IO_ERR | G_IO_HUP,
@@ -986,6 +993,10 @@ void
 polkit_session_initiator_disconnected (PolicyKitSession *session)
 {
 	/*g_debug ("initiator disconnected");*/
+
+	/* if we have a child... kill it  */
+	if (session->priv->child_pid != 0)
+		kill (session->priv->child_pid, SIGTERM);
 
 	if (session->priv->have_granted_temp_privileges) {
 		if (!polkit_manager_remove_temporary_privilege (session->priv->manager,
