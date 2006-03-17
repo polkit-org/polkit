@@ -1,5 +1,10 @@
 2006-03-16  David Zeuthen  <davidz@redhat.com>
 
+	* polkitd/polkit-session.c (polkit_session_close): Remember to
+	kill the child here
+
+2006-03-16  David Zeuthen  <davidz@redhat.com>
+
 	* polkitd/main.c (main): Bail if we can't become primary owner
 
 	* polkitd/polkit-session.c (data_from_pam): Unref when the child dies

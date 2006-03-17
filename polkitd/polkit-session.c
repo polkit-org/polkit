@@ -887,6 +887,10 @@ polkit_session_close (PolicyKitSession      *session,
 	if (!polkit_session_check_caller (session, context))
 		return FALSE;
 
+	/* if we have a child... kill it  */
+	if (session->priv->child_pid != 0)
+		kill (session->priv->child_pid, SIGTERM);
+
 	if (!do_not_revoke_privilege && session->priv->have_granted_temp_privileges) {
 
 		if (!polkit_manager_remove_temporary_privilege (session->priv->manager,
