@@ -198,13 +198,6 @@ out:
 		g_error_free (error);
 	}
 
-	if (!org_freedesktop_PolicyKit_Session_close (session,
-						      TRUE,
-						      &error)) {
-		g_warning ("Close: %s", error->message);
-		g_error_free (error);
-	}
-
 	exit (0);
 }
 
