@@ -1,0 +1,12 @@
+.deps
+.libs
+Makefile
+Makefile.in
+polkitd
+PolicyKit
+PolicyKit.conf
+polkit-marshal.c
+polkit-marshal.h
+polkit-interface-manager-glue.c
+polkit-interface-manager-glue.h
+polkit-interface-session-glue.h

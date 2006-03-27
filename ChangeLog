@@ -1,3 +1,9 @@
+2006-03-27  Richard Hughes  <richard@hughsie.com>
+
+	* .cvsignore, doc/.cvsignore, libpolkit/.cvsignore,
+	polkitd/.cvsignore, privileges/.cvsignore, tools/.cvsignore:
+	Add these files.
+
 2006-03-16  David Zeuthen  <davidz@redhat.com>
 
 	* polkitd/polkit-session.c (polkit_session_close): Remember to
