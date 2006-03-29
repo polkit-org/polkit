@@ -1,3 +1,12 @@
+2006-03-29  David Zeuthen  <davidz@redhat.com>
+
+	* configure.in: Add docbook detection
+	
+	* doc/spec/*: New files
+	
+	* polkitd/polkit-session.c (polkit_session_finalize): Free the
+	questions to prevent memory leak
+
 2006-03-27  Richard Hughes  <richard@hughsie.com>
 
 	* .cvsignore, doc/.cvsignore, libpolkit/.cvsignore,

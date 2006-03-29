@@ -76,8 +76,8 @@ HREF="#AEN15"
 ></DD
 ><DT
 ><A
-HREF="#privileges"
->Theory of operation</A
+HREF="#operation"
+>Theory of Operation</A
 ></DT
 ><DD
 ><DL
@@ -95,6 +95,59 @@ HREF="#AEN26"
 ><A
 HREF="#AEN37"
 >Example</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="#resources"
+>Resources</A
+></DT
+><DT
+><A
+HREF="#privileges"
+>Privileges</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN87"
+>Privilege Descriptors</A
+></DT
+><DT
+><A
+HREF="#AEN101"
+>File Format</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN106"
+>Criteria for Possesing a Privilege</A
+></DT
+><DT
+><A
+HREF="#AEN109"
+>Required Privileges</A
+></DT
+><DT
+><A
+HREF="#AEN112"
+>Obtaining Privileges</A
+></DT
+><DT
+><A
+HREF="#AEN115"
+>Granting Privileges</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="#AEN118"
+>Privileges defined by PolicyKit</A
 ></DT
 ></DL
 ></DD
@@ -126,9 +179,9 @@ NAME="AEN15"
 CLASS="chapter"
 ><HR><H1
 ><A
-NAME="privileges"
+NAME="operation"
 ></A
->Theory of operation</H1
+>Theory of Operation</H1
 ><DIV
 CLASS="sect1"
 ><H2
@@ -314,7 +367,13 @@ CLASS="literal"
 CLASS="literal"
 >PolicyKit</TT
 > service to release the
-	privilege for the user as it is no longer needed.
+	privilege for the user as it is no longer needed. Should the
+	process crash while holding a privilege,
+	the <TT
+CLASS="literal"
+>PolicyKit</TT
+> service will be notifed and
+	the privilege will automatically be revoked.
       </P
 ><P
 >&#13;	Hence, <TT
@@ -334,11 +393,217 @@ CLASS="emphasis"
 	obtaining the privilege may use the obtained privilege.
       </P
 ><P
+>&#13;	In addition, privileges may be restricted to
+	certain <I
+CLASS="emphasis"
+>resources</I
+>; this is discussed in
+	more detail in XXX.
+      </P
+><P
 >&#13;	<IMG
 SRC="polkit-arch.png">
       </P
 ><P
 >&#13;	The whole example is outlined in the diagram above.
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="resources"
+></A
+>Resources</H1
+><P
+>&#13;      PolicyKit allows granting privileges only on
+      certain <I
+CLASS="emphasis"
+>resources</I
+>. For example, for HAL,
+      it is possible to grant the
+      privilege <I
+CLASS="emphasis"
+>hal-storage-fixed-mount</I
+> to the
+      user with uid 500 but only for the HAL device object
+      representing e.g. the <TT
+CLASS="literal"
+>/dev/hda3</TT
+> partition.
+    </P
+><P
+> 
+      Resource identifers are prefixed with a name identifying what
+      service they belong to. The following resource identifiers are
+      defined
+    </P
+><P
+></P
+><UL
+><LI
+><P
+>&#13;	  <TT
+CLASS="literal"
+>hal://</TT
+>
+	</P
+><P
+>&#13;	  HAL Unique Device Identifiers also known as HAL UDI's. Example: <TT
+CLASS="literal"
+>hal:///org/freedesktop/Hal/devices/volume_uuid_1a28b356_9955_44f9_b268_6ed6639978f5</TT
+>
+        </P
+></LI
+></UL
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="privileges"
+></A
+>Privileges</H1
+><DIV
+CLASS="sect1"
+><H2
+CLASS="sect1"
+><A
+NAME="AEN87"
+>Privilege Descriptors</A
+></H2
+><P
+>	
+	Applications, such as HAL, installs <I
+CLASS="emphasis"
+>privilege descriptors</I
+> using the <TT
+CLASS="literal"
+>polkit-policy-descriptor-install</TT
+> commandline utility. The descriptor contains the following information
+      </P
+><P
+></P
+><UL
+><LI
+><P
+>&#13;	    Criteria for determining if a given user possess the privilege on a given resource.
+          </P
+></LI
+><LI
+><P
+>&#13;	    What other privileges a given user must also possess.
+          </P
+></LI
+><LI
+><P
+>&#13;	    Information on whether the user can obtain the privilege, and if he can, whether only temporarily or permanently.
+          </P
+></LI
+><LI
+><P
+>&#13;	    Whether a user with the privilege may permanently grant it to other users.
+          </P
+></LI
+></UL
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN101"
+>File Format</A
+></H2
+><P
+>&#13;	A developer of a system-wide application wanting to define a
+	privilege must create a privilege descriptor. This is a a
+	simple <TT
+CLASS="literal"
+>.ini</TT
+>-like config file. Here is what
+	the skeleton looks like:
+      </P
+><TABLE
+BORDER="0"
+BGCOLOR="#E0E0E0"
+WIDTH="100%"
+><TR
+><TD
+><PRE
+CLASS="programlisting"
+>&#13;	[Policy]
+	Allow=
+	Deny=
+	RequirePrivileges=
+	CanGrantToOthers=
+	CanObtain=
+	ObtainRequireRoot=
+	ObtainPAMService=
+      </PRE
+></TD
+></TR
+></TABLE
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN106"
+>Criteria for Possesing a Privilege</A
+></H3
+><P
+>&#13;	  bar
+	</P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN109"
+>Required Privileges</A
+></H3
+><P
+>&#13;	  bar
+	</P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN112"
+>Obtaining Privileges</A
+></H3
+><P
+>&#13;	  bar1
+	</P
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN115"
+>Granting Privileges</A
+></H3
+><P
+>&#13;	  bar2
+	</P
+></DIV
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN118"
+>Privileges defined by PolicyKit</A
+></H2
+><P
+>&#13;	baz
       </P
 ></DIV
 ></DIV

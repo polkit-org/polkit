@@ -37,7 +37,7 @@
     </sect1>
   </chapter>
 
-  <chapter id="privileges">
+  <chapter id="operation">
     <title>Theory of operation</title>
 
     <sect1>
@@ -143,7 +143,10 @@
 	privilege (after successful authentication) he can now
 	invoke <literal>Mount</literal> and after this succeeds he may
 	tell the <literal>PolicyKit</literal> service to release the
-	privilege for the user as it is no longer needed.
+	privilege for the user as it is no longer needed. Should the
+	process crash while holding a privilege,
+	the <literal>PolicyKit</literal> service will be notifed and
+	the privilege will automatically be revoked.
       </para>
 
       <para>
@@ -156,6 +159,12 @@
       </para>
 
       <para>
+	In addition, privileges may be restricted to
+	certain <emphasis>resources</emphasis>; this is discussed in
+	more detail in XXX.
+      </para>
+
+      <para>
 	<inlinegraphic fileref="polkit-arch.png" format="PNG"/>
       </para>
 
@@ -164,6 +173,79 @@
       </para>
 
     </sect1>
+  </chapter>
+
+
+  <chapter id="resources">
+    <title>Resources</title>
+
+    PolicyKit allows granting privileges only on
+    certain <emphasis>resources</emphasis>. For example, for HAL, it
+    is possible to grant the
+    privilege <emphasis>hal-storage-fixed-mount</emphasis> to the user
+    with uid 500 but only for the HAL device object representing
+    e.g. the <literal>/dev/hda3</literal> partition.
+
+    <sect1>
+      <title>Resource Identifiers</title>
+      <para> Resource identifers are prefixed with a name identifying
+	what service they belong to. The following resource
+	identifiers are defined
+      </para>
+
+      <itemizedlist>
+        <listitem>
+	  <para>
+	    <literal>hal://</literal>
+	    HAL Unique Device Identifiers also known as HAL UID's. Example: <literal>hal:///org/freedesktop/Hal/devices/volume_uuid_1a28b356_9955_44f9_b268_6ed6639978f5</literal>
+          </para>
+	</listitem>
+      </itemizedlist>
+
+    </sect1>
+
+  </chapter>
+
+
+  <chapter id="privileges">
+    <title>Privileges</title>
+
+    <sect1>
+      <title>Privilege Descriptors</title>
+      <para>	
+	Applications, such as HAL, installs <emphasis>privilege descriptors</emphasis> using the <literal>polkit-policy-descriptor-install</literal> commandline utility. The descriptor contains the following information
+      </para>
+
+      <itemizedlist>
+        <listitem>
+	  <para>
+	    What users and groups possess the privilege
+          </para>
+	</listitem>
+
+        <listitem>
+	  <para>
+	    foo
+          </para>
+	</listitem>
+      </itemizedlist>
+
+    </sect1>
+
+    <sect1>
+      <title>Temporary Privileges</title>
+      <para>
+	bar
+      </para>
+    </sect1>
+
+    <sect1>
+      <title>Privileges defined by PolicyKit</title>
+      <para>
+	baz
+      </para>
+    </sect1>
+
   </chapter>
   
 </book>

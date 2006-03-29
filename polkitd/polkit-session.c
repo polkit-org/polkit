@@ -117,8 +117,8 @@ polkit_session_finalize (PolicyKitSession *session)
 
 	g_free (session->priv->auth_denied_reason);
 	if (session->priv->auth_questions != NULL) {
-		//g_slist_foreach (session->priv->auth_questions, (GFunc) g_free, NULL);
-		//g_free (session->priv->auth_questions);
+		g_slist_foreach (session->priv->auth_questions, (GFunc) g_free, NULL);
+		g_slist_free (session->priv->auth_questions);
 	}
 	g_free (session->priv);
 
