@@ -1,0 +1,348 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<HTML
+><HEAD
+><TITLE
+>PolicyKit 0.1 Specification</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.79"></HEAD
+><BODY
+CLASS="book"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="BOOK"
+><A
+NAME="index"
+></A
+><DIV
+CLASS="TITLEPAGE"
+><H1
+CLASS="title"
+><A
+NAME="AEN2"
+>PolicyKit 0.1 Specification</A
+></H1
+><H3
+CLASS="author"
+><A
+NAME="AEN7"
+></A
+>David Zeuthen</H3
+><DIV
+CLASS="affiliation"
+><DIV
+CLASS="address"
+><P
+CLASS="address"
+><br>
+	&nbsp;&nbsp;&nbsp;&nbsp;<CODE
+CLASS="email"
+>&#60;<A
+HREF="mailto:david@fubar.dk"
+>david@fubar.dk</A
+>&#62;</CODE
+><br>
+	&nbsp;&nbsp;</P
+></DIV
+></DIV
+><SPAN
+CLASS="releaseinfo"
+>Version 0.1<BR></SPAN
+><HR></DIV
+><DIV
+CLASS="TOC"
+><DL
+><DT
+><B
+>Table of Contents</B
+></DT
+><DT
+><A
+HREF="#introduction"
+>Introduction</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN15"
+>About</A
+></DT
+></DL
+></DD
+><DT
+><A
+HREF="#privileges"
+>Theory of operation</A
+></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN20"
+>Privileges</A
+></DT
+><DT
+><A
+HREF="#AEN26"
+>Architecture</A
+></DT
+><DT
+><A
+HREF="#AEN37"
+>Example</A
+></DT
+></DL
+></DD
+></DL
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="introduction"
+></A
+>Introduction</H1
+><DIV
+CLASS="sect1"
+><H2
+CLASS="sect1"
+><A
+NAME="AEN15"
+>About</A
+></H2
+><P
+>&#13;	PolicyKit is a system for enabling unprivileged desktop
+	applications to invoke privileged methods on system-wide
+	components in a controlled manner.
+      </P
+></DIV
+></DIV
+><DIV
+CLASS="chapter"
+><HR><H1
+><A
+NAME="privileges"
+></A
+>Theory of operation</H1
+><DIV
+CLASS="sect1"
+><H2
+CLASS="sect1"
+><A
+NAME="AEN20"
+>Privileges</A
+></H2
+><P
+>&#13;	One major concept of the PolicyKit system is the notion of
+	privileges; a <I
+CLASS="emphasis"
+>PolicyKit privilege</I
+>
+	(referred to simply as
+	<I
+CLASS="emphasis"
+>privilege</I
+> in the following) is something
+	that a given user may or may not possess. The thinking behind
+	PolicyKit is that privileged system level components offer
+	functionality to unprivileged desktop applications as D-BUS
+	method calls through the system message bus. In order to have
+	a flexible security policy defining the set of users that are
+	allowed to invoke a method, the system level component defines
+	a set of
+	<I
+CLASS="emphasis"
+>privileges</I
+>. 
+      </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN26"
+>Architecture</A
+></H2
+><P
+>&#13;	The PolicyKit system is basically client/server and is
+	implemented as the
+	system-wide <TT
+CLASS="literal"
+>org.freedesktop.PolicyKit</TT
+> D-BUS
+	service. This D-BUS service serves two purposes
+      </P
+><P
+></P
+><UL
+><LI
+><P
+>&#13;	    System-level components may used D-BUS methods on this
+	    service to determine if a given caller of their methods
+	    are privileged.
+          </P
+></LI
+><LI
+><P
+>&#13;	    Desktop level applications may initiate a dialogue with
+	    this service to (temporarily) obtain a privilege through
+	    authorization.
+          </P
+></LI
+></UL
+><P
+>&#13;	In addition, the PolicyKit system includes client side
+	libraries and command-line utilities wrapping the D-BUS API of
+	the <TT
+CLASS="literal"
+>org.freedesktop.PolicyKit</TT
+> service.
+      </P
+></DIV
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN37"
+>Example</A
+></H2
+><P
+>&#13;	As an example, HAL exports the method <TT
+CLASS="literal"
+>Mount</TT
+>
+	on the
+	<TT
+CLASS="literal"
+>org.freedesktop.Hal.Device.Volume</TT
+> interface
+	for each hal device object of
+	capability <I
+CLASS="emphasis"
+>volume</I
+>. HAL defines a number
+	of privileges for mounting
+	including <I
+CLASS="emphasis"
+>hal-storage-fixed-mount</I
+>
+	and <I
+CLASS="emphasis"
+>hal-storage-removable-mount</I
+>. Depending
+	on the whether the volume stems from a fixed hard disk or a
+	hotpluggable/removable drive, HAL requires the calling user to
+	possess either
+	the <I
+CLASS="emphasis"
+>hal-storage-fixed-mount</I
+>
+	or <I
+CLASS="emphasis"
+>hal-storage-removable-mount</I
+> privilege
+	in order to carry out the <TT
+CLASS="literal"
+>Mount</TT
+> method. 
+      </P
+><P
+>&#13;	Upon a user invoking the <TT
+CLASS="literal"
+>Mount</TT
+> method, HAL
+	simply asks the <TT
+CLASS="literal"
+>org.freedesktop.PolicyKit</TT
+>
+	D-BUS service if the calling user posses this privilege and if
+	this is not the case the <TT
+CLASS="literal"
+>Mount</TT
+> method
+	throws
+	the <TT
+CLASS="literal"
+>org.freedesktop.Hal.Device.PermissionDeniedByPolicy</TT
+>
+	exception. Notably, this exception will tell the caller what
+	privilege the calling user needs to possess,
+	e.g. either <I
+CLASS="emphasis"
+>hal-storage-fixed-mount</I
+>
+	or <I
+CLASS="emphasis"
+>hal-storage-removable-mount</I
+>.
+      </P
+><P
+>&#13;	Should the <TT
+CLASS="literal"
+>Mount</TT
+> method fail with the
+	exception <TT
+CLASS="literal"
+>PermissionDeniedByPolicy</TT
+> the
+	caller now knows what privilege is required. The caller can
+	now initiate a dialogue with the <TT
+CLASS="literal"
+>PolicyKit</TT
+>
+	service to obtain this privilege. This conversation is
+	basically equivalent to a PAM authentication; in fact the 
+	<TT
+CLASS="literal"
+>PolicyKit</TT
+> service uses PAM under the hood
+	and wraps it in D-BUS calls. For details (like what user to
+	authenticate as) see XXX. When the caller obtains the
+	privilege (after successful authentication) he can now
+	invoke <TT
+CLASS="literal"
+>Mount</TT
+> and after this succeeds he may
+	tell the <TT
+CLASS="literal"
+>PolicyKit</TT
+> service to release the
+	privilege for the user as it is no longer needed.
+      </P
+><P
+>&#13;	Hence, <TT
+CLASS="literal"
+>PolicyKit</TT
+> has the notion of
+	both <I
+CLASS="emphasis"
+>permament</I
+>
+	and <I
+CLASS="emphasis"
+>temporary</I
+> privileges. The latter may
+	even be restricted such that only callers from the D-BUS
+	connection (remember, D-BUS connections has unique names)
+	obtaining the privilege may use the obtained privilege.
+      </P
+><P
+>&#13;	<IMG
+SRC="polkit-arch.png">
+      </P
+><P
+>&#13;	The whole example is outlined in the diagram above.
+      </P
+></DIV
+></DIV
+></DIV
+></BODY
+></HTML
+>
