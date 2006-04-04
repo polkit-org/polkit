@@ -179,12 +179,14 @@
   <chapter id="resources">
     <title>Resources</title>
 
-    PolicyKit allows granting privileges only on
-    certain <emphasis>resources</emphasis>. For example, for HAL, it
-    is possible to grant the
-    privilege <emphasis>hal-storage-fixed-mount</emphasis> to the user
-    with uid 500 but only for the HAL device object representing
-    e.g. the <literal>/dev/hda3</literal> partition.
+    <para>
+      PolicyKit allows granting privileges only on
+      certain <emphasis>resources</emphasis>. For example, for HAL, it
+      is possible to grant the
+      privilege <emphasis>hal-storage-fixed-mount</emphasis> to the user
+      with uid 500 but only for the HAL device object representing
+      e.g. the <literal>/dev/hda3</literal> partition.
+    </para>
 
     <sect1>
       <title>Resource Identifiers</title>

@@ -1,7 +1,7 @@
 
 EXTRA_DIST = TODO
 
-SUBDIRS = api
+SUBDIRS = api spec
 
 clean-local:
 	rm -f *~

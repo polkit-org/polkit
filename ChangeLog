@@ -1,3 +1,11 @@
+2006-04-04  Richard Hughes  <richard@hughsie.com>
+
+	* doc/Makefile.am: Add in the new spec directory so we add the folder
+	to the tarball.
+
+	* doc/spec/polkit-spec.xml.in: Fix this up in one place so it validates
+	and so that make distcheck can run again..
+
 2006-03-29  David Zeuthen  <davidz@redhat.com>
 
 	* configure.in: Add docbook detection
