@@ -1,7 +1,7 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * polkit-is-privileged.c : Determine if a user has privileges
+ * polkit-grant-privilege.c : Grant privileges
  *
  * Copyright (C) 2006 David Zeuthen, <david@fubar.dk>
  *
@@ -21,54 +21,56 @@
  *
  **************************************************************************/
 
-
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <getopt.h>
-#include <dbus/dbus.h>
+#include <string.h>
+#include <errno.h>
+
+#include <glib/gstdio.h>
+#include <dbus/dbus-glib.h>
+#include <dbus/dbus-glib-lowlevel.h>
 
 #include <libpolkit/libpolkit.h>
 
 static void
 usage (int argc, char *argv[])
 {
-	fprintf (stderr, "polkit-is-privileged version " PACKAGE_VERSION "\n");
+	fprintf (stderr, "polkit-revoke-privilege version " PACKAGE_VERSION "\n");
 
-	fprintf (stderr, 
-		 "\n" 
-		 "usage : %s -u <uid> -p <privilege> [-r <resource>]\n" 
-		 "        [-i <pid>]", argv[0]);
+	fprintf (stderr, "\n" "usage : %s -p <privilege> [-u user] [-r <resource>]\n", argv[0]);
 	fprintf (stderr,
 		 "\n"
 		 "Options:\n"
-		 "    -u, --user           Username or user id\n"
-		 "    -i, --pid            Pid of process privilege may be restricted to\n"
+		 "    -u, --user           User to revoke privilege from\n"
+		 "    -p, --privilege      Privilege to revoke\n"
 		 "    -r, --resource       Resource\n"
-		 "    -p, --privilege      Privilege to test for\n"
 		 "    -h, --help           Show this information and exit\n"
 		 "    -v, --verbose        Verbose operation\n"
 		 "    -V, --version        Print version number\n"
 		 "\n"
-		 "Queries system policy whether a given user is allowed for a given\n"
-		 "privilege for a given resource. The resource may be omitted.\n"
-		 "\n");
+		 "Revokes a privilege for accessing a resource. The resource may\n"
+		 "be omitted.\n");
 }
 
-int 
-main (int argc, char *argv[])
+static gboolean is_verbose = FALSE;
+
+int
+main (int argc, char **argv)
 {
 	int rc;
+	GError *error = NULL;
+	DBusGConnection *bus;
+	LibPolKitContext *ctx;
 	char *user = NULL;
-	char *privilege = NULL;
 	char *resource = NULL;
-	pid_t pid = (pid_t) -1;
+	char *privilege = NULL;
 	static const struct option long_options[] = {
 		{"user", required_argument, NULL, 'u'},
-		{"pid", required_argument, NULL, 'i'},
 		{"resource", required_argument, NULL, 'r'},
 		{"privilege", required_argument, NULL, 'p'},
 		{"help", no_argument, NULL, 'h'},
@@ -76,37 +78,29 @@ main (int argc, char *argv[])
 		{"version", no_argument, NULL, 'V'},
 		{NULL, 0, NULL, 0}
 	};
-	LibPolKitContext *ctx = NULL;
-	gboolean is_allowed;
-	gboolean is_temporary;
-	LibPolKitResult result;
-	gboolean is_verbose = FALSE;
-	DBusError error;
-	DBusConnection *connection;
+	gboolean was_revoked;
+
+	g_type_init ();
 
 	rc = 1;
-	
+
 	while (TRUE) {
 		int c;
 		
-		c = getopt_long (argc, argv, "u:r:p:i:hVv", long_options, NULL);
+		c = getopt_long (argc, argv, "u:r:p:hVv", long_options, NULL);
 
 		if (c == -1)
 			break;
 		
 		switch (c) {
-		case 'i':
-			pid = atoi (optarg);
-			break;
-
 		case 'u':
 			user = g_strdup (optarg);
 			break;
-			
+
 		case 'r':
 			resource = g_strdup (optarg);
 			break;
-			
+
 		case 'p':
 			privilege = g_strdup (optarg);
 			break;
@@ -121,7 +115,7 @@ main (int argc, char *argv[])
 			goto out;
 
 		case 'V':
-			printf ("polkit-is-privileged version " PACKAGE_VERSION "\n");
+			printf ("polkit-grant-privilege version " PACKAGE_VERSION "\n");
 			rc = 0;
 			goto out;
 			
@@ -131,46 +125,49 @@ main (int argc, char *argv[])
 		}
 	}
 
-	if (user == NULL || privilege == NULL) {
+	if (privilege == NULL) {
 		usage (argc, argv);
 		return 1;
 	}
 
-	if (is_verbose) {
-		printf ("user      = '%s'\n", user);
-		printf ("privilege = '%s'\n", privilege);
-		printf ("resource  = '%s'\n", resource);
+	if (user == NULL) {
+		user = g_strdup (g_get_user_name ());
 	}
 
-	dbus_error_init (&error);
-	connection = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-	if (connection == NULL) {
-		g_warning ("Cannot connect to system message bus");
+	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
+	if (bus == NULL) {
+		g_warning ("dbus_g_bus_get: %s", error->message);
+		g_error_free (error);
 		return 1;
 	}
 
+	ctx = libpolkit_new_context (dbus_g_connection_get_connection (bus));
 
-	ctx = libpolkit_new_context (connection);
-	if (ctx == NULL) {
-		g_warning ("Cannot get libpolkit context");
-		goto out;
-	}
+	LibPolKitResult result;
 
-	result = libpolkit_is_uid_allowed_for_privilege (ctx, 
-							 pid,
-							 user,
-							 privilege,
-							 resource,
-							 &is_allowed,
-							 &is_temporary);
+	result = libpolkit_revoke_temporary_privilege (ctx,
+						       user,
+						       privilege,
+						       resource,
+						       &was_revoked);
 	switch (result) {
 	case LIBPOLKIT_RESULT_OK:
-		rc = is_allowed ? 0 : 1;
+		if (was_revoked) {
+			if (resource == NULL) {
+				g_print ("User '%s' no longer has privilege '%s'.\n", user, privilege);
+			} else {
+				g_print ("User '%s' no longer has privilege '%s' for accessing\n"
+					 "resource '%s'.\n", 
+					 user, privilege, resource);
+			}
+			rc = 0;
+			goto out;
+		}
 		break;
 
 	case LIBPOLKIT_RESULT_ERROR:
-		g_warning ("Error determing whether user is privileged.");
-		break;
+		g_print ("Error granting resource.\n");
+		goto out;
 
 	case LIBPOLKIT_RESULT_INVALID_CONTEXT:
 		g_print ("Invalid context.\n");
@@ -178,6 +175,7 @@ main (int argc, char *argv[])
 
 	case LIBPOLKIT_RESULT_NOT_PRIVILEGED:
 		g_print ("Not privileged.\n");
+		goto out;
 
 	case LIBPOLKIT_RESULT_NO_SUCH_PRIVILEGE:
 		g_print ("No such privilege '%s'.\n", privilege);
@@ -188,15 +186,7 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	if (is_verbose) {
-		printf ("result %d\n", result);
-		printf ("is_allowed %d\n", is_allowed);
-	}
-
+	
 out:
-	if (ctx != NULL)
-		libpolkit_free_context (ctx);
-
 	return rc;
 }
-

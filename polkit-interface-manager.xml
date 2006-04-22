@@ -3,12 +3,20 @@
 <node name="/org/freedesktop/PolicyKit/Manager">
   <interface name="org.freedesktop.PolicyKit.Manager">
 
-    <method name="InitiatePrivilegeGrant">
+    <method name="InitiateTemporaryPrivilegeGrant">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
       <arg name="user"            type="s" direction="in"/>
       <arg name="privilege"       type="s" direction="in"/>
       <arg name="resource"        type="s" direction="in"/>
       <arg name="session_objpath" type="o" direction="out"/>
+    </method>
+
+    <method name="RevokeTemporaryPrivilege">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="user"            type="s" direction="in"/>
+      <arg name="privilege"       type="s" direction="in"/>
+      <arg name="resource"        type="s" direction="in"/>
+      <arg name="was_revoked"     type="b" direction="out"/>
     </method>
 
     <method name="IsUserPrivileged">
@@ -18,13 +26,15 @@
       <arg name="privilege"     type="s" direction="in"/>
       <arg name="resource"      type="s" direction="in"/>
       <arg name="is_privileged" type="b" direction="out"/>
+      <arg name="is_temporary"  type="b" direction="out"/>
     </method>
 
     <method name="GetAllowedResourcesForPrivilege">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="user"          type="s"  direction="in"/>
-      <arg name="privilege"     type="s"  direction="in"/>
-      <arg name="resource_list" type="as" direction="out"/>
+      <arg name="user"           type="s"  direction="in"/>
+      <arg name="privilege"      type="s"  direction="in"/>
+      <arg name="resource_list"  type="as" direction="out"/>
+      <arg name="num_non_temp"   type="i"  direction="out"/>
     </method>
 
     <method name="ListPrivileges">

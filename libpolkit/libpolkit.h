@@ -55,12 +55,20 @@ LibPolKitResult    libpolkit_is_uid_allowed_for_privilege             (LibPolKit
 								       const char            *user, 
 								       const char            *privilege, 
 								       const char            *resource,
+								       gboolean              *is_allowed,
+								       gboolean              *is_temporary);
+
+LibPolKitResult    libpolkit_revoke_temporary_privilege               (LibPolKitContext      *ctx,
+								       const char            *user, 
+								       const char            *privilege, 
+								       const char            *resource,
 								       gboolean              *result);
 
 LibPolKitResult    libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext      *ctx,
 									  const char            *user, 
 									  const char            *privilege, 
-									  GList                **result);
+									  GList                **result,
+									  int                   *num_non_temporary);
 
 #endif /* LIBPOLKIT_H */
 

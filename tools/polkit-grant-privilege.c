@@ -224,12 +224,12 @@ do_grant_privilege (DBusGConnection *conn, const char *user, const char *privile
 		goto out;
 	}
 
-	if (!org_freedesktop_PolicyKit_Manager_initiate_privilege_grant (manager,
-									 user,
-									 privilege,
-									 resource,
-									 &session_objpath,
-									 &error)) {
+	if (!org_freedesktop_PolicyKit_Manager_initiate_temporary_privilege_grant (manager,
+										   user,
+										   privilege,
+										   resource,
+										   &session_objpath,
+										   &error)) {
 		g_warning ("GrantPrivilege: %s", error->message);
 		g_error_free (error);
 		goto out;
@@ -318,6 +318,9 @@ main (int argc, char **argv)
 		{"version", no_argument, NULL, 'V'},
 		{NULL, 0, NULL, 0}
 	};
+	gboolean is_privileged = FALSE;
+	gboolean is_temporary = FALSE;
+	LibPolKitResult result;
 
 	g_type_init ();
 
@@ -382,15 +385,13 @@ main (int argc, char **argv)
 
 	ctx = libpolkit_new_context (dbus_g_connection_get_connection (bus));
 
-	gboolean is_privileged = FALSE;
-	LibPolKitResult result;
-
 	result = libpolkit_is_uid_allowed_for_privilege (ctx,
 							 -1,
 							 user,
 							 privilege,
 							 resource,
-							 &is_privileged);
+							 &is_privileged,
+							 &is_temporary);
 	switch (result) {
 	case LIBPOLKIT_RESULT_OK:
 		if (is_privileged) {

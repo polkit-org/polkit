@@ -1,3 +1,43 @@
+2006-04-22  David Zeuthen  <davidz@redhat.com>
+
+	* tools/polkit-list-privileges.c (main): Update to new D-BUS API;
+	print " (temporary)" for privilege if appropriate.
+
+	* tools/polkit-is-privileged.c (main): Update to new D-BUS API
+
+	* tools/polkit-grant-privilege.c: 
+	(do_grant_privilege): Update to new D-BUS API
+	(main): --do--
+
+	* tools/polkit-revoke-privilege.c: New file
+
+	* tools/Makefile.am: Add build rules for polkit-revoke-privilege
+
+	* polkitd/polkit-manager.h: Fix up prototypes
+
+	* polkitd/polkit-manager.c:
+	(polkit_manager_initiate_temporary_privilege_grant): Update to new
+	D-BUS API
+	(polkit_manager_get_allowed_resources_for_privilege): --do--
+	(polkit_manager_revoke_temporary_privilege): New function
+	(polkit_manager_remove_temporary_privilege): Fix up resource handling
+	(polkit_manager_add_temporary_privilege): --do--
+
+	* libpolkit/libpolkit.h:
+	(libpolkit_get_allowed_resources_for_privilege_for_uid): Update to
+	new D-BUS API and export libpolkit_revoke_temporary_privilege()
+
+	* libpolkit/libpolkit.c: 
+	(libpolkit_is_uid_allowed_for_privilege): Update to new D-BUS API
+	(libpolkit_get_allowed_resources_for_privilege_for_uid): --do--
+	(libpolkit_revoke_temporary_privilege): New function
+
+	* polkit-interface-manager.xml: Rename InitiatePrivilegeGrant() to
+	InitiateTemporaryPrivilegeGrant(). Add new function
+	RevokeTemporaryPrivilege(). Make IsUserPrivileged() output a
+	boolean is_temporary. GetAllowedResourcesForPrivilege() now also
+	outputs an integer num_non_temp.
+
 2006-04-21  David Zeuthen  <davidz@redhat.com>
 
 	* doc/spec/polkit-spec.xml.in: Write some more stuff 

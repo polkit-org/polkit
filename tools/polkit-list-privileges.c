@@ -135,8 +135,10 @@ main (int argc, char *argv[])
 	for (l = privilege_list, i = 0; l != NULL; l = g_list_next (l), i++) {
 		const char *privilege;
 		gboolean is_allowed;
+		gboolean is_temporary;
 		GList *j;
 		GList *resources;
+		int num_non_temporary;
 
 		privilege = (const char *) l->data;
 		if (is_verbose) {
@@ -148,22 +150,29 @@ main (int argc, char *argv[])
 							    user,
 							    privilege,
 							    NULL,
-							    &is_allowed) == LIBPOLKIT_RESULT_OK) {
+							    &is_allowed,
+							    &is_temporary) == LIBPOLKIT_RESULT_OK) {
 			if (is_allowed) {
-				g_print ("privilege %s\n", privilege);
-			} else {
-				if (libpolkit_get_allowed_resources_for_privilege_for_uid (ctx, 
-											   user,
-											   privilege,
-											   &resources) == LIBPOLKIT_RESULT_OK) {
-					for (j = resources; j != NULL; j = g_list_next (j)) {
-						const char *resource;
-						resource = (const char *) j->data;
-						g_print ("resource %s privilege %s\n", resource, privilege);
-					}
-					g_list_foreach (resources, (GFunc) g_free, NULL);
-					g_list_free (resources);
+				g_print ("privilege %s%s\n", privilege, is_temporary ? " (temporary)" : "");
+			} 
+
+			if (libpolkit_get_allowed_resources_for_privilege_for_uid (
+				    ctx, 
+				    user,
+				    privilege,
+				    &resources,
+				    &num_non_temporary) == LIBPOLKIT_RESULT_OK) {
+				int n;
+
+				for (j = resources, n = 0; j != NULL; j = g_list_next (j), n++) {
+					const char *resource;
+					resource = (const char *) j->data;
+					g_print ("resource %s privilege %s%s\n", 
+						 resource, privilege,
+						 n >= num_non_temporary ? " (temporary)" : "");
 				}
+				g_list_foreach (resources, (GFunc) g_free, NULL);
+				g_list_free (resources);
 			}
 		}
 

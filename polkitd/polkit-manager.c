@@ -325,11 +325,11 @@ out:
 }
 
 gboolean
-polkit_manager_initiate_privilege_grant (PolicyKitManager       *manager, 
-					 char                   *user,
-					 char                   *privilege,
-					 char                   *resource,
-					 DBusGMethodInvocation  *context)
+polkit_manager_initiate_temporary_privilege_grant (PolicyKitManager       *manager, 
+						   char                   *user,
+						   char                   *privilege,
+						   char                   *resource,
+						   DBusGMethodInvocation  *context)
 {
 	uid_t calling_uid;
 	pid_t calling_pid;
@@ -402,6 +402,7 @@ polkit_manager_is_user_privileged (PolicyKitManager      *manager,
 	uid_t uid;
 	PolicyResult res;
 	gboolean is_privileged;
+	gboolean is_temporary;
 
 
 	if (!polkit_manager_get_caller_info (manager, 
@@ -462,6 +463,8 @@ polkit_manager_is_user_privileged (PolicyKitManager      *manager,
 		return FALSE;
 	}
 
+	is_temporary = FALSE;
+
 	/* check temporary lists */
 	if (!is_privileged) {
 		GList *i;
@@ -482,12 +485,13 @@ polkit_manager_is_user_privileged (PolicyKitManager      *manager,
 			    ((p->pid_restriction == -1) || (p->pid_restriction == pid))) {
 
 				is_privileged = TRUE;
+				is_temporary = TRUE;
 				break;
 			}
 		}
 	}
 
-	dbus_g_method_return (context, is_privileged);
+	dbus_g_method_return (context, is_privileged, is_temporary);
 
 	return TRUE;
 }
@@ -508,6 +512,7 @@ polkit_manager_get_allowed_resources_for_privilege (PolicyKitManager      *manag
 	PolicyResult res;
 	TemporaryPrivilege *p;
 	char **resource_list;
+	int num_non_temporary;
 
 	if (!polkit_manager_get_caller_info (manager, 
 					     dbus_g_method_get_sender (context), 
@@ -565,6 +570,8 @@ polkit_manager_get_allowed_resources_for_privilege (PolicyKitManager      *manag
 		return FALSE;
 	}
 
+	num_non_temporary = g_list_length (resources);
+
 	/* check temporary list */
 	for (i = manager->priv->temporary_privileges; i != NULL; i = g_list_next (i)) {
 		p = (TemporaryPrivilege *) i->data;
@@ -580,14 +587,15 @@ polkit_manager_get_allowed_resources_for_privilege (PolicyKitManager      *manag
 	resource_list = g_new0 (char *, g_list_length (resources) + 1);
 	for (i = resources, n = 0; i != NULL; i = g_list_next (i)) {
 		char *resource = (char *) i->data;
-		resource_list[n++] = g_strdup (resource);
+		resource_list[n]  = g_strdup (resource);
+		n++;
 	}
 	resource_list[n] = NULL;
 
 	g_list_foreach (resources, (GFunc) g_free, NULL);
 	g_list_free (resources);
 
-	dbus_g_method_return (context, resource_list);
+	dbus_g_method_return (context, resource_list, num_non_temporary);
 
 	return TRUE;
 }
@@ -654,6 +662,72 @@ polkit_manager_list_privileges (PolicyKitManager      *manager,
 	return TRUE;
 }
 
+gboolean
+polkit_manager_revoke_temporary_privilege (PolicyKitManager      *manager, 
+					   char                  *user,
+					   char                  *privilege,
+					   char                  *resource,
+					   DBusGMethodInvocation *context)
+{
+	uid_t uid;
+	uid_t calling_uid;
+	pid_t calling_pid;
+	gboolean result;
+
+	if (!polkit_manager_get_caller_info (manager, 
+					     dbus_g_method_get_sender (context), 
+					     &calling_uid, 
+					     &calling_pid)) {
+		dbus_g_method_return_error (context, 
+					    g_error_new (POLKIT_MANAGER_ERROR,
+							 POLKIT_MANAGER_ERROR_ERROR,
+							 "An error occured."));
+		return FALSE;
+	}
+
+	uid = uid_from_username (user);
+
+	if (uid == (uid_t) -1) {
+		dbus_g_method_return_error (context, 
+					    g_error_new (POLKIT_MANAGER_ERROR,
+							 POLKIT_MANAGER_ERROR_NO_SUCH_USER,
+							 "There is no user '%s'.",
+							 user));
+		return FALSE;
+	}
+
+	/* check if given uid is privileged to revoke privilege; only allow own user to do this */
+	/* TODO: also allow callers with privilege 'polkit-manage-privileges-TODO-RENAME' */
+	if (uid != calling_uid) {
+		dbus_g_method_return_error (context, 
+					    g_error_new (POLKIT_MANAGER_ERROR,
+							 POLKIT_MANAGER_ERROR_NOT_PRIVILEGED,
+							 "You are not authorized to revoke the privilege."));
+		return FALSE;
+	}
+
+	if (resource != NULL && strlen (resource) == 0)
+		resource = NULL;
+
+	if (!polkit_manager_remove_temporary_privilege (manager,
+							uid,
+							privilege,
+							resource,
+							-1)) {
+		dbus_g_method_return_error (context, 
+					    g_error_new (POLKIT_MANAGER_ERROR,
+							 POLKIT_MANAGER_ERROR_NO_SUCH_PRIVILEGE,
+							 "There is no such privilege '%s'.",
+							 privilege));
+		return FALSE;
+	} 
+
+	result = TRUE;
+
+	dbus_g_method_return (context, result);
+	return TRUE;
+}
+
 /* local methods */
 
 
@@ -671,7 +745,7 @@ polkit_manager_add_temporary_privilege (PolicyKitManager   *manager,
 		p = (TemporaryPrivilege *) i->data;
 
 		if ((strcmp (p->privilege, privilege) == 0) &&
-		    (safe_strcmp (p->resource, resource) == 0) &&
+		    ((resource != NULL) && (safe_strcmp (p->resource, resource)) == 0) &&
 		    (p->user == user) &&
 		    (p->pid_restriction == pid_restriction))
 			return FALSE;
@@ -702,7 +776,8 @@ polkit_manager_remove_temporary_privilege (PolicyKitManager   *manager,
 		p = (TemporaryPrivilege *) i->data;
 
 		if ((strcmp (p->privilege, privilege) == 0) &&
-		    (safe_strcmp (p->resource, resource) == 0) &&
+		    ((resource == NULL) ? (p->resource == NULL) 
+		                        : ((p->resource != NULL) ? (strcmp (p->resource, resource) == 0) : FALSE)) &&
 		    (p->user == user) &&
 		    (p->pid_restriction == pid_restriction)) {
 

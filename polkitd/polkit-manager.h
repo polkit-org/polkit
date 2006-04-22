@@ -77,7 +77,13 @@ PolicyKitManager *polkit_manager_new                                 (DBusGConne
 
 /* remote methods */
 
-gboolean          polkit_manager_initiate_privilege_grant            (PolicyKitManager      *manager, 
+gboolean          polkit_manager_initiate_temporary_privilege_grant  (PolicyKitManager      *manager, 
+						                      char                  *user,
+						                      char                  *privilege,
+						                      char                  *resource,
+								      DBusGMethodInvocation *context);
+
+gboolean          polkit_manager_revoke_temporary_privilege          (PolicyKitManager      *manager, 
 						                      char                  *user,
 						                      char                  *privilege,
 						                      char                  *resource,

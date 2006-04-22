@@ -15,7 +15,8 @@ INCLUDES = \
 bin_PROGRAMS =                    \
 	polkit-is-privileged      \
 	polkit-list-privileges    \
-	polkit-grant-privilege
+	polkit-grant-privilege	  \
+	polkit-revoke-privilege
 
 polkit_is_privileged_SOURCES = polkit-is-privileged.c
 polkit_is_privileged_LDADD = @DBUS_CFLAGS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
@@ -29,12 +30,18 @@ polkit-interface-manager-glue.h: ../polkit-interface-manager.xml Makefile.am
 polkit-interface-session-glue.h: ../polkit-interface-session.xml Makefile.am
 	dbus-binding-tool --prefix=polkit_session --mode=glib-client --output=polkit-interface-session-glue.h ../polkit-interface-session.xml
 
+
 polkit_grant_privilege_SOURCES= \
 	polkit-grant-privilege.c					\
 					polkit-interface-manager-glue.h \
 					polkit-interface-session-glue.h
-
 polkit_grant_privilege_LDADD= @DBUS_GLIB_LIBS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+
+
+polkit_revoke_privilege_SOURCES= \
+	polkit-revoke-privilege.c
+polkit_revoke_privilege_LDADD= @DBUS_GLIB_LIBS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+
 
 BUILT_SOURCES = polkit-interface-manager-glue.h polkit-interface-session-glue.h
 

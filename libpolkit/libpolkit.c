@@ -102,7 +102,8 @@ LibPolKitResult
 libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext    *ctx,
 						       const char          *user, 
 						       const char          *privilege, 
-						       GList              **result)
+						       GList              **result,
+						       int                 *num_non_temporary)
 {
 	LibPolKitResult res;
 	DBusMessage *message = NULL;
@@ -148,6 +149,7 @@ libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext    *ctx,
 
 	if (!dbus_message_get_args (reply, &error,
 				    DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &resource_list, &num_resources,
+				    DBUS_TYPE_INT32, num_non_temporary,
 				    DBUS_TYPE_INVALID)) {
 		g_warning ("Could not extract args from D-BUS message: %s : %s", error.name, error.message);
 		dbus_error_free (&error);
@@ -175,7 +177,8 @@ libpolkit_is_uid_allowed_for_privilege (LibPolKitContext    *ctx,
 					const char          *user, 
 					const char          *privilege, 
 					const char          *resource,
-					gboolean            *result)
+					gboolean            *is_allowed,
+					gboolean            *is_temporary)
 {
 	LibPolKitResult res;
 	DBusMessage *message = NULL;
@@ -186,7 +189,8 @@ libpolkit_is_uid_allowed_for_privilege (LibPolKitContext    *ctx,
 	LIBPOLKIT_CHECK_CONTEXT (ctx, LIBPOLKIT_RESULT_INVALID_CONTEXT);
 
 	res = LIBPOLKIT_RESULT_ERROR;
-	*result = FALSE;
+	*is_allowed = FALSE;
+	*is_temporary = FALSE;
 
 	message = dbus_message_new_method_call ("org.freedesktop.PolicyKit",
 						"/org/freedesktop/PolicyKit/Manager",
@@ -228,7 +232,8 @@ libpolkit_is_uid_allowed_for_privilege (LibPolKitContext    *ctx,
 
 
 	if (!dbus_message_get_args (reply, &error,
-				    DBUS_TYPE_BOOLEAN, result,
+				    DBUS_TYPE_BOOLEAN, is_allowed,
+				    DBUS_TYPE_BOOLEAN, is_temporary,
 				    DBUS_TYPE_INVALID)) {
 		g_warning ("Could not extract args from D-BUS message: %s : %s", error.name, error.message);
 		dbus_error_free (&error);
@@ -243,6 +248,80 @@ out:
 	if (message != NULL)
 		dbus_message_unref (message);
 	return res;
+}
+
+LibPolKitResult
+libpolkit_revoke_temporary_privilege (LibPolKitContext      *ctx,
+				      const char            *user, 
+				      const char            *privilege, 
+				      const char            *resource,
+				      gboolean              *result)
+{
+	LibPolKitResult res;
+	DBusMessage *message = NULL;
+	DBusMessage *reply = NULL;
+	DBusError error;
+	const char *myresource = "";
+
+	LIBPOLKIT_CHECK_CONTEXT (ctx, LIBPOLKIT_RESULT_INVALID_CONTEXT);
+
+	res = LIBPOLKIT_RESULT_ERROR;
+	*result = FALSE;
+
+	message = dbus_message_new_method_call ("org.freedesktop.PolicyKit",
+						"/org/freedesktop/PolicyKit/Manager",
+						"org.freedesktop.PolicyKit.Manager",
+						"RevokeTemporaryPrivilege");
+	if (message == NULL) {
+		g_warning ("Could not allocate D-BUS message");
+		goto out;
+	}
+
+	if (resource != NULL)
+		myresource = resource;
+
+	if (!dbus_message_append_args (message, 
+				       DBUS_TYPE_STRING, &user, 
+				       DBUS_TYPE_STRING, &privilege,
+				       DBUS_TYPE_STRING, &myresource,
+				       DBUS_TYPE_INVALID)) {
+		g_warning ("Could not append args to D-BUS message");
+		goto out;
+	}
+
+	dbus_error_init (&error);
+	reply = dbus_connection_send_with_reply_and_block (ctx->connection, message, -1, &error);
+	if (dbus_error_is_set (&error)) {
+		if (strcmp (error.name, "org.freedesktop.PolicyKit.Manager.NoSuchUser") == 0) {
+			res = LIBPOLKIT_RESULT_NO_SUCH_USER;
+		} else if (strcmp (error.name, "org.freedesktop.PolicyKit.Manager.NoSuchPrivilege") == 0) {
+			res = LIBPOLKIT_RESULT_NO_SUCH_PRIVILEGE;
+		} else if (strcmp (error.name, "org.freedesktop.PolicyKit.Manager.NotPrivileged") == 0) {
+			res = LIBPOLKIT_RESULT_NOT_PRIVILEGED;
+		} else if (strcmp (error.name, "org.freedesktop.PolicyKit.Manager.Error") == 0) {
+			res = LIBPOLKIT_RESULT_ERROR;
+		}
+		dbus_error_free (&error);
+		goto out;
+	}
+
+
+	if (!dbus_message_get_args (reply, &error,
+				    DBUS_TYPE_BOOLEAN, result,
+				    DBUS_TYPE_INVALID)) {
+		g_warning ("Could not extract args from D-BUS message: %s : %s", error.name, error.message);
+		dbus_error_free (&error);
+		goto out;
+	}
+
+	res = LIBPOLKIT_RESULT_OK;
+
+out:
+	if (reply != NULL)
+		dbus_message_unref (reply);
+	if (message != NULL)
+		dbus_message_unref (message);
+	return res;	
 }
 
 LibPolKitResult
