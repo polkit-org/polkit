@@ -183,9 +183,9 @@
       PolicyKit allows granting privileges only on
       certain <emphasis>resources</emphasis>. For example, for HAL, it
       is possible to grant the
-      privilege <emphasis>hal-storage-fixed-mount</emphasis> to the user
-      with uid 500 but only for the HAL device object representing
-      e.g. the <literal>/dev/hda3</literal> partition.
+      privilege <emphasis>hal-storage-fixed-mount</emphasis> to the
+      user with uid 500 but only for the HAL device object
+      representing e.g. the <literal>/dev/hda3</literal> partition.
     </para>
 
     <sect1>
@@ -209,6 +209,7 @@
   </chapter>
 
 
+
   <chapter id="privileges">
     <title>Privileges</title>
 
@@ -221,13 +222,25 @@
       <itemizedlist>
         <listitem>
 	  <para>
-	    What users and groups possess the privilege
+	    Criteria for determining if a given user possess the privilege on a given resource.
           </para>
 	</listitem>
 
         <listitem>
 	  <para>
-	    foo
+	    What other privileges a given user must also possess.
+          </para>
+	</listitem>
+
+        <listitem>
+	  <para>
+	    Information on whether the user can obtain the privilege, and if he can, whether only temporarily or permanently.
+          </para>
+	</listitem>
+
+        <listitem>
+	  <para>
+	    Whether a user with the privilege may permanently grant it to other users.
           </para>
 	</listitem>
       </itemizedlist>
@@ -235,10 +248,189 @@
     </sect1>
 
     <sect1>
-      <title>Temporary Privileges</title>
+      <title>File Format</title>
       <para>
-	bar
+	A developer of a system-wide application wanting to define a
+	privilege must create a privilege descriptor. This is a a
+	simple <literal>.ini</literal>-like config file. Here is what
+	the skeleton looks like:
       </para>
+
+      <programlisting>
+	[Policy]
+	RequiredPrivileges=
+	Allow=
+	Deny=
+	CanObtain=
+	CanGrant=
+	ObtainRequireRoot=
+	ObtainPAMService=
+      </programlisting>
+
+      <sect2>
+	<title><literal>RequiredPrivileges</literal>: Required Privileges</title>
+	<para>
+	  This is a list of privileges the user must possess in order
+	  to possess the given privilege. If the user doesn't possess
+	  all of these privileges he is not considered to possess the
+	  given privilege. The list may be empty.
+	</para>
+      </sect2>
+
+      <sect2>
+	<title><literal>Allow, Deny</literal>: Criteria for Possesing a Privilege</title>
+	<para>
+	  Both <literal>Allow</literal> and <literal>Deny</literal>
+	  contains lists describing what users are allowed
+	  respectively denied the privilege. The elements of in each
+	  list are of the form
+	  <literal>type:value[:resource]</literal>.  where the last
+	  part, resource, may be omitted. The following types are
+	  supported:
+	</para>
+	<itemizedlist>
+          <listitem>
+	    <para><literal>uid</literal>: Unix user identifer; either
+	    a positive integer or Unix username. Special values
+	    include <literal>__all__</literal> (for denoting all
+	    users) and <literal>__none__</literal> (for denoting no
+	    users).</para>
+	  </listitem>
+
+          <listitem>
+	    <para><literal>gid</literal>: Unix group identifier,
+	    either a positive integer or Unix groupname. Special
+	    values include <literal>__all__</literal> (for denoting
+	    all groups) and <literal>__none__</literal> (for denoting
+	    no groups).</para>
+	  </listitem>
+	</itemizedlist>
+	<para>
+	  To determine if a given user is allowed for a given
+	  privilege (for a given resource), first
+	  the <literal>RequiredPrivileges</literal> list is consulted
+	  as described above. If the user possess all of the listed
+	  privileges, the <literal>Allow</literal> list is now
+	  consulted. For each element we it is tested whether the user
+	  matches. If there are no elements for which the user is
+	  matches, the user is said not to possess the given privilege
+	  (for the given resource).
+	</para>
+	<para>
+	  If there is a match in the <literal>Allow</literal> list,
+	  the <literal>Deny</literal> list is now consulted. If the
+	  user matches any of the elements we know he doesn't possess
+	  the given privilege. If no elements match we can conclude
+	  that the user indeed possesses the given privilege (for the
+	  given resource).
+	</para>
+	<para>
+	  This logic is best described by a few examples
+	</para>
+	<itemizedlist>
+
+          <listitem>
+	    <para>
+	      <literal>
+		Allow="uid:davidz uid:501:hal:///deviceFoo gid:admins
+		uid:502"
+	      </literal>
+	    </para>
+	    <para>
+	      <literal>
+		Deny="gid:dooders uid:502:hal:///deviceBar"
+	      </literal>
+	    </para>
+	    <para>
+		User <literal>davidz</literal> possess this
+		privilege. All members of
+		the <literal>dooders</literal> group is denied this
+		privilege. User 501 is allowed this privilege but only
+		on the <literal>hal:///deviceFoo</literal>
+		resource. All users in the <literal>admin</literal>
+		group posseses the privilege. User 502 is allowed this
+		privilege but not on
+		the <literal>hal:///deviceBar</literal>
+		resource.
+	    </para>
+	  </listitem>
+
+          <listitem>
+	    <para>
+	      <literal>
+		Allow="uid:__all__"
+	      </literal>
+	    </para>
+	    <para>
+	      <literal>
+		Deny="gid:normalstaff"
+	      </literal>
+	    </para>
+	    <para>
+	        All users expect those in
+	        the <literal>normalstaff</literal> group posseses this
+	        privilege.
+	    </para>
+	  </listitem>
+
+	</itemizedlist>
+
+      </sect2>
+
+      
+      <sect2>
+	<title><literal>CanObtain</literal>: Obtaining Privileges</title>
+	<para>
+	  This property denotes whether an user can obtain the
+	  privilege by authentication. It can assume the values
+	  <literal>True</literal> (the user can obtain the privilege
+	  permanently), <literal>Temporary</literal> (the user can
+	  only obtain the privilege temporarily) and
+	  <literal>False</literal> (the user can never obtain the
+	  privilege through authentication).
+	</para>
+	<para>
+	  The authentication required are specified in
+	  the <literal>ObtainRequireRoot</literal>
+	  and <literal>ObtainPAMService</literal> properties.
+	</para>
+      </sect2>
+      
+      <sect2>
+	<title><literal>CanGrant</literal>: Granting Privileges</title>
+	<para>
+	  This property (it can assume the
+	  values <literal>True</literal> and <literal>False</literal>)
+	  describes whether an user with the given privilege can grant
+	  it to other users, e.g. modify the <literal>Allow</literal>
+	  and <literal>Deny</literal> properties.
+	</para>
+	<para>
+	  The property <literal>CanObtain</literal> needs to have the
+	  value <literal>True</literal> if this property assumes the
+	  value <literal>True</literal>.
+	</para>
+      </sect2>
+
+      <sect2>
+	<title><literal>ObtainRequireRoot, ObtainPAMService</literal>: Authentication Requirements</title>
+	<para>
+	  If the property <literal>CanObtain</literal> assumes the
+	  value <literal>True</literal>
+	  or <literal>Temporary</literal> it means the user can
+	  authenticate to gain a privilege.
+	</para>
+	<para>
+	  The <literal>ObtainRequireRoot</literal> property specifies
+	  whether authentication requires the super user password
+	  (<literal>True</literal>) or the users own password
+	  (<literal>False</literal>). In addition, it can be specified
+	  what PAM service (for example <literal>pam_rps</literal>) is
+	  to be used for authentication through the
+	  property <literal>ObtainPAMService</literal>.
+	</para>
+      </sect2>
+      
     </sect1>
 
     <sect1>

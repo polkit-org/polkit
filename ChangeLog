@@ -1,3 +1,7 @@
+2006-04-21  David Zeuthen  <davidz@redhat.com>
+
+	* doc/spec/polkit-spec.xml.in: Write some more stuff 
+
 2006-04-04  Richard Hughes  <richard@hughsie.com>
 
 	* doc/Makefile.am: Add in the new spec directory so we add the folder

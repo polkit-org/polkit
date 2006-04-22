@@ -77,7 +77,7 @@ HREF="#AEN15"
 ><DT
 ><A
 HREF="#operation"
->Theory of Operation</A
+>Theory of operation</A
 ></DT
 ><DD
 ><DL
@@ -103,6 +103,15 @@ HREF="#AEN37"
 HREF="#resources"
 >Resources</A
 ></DT
+><DD
+><DL
+><DT
+><A
+HREF="#AEN78"
+>Resource Identifiers</A
+></DT
+></DL
+></DD
 ><DT
 ><A
 HREF="#privileges"
@@ -112,41 +121,61 @@ HREF="#privileges"
 ><DL
 ><DT
 ><A
-HREF="#AEN87"
+HREF="#AEN88"
 >Privilege Descriptors</A
 ></DT
 ><DT
 ><A
-HREF="#AEN101"
+HREF="#AEN102"
 >File Format</A
 ></DT
 ><DD
 ><DL
 ><DT
 ><A
-HREF="#AEN106"
->Criteria for Possesing a Privilege</A
+HREF="#AEN107"
+><TT
+CLASS="literal"
+>RequiredPrivileges</TT
+>: Required Privileges</A
 ></DT
 ><DT
 ><A
-HREF="#AEN109"
->Required Privileges</A
+HREF="#AEN111"
+><TT
+CLASS="literal"
+>Allow, Deny</TT
+>: Criteria for Possesing a Privilege</A
 ></DT
 ><DT
 ><A
-HREF="#AEN112"
->Obtaining Privileges</A
+HREF="#AEN155"
+><TT
+CLASS="literal"
+>CanObtain</TT
+>: Obtaining Privileges</A
 ></DT
 ><DT
 ><A
-HREF="#AEN115"
->Granting Privileges</A
+HREF="#AEN165"
+><TT
+CLASS="literal"
+>CanGrant</TT
+>: Granting Privileges</A
+></DT
+><DT
+><A
+HREF="#AEN177"
+><TT
+CLASS="literal"
+>ObtainRequireRoot, ObtainPAMService</TT
+>: Authentication Requirements</A
 ></DT
 ></DL
 ></DD
 ><DT
 ><A
-HREF="#AEN118"
+HREF="#AEN190"
 >Privileges defined by PolicyKit</A
 ></DT
 ></DL
@@ -181,7 +210,7 @@ CLASS="chapter"
 ><A
 NAME="operation"
 ></A
->Theory of Operation</H1
+>Theory of operation</H1
 ><DIV
 CLASS="sect1"
 ><H2
@@ -421,8 +450,8 @@ NAME="resources"
       certain <I
 CLASS="emphasis"
 >resources</I
->. For example, for HAL,
-      it is possible to grant the
+>. For example, for HAL, it
+      is possible to grant the
       privilege <I
 CLASS="emphasis"
 >hal-storage-fixed-mount</I
@@ -433,30 +462,36 @@ CLASS="literal"
 >/dev/hda3</TT
 > partition.
     </P
+><DIV
+CLASS="sect1"
+><HR><H2
+CLASS="sect1"
+><A
+NAME="AEN78"
+>Resource Identifiers</A
+></H2
 ><P
-> 
-      Resource identifers are prefixed with a name identifying what
-      service they belong to. The following resource identifiers are
-      defined
-    </P
+> Resource identifers are prefixed with a name identifying
+	what service they belong to. The following resource
+	identifiers are defined
+      </P
 ><P
 ></P
 ><UL
 ><LI
 ><P
->&#13;	  <TT
+>&#13;	    <TT
 CLASS="literal"
 >hal://</TT
 >
-	</P
-><P
->&#13;	  HAL Unique Device Identifiers also known as HAL UDI's. Example: <TT
+	    HAL Unique Device Identifiers also known as HAL UID's. Example: <TT
 CLASS="literal"
 >hal:///org/freedesktop/Hal/devices/volume_uuid_1a28b356_9955_44f9_b268_6ed6639978f5</TT
 >
-        </P
+          </P
 ></LI
 ></UL
+></DIV
 ></DIV
 ><DIV
 CLASS="chapter"
@@ -470,7 +505,7 @@ CLASS="sect1"
 ><H2
 CLASS="sect1"
 ><A
-NAME="AEN87"
+NAME="AEN88"
 >Privilege Descriptors</A
 ></H2
 ><P
@@ -513,7 +548,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN101"
+NAME="AEN102"
 >File Format</A
 ></H2
 ><P
@@ -534,11 +569,11 @@ WIDTH="100%"
 ><PRE
 CLASS="programlisting"
 >&#13;	[Policy]
+	RequiredPrivileges=
 	Allow=
 	Deny=
-	RequirePrivileges=
-	CanGrantToOthers=
 	CanObtain=
+	CanGrant=
 	ObtainRequireRoot=
 	ObtainPAMService=
       </PRE
@@ -550,11 +585,17 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN106"
->Criteria for Possesing a Privilege</A
+NAME="AEN107"
+><TT
+CLASS="literal"
+>RequiredPrivileges</TT
+>: Required Privileges</A
 ></H3
 ><P
->&#13;	  bar
+>&#13;	  This is a list of privileges the user must possess in order
+	  to possess the given privilege. If the user doesn't possess
+	  all of these privileges he is not considered to possess the
+	  given privilege. The list may be empty.
 	</P
 ></DIV
 ><DIV
@@ -562,11 +603,214 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN109"
->Required Privileges</A
+NAME="AEN111"
+><TT
+CLASS="literal"
+>Allow, Deny</TT
+>: Criteria for Possesing a Privilege</A
 ></H3
 ><P
->&#13;	  bar
+>&#13;	  Both <TT
+CLASS="literal"
+>Allow</TT
+> and <TT
+CLASS="literal"
+>Deny</TT
+>
+	  contains lists describing what users are allowed
+	  respectively denied the privilege. The elements of in each
+	  list are of the form
+	  <TT
+CLASS="literal"
+>type:value[:resource]</TT
+>.  where the last
+	  part, resource, may be omitted. The following types are
+	  supported:
+	</P
+><P
+></P
+><UL
+><LI
+><P
+><TT
+CLASS="literal"
+>uid</TT
+>: Unix user identifer; either
+	    a positive integer or Unix username. Special values
+	    include <TT
+CLASS="literal"
+>__all__</TT
+> (for denoting all
+	    users) and <TT
+CLASS="literal"
+>__none__</TT
+> (for denoting no
+	    users).</P
+></LI
+><LI
+><P
+><TT
+CLASS="literal"
+>gid</TT
+>: Unix group identifier,
+	    either a positive integer or Unix groupname. Special
+	    values include <TT
+CLASS="literal"
+>__all__</TT
+> (for denoting
+	    all groups) and <TT
+CLASS="literal"
+>__none__</TT
+> (for denoting
+	    no groups).</P
+></LI
+></UL
+><P
+>&#13;	  To determine if a given user is allowed for a given
+	  privilege (for a given resource), first
+	  the <TT
+CLASS="literal"
+>RequiredPrivileges</TT
+> list is consulted
+	  as described above. If the user possess all of the listed
+	  privileges, the <TT
+CLASS="literal"
+>Allow</TT
+> list is now
+	  consulted. For each element we it is tested whether the user
+	  matches. If there are no elements for which the user is
+	  matches, the user is said not to possess the given privilege
+	  (for the given resource).
+	</P
+><P
+>&#13;	  If there is a match in the <TT
+CLASS="literal"
+>Allow</TT
+> list,
+	  the <TT
+CLASS="literal"
+>Deny</TT
+> list is now consulted. If the
+	  user matches any of the elements we know he doesn't possess
+	  the given privilege. If no elements match we can conclude
+	  that the user indeed possesses the given privilege (for the
+	  given resource).
+	</P
+><P
+>&#13;	  This logic is best described by a few examples
+	</P
+><P
+></P
+><UL
+><LI
+><P
+>&#13;	      <TT
+CLASS="literal"
+>&#13;		Allow="uid:davidz uid:501:hal:///deviceFoo gid:admins
+		uid:502"
+	      </TT
+>
+	    </P
+><P
+>&#13;	      <TT
+CLASS="literal"
+>&#13;		Deny="gid:dooders uid:502:hal:///deviceBar"
+	      </TT
+>
+	    </P
+><P
+>&#13;		User <TT
+CLASS="literal"
+>davidz</TT
+> possess this
+		privilege. All members of
+		the <TT
+CLASS="literal"
+>dooders</TT
+> group is denied this
+		privilege. User 501 is allowed this privilege but only
+		on the <TT
+CLASS="literal"
+>hal:///deviceFoo</TT
+>
+		resource. All users in the <TT
+CLASS="literal"
+>admin</TT
+>
+		group posseses the privilege. User 502 is allowed this
+		privilege but not on
+		the <TT
+CLASS="literal"
+>hal:///deviceBar</TT
+>
+		resource.
+	    </P
+></LI
+><LI
+><P
+>&#13;	      <TT
+CLASS="literal"
+>&#13;		Allow="uid:__all__"
+	      </TT
+>
+	    </P
+><P
+>&#13;	      <TT
+CLASS="literal"
+>&#13;		Deny="gid:normalstaff"
+	      </TT
+>
+	    </P
+><P
+>&#13;	        All users expect those in
+	        the <TT
+CLASS="literal"
+>normalstaff</TT
+> group posseses this
+	        privilege.
+	    </P
+></LI
+></UL
+></DIV
+><DIV
+CLASS="sect2"
+><HR><H3
+CLASS="sect2"
+><A
+NAME="AEN155"
+><TT
+CLASS="literal"
+>CanObtain</TT
+>: Obtaining Privileges</A
+></H3
+><P
+>&#13;	  This property denotes whether an user can obtain the
+	  privilege by authentication. It can assume the values
+	  <TT
+CLASS="literal"
+>True</TT
+> (the user can obtain the privilege
+	  permanently), <TT
+CLASS="literal"
+>Temporary</TT
+> (the user can
+	  only obtain the privilege temporarily) and
+	  <TT
+CLASS="literal"
+>False</TT
+> (the user can never obtain the
+	  privilege through authentication).
+	</P
+><P
+>&#13;	  The authentication required are specified in
+	  the <TT
+CLASS="literal"
+>ObtainRequireRoot</TT
+>
+	  and <TT
+CLASS="literal"
+>ObtainPAMService</TT
+> properties.
 	</P
 ></DIV
 ><DIV
@@ -574,11 +818,44 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN112"
->Obtaining Privileges</A
+NAME="AEN165"
+><TT
+CLASS="literal"
+>CanGrant</TT
+>: Granting Privileges</A
 ></H3
 ><P
->&#13;	  bar1
+>&#13;	  This property (it can assume the
+	  values <TT
+CLASS="literal"
+>True</TT
+> and <TT
+CLASS="literal"
+>False</TT
+>)
+	  describes whether an user with the given privilege can grant
+	  it to other users, e.g. modify the <TT
+CLASS="literal"
+>Allow</TT
+>
+	  and <TT
+CLASS="literal"
+>Deny</TT
+> properties.
+	</P
+><P
+>&#13;	  The property <TT
+CLASS="literal"
+>CanObtain</TT
+> needs to have the
+	  value <TT
+CLASS="literal"
+>True</TT
+> if this property assumes the
+	  value <TT
+CLASS="literal"
+>True</TT
+>.
 	</P
 ></DIV
 ><DIV
@@ -586,11 +863,50 @@ CLASS="sect2"
 ><HR><H3
 CLASS="sect2"
 ><A
-NAME="AEN115"
->Granting Privileges</A
+NAME="AEN177"
+><TT
+CLASS="literal"
+>ObtainRequireRoot, ObtainPAMService</TT
+>: Authentication Requirements</A
 ></H3
 ><P
->&#13;	  bar2
+>&#13;	  If the property <TT
+CLASS="literal"
+>CanObtain</TT
+> assumes the
+	  value <TT
+CLASS="literal"
+>True</TT
+>
+	  or <TT
+CLASS="literal"
+>Temporary</TT
+> it means the user can
+	  authenticate to gain a privilege.
+	</P
+><P
+>&#13;	  The <TT
+CLASS="literal"
+>ObtainRequireRoot</TT
+> property specifies
+	  whether authentication requires the super user password
+	  (<TT
+CLASS="literal"
+>True</TT
+>) or the users own password
+	  (<TT
+CLASS="literal"
+>False</TT
+>). In addition, it can be specified
+	  what PAM service (for example <TT
+CLASS="literal"
+>pam_rps</TT
+>) is
+	  to be used for authentication through the
+	  property <TT
+CLASS="literal"
+>ObtainPAMService</TT
+>.
 	</P
 ></DIV
 ></DIV
@@ -599,7 +915,7 @@ CLASS="sect1"
 ><HR><H2
 CLASS="sect1"
 ><A
-NAME="AEN118"
+NAME="AEN190"
 >Privileges defined by PolicyKit</A
 ></H2
 ><P
