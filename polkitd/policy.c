@@ -171,7 +171,7 @@ txt_backend_read_policy (const char             *policy,
 		goto out;
 	}
 
-	value = g_key_file_get_string (keyfile, "Policy", key, &error);
+	value = g_key_file_get_string (keyfile, "Privilege", key, &error);
 	if (value == NULL) {
 		g_warning ("Cannot get key '%s' in group 'Policy' in file '%s': %s", key, path, error->message);
 		g_error_free (error);
@@ -295,6 +295,115 @@ out:
 	return rc;
 }
 
+
+static PolicyResult
+txt_backend_read_list (const char             *policy,
+		       const char             *key,
+		       GList                 **result)
+{
+	int i;
+	GKeyFile *keyfile;
+	GError *error;
+	PolicyResult rc;
+	char *path;
+	char *value = NULL;
+	char **tokens = NULL;
+	GList *res;
+	char *token;
+
+	error = NULL;
+	rc = POLICY_RESULT_ERROR;
+	res = NULL;
+	*result = NULL;
+
+	keyfile = g_key_file_new ();
+	path = g_strdup_printf ("%s/%s.privilege", policy_directory, policy);
+	/*g_message ("Loading %s", path);*/
+	if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, &error)) {
+		g_warning ("Couldn't open key-file '%s': %s", path, error->message);
+		g_error_free (error);
+		rc = POLICY_RESULT_NO_SUCH_POLICY;
+		goto out;
+	}
+
+	value = g_key_file_get_string (keyfile, "Privilege", key, &error);
+	if (value == NULL) {
+		g_warning ("Cannot get key '%s' in group 'Policy' in file '%s': %s", key, path, error->message);
+		g_error_free (error);
+		rc = POLICY_RESULT_ERROR;
+		goto out;
+	}
+
+	/*g_message ("value = '%s'", value);*/
+	tokens = g_strsplit (value, " ", 0);
+	for (i = 0; tokens[i] != NULL; i++) {
+		token = tokens[i];
+		/*g_message ("  token = '%s'", token);*/
+
+		res = g_list_append (res, g_strdup (token));
+	}
+
+	*result = res;
+	rc = POLICY_RESULT_OK;
+
+out:
+	g_strfreev (tokens);
+	g_free (value);
+
+	g_key_file_free (keyfile);
+	g_free (path);
+
+	return rc;
+}
+
+static PolicyResult
+txt_backend_read_word (const char             *policy,
+		       const char             *key,
+		       char                  **result)
+{
+	GKeyFile *keyfile;
+	GError *error;
+	PolicyResult rc;
+	char *path;
+	char *value = NULL;
+
+	error = NULL;
+	rc = POLICY_RESULT_ERROR;
+	*result = NULL;
+
+	keyfile = g_key_file_new ();
+	path = g_strdup_printf ("%s/%s.privilege", policy_directory, policy);
+	/*g_message ("Loading %s", path);*/
+	if (!g_key_file_load_from_file (keyfile, path, G_KEY_FILE_NONE, &error)) {
+		g_warning ("Couldn't open key-file '%s': %s", path, error->message);
+		g_error_free (error);
+		rc = POLICY_RESULT_NO_SUCH_POLICY;
+		goto out;
+	}
+
+	value = g_key_file_get_string (keyfile, "Privilege", key, &error);
+	if (value == NULL) {
+		g_warning ("Cannot get key '%s' in group 'Policy' in file '%s': %s", key, path, error->message);
+		g_error_free (error);
+		rc = POLICY_RESULT_ERROR;
+		goto out;
+	}
+
+	/*g_message ("value = '%s'", value);*/
+
+	*result = g_strdup (value);
+
+	rc = POLICY_RESULT_OK;
+
+out:
+	g_free (value);
+
+	g_key_file_free (keyfile);
+	g_free (path);
+
+	return rc;
+}
+
 static PolicyResult
 policy_get_whitelist (const char           *policy,
 		      GList               **result)
@@ -307,6 +416,20 @@ policy_get_blacklist (const char           *policy,
 		      GList               **result)
 {
 	return txt_backend_read_policy (policy, "Deny", result);
+}
+
+static PolicyResult
+policy_get_sufficient_privileges (const char           *policy,
+				  GList               **result)
+{
+	return txt_backend_read_list (policy, "SufficientPrivileges", result);
+}
+
+static PolicyResult
+policy_get_required_privileges (const char           *policy,
+				GList               **result)
+{
+	return txt_backend_read_list (policy, "RequiredPrivileges", result);
 }
 
 /** Return all elements in the white-list for a policy
@@ -351,6 +474,177 @@ policy_get_policies (GList              **result)
 error:
 	return POLICY_RESULT_ERROR;
 }
+
+PolicyResult 
+policy_get_auth_details_for_policy (uid_t           uid,
+				    const char     *policy,
+				    const char     *resource,
+				    gboolean       *out_auth_can_obtain,
+				    gboolean       *out_auth_can_obtain_is_temporary,
+				    gboolean       *out_auth_can_grant,
+				    gboolean       *out_auth_obtain_requires_root,
+				    gpointer        have_temp_privilege_userdata,
+				    HaveTempPrivCB  have_temp_privilege)
+{
+	PolicyResult res;
+	GList *required_privs;
+	GList *l;
+	char *can_obtain_word;
+	char *can_grant_word;
+	char *obtain_requires_root_word;
+
+	required_privs = NULL;
+	can_obtain_word = NULL;
+	can_grant_word = NULL;
+
+	*out_auth_can_obtain = FALSE;
+	*out_auth_can_obtain_is_temporary = FALSE;
+	*out_auth_can_grant = FALSE;
+	*out_auth_obtain_requires_root = TRUE;
+
+	res = POLICY_RESULT_ERROR;
+
+	res = txt_backend_read_word (policy, "CanObtain", &can_obtain_word);
+	if (res != POLICY_RESULT_OK)
+		goto out;
+
+	res = txt_backend_read_word (policy, "CanGrant", &can_grant_word);
+	if (res != POLICY_RESULT_OK)
+		goto out;
+
+	res = txt_backend_read_word (policy, "ObtainRequireRoot", &obtain_requires_root_word);
+	if (res != POLICY_RESULT_OK)
+		goto out;
+
+	if (strcmp (can_obtain_word, "True") == 0) {
+		*out_auth_can_obtain = TRUE;
+		*out_auth_can_obtain_is_temporary = FALSE;
+	} else if (strcmp (can_obtain_word, "False") == 0) {
+		*out_auth_can_obtain = FALSE;
+		*out_auth_can_obtain_is_temporary = FALSE;
+	} else if (strcmp (can_obtain_word, "Temporary") == 0) {
+		*out_auth_can_obtain = TRUE;
+		*out_auth_can_obtain_is_temporary = TRUE;
+	} else {
+		g_critical ("CanObtain has bogus value '%s' in privilege '%s'",
+			    can_obtain_word, policy);
+		goto out;
+	}
+
+	if (strcmp (can_grant_word, "True") == 0) {
+		*out_auth_can_grant = TRUE;
+	} else if (strcmp (can_grant_word, "False") == 0) {
+		*out_auth_can_grant = FALSE;
+	} else {
+		g_critical ("CanGrant has bogus value '%s' in privilege '%s'",
+			    can_grant_word, policy);
+		goto out;
+	}
+
+	if (strcmp (obtain_requires_root_word, "True") == 0) {
+		*out_auth_obtain_requires_root = TRUE;
+	} else if (strcmp (obtain_requires_root_word, "False") == 0) {
+		*out_auth_obtain_requires_root = FALSE;
+	} else {
+		g_critical ("ObtainRequireRoot has bogus value '%s' in privilege '%s'",
+			    obtain_requires_root_word, policy);
+		goto out;
+	}
+
+	/* no need to check RequiredPrivileges if said privilege says we can't obtain it */
+	if ((*out_auth_can_obtain) == FALSE)
+		goto determined;
+
+	/* if privilege already requires super user, no need to check RequiredPrivileges */
+	if ((*out_auth_obtain_requires_root) == TRUE)
+		goto determined;
+
+	/* So now the user can obtain the privilege and doesn't
+	 * require root. However, per the spec, if he is lacking any
+	 * of the privileges listed and one or more of these have
+	 *
+	 *  - has ObtainRequiresRoot set to TRUE; or
+	 *
+	 *  - has CanObtain set to FALSE
+	 *
+	 * then effectively ObtainsRequireRoot becomes TRUE.
+	 */
+
+	res = policy_get_required_privileges (policy, &required_privs);
+	if (res != POLICY_RESULT_OK)
+		goto out;
+
+	g_message ("  * obtain_requires_root = %d", *out_auth_obtain_requires_root);
+
+	for (l = required_privs; l != NULL; l = g_list_next (l)) {
+		gboolean has_required_privilege = FALSE;
+		gboolean has_required_privilege_is_temp = FALSE;
+		char *has_required_privilege_is_restricted = NULL;
+		const char *required_privilege = (const char *) l->data;
+		PolicyResult res2;
+
+		g_message ("  checking for required privilege  '%s'", required_privilege);
+
+		has_required_privilege = FALSE;
+		res2 = policy_is_uid_allowed_for_policy (uid,
+							 required_privilege, 
+							 NULL, 
+							 &has_required_privilege,
+							 &has_required_privilege_is_temp,
+							 &has_required_privilege_is_restricted,
+							 have_temp_privilege_userdata,
+							 have_temp_privilege);
+		if (res2 != POLICY_RESULT_OK)
+			goto out;
+
+		g_message ("   has_required_privilege = %d", has_required_privilege);
+
+		if (!has_required_privilege || 
+		    (has_required_privilege && has_required_privilege_is_restricted != NULL)) {
+
+			g_free (can_obtain_word);
+			g_free (can_grant_word);
+			can_obtain_word = NULL;
+			can_grant_word = NULL;
+
+			res = txt_backend_read_word (required_privilege, "CanObtain", 
+						     &can_obtain_word);
+			if (res != POLICY_RESULT_OK)
+				goto out;
+
+			res = txt_backend_read_word (required_privilege, "ObtainRequireRoot", 
+						     &obtain_requires_root_word);
+			if (res != POLICY_RESULT_OK)
+				goto out;
+
+			if (strcmp (can_obtain_word, "False") == 0) {
+				*out_auth_obtain_requires_root = TRUE;
+				goto determined;
+			}
+
+			if (strcmp (obtain_requires_root_word, "True") == 0) {
+				*out_auth_obtain_requires_root = TRUE;
+				goto determined;
+			}
+		}
+	}
+		
+determined:
+	g_message ("  ** obtain_requires_root = %d", *out_auth_obtain_requires_root);
+	res = POLICY_RESULT_OK;
+
+out:
+	if (required_privs != NULL) {
+		g_list_foreach (required_privs, (GFunc) g_free, NULL);
+		g_list_free (required_privs);
+	}
+
+	g_free (can_obtain_word);
+	g_free (can_grant_word);
+
+	return res;
+}
+
 
 
 static void
@@ -467,24 +761,142 @@ out:
 	return res;	
 }
 
-PolicyResult 
-policy_is_uid_gid_allowed_for_policy (uid_t                 uid, 
-				      guint                 num_gids,
-				      gid_t                *gid_list,
-				      const char           *policy, 
-				      const char           *resource,
-				      gboolean             *result)
+static PolicyResult 
+_policy_is_uid_gid_allowed_for_policy (uid_t           uid, 
+				       guint           num_gids,
+				       gid_t          *gid_list,
+				       const char     *policy, 
+				       const char     *resource,
+				       gboolean       *out_is_privileged,
+				       gboolean       *out_is_temporary,
+				       char          **out_is_privileged_but_restricted,
+				       gpointer        have_temp_privilege_userdata,
+				       HaveTempPrivCB  have_temp_privilege,
+				       int             recursion_counter)
 {
 	gboolean is_in_whitelist;
 	gboolean is_in_blacklist;
 	GList *l;
 	GList *whitelist;
 	GList *blacklist;
+	GList *sufficient_privs;
+	GList *required_privs;
 	PolicyResult res;
+	PolicyResult res2;
 
 	whitelist = NULL;
 	blacklist = NULL;
+	sufficient_privs = NULL;
+	required_privs = NULL;
 	res = POLICY_RESULT_ERROR;
+
+	*out_is_privileged = FALSE;
+	*out_is_temporary = FALSE;
+	*out_is_privileged_but_restricted = NULL;
+
+	if (recursion_counter > 8) {
+		g_critical ("Maximal (8) recursion depth detected checking privilege '%s'", policy);
+		goto out;
+	}
+
+	res = policy_get_sufficient_privileges (policy, &sufficient_privs);
+	if (res != POLICY_RESULT_OK)
+		goto out;
+
+	/* first check SufficientPrivileges.. if we have one of those, then return TRUE */
+	for (l = sufficient_privs; l != NULL; l = g_list_next (l)) {
+		gboolean has_sufficient_privilege = FALSE;
+		gboolean has_sufficient_privilege_is_temp = FALSE;
+		char *has_sufficient_privilege_is_restricted = NULL;
+		const char *sufficient_privilege = (const char *) l->data;
+
+		g_message ("  checking for sufficient privilege  '%s'", sufficient_privilege);
+
+		has_sufficient_privilege = FALSE;
+		res2 = _policy_is_uid_gid_allowed_for_policy (uid, num_gids, gid_list, 
+							      sufficient_privilege, NULL, 
+							      &has_sufficient_privilege,
+							      &has_sufficient_privilege_is_temp,
+							      &has_sufficient_privilege_is_restricted,
+							      have_temp_privilege_userdata,
+							      have_temp_privilege, recursion_counter + 1);
+		if (res2 != POLICY_RESULT_OK)
+			goto out;
+
+		if (has_sufficient_privilege && has_sufficient_privilege_is_restricted == NULL) {
+			g_message ("Returned TRUE because we have the sufficient privilege '%s' for privilege '%s'",
+				   sufficient_privilege, policy);
+			res = POLICY_RESULT_OK;
+			*out_is_privileged = TRUE;			
+			*out_is_temporary = has_sufficient_privilege_is_temp;
+			*out_is_privileged_but_restricted = NULL;
+			goto out;
+		}
+	}
+
+	/* then check temporary privileges as it's OK to have a
+	 * privilege temporarily without having the all the
+	 * RequiredPrivileges.
+	 */
+
+	if ((*out_is_privileged == FALSE) && have_temp_privilege != NULL) {
+		gboolean ignore_resource;
+
+		if (recursion_counter == 0)
+			ignore_resource = FALSE;
+		else
+			ignore_resource = TRUE;
+
+		/* TODO: ask for restriction */
+		if (have_temp_privilege (uid, policy, resource, ignore_resource, have_temp_privilege_userdata)) {
+
+			res = POLICY_RESULT_OK;
+			*out_is_privileged = TRUE;
+			*out_is_temporary = TRUE;
+			*out_is_privileged_but_restricted = NULL;
+			goto out;
+		}
+	}
+
+
+	/* now check RequiredPrivileges.. if we have don't have all of those, then return FALSE */
+
+	res = policy_get_required_privileges (policy, &required_privs);
+	if (res != POLICY_RESULT_OK)
+		goto out;
+
+	for (l = required_privs; l != NULL; l = g_list_next (l)) {
+		gboolean has_required_privilege = FALSE;
+		gboolean has_required_privilege_is_temp = FALSE;
+		char *has_required_privilege_is_restricted = NULL;
+		const char *required_privilege = (const char *) l->data;
+
+		g_message ("  checking for required privilege  '%s'", required_privilege);
+
+		has_required_privilege = FALSE;
+		res2 = _policy_is_uid_gid_allowed_for_policy (uid, num_gids, gid_list, 
+							      required_privilege, NULL, 
+							      &has_required_privilege,
+							      &has_required_privilege_is_temp,
+							      &has_required_privilege_is_restricted,
+							      have_temp_privilege_userdata,
+							      have_temp_privilege, recursion_counter + 1);
+		if (res2 != POLICY_RESULT_OK)
+			goto out;
+
+		if (!has_required_privilege || 
+		    (has_required_privilege && has_required_privilege_is_restricted != NULL)) {
+			g_message ("Returned FALSE because we don't have the required privilege '%s' for privilege '%s'",
+				   required_privilege, policy);
+			res = POLICY_RESULT_OK;
+			*out_is_privileged = FALSE;			
+			*out_is_temporary = TRUE;
+			*out_is_privileged_but_restricted = NULL;
+			goto out;
+		}
+	}
+
+	/* Check against whitelist and blacklist */
 
 	res = policy_get_whitelist (policy, &whitelist);
 	if (res != POLICY_RESULT_OK)
@@ -517,17 +929,49 @@ policy_is_uid_gid_allowed_for_policy (uid_t                 uid,
 		}
 	}
 
-	*result =  is_in_whitelist && (!is_in_blacklist);
+	*out_is_privileged =  is_in_whitelist && (!is_in_blacklist);
+	*out_is_temporary = FALSE;
+	*out_is_privileged_but_restricted = NULL;
 
 	res = POLICY_RESULT_OK;
 
 out:
+	if (required_privs != NULL) {
+		g_list_foreach (required_privs, (GFunc) g_free, NULL);
+		g_list_free (required_privs);
+	}
+	if (sufficient_privs != NULL) {
+		g_list_foreach (sufficient_privs, (GFunc) g_free, NULL);
+		g_list_free (sufficient_privs);
+	}
 	if (whitelist != NULL)
 		policy_element_free_list (whitelist);
 	if (blacklist != NULL)
 		policy_element_free_list (blacklist);
 
 	return res;	
+}
+
+
+PolicyResult 
+policy_is_uid_gid_allowed_for_policy (uid_t           uid, 
+				      guint           num_gids,
+				      gid_t          *gid_list,
+				      const char     *policy, 
+				      const char     *resource,
+				      gboolean       *out_is_privileged,
+				      gboolean       *out_is_temporary,
+				      char          **out_is_privileged_but_restricted,
+				      gpointer        have_temp_privilege_userdata,
+				      HaveTempPrivCB  have_temp_privilege)
+{
+	return _policy_is_uid_gid_allowed_for_policy (uid, num_gids, gid_list, policy, 
+						      resource, 
+						      out_is_privileged, 
+						      out_is_temporary, 
+						      out_is_privileged_but_restricted, 
+						      have_temp_privilege_userdata,
+						      have_temp_privilege, 0);
 }
 
 char *
@@ -686,10 +1130,14 @@ out:
 }
 
 PolicyResult 
-policy_is_uid_allowed_for_policy (uid_t                 uid, 
-				  const char           *policy, 
-				  const char           *resource,
-				  gboolean             *result)
+policy_is_uid_allowed_for_policy (uid_t           uid, 
+				  const char     *policy, 
+				  const char     *resource,
+				  gboolean       *out_is_privileged,
+				  gboolean       *out_is_temporary,
+				  char          **out_is_privileged_but_restricted,
+				  gpointer        have_temp_privilege_userdata,
+				  HaveTempPrivCB  have_temp_privilege)
 {
 	int num_groups = 0;
 	gid_t *groups = NULL;
@@ -715,7 +1163,11 @@ policy_is_uid_allowed_for_policy (uid_t                 uid,
 						  groups,
 						  policy,
 						  resource,
-						  result);
+						  out_is_privileged, 
+						  out_is_temporary, 
+						  out_is_privileged_but_restricted, 
+						  have_temp_privilege_userdata,
+						  have_temp_privilege);
 
 out:
 	g_free (username);

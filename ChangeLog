@@ -1,3 +1,76 @@
+2006-06-05  David Zeuthen  <davidz@redhat.com>
+
+	Lots of changes! Almost ready for 0.2 release.
+
+	* Makefile.am:
+	* README:
+	* configure.in:
+	* doc/TODO:
+	* doc/api/polkit-docs.xml:
+	* doc/spec/Makefile.am:
+	* doc/spec/polkit-spec.html:
+	* doc/spec/polkit-spec.xml.in:
+	* libpolkit/Makefile.am:
+	* libpolkit/libpolkit-grant.c: (have_questions_handler),
+	(libpolkit_grant_provide_answers), (auth_done_handler),
+	(libpolkit_grant_new_context),
+	(libpolkit_grant_get_libpolkit_context),
+	(libpolkit_grant_set_questions_handler),
+	(libpolkit_grant_set_grant_complete_handler),
+	(libpolkit_grant_initiate_temporary_grant),
+	(libpolkit_grant_get_user_for_auth),
+	(libpolkit_grant_get_pam_service_for_auth),
+	(libpolkit_grant_close), (libpolkit_grant_free_context),
+	(libpolkit_grant_get_user), (libpolkit_grant_get_privilege),
+	(libpolkit_grant_get_resource):
+	* libpolkit/libpolkit-grant.h:
+	* libpolkit/libpolkit.c:
+	(libpolkit_get_allowed_resources_for_privilege_for_uid),
+	(libpolkit_is_uid_allowed_for_privilege):
+	* libpolkit/libpolkit.h:
+	* pam-polkit-console/Makefile.am:
+	* pam-polkit-console/pam-polkit-console.c: (_pam_log),
+	(_parse_module_args), (_is_local_xconsole), (_poke_polkitd),
+	(pam_sm_authenticate), (pam_sm_setcred), (pam_sm_open_session),
+	(pam_sm_close_session):
+	* polkit-interface-manager.xml:
+	* polkit-interface-session.xml:
+	* polkit.pc.in:
+	* polkitd/PolicyKit.in:
+	* polkitd/main.c: (handle_sigusr1), (sigusr1_iochn_data), (main):
+	* polkitd/policy.c: (txt_backend_read_policy),
+	(txt_backend_read_list), (txt_backend_read_word),
+	(policy_get_sufficient_privileges),
+	(policy_get_required_privileges),
+	(policy_get_auth_details_for_policy),
+	(_policy_is_uid_gid_allowed_for_policy),
+	(policy_is_uid_gid_allowed_for_policy),
+	(policy_is_uid_allowed_for_policy):
+	* polkitd/policy.h:
+	* polkitd/polkit-manager.c: (_granting_temp_priv),
+	(_revoking_temp_priv), (polkit_manager_error_get_type),
+	(bus_name_owner_changed), (polkit_manager_get_caller_info),
+	(_check_for_temp_privilege),
+	(polkit_manager_initiate_temporary_privilege_grant),
+	(polkit_manager_is_user_privileged),
+	(polkit_manager_get_allowed_resources_for_privilege),
+	(polkit_manager_revoke_temporary_privilege),
+	(polkit_manager_add_temporary_privilege),
+	(polkit_manager_remove_temporary_privilege),
+	(polkit_manager_update_desktop_console_privileges):
+	* polkitd/polkit-manager.h:
+	* polkitd/polkit-session.c: (polkit_session_close),
+	(polkit_session_grant_privilege_temporarily), (polkit_session_new),
+	(polkit_session_initiator_disconnected):
+	* polkitd/polkit-session.h:
+	* privileges/desktop-console.privilege:
+	* tools/Makefile.am:
+	* tools/polkit-grant-privilege.c: (questions_cb),
+	(grant_complete_cb), (main):
+	* tools/polkit-is-privileged.c: (usage), (main):
+	* tools/polkit-list-privileges.c: (main):
+	* tools/polkit-revoke-privilege.c: (main):
+
 2006-04-22  David Zeuthen  <davidz@redhat.com>
 
 	* tools/polkit-list-privileges.c (main): Update to new D-BUS API;

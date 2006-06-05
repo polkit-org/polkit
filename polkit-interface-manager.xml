@@ -21,20 +21,22 @@
 
     <method name="IsUserPrivileged">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="pid"           type="i" direction="in"/>
-      <arg name="user"          type="s" direction="in"/>
-      <arg name="privilege"     type="s" direction="in"/>
-      <arg name="resource"      type="s" direction="in"/>
-      <arg name="is_privileged" type="b" direction="out"/>
-      <arg name="is_temporary"  type="b" direction="out"/>
+      <arg name="system_bus_unique_name"                                 type="s" direction="in"/>
+      <arg name="user"                                                   type="s" direction="in"/>
+      <arg name="privilege"                                              type="s" direction="in"/>
+      <arg name="resource"                                               type="s" direction="in"/>
+      <arg name="is_privileged"                                          type="b" direction="out"/>
+      <arg name="is_temporary"                                           type="b" direction="out"/>
+      <arg name="is_privileged_but_restricted_to_system_bus_unique_name" type="s" direction="out"/>
     </method>
 
     <method name="GetAllowedResourcesForPrivilege">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="user"           type="s"  direction="in"/>
-      <arg name="privilege"      type="s"  direction="in"/>
-      <arg name="resource_list"  type="as" direction="out"/>
-      <arg name="num_non_temp"   type="i"  direction="out"/>
+      <arg name="user"              type="s"  direction="in"/>
+      <arg name="privilege"         type="s"  direction="in"/>
+      <arg name="resource_list"     type="as" direction="out"/>
+      <arg name="restriction_list"  type="as" direction="out"/>
+      <arg name="num_non_temp"      type="i"  direction="out"/>
     </method>
 
     <method name="ListPrivileges">

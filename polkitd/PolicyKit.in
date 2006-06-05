@@ -23,6 +23,13 @@ servicename=PolicyKit
 
 RETVAL=0
 
+cleanup_state_dir()
+{
+    # Clean out all files in 
+    rm -f @LOCALSTATEDIR@/run/polkit-console/*
+    mkdir -p @LOCALSTATEDIR@/run/polkit-console
+}
+
 start() {
     echo -n $"Starting PolicyKit daemon: "
     daemon --check $servicename $processname
@@ -46,6 +53,7 @@ stop() {
 # See how we were called.
 case "$1" in
     start)
+	cleanup_state_dir
         start
         ;;
     stop)
@@ -57,13 +65,11 @@ case "$1" in
         ;;
     restart)
         stop
-	sleep 3
         start
         ;;
     condrestart)
         if [ -f @LOCALSTATEDIR@/lock/subsys/$servicename ]; then
             stop
-	    sleep 3
             start
         fi
         ;;

@@ -27,6 +27,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <getopt.h>
 #include <dbus/dbus.h>
@@ -136,8 +137,11 @@ main (int argc, char *argv[])
 		const char *privilege;
 		gboolean is_allowed;
 		gboolean is_temporary;
+		char *is_privileged_but_restricted_to;
 		GList *j;
+		GList *k;
 		GList *resources;
+		GList *restrictions;
 		int num_non_temporary;
 
 		privilege = (const char *) l->data;
@@ -146,33 +150,46 @@ main (int argc, char *argv[])
 		}
 
 		if (libpolkit_is_uid_allowed_for_privilege (ctx, 
-							    -1,
+							    NULL,
 							    user,
 							    privilege,
 							    NULL,
 							    &is_allowed,
-							    &is_temporary) == LIBPOLKIT_RESULT_OK) {
+							    &is_temporary,
+							    &is_privileged_but_restricted_to) == LIBPOLKIT_RESULT_OK) {
 			if (is_allowed) {
 				g_print ("privilege %s%s\n", privilege, is_temporary ? " (temporary)" : "");
-			} 
+			} else if (is_privileged_but_restricted_to != NULL) {
+				g_print ("privilege %s (temporary) (restricted to %s)\n", 
+					 privilege, is_privileged_but_restricted_to);
+			}
 
 			if (libpolkit_get_allowed_resources_for_privilege_for_uid (
 				    ctx, 
 				    user,
 				    privilege,
 				    &resources,
+				    &restrictions,
 				    &num_non_temporary) == LIBPOLKIT_RESULT_OK) {
 				int n;
 
-				for (j = resources, n = 0; j != NULL; j = g_list_next (j), n++) {
+				for (j = resources, k = restrictions, n = 0; j != NULL; j = g_list_next (j), k = g_list_next (k), n++) {
 					const char *resource;
+					const char *restriction;
 					resource = (const char *) j->data;
-					g_print ("resource %s privilege %s%s\n", 
+					restriction = (const char *) k->data;
+					g_print ("resource %s privilege %s%s", 
 						 resource, privilege,
 						 n >= num_non_temporary ? " (temporary)" : "");
+					if (strlen (restriction) > 0) 
+						g_print (" (restricted to %s)\n", restriction);
+					else
+						g_print ("\n");
 				}
 				g_list_foreach (resources, (GFunc) g_free, NULL);
 				g_list_free (resources);
+				g_list_foreach (restrictions, (GFunc) g_free, NULL);
+				g_list_free (restrictions);
 			}
 		}
 

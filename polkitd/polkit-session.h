@@ -80,11 +80,11 @@ struct PolicyKitSessionClass
 PolicyKitSession *polkit_session_new                         (DBusGConnection    *connection, 
 							      PolicyKitManager   *manager,
 							      uid_t               calling_uid,
-							      pid_t               calling_pid,
 							      const char         *calling_dbus_name,
 							      uid_t               uid,
 							      const char         *privilege,
-							      const char         *resource);
+							      const char         *resource,
+							      gboolean            auth_as_root);
 
 /* remote methods */
 
@@ -102,7 +102,6 @@ gboolean          polkit_session_provide_answers             (PolicyKitSession  
 							      DBusGMethodInvocation *context);
 
 gboolean          polkit_session_close                       (PolicyKitSession      *session, 
-							      gboolean               do_not_revoke_privilege,
 							      DBusGMethodInvocation *context);
 
 gboolean          polkit_session_get_auth_details            (PolicyKitSession      *session, 
@@ -112,7 +111,7 @@ gboolean          polkit_session_get_auth_denied_reason      (PolicyKitSession  
 							      DBusGMethodInvocation *context);
 
 gboolean          polkit_session_grant_privilege_temporarily (PolicyKitSession      *session, 
-							      gboolean               restrict_to_callers_pid,
+							      gboolean               restrict_to_callers_system_bus_unique_name,
 							      DBusGMethodInvocation *context);
 
 /* local methods */

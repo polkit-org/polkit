@@ -36,27 +36,34 @@
 #include <dbus/dbus-glib-lowlevel.h>
 
 #include <libpolkit/libpolkit.h>
+#include <libpolkit/libpolkit-grant.h>
 
-#include "polkit-interface-manager-glue.h"
-#include "polkit-interface-session-glue.h"
 
-static char *grant_user = NULL;
-static char *grant_privilege = NULL;
-static char *grant_resource = NULL;
-static char *auth_user = NULL;
-static char *auth_pam_service_name = NULL;
+static gboolean is_verbose = FALSE;
+
 
 static void
-have_questions_handler (DBusGProxy *session, gpointer user_data)
+questions_cb (LibPolKitGrantContext  *ctx, 
+	      const char            **questions,
+	      gpointer                user_data)
 {
 	int i;
-	char **questions;
-	char **answers;
 	int num_a;
-	GError *error = NULL;
+	char **answers;
+	static gboolean showed_user = FALSE;
 
-	if (auth_user != NULL) {
-		if (grant_resource != NULL)
+
+	/* print banner for user if we are going to ask questions */
+	if (!showed_user) {
+		const char *auth_user;
+		const char *auth_pam_svc;
+
+		showed_user = TRUE;
+
+		auth_user = libpolkit_grant_get_user_for_auth (ctx);
+		auth_pam_svc = libpolkit_grant_get_pam_service_for_auth (ctx);
+
+		if (libpolkit_grant_get_resource (ctx) != NULL) {
 			g_print ("\n"
 				 "Authentication needed for user '%s' in order to grant the\n"
 				 "privilege '%s' to user '%s' for the \n"
@@ -65,10 +72,11 @@ have_questions_handler (DBusGProxy *session, gpointer user_data)
 				 "The privilege is configured to use PAM service '%s'.\n"
 				 "\n",
 				 auth_user,
-				 grant_privilege, grant_user, 
-				 grant_resource,
-				 auth_pam_service_name);
-		else
+				 libpolkit_grant_get_privilege (ctx), 
+				 libpolkit_grant_get_user (ctx), 
+				 libpolkit_grant_get_resource (ctx),
+				 auth_pam_svc);
+		} else {
 			g_print ("\n"
 				 "Authentication needed for user '%s' in order to grant the\n"
 				 "privilege '%s' to user '%s'.\n"
@@ -76,29 +84,20 @@ have_questions_handler (DBusGProxy *session, gpointer user_data)
 				 "The privilege is configured to use PAM service '%s'.\n"
 				 "\n",
 				 auth_user,
-				 grant_privilege, grant_user,
-				 auth_pam_service_name);
-		g_free (auth_user);
-		g_free (auth_pam_service_name);
-		auth_user = NULL;
-		auth_pam_service_name = NULL;
+				 libpolkit_grant_get_privilege (ctx), 
+				 libpolkit_grant_get_user (ctx),
+				 auth_pam_svc);
+		}
 	}
 
-	if (!org_freedesktop_PolicyKit_Session_get_questions (session,
-							      &questions,
-							      &error)) {
-		g_warning ("GetQuestions: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
 
-	answers = g_new0 (char *, g_strv_length (questions) + 1);
+	answers = g_new0 (char *, g_strv_length ((char **) questions) + 1);
 	num_a = 0;
 
 	for (i = 0; questions[i] != NULL && questions[i+1] != NULL; i++) {
 		char *answer;
-		char *question = questions[i+1];
-		char *qtype = questions[i];
+		const char *question = questions[i+1];
+		const char *qtype = questions[i];
 
 		/*g_debug ("Question 1: '%s' (pamtype %s)\n(warning; secret will be echoed to stdout)", question, qtype);*/
 
@@ -112,7 +111,7 @@ have_questions_handler (DBusGProxy *session, gpointer user_data)
 			char buf[1024];
 
 			fputs (question, stderr);
-			answer = fgets (question, sizeof (buf), stdin);
+			answer = fgets ((char *) question, sizeof (buf), stdin);
 			answers[num_a++] = g_strdup (answer);
 
 			/*g_debug ("Provding answer: '%s'", answer);*/
@@ -127,155 +126,30 @@ have_questions_handler (DBusGProxy *session, gpointer user_data)
 	}
 	answers[num_a] = NULL;
 
-	g_strfreev (questions);
-
-	if (!org_freedesktop_PolicyKit_Session_provide_answers (session,
-								(const char **) answers,
-								&error)) {
-		g_warning ("ProvideAnswers: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
+	libpolkit_grant_provide_answers (ctx, (const char **) answers);
 
 	g_strfreev (answers);
-
-out:
-	;
 }
 
 static void
-auth_done_handler (DBusGProxy *session, gpointer user_data)
+grant_complete_cb (LibPolKitGrantContext  *ctx, 
+		   gboolean                obtained_privilege,
+		   const char             *reason_not_obtained,
+		   gpointer                user_data)
 {
-	gboolean auth_result;
-	GError *error = NULL;
-
-	/*g_debug ("in %s", __FUNCTION__);*/
-
-	if (!org_freedesktop_PolicyKit_Session_is_authenticated (session,
-								 &auth_result,
-								 &error)) {
-		g_warning ("IsAuthenticated: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	/*g_message ("Authentication done. %s", auth_result);*/
-
-	if (!auth_result) {
-		char *auth_denied_reason;
-
-		if (!org_freedesktop_PolicyKit_Session_get_auth_denied_reason (session,
-									       &auth_denied_reason,
-									       &error)) {
-			g_warning ("GetAuthDeniedReason: %s", error->message);
-			g_error_free (error);
-			goto out;
-		}
-		
-		g_print ("\n"
-			 "Authentication failed (reason: '%s').\n", auth_denied_reason);
-		g_free (auth_denied_reason);
+	if (!obtained_privilege) {
+		g_print ("Privilege not granted: %s\n", reason_not_obtained != NULL ? reason_not_obtained : "(null)");
 	} else {
-		g_print ("\n"
-			 "Authentication succeeded.\n");
-
-		/* don't restrict privilege to callers PID */
-		if (!org_freedesktop_PolicyKit_Session_grant_privilege_temporarily (session,
-										    FALSE,
-										    &error)) {
-			g_warning ("GrantPrivilegeTemporarily: %s", error->message);
-			g_error_free (error);
-		}
+		/* keep the privilege */
+		libpolkit_grant_close (ctx, FALSE);
 	}
 
-out:
-
-	/* don't revoke privilege when we close the session */
-	if (!org_freedesktop_PolicyKit_Session_close (session,
-						      TRUE,
-						      &error)) {
-		g_warning ("Close: %s", error->message);
-		g_error_free (error);
-	}
+	libpolkit_free_context (ctx);
 
 	exit (0);
 }
 
-static void
-do_grant_privilege (DBusGConnection *conn, const char *user, const char *privilege, const char *resource)
-{
-	GError *error = NULL;
-	DBusGProxy *manager;
-	DBusGProxy *session;
-	char *session_objpath;
-	GMainLoop *mainloop;
 
-	grant_user = g_strdup (user);
-	grant_privilege = g_strdup (privilege);
-	grant_resource = g_strdup (resource);
-
-	mainloop = g_main_loop_new (NULL, FALSE);
-
-	manager = dbus_g_proxy_new_for_name (conn,
-					     "org.freedesktop.PolicyKit",
-					     "/org/freedesktop/PolicyKit/Manager",
-					     "org.freedesktop.PolicyKit.Manager");
-	if (manager == NULL) {
-		goto out;
-	}
-
-	if (!org_freedesktop_PolicyKit_Manager_initiate_temporary_privilege_grant (manager,
-										   user,
-										   privilege,
-										   resource,
-										   &session_objpath,
-										   &error)) {
-		g_warning ("GrantPrivilege: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	/*g_debug ("session_objpath = %s", session_objpath);*/
-
-	session = dbus_g_proxy_new_for_name (conn,
-					     "org.freedesktop.PolicyKit",
-					     session_objpath,
-					     "org.freedesktop.PolicyKit.Session");
-	if (session == NULL) {
-		goto out;
-	}
-
-	dbus_g_proxy_add_signal (session, "HaveQuestions", G_TYPE_INVALID);
-	dbus_g_proxy_connect_signal (session, "HaveQuestions", G_CALLBACK (have_questions_handler),
-				     NULL, NULL);
-
-	dbus_g_proxy_add_signal (session, "AuthenticationDone", G_TYPE_INVALID);
-	dbus_g_proxy_connect_signal (session, "AuthenticationDone", G_CALLBACK (auth_done_handler),
-				     NULL, NULL);
-
-	if (!org_freedesktop_PolicyKit_Session_get_auth_details (session,
-								 &auth_user,
-								 &auth_pam_service_name,
-								 &error)) {
-		g_warning ("GetAuthDetails: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	if (!org_freedesktop_PolicyKit_Session_initiate_auth (session,
-							      &error)) {
-		g_warning ("InitiateAuth: %s", error->message);
-		g_error_free (error);
-		goto out;
-	}
-
-	g_main_loop_run (mainloop);
-
-
-	g_free (session_objpath);
-out:
-	;
-}
 
 static void
 usage (int argc, char *argv[])
@@ -297,15 +171,12 @@ usage (int argc, char *argv[])
 		 "be omitted.\n");
 }
 
-static gboolean is_verbose = FALSE;
-
 int
 main (int argc, char **argv)
 {
 	int rc;
 	GError *error = NULL;
 	DBusGConnection *bus;
-	LibPolKitContext *ctx;
 	char *user = NULL;
 	char *resource = NULL;
 	char *privilege = NULL;
@@ -321,8 +192,14 @@ main (int argc, char **argv)
 	gboolean is_privileged = FALSE;
 	gboolean is_temporary = FALSE;
 	LibPolKitResult result;
+	LibPolKitGrantContext *gctx;
+	LibPolKitContext *ctx;
+	GMainLoop *mainloop;
 
 	g_type_init ();
+
+	mainloop = g_main_loop_new (NULL, FALSE);
+
 
 	rc = 1;
 
@@ -383,15 +260,26 @@ main (int argc, char **argv)
 		return 1;
 	}
 
-	ctx = libpolkit_new_context (dbus_g_connection_get_connection (bus));
+	gctx = libpolkit_grant_new_context (bus,
+					    user,
+					    privilege,
+					    resource,
+					    FALSE,
+					    NULL);
+	if (gctx == NULL) {
+		g_warning ("Cannot initialize new grant context");
+		goto out;
+	}
 
+	ctx = libpolkit_grant_get_libpolkit_context (gctx);
 	result = libpolkit_is_uid_allowed_for_privilege (ctx,
-							 -1,
+							 NULL,
 							 user,
 							 privilege,
 							 resource,
 							 &is_privileged,
-							 &is_temporary);
+							 &is_temporary,
+							 NULL);
 	switch (result) {
 	case LIBPOLKIT_RESULT_OK:
 		if (is_privileged) {
@@ -428,7 +316,15 @@ main (int argc, char **argv)
 		goto out;
 	}
 
-	do_grant_privilege (bus, user, privilege, resource);
+	libpolkit_grant_set_questions_handler (gctx, questions_cb);
+	libpolkit_grant_set_grant_complete_handler (gctx, grant_complete_cb);
+
+	if (!libpolkit_grant_initiate_temporary_grant (gctx)) {
+		g_warning ("Cannot initiate temporary grant; bailing out");
+		goto out;
+	}
+
+	g_main_loop_run (mainloop);
 
 out:
 	return rc;

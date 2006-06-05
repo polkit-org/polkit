@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include <dbus/dbus-glib.h>
 
@@ -69,18 +70,61 @@ delete_pid (void)
 	unlink (POLKITD_PID_FILE);
 }
 
+static int sigusr1_unix_signal_pipe_fds[2];
+static GIOChannel *sigusr1_iochn = NULL;
+static PolicyKitManager *manager = NULL;
+
+static void 
+handle_sigusr1 (int value)
+{
+	ssize_t written;
+	static char marker[1] = {'S'};
+
+	written = write (sigusr1_unix_signal_pipe_fds[1], marker, 1);
+}
+
+static gboolean
+sigusr1_iochn_data (GIOChannel *source, 
+		    GIOCondition condition, 
+		    gpointer user_data)
+{
+	GError *err = NULL;
+	gchar data[1];
+	gsize bytes_read;
+
+	/* Empty the pipe */
+	if (G_IO_STATUS_NORMAL != 
+	    g_io_channel_read_chars (source, data, 1, &bytes_read, &err)) {
+		g_warning ("Error emptying sigusr1 pipe: %s", err->message);
+		g_error_free (err);
+		goto out;
+	}
+
+	g_debug ("Caught SIGUSR1");
+	if (manager != NULL) {
+		polkit_manager_update_desktop_console_privileges (manager);
+	}
+
+out:
+	return TRUE;
+}
+
+
 int
 main (int argc, char *argv[])
 {
 	DBusGConnection *bus;
 	DBusGProxy *bus_proxy;
 	GError *error = NULL;
-	PolicyKitManager *manager;
 	GMainLoop *mainloop;
 	guint request_name_result;
 	int ret;
 	gboolean no_daemon = FALSE;
 	gboolean is_verbose = FALSE;
+	int pf;
+	ssize_t written;
+	char pid[9];
+	guint sigusr1_iochn_listener_source_id;
 	static const struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
 		{"no-daemon", no_argument, NULL, 'n'},
@@ -131,10 +175,6 @@ main (int argc, char *argv[])
 	if (!no_daemon) {
 		int child_pid;
 		int dev_null_fd;
-		int pf;
-		ssize_t written;
-		char pid[9];
-		
 
 		if (chdir ("/") < 0) {
 			g_warning ("Could not chdir to /: %s", strerror (errno));
@@ -170,19 +210,19 @@ main (int argc, char *argv[])
 
 		/* create session */
 		setsid ();
-
-		/* remove old pid file */
-		unlink (POLKITD_PID_FILE);
-
-		/* make a new pid file */
-		if ((pf = open (POLKITD_PID_FILE, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0644)) > 0) {
-			snprintf (pid, sizeof(pid), "%lu\n", (long unsigned) getpid ());
-			written = write (pf, pid, strlen(pid));
-			close (pf);
-			g_atexit (delete_pid);
-		}
 	} else {
 		g_debug (("not becoming a daemon"));
+	}
+
+	/* remove old pid file */
+	unlink (POLKITD_PID_FILE);
+
+	/* make a new pid file */
+	if ((pf = open (POLKITD_PID_FILE, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0644)) > 0) {
+		snprintf (pid, sizeof(pid), "%lu\n", (long unsigned) getpid ());
+		written = write (pf, pid, strlen(pid));
+		close (pf);
+		g_atexit (delete_pid);
 	}
 
 	g_type_init ();
@@ -193,6 +233,30 @@ main (int argc, char *argv[])
 	dbus_g_error_domain_register (POLKIT_SESSION_ERROR, NULL, POLKIT_SESSION_TYPE_ERROR);
 
 	mainloop = g_main_loop_new (NULL, FALSE);
+
+	/* Listen for SIGUSR1 - UNIX signal handlers are evil though,
+	 * so set up a pipe to transmit the signal.
+	 */
+
+	/* create pipe */
+	if (pipe (sigusr1_unix_signal_pipe_fds) != 0) {
+		g_warning ("Could not setup pipe, errno=%d", errno);
+		goto out;
+	}
+	
+	/* setup glib handler - 0 is for reading, 1 is for writing */
+	sigusr1_iochn = g_io_channel_unix_new (sigusr1_unix_signal_pipe_fds[0]);
+	if (sigusr1_iochn == NULL) {
+		g_warning ("Could not create GIOChannel");
+		goto out;
+	}
+	
+	/* get callback when there is data to read */
+	sigusr1_iochn_listener_source_id = g_io_add_watch (
+		sigusr1_iochn, G_IO_IN, sigusr1_iochn_data, NULL);
+
+	/* setup UNIX signal handler for SIGUSR1 */
+	signal (SIGUSR1, handle_sigusr1);
 
 	bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
 	if (bus == NULL) {
@@ -222,8 +286,14 @@ main (int argc, char *argv[])
 	
 
 	manager = polkit_manager_new (bus, bus_proxy);
+	if (manager == NULL) {
+		g_warning ("Could not construct manager object; bailing out");
+		goto out;
+	}
 
 	g_debug ("service running");
+
+	polkit_manager_update_desktop_console_privileges (manager);
 
 	g_main_loop_run (mainloop);
 

@@ -35,12 +35,11 @@
 
     <method name="Close">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="do_not_revoke_privileges" type="b" direction="in"/>
     </method>
 
     <method name="GrantPrivilegeTemporarily">
       <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
-      <arg name="restrict_to_callers_pid" type="b" direction="in"/>
+      <arg name="restrict_to_callers_system_bus_unique_name" type="b" direction="in"/>
     </method>
 
     <signal name="HaveQuestions"/>

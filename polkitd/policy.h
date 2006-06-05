@@ -35,41 +35,68 @@ typedef enum {
 	POLICY_RESULT_NO_SUCH_POLICY
 } PolicyResult;
 
-PolicyResult policy_get_policies                                  (GList       **result);
+typedef gboolean (*HaveTempPrivCB) (uid_t        user,
+				    const char  *privilege,
+				    const char  *resource,
+				    gboolean     ignore_resource,
+				    gpointer     userdata);
 
-PolicyResult policy_is_uid_allowed_for_policy                     (uid_t         uid, 
-								   const char   *policy, 
-								   const char   *resource,
-								   gboolean     *result);
 
-PolicyResult policy_get_allowed_resources_for_policy_for_uid      (uid_t         uid, 
-								   const char   *policy, 
-								   GList       **result);
+PolicyResult policy_get_policies                                  (GList         **result);
 
-PolicyResult policy_get_allowed_resources_for_policy_for_uid_gid  (uid_t         uid, 
-								   guint         num_gids,
-								   gid_t        *gid_list,
-								   const char   *policy, 
-								   GList       **result);
+PolicyResult policy_is_uid_allowed_for_policy                     (uid_t           uid, 
+								   const char     *policy, 
+								   const char     *resource,
+								   gboolean       *out_is_privileged,
+								   gboolean       *out_is_temporary,
+								   char          **out_is_privileged_but_restricted,
+								   gpointer        have_temp_privilege_userdata,
+								   HaveTempPrivCB  have_temp_privilege);
+								   
 
-PolicyResult policy_is_uid_gid_allowed_for_policy                 (uid_t         uid, 
-								   guint         num_gids,
-								   gid_t        *gid_list,
-								   const char   *policy, 
-								   const char   *resource,
-								   gboolean     *result);
+PolicyResult policy_get_auth_details_for_policy                   (uid_t           uid,
+								   const char     *policy,
+								   const char     *resource,
+								   gboolean       *out_auth_can_obtain,
+								   gboolean       *out_auth_can_obtain_is_temporary,
+								   gboolean       *out_auth_can_grant,
+								   gboolean       *out_auth_obtain_requires_root,
+								   gpointer        have_temp_privilege_userdata,
+								   HaveTempPrivCB  have_temp_privilege);
 
-char        *policy_util_uid_to_name                              (uid_t         uid, 
-								   gid_t        *default_gid);
 
-char        *policy_util_gid_to_name                              (gid_t         gid);
+PolicyResult policy_get_allowed_resources_for_policy_for_uid      (uid_t           uid, 
+								   const char     *policy, 
+								   GList         **result);
 
-uid_t        policy_util_name_to_uid                              (const char   *username, 
-								   gid_t        *default_gid);
+PolicyResult policy_get_allowed_resources_for_policy_for_uid_gid  (uid_t           uid, 
+								   guint           num_gids,
+								   gid_t          *gid_list,
+								   const char     *policy, 
+								   GList         **result);
 
-gid_t        policy_util_name_to_gid                              (const char   *groupname);
+PolicyResult policy_is_uid_gid_allowed_for_policy                 (uid_t           uid, 
+								   guint           num_gids,
+								   gid_t          *gid_list,
+								   const char     *policy, 
+								   const char     *resource,
+								   gboolean       *out_is_privileged,
+								   gboolean       *out_is_temporary,
+								   char          **out_is_privileged_but_restricted,
+								   gpointer        have_temp_privilege_userdata,
+								   HaveTempPrivCB  have_temp_privilege);
 
-void         policy_util_set_policy_directory                     (const char   *directory);
+char        *policy_util_uid_to_name                              (uid_t           uid, 
+								   gid_t          *default_gid);
+
+char        *policy_util_gid_to_name                              (gid_t           gid);
+
+uid_t        policy_util_name_to_uid                              (const char     *username, 
+								   gid_t          *default_gid);
+
+gid_t        policy_util_name_to_gid                              (const char     *groupname);
+
+void         policy_util_set_policy_directory                     (const char     *directory);
 
 #endif /* POLICY_H */
 

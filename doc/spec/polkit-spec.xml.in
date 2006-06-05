@@ -6,9 +6,9 @@
 
 <book id="index">
   <bookinfo>
-    <title>PolicyKit 0.1 Specification</title>
-    <releaseinfo>Version 0.1</releaseinfo>
-    <date>March 28th, 2006</date> <!-- Update this manually -->
+    <title>PolicyKit 0.2 Specification</title>
+    <releaseinfo>Version 0.2</releaseinfo>
+    <date>May 12th, 2006</date> <!-- Update this manually -->
     <authorgroup>
       <author>
 	<firstname>David</firstname>
@@ -120,7 +120,7 @@
       <para>
 	Upon a user invoking the <literal>Mount</literal> method, HAL
 	simply asks the <literal>org.freedesktop.PolicyKit</literal>
-	D-BUS service if the calling user posses this privilege and if
+	D-BUS service if the calling user possess this privilege and if
 	this is not the case the <literal>Mount</literal> method
 	throws
 	the <literal>org.freedesktop.Hal.Device.PermissionDeniedByPolicy</literal>
@@ -155,7 +155,11 @@
 	and <emphasis>temporary</emphasis> privileges. The latter may
 	even be restricted such that only callers from the D-BUS
 	connection (remember, D-BUS connections has unique names)
-	obtaining the privilege may use the obtained privilege.
+	obtaining the privilege may use the obtained
+	privilege. Consequently, if a temporary privilege is
+	restricted to a certain D-BUS connection, it is revoked when
+	the owner of this connection disconnects from the system
+	message bus.
       </para>
 
       <para>
@@ -215,8 +219,17 @@
 
     <sect1>
       <title>Privilege Descriptors</title>
-      <para>	
-	Applications, such as HAL, installs <emphasis>privilege descriptors</emphasis> using the <literal>polkit-policy-descriptor-install</literal> commandline utility. The descriptor contains the following information
+      <para> 
+	Applications, such as HAL, installs <emphasis>privilege
+	descriptors</emphasis> into
+	the <literal>/etc/PolicyKit/privilege.d</literal> directory
+	(or more correct, into
+	the <literal>$sysconfdir/PolicyKit/privilege.d</literal>
+	directory depending on where PolicyKit is built).
+      </para>
+
+      <para>
+	A policy descriptor contains the following information:
       </para>
 
       <itemizedlist>
@@ -228,7 +241,13 @@
 
         <listitem>
 	  <para>
-	    What other privileges a given user must also possess.
+	    What privileges are required to possess a given privilege.
+          </para>
+	</listitem>
+
+        <listitem>
+	  <para>
+	    What privileges are sufficient to possess to automatically possess a given privilege.
           </para>
 	</listitem>
 
@@ -259,12 +278,12 @@
       <programlisting>
 	[Policy]
 	RequiredPrivileges=
+	SufficientPrivileges=
 	Allow=
 	Deny=
 	CanObtain=
 	CanGrant=
 	ObtainRequireRoot=
-	ObtainPAMService=
       </programlisting>
 
       <sect2>
@@ -273,7 +292,24 @@
 	  This is a list of privileges the user must possess in order
 	  to possess the given privilege. If the user doesn't possess
 	  all of these privileges he is not considered to possess the
-	  given privilege. The list may be empty.
+	  given privilege. The list may be empty. A privilege in this
+	  list is considered being possessed if the user is privileged
+	  for one or more resources. E.g., if <literal>foo</literal>
+	  is a required privilege then just having this privilege on
+	  one resource is sufficient.
+	</para>
+      </sect2>
+
+      <sect2>
+	<title><literal>SufficientPrivileges</literal>: Sufficient Privileges</title>
+	<para>
+	  This is a list of privileges that, if a user possess any of
+	  these, he is consider to possess the given privilege. The
+	  list may be empty.  A privilege in this list is considered
+	  being possessed if the user is privileged for one or more
+	  resources. As with <literal>RequiredPrivileges</literal>,
+	  if <literal>foo</literal> is a sufficient privilege then
+	  just having this privilege on one resource is sufficient.
 	</para>
       </sect2>
 
@@ -308,11 +344,15 @@
 	<para>
 	  To determine if a given user is allowed for a given
 	  privilege (for a given resource), first
-	  the <literal>RequiredPrivileges</literal> list is consulted
-	  as described above. If the user possess all of the listed
-	  privileges, the <literal>Allow</literal> list is now
-	  consulted. For each element we it is tested whether the user
-	  matches. If there are no elements for which the user is
+	  the <literal>SufficientPrivileges</literal> list is
+	  consulted as described above. If the user possesses one or
+	  more of the listed privileges we're done; the user is
+	  automatically allowed for the given privilege. If this is
+	  not the case, the <literal>RequiredPrivileges</literal> list
+	  is consulted as described above. If the user possess all of
+	  the listed privileges, the <literal>Allow</literal> list is
+	  now consulted. For each element it is tested whether the
+	  user matches. If there are no elements for which the user is
 	  matches, the user is said not to possess the given privilege
 	  (for the given resource).
 	</para>
@@ -378,22 +418,42 @@
       </sect2>
 
       
-      <sect2>
+      <sect2 id="can-obtain">
 	<title><literal>CanObtain</literal>: Obtaining Privileges</title>
 	<para>
 	  This property denotes whether an user can obtain the
-	  privilege by authentication. It can assume the values
+	  privilege by authentication. This is useful when either
+	  either the privilege in question or one of the privileges
+	  listed in <literal>RequiredPrivileges</literal> is not
+	  possessed.
+	</para>
+
+	<para>
+	  The property can assume the values
 	  <literal>True</literal> (the user can obtain the privilege
 	  permanently), <literal>Temporary</literal> (the user can
 	  only obtain the privilege temporarily) and
 	  <literal>False</literal> (the user can never obtain the
-	  privilege through authentication).
+	  privilege through authentication). 
 	</para>
+	  
 	<para>
-	  The authentication required are specified in
-	  the <literal>ObtainRequireRoot</literal>
-	  and <literal>ObtainPAMService</literal> properties.
+	  Whether the user needs to autenticate as himself or the
+	  super user is specified in
+	  the <literal>ObtainRequireRoot</literal> property. Note that
+	  if the user is lacking one or more of the privileges listed
+	  in <literal>RequiredPrivileges</literal> and one of these
+	  has <literal>ObtainRequireRoot=True</literal> the user will
+	  have to authenticate as the super user nonwithstanding that
+	  the privilege he attempts to obtain
+	  has <literal>ObtainRequireRoot=False</literal>. Moreover, if
+	  any of the lacking privileges
+	  in <literal>RequiredPrivileges</literal>
+	  has <literal>CanObtain</literal> set
+	  to <literal>False</literal>, the user will always have to
+	  authenticate as the super user.
 	</para>
+
       </sect2>
       
       <sect2>
@@ -401,43 +461,166 @@
 	<para>
 	  This property (it can assume the
 	  values <literal>True</literal> and <literal>False</literal>)
-	  describes whether an user with the given privilege can grant
-	  it to other users, e.g. modify the <literal>Allow</literal>
-	  and <literal>Deny</literal> properties.
+	  describes whether an user with the given privilege can
+	  permanently grant it to himself and/or other users,.
 	</para>
 	<para>
-	  The property <literal>CanObtain</literal> needs to have the
-	  value <literal>True</literal> if this property assumes the
-	  value <literal>True</literal>.
+	  Typically, the construct is used in the following kind of UI
+	  dialogs:
+	</para>
+
+	<programlisting>
+    +----------------------------------------------------+
+    | You are not privileged to access the volume        |
+    | 'Dave's USB key'. You need to authenticate as the  |
+    | system administrator                               |
+    |                                                    |
+    |   Super user password: [_______________]           |
+    |                                                    |
+    |   Would you also like to automatically allow       |
+    |                                                    |
+    |  (*) This user to mount 'Dave's USB key'           |
+    |  ( ) Any user to mount 'Dave's USB key'            |
+    |  ( ) This user to mount a removable storage device |
+    |  ( ) Any user to mount a removable storage device  |
+    |                                                    |
+    | [Cancel]                                   [Mount] |
+    +----------------------------------------------------+
+       (TODO: replace with screenshot from gnome-mount)
+	</programlisting>
+
+	<para>
+	  The property <literal>CanObtain</literal> needs to assume
+	  the value <literal>True</literal> if this property assumes
+	  the value <literal>True</literal>. Otherwise this property
+	  effectively assumes the value <literal>False</literal>.
 	</para>
       </sect2>
 
       <sect2>
-	<title><literal>ObtainRequireRoot, ObtainPAMService</literal>: Authentication Requirements</title>
+	<title><literal>ObtainRequireRoot</literal>: Authentication Requirements</title>
 	<para>
 	  If the property <literal>CanObtain</literal> assumes the
 	  value <literal>True</literal>
 	  or <literal>Temporary</literal> it means the user can
-	  authenticate to gain a privilege.
+	  authenticate to gain a
+	  privilege. The <literal>ObtainRequireRoot</literal> property
+	  specifies whether authentication requires the super user
+	  password (<literal>True</literal>) or the users own password
+	  (<literal>False</literal>).
 	</para>
 	<para>
-	  The <literal>ObtainRequireRoot</literal> property specifies
-	  whether authentication requires the super user password
-	  (<literal>True</literal>) or the users own password
-	  (<literal>False</literal>). In addition, it can be specified
-	  what PAM service (for example <literal>pam_rps</literal>) is
-	  to be used for authentication through the
-	  property <literal>ObtainPAMService</literal>.
+	  See <xref linkend="can-obtain"/> for discussion on how
+	  the <literal>RequiredPrivileges</literal> property affects
+	  the effective value of this property.
 	</para>
       </sect2>
       
     </sect1>
 
-    <sect1>
+    <sect1 id="privs-by-polkit">
       <title>Privileges defined by PolicyKit</title>
       <para>
-	baz
+	This section describe privileges defined by PolicyKit and how
+	they can be used by other pieces of software. Some privileges
+	have special meaning and affects how PolicyKit works.
       </para>
+
+      <sect2 id="priv-desktop-console">
+	<title><literal>desktop-console</literal> : Users at a local console</title>
+
+	<programlisting>
+desktop-console.privilege:
+
+# This privilege signfies that users holding it are logged into a
+# physical console attached to the system. Thus, it is useful for
+# other privileges for manipulating local devices to simply require
+# this privilege. 
+
+[Privilege]
+RequiredPrivileges=
+SufficientPrivileges=
+Allow=
+Deny=
+CanObtain=Temporary
+CanGrant=False
+ObtainRequireRoot=True
+	</programlisting>
+
+	<para>
+	  This privilege signifies that the user holding it is logged
+	  in at a local console. In this context, "local console"
+	  means that the display / keyboard / pointing device is local
+	  to the system which implies the user got physical access to
+	  the box.
+	</para>
+
+	<para>
+	  The PAM module <literal>pam-polkit-console</literal> shipped
+	  with PolicyKit is used to maintain files
+	  in <literal>/var/run/polkit-console</literal> for users
+	  logging in and out, and signal the PolicyKit daemon to
+	  reread these files and dynamically grant / revoke
+	  the <literal>desktop-console</literal> privilege. Typically,
+	  graphical login managers such as the GNOME Display Manager
+	  (gdm) will want include this in it's stack of PAM modules.
+	</para>
+
+	<para>
+	  Remote users (e.g. those not at a local console) can obtain
+	  the <literal>desktop-console</literal> only by
+	  authenticating as the super user.
+	</para>
+
+	<para>
+	  The <literal>desktop-console</literal> privilege can be used
+	  in conjunction with
+	  the <literal>RequiredPrivileges</literal> property in a
+	  privilege descriptor to ensure only users at a local console
+	  is entitled to a privilege for putting a system to sleep
+	  without having to autenticate. This is achieved by e.g. this
+	  privilege descriptor:
+	</para>
+
+	<programlisting>
+hal-system-suspend.privilege:
+
+# This privilege specifies who is allowed to suspend the system.
+
+[Privilege]
+RequiredPrivileges=desktop-console
+SufficientPrivileges=
+Allow=uid:__all__
+Deny=
+CanObtain=True
+CanGrant=True
+ObtainRequireRoot=False
+	</programlisting>
+
+	<para>
+	  For a remote user with the
+	  privilege <literal>hal-system-suspend</literal> it means
+	  that authentication as the super user is required
+	  as <literal>desktop-console</literal>
+	  has <literal>ObtainRequireRoot=True</literal> and this
+	  trumps the <literal>ObtainRequireRoot=False</literal>
+	  property that is in
+	  the <literal>hal-system-suspend</literal> privilege (see
+	  <xref linkend="can-obtain"/>). Of course, if the user is
+	  logged in at a local console no authentication is required.
+	</para>
+
+	<para>
+	  Typically, the <literal>desktop-console</literal> privilege
+	  is granted on a specific resource, namely what console the
+	  user is logged into. At the time of writing, this resource
+	  can only be consider an opaque identifier (such
+	  as <literal>console://:0</literal> which refers to X11
+	  display ":0") and one cannot assign meaning to it. In the
+	  future, it may be possible to assign meaning to it.
+	</para>
+      </sect2>
+
     </sect1>
 
   </chapter>

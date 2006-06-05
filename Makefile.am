@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = libpolkit polkitd doc tools privileges
+SUBDIRS = libpolkit pam-polkit-console polkitd doc tools privileges
 
 pamdir = $(sysconfdir)/pam.d
 pam_DATA = policy-kit

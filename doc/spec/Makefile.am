@@ -9,7 +9,7 @@ htmldocdir = $(DOCDIR)/spec
 htmldoc_DATA = polkit-spec.html $(FIGURE_FILES)
 
 polkit-spec.html : polkit-spec.xml $(FIGURE_FILES)
-	$(DOCBOOK) --nochunks polkit-spec.xml -o .
+	$(XMLTO) html-nochunks polkit-spec.xml
 
 clean-local:
 	rm -f *~

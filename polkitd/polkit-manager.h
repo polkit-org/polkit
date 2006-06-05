@@ -40,6 +40,7 @@ typedef enum
 	POLKIT_MANAGER_ERROR_NO_SUCH_PRIVILEGE = 1,
 	POLKIT_MANAGER_ERROR_NOT_PRIVILEGED = 2,
 	POLKIT_MANAGER_ERROR_ERROR = 3,
+	POLKIT_MANAGER_ERROR_CANNOT_OBTAIN_PRIVILEGE = 4,
         POLKIT_MANAGER_NUM_ERRORS
 } PolkitManagerError;
 
@@ -90,7 +91,7 @@ gboolean          polkit_manager_revoke_temporary_privilege          (PolicyKitM
 								      DBusGMethodInvocation *context);
 
 gboolean          polkit_manager_is_user_privileged                  (PolicyKitManager      *manager, 
-								      int                    pid,
+								      char                  *system_bus_unique_name,
 						                      char                  *user,
 						                      char                  *privilege,
 						                      char                  *resource,
@@ -116,12 +117,16 @@ gboolean          polkit_manager_add_temporary_privilege             (PolicyKitM
 								      uid_t                  user,
 								      const char            *privilege,
 								      const char            *resource,
-								      pid_t                  pid_restriction);
+								      const char            *system_bus_unique_name);
 
 gboolean          polkit_manager_remove_temporary_privilege          (PolicyKitManager      *manager, 
 								      uid_t                  user,
 								      const char            *privilege,
 								      const char            *resource,
-								      pid_t                  pid_restriction);
+								      const char            *system_bus_unique_name,
+								      gboolean               remove_even_if_system_bus_unique_name_does_not_match);
+
+void              polkit_manager_update_desktop_console_privileges   (PolicyKitManager      *manager);
+
 
 #endif /* _POLKIT_MANAGER_H */

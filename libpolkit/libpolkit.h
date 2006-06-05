@@ -51,12 +51,13 @@ LibPolKitResult    libpolkit_get_privilege_list                       (LibPolKit
 								       GList                **result);
 
 LibPolKitResult    libpolkit_is_uid_allowed_for_privilege             (LibPolKitContext      *ctx,
-								       pid_t                  pid,
+								       const char            *system_bus_unique_name, 
 								       const char            *user, 
 								       const char            *privilege, 
 								       const char            *resource,
-								       gboolean              *is_allowed,
-								       gboolean              *is_temporary);
+								       gboolean              *out_is_allowed,
+								       gboolean              *out_is_temporary,
+								       char                 **out_is_privileged_but_restricted_to_system_bus_unique_name);
 
 LibPolKitResult    libpolkit_revoke_temporary_privilege               (LibPolKitContext      *ctx,
 								       const char            *user, 
@@ -67,7 +68,8 @@ LibPolKitResult    libpolkit_revoke_temporary_privilege               (LibPolKit
 LibPolKitResult    libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext      *ctx,
 									  const char            *user, 
 									  const char            *privilege, 
-									  GList                **result,
+									  GList                **resources,
+									  GList                **restrictions,
 									  int                   *num_non_temporary);
 
 #endif /* LIBPOLKIT_H */

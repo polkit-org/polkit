@@ -1,235 +1,14 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<HTML
-><HEAD
-><TITLE
->PolicyKit 0.1 Specification</TITLE
-><META
-NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.79"></HEAD
-><BODY
-CLASS="book"
-BGCOLOR="#FFFFFF"
-TEXT="#000000"
-LINK="#0000FF"
-VLINK="#840084"
-ALINK="#0000FF"
-><DIV
-CLASS="BOOK"
-><A
-NAME="index"
-></A
-><DIV
-CLASS="TITLEPAGE"
-><H1
-CLASS="title"
-><A
-NAME="AEN2"
->PolicyKit 0.1 Specification</A
-></H1
-><H3
-CLASS="author"
-><A
-NAME="AEN7"
-></A
->David Zeuthen</H3
-><DIV
-CLASS="affiliation"
-><DIV
-CLASS="address"
-><P
-CLASS="address"
-><br>
-	&nbsp;&nbsp;&nbsp;&nbsp;<CODE
-CLASS="email"
->&#60;<A
-HREF="mailto:david@fubar.dk"
->david@fubar.dk</A
->&#62;</CODE
-><br>
-	&nbsp;&nbsp;</P
-></DIV
-></DIV
-><SPAN
-CLASS="releaseinfo"
->Version 0.1<BR></SPAN
-><HR></DIV
-><DIV
-CLASS="TOC"
-><DL
-><DT
-><B
->Table of Contents</B
-></DT
-><DT
-><A
-HREF="#introduction"
->Introduction</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="#AEN15"
->About</A
-></DT
-></DL
-></DD
-><DT
-><A
-HREF="#operation"
->Theory of operation</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="#AEN20"
->Privileges</A
-></DT
-><DT
-><A
-HREF="#AEN26"
->Architecture</A
-></DT
-><DT
-><A
-HREF="#AEN37"
->Example</A
-></DT
-></DL
-></DD
-><DT
-><A
-HREF="#resources"
->Resources</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="#AEN78"
->Resource Identifiers</A
-></DT
-></DL
-></DD
-><DT
-><A
-HREF="#privileges"
->Privileges</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="#AEN88"
->Privilege Descriptors</A
-></DT
-><DT
-><A
-HREF="#AEN102"
->File Format</A
-></DT
-><DD
-><DL
-><DT
-><A
-HREF="#AEN107"
-><TT
-CLASS="literal"
->RequiredPrivileges</TT
->: Required Privileges</A
-></DT
-><DT
-><A
-HREF="#AEN111"
-><TT
-CLASS="literal"
->Allow, Deny</TT
->: Criteria for Possesing a Privilege</A
-></DT
-><DT
-><A
-HREF="#AEN155"
-><TT
-CLASS="literal"
->CanObtain</TT
->: Obtaining Privileges</A
-></DT
-><DT
-><A
-HREF="#AEN165"
-><TT
-CLASS="literal"
->CanGrant</TT
->: Granting Privileges</A
-></DT
-><DT
-><A
-HREF="#AEN177"
-><TT
-CLASS="literal"
->ObtainRequireRoot, ObtainPAMService</TT
->: Authentication Requirements</A
-></DT
-></DL
-></DD
-><DT
-><A
-HREF="#AEN190"
->Privileges defined by PolicyKit</A
-></DT
-></DL
-></DD
-></DL
-></DIV
-><DIV
-CLASS="chapter"
-><HR><H1
-><A
-NAME="introduction"
-></A
->Introduction</H1
-><DIV
-CLASS="sect1"
-><H2
-CLASS="sect1"
-><A
-NAME="AEN15"
->About</A
-></H2
-><P
->&#13;	PolicyKit is a system for enabling unprivileged desktop
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>PolicyKit 0.2 Specification</title><meta name="generator" content="DocBook XSL Stylesheets V1.69.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="index"></a>PolicyKit 0.2 Specification</h1></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">David</span> <span class="surname">Zeuthen</span></h3><div class="affiliation"><div class="address"><p><br>
+	    <code class="email">&lt;<a href="mailto:david@fubar.dk">david@fubar.dk</a>&gt;</code><br>
+	  </p></div></div></div></div></div><div><p class="releaseinfo">Version 0.2</p></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#introduction">1. Introduction</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2789999">About</a></span></dt></dl></dd><dt><span class="chapter"><a href="#operation">2. Theory of operation</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2790022">Privileges</a></span></dt><dt><span class="sect1"><a href="#id2820713">Architecture</a></span></dt><dt><span class="sect1"><a href="#id2785230">Example</a></span></dt></dl></dd><dt><span class="chapter"><a href="#resources">3. Resources</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2785455">Resource Identifiers</a></span></dt></dl></dd><dt><span class="chapter"><a href="#privileges">4. Privileges</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2789259">Privilege Descriptors</a></span></dt><dt><span class="sect1"><a href="#id2789336">File Format</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2789361"><code class="literal">RequiredPrivileges</code>: Required Privileges</a></span></dt><dt><span class="sect2"><a href="#id2789390"><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</a></span></dt><dt><span class="sect2"><a href="#id2789423"><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</a></span></dt><dt><span class="sect2"><a href="#can-obtain"><code class="literal">CanObtain</code>: Obtaining Privileges</a></span></dt><dt><span class="sect2"><a href="#id2785054"><code class="literal">CanGrant</code>: Granting Privileges</a></span></dt><dt><span class="sect2"><a href="#id2829707"><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#privs-by-polkit">Privileges defined by PolicyKit</a></span></dt><dd><dl><dt><span class="sect2"><a href="#priv-desktop-console"><code class="literal">desktop-console</code> : Users at a local console</a></span></dt></dl></dd></dl></dd></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="introduction"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2789999">About</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2789999"></a>About</h2></div></div></div><p>
+	PolicyKit is a system for enabling unprivileged desktop
 	applications to invoke privileged methods on system-wide
 	components in a controlled manner.
-      </P
-></DIV
-></DIV
-><DIV
-CLASS="chapter"
-><HR><H1
-><A
-NAME="operation"
-></A
->Theory of operation</H1
-><DIV
-CLASS="sect1"
-><H2
-CLASS="sect1"
-><A
-NAME="AEN20"
->Privileges</A
-></H2
-><P
->&#13;	One major concept of the PolicyKit system is the notion of
-	privileges; a <I
-CLASS="emphasis"
->PolicyKit privilege</I
->
+      </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="operation"></a>Chapter 2. Theory of operation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2790022">Privileges</a></span></dt><dt><span class="sect1"><a href="#id2820713">Architecture</a></span></dt><dt><span class="sect1"><a href="#id2785230">Example</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2790022"></a>Privileges</h2></div></div></div><p>
+	One major concept of the PolicyKit system is the notion of
+	privileges; a <span class="emphasis"><em>PolicyKit privilege</em></span>
 	(referred to simply as
-	<I
-CLASS="emphasis"
->privilege</I
-> in the following) is something
+	<span class="emphasis"><em>privilege</em></span> in the following) is something
 	that a given user may or may not possess. The thinking behind
 	PolicyKit is that privileged system level components offer
 	functionality to unprivileged desktop applications as D-BUS
@@ -237,693 +16,369 @@ CLASS="emphasis"
 	a flexible security policy defining the set of users that are
 	allowed to invoke a method, the system level component defines
 	a set of
-	<I
-CLASS="emphasis"
->privileges</I
->. 
-      </P
-></DIV
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="AEN26"
->Architecture</A
-></H2
-><P
->&#13;	The PolicyKit system is basically client/server and is
+	<span class="emphasis"><em>privileges</em></span>. 
+      </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2820713"></a>Architecture</h2></div></div></div><p>
+	The PolicyKit system is basically client/server and is
 	implemented as the
-	system-wide <TT
-CLASS="literal"
->org.freedesktop.PolicyKit</TT
-> D-BUS
+	system-wide <code class="literal">org.freedesktop.PolicyKit</code> D-BUS
 	service. This D-BUS service serves two purposes
-      </P
-><P
-></P
-><UL
-><LI
-><P
->&#13;	    System-level components may used D-BUS methods on this
+      </p><div class="itemizedlist"><ul type="disc"><li><p>
+	    System-level components may used D-BUS methods on this
 	    service to determine if a given caller of their methods
 	    are privileged.
-          </P
-></LI
-><LI
-><P
->&#13;	    Desktop level applications may initiate a dialogue with
+          </p></li><li><p>
+	    Desktop level applications may initiate a dialogue with
 	    this service to (temporarily) obtain a privilege through
 	    authorization.
-          </P
-></LI
-></UL
-><P
->&#13;	In addition, the PolicyKit system includes client side
+          </p></li></ul></div><p>
+	In addition, the PolicyKit system includes client side
 	libraries and command-line utilities wrapping the D-BUS API of
-	the <TT
-CLASS="literal"
->org.freedesktop.PolicyKit</TT
-> service.
-      </P
-></DIV
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="AEN37"
->Example</A
-></H2
-><P
->&#13;	As an example, HAL exports the method <TT
-CLASS="literal"
->Mount</TT
->
+	the <code class="literal">org.freedesktop.PolicyKit</code> service.
+      </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2785230"></a>Example</h2></div></div></div><p>
+	As an example, HAL exports the method <code class="literal">Mount</code>
 	on the
-	<TT
-CLASS="literal"
->org.freedesktop.Hal.Device.Volume</TT
-> interface
+	<code class="literal">org.freedesktop.Hal.Device.Volume</code> interface
 	for each hal device object of
-	capability <I
-CLASS="emphasis"
->volume</I
->. HAL defines a number
+	capability <span class="emphasis"><em>volume</em></span>. HAL defines a number
 	of privileges for mounting
-	including <I
-CLASS="emphasis"
->hal-storage-fixed-mount</I
->
-	and <I
-CLASS="emphasis"
->hal-storage-removable-mount</I
->. Depending
+	including <span class="emphasis"><em>hal-storage-fixed-mount</em></span>
+	and <span class="emphasis"><em>hal-storage-removable-mount</em></span>. Depending
 	on the whether the volume stems from a fixed hard disk or a
 	hotpluggable/removable drive, HAL requires the calling user to
 	possess either
-	the <I
-CLASS="emphasis"
->hal-storage-fixed-mount</I
->
-	or <I
-CLASS="emphasis"
->hal-storage-removable-mount</I
-> privilege
-	in order to carry out the <TT
-CLASS="literal"
->Mount</TT
-> method. 
-      </P
-><P
->&#13;	Upon a user invoking the <TT
-CLASS="literal"
->Mount</TT
-> method, HAL
-	simply asks the <TT
-CLASS="literal"
->org.freedesktop.PolicyKit</TT
->
-	D-BUS service if the calling user posses this privilege and if
-	this is not the case the <TT
-CLASS="literal"
->Mount</TT
-> method
+	the <span class="emphasis"><em>hal-storage-fixed-mount</em></span>
+	or <span class="emphasis"><em>hal-storage-removable-mount</em></span> privilege
+	in order to carry out the <code class="literal">Mount</code> method. 
+      </p><p>
+	Upon a user invoking the <code class="literal">Mount</code> method, HAL
+	simply asks the <code class="literal">org.freedesktop.PolicyKit</code>
+	D-BUS service if the calling user possess this privilege and if
+	this is not the case the <code class="literal">Mount</code> method
 	throws
-	the <TT
-CLASS="literal"
->org.freedesktop.Hal.Device.PermissionDeniedByPolicy</TT
->
+	the <code class="literal">org.freedesktop.Hal.Device.PermissionDeniedByPolicy</code>
 	exception. Notably, this exception will tell the caller what
 	privilege the calling user needs to possess,
-	e.g. either <I
-CLASS="emphasis"
->hal-storage-fixed-mount</I
->
-	or <I
-CLASS="emphasis"
->hal-storage-removable-mount</I
->.
-      </P
-><P
->&#13;	Should the <TT
-CLASS="literal"
->Mount</TT
-> method fail with the
-	exception <TT
-CLASS="literal"
->PermissionDeniedByPolicy</TT
-> the
+	e.g. either <span class="emphasis"><em>hal-storage-fixed-mount</em></span>
+	or <span class="emphasis"><em>hal-storage-removable-mount</em></span>.
+      </p><p>
+	Should the <code class="literal">Mount</code> method fail with the
+	exception <code class="literal">PermissionDeniedByPolicy</code> the
 	caller now knows what privilege is required. The caller can
-	now initiate a dialogue with the <TT
-CLASS="literal"
->PolicyKit</TT
->
+	now initiate a dialogue with the <code class="literal">PolicyKit</code>
 	service to obtain this privilege. This conversation is
 	basically equivalent to a PAM authentication; in fact the 
-	<TT
-CLASS="literal"
->PolicyKit</TT
-> service uses PAM under the hood
+	<code class="literal">PolicyKit</code> service uses PAM under the hood
 	and wraps it in D-BUS calls. For details (like what user to
 	authenticate as) see XXX. When the caller obtains the
 	privilege (after successful authentication) he can now
-	invoke <TT
-CLASS="literal"
->Mount</TT
-> and after this succeeds he may
-	tell the <TT
-CLASS="literal"
->PolicyKit</TT
-> service to release the
+	invoke <code class="literal">Mount</code> and after this succeeds he may
+	tell the <code class="literal">PolicyKit</code> service to release the
 	privilege for the user as it is no longer needed. Should the
 	process crash while holding a privilege,
-	the <TT
-CLASS="literal"
->PolicyKit</TT
-> service will be notifed and
+	the <code class="literal">PolicyKit</code> service will be notifed and
 	the privilege will automatically be revoked.
-      </P
-><P
->&#13;	Hence, <TT
-CLASS="literal"
->PolicyKit</TT
-> has the notion of
-	both <I
-CLASS="emphasis"
->permament</I
->
-	and <I
-CLASS="emphasis"
->temporary</I
-> privileges. The latter may
+      </p><p>
+	Hence, <code class="literal">PolicyKit</code> has the notion of
+	both <span class="emphasis"><em>permament</em></span>
+	and <span class="emphasis"><em>temporary</em></span> privileges. The latter may
 	even be restricted such that only callers from the D-BUS
 	connection (remember, D-BUS connections has unique names)
-	obtaining the privilege may use the obtained privilege.
-      </P
-><P
->&#13;	In addition, privileges may be restricted to
-	certain <I
-CLASS="emphasis"
->resources</I
->; this is discussed in
+	obtaining the privilege may use the obtained
+	privilege. Consequently, if a temporary privilege is
+	restricted to a certain D-BUS connection, it is revoked when
+	the owner of this connection disconnects from the system
+	message bus.
+      </p><p>
+	In addition, privileges may be restricted to
+	certain <span class="emphasis"><em>resources</em></span>; this is discussed in
 	more detail in XXX.
-      </P
-><P
->&#13;	<IMG
-SRC="polkit-arch.png">
-      </P
-><P
->&#13;	The whole example is outlined in the diagram above.
-      </P
-></DIV
-></DIV
-><DIV
-CLASS="chapter"
-><HR><H1
-><A
-NAME="resources"
-></A
->Resources</H1
-><P
->&#13;      PolicyKit allows granting privileges only on
-      certain <I
-CLASS="emphasis"
->resources</I
->. For example, for HAL, it
+      </p><p>
+	<img src="polkit-arch.png">
+      </p><p>
+	The whole example is outlined in the diagram above.
+      </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="resources"></a>Chapter 3. Resources</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2785455">Resource Identifiers</a></span></dt></dl></div><p>
+      PolicyKit allows granting privileges only on
+      certain <span class="emphasis"><em>resources</em></span>. For example, for HAL, it
       is possible to grant the
-      privilege <I
-CLASS="emphasis"
->hal-storage-fixed-mount</I
-> to the
+      privilege <span class="emphasis"><em>hal-storage-fixed-mount</em></span> to the
       user with uid 500 but only for the HAL device object
-      representing e.g. the <TT
-CLASS="literal"
->/dev/hda3</TT
-> partition.
-    </P
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="AEN78"
->Resource Identifiers</A
-></H2
-><P
-> Resource identifers are prefixed with a name identifying
+      representing e.g. the <code class="literal">/dev/hda3</code> partition.
+    </p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2785455"></a>Resource Identifiers</h2></div></div></div><p> Resource identifers are prefixed with a name identifying
 	what service they belong to. The following resource
 	identifiers are defined
-      </P
-><P
-></P
-><UL
-><LI
-><P
->&#13;	    <TT
-CLASS="literal"
->hal://</TT
->
-	    HAL Unique Device Identifiers also known as HAL UID's. Example: <TT
-CLASS="literal"
->hal:///org/freedesktop/Hal/devices/volume_uuid_1a28b356_9955_44f9_b268_6ed6639978f5</TT
->
-          </P
-></LI
-></UL
-></DIV
-></DIV
-><DIV
-CLASS="chapter"
-><HR><H1
-><A
-NAME="privileges"
-></A
->Privileges</H1
-><DIV
-CLASS="sect1"
-><H2
-CLASS="sect1"
-><A
-NAME="AEN88"
->Privilege Descriptors</A
-></H2
-><P
->	
-	Applications, such as HAL, installs <I
-CLASS="emphasis"
->privilege descriptors</I
-> using the <TT
-CLASS="literal"
->polkit-policy-descriptor-install</TT
-> commandline utility. The descriptor contains the following information
-      </P
-><P
-></P
-><UL
-><LI
-><P
->&#13;	    Criteria for determining if a given user possess the privilege on a given resource.
-          </P
-></LI
-><LI
-><P
->&#13;	    What other privileges a given user must also possess.
-          </P
-></LI
-><LI
-><P
->&#13;	    Information on whether the user can obtain the privilege, and if he can, whether only temporarily or permanently.
-          </P
-></LI
-><LI
-><P
->&#13;	    Whether a user with the privilege may permanently grant it to other users.
-          </P
-></LI
-></UL
-></DIV
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="AEN102"
->File Format</A
-></H2
-><P
->&#13;	A developer of a system-wide application wanting to define a
+      </p><div class="itemizedlist"><ul type="disc"><li><p>
+	    <code class="literal">hal://</code>
+	    HAL Unique Device Identifiers also known as HAL UID's. Example: <code class="literal">hal:///org/freedesktop/Hal/devices/volume_uuid_1a28b356_9955_44f9_b268_6ed6639978f5</code>
+          </p></li></ul></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="privileges"></a>Chapter 4. Privileges</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2789259">Privilege Descriptors</a></span></dt><dt><span class="sect1"><a href="#id2789336">File Format</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2789361"><code class="literal">RequiredPrivileges</code>: Required Privileges</a></span></dt><dt><span class="sect2"><a href="#id2789390"><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</a></span></dt><dt><span class="sect2"><a href="#id2789423"><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</a></span></dt><dt><span class="sect2"><a href="#can-obtain"><code class="literal">CanObtain</code>: Obtaining Privileges</a></span></dt><dt><span class="sect2"><a href="#id2785054"><code class="literal">CanGrant</code>: Granting Privileges</a></span></dt><dt><span class="sect2"><a href="#id2829707"><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#privs-by-polkit">Privileges defined by PolicyKit</a></span></dt><dd><dl><dt><span class="sect2"><a href="#priv-desktop-console"><code class="literal">desktop-console</code> : Users at a local console</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2789259"></a>Privilege Descriptors</h2></div></div></div><p> 
+	Applications, such as HAL, installs <span class="emphasis"><em>privilege
+	descriptors</em></span> into
+	the <code class="literal">/etc/PolicyKit/privilege.d</code> directory
+	(or more correct, into
+	the <code class="literal">$sysconfdir/PolicyKit/privilege.d</code>
+	directory depending on where PolicyKit is built).
+      </p><p>
+	A policy descriptor contains the following information:
+      </p><div class="itemizedlist"><ul type="disc"><li><p>
+	    Criteria for determining if a given user possess the privilege on a given resource.
+          </p></li><li><p>
+	    What privileges are required to possess a given privilege.
+          </p></li><li><p>
+	    What privileges are sufficient to possess to automatically possess a given privilege.
+          </p></li><li><p>
+	    Information on whether the user can obtain the privilege, and if he can, whether only temporarily or permanently.
+          </p></li><li><p>
+	    Whether a user with the privilege may permanently grant it to other users.
+          </p></li></ul></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2789336"></a>File Format</h2></div></div></div><p>
+	A developer of a system-wide application wanting to define a
 	privilege must create a privilege descriptor. This is a a
-	simple <TT
-CLASS="literal"
->.ini</TT
->-like config file. Here is what
+	simple <code class="literal">.ini</code>-like config file. Here is what
 	the skeleton looks like:
-      </P
-><TABLE
-BORDER="0"
-BGCOLOR="#E0E0E0"
-WIDTH="100%"
-><TR
-><TD
-><PRE
-CLASS="programlisting"
->&#13;	[Policy]
+      </p><pre class="programlisting">
+	[Policy]
 	RequiredPrivileges=
+	SufficientPrivileges=
 	Allow=
 	Deny=
 	CanObtain=
 	CanGrant=
 	ObtainRequireRoot=
-	ObtainPAMService=
-      </PRE
-></TD
-></TR
-></TABLE
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN107"
-><TT
-CLASS="literal"
->RequiredPrivileges</TT
->: Required Privileges</A
-></H3
-><P
->&#13;	  This is a list of privileges the user must possess in order
+      </pre><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2789361"></a><code class="literal">RequiredPrivileges</code>: Required Privileges</h3></div></div></div><p>
+	  This is a list of privileges the user must possess in order
 	  to possess the given privilege. If the user doesn't possess
 	  all of these privileges he is not considered to possess the
-	  given privilege. The list may be empty.
-	</P
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN111"
-><TT
-CLASS="literal"
->Allow, Deny</TT
->: Criteria for Possesing a Privilege</A
-></H3
-><P
->&#13;	  Both <TT
-CLASS="literal"
->Allow</TT
-> and <TT
-CLASS="literal"
->Deny</TT
->
+	  given privilege. The list may be empty. A privilege in this
+	  list is considered being possessed if the user is privileged
+	  for one or more resources. E.g., if <code class="literal">foo</code>
+	  is a required privilege then just having this privilege on
+	  one resource is sufficient.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2789390"></a><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</h3></div></div></div><p>
+	  This is a list of privileges that, if a user possess any of
+	  these, he is consider to possess the given privilege. The
+	  list may be empty.  A privilege in this list is considered
+	  being possessed if the user is privileged for one or more
+	  resources. As with <code class="literal">RequiredPrivileges</code>,
+	  if <code class="literal">foo</code> is a sufficient privilege then
+	  just having this privilege on one resource is sufficient.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2789423"></a><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</h3></div></div></div><p>
+	  Both <code class="literal">Allow</code> and <code class="literal">Deny</code>
 	  contains lists describing what users are allowed
 	  respectively denied the privilege. The elements of in each
 	  list are of the form
-	  <TT
-CLASS="literal"
->type:value[:resource]</TT
->.  where the last
+	  <code class="literal">type:value[:resource]</code>.  where the last
 	  part, resource, may be omitted. The following types are
 	  supported:
-	</P
-><P
-></P
-><UL
-><LI
-><P
-><TT
-CLASS="literal"
->uid</TT
->: Unix user identifer; either
+	</p><div class="itemizedlist"><ul type="disc"><li><p><code class="literal">uid</code>: Unix user identifer; either
 	    a positive integer or Unix username. Special values
-	    include <TT
-CLASS="literal"
->__all__</TT
-> (for denoting all
-	    users) and <TT
-CLASS="literal"
->__none__</TT
-> (for denoting no
-	    users).</P
-></LI
-><LI
-><P
-><TT
-CLASS="literal"
->gid</TT
->: Unix group identifier,
+	    include <code class="literal">__all__</code> (for denoting all
+	    users) and <code class="literal">__none__</code> (for denoting no
+	    users).</p></li><li><p><code class="literal">gid</code>: Unix group identifier,
 	    either a positive integer or Unix groupname. Special
-	    values include <TT
-CLASS="literal"
->__all__</TT
-> (for denoting
-	    all groups) and <TT
-CLASS="literal"
->__none__</TT
-> (for denoting
-	    no groups).</P
-></LI
-></UL
-><P
->&#13;	  To determine if a given user is allowed for a given
+	    values include <code class="literal">__all__</code> (for denoting
+	    all groups) and <code class="literal">__none__</code> (for denoting
+	    no groups).</p></li></ul></div><p>
+	  To determine if a given user is allowed for a given
 	  privilege (for a given resource), first
-	  the <TT
-CLASS="literal"
->RequiredPrivileges</TT
-> list is consulted
-	  as described above. If the user possess all of the listed
-	  privileges, the <TT
-CLASS="literal"
->Allow</TT
-> list is now
-	  consulted. For each element we it is tested whether the user
-	  matches. If there are no elements for which the user is
+	  the <code class="literal">SufficientPrivileges</code> list is
+	  consulted as described above. If the user possesses one or
+	  more of the listed privileges we're done; the user is
+	  automatically allowed for the given privilege. If this is
+	  not the case, the <code class="literal">RequiredPrivileges</code> list
+	  is consulted as described above. If the user possess all of
+	  the listed privileges, the <code class="literal">Allow</code> list is
+	  now consulted. For each element it is tested whether the
+	  user matches. If there are no elements for which the user is
 	  matches, the user is said not to possess the given privilege
 	  (for the given resource).
-	</P
-><P
->&#13;	  If there is a match in the <TT
-CLASS="literal"
->Allow</TT
-> list,
-	  the <TT
-CLASS="literal"
->Deny</TT
-> list is now consulted. If the
+	</p><p>
+	  If there is a match in the <code class="literal">Allow</code> list,
+	  the <code class="literal">Deny</code> list is now consulted. If the
 	  user matches any of the elements we know he doesn't possess
 	  the given privilege. If no elements match we can conclude
 	  that the user indeed possesses the given privilege (for the
 	  given resource).
-	</P
-><P
->&#13;	  This logic is best described by a few examples
-	</P
-><P
-></P
-><UL
-><LI
-><P
->&#13;	      <TT
-CLASS="literal"
->&#13;		Allow="uid:davidz uid:501:hal:///deviceFoo gid:admins
+	</p><p>
+	  This logic is best described by a few examples
+	</p><div class="itemizedlist"><ul type="disc"><li><p>
+	      <code class="literal">
+		Allow="uid:davidz uid:501:hal:///deviceFoo gid:admins
 		uid:502"
-	      </TT
->
-	    </P
-><P
->&#13;	      <TT
-CLASS="literal"
->&#13;		Deny="gid:dooders uid:502:hal:///deviceBar"
-	      </TT
->
-	    </P
-><P
->&#13;		User <TT
-CLASS="literal"
->davidz</TT
-> possess this
+	      </code>
+	    </p><p>
+	      <code class="literal">
+		Deny="gid:dooders uid:502:hal:///deviceBar"
+	      </code>
+	    </p><p>
+		User <code class="literal">davidz</code> possess this
 		privilege. All members of
-		the <TT
-CLASS="literal"
->dooders</TT
-> group is denied this
+		the <code class="literal">dooders</code> group is denied this
 		privilege. User 501 is allowed this privilege but only
-		on the <TT
-CLASS="literal"
->hal:///deviceFoo</TT
->
-		resource. All users in the <TT
-CLASS="literal"
->admin</TT
->
+		on the <code class="literal">hal:///deviceFoo</code>
+		resource. All users in the <code class="literal">admin</code>
 		group posseses the privilege. User 502 is allowed this
 		privilege but not on
-		the <TT
-CLASS="literal"
->hal:///deviceBar</TT
->
+		the <code class="literal">hal:///deviceBar</code>
 		resource.
-	    </P
-></LI
-><LI
-><P
->&#13;	      <TT
-CLASS="literal"
->&#13;		Allow="uid:__all__"
-	      </TT
->
-	    </P
-><P
->&#13;	      <TT
-CLASS="literal"
->&#13;		Deny="gid:normalstaff"
-	      </TT
->
-	    </P
-><P
->&#13;	        All users expect those in
-	        the <TT
-CLASS="literal"
->normalstaff</TT
-> group posseses this
+	    </p></li><li><p>
+	      <code class="literal">
+		Allow="uid:__all__"
+	      </code>
+	    </p><p>
+	      <code class="literal">
+		Deny="gid:normalstaff"
+	      </code>
+	    </p><p>
+	        All users expect those in
+	        the <code class="literal">normalstaff</code> group posseses this
 	        privilege.
-	    </P
-></LI
-></UL
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN155"
-><TT
-CLASS="literal"
->CanObtain</TT
->: Obtaining Privileges</A
-></H3
-><P
->&#13;	  This property denotes whether an user can obtain the
-	  privilege by authentication. It can assume the values
-	  <TT
-CLASS="literal"
->True</TT
-> (the user can obtain the privilege
-	  permanently), <TT
-CLASS="literal"
->Temporary</TT
-> (the user can
+	    </p></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="can-obtain"></a><code class="literal">CanObtain</code>: Obtaining Privileges</h3></div></div></div><p>
+	  This property denotes whether an user can obtain the
+	  privilege by authentication. This is useful when either
+	  either the privilege in question or one of the privileges
+	  listed in <code class="literal">RequiredPrivileges</code> is not
+	  possessed.
+	</p><p>
+	  The property can assume the values
+	  <code class="literal">True</code> (the user can obtain the privilege
+	  permanently), <code class="literal">Temporary</code> (the user can
 	  only obtain the privilege temporarily) and
-	  <TT
-CLASS="literal"
->False</TT
-> (the user can never obtain the
-	  privilege through authentication).
-	</P
-><P
->&#13;	  The authentication required are specified in
-	  the <TT
-CLASS="literal"
->ObtainRequireRoot</TT
->
-	  and <TT
-CLASS="literal"
->ObtainPAMService</TT
-> properties.
-	</P
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN165"
-><TT
-CLASS="literal"
->CanGrant</TT
->: Granting Privileges</A
-></H3
-><P
->&#13;	  This property (it can assume the
-	  values <TT
-CLASS="literal"
->True</TT
-> and <TT
-CLASS="literal"
->False</TT
->)
-	  describes whether an user with the given privilege can grant
-	  it to other users, e.g. modify the <TT
-CLASS="literal"
->Allow</TT
->
-	  and <TT
-CLASS="literal"
->Deny</TT
-> properties.
-	</P
-><P
->&#13;	  The property <TT
-CLASS="literal"
->CanObtain</TT
-> needs to have the
-	  value <TT
-CLASS="literal"
->True</TT
-> if this property assumes the
-	  value <TT
-CLASS="literal"
->True</TT
->.
-	</P
-></DIV
-><DIV
-CLASS="sect2"
-><HR><H3
-CLASS="sect2"
-><A
-NAME="AEN177"
-><TT
-CLASS="literal"
->ObtainRequireRoot, ObtainPAMService</TT
->: Authentication Requirements</A
-></H3
-><P
->&#13;	  If the property <TT
-CLASS="literal"
->CanObtain</TT
-> assumes the
-	  value <TT
-CLASS="literal"
->True</TT
->
-	  or <TT
-CLASS="literal"
->Temporary</TT
-> it means the user can
-	  authenticate to gain a privilege.
-	</P
-><P
->&#13;	  The <TT
-CLASS="literal"
->ObtainRequireRoot</TT
-> property specifies
-	  whether authentication requires the super user password
-	  (<TT
-CLASS="literal"
->True</TT
->) or the users own password
-	  (<TT
-CLASS="literal"
->False</TT
->). In addition, it can be specified
-	  what PAM service (for example <TT
-CLASS="literal"
->pam_rps</TT
->) is
-	  to be used for authentication through the
-	  property <TT
-CLASS="literal"
->ObtainPAMService</TT
->.
-	</P
-></DIV
-></DIV
-><DIV
-CLASS="sect1"
-><HR><H2
-CLASS="sect1"
-><A
-NAME="AEN190"
->Privileges defined by PolicyKit</A
-></H2
-><P
->&#13;	baz
-      </P
-></DIV
-></DIV
-></DIV
-></BODY
-></HTML
->
+	  <code class="literal">False</code> (the user can never obtain the
+	  privilege through authentication). 
+	</p><p>
+	  Whether the user needs to autenticate as himself or the
+	  super user is specified in
+	  the <code class="literal">ObtainRequireRoot</code> property. Note that
+	  if the user is lacking one or more of the privileges listed
+	  in <code class="literal">RequiredPrivileges</code> and one of these
+	  has <code class="literal">ObtainRequireRoot=True</code> the user will
+	  have to authenticate as the super user nonwithstanding that
+	  the privilege he attempts to obtain
+	  has <code class="literal">ObtainRequireRoot=False</code>. Moreover, if
+	  any of the lacking privileges
+	  in <code class="literal">RequiredPrivileges</code>
+	  has <code class="literal">CanObtain</code> set
+	  to <code class="literal">False</code>, the user will always have to
+	  authenticate as the super user.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2785054"></a><code class="literal">CanGrant</code>: Granting Privileges</h3></div></div></div><p>
+	  This property (it can assume the
+	  values <code class="literal">True</code> and <code class="literal">False</code>)
+	  describes whether an user with the given privilege can
+	  permanently grant it to himself and/or other users,.
+	</p><p>
+	  Typically, the construct is used in the following kind of UI
+	  dialogs:
+	</p><pre class="programlisting">
+    +----------------------------------------------------+
+    | You are not privileged to access the volume        |
+    | 'Dave's USB key'. You need to authenticate as the  |
+    | system administrator                               |
+    |                                                    |
+    |   Super user password: [_______________]           |
+    |                                                    |
+    |   Would you also like to automatically allow       |
+    |                                                    |
+    |  (*) This user to mount 'Dave's USB key'           |
+    |  ( ) Any user to mount 'Dave's USB key'            |
+    |  ( ) This user to mount a removable storage device |
+    |  ( ) Any user to mount a removable storage device  |
+    |                                                    |
+    | [Cancel]                                   [Mount] |
+    +----------------------------------------------------+
+       (TODO: replace with screenshot from gnome-mount)
+	</pre><p>
+	  The property <code class="literal">CanObtain</code> needs to assume
+	  the value <code class="literal">True</code> if this property assumes
+	  the value <code class="literal">True</code>. Otherwise this property
+	  effectively assumes the value <code class="literal">False</code>.
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2829707"></a><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</h3></div></div></div><p>
+	  If the property <code class="literal">CanObtain</code> assumes the
+	  value <code class="literal">True</code>
+	  or <code class="literal">Temporary</code> it means the user can
+	  authenticate to gain a
+	  privilege. The <code class="literal">ObtainRequireRoot</code> property
+	  specifies whether authentication requires the super user
+	  password (<code class="literal">True</code>) or the users own password
+	  (<code class="literal">False</code>).
+	</p><p>
+	  See <a href="#can-obtain" title="CanObtain: Obtaining Privileges">the section called &#8220;<code class="literal">CanObtain</code>: Obtaining Privileges&#8221;</a> for discussion on how
+	  the <code class="literal">RequiredPrivileges</code> property affects
+	  the effective value of this property.
+	</p></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="privs-by-polkit"></a>Privileges defined by PolicyKit</h2></div></div></div><p>
+	This section describe privileges defined by PolicyKit and how
+	they can be used by other pieces of software. Some privileges
+	have special meaning and affects how PolicyKit works.
+      </p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="priv-desktop-console"></a><code class="literal">desktop-console</code> : Users at a local console</h3></div></div></div><pre class="programlisting">
+desktop-console.privilege:
+
+# This privilege signfies that users holding it are logged into a
+# physical console attached to the system. Thus, it is useful for
+# other privileges for manipulating local devices to simply require
+# this privilege. 
+
+[Privilege]
+RequiredPrivileges=
+SufficientPrivileges=
+Allow=
+Deny=
+CanObtain=Temporary
+CanGrant=False
+ObtainRequireRoot=True
+	</pre><p>
+	  This privilege signifies that the user holding it is logged
+	  in at a local console. In this context, "local console"
+	  means that the display / keyboard / pointing device is local
+	  to the system which implies the user got physical access to
+	  the box.
+	</p><p>
+	  The PAM module <code class="literal">pam-polkit-console</code> shipped
+	  with PolicyKit is used to maintain files
+	  in <code class="literal">/var/run/polkit-console</code> for users
+	  logging in and out, and signal the PolicyKit daemon to
+	  reread these files and dynamically grant / revoke
+	  the <code class="literal">desktop-console</code> privilege. Typically,
+	  graphical login managers such as the GNOME Display Manager
+	  (gdm) will want include this in it's stack of PAM modules.
+	</p><p>
+	  Remote users (e.g. those not at a local console) can obtain
+	  the <code class="literal">desktop-console</code> only by
+	  authenticating as the super user.
+	</p><p>
+	  The <code class="literal">desktop-console</code> privilege can be used
+	  in conjunction with
+	  the <code class="literal">RequiredPrivileges</code> property in a
+	  privilege descriptor to ensure only users at a local console
+	  is entitled to a privilege for putting a system to sleep
+	  without having to autenticate. This is achieved by e.g. this
+	  privilege descriptor:
+	</p><pre class="programlisting">
+hal-system-suspend.privilege:
+
+# This privilege specifies who is allowed to suspend the system.
+
+[Privilege]
+RequiredPrivileges=desktop-console
+SufficientPrivileges=
+Allow=uid:__all__
+Deny=
+CanObtain=True
+CanGrant=True
+ObtainRequireRoot=False
+	</pre><p>
+	  For a remote user with the
+	  privilege <code class="literal">hal-system-suspend</code> it means
+	  that authentication as the super user is required
+	  as <code class="literal">desktop-console</code>
+	  has <code class="literal">ObtainRequireRoot=True</code> and this
+	  trumps the <code class="literal">ObtainRequireRoot=False</code>
+	  property that is in
+	  the <code class="literal">hal-system-suspend</code> privilege (see
+	  <a href="#can-obtain" title="CanObtain: Obtaining Privileges">the section called &#8220;<code class="literal">CanObtain</code>: Obtaining Privileges&#8221;</a>). Of course, if the user is
+	  logged in at a local console no authentication is required.
+	</p><p>
+	  Typically, the <code class="literal">desktop-console</code> privilege
+	  is granted on a specific resource, namely what console the
+	  user is logged into. At the time of writing, this resource
+	  can only be consider an opaque identifier (such
+	  as <code class="literal">console://:0</code> which refers to X11
+	  display ":0") and one cannot assign meaning to it. In the
+	  future, it may be possible to assign meaning to it.
+	</p></div></div></div></div></body></html>

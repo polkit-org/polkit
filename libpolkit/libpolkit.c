@@ -54,8 +54,8 @@
 			return _ret_;					        \
 		}								\
 		if (_ctx_->magic != LIBPOLKIT_MAGIC) {			\
-			g_warning ("%s: given LibPolKitContext is invalid",  \
-				   __FUNCTION__);			        \
+			g_warning ("%s: given LibPolKitContext is invalid (read magic 0x%08x, should be 0x%08x)",  \
+				   __FUNCTION__, _ctx_->magic, LIBPOLKIT_MAGIC);	\
 			return _ret_;					        \
 		}								\
 	} while(0)
@@ -102,7 +102,8 @@ LibPolKitResult
 libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext    *ctx,
 						       const char          *user, 
 						       const char          *privilege, 
-						       GList              **result,
+						       GList              **resources,
+						       GList              **restrictions,
 						       int                 *num_non_temporary)
 {
 	LibPolKitResult res;
@@ -111,12 +112,15 @@ libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext    *ctx,
 	DBusError error;
 	char **resource_list;
 	int num_resources;
+	char **restriction_list;
+	int num_restrictions;
 	int i;
 
 	LIBPOLKIT_CHECK_CONTEXT (ctx, LIBPOLKIT_RESULT_INVALID_CONTEXT);
 
 	res = LIBPOLKIT_RESULT_ERROR;
-	*result = NULL;
+	*resources = NULL;
+	*restrictions = NULL;
 
 	message = dbus_message_new_method_call ("org.freedesktop.PolicyKit",
 						"/org/freedesktop/PolicyKit/Manager",
@@ -149,6 +153,7 @@ libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext    *ctx,
 
 	if (!dbus_message_get_args (reply, &error,
 				    DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &resource_list, &num_resources,
+				    DBUS_TYPE_ARRAY, DBUS_TYPE_STRING, &restriction_list, &num_restrictions,
 				    DBUS_TYPE_INT32, num_non_temporary,
 				    DBUS_TYPE_INVALID)) {
 		g_warning ("Could not extract args from D-BUS message: %s : %s", error.name, error.message);
@@ -157,9 +162,14 @@ libpolkit_get_allowed_resources_for_privilege_for_uid (LibPolKitContext    *ctx,
 	}
 
 	for (i = 0; i < num_resources; i++) {
-		*result = g_list_append (*result, g_strdup (resource_list[i]));
+		*resources = g_list_append (*resources, g_strdup (resource_list[i]));
 	}
 	dbus_free_string_array (resource_list);
+
+	for (i = 0; i < num_restrictions; i++) {
+		*restrictions = g_list_append (*restrictions, g_strdup (restriction_list[i]));
+	}
+	dbus_free_string_array (restriction_list);
 
 	res = LIBPOLKIT_RESULT_OK;
 
@@ -172,25 +182,28 @@ out:
 }
 
 LibPolKitResult 
-libpolkit_is_uid_allowed_for_privilege (LibPolKitContext    *ctx,
-					pid_t                pid,
-					const char          *user, 
-					const char          *privilege, 
-					const char          *resource,
-					gboolean            *is_allowed,
-					gboolean            *is_temporary)
+libpolkit_is_uid_allowed_for_privilege (LibPolKitContext   *ctx,
+					const char         *system_bus_unique_name, 
+					const char         *user, 
+					const char         *privilege, 
+					const char         *resource,
+					gboolean           *out_is_allowed,
+					gboolean           *out_is_temporary,
+					char              **out_is_privileged_but_restricted_to_system_bus_unique_name)
 {
 	LibPolKitResult res;
 	DBusMessage *message = NULL;
 	DBusMessage *reply = NULL;
 	DBusError error;
 	const char *myresource = "";
+	const char *mysystem_bus_unique_name = "";
+	char *but_restricted_to = NULL;
 
 	LIBPOLKIT_CHECK_CONTEXT (ctx, LIBPOLKIT_RESULT_INVALID_CONTEXT);
 
 	res = LIBPOLKIT_RESULT_ERROR;
-	*is_allowed = FALSE;
-	*is_temporary = FALSE;
+	*out_is_allowed = FALSE;
+	*out_is_temporary = FALSE;
 
 	message = dbus_message_new_method_call ("org.freedesktop.PolicyKit",
 						"/org/freedesktop/PolicyKit/Manager",
@@ -204,8 +217,11 @@ libpolkit_is_uid_allowed_for_privilege (LibPolKitContext    *ctx,
 	if (resource != NULL)
 		myresource = resource;
 
+	if (system_bus_unique_name != NULL)
+		mysystem_bus_unique_name = system_bus_unique_name;
+
 	if (!dbus_message_append_args (message, 
-				       DBUS_TYPE_INT32, &pid, 
+				       DBUS_TYPE_STRING, &mysystem_bus_unique_name, 
 				       DBUS_TYPE_STRING, &user, 
 				       DBUS_TYPE_STRING, &privilege,
 				       DBUS_TYPE_STRING, &myresource,
@@ -232,13 +248,23 @@ libpolkit_is_uid_allowed_for_privilege (LibPolKitContext    *ctx,
 
 
 	if (!dbus_message_get_args (reply, &error,
-				    DBUS_TYPE_BOOLEAN, is_allowed,
-				    DBUS_TYPE_BOOLEAN, is_temporary,
+				    DBUS_TYPE_BOOLEAN, out_is_allowed,
+				    DBUS_TYPE_BOOLEAN, out_is_temporary,
+				    DBUS_TYPE_STRING, &but_restricted_to,
 				    DBUS_TYPE_INVALID)) {
 		g_warning ("Could not extract args from D-BUS message: %s : %s", error.name, error.message);
 		dbus_error_free (&error);
 		goto out;
 	}
+
+	if (out_is_privileged_but_restricted_to_system_bus_unique_name != NULL) {
+		if (but_restricted_to != NULL && strlen (but_restricted_to) > 0) {
+			*out_is_privileged_but_restricted_to_system_bus_unique_name = strdup (but_restricted_to);
+		} else {
+			*out_is_privileged_but_restricted_to_system_bus_unique_name = NULL;
+		}
+		//dbus_free (but_restricted_to);
+	} 
 
 	res = LIBPOLKIT_RESULT_OK;
 

@@ -36,6 +36,7 @@
 #include <dbus/dbus-glib-lowlevel.h>
 #include <security/pam_appl.h>
 
+#include "policy.h"
 #include "polkit-session.h"
 
 enum
@@ -58,13 +59,12 @@ struct PolicyKitSessionPrivate
 	char *auth_with_pam_service;
 
 	uid_t calling_uid;
-	pid_t calling_pid;
 	char *calling_dbus_name;
 
 	uid_t grant_to_uid;
 	char *grant_privilege;
 	char *grant_resource;
-	pid_t grant_pid_restriction;
+	char *grant_system_bus_name_unique_name_restriction;
 
 	gboolean have_granted_temp_privileges;
 
@@ -879,10 +879,9 @@ polkit_session_provide_answers  (PolicyKitSession      *session,
 
 gboolean
 polkit_session_close (PolicyKitSession      *session, 
-		      gboolean               do_not_revoke_privilege,
 		      DBusGMethodInvocation *context)
 {
-	/*g_debug ("in %s", __FUNCTION__);*/
+	g_debug ("In polkit_session_close for session %d", session->priv->session_number);
 
 	if (!polkit_session_check_caller (session, context))
 		return FALSE;
@@ -890,21 +889,6 @@ polkit_session_close (PolicyKitSession      *session,
 	/* if we have a child... kill it  */
 	if (session->priv->child_pid != 0)
 		kill (session->priv->child_pid, SIGTERM);
-
-	if (!do_not_revoke_privilege && session->priv->have_granted_temp_privileges) {
-
-		if (!polkit_manager_remove_temporary_privilege (session->priv->manager,
-								session->priv->grant_to_uid,
-								session->priv->grant_privilege,
-								session->priv->grant_resource,
-								session->priv->grant_pid_restriction)) {
-			g_warning ("Could not remove tmp priv '%s' to uid %d for resource '%s' on pid %d",
-				   session->priv->grant_privilege,
-				   session->priv->grant_to_uid,
-				   session->priv->grant_resource,
-				   session->priv->grant_pid_restriction);
-		}
-	}
 
 	g_object_unref (session);
 
@@ -914,7 +898,7 @@ polkit_session_close (PolicyKitSession      *session,
 
 gboolean 
 polkit_session_grant_privilege_temporarily (PolicyKitSession      *session, 
-					    gboolean               restrict_to_callers_pid,
+					    gboolean               restrict_to_callers_system_bus_unique_name,
 					    DBusGMethodInvocation *context)
 {
 	if (!polkit_session_check_caller (session, context))
@@ -936,17 +920,18 @@ polkit_session_grant_privilege_temporarily (PolicyKitSession      *session,
 		return FALSE;
 	}
 
-	session->priv->grant_pid_restriction = restrict_to_callers_pid ? session->priv->calling_pid : (pid_t) -1;
+	session->priv->grant_system_bus_name_unique_name_restriction = restrict_to_callers_system_bus_unique_name ? 
+		g_strdup (session->priv->calling_dbus_name) : NULL;
 	if (!polkit_manager_add_temporary_privilege (session->priv->manager,
 						     session->priv->grant_to_uid,
 						     session->priv->grant_privilege,
 						     session->priv->grant_resource,
-						     session->priv->grant_pid_restriction)) {
-		g_warning ("Could not add tmp priv '%s' to uid %d for resource '%s' on pid %d",
+						     session->priv->grant_system_bus_name_unique_name_restriction)) {
+		g_warning ("Could not add tmp priv '%s' to uid %d for resource '%s' on connection '%s'",
 			   session->priv->grant_privilege,
 			   session->priv->grant_to_uid,
 			   session->priv->grant_resource,
-			   session->priv->grant_pid_restriction);
+			   session->priv->grant_system_bus_name_unique_name_restriction);
 	}
 
 	session->priv->have_granted_temp_privileges = TRUE;
@@ -959,11 +944,11 @@ PolicyKitSession *
 polkit_session_new (DBusGConnection    *connection, 
 		    PolicyKitManager   *manager,
 		    uid_t               calling_uid,
-		    pid_t               calling_pid,
 		    const char         *calling_dbus_name,
 		    uid_t               uid,
 		    const char         *privilege,
-		    const char         *resource)
+		    const char         *resource,
+		    gboolean            auth_as_root)
 {
 	char *objpath;
 	PolicyKitSession *session;
@@ -978,16 +963,20 @@ polkit_session_new (DBusGConnection    *connection,
 	g_free (objpath);
 
 	session->priv->calling_uid = calling_uid;
-	session->priv->calling_pid = calling_pid;
 	session->priv->calling_dbus_name = g_strdup (calling_dbus_name);
 
 	session->priv->grant_to_uid = uid;
 	session->priv->grant_privilege = g_strdup (privilege);
 	session->priv->grant_resource = g_strdup (resource);
 
-	/* TODO: look up auth_as_user, auth_with_pam_service from privilege configuration files */
-	session->priv->auth_as_user = g_strdup ("root");
+	/* TODO: look up auth_as_user from privilege configuration files */
+	if (auth_as_root)
+		session->priv->auth_as_user = g_strdup ("root");
+	else
+		session->priv->auth_as_user = policy_util_uid_to_name (uid, NULL);
 	session->priv->auth_with_pam_service = g_strdup ("policy-kit");
+
+	g_debug ("In polkit_session_new ; established session %d", session->priv->session_number);
 
 	return session;
 }
@@ -996,23 +985,29 @@ polkit_session_new (DBusGConnection    *connection,
 void
 polkit_session_initiator_disconnected (PolicyKitSession *session)
 {
-	/*g_debug ("initiator disconnected");*/
+	g_debug ("Initiator for session %d disconnected", session->priv->session_number);
 
 	/* if we have a child... kill it  */
 	if (session->priv->child_pid != 0)
 		kill (session->priv->child_pid, SIGTERM);
 
 	if (session->priv->have_granted_temp_privileges) {
+		g_debug ("  Revoking temporary privilege %s on %s for uid %d on connection %s", 
+			 session->priv->grant_privilege,
+			 session->priv->grant_resource,
+			 session->priv->grant_to_uid,
+			 session->priv->grant_system_bus_name_unique_name_restriction);
 		if (!polkit_manager_remove_temporary_privilege (session->priv->manager,
 								session->priv->grant_to_uid,
 								session->priv->grant_privilege,
 								session->priv->grant_resource,
-								session->priv->grant_pid_restriction)) {
-			g_warning ("Could not remove tmp priv '%s' to uid %d for resource '%s' on pid %d",
+								session->priv->grant_system_bus_name_unique_name_restriction,
+								FALSE)) {
+			g_warning ("Could not remove tmp priv '%s' to uid %d for resource '%s' on connection '%s'",
 				   session->priv->grant_privilege,
 				   session->priv->grant_to_uid,
 				   session->priv->grant_resource,
-				   session->priv->grant_pid_restriction);
+				   session->priv->grant_system_bus_name_unique_name_restriction);
 		}
 	}
 }

@@ -7,8 +7,9 @@
   </bookinfo>
 
   <chapter>
-    <title>Client library</title>
+    <title>Client libraries</title>
     <xi:include href="xml/libpolkit.xml"/>
+    <xi:include href="xml/libpolkit-grant.xml"/>
   </chapter>
 
 </book>

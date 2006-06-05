@@ -24,27 +24,15 @@ polkit_is_privileged_LDADD = @DBUS_CFLAGS@ @GLIB_LIBS@ $(top_builddir)/libpolkit
 polkit_list_privileges_SOURCES = polkit-list-privileges.c
 polkit_list_privileges_LDADD = @DBUS_CFLAGS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
 
-polkit-interface-manager-glue.h: ../polkit-interface-manager.xml Makefile.am
-	dbus-binding-tool --prefix=polkit_manager --mode=glib-client --output=polkit-interface-manager-glue.h ../polkit-interface-manager.xml
-
-polkit-interface-session-glue.h: ../polkit-interface-session.xml Makefile.am
-	dbus-binding-tool --prefix=polkit_session --mode=glib-client --output=polkit-interface-session-glue.h ../polkit-interface-session.xml
-
-
 polkit_grant_privilege_SOURCES= \
-	polkit-grant-privilege.c					\
-					polkit-interface-manager-glue.h \
-					polkit-interface-session-glue.h
-polkit_grant_privilege_LDADD= @DBUS_GLIB_LIBS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+	polkit-grant-privilege.c
 
+polkit_grant_privilege_LDADD= @DBUS_GLIB_LIBS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la $(top_builddir)/libpolkit/libpolkit-grant.la
 
 polkit_revoke_privilege_SOURCES= \
 	polkit-revoke-privilege.c
 polkit_revoke_privilege_LDADD= @DBUS_GLIB_LIBS@ @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
 
-
-BUILT_SOURCES = polkit-interface-manager-glue.h polkit-interface-session-glue.h
-
 clean-local :
-	rm -f *~ $(BUILT_SOURCES)
+	rm -f *~
 

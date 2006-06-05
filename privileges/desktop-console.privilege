@@ -1,4 +1,14 @@
 
-[Policy]
+# This privilege signfies that users holding it are logged into a
+# physical console attached to the system. Thus, it is useful for
+# other privileges for manipulating local devices to simply require
+# this privilege. 
+
+[Privilege]
+RequiredPrivileges=
+SufficientPrivileges=
 Allow=
 Deny=
+CanObtain=False
+CanGrant=False
+ObtainRequireRoot=True

@@ -41,17 +41,17 @@ usage (int argc, char *argv[])
 	fprintf (stderr, 
 		 "\n" 
 		 "usage : %s -u <uid> -p <privilege> [-r <resource>]\n" 
-		 "        [-i <pid>]", argv[0]);
+		 "        [-s <system-bus-connection-name>]", argv[0]);
 	fprintf (stderr,
 		 "\n"
 		 "Options:\n"
-		 "    -u, --user           Username or user id\n"
-		 "    -i, --pid            Pid of process privilege may be restricted to\n"
-		 "    -r, --resource       Resource\n"
-		 "    -p, --privilege      Privilege to test for\n"
-		 "    -h, --help           Show this information and exit\n"
-		 "    -v, --verbose        Verbose operation\n"
-		 "    -V, --version        Print version number\n"
+		 "    -u, --user                    Username or user id\n"
+		 "    -s, --system-bus-unique-name  Unique system bus connection name\n"
+		 "    -r, --resource                Resource\n"
+		 "    -p, --privilege               Privilege to test for\n"
+		 "    -h, --help                    Show this information and exit\n"
+		 "    -v, --verbose                 Verbose operation\n"
+		 "    -V, --version                 Print version number\n"
 		 "\n"
 		 "Queries system policy whether a given user is allowed for a given\n"
 		 "privilege for a given resource. The resource may be omitted.\n"
@@ -65,10 +65,10 @@ main (int argc, char *argv[])
 	char *user = NULL;
 	char *privilege = NULL;
 	char *resource = NULL;
-	pid_t pid = (pid_t) -1;
+	char *system_bus_unique_name = NULL;
 	static const struct option long_options[] = {
 		{"user", required_argument, NULL, 'u'},
-		{"pid", required_argument, NULL, 'i'},
+		{"system-bus-unique-name", required_argument, NULL, 's'},
 		{"resource", required_argument, NULL, 'r'},
 		{"privilege", required_argument, NULL, 'p'},
 		{"help", no_argument, NULL, 'h'},
@@ -89,14 +89,14 @@ main (int argc, char *argv[])
 	while (TRUE) {
 		int c;
 		
-		c = getopt_long (argc, argv, "u:r:p:i:hVv", long_options, NULL);
+		c = getopt_long (argc, argv, "u:r:p:s:hVv", long_options, NULL);
 
 		if (c == -1)
 			break;
 		
 		switch (c) {
-		case 'i':
-			pid = atoi (optarg);
+		case 's':
+			system_bus_unique_name = g_strdup (optarg);
 			break;
 
 		case 'u':
@@ -157,12 +157,13 @@ main (int argc, char *argv[])
 	}
 
 	result = libpolkit_is_uid_allowed_for_privilege (ctx, 
-							 pid,
+							 system_bus_unique_name,
 							 user,
 							 privilege,
 							 resource,
 							 &is_allowed,
-							 &is_temporary);
+							 &is_temporary,
+							 NULL);
 	switch (result) {
 	case LIBPOLKIT_RESULT_OK:
 		rc = is_allowed ? 0 : 1;

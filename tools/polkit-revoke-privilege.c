@@ -154,11 +154,11 @@ main (int argc, char **argv)
 	case LIBPOLKIT_RESULT_OK:
 		if (was_revoked) {
 			if (resource == NULL) {
-				g_print ("User '%s' no longer has privilege '%s'.\n", user, privilege);
+				g_print ("Privilege '%s' succesfully revoked from user '%s'.\n", privilege, user);
 			} else {
-				g_print ("User '%s' no longer has privilege '%s' for accessing\n"
+				g_print ("Privilege '%s' succesfully revoked from user '%s' on\n"
 					 "resource '%s'.\n", 
-					 user, privilege, resource);
+					 privilege, user, resource);
 			}
 			rc = 0;
 			goto out;
@@ -166,23 +166,29 @@ main (int argc, char **argv)
 		break;
 
 	case LIBPOLKIT_RESULT_ERROR:
-		g_print ("Error granting resource.\n");
+		g_print ("Error: There was an error granting the privilege.\n");
 		goto out;
 
 	case LIBPOLKIT_RESULT_INVALID_CONTEXT:
-		g_print ("Invalid context.\n");
+		g_print ("Error: Invalid context.\n");
 		goto out;
 
 	case LIBPOLKIT_RESULT_NOT_PRIVILEGED:
-		g_print ("Not privileged.\n");
+		g_print ("Error: Not privileged to perform this operation.\n");
 		goto out;
 
 	case LIBPOLKIT_RESULT_NO_SUCH_PRIVILEGE:
-		g_print ("No such privilege '%s'.\n", privilege);
+		if (resource == NULL) {
+			g_print ("Error: User '%s' does not have privilege '%s'.\n", user, privilege);
+		} else {
+			g_print ("Error: User '%s' does not have privilege '%s' for accessing\n"
+				 "resource '%s'.\n", 
+				 user, privilege, resource);
+		}
 		goto out;
 
 	case LIBPOLKIT_RESULT_NO_SUCH_USER:
-		g_print ("No such user '%s'.\n", user);
+		g_print ("Error: No such user '%s'.\n", user);
 		goto out;
 	}
 
