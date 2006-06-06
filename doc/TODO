@@ -35,3 +35,6 @@ PENDING
  - implement D-BUS interfaces suitable for a GUI privilege editor
 
  - write more tests; audit code
+
+ - Maybe use straight vsyslog from pam-polkit-console.c if pam_vsyslog
+   is missing (as recommened by Frederic Peters <fpeters@entrouvert.com>)

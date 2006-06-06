@@ -37,11 +37,16 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
+#include <stdarg.h>
 
 #include <security/pam_modules.h>
 #include <security/_pam_macros.h>
+#ifdef HAVE_PAM_MODUTIL_H
 #include <security/pam_modutil.h>
+#endif
+#ifdef HAVE_PAM_EXT_H
 #include <security/pam_ext.h>
+#endif
 
 #ifndef FALSE
 #define FALSE 0
@@ -64,7 +69,9 @@ _pam_log (pam_handle_t *pamh,
 		return;
 
 	va_start (args, format);
+#ifdef HAVE_PAM_VSYSLOG
 	pam_vsyslog (pamh, err, format, args);
+#endif
 	closelog ();
 }
 

@@ -262,6 +262,9 @@ AM_CONDITIONAL(HAVE_PAM, test x$have_pam = xyes)
 AC_SUBST(HAVE_PAM)
 AC_SUBST(AUTH_LIBS)
 
+AC_CHECK_HEADER(security/pam_modutil.h, [AC_DEFINE(HAVE_PAM_MODUTIL_H, [], "Have pam_modutil.h")])
+AC_CHECK_HEADER(security/pam_ext.h, [AC_DEFINE(HAVE_PAM_EXT_H, [], "Have pam_ext.h")])
+AC_CHECK_LIB(pam, pam_vsyslog, [AC_DEFINE(HAVE_PAM_VSYSLOG, [], "Have pam_vsyslog")])
 
 AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat)])
 

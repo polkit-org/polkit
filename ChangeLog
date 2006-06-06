@@ -1,3 +1,18 @@
+2006-06-06  David Zeuthen  <davidz@redhat.com>
+
+	Patch from Frederic Peters <fpeters@entrouvert.com>.
+	http://jhbuild.bxlug.be/builds/2006-06-06-0000/logs/PolicyKit/#build
+	shows a error when building newest PolicyKit with Debian PAM
+	libraries.
+
+	Attached patch adds new configure checks; pam-polkit-console.c may
+	need alternate behaviour if pam_vsyslog is missing (using straight
+	vsyslog?).
+
+	* configure.in,
+	* pam-polkit-console/pam-polkit-console.c: (_pam_log):
+	* doc/TODO:
+
 2006-06-05  David Zeuthen  <davidz@redhat.com>
 
 	Lots of changes! Almost ready for 0.2 release.
