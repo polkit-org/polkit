@@ -2,7 +2,7 @@
 LOCKDIR     = $(localstatedir)/run/polkit-console
 LOCKDIRMODE = 0700
 
-securelibdir = /lib/security
+securelibdir = $(PAM_MODULE_DIR)
 securelib_LTLIBRARIES = pam_polkit_console.la
 
 pam_polkit_console_la_LDFLAGS = -no-undefined -avoid-version -module

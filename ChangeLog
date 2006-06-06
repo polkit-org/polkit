@@ -1,5 +1,18 @@
 2006-06-06  David Zeuthen  <davidz@redhat.com>
 
+	Patch from Frederic Peters <fpeters@entrouvert.com>. jhbuild
+	monitors files being installed and prevents them from being
+	written out of its target directory.  This means HAL now prevents
+	jhautobuild[1] to complete since pam-polkit-console hardcodes
+	/lib/security. Attached is a patch with a configure
+	option (--with-pam-module-dir) so it is possible to set an other
+	directory. [1] http://jhbuild.bxlug.be
+
+	* pam-polkit-console/Makefile.am: 
+	* configure.in: 
+
+2006-06-06  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Frederic Peters <fpeters@entrouvert.com>.
 	http://jhbuild.bxlug.be/builds/2006-06-06-0000/logs/PolicyKit/#build
 	shows a error when building newest PolicyKit with Debian PAM
