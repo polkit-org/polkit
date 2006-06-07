@@ -354,6 +354,7 @@ polkit_manager_get_caller_info (PolicyKitManager      *manager,
 		goto out;
 	}
 
+#if 0
 	if (!dbus_g_proxy_call (manager->priv->bus_proxy, "GetConnectionSELinuxSecurityContext", &error,
 				G_TYPE_STRING, sender,
 				G_TYPE_INVALID,
@@ -369,6 +370,7 @@ polkit_manager_get_caller_info (PolicyKitManager      *manager,
 	selinux_context_string = (char *) g_array_free (calling_selinux_context, FALSE);
 	g_message ("selinux context = '%s' for sender '%s'", selinux_context_string, sender);
 	g_free (selinux_context_string);
+#endif
 
 	caller_info = g_new0 (CallerInfo, 1);
 	caller_info->uid = *calling_uid;

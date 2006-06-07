@@ -9,12 +9,10 @@ libpolkit
 
 </para>
 
-
 <!-- ##### SECTION See_Also ##### -->
 <para>
 
 </para>
-
 
 <!-- ##### SECTION Stability_Level ##### -->
 
@@ -58,6 +56,59 @@ libpolkit
 </para>
 
 @ctx: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libpolkit_get_privilege_list ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libpolkit_is_uid_allowed_for_privilege ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@system_bus_unique_name: 
+@user: 
+@privilege: 
+@resource: 
+@out_is_allowed: 
+@out_is_temporary: 
+@out_is_privileged_but_restricted_to_system_bus_unique_name: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libpolkit_revoke_temporary_privilege ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@user: 
+@privilege: 
+@resource: 
+@result: 
+@Returns: 
+
+
+<!-- ##### FUNCTION libpolkit_get_allowed_resources_for_privilege_for_uid ##### -->
+<para>
+
+</para>
+
+@ctx: 
+@user: 
+@privilege: 
+@resources: 
+@ions: 
+@num_non_temporary: 
 @Returns: 
 
 

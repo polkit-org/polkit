@@ -1,5 +1,11 @@
 2006-06-06  David Zeuthen  <davidz@redhat.com>
 
+	* polkitd/polkit-manager.c (polkit_manager_get_caller_info): For
+	now, comment out SELinux stuff as it breaks when SELinux is not
+	available.
+
+2006-06-06  David Zeuthen  <davidz@redhat.com>
+
 	Patch from Frederic Peters <fpeters@entrouvert.com>. jhbuild
 	monitors files being installed and prevents them from being
 	written out of its target directory.  This means HAL now prevents
