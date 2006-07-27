@@ -10,3 +10,4 @@ polkit-marshal.h
 polkit-interface-manager-glue.c
 polkit-interface-manager-glue.h
 polkit-interface-session-glue.h
+*.o

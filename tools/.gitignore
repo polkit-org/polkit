@@ -1,10 +1,9 @@
 .deps
 .libs
+*.o
 Makefile
 Makefile.in
 polkit-is-privileged
 polkit-list-privileges
 polkit-grant-privilege
-polkit-interface-manager-glue.c
-polkit-interface-manager-glue.h
-polkit-interface-session-glue.h
+polkit-revoke-privilege

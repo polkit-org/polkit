@@ -27,3 +27,4 @@ policy-kit
 polkit.pc
 py-compile
 stamp-h1
+*.o

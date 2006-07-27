@@ -1,10 +1,10 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>PolicyKit 0.2 Specification</title><meta name="generator" content="DocBook XSL Stylesheets V1.69.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="index"></a>PolicyKit 0.2 Specification</h1></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">David</span> <span class="surname">Zeuthen</span></h3><div class="affiliation"><div class="address"><p><br>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>PolicyKit 0.2 Specification</title><meta name="generator" content="DocBook XSL Stylesheets V1.70.1"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" lang="en"><div class="titlepage"><div><div><h1 class="title"><a name="index"></a>PolicyKit 0.2 Specification</h1></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">David</span> <span class="surname">Zeuthen</span></h3><div class="affiliation"><div class="address"><p><br>
 	    <code class="email">&lt;<a href="mailto:david@fubar.dk">david@fubar.dk</a>&gt;</code><br>
-	  </p></div></div></div></div></div><div><p class="releaseinfo">Version 0.2</p></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#introduction">1. Introduction</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2993332">About</a></span></dt></dl></dd><dt><span class="chapter"><a href="#operation">2. Theory of operation</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2993355">Privileges</a></span></dt><dt><span class="sect1"><a href="#id3024047">Architecture</a></span></dt><dt><span class="sect1"><a href="#id2988556">Example</a></span></dt></dl></dd><dt><span class="chapter"><a href="#resources">3. Resources</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2988781">Resource Identifiers</a></span></dt></dl></dd><dt><span class="chapter"><a href="#privileges">4. Privileges</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2992592">Privilege Descriptors</a></span></dt><dt><span class="sect1"><a href="#id2992668">File Format</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2992694"><code class="literal">RequiredPrivileges</code>: Required Privileges</a></span></dt><dt><span class="sect2"><a href="#id2992722"><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</a></span></dt><dt><span class="sect2"><a href="#id2992755"><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</a></span></dt><dt><span class="sect2"><a href="#can-obtain"><code class="literal">CanObtain</code>: Obtaining Privileges</a></span></dt><dt><span class="sect2"><a href="#id2988375"><code class="literal">CanGrant</code>: Granting Privileges</a></span></dt><dt><span class="sect2"><a href="#id3033039"><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#privs-by-polkit">Privileges defined by PolicyKit</a></span></dt><dd><dl><dt><span class="sect2"><a href="#priv-desktop-console"><code class="literal">desktop-console</code> : Users at a local console</a></span></dt></dl></dd></dl></dd></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="introduction"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2993332">About</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2993332"></a>About</h2></div></div></div><p>
+	  </p></div></div></div></div></div><div><p class="releaseinfo">Version 0.2</p></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#introduction">1. Introduction</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2502145">About</a></span></dt></dl></dd><dt><span class="chapter"><a href="#operation">2. Theory of operation</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2538305">Privileges</a></span></dt><dt><span class="sect1"><a href="#id2538337">Architecture</a></span></dt><dt><span class="sect1"><a href="#id2503495">Example</a></span></dt></dl></dd><dt><span class="chapter"><a href="#resources">3. Resources</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2506081">Resource Identifiers</a></span></dt></dl></dd><dt><span class="chapter"><a href="#privileges">4. Privileges</a></span></dt><dd><dl><dt><span class="sect1"><a href="#id2506131">Privilege Descriptors</a></span></dt><dt><span class="sect1"><a href="#id2506216">File Format</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2501541"><code class="literal">RequiredPrivileges</code>: Required Privileges</a></span></dt><dt><span class="sect2"><a href="#id2501572"><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</a></span></dt><dt><span class="sect2"><a href="#id2501608"><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</a></span></dt><dt><span class="sect2"><a href="#can-obtain"><code class="literal">CanObtain</code>: Obtaining Privileges</a></span></dt><dt><span class="sect2"><a href="#id2548444"><code class="literal">CanGrant</code>: Granting Privileges</a></span></dt><dt><span class="sect2"><a href="#id2548536"><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#privs-by-polkit">Privileges defined by PolicyKit</a></span></dt><dd><dl><dt><span class="sect2"><a href="#priv-desktop-console"><code class="literal">desktop-console</code> : Users at a local console</a></span></dt></dl></dd></dl></dd></dl></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="introduction"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2502145">About</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2502145"></a>About</h2></div></div></div><p>
 	PolicyKit is a system for enabling unprivileged desktop
 	applications to invoke privileged methods on system-wide
 	components in a controlled manner.
-      </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="operation"></a>Chapter 2. Theory of operation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2993355">Privileges</a></span></dt><dt><span class="sect1"><a href="#id3024047">Architecture</a></span></dt><dt><span class="sect1"><a href="#id2988556">Example</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2993355"></a>Privileges</h2></div></div></div><p>
+      </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="operation"></a>Chapter 2. Theory of operation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2538305">Privileges</a></span></dt><dt><span class="sect1"><a href="#id2538337">Architecture</a></span></dt><dt><span class="sect1"><a href="#id2503495">Example</a></span></dt></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2538305"></a>Privileges</h2></div></div></div><p>
 	One major concept of the PolicyKit system is the notion of
 	privileges; a <span class="emphasis"><em>PolicyKit privilege</em></span>
 	(referred to simply as
@@ -17,7 +17,7 @@
 	allowed to invoke a method, the system level component defines
 	a set of
 	<span class="emphasis"><em>privileges</em></span>. 
-      </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id3024047"></a>Architecture</h2></div></div></div><p>
+      </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2538337"></a>Architecture</h2></div></div></div><p>
 	The PolicyKit system is basically client/server and is
 	implemented as the
 	system-wide <code class="literal">org.freedesktop.PolicyKit</code> D-BUS
@@ -34,7 +34,7 @@
 	In addition, the PolicyKit system includes client side
 	libraries and command-line utilities wrapping the D-BUS API of
 	the <code class="literal">org.freedesktop.PolicyKit</code> service.
-      </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2988556"></a>Example</h2></div></div></div><p>
+      </p></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2503495"></a>Example</h2></div></div></div><p>
 	As an example, HAL exports the method <code class="literal">Mount</code>
 	on the
 	<code class="literal">org.freedesktop.Hal.Device.Volume</code> interface
@@ -96,20 +96,20 @@
 	<img src="polkit-arch.png">
       </p><p>
 	The whole example is outlined in the diagram above.
-      </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="resources"></a>Chapter 3. Resources</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2988781">Resource Identifiers</a></span></dt></dl></div><p>
+      </p></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="resources"></a>Chapter 3. Resources</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2506081">Resource Identifiers</a></span></dt></dl></div><p>
       PolicyKit allows granting privileges only on
       certain <span class="emphasis"><em>resources</em></span>. For example, for HAL, it
       is possible to grant the
       privilege <span class="emphasis"><em>hal-storage-fixed-mount</em></span> to the
       user with uid 500 but only for the HAL device object
       representing e.g. the <code class="literal">/dev/hda3</code> partition.
-    </p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2988781"></a>Resource Identifiers</h2></div></div></div><p> Resource identifers are prefixed with a name identifying
+    </p><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2506081"></a>Resource Identifiers</h2></div></div></div><p> Resource identifers are prefixed with a name identifying
 	what service they belong to. The following resource
 	identifiers are defined
       </p><div class="itemizedlist"><ul type="disc"><li><p>
 	    <code class="literal">hal://</code>
 	    HAL Unique Device Identifiers also known as HAL UID's. Example: <code class="literal">hal:///org/freedesktop/Hal/devices/volume_uuid_1a28b356_9955_44f9_b268_6ed6639978f5</code>
-          </p></li></ul></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="privileges"></a>Chapter 4. Privileges</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2992592">Privilege Descriptors</a></span></dt><dt><span class="sect1"><a href="#id2992668">File Format</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2992694"><code class="literal">RequiredPrivileges</code>: Required Privileges</a></span></dt><dt><span class="sect2"><a href="#id2992722"><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</a></span></dt><dt><span class="sect2"><a href="#id2992755"><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</a></span></dt><dt><span class="sect2"><a href="#can-obtain"><code class="literal">CanObtain</code>: Obtaining Privileges</a></span></dt><dt><span class="sect2"><a href="#id2988375"><code class="literal">CanGrant</code>: Granting Privileges</a></span></dt><dt><span class="sect2"><a href="#id3033039"><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#privs-by-polkit">Privileges defined by PolicyKit</a></span></dt><dd><dl><dt><span class="sect2"><a href="#priv-desktop-console"><code class="literal">desktop-console</code> : Users at a local console</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2992592"></a>Privilege Descriptors</h2></div></div></div><p> 
+          </p></li></ul></div></div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="privileges"></a>Chapter 4. Privileges</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="sect1"><a href="#id2506131">Privilege Descriptors</a></span></dt><dt><span class="sect1"><a href="#id2506216">File Format</a></span></dt><dd><dl><dt><span class="sect2"><a href="#id2501541"><code class="literal">RequiredPrivileges</code>: Required Privileges</a></span></dt><dt><span class="sect2"><a href="#id2501572"><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</a></span></dt><dt><span class="sect2"><a href="#id2501608"><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</a></span></dt><dt><span class="sect2"><a href="#can-obtain"><code class="literal">CanObtain</code>: Obtaining Privileges</a></span></dt><dt><span class="sect2"><a href="#id2548444"><code class="literal">CanGrant</code>: Granting Privileges</a></span></dt><dt><span class="sect2"><a href="#id2548536"><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</a></span></dt></dl></dd><dt><span class="sect1"><a href="#privs-by-polkit">Privileges defined by PolicyKit</a></span></dt><dd><dl><dt><span class="sect2"><a href="#priv-desktop-console"><code class="literal">desktop-console</code> : Users at a local console</a></span></dt></dl></dd></dl></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2506131"></a>Privilege Descriptors</h2></div></div></div><p> 
 	Applications, such as HAL, installs <span class="emphasis"><em>privilege
 	descriptors</em></span> into
 	the <code class="literal">/etc/PolicyKit/privilege.d</code> directory
@@ -128,7 +128,7 @@
 	    Information on whether the user can obtain the privilege, and if he can, whether only temporarily or permanently.
           </p></li><li><p>
 	    Whether a user with the privilege may permanently grant it to other users.
-          </p></li></ul></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2992668"></a>File Format</h2></div></div></div><p>
+          </p></li></ul></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="id2506216"></a>File Format</h2></div></div></div><p>
 	A developer of a system-wide application wanting to define a
 	privilege must create a privilege descriptor. This is a a
 	simple <code class="literal">.ini</code>-like config file. Here is what
@@ -142,7 +142,7 @@
 	CanObtain=
 	CanGrant=
 	ObtainRequireRoot=
-      </pre><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2992694"></a><code class="literal">RequiredPrivileges</code>: Required Privileges</h3></div></div></div><p>
+      </pre><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2501541"></a><code class="literal">RequiredPrivileges</code>: Required Privileges</h3></div></div></div><p>
 	  This is a list of privileges the user must possess in order
 	  to possess the given privilege. If the user doesn't possess
 	  all of these privileges he is not considered to possess the
@@ -151,7 +151,7 @@
 	  for one or more resources. E.g., if <code class="literal">foo</code>
 	  is a required privilege then just having this privilege on
 	  one resource is sufficient.
-	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2992722"></a><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</h3></div></div></div><p>
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2501572"></a><code class="literal">SufficientPrivileges</code>: Sufficient Privileges</h3></div></div></div><p>
 	  This is a list of privileges that, if a user possess any of
 	  these, he is consider to possess the given privilege. The
 	  list may be empty.  A privilege in this list is considered
@@ -159,7 +159,7 @@
 	  resources. As with <code class="literal">RequiredPrivileges</code>,
 	  if <code class="literal">foo</code> is a sufficient privilege then
 	  just having this privilege on one resource is sufficient.
-	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2992755"></a><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</h3></div></div></div><p>
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2501608"></a><code class="literal">Allow, Deny</code>: Criteria for Possesing a Privilege</h3></div></div></div><p>
 	  Both <code class="literal">Allow</code> and <code class="literal">Deny</code>
 	  contains lists describing what users are allowed
 	  respectively denied the privilege. The elements of in each
@@ -258,7 +258,7 @@
 	  has <code class="literal">CanObtain</code> set
 	  to <code class="literal">False</code>, the user will always have to
 	  authenticate as the super user.
-	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2988375"></a><code class="literal">CanGrant</code>: Granting Privileges</h3></div></div></div><p>
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2548444"></a><code class="literal">CanGrant</code>: Granting Privileges</h3></div></div></div><p>
 	  This property (it can assume the
 	  values <code class="literal">True</code> and <code class="literal">False</code>)
 	  describes whether an user with the given privilege can
@@ -289,7 +289,7 @@
 	  the value <code class="literal">True</code> if this property assumes
 	  the value <code class="literal">True</code>. Otherwise this property
 	  effectively assumes the value <code class="literal">False</code>.
-	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id3033039"></a><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</h3></div></div></div><p>
+	</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2548536"></a><code class="literal">ObtainRequireRoot</code>: Authentication Requirements</h3></div></div></div><p>
 	  If the property <code class="literal">CanObtain</code> assumes the
 	  value <code class="literal">True</code>
 	  or <code class="literal">Temporary</code> it means the user can
