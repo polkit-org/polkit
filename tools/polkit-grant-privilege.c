@@ -144,7 +144,7 @@ grant_complete_cb (LibPolKitGrantContext  *ctx,
 		libpolkit_grant_close (ctx, FALSE);
 	}
 
-	libpolkit_free_context (ctx);
+	libpolkit_grant_free_context (ctx);
 
 	exit (0);
 }

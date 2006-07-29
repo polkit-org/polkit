@@ -315,8 +315,9 @@ polkit_manager_get_caller_info (PolicyKitManager      *manager,
 	gboolean res;
 	CallerInfo *caller_info;
 	GError *error = NULL;
+#if 0
 	GArray *calling_selinux_context;
-
+#endif
 	res = FALSE;
 
 	if (sender == NULL)

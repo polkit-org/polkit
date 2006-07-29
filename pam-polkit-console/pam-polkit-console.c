@@ -169,7 +169,7 @@ pam_sm_open_session (pam_handle_t *pamh,
 
 	_pam_log (pamh, LOG_ERR, TRUE, "pam_polkit_console open_session");
 	_parse_module_args (pamh, argc, argv);
-	if(pam_get_item (pamh, PAM_USER_PROMPT, (const void **) &user_prompt) != PAM_SUCCESS) {
+	if(pam_get_item (pamh, PAM_USER_PROMPT, (const void **)(char*) &user_prompt) != PAM_SUCCESS) {
 		user_prompt = "user name: ";
 	}
 	username = NULL;
@@ -178,7 +178,7 @@ pam_sm_open_session (pam_handle_t *pamh,
 		return PAM_SESSION_ERR;
 	}
 
-	pam_get_item(pamh, PAM_TTY, (const void**) &tty);
+	pam_get_item(pamh, PAM_TTY, (const void**)(char*) &tty);
 	if (tty == NULL || strlen (tty) == 0) {
 		_pam_log(pamh, LOG_ERR, TRUE, "TTY not defined");
 		return PAM_SESSION_ERR;
@@ -216,7 +216,7 @@ pam_sm_close_session (pam_handle_t *pamh,
 
 	_pam_log (pamh, LOG_ERR, TRUE, "pam_polkit_console close_session");
 	_parse_module_args (pamh, argc, argv);
-	if (pam_get_item (pamh, PAM_USER_PROMPT, (const void **) &user_prompt) != PAM_SUCCESS) {
+	if (pam_get_item (pamh, PAM_USER_PROMPT, (const void **)(char*) &user_prompt) != PAM_SUCCESS) {
 		user_prompt = "user name: ";
 	}
 	username = NULL;
@@ -225,7 +225,7 @@ pam_sm_close_session (pam_handle_t *pamh,
 		return PAM_SESSION_ERR;
 	}
 
-	pam_get_item (pamh, PAM_TTY, (const void**) &tty);
+	pam_get_item (pamh, PAM_TTY, (const void**)(char*) &tty);
 	if (tty == NULL || strlen (tty) == 0) {
 		_pam_log(pamh, LOG_ERR, TRUE, "TTY not defined");
 		return PAM_SESSION_ERR;
