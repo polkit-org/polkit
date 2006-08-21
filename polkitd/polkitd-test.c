@@ -82,7 +82,9 @@ do_check (const char *policy,
 {
 	int i;
 	gboolean allowed;
+	gboolean is_temporary;
 	char *gidstring;
+	char **out_is_privileged_but_restricted; 
 	GString *str;
 
 	str = g_string_new ("");
@@ -93,8 +95,15 @@ do_check (const char *policy,
 	}
 	gidstring = g_string_free (str, FALSE);
 
-	if (POLICY_RESULT_OK != policy_is_uid_gid_allowed_for_policy (
-		    uid, num_gids, gids, policy, resource, &allowed)) {
+	if (POLICY_RESULT_OK != policy_is_uid_gid_allowed_for_policy ( uid, 
+								       num_gids, 
+								       gids, 
+								       policy, 
+								       resource, 
+								       &allowed, 
+								       &is_temporary, 
+							  	       out_is_privileged_but_restricted,
+								       NULL, NULL)) {
 		g_warning ("fail: no policy %s", policy);
 		my_exit (1);
 	}
@@ -131,7 +140,9 @@ write_test_policy (const char *policy, const char *allow_rule, const char *deny_
 		my_exit (1);
 	}
 	fprintf (f, 
-		 "[Policy]\n"
+		 "[Privilege]\n"
+		 "SufficientPrivileges=\n"
+		 "RequiredPrivileges=\n"
 		 "Allow=%s\n"
 		 "Deny=%s\n", 
 		 allow_rule, deny_rule);
