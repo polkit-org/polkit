@@ -220,7 +220,9 @@ dnl ---------------------------------------------------------------------------
 
 have_pam=no
 AC_CHECK_LIB(pam, pam_start, have_pam=yes)
-if test "x$have_pam" = "xyes"; then
+if test x$have_pam = xno; then
+    AC_ERROR([Could not find pam/pam-devel, please install the needed packages.])
+else
     AUTH_LIBS="${AUTH_LIBS} -lpam"
     AC_DEFINE(HAVE_PAM, 1, [Define if PAM support is included])
 
@@ -258,6 +260,7 @@ if test "x$have_pam" = "xyes"; then
     fi
  
 fi
+
 AM_CONDITIONAL(HAVE_PAM, test x$have_pam = xyes)
 AC_SUBST(HAVE_PAM)
 AC_SUBST(AUTH_LIBS)
