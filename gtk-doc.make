@@ -76,7 +76,7 @@ tmpl.stamp: tmpl-build.stamp
 
 #### xml ####
 
-sgml-build.stamp: tmpl.stamp $(CFILE_GLOB) $(srcdir)/tmpl/*.sgml $(expand_content_files)
+sgml-build.stamp: tmpl.stamp $(CFILE_GLOB) $(expand_content_files)
 	@echo 'gtk-doc: Building XML'
 	@-chmod -R u+w $(srcdir)
 	cd $(srcdir) && \
@@ -107,6 +107,7 @@ endif
 clean-local:
 	rm -f *~ *.bak
 	rm -rf .libs
+	rm -rf tmpl
 
 maintainer-clean-local: clean
 	cd $(srcdir) && rm -rf xml html $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt
