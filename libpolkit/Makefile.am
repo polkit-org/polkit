@@ -12,13 +12,25 @@ INCLUDES = \
 
 lib_LTLIBRARIES=libpolkit.la
 
-libpolkitincludedir=$(includedir)/libpolkit
+libpolkitincludedir=$(includedir)/PolicyKit/libpolkit
 
-libpolkitinclude_HEADERS =                            \
-	libpolkit.h
+libpolkitinclude_HEADERS =              		\
+	libpolkit.h					\
+	libpolkit-context.h				\
+	libpolkit-privilege.h				\
+	libpolkit-resource.h				\
+	libpolkit-seat.h				\
+	libpolkit-session.h				\
+	libpolkit-caller.h
 
-libpolkit_la_SOURCES =                                \
-	libpolkit.c           libpolkit.h
+libpolkit_la_SOURCES =                                	\
+	libpolkit.h		libpolkit.c		\
+	libpolkit-context.h	libpolkit-context.c	\
+	libpolkit-privilege.h	libpolkit-privilege.c	\
+	libpolkit-resource.h	libpolkit-resource.c	\
+	libpolkit-seat.h	libpolkit-seat.c	\
+	libpolkit-session.h	libpolkit-session.c	\
+	libpolkit-caller.h	libpolkit-caller.c
 
 libpolkit_la_LIBADD = @GLIB_LIBS@
 
