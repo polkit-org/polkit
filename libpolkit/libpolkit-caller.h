@@ -33,22 +33,22 @@
 
 #include <libpolkit/libpolkit-session.h>
 
-struct PolKitCaller_s;
-typedef struct PolKitCaller_s PolKitCaller;
+struct PolKitCaller;
+typedef struct PolKitCaller PolKitCaller;
 
 PolKitCaller     *libpolkit_caller_new                 (void);
 PolKitCaller     *libpolkit_caller_ref                 (PolKitCaller *caller);
-void              libpolkit_caller_set_dbus_name       (PolKitCaller *caller, const char *dbus_name);
-void              libpolkit_caller_set_uid             (PolKitCaller *caller, uid_t       uid);
-void              libpolkit_caller_set_pid             (PolKitCaller *caller, pid_t       pid);
-void              libpolkit_caller_set_selinux_context (PolKitCaller *caller, const char *selinux_context);
-void              libpolkit_caller_set_ck_session      (PolKitCaller *caller, PolKitSession  *session);
-gboolean          libpolkit_caller_get_dbus_name       (PolKitCaller *caller, char      **out_dbus_name);
-gboolean          libpolkit_caller_get_uid             (PolKitCaller *caller, uid_t      *out_uid);
-gboolean          libpolkit_caller_get_pid             (PolKitCaller *caller, uid_t      *out_pid);
-gboolean          libpolkit_caller_get_selinux_context (PolKitCaller *caller, char       *out_selinux_context);
-gboolean          libpolkit_caller_get_ck_session      (PolKitCaller *caller, PolKitSession **out_session);
 void              libpolkit_caller_unref               (PolKitCaller *caller);
+void              libpolkit_caller_set_dbus_name       (PolKitCaller *caller, const char     *dbus_name);
+void              libpolkit_caller_set_uid             (PolKitCaller *caller, uid_t           uid);
+void              libpolkit_caller_set_pid             (PolKitCaller *caller, pid_t           pid);
+void              libpolkit_caller_set_selinux_context (PolKitCaller *caller, const char     *selinux_context);
+void              libpolkit_caller_set_ck_session      (PolKitCaller *caller, PolKitSession  *session);
+gboolean          libpolkit_caller_get_dbus_name       (PolKitCaller *caller, char          **out_dbus_name);
+gboolean          libpolkit_caller_get_uid             (PolKitCaller *caller, uid_t          *out_uid);
+gboolean          libpolkit_caller_get_pid             (PolKitCaller *caller, uid_t          *out_pid);
+gboolean          libpolkit_caller_get_selinux_context (PolKitCaller *caller, char           *out_selinux_context);
+gboolean          libpolkit_caller_get_ck_session      (PolKitCaller *caller, PolKitSession **out_session);
 
 #endif /* LIBPOLKIT_H */
 

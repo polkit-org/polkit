@@ -39,33 +39,85 @@
 #include <glib.h>
 #include "libpolkit-seat.h"
 
-struct PolKitSeat_s
+/**
+ * SECTION:libpolkit-seat
+ * @short_description: Seats.
+ *
+ * This class is used to represent a seat. TODO: describe seat.
+ **/
+
+/**
+ * PolKitSeat:
+ *
+ * Objects of this class are used to record information about a
+ * seat.
+ **/
+struct PolKitSeat
 {
 };
 
+/**
+ * libpolkit_seat_new:
+ * 
+ * Creates a new #PolKitSeat object.
+ * 
+ * Returns: the new object
+ **/
 PolKitSeat *
 libpolkit_seat_new (void)
 {
         return NULL;
 }
 
+/**
+ * libpolkit_seat_ref:
+ * @seat: the seat object
+ * 
+ * Increase reference count.
+ * 
+ * Returns: the object
+ **/
 PolKitSeat *
 libpolkit_seat_ref (PolKitSeat *seat)
 {
         return seat;
 }
 
+/**
+ * libpolkit_seat_set_ck_objref:
+ * @seat: the seat object
+ * @ck_objref: the D-Bus object path to the ConsoleKit seat object
+ * 
+ * Set the D-Bus object path to the ConsoleKit seat object.
+ **/
 void 
 libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
 {
 }
 
+/**
+ * libpolkit_seat_get_ck_objref:
+ * @seat: the seat object
+ * @out_ck_objref: Returns the D-Bus object path to the ConsoleKit seat object. The caller shall not free this string.
+ * 
+ * Get the D-Bus object path to the ConsoleKit seat object.
+ * 
+ * Returns: TRUE iff the value is returned
+ **/
 gboolean
 libpolkit_seat_get_ck_objref (PolKitSeat *seat, char **out_ck_objref)
 {
         return FALSE;
 }
 
+/**
+ * libpolkit_seat_unref:
+ * @seat: the seat object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
 void
 libpolkit_seat_unref (PolKitSeat *seat)
 {

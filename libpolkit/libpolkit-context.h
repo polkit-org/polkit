@@ -31,19 +31,15 @@
 #include <sys/types.h>
 #include <glib.h>
 
-struct PolKitContext_s;
-
-typedef struct PolKitContext_s PolKitContext;
+struct PolKitContext;
+typedef struct PolKitContext PolKitContext;
 
 /**
  * PolKitContextConfigChangedCB:
  * @pk_context: PolicyKit context
  * @user_data: user data
  *
- * Called when configuration changes. Mechanisms should listen on this
- * signal and e.g. reconfigure all permissions / acl's they have set
- * in response to policy decisions made from information provided by
- * PolicyKit.
+ * See libpolkit_context_set_config_changed() for details.
  */
 typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
                                               gpointer        user_data);

@@ -33,24 +33,24 @@
 
 #include <libpolkit/libpolkit-seat.h>
 
-struct PolKitSession_s;
-typedef struct PolKitSession_s PolKitSession;
+struct PolKitSession;
+typedef struct PolKitSession PolKitSession;
 
-PolKitSession     *libpolkit_session_new                (void);
-PolKitSession     *libpolkit_session_ref                (PolKitSession *session);
-void               libpolkit_session_set_uid            (PolKitSession *session, uid_t       uid);
-void               libpolkit_session_set_ck_objref      (PolKitSession *session, const char *ck_objref);
-void               libpolkit_session_set_ck_is_active   (PolKitSession *session, gboolean    is_active);
-void               libpolkit_session_set_ck_is_local    (PolKitSession *session, gboolean    is_local);
-void               libpolkit_session_set_ck_remote_host (PolKitSession *session, const char *remote_host);
-void               libpolkit_session_set_ck_seat        (PolKitSession *session, PolKitSeat     *seat);
-gboolean           libpolkit_session_get_uid            (PolKitSession *session, uid_t      *out_uid);
-gboolean           libpolkit_session_get_ck_objref      (PolKitSession *session, char      **out_ck_objref);
-gboolean           libpolkit_session_get_ck_is_active   (PolKitSession *session, gboolean   *out_is_active);
-gboolean           libpolkit_session_get_ck_is_local    (PolKitSession *session, gboolean   *out_is_local);
-gboolean           libpolkit_session_get_ck_remote_host (PolKitSession *session, char       *out_remote_host);
-gboolean           libpolkit_session_get_ck_seat        (PolKitSession *session, PolKitSeat    **out_seat);
-void               libpolkit_session_unref              (PolKitSession *session);
+PolKitSession *libpolkit_session_new                (void);
+PolKitSession *libpolkit_session_ref                (PolKitSession *session);
+void           libpolkit_session_unref              (PolKitSession *session);
+void           libpolkit_session_set_uid            (PolKitSession *session, uid_t           uid);
+void           libpolkit_session_set_seat           (PolKitSession *session, PolKitSeat     *seat);
+void           libpolkit_session_set_ck_objref      (PolKitSession *session, const char     *ck_objref);
+void           libpolkit_session_set_ck_is_active   (PolKitSession *session, gboolean        is_active);
+void           libpolkit_session_set_ck_is_local    (PolKitSession *session, gboolean        is_local);
+void           libpolkit_session_set_ck_remote_host (PolKitSession *session, const char     *remote_host);
+gboolean       libpolkit_session_get_uid            (PolKitSession *session, uid_t          *out_uid);
+gboolean       libpolkit_session_get_seat           (PolKitSession *session, PolKitSeat    **out_seat);
+gboolean       libpolkit_session_get_ck_objref      (PolKitSession *session, char          **out_ck_objref);
+gboolean       libpolkit_session_get_ck_is_active   (PolKitSession *session, gboolean       *out_is_active);
+gboolean       libpolkit_session_get_ck_is_local    (PolKitSession *session, gboolean       *out_is_local);
+gboolean       libpolkit_session_get_ck_remote_host (PolKitSession *session, char           *out_remote_host);
 
 #endif /* LIBPOLKIT_SESSION_H */
 

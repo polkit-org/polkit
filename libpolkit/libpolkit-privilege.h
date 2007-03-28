@@ -31,14 +31,14 @@
 #include <sys/types.h>
 #include <glib.h>
 
-struct PolKitPrivilege_s;
-typedef struct PolKitPrivilege_s PolKitPrivilege;
+struct PolKitPrivilege;
+typedef struct PolKitPrivilege PolKitPrivilege;
 
 PolKitPrivilege *libpolkit_privilege_new              (void);
 PolKitPrivilege *libpolkit_privilege_ref              (PolKitPrivilege *privilege);
+void             libpolkit_privilege_unref            (PolKitPrivilege *privilege);
 void             libpolkit_privilege_set_privilege_id (PolKitPrivilege *privilege, const char  *privilege_id);
 gboolean         libpolkit_privilege_get_privilege_id (PolKitPrivilege *privilege, char       **out_privilege_id);
-void             libpolkit_privilege_unref            (PolKitPrivilege *privilege);
 
 #endif /* LIBPOLKIT_PRIVILEGE_H */
 

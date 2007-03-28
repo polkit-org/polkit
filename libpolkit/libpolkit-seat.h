@@ -31,14 +31,14 @@
 #include <sys/types.h>
 #include <glib.h>
 
-struct PolKitSeat_s;
-typedef struct PolKitSeat_s PolKitSeat;
+struct PolKitSeat;
+typedef struct PolKitSeat PolKitSeat;
 
-PolKitSeat     *libpolkit_seat_new             (void);
-PolKitSeat     *libpolkit_seat_ref             (PolKitSeat *seat);
-void            libpolkit_seat_set_ck_objref   (PolKitSeat *seat, const char *ck_objref);
-gboolean        libpolkit_seat_get_ck_objref   (PolKitSeat *seat, char **out_ck_objref);
-void            libpolkit_seat_unref           (PolKitSeat *seat);
+PolKitSeat *libpolkit_seat_new           (void);
+PolKitSeat *libpolkit_seat_ref           (PolKitSeat *seat);
+void        libpolkit_seat_unref         (PolKitSeat *seat);
+void        libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char  *ck_objref);
+gboolean    libpolkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_objref);
 
 #endif /* LIBPOLKIT_SEAT_H */
 

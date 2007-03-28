@@ -39,44 +39,112 @@
 #include <glib.h>
 #include "libpolkit-resource.h"
 
-struct PolKitResource_s
+/**
+ * SECTION:libpolkit-resource
+ * @short_description: Resources.
+ *
+ * This class is used to represent a resource. TODO: describe what a resource really is.
+ **/
+
+/**
+ * PolKitResource:
+ *
+ * Objects of this class are used to record information about a
+ * resource. TODO: describe what a resource really is.
+ **/
+struct PolKitResource
 {
 };
 
+/**
+ * libpolkit_resource_new:
+ * 
+ * Create a new #PolKitResource object.
+ * 
+ * Returns: the new object
+ **/
 PolKitResource *
 libpolkit_resource_new (void)
 {
         return NULL;
 }
 
+/**
+ * libpolkit_resource_ref:
+ * @resource: the resource object
+ * 
+ * Increase reference count
+ * 
+ * Returns: the object
+ **/
 PolKitResource *
 libpolkit_resource_ref (PolKitResource *resource)
 {
         return resource;
 }
 
+/**
+ * libpolkit_resource_set_resource_type:
+ * @resource: the resource object
+ * @resource_type: type of resource
+ * 
+ * Set the type of the resource. TODO: link to wtf this is.
+ **/
 void
 libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *resource_type)
 {
 }
 
+/**
+ * libpolkit_resource_set_resource_id:
+ * @resource: the resource object
+ * @resource_id: identifier of resource
+ * 
+ * set the identifier of the resource. TODO: link to wtf this is.
+ **/
 void
 libpolkit_resource_set_resource_id (PolKitResource *resource, const char  *resource_id)
 {
 }
 
+/**
+ * libpolkit_resource_get_resource_type:
+ * @resource: the resource object
+ * @out_resource_type: Returns the resource type. The caller shall not free this string.
+ * 
+ * Get the type of the resource.
+ * 
+ * Returns: TRUE iff the value was returned.
+ **/
 gboolean
 libpolkit_resource_get_resource_type (PolKitResource *resource, char **out_resource_type)
 {
         return FALSE;
 }
 
+/**
+ * libpolkit_resource_get_resource_id:
+ * @resource: the resource object
+ * @out_resource_id: Returns the resource identifier. The caller shall not free this string.
+ * 
+ * Get the identifier of the resource
+ * 
+ * Returns: TRUE iff the value was returned.
+ **/
 gboolean 
 libpolkit_resource_get_resource_id (PolKitResource *resource, char **out_resource_id)
 {
         return FALSE;
 }
 
+/**
+ * libpolkit_resource_unref:
+ * @resource: the resource object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
 void 
 libpolkit_resource_unref (PolKitResource *resource)
 {

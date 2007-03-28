@@ -39,33 +39,85 @@
 #include <glib.h>
 #include "libpolkit-privilege.h"
 
-struct PolKitPrivilege_s
+/**
+ * SECTION:libpolkit-privilege
+ * @short_description: Privileges.
+ *
+ * This class is used to represent a privilege. TODO: describe what a privilege really is.
+ **/
+
+/**
+ * PolKitPrivilege:
+ *
+ * Objects of this class are used to record information about a
+ * privilege.
+ **/
+struct PolKitPrivilege
 {
 };
 
+/**
+ * libpolkit_privilege_new:
+ * 
+ * Create a new #PolKitPrivilege object.
+ * 
+ * Returns: the new object
+ **/
 PolKitPrivilege *
 libpolkit_privilege_new (void)
 {
         return NULL;
 }
 
+/**
+ * libpolkit_privilege_ref:
+ * @privilege: the privilege object
+ * 
+ * Increase reference count.
+ * 
+ * Returns: the object
+ **/
 PolKitPrivilege *
 libpolkit_privilege_ref (PolKitPrivilege *privilege)
 {
         return privilege;
 }
 
+/**
+ * libpolkit_privilege_set_privilege_id:
+ * @privilege: the privilege object
+ * @privilege_id: privilege identifier
+ * 
+ * Set the privilege identifier
+ **/
 void
 libpolkit_privilege_set_privilege_id (PolKitPrivilege *privilege, const char  *privilege_id)
 {
 }
 
+/**
+ * libpolkit_privilege_get_privilege_id:
+ * @privilege: the privilege object
+ * @out_privilege_id: Returns the privilege identifier. The caller shall not free this string.
+ * 
+ * Get the privilege identifier.
+ * 
+ * Returns: TRUE iff the value was returned.
+ **/
 gboolean
 libpolkit_privilege_get_privilege_id (PolKitPrivilege *privilege, char **out_privilege_id)
 {
         return FALSE;
 }
 
+/**
+ * libpolkit_privilege_unref:
+ * @privilege: the privilege object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
 void
 libpolkit_privilege_unref (PolKitPrivilege *privilege)
 {

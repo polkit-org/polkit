@@ -39,22 +39,60 @@
 #include <glib.h>
 #include "libpolkit-context.h"
 
-struct PolKitContext_s
+/**
+ * SECTION:libpolkit-context
+ * @short_description: Context.
+ *
+ * This class is used to represent the interface to PolicyKit.
+ **/
+
+/**
+ * PolKitContext:
+ *
+ * Context object for users of PolicyKit.
+ **/
+struct PolKitContext
 {
 };
 
+/**
+ * libpolkit_context_new:
+ * 
+ * Create a new context.
+ * 
+ * Returns: the new context object
+ **/
 PolKitContext *
 libpolkit_context_new (void)
 {
         return FALSE;
 }
 
+/**
+ * libpolkit_context_ref:
+ * @pk_context: the context object
+ * 
+ * Increase reference count.
+ * 
+ * Returns: the object
+ **/
 PolKitContext *
 libpolkit_context_ref (PolKitContext *pk_context)
 {
         return pk_context;
 }
 
+/**
+ * libpolkit_context_set_config_changed:
+ * @pk_context: the context object
+ * @cb: the callback to invoke
+ * @user_data: user data to pass to the callback
+ * 
+ * Register the callback function for when configuration changes.
+ * Mechanisms should use this callback to e.g. reconfigure all
+ * permissions / acl's they have set in response to policy decisions
+ * made from information provided by PolicyKit.
+ **/
 void
 libpolkit_context_set_config_changed (PolKitContext                *pk_context, 
                                       PolKitContextConfigChangedCB cb, 
@@ -62,6 +100,14 @@ libpolkit_context_set_config_changed (PolKitContext                *pk_context,
 {
 }
 
+/**
+ * libpolkit_context_unref:
+ * @pk_context: the context object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
 void
 libpolkit_context_unref (PolKitContext *pk_context)
 {

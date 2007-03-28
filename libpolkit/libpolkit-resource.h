@@ -31,16 +31,16 @@
 #include <sys/types.h>
 #include <glib.h>
 
-struct PolKitResource_s;
-typedef struct PolKitResource_s PolKitResource;
+struct PolKitResource;
+typedef struct PolKitResource PolKitResource;
 
 PolKitResource *libpolkit_resource_new               (void);
 PolKitResource *libpolkit_resource_ref               (PolKitResource *resource);
+void            libpolkit_resource_unref             (PolKitResource *resource);
 void            libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *resource_type);
 void            libpolkit_resource_set_resource_id   (PolKitResource *resource, const char  *resource_id);
 gboolean        libpolkit_resource_get_resource_type (PolKitResource *resource, char       **out_resource_type);
 gboolean        libpolkit_resource_get_resource_id   (PolKitResource *resource, char       **out_resource_id);
-void            libpolkit_resource_unref             (PolKitResource *resource);
 
 #endif /* LIBPOLKIT_RESOURCE_H */
 
