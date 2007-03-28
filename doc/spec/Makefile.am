@@ -1,24 +1,28 @@
 
+FIGURE_FILES =
 
-FIGURE_FILES =                        	\
-	polkit-arch.png
+SPEC_XML_EXTRA_FILES =			\
+	polkit-spec-introduction.xml
 
 if DOCBOOK_DOCS_ENABLED
 
 htmldocdir = $(DOCDIR)/spec
-htmldoc_DATA = polkit-spec.html $(FIGURE_FILES)
+htmldoc_DATA = polkit-spec.html $(FIGURE_FILES) docbook.css
 
-polkit-spec.html : polkit-spec.xml $(FIGURE_FILES)
-	$(XMLTO) html-nochunks polkit-spec.xml
-
-clean-local:
-	rm -f *~
-	rm -f polkit-spec.html polkit-spec.xml
-
+polkit-spec.html : polkit-spec.xml.in $(FIGURE_FILES) $(SPEC_XML_EXTRA_FILES)
+	${XMLLINT} --xinclude polkit-spec.xml.in > polkit-spec.xml
+	$(XMLTO) html-nochunks -m config.xsl polkit-spec.xml
 
 endif # DOCBOOK_DOCS_ENABLED
 
-EXTRA_DIST = polkit-spec.html    \
-	     polkit-spec.xml.in  \
-	     polkit-arch.dia	 \
-	     $(FIGURE_FILES)
+clean-local:
+	rm -f *~
+	rm -f *.html
+	rm -f polkit-spec.xml
+
+EXTRA_DIST =				\
+	polkit-spec.xml.in		\
+	config.xsl			\
+	docbook.css			\
+	$(SPEC_XML_EXTRA_FILES)		\
+	$(FIGURE_FILES)

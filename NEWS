@@ -4,6 +4,6 @@ PolicyKit 0.1 ""
 
 WRITE ME
 
-Requirements for PolicyKit 0.1 "" (and CVS HEAD)
+Requirements for PolicyKit 0.1 "" (and git master)
 
  - glib             >= 2.6.0

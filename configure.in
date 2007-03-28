@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.57)
-AC_INIT(PolicyKit, 0.2, david@fubar.dk)
-AM_INIT_AUTOMAKE(PolicyKit, 0.2)
+AC_INIT(PolicyKit, 0.3, david@fubar.dk)
+AM_INIT_AUTOMAKE(PolicyKit, 0.3)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
@@ -10,7 +10,7 @@ AM_MAINTAINER_MODE
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
-LT_CURRENT=0
+LT_CURRENT=1
 LT_REVISION=0
 LT_AGE=0
 AC_SUBST(LT_CURRENT)
@@ -26,29 +26,12 @@ AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AC_SYS_LARGEFILE
 
-AC_ARG_WITH(polkit_user,[  --with-polkit-user=<user>  user for PolicyKit])
-if test -z "$with_polkit_user" ; then
-    POLKIT_USER=polkit
-else
-    POLKIT_USER=$with_polkit_user
-fi
-AC_SUBST(POLKIT_USER)
-AC_DEFINE_UNQUOTED(POLKIT_USER, "$POLKIT_USER", [User for PolicyKit])
-
-AC_ARG_WITH(polkit_group,[  --with-polkit-group=<grp>  group for PolicyKit])
-if test -z "$with_polkit_group" ; then
-    POLKIT_GROUP=polkit
-else
-    POLKIT_GROUP=$with_polkit_group
-fi
-AC_SUBST(POLKIT_GROUP)
-AC_DEFINE_UNQUOTED(POLKIT_GROUP,"$POLKIT_GROUP", [Group for PolicyKit])
-
-
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
 AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
-AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build documentation (requires xmlto)],enable_docbook_docs=$enableval,enable_docbook_docs=auto)
+AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build documentation (requires xmlto)],enable_docbook_docs=$enableval,enable_docbook_docs=no)
+AC_ARG_ENABLE(man-pages,        [  --enable-man-pages      build manual pages],enable_man_pages=$enableval,enable_man_pages=yes)
+AM_CONDITIONAL(MAN_PAGES_ENABLED, test x$enable_man_pages = xyes)
 
 GTK_DOC_CHECK([1.3])
 
@@ -138,30 +121,23 @@ PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.6.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(DBUS, [dbus-1 >= 0.60])
-AC_SUBST(DBUS_CFLAGS)
-AC_SUBST(DBUS_LIBS)
-
-PKG_CHECK_MODULES(DBUS_GLIB, [dbus-glib-1 >= 0.60])
-AC_SUBST(DBUS_GLIB_CFLAGS)
-AC_SUBST(DBUS_GLIB_LIBS)
-
 AC_CHECK_FUNCS(getgrouplist)
 
 # DocBook Documentation
 
-AC_PATH_PROG(XMLTO, xmlto, no)
-
 AC_MSG_CHECKING([whether to build DocBook documentation])
 
-if test x$DOCBOOK = xno ; then
-    have_docbook=no
+AC_PATH_PROG(XMLTO, xmlto, no)
+AC_PATH_PROG(XMLLINT, xmllint, no)
+
+if test x$XMLLINT = xno ; then
+    have_xmllint=no
 else
-    have_docbook=yes
+    have_xmllint=yes
 fi
 
 if test x$enable_docbook_docs = xauto ; then
-    if test x$have_docbook = xno ; then
+    if test x$have_xmlto = xno || test x$have_xmllint = xno ; then
         enable_docbook_docs=no
     else
         enable_docbook_docs=yes
@@ -169,8 +145,8 @@ if test x$enable_docbook_docs = xauto ; then
 fi
 
 if test x$enable_docbook_docs = xyes; then
-    if test x$have_docbook = xno; then
-	AC_MSG_ERROR([Building DocBook docs explicitly required, but DocBook not found])
+    if test x$have_xmlto = xno; then
+	AC_MSG_ERROR([Building DocBook docs explicitly required, but xmlto not found])
     fi
 fi
 
@@ -195,186 +171,22 @@ fi
 
 AC_SUBST(DOCDIR)
 
-# PAM stuff borrowed from gnome-screensaver
-
-# Determine PAM prefix
-
-withval=""
-AC_ARG_WITH(pam-prefix,
-[  --with-pam-prefix=<prefix> specify where pam files go],[
-if test x$withval != x; then
-   AC_MSG_RESULT("PAM files will be installed in prefix ${withval}.")
-fi])
-if test x$withval != x; then
-	PAM_PREFIX_UNEXPANDED="$withval"
-else
-	PAM_PREFIX_UNEXPANDED="$sysconfdir"
+if test "x$GCC" = "xyes"; then
+  LDFLAGS="-Wl,--as-needed $LDFLAGS"
 fi
-PAM_PREFIX=`eval echo $PAM_PREFIX_UNEXPANDED`
-AC_SUBST(PAM_PREFIX)
-
-
-dnl ---------------------------------------------------------------------------
-dnl - Check for PAM
-dnl ---------------------------------------------------------------------------
-
-have_pam=no
-AC_CHECK_LIB(pam, pam_start, have_pam=yes)
-if test x$have_pam = xno; then
-    AC_ERROR([Could not find pam/pam-devel, please install the needed packages.])
-else
-    AUTH_LIBS="${AUTH_LIBS} -lpam"
-    AC_DEFINE(HAVE_PAM, 1, [Define if PAM support is included])
-
-    # On Linux, sigtimedwait() is in libc; on Solaris, it's in librt.
-    have_timedwait=no
-    AC_CHECK_LIB(c, sigtimedwait, [have_timedwait=yes])
-    if test "$have_timedwait" = no ; then
-      AC_CHECK_LIB(rt, sigtimedwait, [AUTH_LIBS="${AUTH_LIBS} -lrt"])
-    fi
-
-    AC_MSG_CHECKING(how to call pam_strerror)
-    AC_CACHE_VAL(ac_cv_pam_strerror_args,
-     [AC_TRY_COMPILE([#include <stdio.h>
-                      #include <stdlib.h>
-                      #include <security/pam_appl.h>],
-                     [pam_handle_t *pamh = 0;
-                      char *s = pam_strerror(pamh, PAM_SUCCESS);],
-                     [ac_pam_strerror_args=2],
-                     [AC_TRY_COMPILE([#include <stdio.h>
-                                      #include <stdlib.h>
-                                      #include <security/pam_appl.h>],
-                                     [char *s =
-                                       pam_strerror(PAM_SUCCESS);],
-                                     [ac_pam_strerror_args=1],
-                                     [ac_pam_strerror_args=0])])
-      ac_cv_pam_strerror_args=$ac_pam_strerror_args])
-    ac_pam_strerror_args=$ac_cv_pam_strerror_args
-    if test "$ac_pam_strerror_args" = 1 ; then
-      AC_MSG_RESULT(one argument)
-    elif test "$ac_pam_strerror_args" = 2 ; then
-      AC_DEFINE(PAM_STRERROR_TWO_ARGS, 1, [Define if pam_strerror takes two arguments])
-      AC_MSG_RESULT(two arguments)
-    else
-      AC_MSG_RESULT(unknown)
-    fi
- 
-fi
-
-AM_CONDITIONAL(HAVE_PAM, test x$have_pam = xyes)
-AC_SUBST(HAVE_PAM)
-AC_SUBST(AUTH_LIBS)
-
-AC_CHECK_HEADER(security/pam_modutil.h, [AC_DEFINE(HAVE_PAM_MODUTIL_H, [], "Have pam_modutil.h")])
-AC_CHECK_HEADER(security/pam_ext.h, [AC_DEFINE(HAVE_PAM_EXT_H, [], "Have pam_ext.h")])
-AC_CHECK_LIB(pam, pam_vsyslog, [AC_DEFINE(HAVE_PAM_VSYSLOG, [], "Have pam_vsyslog")])
-
-
-AC_ARG_WITH(pam-module-dir, [  --with-pam-module-dir=[dirname]  directory to install PAM security module])
-if ! test -z "$with_pam_module_dir"; then
-    PAM_MODULE_DIR=$with_pam_module_dir
-else
-    PAM_MODULE_DIR="/lib/security"
-fi
-
-AC_SUBST(PAM_MODULE_DIR)
-
-
-AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat)])
-
-#### Check our operating system (distro-tweaks required)
-if test "z$with_os_type" = "z"; then
-	AC_CHECK_FILE(/etc/redhat-release,distro_type="redhat")
-	AC_CHECK_FILE(/etc/SuSE-release,distro_type="suse")
-	if test "z$distro_type" = "z"; then
-		echo "Linux distribution autodetection failed, specify the distribution to target using --with-os-type="
-	else
-		operating_system=`echo ${distro_type} | tr '[[:upper:]]' '[[:lower:]]' `
-	fi
-fi
-
-#### Sort out OS (distro-tweaks required)
-if test x$with_os_type = x; then
-    if test x$operating_system = xredhat ; then
-        with_os_type=redhat
-    elif test x$operating_system = xsuse ; then
-        with_os_type=suse
-    else
-        with_os_type=unknown
-    fi
-fi
-
-# (distro-tweaks required)
-AM_CONDITIONAL(OS_TYPE_UNKNOWN, test x$with_os_type = xunknown, [Running on unknown OS])
-AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red Hat OS'es])
-AM_CONDITIONAL(OS_TYPE_SUSE, test x$with_os_type = xsuse, [Running on SUSE OS'es])
-
-AC_ARG_WITH(pid-file,    [  --with-pid-file=<file>     pid file for polkitd])
-
-#### Set up the pid file (distro-tweaks required)
-if ! test -z "$with_pid_file"; then
-   POLKITD_PID_FILE=$with_pid_file
-elif test x$with_os_type = xredhat ; then
-   POLKITD_PID_FILE=${LOCALSTATEDIR}/run/polkitd.pid
-elif test x$with_os_type = xsuse ; then
-   POLKITD_PID_FILE=${LOCALSTATEDIR}/run/polkitd.pid
-else
-   POLKITD_PID_FILE=${LOCALSTATEDIR}/run/polkitd/pid
-fi
-
-AC_SUBST(POLKITD_PID_FILE)
-AC_DEFINE_UNQUOTED(POLKITD_PID_FILE, "$POLKITD_PID_FILE", [pid file])
-
-AC_ARG_WITH(pam-include, [  --with-pam-include=<file>  pam file to include])
-
-#### Set up pam file to include (distro-tweaks required)
-if ! test -z "$with_pam_include"; then
-   PAM_FILE_INCLUDE_AUTH=$with_pam_include
-   PAM_FILE_INCLUDE_ACCOUNT=$with_pam_include
-   PAM_FILE_INCLUDE_PASSWORD=$with_pam_include
-   PAM_FILE_INCLUDE_SESSION=$with_pam_include
-elif test x$with_os_type = xredhat ; then
-   PAM_FILE_INCLUDE_AUTH=system-auth
-   PAM_FILE_INCLUDE_ACCOUNT=system-auth
-   PAM_FILE_INCLUDE_PASSWORD=system-auth
-   PAM_FILE_INCLUDE_SESSION=system-auth
-elif test x$with_os_type = xsuse ; then
-   PAM_FILE_INCLUDE_AUTH=common-auth
-   PAM_FILE_INCLUDE_ACCOUNT=common-account
-   PAM_FILE_INCLUDE_PASSWORD=common-password
-   PAM_FILE_INCLUDE_SESSION=common-session
-else
-   PAM_FILE_INCLUDE_AUTH=system-auth
-   PAM_FILE_INCLUDE_ACCOUNT=system-auth
-   PAM_FILE_INCLUDE_PASSWORD=system-auth
-   PAM_FILE_INCLUDE_SESSION=system-auth
-fi
-
-AC_SUBST(PAM_FILE_INCLUDE_AUTH)
-AC_SUBST(PAM_FILE_INCLUDE_ACCOUNT)
-AC_SUBST(PAM_FILE_INCLUDE_PASSWORD)
-AC_SUBST(PAM_FILE_INCLUDE_SESSION)
-AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_AUTH, "$PAM_FILE_INCLUDE_AUTH", [pam file auth])
-AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_ACCOUNT, "$PAM_FILE_INCLUDE_ACCOUNT", [pam file account])
-AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_PASSWORD, "$PAM_FILE_INCLUDE_PASSWORD", [pam file password])
-AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_SESSION, "$PAM_FILE_INCLUDE_SESSION", [pam file session])
-
 
 AC_OUTPUT([
-policy-kit
-polkit.pc
+libpolkit.pc
 Makefile
-pam-polkit-console/Makefile
-polkitd/Makefile
-polkitd/PolicyKit
-polkitd/PolicyKit.conf
 libpolkit/Makefile
 tools/Makefile
 doc/Makefile
 doc/api/Makefile
+doc/api/libpolkit/Makefile
+doc/api/libpolkit/version.xml
 doc/spec/Makefile
-doc/spec/polkit-spec.xml
-privileges/Makefile
+doc/spec/polkit-spec.xml.in
+doc/man/Makefile
 ])
 
 dnl ==========================================================================
@@ -391,41 +203,16 @@ echo "
         sysconfdir:                 ${SYSCONFDIR}
         localstatedir:              ${LOCALSTATEDIR}
         docdir:                     ${DOCDIR}
-        PAM prefix:                 ${PAM_PREFIX}
-	PAM module dir:             ${PAM_MODULE_DIR}
 
         compiler:                   ${CC}
         cflags:                     ${CFLAGS}
         cppflags:                   ${CPPFLAGS}
-        DocBook:                    ${DOCBOOK}
-        user for PolicyKit:         ${POLKIT_USER}
-        group for PolicyKit:        ${POLKIT_GROUP}
-        pidfile for polkitd:        ${POLKITD_PID_FILE}
-
-        Distribution/OS:            ${with_os_type}
-
-        PAM support:                ${have_pam}
-        PAM file auth:              ${PAM_FILE_INCLUDE_AUTH}
-        PAM file account:           ${PAM_FILE_INCLUDE_ACCOUNT}
-        PAM file password:          ${PAM_FILE_INCLUDE_PASSWORD}
-        PAM file session:           ${PAM_FILE_INCLUDE_SESSION}
+        xmlto:                      ${XMLTO}
+        xmllint:                    ${XMLLINT}
 
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}
         Building api docs:          ${enable_gtk_doc}
         Building docs:              ${enable_docbook_docs}
+        Building man pages:         ${enable_man_pages}
 "
-
-# (distro-tweaks required)
-if test x$with_os_type = xredhat; then
-   echo "NOTE: Red Hat style init scripts and pam file will be installed"
-elif test x$with_os_type = xsuse; then
-   echo "NOTE: SUSE style init scripts and pam file will be installed"
-else
-   echo "NOTE: You have to install init scripts yourself and tweak your own pam file"
-fi
-echo
-
-echo "NOTE: Remember to create user ${POLKIT_USER} and group ${POLKIT_GROUP} before make install"
-echo
-

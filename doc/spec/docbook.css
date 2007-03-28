@@ -1,0 +1,18 @@
+body {
+	font-family: luxi sans,sans-serif;
+}
+
+table {
+	border: solid 1pt; 
+	border-collapse: collapse;
+}
+
+th {
+	background: #eeeeee; 
+	padding: 5px;
+}
+
+td {
+	border: solid 1pt;
+	padding: 5px;
+}
