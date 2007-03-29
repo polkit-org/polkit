@@ -8,7 +8,6 @@ INCLUDES = \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
-	-I$(top_srcdir) \
 	@GLIB_CFLAGS@ \
 	@DBUS_CFLAGS@
 
