@@ -50,7 +50,7 @@ gboolean       libpolkit_session_get_seat           (PolKitSession *session, Pol
 gboolean       libpolkit_session_get_ck_objref      (PolKitSession *session, char          **out_ck_objref);
 gboolean       libpolkit_session_get_ck_is_active   (PolKitSession *session, gboolean       *out_is_active);
 gboolean       libpolkit_session_get_ck_is_local    (PolKitSession *session, gboolean       *out_is_local);
-gboolean       libpolkit_session_get_ck_remote_host (PolKitSession *session, char           *out_remote_host);
+gboolean       libpolkit_session_get_ck_remote_host (PolKitSession *session, char          **out_remote_host);
 
 #endif /* LIBPOLKIT_SESSION_H */
 

@@ -54,6 +54,8 @@
  **/
 struct PolKitSeat
 {
+        int refcount;
+        char *ck_objref;
 };
 
 /**
@@ -66,7 +68,10 @@ struct PolKitSeat
 PolKitSeat *
 libpolkit_seat_new (void)
 {
-        return NULL;
+        PolKitSeat *seat;
+        seat = g_new0 (PolKitSeat, 1);
+        seat->refcount = 1;
+        return seat;
 }
 
 /**
@@ -80,7 +85,28 @@ libpolkit_seat_new (void)
 PolKitSeat *
 libpolkit_seat_ref (PolKitSeat *seat)
 {
+        g_return_val_if_fail (seat != NULL, seat);
+        seat->refcount++;
         return seat;
+}
+
+/**
+ * libpolkit_seat_unref:
+ * @seat: the seat object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
+void
+libpolkit_seat_unref (PolKitSeat *seat)
+{
+        g_return_if_fail (seat != NULL);
+        seat->refcount--;
+        if (seat->refcount > 0) 
+                return;
+        g_free (seat->ck_objref);
+        g_free (seat);
 }
 
 /**
@@ -93,6 +119,10 @@ libpolkit_seat_ref (PolKitSeat *seat)
 void 
 libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
 {
+        g_return_if_fail (seat != NULL);
+        if (seat->ck_objref == NULL)
+                g_free (seat->ck_objref);
+        seat->ck_objref = g_strdup (ck_objref);
 }
 
 /**
@@ -107,18 +137,8 @@ libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
 gboolean
 libpolkit_seat_get_ck_objref (PolKitSeat *seat, char **out_ck_objref)
 {
-        return FALSE;
-}
-
-/**
- * libpolkit_seat_unref:
- * @seat: the seat object
- * 
- * Decreases the reference count of the object. If it becomes zero,
- * the object is freed. Before freeing, reference counts on embedded
- * objects are decresed by one.
- **/
-void
-libpolkit_seat_unref (PolKitSeat *seat)
-{
+        g_return_val_if_fail (seat != NULL, FALSE);
+        g_return_val_if_fail (out_ck_objref != NULL, FALSE);
+        *out_ck_objref = seat->ck_objref;
+        return TRUE;
 }

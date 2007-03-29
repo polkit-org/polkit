@@ -53,6 +53,9 @@
  **/
 struct PolKitContext
 {
+        int refcount;
+        PolKitContextConfigChangedCB config_changed_cb;
+        gpointer config_changed_user_data;
 };
 
 /**
@@ -65,7 +68,10 @@ struct PolKitContext
 PolKitContext *
 libpolkit_context_new (void)
 {
-        return FALSE;
+        PolKitContext *pk_context;
+        pk_context = g_new0 (PolKitContext, 1);
+        pk_context->refcount = 1;
+        return pk_context;
 }
 
 /**
@@ -79,7 +85,27 @@ libpolkit_context_new (void)
 PolKitContext *
 libpolkit_context_ref (PolKitContext *pk_context)
 {
+        g_return_val_if_fail (pk_context != NULL, pk_context);
+        pk_context->refcount++;
         return pk_context;
+}
+
+/**
+ * libpolkit_context_unref:
+ * @pk_context: the context object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
+void
+libpolkit_context_unref (PolKitContext *pk_context)
+{
+        g_return_if_fail (pk_context != NULL);
+        pk_context->refcount--;
+        if (pk_context->refcount > 0) 
+                return;
+        g_free (pk_context);
 }
 
 /**
@@ -98,18 +124,7 @@ libpolkit_context_set_config_changed (PolKitContext                *pk_context,
                                       PolKitContextConfigChangedCB cb, 
                                       gpointer                     user_data)
 {
+        g_return_if_fail (pk_context != NULL);
+        pk_context->config_changed_cb = cb;
+        pk_context->config_changed_user_data = user_data;
 }
-
-/**
- * libpolkit_context_unref:
- * @pk_context: the context object
- * 
- * Decreases the reference count of the object. If it becomes zero,
- * the object is freed. Before freeing, reference counts on embedded
- * objects are decresed by one.
- **/
-void
-libpolkit_context_unref (PolKitContext *pk_context)
-{
-}
-

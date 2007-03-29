@@ -54,6 +54,8 @@
  **/
 struct PolKitPrivilege
 {
+        int refcount;
+        char *id;
 };
 
 /**
@@ -66,7 +68,10 @@ struct PolKitPrivilege
 PolKitPrivilege *
 libpolkit_privilege_new (void)
 {
-        return NULL;
+        PolKitPrivilege *privilege;
+        privilege = g_new0 (PolKitPrivilege, 1);
+        privilege->refcount = 1;
+        return privilege;
 }
 
 /**
@@ -80,7 +85,28 @@ libpolkit_privilege_new (void)
 PolKitPrivilege *
 libpolkit_privilege_ref (PolKitPrivilege *privilege)
 {
+        g_return_val_if_fail (privilege != NULL, privilege);
+        privilege->refcount++;
         return privilege;
+}
+
+/**
+ * libpolkit_privilege_unref:
+ * @privilege: the privilege object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
+void
+libpolkit_privilege_unref (PolKitPrivilege *privilege)
+{
+        g_return_if_fail (privilege != NULL);
+        privilege->refcount--;
+        if (privilege->refcount > 0) 
+                return;
+        g_free (privilege->id);
+        g_free (privilege);
 }
 
 /**
@@ -93,6 +119,10 @@ libpolkit_privilege_ref (PolKitPrivilege *privilege)
 void
 libpolkit_privilege_set_privilege_id (PolKitPrivilege *privilege, const char  *privilege_id)
 {
+        g_return_if_fail (privilege != NULL);
+        if (privilege->id == NULL)
+                g_free (privilege->id);
+        privilege->id = g_strdup (privilege_id);
 }
 
 /**
@@ -107,18 +137,10 @@ libpolkit_privilege_set_privilege_id (PolKitPrivilege *privilege, const char  *p
 gboolean
 libpolkit_privilege_get_privilege_id (PolKitPrivilege *privilege, char **out_privilege_id)
 {
-        return FALSE;
-}
-
-/**
- * libpolkit_privilege_unref:
- * @privilege: the privilege object
- * 
- * Decreases the reference count of the object. If it becomes zero,
- * the object is freed. Before freeing, reference counts on embedded
- * objects are decresed by one.
- **/
-void
-libpolkit_privilege_unref (PolKitPrivilege *privilege)
-{
+        g_return_val_if_fail (privilege != NULL, FALSE);
+        g_return_val_if_fail (out_privilege_id != NULL, FALSE);
+        if (privilege->id == NULL)
+                return FALSE;
+        *out_privilege_id = privilege->id;
+        return TRUE;
 }

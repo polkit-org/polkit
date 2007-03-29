@@ -54,6 +54,9 @@
  **/
 struct PolKitResource
 {
+        int refcount;
+        char *type;
+        char *id;
 };
 
 /**
@@ -66,7 +69,10 @@ struct PolKitResource
 PolKitResource *
 libpolkit_resource_new (void)
 {
-        return NULL;
+        PolKitResource *resource;
+        resource = g_new0 (PolKitResource, 1);
+        resource->refcount = 1;
+        return resource;
 }
 
 /**
@@ -80,8 +86,34 @@ libpolkit_resource_new (void)
 PolKitResource *
 libpolkit_resource_ref (PolKitResource *resource)
 {
+        g_return_val_if_fail (resource != NULL, resource);
+        resource->refcount++;
         return resource;
 }
+
+
+/**
+ * libpolkit_resource_unref:
+ * @resource: the resource object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
+void 
+libpolkit_resource_unref (PolKitResource *resource)
+{
+        g_return_if_fail (resource != NULL);
+
+        resource->refcount--;
+        if (resource->refcount > 0) 
+                return;
+
+        g_free (resource->type);
+        g_free (resource->id);
+        g_free (resource);
+}
+
 
 /**
  * libpolkit_resource_set_resource_type:
@@ -93,6 +125,11 @@ libpolkit_resource_ref (PolKitResource *resource)
 void
 libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *resource_type)
 {
+        g_return_if_fail (resource != NULL);
+
+        if (resource->type == NULL)
+                g_free (resource->type);
+        resource->type = g_strdup (resource_type);
 }
 
 /**
@@ -105,6 +142,11 @@ libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *res
 void
 libpolkit_resource_set_resource_id (PolKitResource *resource, const char  *resource_id)
 {
+        g_return_if_fail (resource != NULL);
+
+        if (resource->id == NULL)
+                g_free (resource->id);
+        resource->id = g_strdup (resource_id);
 }
 
 /**
@@ -119,7 +161,14 @@ libpolkit_resource_set_resource_id (PolKitResource *resource, const char  *resou
 gboolean
 libpolkit_resource_get_resource_type (PolKitResource *resource, char **out_resource_type)
 {
-        return FALSE;
+        g_return_val_if_fail (resource != NULL, FALSE);
+        g_return_val_if_fail (out_resource_type != NULL, FALSE);
+
+        if (resource->type == NULL)
+                return FALSE;
+
+        *out_resource_type = resource->type;
+        return TRUE;
 }
 
 /**
@@ -134,18 +183,12 @@ libpolkit_resource_get_resource_type (PolKitResource *resource, char **out_resou
 gboolean 
 libpolkit_resource_get_resource_id (PolKitResource *resource, char **out_resource_id)
 {
-        return FALSE;
-}
+        g_return_val_if_fail (resource != NULL, FALSE);
+        g_return_val_if_fail (out_resource_id != NULL, FALSE);
 
-/**
- * libpolkit_resource_unref:
- * @resource: the resource object
- * 
- * Decreases the reference count of the object. If it becomes zero,
- * the object is freed. Before freeing, reference counts on embedded
- * objects are decresed by one.
- **/
-void 
-libpolkit_resource_unref (PolKitResource *resource)
-{
+        if (resource->id == NULL)
+                return FALSE;
+
+        *out_resource_id = resource->id;
+        return TRUE;
 }

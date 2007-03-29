@@ -55,6 +55,13 @@
  **/
 struct PolKitSession
 {
+        int refcount;
+        uid_t uid;
+        PolKitSeat *seat;
+        char *ck_objref;
+        gboolean is_active;
+        gboolean is_local;
+        char *remote_host;
 };
 
 /**
@@ -67,7 +74,10 @@ struct PolKitSession
 PolKitSession *
 libpolkit_session_new (void)
 {
-        return NULL;
+        PolKitSession *session;
+        session = g_new0 (PolKitSession, 1);
+        session->refcount = 1;
+        return session;
 }
 
 /**
@@ -81,7 +91,32 @@ libpolkit_session_new (void)
 PolKitSession *
 libpolkit_session_ref (PolKitSession *session)
 {
-        return NULL;
+        g_return_val_if_fail (session != NULL, session);
+        session->refcount++;
+        return session;
+}
+
+
+/**
+ * libpolkit_session_unref:
+ * @session: The session object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
+void 
+libpolkit_session_unref (PolKitSession *session)
+{
+        g_return_if_fail (session != NULL);
+        session->refcount--;
+        if (session->refcount > 0) 
+                return;
+        g_free (session->ck_objref);
+        g_free (session->remote_host);
+        if (session->seat != NULL)
+                libpolkit_seat_unref (session->seat);
+        g_free (session);
 }
 
 /**
@@ -94,6 +129,8 @@ libpolkit_session_ref (PolKitSession *session)
 void 
 libpolkit_session_set_uid (PolKitSession *session, uid_t uid)
 {
+        g_return_if_fail (session != NULL);
+        session->uid = uid;
 }
 
 /**
@@ -106,6 +143,10 @@ libpolkit_session_set_uid (PolKitSession *session, uid_t uid)
 void 
 libpolkit_session_set_ck_objref (PolKitSession *session, const char *ck_objref)
 {
+        g_return_if_fail (session != NULL);
+        if (session->ck_objref == NULL)
+                g_free (session->ck_objref);
+        session->ck_objref = g_strdup (ck_objref);
 }
 
 /**
@@ -118,6 +159,8 @@ libpolkit_session_set_ck_objref (PolKitSession *session, const char *ck_objref)
 void 
 libpolkit_session_set_ck_is_active (PolKitSession *session, gboolean is_active)
 {
+        g_return_if_fail (session != NULL);
+        session->is_active = is_active;
 }
 
 /**
@@ -130,6 +173,8 @@ libpolkit_session_set_ck_is_active (PolKitSession *session, gboolean is_active)
 void 
 libpolkit_session_set_ck_is_local (PolKitSession *session, gboolean is_local)
 {
+        g_return_if_fail (session != NULL);
+        session->is_local = is_local;
 }
 
 /**
@@ -144,6 +189,10 @@ libpolkit_session_set_ck_is_local (PolKitSession *session, gboolean is_local)
 void 
 libpolkit_session_set_ck_remote_host (PolKitSession *session, const char *remote_host)
 {
+        g_return_if_fail (session != NULL);
+        if (session->remote_host == NULL)
+                g_free (session->remote_host);
+        session->remote_host = g_strdup (remote_host);
 }
 
 /**
@@ -159,6 +208,10 @@ libpolkit_session_set_ck_remote_host (PolKitSession *session, const char *remote
 void 
 libpolkit_session_set_seat (PolKitSession *session, PolKitSeat *seat)
 {
+        g_return_if_fail (session != NULL);
+        if (session->seat == NULL)
+                libpolkit_seat_unref (session->seat);
+        session->seat = seat != NULL ? libpolkit_seat_ref (seat) : NULL;
 }
 
 /**
@@ -173,7 +226,10 @@ libpolkit_session_set_seat (PolKitSession *session, PolKitSeat *seat)
 gboolean
 libpolkit_session_get_uid (PolKitSession *session, uid_t *out_uid)
 {
-        return FALSE;
+        g_return_val_if_fail (session != NULL, FALSE);
+        g_return_val_if_fail (out_uid != NULL, FALSE);
+        *out_uid = session->uid;
+        return TRUE;
 }
 
 /**
@@ -188,7 +244,10 @@ libpolkit_session_get_uid (PolKitSession *session, uid_t *out_uid)
 gboolean
 libpolkit_session_get_ck_objref (PolKitSession *session, char **out_ck_objref)
 {
-        return FALSE;
+        g_return_val_if_fail (session != NULL, FALSE);
+        g_return_val_if_fail (out_ck_objref != NULL, FALSE);
+        *out_ck_objref = session->ck_objref;
+        return TRUE;
 }
 
 /**
@@ -203,7 +262,10 @@ libpolkit_session_get_ck_objref (PolKitSession *session, char **out_ck_objref)
 gboolean
 libpolkit_session_get_ck_is_active (PolKitSession *session, gboolean *out_is_active)
 {
-        return FALSE;
+        g_return_val_if_fail (session != NULL, FALSE);
+        g_return_val_if_fail (out_is_active != NULL, FALSE);
+        *out_is_active = session->is_active;
+        return TRUE;
 }
 
 /**
@@ -218,7 +280,10 @@ libpolkit_session_get_ck_is_active (PolKitSession *session, gboolean *out_is_act
 gboolean
 libpolkit_session_get_ck_is_local (PolKitSession *session, gboolean *out_is_local)
 {
-        return FALSE;
+        g_return_val_if_fail (session != NULL, FALSE);
+        g_return_val_if_fail (out_is_local != NULL, FALSE);
+        *out_is_local = session->is_local;
+        return TRUE;
 }
 
 /**
@@ -233,9 +298,12 @@ libpolkit_session_get_ck_is_local (PolKitSession *session, gboolean *out_is_loca
  * Returns: TRUE iff the value is returned
  **/
 gboolean
-libpolkit_session_get_ck_remote_host (PolKitSession *session, char *out_remote_host)
+libpolkit_session_get_ck_remote_host (PolKitSession *session, char **out_remote_host)
 {
-        return FALSE;
+        g_return_val_if_fail (session != NULL, FALSE);
+        g_return_val_if_fail (out_remote_host != NULL, FALSE);
+        *out_remote_host = session->remote_host;
+        return TRUE;
 }
 
 /**
@@ -251,18 +319,8 @@ libpolkit_session_get_ck_remote_host (PolKitSession *session, char *out_remote_h
 gboolean
 libpolkit_session_get_seat (PolKitSession *session, PolKitSeat **out_seat)
 {
-        return FALSE;
-}
-
-/**
- * libpolkit_session_unref:
- * @session: The session object
- * 
- * Decreases the reference count of the object. If it becomes zero,
- * the object is freed. Before freeing, reference counts on embedded
- * objects are decresed by one.
- **/
-void 
-libpolkit_session_unref (PolKitSession *session)
-{
+        g_return_val_if_fail (session != NULL, FALSE);
+        g_return_val_if_fail (out_seat != NULL, FALSE);
+        *out_seat = session->seat;
+        return TRUE;
 }

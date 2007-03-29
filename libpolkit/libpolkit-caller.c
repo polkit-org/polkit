@@ -54,6 +54,12 @@
  **/
 struct PolKitCaller
 {
+        int refcount;
+        char *dbus_name;
+        pid_t uid;
+        pid_t pid;
+        char *selinux_context;
+        PolKitSession *session;
 };
 
 /**
@@ -66,7 +72,10 @@ struct PolKitCaller
 PolKitCaller *
 libpolkit_caller_new (void)
 {
-        return NULL;
+        PolKitCaller *caller;
+        caller = g_new0 (PolKitCaller, 1);
+        caller->refcount = 1;
+        return caller;
 }
 
 /**
@@ -80,7 +89,32 @@ libpolkit_caller_new (void)
 PolKitCaller *
 libpolkit_caller_ref (PolKitCaller *caller)
 {
+        g_return_val_if_fail (caller != NULL, caller);
+        caller->refcount++;
         return caller;
+}
+
+
+/**
+ * libpolkit_caller_unref:
+ * @caller: The caller object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
+void
+libpolkit_caller_unref (PolKitCaller *caller)
+{
+        g_return_if_fail (caller != NULL);
+        caller->refcount--;
+        if (caller->refcount > 0) 
+                return;
+        g_free (caller->dbus_name);
+        g_free (caller->selinux_context);
+        if (caller->session != NULL)
+                libpolkit_session_unref (caller->session);
+        g_free (caller);
 }
 
 /**
@@ -93,18 +127,24 @@ libpolkit_caller_ref (PolKitCaller *caller)
 void
 libpolkit_caller_set_dbus_name (PolKitCaller *caller, const char *dbus_name)
 {
+        g_return_if_fail (caller != NULL);
+        if (caller->dbus_name == NULL)
+                g_free (caller->dbus_name);
+        caller->dbus_name = g_strdup (dbus_name);
 }
 
 /**
- * libpolkit_caller_set_uid:
- * @caller: The caller object
- * @uid: UNIX user id
+ * libpolkit_caller_set_pid:
+ * @caller: The caller object 
+ * @pid: UNIX process id
  * 
- * Set the callers UNIX user id.
+ * Set the callers UNIX process id.
  **/
 void
 libpolkit_caller_set_uid (PolKitCaller *caller, uid_t uid)
 {
+        g_return_if_fail (caller != NULL);
+        caller->uid = uid;
 }
 
 /**
@@ -117,6 +157,8 @@ libpolkit_caller_set_uid (PolKitCaller *caller, uid_t uid)
 void
 libpolkit_caller_set_pid (PolKitCaller *caller, pid_t pid)
 {
+        g_return_if_fail (caller != NULL);
+        caller->pid = pid;
 }
 
 /**
@@ -129,6 +171,10 @@ libpolkit_caller_set_pid (PolKitCaller *caller, pid_t pid)
 void
 libpolkit_caller_set_selinux_context (PolKitCaller *caller, const char *selinux_context)
 {
+        g_return_if_fail (caller != NULL);
+        if (caller->selinux_context == NULL)
+                g_free (caller->selinux_context);
+        caller->selinux_context = g_strdup (selinux_context);
 }
 
 /**
@@ -143,6 +189,10 @@ libpolkit_caller_set_selinux_context (PolKitCaller *caller, const char *selinux_
 void
 libpolkit_caller_set_ck_session (PolKitCaller *caller, PolKitSession *session)
 {
+        g_return_if_fail (caller != NULL);
+        if (caller->session == NULL)
+                libpolkit_session_unref (caller->session);
+        caller->session = session != NULL ? libpolkit_session_ref (session) : NULL;
 }
 
 /**
@@ -157,22 +207,10 @@ libpolkit_caller_set_ck_session (PolKitCaller *caller, PolKitSession *session)
 gboolean
 libpolkit_caller_get_dbus_name (PolKitCaller *caller, char **out_dbus_name)
 {
-        return FALSE;
-}
-
-/**
- * libpolkit_caller_get_uid:
- * @caller: The caller object 
- * @out_uid: Returns the UNIX user id
- * 
- * Get the callers UNIX user id.
- * 
- * Returns: TRUE iff the value is returned
- **/
-gboolean
-libpolkit_caller_get_uid (PolKitCaller *caller, uid_t *out_uid)
-{
-        return FALSE;
+        g_return_val_if_fail (caller != NULL, FALSE);
+        g_return_val_if_fail (out_dbus_name != NULL, FALSE);
+        *out_dbus_name = caller->dbus_name;
+        return TRUE;
 }
 
 /**
@@ -185,9 +223,30 @@ libpolkit_caller_get_uid (PolKitCaller *caller, uid_t *out_uid)
  * Returns: TRUE iff the value is returned
  **/
 gboolean
-libpolkit_caller_get_pid (PolKitCaller *caller, uid_t *out_pid)
+libpolkit_caller_get_uid (PolKitCaller *caller, uid_t *out_uid)
 {
-        return FALSE;
+        g_return_val_if_fail (caller != NULL, FALSE);
+        g_return_val_if_fail (out_uid != NULL, FALSE);
+        *out_uid = caller->uid;
+        return TRUE;
+}
+
+/**
+ * libpolkit_caller_get_pid:
+ * @caller: The caller object 
+ * @out_pid: Returns the UNIX process id
+ * 
+ * Get the callers UNIX process id.
+ * 
+ * Returns: TRUE iff the value is returned
+ **/
+gboolean
+libpolkit_caller_get_pid (PolKitCaller *caller, pid_t *out_pid)
+{
+        g_return_val_if_fail (caller != NULL, FALSE);
+        g_return_val_if_fail (out_pid != NULL, FALSE);
+        *out_pid = caller->pid;
+        return TRUE;
 }
 
 /**
@@ -200,9 +259,12 @@ libpolkit_caller_get_pid (PolKitCaller *caller, uid_t *out_pid)
  * Returns: TRUE iff the value is returned
  **/
 gboolean
-libpolkit_caller_get_selinux_context (PolKitCaller *caller, char *out_selinux_context)
+libpolkit_caller_get_selinux_context (PolKitCaller *caller, char **out_selinux_context)
 {
-        return FALSE;
+        g_return_val_if_fail (caller != NULL, FALSE);
+        g_return_val_if_fail (out_selinux_context != NULL, FALSE);
+        *out_selinux_context = caller->selinux_context;
+        return TRUE;
 }
 
 /**
@@ -217,18 +279,8 @@ libpolkit_caller_get_selinux_context (PolKitCaller *caller, char *out_selinux_co
 gboolean
 libpolkit_caller_get_ck_session (PolKitCaller *caller, PolKitSession **out_session)
 {
-        return FALSE;
-}
-
-/**
- * libpolkit_caller_unref:
- * @caller: The caller object
- * 
- * Decreases the reference count of the object. If it becomes zero,
- * the object is freed. Before freeing, reference counts on embedded
- * objects are decresed by one.
- **/
-void
-libpolkit_caller_unref (PolKitCaller *caller)
-{
+        g_return_val_if_fail (caller != NULL, FALSE);
+        g_return_val_if_fail (out_session != NULL, FALSE);
+        *out_session = caller->session;
+        return TRUE;
 }
