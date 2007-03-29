@@ -1,9 +1,9 @@
 
 if MAN_PAGES_ENABLED
 
-MAN_IN_FILES = 
+MAN_IN_FILES = polkit-check-caller.1.in polkit-check-session.1.in
 
-man_MANS = 
+man_MANS = polkit-check-caller.1 polkit-check-session.1
 
 endif # MAN_PAGES_ENABLED
 

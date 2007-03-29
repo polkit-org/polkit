@@ -8,11 +8,16 @@ INCLUDES = \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-I$(top_srcdir) \
-	-DDBUS_API_SUBJECT_TO_CHANGE \
 	@GLIB_CFLAGS@ \
 	@DBUS_CFLAGS@
 
-bin_PROGRAMS =
+bin_PROGRAMS = polkit-check-caller polkit-check-session
+
+polkit_check_caller_SOURCES = polkit-check-caller.c
+polkit_check_caller_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+
+polkit_check_session_SOURCES = polkit-check-session.c
+polkit_check_session_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
 
 clean-local :
 	rm -f *~

@@ -127,7 +127,7 @@ libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *res
 {
         g_return_if_fail (resource != NULL);
 
-        if (resource->type == NULL)
+        if (resource->type != NULL)
                 g_free (resource->type);
         resource->type = g_strdup (resource_type);
 }
@@ -144,7 +144,7 @@ libpolkit_resource_set_resource_id (PolKitResource *resource, const char  *resou
 {
         g_return_if_fail (resource != NULL);
 
-        if (resource->id == NULL)
+        if (resource->id != NULL)
                 g_free (resource->id);
         resource->id = g_strdup (resource_id);
 }

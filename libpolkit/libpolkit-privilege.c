@@ -120,7 +120,7 @@ void
 libpolkit_privilege_set_privilege_id (PolKitPrivilege *privilege, const char  *privilege_id)
 {
         g_return_if_fail (privilege != NULL);
-        if (privilege->id == NULL)
+        if (privilege->id != NULL)
                 g_free (privilege->id);
         privilege->id = g_strdup (privilege_id);
 }

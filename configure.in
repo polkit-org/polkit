@@ -121,6 +121,10 @@ PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.6.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
+PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.0])
+AC_SUBST(DBUS_CFLAGS)
+AC_SUBST(DBUS_LIBS)
+
 AC_CHECK_FUNCS(getgrouplist)
 
 # DocBook Documentation
@@ -187,6 +191,8 @@ doc/api/libpolkit/version.xml
 doc/spec/Makefile
 doc/spec/polkit-spec.xml.in
 doc/man/Makefile
+doc/man/polkit-check-caller.1
+doc/man/polkit-check-session.1
 ])
 
 dnl ==========================================================================

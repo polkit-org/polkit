@@ -38,6 +38,8 @@
 #include <libpolkit/libpolkit-session.h>
 #include <libpolkit/libpolkit-caller.h>
 
+
+
 /**
  * PolKitSeatVisitorCB:
  * @seat: the seat

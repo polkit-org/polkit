@@ -23,6 +23,13 @@
  *
  **************************************************************************/
 
+/**
+ * SECTION:libpolkit
+ * @short_description: Policy functions.
+ *
+ * These functions are used to query system policy.
+ **/
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif

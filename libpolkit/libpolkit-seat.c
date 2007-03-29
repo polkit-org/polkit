@@ -120,7 +120,7 @@ void
 libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
 {
         g_return_if_fail (seat != NULL);
-        if (seat->ck_objref == NULL)
+        if (seat->ck_objref != NULL)
                 g_free (seat->ck_objref);
         seat->ck_objref = g_strdup (ck_objref);
 }

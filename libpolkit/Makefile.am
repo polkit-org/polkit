@@ -8,7 +8,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
-	@GLIB_CFLAGS@
+	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 lib_LTLIBRARIES=libpolkit.la
 
@@ -32,7 +32,7 @@ libpolkit_la_SOURCES =                                	\
 	libpolkit-session.h	libpolkit-session.c	\
 	libpolkit-caller.h	libpolkit-caller.c
 
-libpolkit_la_LIBADD = @GLIB_LIBS@
+libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

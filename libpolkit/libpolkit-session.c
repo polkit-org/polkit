@@ -144,7 +144,7 @@ void
 libpolkit_session_set_ck_objref (PolKitSession *session, const char *ck_objref)
 {
         g_return_if_fail (session != NULL);
-        if (session->ck_objref == NULL)
+        if (session->ck_objref != NULL)
                 g_free (session->ck_objref);
         session->ck_objref = g_strdup (ck_objref);
 }
@@ -190,7 +190,7 @@ void
 libpolkit_session_set_ck_remote_host (PolKitSession *session, const char *remote_host)
 {
         g_return_if_fail (session != NULL);
-        if (session->remote_host == NULL)
+        if (session->remote_host != NULL)
                 g_free (session->remote_host);
         session->remote_host = g_strdup (remote_host);
 }
@@ -209,7 +209,7 @@ void
 libpolkit_session_set_seat (PolKitSession *session, PolKitSeat *seat)
 {
         g_return_if_fail (session != NULL);
-        if (session->seat == NULL)
+        if (session->seat != NULL)
                 libpolkit_seat_unref (session->seat);
         session->seat = seat != NULL ? libpolkit_seat_ref (seat) : NULL;
 }
@@ -324,3 +324,242 @@ libpolkit_session_get_seat (PolKitSession *session, PolKitSeat **out_seat)
         *out_seat = session->seat;
         return TRUE;
 }
+
+/**
+ * libpolkit_session_new_from_objpath:
+ * @con: D-Bus system bus connection
+ * @objpath: object path of ConsoleKit session object
+ * @uid: the user owning the session or -1 if unknown
+ * @error: D-Bus error
+ * 
+ * This function will construct a #PolKitSession object by querying
+ * the ConsoleKit daemon for information. Note that this will do a lot
+ * of blocking IO so it is best avoided if your process already
+ * tracks/caches all the information. If you pass in @uid as a
+ * non-negative number, a round trip can be saved.
+ * 
+ * Returns: the new object or #NULL if an error occured (in which case
+ * @error will be set)
+ **/
+PolKitSession *
+libpolkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t uid, DBusError *error)
+{
+        PolKitSeat *seat;
+        PolKitSession *session;
+        DBusMessage *message;
+        DBusMessage *reply;
+        char *str;
+        gboolean is_active;
+        gboolean is_local;
+        char *remote_host;
+        char *seat_path;
+
+        g_return_val_if_fail (con != NULL, NULL);
+        g_return_val_if_fail (objpath != NULL, NULL);
+        g_return_val_if_fail (error != NULL, NULL);
+        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+
+        session = NULL;
+        remote_host = NULL;
+        seat_path = NULL;
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						objpath,
+						"org.freedesktop.ConsoleKit.Session",
+						"IsActive");
+	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+	if (reply == NULL || dbus_error_is_set (error)) {
+		g_warning ("Error doing Session.IsActive on ConsoleKit: %s: %s", error->name, error->message);
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		goto out;
+	}
+	if (!dbus_message_get_args (reply, NULL,
+				    DBUS_TYPE_BOOLEAN, &is_active,
+                                    DBUS_TYPE_INVALID)) {
+                g_warning ("Invalid IsActive reply from CK");
+		goto out;
+	}
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						objpath,
+						"org.freedesktop.ConsoleKit.Session",
+						"IsLocal");
+	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+	if (reply == NULL || dbus_error_is_set (error)) {
+		g_warning ("Error doing Session.IsLocal on ConsoleKit: %s: %s", error->name, error->message);
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		goto out;
+	}
+	if (!dbus_message_get_args (reply, NULL,
+				    DBUS_TYPE_BOOLEAN, &is_local,
+				    DBUS_TYPE_INVALID)) {
+		g_warning ("Invalid IsLocal reply from CK");
+		goto out;
+	}
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
+        if (!is_local) {
+                message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+                                                        objpath,
+                                                        "org.freedesktop.ConsoleKit.Session",
+                                                        "GetRemoteHostName");
+                reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+                if (reply == NULL || dbus_error_is_set (error)) {
+                        g_warning ("Error doing Session.GetRemoteHostName on ConsoleKit: %s: %s", 
+                                   error->name, error->message);
+                        dbus_message_unref (message);
+                        if (reply != NULL)
+                                dbus_message_unref (reply);
+                        goto out;
+                }
+                if (!dbus_message_get_args (reply, NULL,
+                                            DBUS_TYPE_STRING, &str,
+                                            DBUS_TYPE_INVALID)) {
+                        g_warning ("Invalid GetRemoteHostName reply from CK");
+                        goto out;
+                }
+                remote_host = g_strdup (str);
+                dbus_message_unref (message);
+                dbus_message_unref (reply);
+        }
+
+        message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+                                                objpath,
+                                                "org.freedesktop.ConsoleKit.Session",
+                                                "GetSeatId");
+        reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+        if (reply == NULL || dbus_error_is_set (error)) {
+                g_warning ("Error doing Session.GetSeatId on ConsoleKit: %s: %s", 
+                           error->name, error->message);
+                dbus_message_unref (message);
+                if (reply != NULL)
+                        dbus_message_unref (reply);
+                goto out;
+        }
+        if (!dbus_message_get_args (reply, NULL,
+                                    DBUS_TYPE_OBJECT_PATH, &str,
+                                    DBUS_TYPE_INVALID)) {
+                g_warning ("Invalid GetSeatId reply from CK");
+                goto out;
+        }
+        seat_path = g_strdup (str);
+        dbus_message_unref (message);
+        dbus_message_unref (reply);
+
+        if ((int) uid == -1) {
+                message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+                                                        objpath,
+                                                        "org.freedesktop.ConsoleKit.Session",
+                                                        "GetUnixUser");
+                reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+                if (reply == NULL || dbus_error_is_set (error)) {
+                        g_warning ("Error doing Session.GetUnixUser on ConsoleKit: %s: %s",error->name, error->message);
+                        dbus_message_unref (message);
+                        if (reply != NULL)
+                                dbus_message_unref (reply);
+                        goto out;
+                }
+                if (!dbus_message_get_args (reply, NULL,
+                                            DBUS_TYPE_INT32, &uid,
+                                            DBUS_TYPE_INVALID)) {
+                        g_warning ("Invalid GetUnixUser reply from CK");
+                        goto out;
+                }
+                dbus_message_unref (message);
+                dbus_message_unref (reply);
+        }
+
+        g_debug ("is_active %d", is_active);
+        g_debug ("is_local %d", is_local);
+        g_debug ("uid %d", uid);
+        if (!is_local) {
+                g_debug ("remote host '%s'", remote_host);
+        }
+        g_debug ("ck seat '%s'", seat_path);
+
+        session = libpolkit_session_new ();
+        libpolkit_session_set_ck_is_active (session, is_active);
+        libpolkit_session_set_ck_is_local (session, is_local);
+        if (!is_local) {
+                libpolkit_session_set_ck_remote_host (session, remote_host);
+        }
+        seat = libpolkit_seat_new ();
+        libpolkit_seat_set_ck_objref (seat, seat_path);
+        libpolkit_session_set_seat (session, seat);
+        libpolkit_seat_unref (seat); /* we own this now */
+
+out:
+        g_free (remote_host);
+        g_free (seat_path);
+        return session;
+}
+
+/**
+ * libpolkit_session_new_from_cookie:
+ * @con: D-Bus system bus connection
+ * @cookie: a ConsoleKit XDG_SESSION_COOKIE
+ * @error: D-Bus error
+ * 
+ * This function will construct a #PolKitSession object by querying
+ * the ConsoleKit daemon for information. Note that this will do a lot
+ * of blocking IO so it is best avoided if your process already
+ * tracks/caches all the information.
+ * 
+ * Returns: the new object or #NULL if an error occured (in which case
+ * @error will be set)
+ **/
+PolKitSession *
+libpolkit_session_new_from_cookie (DBusConnection *con, const char *cookie, DBusError *error)
+{
+        PolKitSession *session;
+        DBusMessage *message;
+        DBusMessage *reply;
+        char *str;
+        char *objpath;
+
+        g_return_val_if_fail (con != NULL, NULL);
+        g_return_val_if_fail (cookie != NULL, NULL);
+        g_return_val_if_fail (error != NULL, NULL);
+        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+
+        objpath = NULL;
+        session = NULL;
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						"/org/freedesktop/ConsoleKit/Manager",
+						"org.freedesktop.ConsoleKit.Manager",
+						"GetSessionForCookie");
+	dbus_message_append_args (message, DBUS_TYPE_STRING, &cookie, DBUS_TYPE_INVALID);
+	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+	if (reply == NULL || dbus_error_is_set (error)) {
+		g_warning ("Error doing Manager.GetSessionForCookie on ConsoleKit: %s: %s", 
+                           error->name, error->message);
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		goto out;
+	}
+	if (!dbus_message_get_args (reply, NULL,
+				    DBUS_TYPE_OBJECT_PATH, &str,
+                                    DBUS_TYPE_INVALID)) {
+                g_warning ("Invalid GetSessionForCookie reply from CK");
+		goto out;
+	}
+        objpath = g_strdup (str);
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
+        session = libpolkit_session_new_from_objpath (con, objpath, -1, error);
+
+out:
+        g_free (objpath);
+        return session;
+}
+

@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <glib.h>
+#include <dbus/dbus.h>
 
 #include <libpolkit/libpolkit-seat.h>
 
@@ -37,6 +38,8 @@ struct PolKitSession;
 typedef struct PolKitSession PolKitSession;
 
 PolKitSession *libpolkit_session_new                (void);
+PolKitSession *libpolkit_session_new_from_objpath   (DBusConnection *con, const char *objpath, uid_t uid, DBusError *error);
+PolKitSession *libpolkit_session_new_from_cookie    (DBusConnection *con, const char *cookie, DBusError *error);
 PolKitSession *libpolkit_session_ref                (PolKitSession *session);
 void           libpolkit_session_unref              (PolKitSession *session);
 void           libpolkit_session_set_uid            (PolKitSession *session, uid_t           uid);
@@ -53,5 +56,3 @@ gboolean       libpolkit_session_get_ck_is_local    (PolKitSession *session, gbo
 gboolean       libpolkit_session_get_ck_remote_host (PolKitSession *session, char          **out_remote_host);
 
 #endif /* LIBPOLKIT_SESSION_H */
-
-
