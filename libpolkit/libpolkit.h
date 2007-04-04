@@ -31,14 +31,14 @@
 #include <sys/types.h>
 #include <glib.h>
 
+#include <libpolkit/libpolkit-error.h>
+#include <libpolkit/libpolkit-result.h>
 #include <libpolkit/libpolkit-context.h>
 #include <libpolkit/libpolkit-privilege.h>
 #include <libpolkit/libpolkit-resource.h>
 #include <libpolkit/libpolkit-seat.h>
 #include <libpolkit/libpolkit-session.h>
 #include <libpolkit/libpolkit-caller.h>
-
-
 
 /**
  * PolKitSeatVisitorCB:
@@ -47,42 +47,32 @@
  * @user_data: user data
  *
  * Visitor function for libpolkit_get_seat_resource_association(). The caller should _not_ unref the passed objects.
- *
  */
 typedef void (*PolKitSeatVisitorCB) (PolKitSeat      *seat,
                                      PolKitResource **resources_associated_with_seat,
                                      gpointer         user_data);
 
-void
+PolKitResult
 libpolkit_get_seat_resource_association (PolKitContext       *pk_context,
                                          PolKitSeatVisitorCB  visitor,
                                          gpointer            *user_data);
 
-gboolean
+PolKitResult
 libpolkit_is_resource_associated_with_seat (PolKitContext   *pk_context,
                                             PolKitResource  *resource,
                                             PolKitSeat      *seat);
 
-gboolean
+PolKitResult
 libpolkit_can_session_access_resource (PolKitContext   *pk_context,
                                        PolKitPrivilege *privilege,
                                        PolKitResource  *resource,
                                        PolKitSession   *session);
 
-gboolean
+PolKitResult
 libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
                                       PolKitPrivilege *privilege,
                                       PolKitResource  *resource,
                                       PolKitCaller    *caller);
-
-typedef enum
-{
-        POLKIT_ERROR_PRIVILEGE_FILE_INVALID_VALUE
-} PolKitError;
-
-#define POLKIT_ERROR libpolkit_error_quark()
-
-GQuark libpolkit_error_quark (void);
 
 #endif /* LIBPOLKIT_H */
 

@@ -61,12 +61,20 @@
  * Typically, this information is used to e.g. bootstrap the system
  * insofar that it can be used to start login greeters on the given
  * video hardware (e.g. resources) on the given user-configured seats.
+ *
+ * If a resource is not associated with any seat, it is assumed to be
+ * available to any local seat.
+ *
+ * Returns: A #PolKitResult - can only be one of
+ * #LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW or
+ * #LIBPOLKIT_RESULT_YES (if the callback was invoked)
  */
-void
+PolKitResult
 libpolkit_get_seat_resource_association (PolKitContext       *pk_context,
                                          PolKitSeatVisitorCB  visitor,
                                          gpointer            *user_data)
 {
+        return LIBPOLKIT_RESULT_YES;
 }
 
 /**
@@ -79,15 +87,16 @@ libpolkit_get_seat_resource_association (PolKitContext       *pk_context,
  * same comments noted in libpolkit_get_seat_resource_association() about the
  * source purely being user configuration applies here as well.
  *
- * Returns: TRUE if, and only if, the given resource is
- * associated with the given seat.
+ * Returns: A #PolKitResult - can only be one of
+ * #LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
+ * #LIBPOLKIT_RESULT_YES, #LIBPOLKIT_RESULT_NO.
  */
-gboolean
+PolKitResult
 libpolkit_is_resource_associated_with_seat (PolKitContext   *pk_context,
                                             PolKitResource  *resource,
                                             PolKitSeat      *seat)
 {
-        return FALSE;
+        return LIBPOLKIT_RESULT_NO;
 }
 
 /**
@@ -99,16 +108,17 @@ libpolkit_is_resource_associated_with_seat (PolKitContext   *pk_context,
  *
  * Determine if a given session can access a given resource in a given way.
  *
- * Returns: TRUE if, and only if, the given session can access the
- * given resource in the given way.
+ * Returns: A #PolKitResult - can only be one of
+ * #LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
+ * #LIBPOLKIT_RESULT_YES, #LIBPOLKIT_RESULT_NO.
  */
-gboolean
+PolKitResult
 libpolkit_can_session_access_resource (PolKitContext   *pk_context,
                                        PolKitPrivilege *privilege,
                                        PolKitResource  *resource,
                                        PolKitSession   *session)
 {
-        return FALSE;
+        return LIBPOLKIT_RESULT_NO;
 }
 
 /**
@@ -120,20 +130,14 @@ libpolkit_can_session_access_resource (PolKitContext   *pk_context,
  *
  * Determine if a given caller can access a given resource in a given way.
  *
- * Returns: TRUE if, and only if, the given caller can access the
- * given resource in the given way.
+ * Returns: A #PolKitResult specifying if, and how, the caller can
+ * access the resource in the given way
  */
-gboolean
+PolKitResult
 libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
                                       PolKitPrivilege *privilege,
                                       PolKitResource  *resource,
                                       PolKitCaller    *caller)
 {
-        return FALSE;
-}
-
-GQuark
-libpolkit_error_quark (void)
-{
-        return g_quark_from_static_string ("libpolkit-error-quark");
+        return LIBPOLKIT_RESULT_NO;
 }

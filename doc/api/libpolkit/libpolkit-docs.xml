@@ -65,6 +65,8 @@
       </para>
     </partintro>
     <xi:include href="xml/libpolkit.xml"/>
+    <xi:include href="xml/libpolkit-error.xml"/>
+    <xi:include href="xml/libpolkit-result.xml"/>
     <xi:include href="xml/libpolkit-context.xml"/>
     <xi:include href="xml/libpolkit-privilege.xml"/>
     <xi:include href="xml/libpolkit-resource.xml"/>

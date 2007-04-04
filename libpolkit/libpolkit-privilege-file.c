@@ -37,7 +37,8 @@
 #include <errno.h>
 
 #include <glib.h>
-#include "libpolkit.h"
+#include "libpolkit-error.h"
+#include "libpolkit-result.h"
 #include "libpolkit-privilege-file.h"
 
 /**
@@ -46,16 +47,6 @@
  *
  * This class is used to represent a privilege files.
  **/
-
-typedef enum
-{
-        LIBPOLKIT_RESULT_YES               = 1<<0,
-        LIBPOLKIT_RESULT_NO                = 1<<1,
-        LIBPOLKIT_RESULT_AUTH_REQ_ROOT     = 1<<2,
-        LIBPOLKIT_RESULT_AUTH_REQ_SELF     = 1<<3,
-        LIBPOLKIT_RESULT_AUTH_KEEP_SESSION = 1<<4,
-        LIBPOLKIT_RESULT_AUTH_KEEP_ALWAYS  = 1<<5
-} PolKitResult;
 
 /**
  * PolKitPrivilegeFile:
@@ -81,34 +72,34 @@ parse_default (const char *key, char *s, PolKitResult* target, GError **error)
 {
         gboolean ret;
 
-        ret = TRUE;
+        ret = libpolkit_result_from_string_representation (s, target);
+        if (!ret) {
+                int n;
+                char *s2;
+                GString *str;
 
-        if (strcmp (s, "yes") == 0) {
-                *target = LIBPOLKIT_RESULT_YES;
-        } else if (strcmp (s, "no") == 0) {
-                *target = LIBPOLKIT_RESULT_NO;
-        } else if (strcmp (s, "auth_root") == 0) {
-                *target = LIBPOLKIT_RESULT_NO | LIBPOLKIT_RESULT_AUTH_REQ_ROOT;
-        } else if (strcmp (s, "auth_root_keep_session") == 0) {
-                *target = LIBPOLKIT_RESULT_NO | LIBPOLKIT_RESULT_AUTH_REQ_ROOT | LIBPOLKIT_RESULT_AUTH_KEEP_SESSION;
-        } else if (strcmp (s, "auth_root_keep_always") == 0) {
-                *target = LIBPOLKIT_RESULT_NO | LIBPOLKIT_RESULT_AUTH_REQ_ROOT | LIBPOLKIT_RESULT_AUTH_KEEP_ALWAYS;
-        } else if (strcmp (s, "auth_self") == 0) {
-                *target = LIBPOLKIT_RESULT_NO | LIBPOLKIT_RESULT_AUTH_REQ_SELF;
-        } else if (strcmp (s, "auth_self_keep_session") == 0) {
-                *target = LIBPOLKIT_RESULT_NO | LIBPOLKIT_RESULT_AUTH_REQ_SELF | LIBPOLKIT_RESULT_AUTH_KEEP_SESSION;
-        } else if (strcmp (s, "auth_self_keep_always") == 0) {
-                *target = LIBPOLKIT_RESULT_NO | LIBPOLKIT_RESULT_AUTH_REQ_SELF | LIBPOLKIT_RESULT_AUTH_KEEP_ALWAYS;
-        } else {
+                str = g_string_new (NULL);
+                for (n = 0; n < LIBPOLKIT_RESULT_N_RESULTS; n++) {
+                        if (n == LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW)
+                                continue;
+
+                        if (str->len > 0) {
+                                g_string_append (str, ", ");
+                        }
+                        g_string_append (str, libpolkit_result_to_string_representation (n));
+                }
+                s2 = g_string_free (str, FALSE);
+
                 g_set_error (error, 
                              POLKIT_ERROR, 
                              POLKIT_ERROR_PRIVILEGE_FILE_INVALID_VALUE,
-                             "Value %s is not allowed for key %s - supported values are 'yes', 'no', 'auth_root', 'auth_root_keep_session', 'auth_root_keep_always', 'auth_self', 'auth_self_keep_session', 'auth_self_keep_always'", 
+                             "Value %s is not allowed for key %s - supported values are: %s", 
                              s, 
-                             key);
-                ret = FALSE;
+                             key,
+                             s2);
+                g_free (s2);
         }
-
+        
         g_free (s);
         return ret;
 }
@@ -183,7 +174,7 @@ error:
 
 /**
  * libpolkit_privilege_file_ref:
- * @privilege: the privilege object
+ * @privilege_file: the privilege file object
  * 
  * Increase reference count.
  * 
@@ -199,7 +190,7 @@ libpolkit_privilege_file_ref (PolKitPrivilegeFile *privilege_file)
 
 /**
  * libpolkit_privilege_file_unref:
- * @privilege: the privilege object
+ * @privilege_file: the privilege file object
  * 
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
