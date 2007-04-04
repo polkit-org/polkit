@@ -16,7 +16,7 @@ polkit-check-session \- check access
 can access a given resource in a given way. For more information about
 the big picture refer to the \fIPolicyKit spec\fP which can be found
 in
-.I "/usr/share/doc/PolicyKit-@VERSION@/spec/polkit-spec.html"
+.I "@docdir@/spec/polkit-spec.html"
 depending on the distribution.
 
 .SH OPTIONS

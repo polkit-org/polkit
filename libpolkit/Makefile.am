@@ -7,7 +7,7 @@ INCLUDES = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
-	-DPACKAGE_LOCALE_DIR=\""$(prefix)/$(DATADIRNAME)/locale"\" \
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 

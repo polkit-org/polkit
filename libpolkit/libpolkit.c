@@ -120,10 +120,9 @@ libpolkit_can_session_access_resource (PolKitContext   *pk_context,
  *
  * Determine if a given caller can access a given resource in a given way.
  *
- * Returns: TRUE if, and only if, the given caller can access the given interface
- * of the given resource in the given way.
+ * Returns: TRUE if, and only if, the given caller can access the
+ * given resource in the given way.
  */
-
 gboolean
 libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
                                       PolKitPrivilege *privilege,

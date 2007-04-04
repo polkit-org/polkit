@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.57)
+AC_PREREQ(2.59c)
 AC_INIT(PolicyKit, 0.3, david@fubar.dk)
 AM_INIT_AUTOMAKE(PolicyKit, 0.3)
 AM_CONFIG_HEADER(config.h)
@@ -157,24 +157,6 @@ fi
 AM_CONDITIONAL(DOCBOOK_DOCS_ENABLED, test x$enable_docbook_docs = xyes)
 AC_MSG_RESULT(yes)
 
-AS_AC_EXPAND(LOCALSTATEDIR, $localstatedir)
-AS_AC_EXPAND(SYSCONFDIR, $sysconfdir)
-AS_AC_EXPAND(DATADIR, $datadir)
-AS_AC_EXPAND(BINDIR, $bindir)
-AS_AC_EXPAND(SBINDIR, $sbindir)
-AS_AC_EXPAND(LIBDIR, $libdir)
-AS_AC_EXPAND(LIBEXECDIR, $libexecdir)
-
-# documentation target
-AC_ARG_WITH(doc-dir,   [  --with-doc-dir=[dirname]     directory to install documentation])
-if ! test -z "$with_doc_dir"; then
-   DOCDIR=$with_doc_dir
-else
-   DOCDIR="$DATADIR/doc/PolicyKit-$VERSION"
-fi
-
-AC_SUBST(DOCDIR)
-
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
 fi
@@ -191,8 +173,6 @@ doc/api/libpolkit/version.xml
 doc/spec/Makefile
 doc/spec/polkit-spec.xml.in
 doc/man/Makefile
-doc/man/polkit-check-caller.1
-doc/man/polkit-check-session.1
 ])
 
 dnl ==========================================================================
@@ -201,14 +181,14 @@ echo "
                 =================
 
         prefix:                     ${prefix}
-        libdir:                     ${LIBDIR}
-        libexecdir:                 ${LIBEXECDIR}
-        bindir:                     ${BINDIR}
-        sbindir:                    ${SBINDIR}
-        datadir:                    ${DATADIR}
-        sysconfdir:                 ${SYSCONFDIR}
-        localstatedir:              ${LOCALSTATEDIR}
-        docdir:                     ${DOCDIR}
+        libdir:                     ${libdir}
+        libexecdir:                 ${libexecdir}
+        bindir:                     ${bindir}
+        sbindir:                    ${sbindir}
+        datadir:                    ${datadir}
+        sysconfdir:                 ${sysconfdir}
+        localstatedir:              ${localstatedir}
+        docdir:                     ${docdir}
 
         compiler:                   ${CC}
         cflags:                     ${CFLAGS}
