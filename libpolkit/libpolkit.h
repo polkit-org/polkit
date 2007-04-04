@@ -75,6 +75,15 @@ libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
                                       PolKitResource  *resource,
                                       PolKitCaller    *caller);
 
+typedef enum
+{
+        POLKIT_ERROR_PRIVILEGE_FILE_INVALID_VALUE
+} PolKitError;
+
+#define POLKIT_ERROR libpolkit_error_quark()
+
+GQuark libpolkit_error_quark (void);
+
 #endif /* LIBPOLKIT_H */
 
 

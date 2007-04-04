@@ -22,16 +22,18 @@ libpolkitinclude_HEADERS =              		\
 	libpolkit-resource.h				\
 	libpolkit-seat.h				\
 	libpolkit-session.h				\
-	libpolkit-caller.h
+	libpolkit-caller.h				\
+	libpolkit-privilege-file.h
 
-libpolkit_la_SOURCES =                                	\
-	libpolkit.h		libpolkit.c		\
-	libpolkit-context.h	libpolkit-context.c	\
-	libpolkit-privilege.h	libpolkit-privilege.c	\
-	libpolkit-resource.h	libpolkit-resource.c	\
-	libpolkit-seat.h	libpolkit-seat.c	\
-	libpolkit-session.h	libpolkit-session.c	\
-	libpolkit-caller.h	libpolkit-caller.c
+libpolkit_la_SOURCES =                  	              		\
+	libpolkit.h			libpolkit.c			\
+	libpolkit-context.h		libpolkit-context.c		\
+	libpolkit-privilege.h		libpolkit-privilege.c		\
+	libpolkit-resource.h		libpolkit-resource.c		\
+	libpolkit-seat.h		libpolkit-seat.c		\
+	libpolkit-session.h		libpolkit-session.c		\
+	libpolkit-caller.h		libpolkit-caller.c		\
+	libpolkit-privilege-file.h	libpolkit-privilege-file.c
 
 libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@
 

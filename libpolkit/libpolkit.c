@@ -132,3 +132,8 @@ libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
         return FALSE;
 }
 
+GQuark
+libpolkit_error_quark (void)
+{
+        return g_quark_from_static_string ("libpolkit-error-quark");
+}
