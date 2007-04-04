@@ -1,0 +1,12 @@
+
+[Privilege]
+Group=PolicyKit Example
+Identifier=polkit-example-privileges
+Description=Example Privilege
+
+[Defaults]
+AllowRemoteInactive=no
+AllowRemoteActive=auth_root_keep_session
+AllowLocalInactive=auth_self_keep_always
+AllowLocalActive=yes
+
