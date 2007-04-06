@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-resource.h"
 
 /**
@@ -203,5 +204,5 @@ void
 libpolkit_resource_debug (PolKitResource *resource)
 {
         g_return_if_fail (resource != NULL);
-        g_debug ("PolKitResource: refcount=%d type=%s id=%s", resource->refcount, resource->type, resource->id);
+        _pk_debug ("PolKitResource: refcount=%d type=%s id=%s", resource->refcount, resource->type, resource->id);
 }

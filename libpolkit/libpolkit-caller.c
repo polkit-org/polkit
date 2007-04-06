@@ -44,6 +44,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-caller.h"
 
 /**
@@ -414,10 +415,10 @@ libpolkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name,
         }
 
 not_in_session:
-        g_debug ("uid %d", uid);
-        g_debug ("pid %d", pid);
-        g_debug ("selinux context '%s'", selinux_context != NULL ? selinux_context : "(not set)");
-        g_debug ("ck session '%s'", ck_session_objpath != NULL ? ck_session_objpath : "(not in a session)");
+        _pk_debug ("uid %d", uid);
+        _pk_debug ("pid %d", pid);
+        _pk_debug ("selinux context '%s'", selinux_context != NULL ? selinux_context : "(not set)");
+        _pk_debug ("ck session '%s'", ck_session_objpath != NULL ? ck_session_objpath : "(not in a session)");
 
         caller = libpolkit_caller_new ();
         libpolkit_caller_set_dbus_name (caller, dbus_name);
@@ -445,8 +446,8 @@ void
 libpolkit_caller_debug (PolKitCaller *caller)
 {
         g_return_if_fail (caller != NULL);
-        g_debug ("PolKitCaller: refcount=%d dbus_name=%s uid=%d pid=%d selinux_context=%s", 
-                 caller->refcount, caller->dbus_name, caller->uid, caller->pid, caller->selinux_context);
+        _pk_debug ("PolKitCaller: refcount=%d dbus_name=%s uid=%d pid=%d selinux_context=%s", 
+                   caller->refcount, caller->dbus_name, caller->uid, caller->pid, caller->selinux_context);
         if (caller->session != NULL)
                 libpolkit_session_debug (caller->session);
 }

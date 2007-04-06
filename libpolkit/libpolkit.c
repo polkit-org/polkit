@@ -45,6 +45,7 @@
 
 #include <glib.h>
 #include "libpolkit.h"
+#include "libpolkit-debug.h"
 
 /**
  * libpolkit_get_seat_resource_association:
@@ -128,7 +129,7 @@ libpolkit_can_session_access_resource (PolKitContext   *pk_context,
         if (cache == NULL)
                 goto out;
 
-        g_debug ("entering libpolkit_can_session_access_resource()");
+        _pk_debug ("entering libpolkit_can_session_access_resource()");
         libpolkit_privilege_debug (privilege);
         libpolkit_resource_debug (resource);
         libpolkit_session_debug (session);
@@ -154,7 +155,7 @@ libpolkit_can_session_access_resource (PolKitContext   *pk_context,
                 resource, 
                 session);
 out:
-        g_debug ("... result was %s", libpolkit_result_to_string_representation (result));
+        _pk_debug ("... result was %s", libpolkit_result_to_string_representation (result));
         return result;
 }
 
@@ -186,7 +187,7 @@ libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
         if (cache == NULL)
                 goto out;
 
-        g_debug ("entering libpolkit_can_caller_access_resource()");
+        _pk_debug ("entering libpolkit_can_caller_access_resource()");
         libpolkit_privilege_debug (privilege);
         libpolkit_resource_debug (resource);
         libpolkit_caller_debug (caller);
@@ -213,6 +214,6 @@ libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
                 caller);
 
 out:
-        g_debug ("... result was %s", libpolkit_result_to_string_representation (result));
+        _pk_debug ("... result was %s", libpolkit_result_to_string_representation (result));
         return result;
 }

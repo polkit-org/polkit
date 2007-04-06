@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-error.h"
 #include "libpolkit-result.h"
 #include "libpolkit-privilege-file-entry.h"
@@ -140,9 +141,9 @@ void
 libpolkit_privilege_file_entry_debug (PolKitPrivilegeFileEntry *privilege_file_entry)
 {
         g_return_if_fail (privilege_file_entry != NULL);
-        g_debug ("PolKitPrivilegeFileEntry: refcount=%d privilege=%s",
-                 privilege_file_entry->refcount,
-                 privilege_file_entry->privilege);
+        _pk_debug ("PolKitPrivilegeFileEntry: refcount=%d privilege=%s",
+                   privilege_file_entry->refcount,
+                   privilege_file_entry->privilege);
         libpolkit_privilege_default_debug (privilege_file_entry->defaults);
 }
 

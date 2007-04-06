@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-seat.h"
 
 /**
@@ -153,5 +154,5 @@ void
 libpolkit_seat_debug (PolKitSeat *seat)
 {
         g_return_if_fail (seat != NULL);
-        g_debug ("PolKitSeat: refcount=%d objpath=%s", seat->refcount, seat->ck_objref);
+        _pk_debug ("PolKitSeat: refcount=%d objpath=%s", seat->refcount, seat->ck_objref);
 }

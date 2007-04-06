@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-privilege-file.h"
 #include "libpolkit-privilege-cache.h"
 
@@ -112,7 +113,7 @@ libpolkit_privilege_cache_new (const char *dirname, GError **error)
 
                 path = g_strdup_printf ("%s/%s", dirname, file);
 
-                g_debug ("Loading %s", path);
+                _pk_debug ("Loading %s", path);
                 pf = libpolkit_privilege_file_new (path, error);
                 g_free (path);
 
@@ -188,9 +189,9 @@ libpolkit_privilege_cache_debug (PolKitPrivilegeCache *privilege_cache)
         GSList *i;
         g_return_if_fail (privilege_cache != NULL);
 
-        g_debug ("PolKitPrivilegeCache: refcount=%d num_entries=%d ...", 
-                 privilege_cache->refcount,
-                 privilege_cache->priv_entries == NULL ? 0 : g_slist_length (privilege_cache->priv_entries));
+        _pk_debug ("PolKitPrivilegeCache: refcount=%d num_entries=%d ...", 
+                   privilege_cache->refcount,
+                   privilege_cache->priv_entries == NULL ? 0 : g_slist_length (privilege_cache->priv_entries));
 
         for (i = privilege_cache->priv_entries; i != NULL; i = g_slist_next (i)) {
                 PolKitPrivilegeFileEntry *pfe = i->data;
@@ -220,6 +221,8 @@ libpolkit_privilege_cache_get_entry (PolKitPrivilegeCache *privilege_cache,
         PolKitPrivilegeFileEntry *pfe;
 
         pfe = NULL;
+
+        /* I'm sure it would be easy to make this O(1)... */
 
         g_return_val_if_fail (privilege_cache != NULL, NULL);
         g_return_val_if_fail (privilege != NULL, NULL);

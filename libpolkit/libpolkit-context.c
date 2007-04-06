@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-context.h"
 #include "libpolkit-privilege-cache.h"
 
@@ -65,7 +66,12 @@ struct PolKitContext
  * libpolkit_context_new:
  * @error: return location for error
  * 
- * Create a new context.
+ * Create a new context; loads PolicyKit files from
+ * /etc/PolicyKit/privileges unless the environment variable
+ * $POLKIT_PRIVILEGE_DIR points to a location.
+ *
+ * If the environment $POLKIT_DEBUG is set, libpolkit will spew lots
+ * of debug.
  * 
  * Returns: #NULL if @error was set, otherwise the #PolKitPrivilegeCache object
  **/
@@ -77,9 +83,9 @@ libpolkit_context_new (GError **error)
         pk_context = g_new0 (PolKitContext, 1);
         pk_context->refcount = 1;
 
-        dirname = getenv ("POLKIT_PRIV_DIR");
+        dirname = getenv ("POLKIT_PRIVILEGE_DIR");
         if (dirname != NULL) {
-                g_debug ("Using directory %s", dirname);
+                _pk_debug ("Using directory %s", dirname);
         } else {
                 dirname = PACKAGE_SYSCONF_DIR "/PolicyKit/privileges";
         }

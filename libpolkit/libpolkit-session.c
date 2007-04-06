@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-session.h"
 
 
@@ -476,13 +477,13 @@ libpolkit_session_new_from_objpath (DBusConnection *con, const char *objpath, ui
                 dbus_message_unref (reply);
         }
 
-        g_debug ("is_active %d", is_active);
-        g_debug ("is_local %d", is_local);
-        g_debug ("uid %d", uid);
+        _pk_debug ("is_active %d", is_active);
+        _pk_debug ("is_local %d", is_local);
+        _pk_debug ("uid %d", uid);
         if (!is_local) {
-                g_debug ("remote host '%s'", remote_host);
+                _pk_debug ("remote host '%s'", remote_host);
         }
-        g_debug ("ck seat '%s'", seat_path);
+        _pk_debug ("ck seat '%s'", seat_path);
 
         session = libpolkit_session_new ();
         libpolkit_session_set_ck_is_active (session, is_active);
@@ -573,8 +574,9 @@ void
 libpolkit_session_debug (PolKitSession *session)
 {
         g_return_if_fail (session != NULL);
-        g_debug ("PolKitSession: refcount=%d objpath=%s is_active=%d is_local=%d remote_host=%s", 
-                 session->refcount, session->ck_objref, session->is_active, session->is_local, session->remote_host);
+        _pk_debug ("PolKitSession: refcount=%d uid=%d objpath=%s is_active=%d is_local=%d remote_host=%s", 
+                   session->refcount, session->uid,
+                   session->ck_objref, session->is_active, session->is_local, session->remote_host);
         if (session->seat != NULL)
                 libpolkit_seat_debug (session->seat);
 }

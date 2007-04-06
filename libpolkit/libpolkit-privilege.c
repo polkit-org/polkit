@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-privilege.h"
 
 /**
@@ -155,5 +156,5 @@ void
 libpolkit_privilege_debug (PolKitPrivilege *privilege)
 {
         g_return_if_fail (privilege != NULL);
-        g_debug ("PolKitPrivilege: refcount=%d id=%s", privilege->refcount, privilege->id);
+        _pk_debug ("PolKitPrivilege: refcount=%d id=%s", privilege->refcount, privilege->id);
 }

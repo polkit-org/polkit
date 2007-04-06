@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include <glib.h>
+#include "libpolkit-debug.h"
 #include "libpolkit-error.h"
 #include "libpolkit-privilege-default.h"
 
@@ -199,16 +200,16 @@ void
 libpolkit_privilege_default_debug (PolKitPrivilegeDefault *privilege_default)
 {
         g_return_if_fail (privilege_default != NULL);
-        g_debug ("PolKitPrivilegeDefault: refcount=%d\n"
-                 "  default_remote_inactive=%s\n"
-                 "    default_remote_active=%s\n"
-                 "   default_local_inactive=%s\n"
-                 "     default_local_active=%s", 
-                 privilege_default->refcount,
-                 libpolkit_result_to_string_representation (privilege_default->default_remote_inactive),
-                 libpolkit_result_to_string_representation (privilege_default->default_remote_active),
-                 libpolkit_result_to_string_representation (privilege_default->default_local_inactive),
-                 libpolkit_result_to_string_representation (privilege_default->default_local_active));
+        _pk_debug ("PolKitPrivilegeDefault: refcount=%d\n"
+                   "  default_remote_inactive=%s\n"
+                   "    default_remote_active=%s\n"
+                   "   default_local_inactive=%s\n"
+                   "     default_local_active=%s", 
+                   privilege_default->refcount,
+                   libpolkit_result_to_string_representation (privilege_default->default_remote_inactive),
+                   libpolkit_result_to_string_representation (privilege_default->default_remote_active),
+                   libpolkit_result_to_string_representation (privilege_default->default_local_inactive),
+                   libpolkit_result_to_string_representation (privilege_default->default_local_active));
 }
 
 

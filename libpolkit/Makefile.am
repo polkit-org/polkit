@@ -43,7 +43,8 @@ libpolkit_la_SOURCES =                  	              				\
 	libpolkit-privilege-file-entry.h	libpolkit-privilege-file-entry.c	\
 	libpolkit-privilege-file.h		libpolkit-privilege-file.c		\
 	libpolkit-privilege-cache.h		libpolkit-privilege-cache.c		\
-	libpolkit-privilege-default.h		libpolkit-privilege-default.c
+	libpolkit-privilege-default.h		libpolkit-privilege-default.c		\
+	libpolkit-debug.h			libpolkit-debug.c
 
 libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@
 
