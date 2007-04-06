@@ -76,6 +76,7 @@ main (int argc, char *argv[])
         PolKitResource *resource;
         PolKitPrivilege *privilege;
         gboolean allowed;
+        GError *g_error;
 
 	if (argc <= 1) {
 		usage (argc, argv);
@@ -145,7 +146,13 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-        pol_ctx = libpolkit_context_new ();
+        g_error = NULL;
+        pol_ctx = libpolkit_context_new (&g_error);
+        if (pol_ctx == NULL) {
+		fprintf (stderr, "error: libpolkit_context_new: %s\n", g_error->message);
+                g_error_free (g_error);
+                return 1;
+        }
 
         privilege = libpolkit_privilege_new ();
         libpolkit_privilege_set_privilege_id (privilege, privilege_id);

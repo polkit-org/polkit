@@ -57,52 +57,8 @@
 struct PolKitPrivilegeFile
 {
         int refcount;
-        char *group;
-        char *identifier;
-        char *description;
-
-        PolKitResult default_remote_inactive;
-        PolKitResult default_remote_active;
-        PolKitResult default_local_inactive;
-        PolKitResult default_local_active;
+        GSList *entries;
 };
-
-static gboolean
-parse_default (const char *key, char *s, PolKitResult* target, GError **error)
-{
-        gboolean ret;
-
-        ret = libpolkit_result_from_string_representation (s, target);
-        if (!ret) {
-                int n;
-                char *s2;
-                GString *str;
-
-                str = g_string_new (NULL);
-                for (n = 0; n < LIBPOLKIT_RESULT_N_RESULTS; n++) {
-                        if (n == LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW)
-                                continue;
-
-                        if (str->len > 0) {
-                                g_string_append (str, ", ");
-                        }
-                        g_string_append (str, libpolkit_result_to_string_representation (n));
-                }
-                s2 = g_string_free (str, FALSE);
-
-                g_set_error (error, 
-                             POLKIT_ERROR, 
-                             POLKIT_ERROR_PRIVILEGE_FILE_INVALID_VALUE,
-                             "Value %s is not allowed for key %s - supported values are: %s", 
-                             s, 
-                             key,
-                             s2);
-                g_free (s2);
-        }
-        
-        g_free (s);
-        return ret;
-}
 
 /**
  * libpolkit_privilege_file_new:
@@ -120,11 +76,21 @@ libpolkit_privilege_file_new (const char *path, GError **error)
 {
         GKeyFile *key_file;
         PolKitPrivilegeFile *pf;
-        char *s;
-        const char *key;
-        const char *group;
+        char **groups;
+        gsize groups_len;
+        int n;
 
         pf = NULL;
+        key_file = NULL;
+        groups = NULL;
+
+        if (!g_str_has_suffix (path, ".priv")) {
+                g_set_error (error, 
+                             POLKIT_ERROR, 
+                             POLKIT_ERROR_PRIVILEGE_FILE_INVALID,
+                             "Privilege files must have extension .priv");
+                goto error;
+        }
 
         key_file = g_key_file_new ();
         if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
@@ -133,40 +99,45 @@ libpolkit_privilege_file_new (const char *path, GError **error)
         pf = g_new0 (PolKitPrivilegeFile, 1);
         pf->refcount = 1;
 
-        group = "Privilege";
-        if ((pf->group = g_key_file_get_string (key_file, group, "Group", error)) == NULL)
-                goto error;
-        if ((pf->identifier = g_key_file_get_string (key_file, group, "Identifier", error)) == NULL)
-                goto error;
-        if ((pf->description = g_key_file_get_string (key_file, group, "Description", error)) == NULL)
+        groups = g_key_file_get_groups(key_file, &groups_len);
+        if (groups == NULL)
                 goto error;
 
-        group = "Defaults";
-        key = "AllowRemoteInactive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, &pf->default_remote_inactive, error))
-                goto error;
-        key = "AllowRemoteActive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, &pf->default_remote_active, error))
-                goto error;
-        key = "AllowLocalInactive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, &pf->default_local_inactive, error))
-                goto error;
-        key = "AllowLocalActive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, &pf->default_local_active, error))
-                goto error;
+        for (n = 0; groups[n] != NULL; n++) {
+                const char *privilege;
+                PolKitPrivilegeFileEntry *pfe;
 
+                if (!g_str_has_prefix (groups[n], "Privilege ")) {
+                        g_set_error (error, 
+                                     POLKIT_ERROR, 
+                                     POLKIT_ERROR_PRIVILEGE_FILE_INVALID,
+                                     "Unknown group of name '%s'", groups[n]);
+                        goto error;
+                }
+
+                privilege = groups[n] + 10; /* strlen ("Privilege ") */
+                if (strlen (privilege) == 0) {
+                        g_set_error (error, 
+                                     POLKIT_ERROR, 
+                                     POLKIT_ERROR_PRIVILEGE_FILE_INVALID,
+                                     "Zero-length privilege name");
+                        goto error;
+                }
+
+                pfe = libpolkit_privilege_file_entry_new (key_file, privilege, error);
+                if (pfe == NULL)
+                        goto error;
+                pf->entries = g_slist_prepend (pf->entries, pfe);
+        }
+
+        g_strfreev (groups);
         g_key_file_free (key_file);
         return pf;
 error:
-        g_key_file_free (key_file);
+        if (groups != NULL)
+                g_strfreev (groups);
+        if (key_file != NULL)
+                g_key_file_free (key_file);
         if (pf != NULL)
                 libpolkit_privilege_file_unref (pf);
         return NULL;
@@ -199,13 +170,31 @@ libpolkit_privilege_file_ref (PolKitPrivilegeFile *privilege_file)
 void
 libpolkit_privilege_file_unref (PolKitPrivilegeFile *privilege_file)
 {
+        GSList *i;
         g_return_if_fail (privilege_file != NULL);
         privilege_file->refcount--;
         if (privilege_file->refcount > 0) 
                 return;
-        g_free (privilege_file->group);
-        g_free (privilege_file->identifier);
-        g_free (privilege_file->description);
+        for (i = privilege_file->entries; i != NULL; i = g_slist_next (i)) {
+                libpolkit_privilege_file_entry_unref (i->data);
+        }
+        if (privilege_file->entries != NULL)
+                g_slist_free (privilege_file->entries);
         g_free (privilege_file);
+}
+
+/**
+ * libpolkit_privilege_file_get_entries:
+ * @privilege_file: the privilege file object
+ * 
+ * Get the entries stemming from the given file.
+ * 
+ * Returns: A #GSList of the entries.
+ **/
+GSList *
+libpolkit_privilege_file_get_entries (PolKitPrivilegeFile *privilege_file)
+{
+        g_return_val_if_fail (privilege_file != NULL, NULL);
+        return privilege_file->entries;
 }
 

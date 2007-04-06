@@ -22,7 +22,6 @@ polkit_check_session_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/l
 polkit_privilege_file_validate_SOURCES = polkit-privilege-file-validate.c
 polkit_privilege_file_validate_LDADD = @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
 
-
 clean-local :
 	rm -f *~
 

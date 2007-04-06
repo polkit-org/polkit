@@ -192,3 +192,16 @@ libpolkit_resource_get_resource_id (PolKitResource *resource, char **out_resourc
         *out_resource_id = resource->id;
         return TRUE;
 }
+
+/**
+ * libpolkit_resource_debug:
+ * @resource: the object
+ * 
+ * Print debug details
+ **/
+void
+libpolkit_resource_debug (PolKitResource *resource)
+{
+        g_return_if_fail (resource != NULL);
+        g_debug ("PolKitResource: refcount=%d type=%s id=%s", resource->refcount, resource->type, resource->id);
+}

@@ -118,7 +118,44 @@ libpolkit_can_session_access_resource (PolKitContext   *pk_context,
                                        PolKitResource  *resource,
                                        PolKitSession   *session)
 {
-        return LIBPOLKIT_RESULT_NO;
+        PolKitPrivilegeCache *cache;
+        PolKitResult result;
+        PolKitPrivilegeFileEntry *pfe;
+
+        result = LIBPOLKIT_RESULT_NO;
+
+        cache = libpolkit_context_get_privilege_cache (pk_context);
+        if (cache == NULL)
+                goto out;
+
+        g_debug ("entering libpolkit_can_session_access_resource()");
+        libpolkit_privilege_debug (privilege);
+        libpolkit_resource_debug (resource);
+        libpolkit_session_debug (session);
+
+        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
+        if (pfe == NULL) {
+                char *privilege_name;
+                if (!libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
+                        g_warning ("given privilege has no name");
+                } else {
+                        g_warning ("no privilege with name '%s'", privilege_name);
+                }
+                result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                goto out;
+        }
+
+        libpolkit_privilege_file_entry_debug (pfe);
+        
+        /* for now, hardcode to defaults */
+        result = libpolkit_privilege_default_can_session_access_resource (
+                libpolkit_privilege_file_entry_get_default (pfe), 
+                privilege, 
+                resource, 
+                session);
+out:
+        g_debug ("... result was %s", libpolkit_result_to_string_representation (result));
+        return result;
 }
 
 /**
@@ -139,5 +176,43 @@ libpolkit_can_caller_access_resource (PolKitContext   *pk_context,
                                       PolKitResource  *resource,
                                       PolKitCaller    *caller)
 {
-        return LIBPOLKIT_RESULT_NO;
+        PolKitPrivilegeCache *cache;
+        PolKitResult result;
+        PolKitPrivilegeFileEntry *pfe;
+
+        result = LIBPOLKIT_RESULT_NO;
+
+        cache = libpolkit_context_get_privilege_cache (pk_context);
+        if (cache == NULL)
+                goto out;
+
+        g_debug ("entering libpolkit_can_caller_access_resource()");
+        libpolkit_privilege_debug (privilege);
+        libpolkit_resource_debug (resource);
+        libpolkit_caller_debug (caller);
+
+        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
+        if (pfe == NULL) {
+                char *privilege_name;
+                if (!libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
+                        g_warning ("given privilege has no name");
+                } else {
+                        g_warning ("no privilege with name '%s'", privilege_name);
+                }
+                result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                goto out;
+        }
+
+        libpolkit_privilege_file_entry_debug (pfe);
+
+        /* for now, hardcode to defaults */
+        result = libpolkit_privilege_default_can_caller_access_resource (
+                libpolkit_privilege_file_entry_get_default (pfe), 
+                privilege, 
+                resource, 
+                caller);
+
+out:
+        g_debug ("... result was %s", libpolkit_result_to_string_representation (result));
+        return result;
 }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * libpolkit-seat.h : seats
+ * libpolkit-privilege-file-entry.h : entries in privilege files
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,25 +23,29 @@
  *
  **************************************************************************/
 
-#ifndef LIBPOLKIT_SEAT_H
-#define LIBPOLKIT_SEAT_H
+#ifndef LIBPOLKIT_PRIVILEGE_FILE_ENTRY_H
+#define LIBPOLKIT_PRIVILEGE_FILE_ENTRY_H
 
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <glib.h>
 
-struct PolKitSeat;
-typedef struct PolKitSeat PolKitSeat;
+#include <libpolkit/libpolkit-result.h>
+#include <libpolkit/libpolkit-privilege-default.h>
 
-PolKitSeat *libpolkit_seat_new           (void);
-PolKitSeat *libpolkit_seat_ref           (PolKitSeat *seat);
-void        libpolkit_seat_unref         (PolKitSeat *seat);
-void        libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char  *ck_objref);
-gboolean    libpolkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_objref);
+struct PolKitPrivilegeFileEntry;
+typedef struct PolKitPrivilegeFileEntry PolKitPrivilegeFileEntry;
 
-void        libpolkit_seat_debug         (PolKitSeat *seat);
+PolKitPrivilegeFileEntry *libpolkit_privilege_file_entry_new   (GKeyFile *key_file, const char *privilege, GError **error);
+PolKitPrivilegeFileEntry *libpolkit_privilege_file_entry_ref   (PolKitPrivilegeFileEntry *privilege_file_entry);
+void                      libpolkit_privilege_file_entry_unref (PolKitPrivilegeFileEntry *privilege_file_entry);
+void                      libpolkit_privilege_file_entry_debug (PolKitPrivilegeFileEntry *privilege_file_entry);
 
-#endif /* LIBPOLKIT_SEAT_H */
+const char             *libpolkit_privilege_file_entry_get_id      (PolKitPrivilegeFileEntry *privilege_file_entry);
+PolKitPrivilegeDefault *libpolkit_privilege_file_entry_get_default (PolKitPrivilegeFileEntry *privilege_file_entry);
+
+
+#endif /* LIBPOLKIT_PRIVILEGE_FILE_ENTRY_H */
 
 

@@ -40,6 +40,8 @@ void             libpolkit_privilege_unref            (PolKitPrivilege *privileg
 void             libpolkit_privilege_set_privilege_id (PolKitPrivilege *privilege, const char  *privilege_id);
 gboolean         libpolkit_privilege_get_privilege_id (PolKitPrivilege *privilege, char       **out_privilege_id);
 
+void             libpolkit_privilege_debug            (PolKitPrivilege *privilege);
+
 #endif /* LIBPOLKIT_PRIVILEGE_H */
 
 

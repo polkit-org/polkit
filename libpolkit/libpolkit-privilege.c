@@ -144,3 +144,16 @@ libpolkit_privilege_get_privilege_id (PolKitPrivilege *privilege, char **out_pri
         *out_privilege_id = privilege->id;
         return TRUE;
 }
+
+/**
+ * libpolkit_privilege_debug:
+ * @privilege: the object
+ * 
+ * Print debug details
+ **/
+void
+libpolkit_privilege_debug (PolKitPrivilege *privilege)
+{
+        g_return_if_fail (privilege != NULL);
+        g_debug ("PolKitPrivilege: refcount=%d id=%s", privilege->refcount, privilege->id);
+}

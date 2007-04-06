@@ -55,4 +55,6 @@ gboolean       libpolkit_session_get_ck_is_active   (PolKitSession *session, gbo
 gboolean       libpolkit_session_get_ck_is_local    (PolKitSession *session, gboolean       *out_is_local);
 gboolean       libpolkit_session_get_ck_remote_host (PolKitSession *session, char          **out_remote_host);
 
+void           libpolkit_session_debug              (PolKitSession *session);
+
 #endif /* LIBPOLKIT_SESSION_H */

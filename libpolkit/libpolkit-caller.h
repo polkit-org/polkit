@@ -52,6 +52,8 @@ gboolean          libpolkit_caller_get_pid             (PolKitCaller   *caller, 
 gboolean          libpolkit_caller_get_selinux_context (PolKitCaller   *caller, char          **out_selinux_context);
 gboolean          libpolkit_caller_get_ck_session      (PolKitCaller   *caller, PolKitSession **out_session);
 
+void              libpolkit_caller_debug               (PolKitCaller   *caller);
+
 #endif /* LIBPOLKIT_H */
 
 

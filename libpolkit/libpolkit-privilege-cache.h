@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * libpolkit-seat.h : seats
+ * libpolkit-privilege-cache.h : privilege cache
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,25 +23,28 @@
  *
  **************************************************************************/
 
-#ifndef LIBPOLKIT_SEAT_H
-#define LIBPOLKIT_SEAT_H
+#ifndef LIBPOLKIT_PRIVILEGE_CACHE_H
+#define LIBPOLKIT_PRIVILEGE_CACHE_H
 
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <glib.h>
 
-struct PolKitSeat;
-typedef struct PolKitSeat PolKitSeat;
+#include <libpolkit/libpolkit-privilege.h>
+#include <libpolkit/libpolkit-privilege-file-entry.h>
 
-PolKitSeat *libpolkit_seat_new           (void);
-PolKitSeat *libpolkit_seat_ref           (PolKitSeat *seat);
-void        libpolkit_seat_unref         (PolKitSeat *seat);
-void        libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char  *ck_objref);
-gboolean    libpolkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_objref);
+struct PolKitPrivilegeCache;
+typedef struct PolKitPrivilegeCache PolKitPrivilegeCache;
 
-void        libpolkit_seat_debug         (PolKitSeat *seat);
+PolKitPrivilegeCache *libpolkit_privilege_cache_new                   (const char *dirname, GError **error);
+PolKitPrivilegeCache *libpolkit_privilege_cache_ref                   (PolKitPrivilegeCache *privilege_cache);
+void                  libpolkit_privilege_cache_unref                 (PolKitPrivilegeCache *privilege_cache);
+void                  libpolkit_privilege_cache_debug                 (PolKitPrivilegeCache *privilege_cache);
 
-#endif /* LIBPOLKIT_SEAT_H */
+PolKitPrivilegeFileEntry* libpolkit_privilege_cache_get_entry (PolKitPrivilegeCache *privilege_cache,
+                                                               PolKitPrivilege      *privilege);
+
+#endif /* LIBPOLKIT_PRIVILEGE_CACHE_H */
 
 

@@ -52,6 +52,7 @@ static const struct {
         const char *str;
 } mapping[] = 
 {
+        {LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE, "unknown"},
         {LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW, "not_authorized"},
         {LIBPOLKIT_RESULT_YES, "yes"},
         {LIBPOLKIT_RESULT_NO, "no"},
@@ -109,7 +110,6 @@ libpolkit_result_from_string_representation (const char *string, PolKitResult *o
                 }
         }
 
-        /* don't print a warning; this is used by polkit-privilege-file-validate */
         return FALSE;
 
 found:

@@ -142,3 +142,16 @@ libpolkit_seat_get_ck_objref (PolKitSeat *seat, char **out_ck_objref)
         *out_ck_objref = seat->ck_objref;
         return TRUE;
 }
+
+/**
+ * libpolkit_seat_debug:
+ * @seat: the object
+ * 
+ * Print debug details
+ **/
+void
+libpolkit_seat_debug (PolKitSeat *seat)
+{
+        g_return_if_fail (seat != NULL);
+        g_debug ("PolKitSeat: refcount=%d objpath=%s", seat->refcount, seat->ck_objref);
+}

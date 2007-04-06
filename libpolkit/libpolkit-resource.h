@@ -42,6 +42,8 @@ void            libpolkit_resource_set_resource_id   (PolKitResource *resource, 
 gboolean        libpolkit_resource_get_resource_type (PolKitResource *resource, char       **out_resource_type);
 gboolean        libpolkit_resource_get_resource_id   (PolKitResource *resource, char       **out_resource_id);
 
+void            libpolkit_resource_debug             (PolKitResource *resource);
+
 #endif /* LIBPOLKIT_RESOURCE_H */
 
 

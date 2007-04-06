@@ -30,6 +30,7 @@
 
 /**
  * PolKitResult:
+ * @LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE: The passed privilege is unknown.
  * @LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW: The caller of libpolkit is not sufficiently privilege to know the answer.
  * @LIBPOLKIT_RESULT_YES: Access granted.
  * @LIBPOLKIT_RESULT_NO: Access denied.
@@ -51,6 +52,7 @@
  */
 typedef enum
 {
+        LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE,
         LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
         LIBPOLKIT_RESULT_YES,
         LIBPOLKIT_RESULT_NO,

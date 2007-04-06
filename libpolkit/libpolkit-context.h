@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <glib.h>
 
+#include <libpolkit/libpolkit-privilege-cache.h>
+
 struct PolKitContext;
 typedef struct PolKitContext PolKitContext;
 
@@ -44,13 +46,14 @@ typedef struct PolKitContext PolKitContext;
 typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
                                               gpointer        user_data);
 
-PolKitContext *libpolkit_context_new                (void);
+PolKitContext *libpolkit_context_new                (GError                      **error);
 PolKitContext *libpolkit_context_ref                (PolKitContext                *pk_context);
 void           libpolkit_context_set_config_changed (PolKitContext                *pk_context, 
                                                      PolKitContextConfigChangedCB  cb, 
                                                      gpointer                      user_data);
 void           libpolkit_context_unref              (PolKitContext                *pk_context);
 
+PolKitPrivilegeCache *libpolkit_context_get_privilege_cache (PolKitContext *pk_context);
 
 #endif /* LIBPOLKIT_CONTEXT_H */
 

@@ -1,7 +1,7 @@
 
 if MAN_PAGES_ENABLED
 
-MAN_IN_FILES = polkit-check-caller.1.in polkit-check-session.1.in
+MAN_IN_FILES = polkit-check-caller.1.in polkit-check-session.1.in polkit-privilege-file-validate.1.in
 
 man_MANS = $(MAN_IN_FILES:.in=)
 

@@ -70,6 +70,9 @@
     <xi:include href="xml/libpolkit-context.xml"/>
     <xi:include href="xml/libpolkit-privilege.xml"/>
     <xi:include href="xml/libpolkit-privilege-file.xml"/>
+    <xi:include href="xml/libpolkit-privilege-file-entry.xml"/>
+    <xi:include href="xml/libpolkit-privilege-cache.xml"/>
+    <xi:include href="xml/libpolkit-privilege-default.xml"/>
     <xi:include href="xml/libpolkit-resource.xml"/>
     <xi:include href="xml/libpolkit-seat.xml"/>
     <xi:include href="xml/libpolkit-session.xml"/>

@@ -25,19 +25,25 @@ libpolkitinclude_HEADERS =              		\
 	libpolkit-seat.h				\
 	libpolkit-session.h				\
 	libpolkit-caller.h				\
-	libpolkit-privilege-file.h
+	libpolkit-privilege-file-entry.h		\
+	libpolkit-privilege-file.h			\
+	libpolkit-privilege-cache.h			\
+	libpolkit-privilege-default.h
 
-libpolkit_la_SOURCES =                  	              		\
-	libpolkit.h			libpolkit.c			\
-	libpolkit-error.h		libpolkit-error.c		\
-	libpolkit-result.h		libpolkit-result.c		\
-	libpolkit-context.h		libpolkit-context.c		\
-	libpolkit-privilege.h		libpolkit-privilege.c		\
-	libpolkit-resource.h		libpolkit-resource.c		\
-	libpolkit-seat.h		libpolkit-seat.c		\
-	libpolkit-session.h		libpolkit-session.c		\
-	libpolkit-caller.h		libpolkit-caller.c		\
-	libpolkit-privilege-file.h	libpolkit-privilege-file.c
+libpolkit_la_SOURCES =                  	              				\
+	libpolkit.h				libpolkit.c				\
+	libpolkit-error.h			libpolkit-error.c			\
+	libpolkit-result.h			libpolkit-result.c			\
+	libpolkit-context.h			libpolkit-context.c			\
+	libpolkit-privilege.h			libpolkit-privilege.c			\
+	libpolkit-resource.h			libpolkit-resource.c			\
+	libpolkit-seat.h			libpolkit-seat.c			\
+	libpolkit-session.h			libpolkit-session.c			\
+	libpolkit-caller.h			libpolkit-caller.c			\
+	libpolkit-privilege-file-entry.h	libpolkit-privilege-file-entry.c	\
+	libpolkit-privilege-file.h		libpolkit-privilege-file.c		\
+	libpolkit-privilege-cache.h		libpolkit-privilege-cache.c		\
+	libpolkit-privilege-default.h		libpolkit-privilege-default.c
 
 libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@
 

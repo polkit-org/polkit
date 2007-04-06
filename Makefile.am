@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = libpolkit doc tools
+SUBDIRS = libpolkit doc tools privileges
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libpolkit.pc

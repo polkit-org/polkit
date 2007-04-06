@@ -31,12 +31,15 @@
 #include <sys/types.h>
 #include <glib.h>
 
+#include <libpolkit/libpolkit-privilege-file-entry.h>
+
 struct PolKitPrivilegeFile;
 typedef struct PolKitPrivilegeFile PolKitPrivilegeFile;
 
-PolKitPrivilegeFile *libpolkit_privilege_file_new   (const char          *path, GError **error);
-PolKitPrivilegeFile *libpolkit_privilege_file_ref   (PolKitPrivilegeFile *privilege_file);
-void                 libpolkit_privilege_file_unref (PolKitPrivilegeFile *privilege_file);
+PolKitPrivilegeFile *libpolkit_privilege_file_new         (const char          *path, GError **error);
+PolKitPrivilegeFile *libpolkit_privilege_file_ref         (PolKitPrivilegeFile *privilege_file);
+GSList              *libpolkit_privilege_file_get_entries (PolKitPrivilegeFile *privilege_file);
+void                 libpolkit_privilege_file_unref       (PolKitPrivilegeFile *privilege_file);
 
 #endif /* LIBPOLKIT_PRIVILEGE_FILE_H */
 

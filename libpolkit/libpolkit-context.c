@@ -38,6 +38,7 @@
 
 #include <glib.h>
 #include "libpolkit-context.h"
+#include "libpolkit-privilege-cache.h"
 
 /**
  * SECTION:libpolkit-context
@@ -56,22 +57,42 @@ struct PolKitContext
         int refcount;
         PolKitContextConfigChangedCB config_changed_cb;
         gpointer config_changed_user_data;
+
+        PolKitPrivilegeCache *priv_cache;
 };
 
 /**
  * libpolkit_context_new:
+ * @error: return location for error
  * 
  * Create a new context.
  * 
- * Returns: the new context object
+ * Returns: #NULL if @error was set, otherwise the #PolKitPrivilegeCache object
  **/
 PolKitContext *
-libpolkit_context_new (void)
+libpolkit_context_new (GError **error)
 {
+        const char *dirname;
         PolKitContext *pk_context;
         pk_context = g_new0 (PolKitContext, 1);
         pk_context->refcount = 1;
+
+        dirname = getenv ("POLKIT_PRIV_DIR");
+        if (dirname != NULL) {
+                g_debug ("Using directory %s", dirname);
+        } else {
+                dirname = PACKAGE_SYSCONF_DIR "/PolicyKit/privileges";
+        }
+
+        pk_context->priv_cache = libpolkit_privilege_cache_new (dirname, error);
+        if (pk_context->priv_cache == NULL)
+                goto error;
+        libpolkit_privilege_cache_debug (pk_context->priv_cache);
+
         return pk_context;
+error:
+        libpolkit_context_unref (pk_context);
+        return NULL;
 }
 
 /**
@@ -127,4 +148,19 @@ libpolkit_context_set_config_changed (PolKitContext                *pk_context,
         g_return_if_fail (pk_context != NULL);
         pk_context->config_changed_cb = cb;
         pk_context->config_changed_user_data = user_data;
+}
+
+/**
+ * libpolkit_context_get_privilege_cache:
+ * @pk_context: the context
+ * 
+ * Get the #PolKitPrivilegeCache object that holds all the defined privileges as well as their defaults.
+ * 
+ * Returns: the #PolKitPrivilegeCache object. Caller shall not unref it.
+ **/
+PolKitPrivilegeCache *
+libpolkit_context_get_privilege_cache (PolKitContext *pk_context)
+{
+        g_return_val_if_fail (pk_context != NULL, NULL);
+        return pk_context->priv_cache;
 }

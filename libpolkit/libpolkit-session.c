@@ -563,3 +563,18 @@ out:
         return session;
 }
 
+/**
+ * libpolkit_session_debug:
+ * @session: the object
+ * 
+ * Print debug details
+ **/
+void
+libpolkit_session_debug (PolKitSession *session)
+{
+        g_return_if_fail (session != NULL);
+        g_debug ("PolKitSession: refcount=%d objpath=%s is_active=%d is_local=%d remote_host=%s", 
+                 session->refcount, session->ck_objref, session->is_active, session->is_local, session->remote_host);
+        if (session->seat != NULL)
+                libpolkit_seat_debug (session->seat);
+}
