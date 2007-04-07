@@ -111,7 +111,7 @@ libpolkit_privilege_cache_new (const char *dirname, GError **error)
                 if (!g_str_has_suffix (file, ".priv"))
                         continue;
 
-                if (g_str_has_suffix (file, "."))
+                if (g_str_has_prefix (file, "."))
                         continue;
 
                 path = g_strdup_printf ("%s/%s", dirname, file);

@@ -257,7 +257,7 @@ libpolkit_context_get_privilege_cache (PolKitContext *pk_context)
                                    pk_context->priv_dir, error->message);
                         g_error_free (error);
                 } else {
-                        libpolkit_privilege_cache_debug (pk_context->priv_cache);
+                        /*libpolkit_privilege_cache_debug (pk_context->priv_cache)*/;
                 }
         }
 
