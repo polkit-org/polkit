@@ -8,7 +8,7 @@ polkit-privilege-file-validate \- check access
 .SH SYNOPSIS
 .PP
 .B polkit-privilege-file-validate
-[options]
+<privilege-files>
 
 .SH DESCRIPTION
 
@@ -23,9 +23,6 @@ depending on the distribution.
 .SH OPTIONS
 The following options are supported:
 .TP
-.I "--file"
-File to validate.
-.TP
 .I "--help"
 Print out usage.
 .TP
@@ -34,8 +31,8 @@ Print the version.
 
 .SH RETURN VALUE
 .PP
-If the file validates, this program exits with exit code 0. Otherwise
-the program exits with a non-zero exit code.
+If the given files are all valid, this program exits with exit code
+0. Otherwise the program exits with a non-zero exit code.
 
 .SH BUGS
 .PP

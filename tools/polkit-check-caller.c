@@ -130,7 +130,7 @@ main (int argc, char *argv[])
 	}
 
 	if (is_version) {
-		printf ("pk-can-caller-access-resource " PACKAGE_VERSION "\n");
+		printf ("polkit-check-caller " PACKAGE_VERSION "\n");
 		return 0;
 	}
 
@@ -147,9 +147,9 @@ main (int argc, char *argv[])
 	}
 
         g_error = NULL;
-        pol_ctx = libpolkit_context_new (&g_error);
-        if (pol_ctx == NULL) {
-		fprintf (stderr, "error: libpolkit_context_new: %s\n", g_error->message);
+        pol_ctx = libpolkit_context_new ();
+        if (!libpolkit_context_init (pol_ctx, &g_error)) {
+		fprintf (stderr, "error: libpolkit_context_init: %s\n", g_error->message);
                 g_error_free (g_error);
                 return 1;
         }

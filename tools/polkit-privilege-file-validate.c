@@ -42,96 +42,57 @@ usage (int argc, char *argv[])
 {
 	fprintf (stderr,
                  "\n"
-                 "usage : polkit-privilege-file-validate --file <privilege-file>\n"
+                 "usage : polkit-privilege-file-validate <privilege-files>\n"
                  "        [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
-                 "        --file           File to validate\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
-                 "Validates a PolicyKit privilege file. Returns 0 if it validates. If\n"
-                 "not, the program exits with a non-zero exit code.\n");
+                 "Validates one or more PolicyKit privilege file. Returns 0 if it validates.\n"
+                 "If not, the program exits with a non-zero exit code.\n");
 }
 
-int
-main (int argc, char *argv[])
+static gboolean
+validate_file (const char *file)
 {
-        char *file = NULL;
-        gboolean is_version = FALSE;
-        gboolean validated;
         PolKitPrivilegeFile *priv_file;
         GError *error = NULL;
-
-        validated = FALSE;
-
-	if (argc <= 1) {
-		usage (argc, argv);
-                goto out;
-	}
-
-	while (1) {
-		int c;
-		int option_index = 0;
-		const char *opt;
-		static struct option long_options[] = {
-			{"file", 1, NULL, 0},
-			{"version", 0, NULL, 0},
-			{"help", 0, NULL, 0},
-			{NULL, 0, NULL, 0}
-		};
-
-		c = getopt_long (argc, argv, "",
-				 long_options, &option_index);
-		if (c == -1)
-			break;
-
-		switch (c) {
-		case 0:
-			opt = long_options[option_index].name;
-
-			if (strcmp (opt, "help") == 0) {
-				usage (argc, argv);
-				return 0;
-			} else if (strcmp (opt, "version") == 0) {
-				is_version = TRUE;
-			} else if (strcmp (opt, "file") == 0) {
-                                file = g_strdup (optarg);
-			}
-			break;
-
-		default:
-			usage (argc, argv);
-                        goto out;
-		}
-	}
-
-	if (is_version) {
-		printf ("pk-privilege-file-validate " PACKAGE_VERSION "\n");
-                return 0;
-	}
-
-	if (file == NULL) {
-		usage (argc, argv);
-                goto out;
-	}
 
         priv_file = libpolkit_privilege_file_new (file, &error);
         if (priv_file == NULL) {
                 printf ("%s did not validate: %s\n", file, error->message);
                 g_error_free (error);
-                goto out;
+                return FALSE;
         }
-
-        validated = TRUE;
         libpolkit_privilege_file_unref (priv_file);
+        return TRUE;
+}
 
-out:
-        if (file != NULL)
-                g_free (file);
+int
+main (int argc, char *argv[])
+{
+        int n;
 
-        if (validated)
-                return 0;
-        else
+	if (argc <= 1) {
+		usage (argc, argv);
                 return 1;
+	}
+
+        for (n = 1; n < argc; n++) {
+                if (strcmp (argv[n], "--help") == 0) {
+                        usage (argc, argv);
+                        return 0;
+                }
+                if (strcmp (argv[n], "--version") == 0) {
+                        printf ("polkit-privilege-file-validate " PACKAGE_VERSION "\n");
+                        return 0;
+                }
+
+                if (!validate_file (argv[n])) {
+                        return 1;
+                }
+	}
+
+        return 0;
 }
