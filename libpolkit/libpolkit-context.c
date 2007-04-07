@@ -136,7 +136,7 @@ libpolkit_context_init (PolKitContext *pk_context, GError **error)
                 _pk_debug ("No file monitor; cannot monitor '%s' for .priv file changes", dirname);
         } else {
                 pk_context->file_monitor_add_watch_func (pk_context, 
-                                                         dirname,
+                                                         pk_context->priv_dir,
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE|
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE|
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE,
