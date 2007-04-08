@@ -185,7 +185,6 @@ on how to subscribe.
 \&\fIPolicyKit\fR\|(8),
 \&\fIhald\fR\|(8),
 \&\fIdbus-daemon\fR\|(1),
-\&\fIpolkit-module-default\fR\|(8),
 \&\fIpolkit-module-builtins\fR\|(8),
 \&\fIpolkit-module-default\fR\|(8),
 \&\fIpolkit-module-allow-all\fR\|(8),
