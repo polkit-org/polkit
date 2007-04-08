@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * libpolkit-privilege-default.c : privilege definition for the defaults
+ * libpolkit-policy-default.c : policy definition for the defaults
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -39,24 +39,22 @@
 #include <glib.h>
 #include "libpolkit-debug.h"
 #include "libpolkit-error.h"
-#include "libpolkit-privilege-default.h"
+#include "libpolkit-policy-default.h"
 
 /**
- * SECTION:libpolkit-privilege-default
- * @short_description: Defaults for privileges.
+ * SECTION:libpolkit-policy-default
+ * @short_description: Defaults policy.
  *
- * This class records the default policy of a privilege as defined by
- * the, privilege files installed in /etc/PolicyKit/privileges.
- * 
+ * This class records the default policy of an action.
  **/
 
 /**
- * PolKitPrivilegeDefault:
+ * PolKitPolicyDefault:
  *
  * Objects of this class are used to record information about a
- * default policy for privilege.
+ * default policy for an action.
  **/
-struct PolKitPrivilegeDefault
+struct PolKitPolicyDefault
 {
         int refcount;
         PolKitResult default_remote_inactive;
@@ -90,7 +88,7 @@ parse_default (const char *key, char *s, const char *group, PolKitResult* target
 
                 g_set_error (error, 
                              POLKIT_ERROR, 
-                             POLKIT_ERROR_PRIVILEGE_FILE_INVALID,
+                             POLKIT_ERROR_POLICY_FILE_INVALID,
                              "Value '%s' is not allowed for key '%s' in group '%s' - supported values are: %s", 
                              s, 
                              key,
@@ -104,28 +102,28 @@ parse_default (const char *key, char *s, const char *group, PolKitResult* target
 }
 
 /**
- * libpolkit_privilege_default_new:
+ * libpolkit_policy_default_new:
  * @key_file: a #GKeyFile object
- * @privilege: privilege to look up defaults for in key_file
+ * @action: action to look up defaults for in key_file
  * @error: return location for error
  * 
- * Create a new #PolKitPrivilegeDefault object.
+ * Create a new #PolKitPolicyDefault object.
  * 
  * Returns: the new object or #NULL if error is set
  **/
-PolKitPrivilegeDefault *
-libpolkit_privilege_default_new (GKeyFile *key_file, const char *privilege, GError **error)
+PolKitPolicyDefault *
+libpolkit_policy_default_new (GKeyFile *key_file, const char *action, GError **error)
 {
         const char *key;
         const char *group;
         char *s;
         char buf[256];
-        PolKitPrivilegeDefault *pd;
+        PolKitPolicyDefault *pd;
 
-        pd = g_new0 (PolKitPrivilegeDefault, 1);
+        pd = g_new0 (PolKitPolicyDefault, 1);
         pd->refcount = 1;
 
-        g_snprintf (buf, sizeof (buf), "Privilege %s", privilege);
+        g_snprintf (buf, sizeof (buf), "Action %s", action);
         group = buf;
 
         key = "AllowRemoteInactive";
@@ -152,75 +150,75 @@ libpolkit_privilege_default_new (GKeyFile *key_file, const char *privilege, GErr
         return pd;
 error:
         if (pd != NULL)
-                libpolkit_privilege_default_ref (pd);
+                libpolkit_policy_default_ref (pd);
         return NULL;
 }
 
 /**
- * libpolkit_privilege_default_ref:
- * @privilege_default: the privilege object
+ * libpolkit_policy_default_ref:
+ * @policy_default: the policy object
  * 
  * Increase reference count.
  * 
  * Returns: the object
  **/
-PolKitPrivilegeDefault *
-libpolkit_privilege_default_ref (PolKitPrivilegeDefault *privilege_default)
+PolKitPolicyDefault *
+libpolkit_policy_default_ref (PolKitPolicyDefault *policy_default)
 {
-        g_return_val_if_fail (privilege_default != NULL, privilege_default);
-        privilege_default->refcount++;
-        return privilege_default;
+        g_return_val_if_fail (policy_default != NULL, policy_default);
+        policy_default->refcount++;
+        return policy_default;
 }
 
 /**
- * libpolkit_privilege_default_unref:
- * @privilege_default: the object
+ * libpolkit_policy_default_unref:
+ * @policy_default: the object
  * 
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
  * objects are decresed by one.
  **/
 void
-libpolkit_privilege_default_unref (PolKitPrivilegeDefault *privilege_default)
+libpolkit_policy_default_unref (PolKitPolicyDefault *policy_default)
 {
-        g_return_if_fail (privilege_default != NULL);
-        privilege_default->refcount--;
-        if (privilege_default->refcount > 0) 
+        g_return_if_fail (policy_default != NULL);
+        policy_default->refcount--;
+        if (policy_default->refcount > 0) 
                 return;
-        g_free (privilege_default);
+        g_free (policy_default);
 }
 
 /**
- * libpolkit_privilege_default_debug:
- * @privilege_default: the object
+ * libpolkit_policy_default_debug:
+ * @policy_default: the object
  * 
  * Print debug details
  **/
 void
-libpolkit_privilege_default_debug (PolKitPrivilegeDefault *privilege_default)
+libpolkit_policy_default_debug (PolKitPolicyDefault *policy_default)
 {
-        g_return_if_fail (privilege_default != NULL);
-        _pk_debug ("PolKitPrivilegeDefault: refcount=%d\n"
+        g_return_if_fail (policy_default != NULL);
+        _pk_debug ("PolKitPolicyDefault: refcount=%d\n"
                    "  default_remote_inactive=%s\n"
                    "    default_remote_active=%s\n"
                    "   default_local_inactive=%s\n"
                    "     default_local_active=%s", 
-                   privilege_default->refcount,
-                   libpolkit_result_to_string_representation (privilege_default->default_remote_inactive),
-                   libpolkit_result_to_string_representation (privilege_default->default_remote_active),
-                   libpolkit_result_to_string_representation (privilege_default->default_local_inactive),
-                   libpolkit_result_to_string_representation (privilege_default->default_local_active));
+                   policy_default->refcount,
+                   libpolkit_result_to_string_representation (policy_default->default_remote_inactive),
+                   libpolkit_result_to_string_representation (policy_default->default_remote_active),
+                   libpolkit_result_to_string_representation (policy_default->default_local_inactive),
+                   libpolkit_result_to_string_representation (policy_default->default_local_active));
 }
 
 
 /**
- * libpolkit_privilege_default_can_session_access_resource:
- * @privilege_default: the object
- * @privilege: the type of access to check for
+ * libpolkit_policy_default_can_session_access_resource:
+ * @policy_default: the object
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @session: the session in question
  * 
- * Using the default policy for a privilege, determine if a given
+ * Using the default policy for an action, determine if a given
  * session can access a given resource in a given way.
  * 
  * Returns: A #PolKitResult - can only be one of
@@ -228,8 +226,8 @@ libpolkit_privilege_default_debug (PolKitPrivilegeDefault *privilege_default)
  * #LIBPOLKIT_RESULT_YES, #LIBPOLKIT_RESULT_NO.
  **/
 PolKitResult
-libpolkit_privilege_default_can_session_access_resource (PolKitPrivilegeDefault *privilege_default,
-                                                         PolKitPrivilege        *privilege,
+libpolkit_policy_default_can_session_access_resource (PolKitPolicyDefault *policy_default,
+                                                         PolKitAction        *action,
                                                          PolKitResource         *resource,
                                                          PolKitSession          *session)
 {
@@ -239,8 +237,8 @@ libpolkit_privilege_default_can_session_access_resource (PolKitPrivilegeDefault 
 
         ret = LIBPOLKIT_RESULT_NO;
 
-        g_return_val_if_fail (privilege_default != NULL, ret);
-        g_return_val_if_fail (privilege != NULL, ret);
+        g_return_val_if_fail (policy_default != NULL, ret);
+        g_return_val_if_fail (action != NULL, ret);
         g_return_val_if_fail (resource != NULL, ret);
         g_return_val_if_fail (session != NULL, ret);
 
@@ -251,15 +249,15 @@ libpolkit_privilege_default_can_session_access_resource (PolKitPrivilegeDefault 
 
         if (is_local) {
                 if (is_active) {
-                        ret = privilege_default->default_local_active;
+                        ret = policy_default->default_local_active;
                 } else {
-                        ret = privilege_default->default_local_inactive;
+                        ret = policy_default->default_local_inactive;
                 }
         } else {
                 if (is_active) {
-                        ret = privilege_default->default_remote_active;
+                        ret = policy_default->default_remote_active;
                 } else {
-                        ret = privilege_default->default_remote_inactive;
+                        ret = policy_default->default_remote_inactive;
                 }
         }
 out:
@@ -267,21 +265,21 @@ out:
 }
 
 /**
- * libpolkit_privilege_default_can_caller_access_resource:
- * @privilege_default: the object
- * @privilege: the type of access to check for
+ * libpolkit_policy_default_can_caller_access_resource:
+ * @policy_default: the object
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @caller: the resource in question
  * 
- * Using the default policy for a privilege, determine if a given
+ * Using the default policy for an action, determine if a given
  * caller can access a given resource in a given way.
  * 
  * Returns: A #PolKitResult specifying if, and how, the caller can
  * access the resource in the given way
  **/
 PolKitResult
-libpolkit_privilege_default_can_caller_access_resource (PolKitPrivilegeDefault *privilege_default,
-                                                        PolKitPrivilege        *privilege,
+libpolkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy_default,
+                                                        PolKitAction        *action,
                                                         PolKitResource         *resource,
                                                         PolKitCaller           *caller)
 {
@@ -292,8 +290,8 @@ libpolkit_privilege_default_can_caller_access_resource (PolKitPrivilegeDefault *
 
         ret = LIBPOLKIT_RESULT_NO;
 
-        g_return_val_if_fail (privilege_default != NULL, ret);
-        g_return_val_if_fail (privilege != NULL, ret);
+        g_return_val_if_fail (policy_default != NULL, ret);
+        g_return_val_if_fail (action != NULL, ret);
         g_return_val_if_fail (resource != NULL, ret);
         g_return_val_if_fail (caller != NULL, ret);
 
@@ -309,15 +307,15 @@ libpolkit_privilege_default_can_caller_access_resource (PolKitPrivilegeDefault *
 
         if (is_local) {
                 if (is_active) {
-                        ret = privilege_default->default_local_active;
+                        ret = policy_default->default_local_active;
                 } else {
-                        ret = privilege_default->default_local_inactive;
+                        ret = policy_default->default_local_inactive;
                 }
         } else {
                 if (is_active) {
-                        ret = privilege_default->default_remote_active;
+                        ret = policy_default->default_remote_active;
                 } else {
-                        ret = privilege_default->default_remote_inactive;
+                        ret = policy_default->default_remote_inactive;
                 }
         }
 out:

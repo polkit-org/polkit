@@ -28,8 +28,8 @@ Type of resource.
 .I "--resource"
 Identifier of resource.
 .TP
-.I "--privilege"
-The privilege to check.
+.I "--action"
+The action to check.
 .TP
 .I "--session"
 The session to check for. Must be a ConsoleKit object path. If

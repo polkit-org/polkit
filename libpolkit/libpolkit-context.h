@@ -34,12 +34,12 @@
 #include <libpolkit/libpolkit-error.h>
 #include <libpolkit/libpolkit-result.h>
 #include <libpolkit/libpolkit-context.h>
-#include <libpolkit/libpolkit-privilege.h>
+#include <libpolkit/libpolkit-action.h>
 #include <libpolkit/libpolkit-resource.h>
 #include <libpolkit/libpolkit-seat.h>
 #include <libpolkit/libpolkit-session.h>
 #include <libpolkit/libpolkit-caller.h>
-#include <libpolkit/libpolkit-privilege-cache.h>
+#include <libpolkit/libpolkit-policy-cache.h>
 
 struct PolKitContext;
 typedef struct PolKitContext PolKitContext;
@@ -145,7 +145,7 @@ gboolean       libpolkit_context_init               (PolKitContext              
 PolKitContext *libpolkit_context_ref                (PolKitContext                        *pk_context);
 void           libpolkit_context_unref              (PolKitContext                        *pk_context);
 
-PolKitPrivilegeCache *libpolkit_context_get_privilege_cache (PolKitContext *pk_context);
+PolKitPolicyCache *libpolkit_context_get_policy_cache (PolKitContext *pk_context);
 
 /**
  * PolKitSeatVisitorCB:
@@ -171,13 +171,13 @@ libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
 
 PolKitResult
 libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
-                                               PolKitPrivilege *privilege,
+                                               PolKitAction *action,
                                                PolKitResource  *resource,
                                                PolKitSession   *session);
 
 PolKitResult
 libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
-                                              PolKitPrivilege *privilege,
+                                              PolKitAction *action,
                                               PolKitResource  *resource,
                                               PolKitCaller    *caller);
 

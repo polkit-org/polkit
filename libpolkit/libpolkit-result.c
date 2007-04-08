@@ -52,7 +52,7 @@ static const struct {
         const char *str;
 } mapping[] = 
 {
-        {LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE, "unknown"},
+        {LIBPOLKIT_RESULT_UNKNOWN_ACTION, "unknown"},
         {LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW, "not_authorized"},
         {LIBPOLKIT_RESULT_NO, "no"},
         {LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH, "auth_root"},

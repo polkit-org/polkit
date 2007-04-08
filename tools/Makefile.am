@@ -11,7 +11,7 @@ INCLUDES = \
 	@GLIB_CFLAGS@ \
 	@DBUS_CFLAGS@
 
-bin_PROGRAMS = polkit-check-caller polkit-check-session polkit-privilege-file-validate
+bin_PROGRAMS = polkit-check-caller polkit-check-session polkit-policy-file-validate
 
 polkit_check_caller_SOURCES = polkit-check-caller.c
 polkit_check_caller_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
@@ -19,8 +19,8 @@ polkit_check_caller_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/li
 polkit_check_session_SOURCES = polkit-check-session.c
 polkit_check_session_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
 
-polkit_privilege_file_validate_SOURCES = polkit-privilege-file-validate.c
-polkit_privilege_file_validate_LDADD = @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+polkit_policy_file_validate_SOURCES = polkit-policy-file-validate.c
+polkit_policy_file_validate_LDADD = @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
 
 clean-local :
 	rm -f *~

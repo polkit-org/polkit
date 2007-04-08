@@ -62,8 +62,8 @@ struct PolKitModuleInterface
         PolKitModuleCanSessionAccessResource       func_can_session_access_resource;
         PolKitModuleCanCallerAccessResource        func_can_caller_access_resource;
 
-        gboolean builtin_have_privilege_regex;
-        regex_t  builtin_privilege_regex_compiled;
+        gboolean builtin_have_action_regex;
+        regex_t  builtin_action_regex_compiled;
 
         GSList *builtin_users;
 };
@@ -116,22 +116,22 @@ _parse_builtin (PolKitModuleInterface *mi, int *argc, char *argv[])
         ret = FALSE;
 
         for (n = 1; n < *argc; ) {
-                if (g_str_has_prefix (argv[n], "privilege=")) {
+                if (g_str_has_prefix (argv[n], "action=")) {
                         const char *regex;
 
-                        if (mi->builtin_have_privilege_regex) {
-                                _pk_debug ("Already have option 'privilege='");
+                        if (mi->builtin_have_action_regex) {
+                                _pk_debug ("Already have option 'action='");
                                 goto error;
                         }
 
                         regex = argv[n] + 10;
-                        if (regcomp (&(mi->builtin_privilege_regex_compiled), regex, REG_EXTENDED) != 0) {
+                        if (regcomp (&(mi->builtin_action_regex_compiled), regex, REG_EXTENDED) != 0) {
                                 _pk_debug ("Regex '%s' didn't compile", regex);
                                 goto error;
                         }
-                        mi->builtin_have_privilege_regex = TRUE;
+                        mi->builtin_have_action_regex = TRUE;
 
-                        _pk_debug ("Compiled regex '%s' for option 'privilege=' OK", regex);
+                        _pk_debug ("Compiled regex '%s' for option 'action=' OK", regex);
 
                         _parse_builtin_remove_option (argc, argv, n);
                 } else if (g_str_has_prefix (argv[n], "user=")) {
@@ -308,8 +308,8 @@ libpolkit_module_interface_unref (PolKitModuleInterface *module_interface)
                 return;
 
         /* builtins */
-        if (module_interface->builtin_have_privilege_regex)
-                regfree (&module_interface->builtin_privilege_regex_compiled);
+        if (module_interface->builtin_have_action_regex)
+                regfree (&module_interface->builtin_action_regex_compiled);
         g_slist_free (module_interface->builtin_users);
 
         /* shutdown the module and unload it */
@@ -608,17 +608,17 @@ libpolkit_module_get_user_data   (PolKitModuleInterface *module_interface)
 }
 
 static gboolean 
-_check_privilege (PolKitModuleInterface *module_interface, PolKitPrivilege *privilege)
+_check_action (PolKitModuleInterface *module_interface, PolKitAction *action)
 {
         gboolean ret;
 
         ret = FALSE;
 
-        if (module_interface->builtin_have_privilege_regex) {
-                char *privilege_name;
-                if (libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
-                        if (regexec (&module_interface->builtin_privilege_regex_compiled, 
-                                     privilege_name, 0, NULL, 0) == 0) {
+        if (module_interface->builtin_have_action_regex) {
+                char *action_name;
+                if (libpolkit_action_get_action_id (action, &action_name)) {
+                        if (regexec (&module_interface->builtin_action_regex_compiled, 
+                                     action_name, 0, NULL, 0) == 0) {
                                 ret = TRUE;
                         }
                 }
@@ -677,11 +677,11 @@ _check_users_for_caller (PolKitModuleInterface *module_interface, PolKitCaller *
  * libpolkit_module_interface_check_builtin_confinement_for_session:
  * @module_interface: the given module
  * @pk_context: the PolicyKit context
- * @privilege: the type of access to check for
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @session: the session in question
  * 
- * Check whether some of the built-in module options (e.g. privilege="hal-storage-*", 
+ * Check whether some of the built-in module options (e.g. action="hal-storage-*", 
  * user=davidz) confines the given module, e.g. whether it should be skipped.
  * 
  * Returns: TRUE if, and only if, the module is confined from handling the request
@@ -689,7 +689,7 @@ _check_users_for_caller (PolKitModuleInterface *module_interface, PolKitCaller *
 gboolean
 libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
                                                                   PolKitContext   *pk_context,
-                                                                  PolKitPrivilege *privilege,
+                                                                  PolKitAction *action,
                                                                   PolKitResource  *resource,
                                                                   PolKitSession   *session)
 {
@@ -698,7 +698,7 @@ libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleIn
 
         g_return_val_if_fail (module_interface != NULL, ret);
 
-        if (!_check_privilege (module_interface, privilege))
+        if (!_check_action (module_interface, action))
                 goto out;
         if (!_check_users_for_session (module_interface, session))
                 goto out;
@@ -713,11 +713,11 @@ out:
  * libpolkit_module_interface_check_builtin_confinement_for_caller:
  * @module_interface: the given module
  * @pk_context: the PolicyKit context
- * @privilege: the type of access to check for
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @caller: the resource in question
  * 
- * Check whether some of the built-in module options (e.g. privilege="hal-storage-*", 
+ * Check whether some of the built-in module options (e.g. action="hal-storage-*", 
  * user=davidz) confines the given module, e.g. whether it should be skipped.
  * 
  * Returns: TRUE if, and only if, the module is confined from handling the request
@@ -725,7 +725,7 @@ out:
 gboolean
 libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
                                                                  PolKitContext   *pk_context,
-                                                                 PolKitPrivilege *privilege,
+                                                                 PolKitAction *action,
                                                                  PolKitResource  *resource,
                                                                  PolKitCaller    *caller)
 {
@@ -734,7 +734,7 @@ libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInt
 
         g_return_val_if_fail (module_interface != NULL, ret);
 
-        if (!_check_privilege (module_interface, privilege))
+        if (!_check_action (module_interface, action))
                 goto out;
         if (!_check_users_for_caller (module_interface, caller))
                 goto out;

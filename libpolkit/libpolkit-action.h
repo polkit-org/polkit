@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * libpolkit-privilege-file-entry.h : entries in privilege files
+ * libpolkit-action.h : actions
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,29 +23,25 @@
  *
  **************************************************************************/
 
-#ifndef LIBPOLKIT_PRIVILEGE_FILE_ENTRY_H
-#define LIBPOLKIT_PRIVILEGE_FILE_ENTRY_H
+#ifndef LIBPOLKIT_ACTION_H
+#define LIBPOLKIT_ACTION_H
 
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <glib.h>
 
-#include <libpolkit/libpolkit-result.h>
-#include <libpolkit/libpolkit-privilege-default.h>
+struct PolKitAction;
+typedef struct PolKitAction PolKitAction;
 
-struct PolKitPrivilegeFileEntry;
-typedef struct PolKitPrivilegeFileEntry PolKitPrivilegeFileEntry;
+PolKitAction *libpolkit_action_new              (void);
+PolKitAction *libpolkit_action_ref              (PolKitAction *action);
+void             libpolkit_action_unref            (PolKitAction *action);
+void             libpolkit_action_set_action_id (PolKitAction *action, const char  *action_id);
+gboolean         libpolkit_action_get_action_id (PolKitAction *action, char       **out_action_id);
 
-PolKitPrivilegeFileEntry *libpolkit_privilege_file_entry_new   (GKeyFile *key_file, const char *privilege, GError **error);
-PolKitPrivilegeFileEntry *libpolkit_privilege_file_entry_ref   (PolKitPrivilegeFileEntry *privilege_file_entry);
-void                      libpolkit_privilege_file_entry_unref (PolKitPrivilegeFileEntry *privilege_file_entry);
-void                      libpolkit_privilege_file_entry_debug (PolKitPrivilegeFileEntry *privilege_file_entry);
+void             libpolkit_action_debug            (PolKitAction *action);
 
-const char             *libpolkit_privilege_file_entry_get_id      (PolKitPrivilegeFileEntry *privilege_file_entry);
-PolKitPrivilegeDefault *libpolkit_privilege_file_entry_get_default (PolKitPrivilegeFileEntry *privilege_file_entry);
-
-
-#endif /* LIBPOLKIT_PRIVILEGE_FILE_ENTRY_H */
+#endif /* LIBPOLKIT_ACTION_H */
 
 

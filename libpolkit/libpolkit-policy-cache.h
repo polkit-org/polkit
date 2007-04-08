@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * libpolkit-privilege-cache.h : privilege cache
+ * libpolkit-policy-cache.h : policy cache
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,28 +23,28 @@
  *
  **************************************************************************/
 
-#ifndef LIBPOLKIT_PRIVILEGE_CACHE_H
-#define LIBPOLKIT_PRIVILEGE_CACHE_H
+#ifndef LIBPOLKIT_POLICY_CACHE_H
+#define LIBPOLKIT_POLICY_CACHE_H
 
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <glib.h>
 
-#include <libpolkit/libpolkit-privilege.h>
-#include <libpolkit/libpolkit-privilege-file-entry.h>
+#include <libpolkit/libpolkit-action.h>
+#include <libpolkit/libpolkit-policy-file-entry.h>
 
-struct PolKitPrivilegeCache;
-typedef struct PolKitPrivilegeCache PolKitPrivilegeCache;
+struct PolKitPolicyCache;
+typedef struct PolKitPolicyCache PolKitPolicyCache;
 
-PolKitPrivilegeCache *libpolkit_privilege_cache_new                   (const char *dirname, GError **error);
-PolKitPrivilegeCache *libpolkit_privilege_cache_ref                   (PolKitPrivilegeCache *privilege_cache);
-void                  libpolkit_privilege_cache_unref                 (PolKitPrivilegeCache *privilege_cache);
-void                  libpolkit_privilege_cache_debug                 (PolKitPrivilegeCache *privilege_cache);
+PolKitPolicyCache *libpolkit_policy_cache_new                   (const char *dirname, GError **error);
+PolKitPolicyCache *libpolkit_policy_cache_ref                   (PolKitPolicyCache *policy_cache);
+void               libpolkit_policy_cache_unref                 (PolKitPolicyCache *policy_cache);
+void               libpolkit_policy_cache_debug                 (PolKitPolicyCache *policy_cache);
 
-PolKitPrivilegeFileEntry* libpolkit_privilege_cache_get_entry (PolKitPrivilegeCache *privilege_cache,
-                                                               PolKitPrivilege      *privilege);
+PolKitPolicyFileEntry* libpolkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache,
+                                                         PolKitAction      *action);
 
-#endif /* LIBPOLKIT_PRIVILEGE_CACHE_H */
+#endif /* LIBPOLKIT_POLICY_CACHE_H */
 
 

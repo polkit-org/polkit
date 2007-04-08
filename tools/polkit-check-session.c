@@ -44,13 +44,13 @@ usage (int argc, char *argv[])
                  "\n"
                  "usage : polkit-check-session\n"
                  "          --resource-type <type> --resource-id <id>\n"
-                 "          --privilege <privilege> [--session <session>]\n"
+                 "          --action <action> [--session <session>]\n"
                  "          [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
                  "        --resource-type  Type of resource\n"
                  "        --resource-id    Identifier of resource\n"
-                 "        --privilege      Requested privilege\n"
+                 "        --action         Requested action\n"
                  "        --session        ConsoleKit object path of session\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
@@ -66,7 +66,7 @@ main (int argc, char *argv[])
 {
         char *resource_type = NULL;
         char *resource_id = NULL;
-        char *privilege_id = NULL;
+        char *action_id = NULL;
         char *session_id = NULL;
         char *cookie = NULL;
         gboolean is_version = FALSE;
@@ -75,7 +75,7 @@ main (int argc, char *argv[])
         PolKitContext *pol_ctx;
         PolKitSession *session;
         PolKitResource *resource;
-        PolKitPrivilege *privilege;
+        PolKitAction *action;
         gboolean allowed;
         GError *g_error;
 
@@ -93,7 +93,7 @@ main (int argc, char *argv[])
 		static struct option long_options[] = {
 			{"resource-type", 1, NULL, 0},
 			{"resource-id", 1, NULL, 0},
-			{"privilege", 1, NULL, 0},
+			{"action", 1, NULL, 0},
 			{"session", 1, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
@@ -118,8 +118,8 @@ main (int argc, char *argv[])
 				resource_type = strdup (optarg);
 			} else if (strcmp (opt, "resource-id") == 0) {
 				resource_id = strdup (optarg);
-			} else if (strcmp (opt, "privilege") == 0) {
-				privilege_id = strdup (optarg);
+			} else if (strcmp (opt, "action") == 0) {
+				action_id = strdup (optarg);
 			} else if (strcmp (opt, "session") == 0) {
 				session_id = strdup (optarg);
 			}
@@ -137,7 +137,7 @@ main (int argc, char *argv[])
 		return 0;
 	}
 
-	if (resource_type == NULL || resource_id == NULL || privilege_id == NULL) {
+	if (resource_type == NULL || resource_id == NULL || action_id == NULL) {
 		usage (argc, argv);
 		return 1;
 	}
@@ -171,14 +171,14 @@ main (int argc, char *argv[])
 		return 1;
         }
 
-        privilege = libpolkit_privilege_new ();
-        libpolkit_privilege_set_privilege_id (privilege, privilege_id);
+        action = libpolkit_action_new ();
+        libpolkit_action_set_action_id (action, action_id);
 
         resource = libpolkit_resource_new ();
         libpolkit_resource_set_resource_type (resource, resource_type);
         libpolkit_resource_set_resource_id (resource, resource_id);
 
-        allowed = libpolkit_context_can_session_access_resource (pol_ctx, privilege, resource, session);
+        allowed = libpolkit_context_can_session_access_resource (pol_ctx, action, resource, session);
 
         if (allowed)
                 return 0;

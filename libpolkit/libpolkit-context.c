@@ -39,7 +39,7 @@
 #include <glib.h>
 #include "libpolkit-debug.h"
 #include "libpolkit-context.h"
-#include "libpolkit-privilege-cache.h"
+#include "libpolkit-policy-cache.h"
 #include "libpolkit-module.h"
 
 /**
@@ -71,9 +71,9 @@ struct PolKitContext
         PolKitContextFileMonitorAddWatch      file_monitor_add_watch_func;
         PolKitContextFileMonitorRemoveWatch   file_monitor_remove_watch_func;
 
-        char *priv_dir;
+        char *policy_dir;
 
-        PolKitPrivilegeCache *priv_cache;
+        PolKitPolicyCache *priv_cache;
 
         GSList *modules;
 };
@@ -83,7 +83,7 @@ struct PolKitContext
  * 
  * Create a new context
  * 
- * Returns: the #PolKitPrivilegeCache object
+ * Returns: the object
  **/
 PolKitContext *
 libpolkit_context_new (void)
@@ -236,15 +236,15 @@ _config_file_events (PolKitContext                 *pk_context,
 }
 
 static void
-_privilege_dir_events (PolKitContext                 *pk_context,
+_policy_dir_events (PolKitContext                 *pk_context,
                        PolKitContextFileMonitorEvent  event_mask,
                        const char                    *path,
                        gpointer                       user_data)
 {
-        /* mark cache of privilege files as stale.. (will be populated on-demand, see _get_cache()) */
+        /* mark cache of policy files as stale.. (will be populated on-demand, see _get_cache()) */
         if (pk_context->priv_cache != NULL) {
-                _pk_debug ("Something happened in %s - invalidating cache", pk_context->priv_dir);
-                libpolkit_privilege_cache_unref (pk_context->priv_cache);
+                _pk_debug ("Something happened in %s - invalidating cache", pk_context->policy_dir);
+                libpolkit_policy_cache_unref (pk_context->priv_cache);
                 pk_context->priv_cache = NULL;
         }
 
@@ -260,8 +260,8 @@ _privilege_dir_events (PolKitContext                 *pk_context,
  * @error: return location for error
  * 
  * Initializes a new context; loads PolicyKit files from
- * /etc/PolicyKit/privileges unless the environment variable
- * $POLKIT_PRIVILEGE_DIR points to a location.
+ * /etc/PolicyKit/policy unless the environment variable
+ * $POLKIT_POLICY_DIR points to a location.
  *
  * Returns: #FALSE if @error was set, otherwise #TRUE
  **/
@@ -270,13 +270,13 @@ libpolkit_context_init (PolKitContext *pk_context, GError **error)
 {
         const char *dirname;
 
-        dirname = getenv ("POLKIT_PRIVILEGE_DIR");
+        dirname = getenv ("POLKIT_POLICY_DIR");
         if (dirname != NULL) {
-                pk_context->priv_dir = g_strdup (dirname);
+                pk_context->policy_dir = g_strdup (dirname);
         } else {
-                pk_context->priv_dir = g_strdup (PACKAGE_SYSCONF_DIR "/PolicyKit/privileges");
+                pk_context->policy_dir = g_strdup (PACKAGE_SYSCONF_DIR "/PolicyKit/policy");
         }
-        _pk_debug ("Using privilege files from directory %s", pk_context->priv_dir);
+        _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
         /* Load modules */
         if (!load_modules (pk_context, error))
@@ -287,13 +287,13 @@ libpolkit_context_init (PolKitContext *pk_context, GError **error)
         if (pk_context->file_monitor_add_watch_func == NULL) {
                 _pk_debug ("No file monitor; cannot monitor '%s' for .priv file changes", dirname);
         } else {
-                /* Watch when privilege definitions file change */
+                /* Watch when policy definitions file change */
                 pk_context->file_monitor_add_watch_func (pk_context, 
-                                                         pk_context->priv_dir,
+                                                         pk_context->policy_dir,
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE|
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE|
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE,
-                                                         _privilege_dir_events,
+                                                         _policy_dir_events,
                                                          NULL);
 
                 /* Config file changes */
@@ -401,31 +401,31 @@ libpolkit_context_set_file_monitor (PolKitContext                        *pk_con
 
 
 /**
- * libpolkit_context_get_privilege_cache:
+ * libpolkit_context_get_policy_cache:
  * @pk_context: the context
  * 
- * Get the #PolKitPrivilegeCache object that holds all the defined privileges as well as their defaults.
+ * Get the #PolKitPolicyCache object that holds all the defined policies as well as their defaults.
  * 
- * Returns: the #PolKitPrivilegeCache object. Caller shall not unref it.
+ * Returns: the #PolKitPolicyCache object. Caller shall not unref it.
  **/
-PolKitPrivilegeCache *
-libpolkit_context_get_privilege_cache (PolKitContext *pk_context)
+PolKitPolicyCache *
+libpolkit_context_get_policy_cache (PolKitContext *pk_context)
 {
         g_return_val_if_fail (pk_context != NULL, NULL);
 
         if (pk_context->priv_cache == NULL) {
                 GError *error;
 
-                _pk_debug ("Populating cache from directory %s", pk_context->priv_dir);
+                _pk_debug ("Populating cache from directory %s", pk_context->policy_dir);
 
                 error = NULL;
-                pk_context->priv_cache = libpolkit_privilege_cache_new (pk_context->priv_dir, &error);
+                pk_context->priv_cache = libpolkit_policy_cache_new (pk_context->policy_dir, &error);
                 if (pk_context->priv_cache == NULL) {
-                        g_warning ("Error loading privilege files from %s: %s", 
-                                   pk_context->priv_dir, error->message);
+                        g_warning ("Error loading policy files from %s: %s", 
+                                   pk_context->policy_dir, error->message);
                         g_error_free (error);
                 } else {
-                        /*libpolkit_privilege_cache_debug (pk_context->priv_cache)*/;
+                        /*libpolkit_policy_cache_debug (pk_context->priv_cache)*/;
                 }
         }
 
@@ -489,7 +489,7 @@ libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
 /**
  * libpolkit_context_can_session_access_resource:
  * @pk_context: the PolicyKit context
- * @privilege: the type of access to check for
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @session: the session in question
  *
@@ -501,42 +501,42 @@ libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
  */
 PolKitResult
 libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
-                                               PolKitPrivilege *privilege,
+                                               PolKitAction *action,
                                                PolKitResource  *resource,
                                                PolKitSession   *session)
 {
-        PolKitPrivilegeCache *cache;
-        PolKitPrivilegeFileEntry *pfe;
+        PolKitPolicyCache *cache;
+        PolKitPolicyFileEntry *pfe;
         PolKitResult current_result;
         PolKitModuleControl current_control;
         GSList *i;
 
         current_result = LIBPOLKIT_RESULT_NO;
 
-        cache = libpolkit_context_get_privilege_cache (pk_context);
+        cache = libpolkit_context_get_policy_cache (pk_context);
         if (cache == NULL)
                 goto out;
 
         _pk_debug ("entering libpolkit_can_session_access_resource()");
-        libpolkit_privilege_debug (privilege);
+        libpolkit_action_debug (action);
         libpolkit_resource_debug (resource);
         libpolkit_session_debug (session);
 
-        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
+        pfe = libpolkit_policy_cache_get_entry (cache, action);
         if (pfe == NULL) {
-                char *privilege_name;
-                if (!libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
-                        g_warning ("given privilege has no name");
+                char *action_name;
+                if (!libpolkit_action_get_action_id (action, &action_name)) {
+                        g_warning ("given action has no name");
                 } else {
-                        g_warning ("no privilege with name '%s'", privilege_name);
+                        g_warning ("no action with name '%s'", action_name);
                 }
-                current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                current_result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
                 goto out;
         }
 
-        libpolkit_privilege_file_entry_debug (pfe);
+        libpolkit_policy_file_entry_debug (pfe);
 
-        current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+        current_result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
         current_control = LIBPOLKIT_MODULE_CONTROL_ADVISE; /* start with advise */
 
         /* visit modules */
@@ -556,27 +556,27 @@ libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
                         if (libpolkit_module_interface_check_builtin_confinement_for_session (
                                     module_interface,
                                     pk_context,
-                                    privilege,
+                                    action,
                                     resource,
                                     session)) {
                                 /* module is confined by built-in options */
-                                module_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                                module_result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
                                 _pk_debug ("Module '%s' confined by built-in's", 
                                            libpolkit_module_get_name (module_interface));
                         } else {
                                 module_result = func (module_interface,
                                                       pk_context,
-                                                      privilege, 
+                                                      action, 
                                                       resource, 
                                                       session);
                         }
 
-                        /* if a module returns _UNKNOWN_PRIVILEGE, it means that it doesn't
+                        /* if a module returns _UNKNOWN_ACTION, it means that it doesn't
                          * have an opinion about the query; e.g. polkit-module-allow-all(8)
-                         * will return this if it's confined to only consider certain privileges
+                         * will return this if it's confined to only consider certain actions
                          * or certain users.
                          */
-                        if (module_result != LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE) {
+                        if (module_result != LIBPOLKIT_RESULT_UNKNOWN_ACTION) {
 
                                 if (current_control == LIBPOLKIT_MODULE_CONTROL_ADVISE &&
                                     module_control == LIBPOLKIT_MODULE_CONTROL_ADVISE) {
@@ -599,8 +599,8 @@ libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
                 }
         }
 
-        /* Never return UNKNOWN_PRIVILEGE to user */
-        if (current_result == LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE)
+        /* Never return UNKNOWN_ACTION to user */
+        if (current_result == LIBPOLKIT_RESULT_UNKNOWN_ACTION)
                 current_result = LIBPOLKIT_RESULT_NO;
 
 out:
@@ -611,7 +611,7 @@ out:
 /**
  * libpolkit_context_can_caller_access_resource:
  * @pk_context: the PolicyKit context
- * @privilege: the type of access to check for
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @caller: the resource in question
  *
@@ -622,42 +622,42 @@ out:
  */
 PolKitResult
 libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
-                                              PolKitPrivilege *privilege,
+                                              PolKitAction *action,
                                               PolKitResource  *resource,
                                               PolKitCaller    *caller)
 {
-        PolKitPrivilegeCache *cache;
-        PolKitPrivilegeFileEntry *pfe;
+        PolKitPolicyCache *cache;
+        PolKitPolicyFileEntry *pfe;
         PolKitResult current_result;
         PolKitModuleControl current_control;
         GSList *i;
 
         current_result = LIBPOLKIT_RESULT_NO;
 
-        cache = libpolkit_context_get_privilege_cache (pk_context);
+        cache = libpolkit_context_get_policy_cache (pk_context);
         if (cache == NULL)
                 goto out;
 
         _pk_debug ("entering libpolkit_can_caller_access_resource()");
-        libpolkit_privilege_debug (privilege);
+        libpolkit_action_debug (action);
         libpolkit_resource_debug (resource);
         libpolkit_caller_debug (caller);
 
-        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
+        pfe = libpolkit_policy_cache_get_entry (cache, action);
         if (pfe == NULL) {
-                char *privilege_name;
-                if (!libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
-                        g_warning ("given privilege has no name");
+                char *action_name;
+                if (!libpolkit_action_get_action_id (action, &action_name)) {
+                        g_warning ("given action has no name");
                 } else {
-                        g_warning ("no privilege with name '%s'", privilege_name);
+                        g_warning ("no action with name '%s'", action_name);
                 }
-                current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                current_result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
                 goto out;
         }
 
-        libpolkit_privilege_file_entry_debug (pfe);
+        libpolkit_policy_file_entry_debug (pfe);
 
-        current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+        current_result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
         current_control = LIBPOLKIT_MODULE_CONTROL_ADVISE; /* start with advise */
 
         /* visit modules */
@@ -677,27 +677,27 @@ libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
                         if (libpolkit_module_interface_check_builtin_confinement_for_caller (
                                     module_interface,
                                     pk_context,
-                                    privilege,
+                                    action,
                                     resource,
                                     caller)) {
                                 /* module is confined by built-in options */
-                                module_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                                module_result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
                                 _pk_debug ("Module '%s' confined by built-in's", 
                                            libpolkit_module_get_name (module_interface));
                         } else {
                                 module_result = func (module_interface,
                                                       pk_context,
-                                                      privilege, 
+                                                      action, 
                                                       resource, 
                                                       caller);
                         }
 
-                        /* if a module returns _UNKNOWN_PRIVILEGE, it means that it doesn't
+                        /* if a module returns _UNKNOWN_ACTION, it means that it doesn't
                          * have an opinion about the query; e.g. polkit-module-allow-all(8)
-                         * will return this if it's confined to only consider certain privileges
+                         * will return this if it's confined to only consider certain actions
                          * or certain users.
                          */
-                        if (module_result != LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE) {
+                        if (module_result != LIBPOLKIT_RESULT_UNKNOWN_ACTION) {
 
                                 if (current_control == LIBPOLKIT_MODULE_CONTROL_ADVISE &&
                                     module_control == LIBPOLKIT_MODULE_CONTROL_ADVISE) {
@@ -720,8 +720,8 @@ libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
                 }
         }
 
-        /* Never return UNKNOWN_PRIVILEGE to user */
-        if (current_result == LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE)
+        /* Never return UNKNOWN_ACTION to user */
+        if (current_result == LIBPOLKIT_RESULT_UNKNOWN_ACTION)
                 current_result = LIBPOLKIT_RESULT_NO;
 out:
         _pk_debug ("... result was %s", libpolkit_result_to_string_representation (current_result));

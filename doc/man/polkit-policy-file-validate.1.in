@@ -1,20 +1,20 @@
 .\" 
-.\" polkit-privilege-file-validate manual page.
+.\" polkit-policy-file-validate manual page.
 .\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
 .\"
-.TH POLKIT-PRIVILEGE-FILE-VALIDATE 1
+.TH POLKIT-POLICY-FILE-VALIDATE 1
 .SH NAME
-polkit-privilege-file-validate \- check access
+polkit-policy-file-validate \- check access
 .SH SYNOPSIS
 .PP
-.B polkit-privilege-file-validate
-<privilege-files>
+.B polkit-policy-file-validate
+<policy-files>
 
 .SH DESCRIPTION
 
-\fIpolkit-privilege-file-validate\fP is used to validate PolicyKit
-privilege definition files. These are normally stored in the
-.I "@sysconfdir@/PolicyKit/privileges"
+\fIpolkit-policy-file-validate\fP is used to validate PolicyKit
+policy definition files. These are normally stored in the
+.I "@sysconfdir@/PolicyKit/policy"
 directory. For more information about the big picture
 refer to the \fIPolicyKit spec\fP which can be found in
 .I "@docdir@/spec/polkit-spec.html"

@@ -30,13 +30,13 @@
 
 /**
  * PolKitError:
- * @POLKIT_ERROR_PRIVILEGE_FILE_INVALID: There was an error parsing the given privilege file
+ * @POLKIT_ERROR_POLICY_FILE_INVALID: There was an error parsing the given policy file
  *
  * Error codes returned by PolicyKit
  */
 typedef enum
 {      
-        POLKIT_ERROR_PRIVILEGE_FILE_INVALID
+        POLKIT_ERROR_POLICY_FILE_INVALID
 } PolKitError;
 
 /**

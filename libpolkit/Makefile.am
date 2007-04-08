@@ -21,33 +21,33 @@ libpolkitinclude_HEADERS =              		\
 	libpolkit-error.h				\
 	libpolkit-result.h				\
 	libpolkit-context.h				\
-	libpolkit-privilege.h				\
+	libpolkit-action.h				\
 	libpolkit-resource.h				\
 	libpolkit-seat.h				\
 	libpolkit-session.h				\
 	libpolkit-caller.h				\
-	libpolkit-privilege-file-entry.h		\
-	libpolkit-privilege-file.h			\
-	libpolkit-privilege-cache.h			\
-	libpolkit-privilege-default.h			\
+	libpolkit-policy-file-entry.h			\
+	libpolkit-policy-file.h				\
+	libpolkit-policy-cache.h			\
+	libpolkit-policy-default.h			\
 	libpolkit-module.h
 
-libpolkit_la_SOURCES =                  	              				\
-	libpolkit.h									\
-	libpolkit-error.h			libpolkit-error.c			\
-	libpolkit-result.h			libpolkit-result.c			\
-	libpolkit-context.h			libpolkit-context.c			\
-	libpolkit-privilege.h			libpolkit-privilege.c			\
-	libpolkit-resource.h			libpolkit-resource.c			\
-	libpolkit-seat.h			libpolkit-seat.c			\
-	libpolkit-session.h			libpolkit-session.c			\
-	libpolkit-caller.h			libpolkit-caller.c			\
-	libpolkit-privilege-file-entry.h	libpolkit-privilege-file-entry.c	\
-	libpolkit-privilege-file.h		libpolkit-privilege-file.c		\
-	libpolkit-privilege-cache.h		libpolkit-privilege-cache.c		\
-	libpolkit-privilege-default.h		libpolkit-privilege-default.c		\
-	libpolkit-debug.h			libpolkit-debug.c			\
-	libpolkit-module.h			libpolkit-module.c
+libpolkit_la_SOURCES =                                				\
+	libpolkit.h								\
+	libpolkit-error.h		libpolkit-error.c			\
+	libpolkit-result.h		libpolkit-result.c			\
+	libpolkit-context.h		libpolkit-context.c			\
+	libpolkit-action.h		libpolkit-action.c			\
+	libpolkit-resource.h		libpolkit-resource.c			\
+	libpolkit-seat.h		libpolkit-seat.c			\
+	libpolkit-session.h		libpolkit-session.c			\
+	libpolkit-caller.h		libpolkit-caller.c			\
+	libpolkit-policy-file-entry.h	libpolkit-policy-file-entry.c		\
+	libpolkit-policy-file.h		libpolkit-policy-file.c			\
+	libpolkit-policy-cache.h	libpolkit-policy-cache.c		\
+	libpolkit-policy-default.h	libpolkit-policy-default.c		\
+	libpolkit-debug.h		libpolkit-debug.c			\
+	libpolkit-module.h		libpolkit-module.c
 
 libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ -ldl
 

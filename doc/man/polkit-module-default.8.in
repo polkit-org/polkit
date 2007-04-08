@@ -4,14 +4,14 @@
 .\"
 .TH POLKIT-MODULE-DEFAULT 8
 .SH NAME
-polkit-module-default \- use default policy for privileges
+polkit-module-default \- use default policy for actions
 .SH SYNOPSIS
 .PP
 .B standard   polkit-module-default.so
 .SH DESCRIPTION
 .PP
 This PolicyKit module uses the default policy as specified (and
-required) for by the privilege definition file for a given privilege.
+required) for by the policy definition file for a given action.
 
 For more information about the big picture refer to the \fIPolicyKit
 spec\fP which can be found in
@@ -30,7 +30,7 @@ on how to subscribe.
 \&\fIPolicyKit\fR\|(8),
 \&\fIpolkit-module-allow-all\fR\|(8),
 \&\fIpolkit-module-deny-all\fR\|(8),
-\&\fI@sysconfdir@/PolicyKit/privileges\fR\|,
+\&\fI@sysconfdir@/PolicyKit/policy\fR\|,
 \&\fI@sysconfdir@/PolicyKit/PolicyKit.conf\fR\|
 
 .SH AUTHOR

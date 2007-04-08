@@ -94,7 +94,7 @@ typedef PolKitResult (*PolKitModuleIsResourceAssociatedWithSeat) (PolKitModuleIn
  * PolKitModuleCanSessionAccessResource:
  * @module_interface: the module interface
  * @pk_context: the PolicyKit context
- * @privilege: the type of access to check for
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @session: the session in question
  *
@@ -104,7 +104,7 @@ typedef PolKitResult (*PolKitModuleIsResourceAssociatedWithSeat) (PolKitModuleIn
  **/
 typedef PolKitResult (*PolKitModuleCanSessionAccessResource) (PolKitModuleInterface *module_interface,
                                                               PolKitContext         *pk_context,
-                                                              PolKitPrivilege       *privilege,
+                                                              PolKitAction       *action,
                                                               PolKitResource        *resource,
                                                               PolKitSession         *session);
 
@@ -112,7 +112,7 @@ typedef PolKitResult (*PolKitModuleCanSessionAccessResource) (PolKitModuleInterf
  * PolKitModuleCanCallerAccessResource:
  * @module_interface: the module interface
  * @pk_context: the PolicyKit context
- * @privilege: the type of access to check for
+ * @action: the type of access to check for
  * @resource: the resource in question
  * @caller: the resource in question
  *
@@ -122,7 +122,7 @@ typedef PolKitResult (*PolKitModuleCanSessionAccessResource) (PolKitModuleInterf
  **/
 typedef PolKitResult (*PolKitModuleCanCallerAccessResource) (PolKitModuleInterface *module_interface,
                                                              PolKitContext         *pk_context,
-                                                             PolKitPrivilege       *privilege,
+                                                             PolKitAction       *action,
                                                              PolKitResource        *resource,
                                                              PolKitCaller          *caller);
 
@@ -160,7 +160,7 @@ PolKitModuleCanCallerAccessResource libpolkit_module_get_func_can_caller_access_
  * stack to override results from this module. Modules down the stack that are also marked with 
  * the #LIBPOLKIT_MODULE_CONTROL_ADVISE control will only take effect it they change the result to be "less strict".
  * @LIBPOLKIT_MODULE_CONTROL_MANDATORY: Always use results (unless it returns 
- * #LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE for a given request) from this module, even if it changes whether the
+ * #LIBPOLKIT_RESULT_UNKNOWN_ACTION for a given request) from this module, even if it changes whether the
  * result to be "more strict". . If a later module also uses this control, results from that module will override it.
  * @LIBPOLKIT_MODULE_CONTROL_N_CONTROLS: Number of control stanzas
  *
@@ -193,14 +193,14 @@ PolKitModuleControl libpolkit_module_interface_get_control (PolKitModuleInterfac
 gboolean
 libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
                                                                   PolKitContext   *pk_context,
-                                                                  PolKitPrivilege *privilege,
+                                                                  PolKitAction *action,
                                                                   PolKitResource  *resource,
                                                                   PolKitSession   *session);
 
 gboolean
 libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
                                                                  PolKitContext   *pk_context,
-                                                                 PolKitPrivilege *privilege,
+                                                                 PolKitAction *action,
                                                                  PolKitResource  *resource,
                                                                  PolKitCaller    *caller);
 

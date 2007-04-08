@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-privilege-file-validate.c : validate privilege file
+ * polkit-policy-file-validate.c : validate policy file
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -35,37 +35,37 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <libpolkit/libpolkit-privilege-file.h>
+#include <libpolkit/libpolkit-policy-file.h>
 
 static void
 usage (int argc, char *argv[])
 {
 	fprintf (stderr,
                  "\n"
-                 "usage : polkit-privilege-file-validate <privilege-files>\n"
+                 "usage : polkit-policy-file-validate <policy-files>\n"
                  "        [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
-                 "Validates one or more PolicyKit privilege file. Returns 0 if it validates.\n"
+                 "Validates one or more PolicyKit policy file. Returns 0 if it validates.\n"
                  "If not, the program exits with a non-zero exit code.\n");
 }
 
 static gboolean
 validate_file (const char *file)
 {
-        PolKitPrivilegeFile *priv_file;
+        PolKitPolicyFile *priv_file;
         GError *error = NULL;
 
-        priv_file = libpolkit_privilege_file_new (file, &error);
+        priv_file = libpolkit_policy_file_new (file, &error);
         if (priv_file == NULL) {
                 printf ("%s did not validate: %s\n", file, error->message);
                 g_error_free (error);
                 return FALSE;
         }
-        libpolkit_privilege_file_unref (priv_file);
+        libpolkit_policy_file_unref (priv_file);
         return TRUE;
 }
 
@@ -85,7 +85,7 @@ main (int argc, char *argv[])
                         return 0;
                 }
                 if (strcmp (argv[n], "--version") == 0) {
-                        printf ("polkit-privilege-file-validate " PACKAGE_VERSION "\n");
+                        printf ("polkit-policy-file-validate " PACKAGE_VERSION "\n");
                         return 0;
                 }
 

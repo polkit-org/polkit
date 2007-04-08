@@ -57,20 +57,20 @@ _module_shutdown (PolKitModuleInterface *module_interface)
 static PolKitResult
 _module_can_session_access_resource (PolKitModuleInterface *module_interface,
                                      PolKitContext         *pk_context,
-                                     PolKitPrivilege       *privilege,
+                                     PolKitAction          *action,
                                      PolKitResource        *resource,
                                      PolKitSession         *session)
 {
         PolKitResult result;
-        PolKitPrivilegeCache *cache;
-        PolKitPrivilegeFileEntry *pfe;
+        PolKitPolicyCache *cache;
+        PolKitPolicyFileEntry *pfe;
 
         result = LIBPOLKIT_RESULT_NO;
-        cache = libpolkit_context_get_privilege_cache (pk_context);
-        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
-        return libpolkit_privilege_default_can_session_access_resource (
-                libpolkit_privilege_file_entry_get_default (pfe), 
-                privilege, 
+        cache = libpolkit_context_get_policy_cache (pk_context);
+        pfe = libpolkit_policy_cache_get_entry (cache, action);
+        return libpolkit_policy_default_can_session_access_resource (
+                libpolkit_policy_file_entry_get_default (pfe), 
+                action, 
                 resource, 
                 session);
 }
@@ -78,20 +78,20 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
 static PolKitResult
 _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
                                     PolKitContext         *pk_context,
-                                    PolKitPrivilege       *privilege,
+                                    PolKitAction          *action,
                                     PolKitResource        *resource,
                                     PolKitCaller          *caller)
 {
         PolKitResult result;
-        PolKitPrivilegeCache *cache;
-        PolKitPrivilegeFileEntry *pfe;
+        PolKitPolicyCache *cache;
+        PolKitPolicyFileEntry *pfe;
 
         result = LIBPOLKIT_RESULT_NO;
-        cache = libpolkit_context_get_privilege_cache (pk_context);
-        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
-        return libpolkit_privilege_default_can_caller_access_resource (
-                libpolkit_privilege_file_entry_get_default (pfe), 
-                privilege, 
+        cache = libpolkit_context_get_policy_cache (pk_context);
+        pfe = libpolkit_policy_cache_get_entry (cache, action);
+        return libpolkit_policy_default_can_caller_access_resource (
+                libpolkit_policy_file_entry_get_default (pfe), 
+                action, 
                 resource, 
                 caller);
 }

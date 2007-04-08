@@ -173,7 +173,7 @@ doc/api/libpolkit/version.xml
 doc/spec/Makefile
 doc/spec/polkit-spec.xml.in
 doc/man/Makefile
-privileges/Makefile
+policy/Makefile
 modules/Makefile
 modules/default/Makefile
 modules/allow-all/Makefile

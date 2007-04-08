@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * libpolkit-privilege-file.c : privilege files
+ * libpolkit-policy-file.c : policy files
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -39,43 +39,43 @@
 #include <glib.h>
 #include "libpolkit-error.h"
 #include "libpolkit-result.h"
-#include "libpolkit-privilege-file.h"
+#include "libpolkit-policy-file.h"
 
 /**
- * SECTION:libpolkit-privilege-file
- * @short_description: Privileges files.
+ * SECTION:libpolkit-policy-file
+ * @short_description: Policys files.
  *
- * This class is used to represent a privilege files.
+ * This class is used to represent a policy files.
  **/
 
 /**
- * PolKitPrivilegeFile:
+ * PolKitPolicyFile:
  *
  * Objects of this class are used to record information about a
- * privilege.
+ * policy file.
  **/
-struct PolKitPrivilegeFile
+struct PolKitPolicyFile
 {
         int refcount;
         GSList *entries;
 };
 
 /**
- * libpolkit_privilege_file_new:
- * @path: path to privilege file
+ * libpolkit_policy_file_new:
+ * @path: path to policy file
  * @error: return location for error
  * 
- * Create a new #PolKitPrivilegeFile object. If the file does not
+ * Create a new #PolKitPolicyFile object. If the file does not
  * validate, a human readable explanation of why will be set in
  * @error.
  * 
  * Returns: the new object or #NULL if error is set
  **/
-PolKitPrivilegeFile *
-libpolkit_privilege_file_new (const char *path, GError **error)
+PolKitPolicyFile *
+libpolkit_policy_file_new (const char *path, GError **error)
 {
         GKeyFile *key_file;
-        PolKitPrivilegeFile *pf;
+        PolKitPolicyFile *pf;
         char **groups;
         gsize groups_len;
         int n;
@@ -84,11 +84,11 @@ libpolkit_privilege_file_new (const char *path, GError **error)
         key_file = NULL;
         groups = NULL;
 
-        if (!g_str_has_suffix (path, ".priv")) {
+        if (!g_str_has_suffix (path, ".policy")) {
                 g_set_error (error, 
                              POLKIT_ERROR, 
-                             POLKIT_ERROR_PRIVILEGE_FILE_INVALID,
-                             "Privilege files must have extension .priv");
+                             POLKIT_ERROR_POLICY_FILE_INVALID,
+                             "Policy files must have extension .policy");
                 goto error;
         }
 
@@ -96,7 +96,7 @@ libpolkit_privilege_file_new (const char *path, GError **error)
         if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
                 goto error;
 
-        pf = g_new0 (PolKitPrivilegeFile, 1);
+        pf = g_new0 (PolKitPolicyFile, 1);
         pf->refcount = 1;
 
         groups = g_key_file_get_groups(key_file, &groups_len);
@@ -104,27 +104,27 @@ libpolkit_privilege_file_new (const char *path, GError **error)
                 goto error;
 
         for (n = 0; groups[n] != NULL; n++) {
-                const char *privilege;
-                PolKitPrivilegeFileEntry *pfe;
+                const char *action;
+                PolKitPolicyFileEntry *pfe;
 
-                if (!g_str_has_prefix (groups[n], "Privilege ")) {
+                if (!g_str_has_prefix (groups[n], "Action ")) {
                         g_set_error (error, 
                                      POLKIT_ERROR, 
-                                     POLKIT_ERROR_PRIVILEGE_FILE_INVALID,
+                                     POLKIT_ERROR_POLICY_FILE_INVALID,
                                      "Unknown group of name '%s'", groups[n]);
                         goto error;
                 }
 
-                privilege = groups[n] + 10; /* strlen ("Privilege ") */
-                if (strlen (privilege) == 0) {
+                action = groups[n] + 7; /* "Action " */
+                if (strlen (action) == 0) {
                         g_set_error (error, 
                                      POLKIT_ERROR, 
-                                     POLKIT_ERROR_PRIVILEGE_FILE_INVALID,
-                                     "Zero-length privilege name");
+                                     POLKIT_ERROR_POLICY_FILE_INVALID,
+                                     "Zero-length action name");
                         goto error;
                 }
 
-                pfe = libpolkit_privilege_file_entry_new (key_file, privilege, error);
+                pfe = libpolkit_policy_file_entry_new (key_file, action, error);
                 if (pfe == NULL)
                         goto error;
                 pf->entries = g_slist_prepend (pf->entries, pfe);
@@ -139,62 +139,62 @@ error:
         if (key_file != NULL)
                 g_key_file_free (key_file);
         if (pf != NULL)
-                libpolkit_privilege_file_unref (pf);
+                libpolkit_policy_file_unref (pf);
         return NULL;
 }
 
 /**
- * libpolkit_privilege_file_ref:
- * @privilege_file: the privilege file object
+ * libpolkit_policy_file_ref:
+ * @policy_file: the policy file object
  * 
  * Increase reference count.
  * 
  * Returns: the object
  **/
-PolKitPrivilegeFile *
-libpolkit_privilege_file_ref (PolKitPrivilegeFile *privilege_file)
+PolKitPolicyFile *
+libpolkit_policy_file_ref (PolKitPolicyFile *policy_file)
 {
-        g_return_val_if_fail (privilege_file != NULL, privilege_file);
-        privilege_file->refcount++;
-        return privilege_file;
+        g_return_val_if_fail (policy_file != NULL, policy_file);
+        policy_file->refcount++;
+        return policy_file;
 }
 
 /**
- * libpolkit_privilege_file_unref:
- * @privilege_file: the privilege file object
+ * libpolkit_policy_file_unref:
+ * @policy_file: the policy file object
  * 
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
  * objects are decresed by one.
  **/
 void
-libpolkit_privilege_file_unref (PolKitPrivilegeFile *privilege_file)
+libpolkit_policy_file_unref (PolKitPolicyFile *policy_file)
 {
         GSList *i;
-        g_return_if_fail (privilege_file != NULL);
-        privilege_file->refcount--;
-        if (privilege_file->refcount > 0) 
+        g_return_if_fail (policy_file != NULL);
+        policy_file->refcount--;
+        if (policy_file->refcount > 0) 
                 return;
-        for (i = privilege_file->entries; i != NULL; i = g_slist_next (i)) {
-                libpolkit_privilege_file_entry_unref (i->data);
+        for (i = policy_file->entries; i != NULL; i = g_slist_next (i)) {
+                libpolkit_policy_file_entry_unref (i->data);
         }
-        if (privilege_file->entries != NULL)
-                g_slist_free (privilege_file->entries);
-        g_free (privilege_file);
+        if (policy_file->entries != NULL)
+                g_slist_free (policy_file->entries);
+        g_free (policy_file);
 }
 
 /**
- * libpolkit_privilege_file_get_entries:
- * @privilege_file: the privilege file object
+ * libpolkit_policy_file_get_entries:
+ * @policy_file: the policy file object
  * 
  * Get the entries stemming from the given file.
  * 
  * Returns: A #GSList of the entries.
  **/
 GSList *
-libpolkit_privilege_file_get_entries (PolKitPrivilegeFile *privilege_file)
+libpolkit_policy_file_get_entries (PolKitPolicyFile *policy_file)
 {
-        g_return_val_if_fail (privilege_file != NULL, NULL);
-        return privilege_file->entries;
+        g_return_val_if_fail (policy_file != NULL, NULL);
+        return policy_file->entries;
 }
 

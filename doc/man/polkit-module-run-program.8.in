@@ -11,7 +11,7 @@ polkit-module-run-program \- determine policy by running a program
 \fBpolkit-module-run-program.so\fR program=\fI<program>\fR
 .SH DESCRIPTION
 .PP
-This PolicyKit module will run a program every time a privilege is
+This PolicyKit module will run a program every time an action is
 requested. For more information about the big picture refer to the
 \fIPolicyKit spec\fP which can be found in
 .I "@docdir@/spec/polkit-spec.html"
@@ -22,9 +22,9 @@ depending on the distribution.
 .TP 3n
 .B program=<program>
 Absolute path to program to run; this is a mandatory option. Examples:
-.B privilege=/usr/bin/my-program
+.B program=/usr/bin/my-program
 or
-.B privilege="/path/to/program --foo --bar"
+.B program="/path/to/program --foo --bar"
 
 .SH DESCRIPTION
 This module will invoke the given program and will export a minimal
@@ -51,7 +51,7 @@ enumeration):
 .I
 .TP
 .B unknown
-The passed privilege is unknown.
+The passed action is unknown.
 .TP
 .B not_authorized
 The mechanism / caller (e.g. the program using
@@ -98,8 +98,8 @@ bus daemon, the environment will contain:
 To identify the request to be concerning a decision about a caller on
 the system message bus.
 .TP
-.B POLKIT_PRIVILEGE_ID
-Privilege identifier
+.B POLKIT_ACTION_ID
+An identifier for the action
 .TP
 .B POLKIT_RESOURCE_ID
 Resource identifier
@@ -142,8 +142,8 @@ contain:
 .B POLKIT_REQUEST_SESSION=1
 To identify the request to be session-wide.
 .TP
-.B POLKIT_PRIVILEGE_ID
-Privilege identifier
+.B POLKIT_ACTION_ID
+An identifier for the action
 .TP
 .B POLKIT_RESOURCE_ID
 Resource identifier
@@ -190,7 +190,7 @@ on how to subscribe.
 \&\fIpolkit-module-default\fR\|(8),
 \&\fIpolkit-module-allow-all\fR\|(8),
 \&\fIpolkit-module-deny-all\fR\|(8),
-\&\fI@sysconfdir@/PolicyKit/privileges\fR\|,
+\&\fI@sysconfdir@/PolicyKit/policy\fR\|,
 \&\fI@sysconfdir@/PolicyKit/PolicyKit.conf\fR\|
 
 .SH AUTHOR

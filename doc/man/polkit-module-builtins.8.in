@@ -7,7 +7,7 @@
 polkit-module-builtins \- options that apply to any PolicyKit module
 .SH SYNOPSIS
 .PP
-.B any-module.so [privilege=<regexp>] [user=<username> ...]
+.B any-module.so [action=<regexp>] [user=<username> ...]
 .SH DESCRIPTION
 .PP
 This manual page describes options that can be used for any PolicyKit
@@ -21,10 +21,10 @@ depending on the distribution.
 .SH OPTIONS
 
 .TP 3n
-.B privilege=<regexp>
-Only consider requests where the privilege name matches the given
+.B action=<regexp>
+Only consider requests where the action name matches the given
 regular expression. Example:
-.B privilege=hal-storage-mount*
+.B action=hal-storage-mount*
 
 .TP 3n
 .B user=<username>
@@ -47,7 +47,7 @@ on how to subscribe.
 \&\fIPolicyKit\fR\|(8),
 \&\fIpolkit-module-default\fR\|(8),
 \&\fIpolkit-module-deny-all\fR\|(8),
-\&\fI@sysconfdir@/PolicyKit/privileges\fR\|,
+\&\fI@sysconfdir@/PolicyKit/policy\fR\|,
 \&\fI@sysconfdir@/PolicyKit/PolicyKit.conf\fR\|
 
 .SH AUTHOR

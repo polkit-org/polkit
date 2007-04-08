@@ -4,15 +4,15 @@
 .\"
 .TH POLKIT-MODULE-DENY-ALL 8
 .SH NAME
-polkit-module-deny-all \- grant access to all privileges
+polkit-module-deny-all \- deny any action
 .SH SYNOPSIS
 .PP
 .B polkit-module-deny-all.so
 .SH DESCRIPTION
 .PP
-This PolicyKit module will deny access to any privilege regardless of
-the entity requesting it, what the requested privilege is and what
-resource is involved.
+This PolicyKit module will deny any action regardless of the entity
+requesting it, what the requested action is and what resource is
+involved.
 
 For more information about the big picture refer to the \fIPolicyKit
 spec\fP which can be found in
@@ -42,7 +42,7 @@ on how to subscribe.
 \&\fIpolkit-module-default\fR\|(8),
 \&\fIpolkit-module-allow-all\fR\|(8),
 \&\fIpolkit-module-run-program\fR\|(8),
-\&\fI@sysconfdir@/PolicyKit/privileges\fR\|,
+\&\fI@sysconfdir@/PolicyKit/policy\fR\|,
 \&\fI@sysconfdir@/PolicyKit/PolicyKit.conf\fR\|
 
 .SH AUTHOR

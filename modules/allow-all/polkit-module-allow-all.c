@@ -55,7 +55,7 @@ _module_shutdown (PolKitModuleInterface *module_interface)
 static PolKitResult
 _module_can_session_access_resource (PolKitModuleInterface *module_interface,
                                      PolKitContext         *pk_context,
-                                     PolKitPrivilege       *privilege,
+                                     PolKitAction          *action,
                                      PolKitResource        *resource,
                                      PolKitSession         *session)
 {
@@ -65,7 +65,7 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
 static PolKitResult
 _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
                                     PolKitContext         *pk_context,
-                                    PolKitPrivilege       *privilege,
+                                    PolKitAction          *action,
                                     PolKitResource        *resource,
                                     PolKitCaller          *caller)
 {

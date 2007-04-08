@@ -4,15 +4,15 @@
 .\"
 .TH POLKIT-MODULE-ALLOW-ALL 8
 .SH NAME
-polkit-module-allow-all \- grant access to all privileges
+polkit-module-allow-all \- permit any action
 .SH SYNOPSIS
 .PP
 .B polkit-module-allow-all.so
 .SH DESCRIPTION
 .PP
-This PolicyKit module will allow access to any privilege regardless of
-the entity requesting it, what the requested privilege is and what
-resource is involved.
+This PolicyKit module will permit any action regardless of the entity
+requesting it, what the requested action is and what resource is
+involved.
 
 For more information about the big picture refer to the \fIPolicyKit
 spec\fP which can be found in
@@ -43,7 +43,7 @@ on how to subscribe.
 \&\fIpolkit-module-default\fR\|(8),
 \&\fIpolkit-module-deny-all\fR\|(8),
 \&\fIpolkit-module-run-program\fR\|(8),
-\&\fI@sysconfdir@/PolicyKit/privileges\fR\|,
+\&\fI@sysconfdir@/PolicyKit/policy\fR\|,
 \&\fI@sysconfdir@/PolicyKit/PolicyKit.conf\fR\|
 
 .SH AUTHOR

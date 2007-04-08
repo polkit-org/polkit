@@ -106,12 +106,12 @@ _module_shutdown (PolKitModuleInterface *module_interface)
 }
 
 static gboolean
-_add_privilege_to_env (PolKitPrivilege *privilege, GPtrArray *envp)
+_add_action_to_env (PolKitAction *action, GPtrArray *envp)
 {
         char *p_id;
-        if (!libpolkit_privilege_get_privilege_id (privilege, &p_id))
+        if (!libpolkit_action_get_action_id (action, &p_id))
                 goto error;
-        g_ptr_array_add (envp, g_strdup_printf ("POLKIT_PRIVILEGE_ID=%s", p_id));
+        g_ptr_array_add (envp, g_strdup_printf ("POLKIT_ACTION_ID=%s", p_id));
         return TRUE;
 error:
         return FALSE;
@@ -267,7 +267,7 @@ error:
 static PolKitResult
 _module_can_session_access_resource (PolKitModuleInterface *module_interface,
                                      PolKitContext         *pk_context,
-                                     PolKitPrivilege       *privilege,
+                                     PolKitAction          *action,
                                      PolKitResource        *resource,
                                      PolKitSession         *session)
 {
@@ -276,13 +276,13 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
         GPtrArray *envp;
 
         envp = NULL;
-        result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+        result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
 
         user_data = libpolkit_module_get_user_data (module_interface);
 
         envp = g_ptr_array_new ();
 
-        if (!_add_privilege_to_env (privilege, envp))
+        if (!_add_action_to_env (action, envp))
                 goto error;
         if (!_add_resource_to_env (resource, envp))
                 goto error;
@@ -306,7 +306,7 @@ error:
 static PolKitResult
 _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
                                     PolKitContext         *pk_context,
-                                    PolKitPrivilege       *privilege,
+                                    PolKitAction          *action,
                                     PolKitResource        *resource,
                                     PolKitCaller          *caller)
 {
@@ -319,7 +319,7 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         user_data = libpolkit_module_get_user_data (module_interface);
 
         envp = g_ptr_array_new ();
-        if (!_add_privilege_to_env (privilege, envp))
+        if (!_add_action_to_env (action, envp))
                 goto error;
         if (!_add_resource_to_env (resource, envp))
                 goto error;
