@@ -285,7 +285,7 @@ libpolkit_context_init (PolKitContext *pk_context, GError **error)
         /* don't populate the cache until it's needed.. */
 
         if (pk_context->file_monitor_add_watch_func == NULL) {
-                _pk_debug ("No file monitor; cannot monitor '%s' for .priv file changes", dirname);
+                _pk_debug ("No file monitor; cannot monitor '%s' for .policy file changes", pk_context->policy_dir);
         } else {
                 /* Watch when policy definitions file change */
                 pk_context->file_monitor_add_watch_func (pk_context, 
@@ -425,7 +425,7 @@ libpolkit_context_get_policy_cache (PolKitContext *pk_context)
                                    pk_context->policy_dir, error->message);
                         g_error_free (error);
                 } else {
-                        /*libpolkit_policy_cache_debug (pk_context->priv_cache)*/;
+                        libpolkit_policy_cache_debug (pk_context->priv_cache);
                 }
         }
 

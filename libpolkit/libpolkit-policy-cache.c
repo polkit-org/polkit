@@ -107,7 +107,7 @@ libpolkit_policy_cache_new (const char *dirname, GError **error)
                 char *path;
                 PolKitPolicyFile *pf;
 
-                if (!g_str_has_suffix (file, ".priv"))
+                if (!g_str_has_suffix (file, ".policy"))
                         continue;
 
                 if (g_str_has_prefix (file, "."))
