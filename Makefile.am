@@ -7,8 +7,6 @@ pkgconfig_DATA = libpolkit.pc
 
 DISTCLEANFILES = libpolkit.pc
 
-EXTRA_DIST = HACKING libpolkit.pc.in mkinstalldirs
-
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
 
@@ -29,7 +27,6 @@ $(srcdir)/ChangeLog:
 .PHONY: ChangeLog $(srcdir)/ChangeLog
 
 EXTRA_DIST = HACKING libpolkit.pc.in mkinstalldirs ChangeLog
-
 
 clean-local :
 	rm -f *~
