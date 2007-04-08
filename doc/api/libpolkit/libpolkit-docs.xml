@@ -64,7 +64,6 @@
 	PolicyKit library.
       </para>
     </partintro>
-    <xi:include href="xml/libpolkit.xml"/>
     <xi:include href="xml/libpolkit-error.xml"/>
     <xi:include href="xml/libpolkit-result.xml"/>
     <xi:include href="xml/libpolkit-context.xml"/>
@@ -77,6 +76,7 @@
     <xi:include href="xml/libpolkit-seat.xml"/>
     <xi:include href="xml/libpolkit-session.xml"/>
     <xi:include href="xml/libpolkit-caller.xml"/>
+    <xi:include href="xml/libpolkit-module.xml"/>
   </reference>
 
   <index>

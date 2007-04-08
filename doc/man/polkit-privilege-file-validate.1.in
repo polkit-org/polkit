@@ -43,6 +43,7 @@ on how to subscribe.
 
 .SH SEE ALSO
 .PP
+\&\fIPolicyKit\fR\|(8),
 \&\fIpolkit-check-caller\fR\|(1),
 \&\fIpolkit-check-session\fR\|(1)
 

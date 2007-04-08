@@ -170,7 +170,7 @@ main (int argc, char *argv[])
                 }
         }
 
-        allowed = libpolkit_can_caller_access_resource (pol_ctx, privilege, resource, caller);
+        allowed = libpolkit_context_can_caller_access_resource (pol_ctx, privilege, resource, caller);
 
         if (allowed)
                 return 0;

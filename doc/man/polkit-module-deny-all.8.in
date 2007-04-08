@@ -1,0 +1,60 @@
+.\" 
+.\" polkit-module-deny-all manual page.
+.\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
+.\"
+.TH POLKIT-MODULE-DENY-ALL 8
+.SH NAME
+polkit-module-deny-all \- grant access to all privileges
+.SH SYNOPSIS
+.PP
+.B polkit-module-deny-all.so [privilege=<regexp>] [user=<username>]
+.SH DESCRIPTION
+.PP
+This PolicyKit module will deny access to any privilege regardless of
+the entity requesting it, what the requested privilege is and what
+resource is involved.
+
+For more information about the big picture refer to the \fIPolicyKit
+spec\fP which can be found in
+.I "@docdir@/spec/polkit-spec.html"
+depending on the distribution.
+
+.SH OPTIONS
+
+.TP 3n
+.B privilege=<regexp>
+Only consider requests where the privilege name matches the given
+regular expression. Example:
+.B privilege=hal-storage-mount*
+
+.TP 3n
+.B user=<username>
+Only consider requests matching the given username. May be both a
+numerical
+.B uid
+value or a username. Example:
+.B user=davidz
+
+.SH NOTES
+.PP
+This module is mostly useful in situations where it's desirable to
+lock down the system so it's unusable by normal unprivileged users.
+
+.SH BUGS
+.PP
+Please send bug reports to either the distribution or the HAL
+mailing list, see 
+.I "http://lists.freedesktop.org/mailman/listinfo/hal"
+on how to subscribe.
+
+.SH SEE ALSO
+.PP
+\&\fIPolicyKit\fR\|(8),
+\&\fIpolkit-module-default\fR\|(8),
+\&\fIpolkit-module-allow-all\fR\|(8),
+\&\fI@sysconfdir@/PolicyKit/privileges\fR\|,
+\&\fI@sysconfdir@/PolicyKit/PolicyKit.conf\fR\|
+
+.SH AUTHOR
+Written by David Zeuthen <david@fubar.dk> with a lot of help from many
+others.

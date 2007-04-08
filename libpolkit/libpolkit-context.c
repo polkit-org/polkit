@@ -40,6 +40,7 @@
 #include "libpolkit-debug.h"
 #include "libpolkit-context.h"
 #include "libpolkit-privilege-cache.h"
+#include "libpolkit-module.h"
 
 /**
  * SECTION:libpolkit-context
@@ -66,6 +67,8 @@ struct PolKitContext
         char *priv_dir;
 
         PolKitPrivilegeCache *priv_cache;
+
+        GSList *modules;
 };
 
 /**
@@ -82,6 +85,147 @@ libpolkit_context_new (void)
         pk_context = g_new0 (PolKitContext, 1);
         pk_context->refcount = 1;
         return pk_context;
+}
+
+static gboolean
+unload_modules (PolKitContext *pk_context)
+{
+        GSList *i;
+        for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
+                PolKitModuleInterface *module_interface = i->data;
+                libpolkit_module_interface_unref (module_interface);
+        }
+        g_slist_free (pk_context->modules);
+        pk_context->modules = NULL;
+        _pk_debug ("Unloaded modules");
+
+        return TRUE;
+}
+
+static gboolean
+load_modules (PolKitContext *pk_context, GError **error)
+{
+        const char *config_file;
+        gboolean ret;
+        char *buf;
+        char *end;
+        char line[256];
+        char *p;
+        char *q;
+        gsize len;
+        int line_number;
+        int mod_number;
+
+        ret = FALSE;
+        buf = NULL;
+        mod_number = 0;
+
+        config_file = PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf";
+        if (!g_file_get_contents (config_file,
+                                  &buf,
+                                  &len,
+                                  error)) {
+                _pk_debug ("Cannot load PolicyKit configuration file at '%s'", config_file);
+                goto out;
+        }
+
+        end = buf + len;
+
+        /* parse the config file; one line at a time (yes, this is super ugly code) */
+        p = buf;
+        line_number = -1;
+        while (TRUE) {
+                int argc;
+                char **tokens;
+                char *module_name;
+                char *module_path;
+                PolKitModuleControl module_control;
+                PolKitModuleInterface *module_interface;
+
+                line_number++;
+
+                q = p;
+                while (*q != '\n' && q != '\0' && q < end)
+                        q++;
+                if (*q == '\0' || q >= end) {
+                        /* skip last line if it's not terminated by whitespace */
+                        break;
+                }
+                if ((unsigned int) (q - p) > sizeof(line) - 1) {
+                        _pk_debug ("Line is too long; skipping it");
+                        continue;
+                }
+                strncpy (line, p, q - p);
+                line[q - p] = '\0';
+                p = q + 1;
+
+                /* remove leading and trailing white space */
+                g_strstrip (line);
+
+                /* comments, blank lines are fine; just skip them */
+                if (line[0] == '#' || strlen (line) == 0) {
+                        continue;
+                }
+
+                /*_pk_debug ("Looking at line: '%s'", line);*/
+
+                if (!g_shell_parse_argv (line, &argc, &tokens, NULL)) {
+                        _pk_debug ("Cannot parse line %d - skipping", line_number);
+                        continue;
+                }
+                if (argc < 2) {
+                        _pk_debug ("Line %d is malformed - skipping line", line_number);
+                        g_strfreev (tokens);
+                        continue;
+                }
+                if (!libpolkit_module_control_from_string_representation (tokens[0], &module_control)) {
+                        _pk_debug ("Unknown module_control '%s' at line %d - skipping line", tokens[0], line_number);
+                        g_strfreev (tokens);
+                        continue;
+                }
+                module_name = tokens[1];
+
+                module_path = g_strdup_printf (PACKAGE_LIB_DIR "/PolicyKit/modules/%s", module_name);
+                _pk_debug ("MODULE: number=%d control=%d name=%s argc=%d", 
+                           mod_number, module_control, module_name, argc - 1);
+                module_interface = libpolkit_module_interface_load_module (module_path, 
+                                                                           module_control, 
+                                                                           argc - 1, 
+                                                                           tokens + 1);
+                g_free (module_path);
+
+                if (module_interface != NULL) {
+                        pk_context->modules = g_slist_append (pk_context->modules, module_interface);
+                        mod_number++;
+                }
+                g_strfreev (tokens);
+
+        }
+
+        ret = TRUE;
+
+out:
+        if (buf != NULL)
+                g_free (buf);
+
+        _pk_debug ("Loaded %d modules in total", mod_number);
+        return ret;
+}
+
+static void
+_config_file_events (PolKitContext                 *pk_context,
+                     PolKitContextFileMonitorEvent  event_mask,
+                     const char                    *path,
+                     gpointer                       user_data)
+{
+        _pk_debug ("Config file changed");
+        unload_modules (pk_context);
+        load_modules (pk_context, NULL);
+
+        /* signal that our configuration (may have) changed */
+        if (pk_context->config_changed_cb) {
+                pk_context->config_changed_cb (pk_context, pk_context->config_changed_user_data);
+        }
 }
 
 static void
@@ -117,10 +261,7 @@ _privilege_dir_events (PolKitContext                 *pk_context,
 gboolean
 libpolkit_context_init (PolKitContext *pk_context, GError **error)
 {
-        gboolean ret;
         const char *dirname;
-
-        ret = FALSE;
 
         dirname = getenv ("POLKIT_PRIVILEGE_DIR");
         if (dirname != NULL) {
@@ -130,11 +271,16 @@ libpolkit_context_init (PolKitContext *pk_context, GError **error)
         }
         _pk_debug ("Using privilege files from directory %s", pk_context->priv_dir);
 
+        /* Load modules */
+        if (!load_modules (pk_context, error))
+                goto error;
+
         /* don't populate the cache until it's needed.. */
 
         if (pk_context->file_monitor_add_watch_func == NULL) {
                 _pk_debug ("No file monitor; cannot monitor '%s' for .priv file changes", dirname);
         } else {
+                /* Watch when privilege definitions file change */
                 pk_context->file_monitor_add_watch_func (pk_context, 
                                                          pk_context->priv_dir,
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE|
@@ -142,12 +288,23 @@ libpolkit_context_init (PolKitContext *pk_context, GError **error)
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE,
                                                          _privilege_dir_events,
                                                          NULL);
+
+                /* Config file changes */
+                pk_context->file_monitor_add_watch_func (pk_context, 
+                                                         PACKAGE_SYSCONF_DIR "/PolicyKit",
+                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE|
+                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE|
+                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE,
+                                                         _config_file_events,
+                                                         NULL);
         }
 
-        /* right now we can't fail - but in the future modules we load may */
+        return TRUE;
+error:
+        if (pk_context != NULL)
+                libpolkit_context_unref (pk_context);
 
-        ret = TRUE;
-        return ret;
+        return FALSE;
 }
 
 /**
@@ -177,10 +334,14 @@ libpolkit_context_ref (PolKitContext *pk_context)
 void
 libpolkit_context_unref (PolKitContext *pk_context)
 {
+
         g_return_if_fail (pk_context != NULL);
         pk_context->refcount--;
         if (pk_context->refcount > 0) 
                 return;
+
+        unload_modules (pk_context);
+
         g_free (pk_context);
 }
 
@@ -262,4 +423,274 @@ libpolkit_context_get_privilege_cache (PolKitContext *pk_context)
         }
 
         return pk_context->priv_cache;
+}
+
+
+/**
+ * libpolkit_context_get_seat_resource_association:
+ * @pk_context: the PolicyKit context
+ * @visitor: visitor function
+ * @user_data: user data
+ *
+ * Retrieve information about what resources are associated to what
+ * seats. Note that a resource may be associated to more than one
+ * seat. This information stems from user configuration and consumers
+ * of this information that know better (e.g. HAL) may choose to
+ * override it. 
+ *
+ * Typically, this information is used to e.g. bootstrap the system
+ * insofar that it can be used to start login greeters on the given
+ * video hardware (e.g. resources) on the given user-configured seats.
+ *
+ * If a resource is not associated with any seat, it is assumed to be
+ * available to any local seat.
+ *
+ * Returns: A #PolKitResult - can only be one of
+ * #LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW or
+ * #LIBPOLKIT_RESULT_YES (if the callback was invoked)
+ */
+PolKitResult
+libpolkit_context_get_seat_resource_association (PolKitContext       *pk_context,
+                                                 PolKitSeatVisitorCB  visitor,
+                                                 gpointer            *user_data)
+{
+        return LIBPOLKIT_RESULT_YES;
+}
+
+/**
+ * libpolkit_context_is_resource_associated_with_seat:
+ * @pk_context: the PolicyKit context
+ * @resource: the resource in question
+ * @seat: the seat
+ *
+ * Determine if a given resource is associated with a given seat. The
+ * same comments noted in libpolkit_get_seat_resource_association() about the
+ * source purely being user configuration applies here as well.
+ *
+ * Returns: A #PolKitResult - can only be one of
+ * #LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
+ * #LIBPOLKIT_RESULT_YES, #LIBPOLKIT_RESULT_NO.
+ */
+PolKitResult
+libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
+                                                    PolKitResource  *resource,
+                                                    PolKitSeat      *seat)
+{
+        return LIBPOLKIT_RESULT_NO;
+}
+
+/**
+ * libpolkit_context_can_session_access_resource:
+ * @pk_context: the PolicyKit context
+ * @privilege: the type of access to check for
+ * @resource: the resource in question
+ * @session: the session in question
+ *
+ * Determine if a given session can access a given resource in a given way.
+ *
+ * Returns: A #PolKitResult - can only be one of
+ * #LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
+ * #LIBPOLKIT_RESULT_YES, #LIBPOLKIT_RESULT_NO.
+ */
+PolKitResult
+libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
+                                               PolKitPrivilege *privilege,
+                                               PolKitResource  *resource,
+                                               PolKitSession   *session)
+{
+        PolKitPrivilegeCache *cache;
+        PolKitPrivilegeFileEntry *pfe;
+        PolKitResult current_result;
+        PolKitModuleControl current_control;
+        GSList *i;
+
+        current_result = LIBPOLKIT_RESULT_NO;
+
+        cache = libpolkit_context_get_privilege_cache (pk_context);
+        if (cache == NULL)
+                goto out;
+
+        _pk_debug ("entering libpolkit_can_session_access_resource()");
+        libpolkit_privilege_debug (privilege);
+        libpolkit_resource_debug (resource);
+        libpolkit_session_debug (session);
+
+        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
+        if (pfe == NULL) {
+                char *privilege_name;
+                if (!libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
+                        g_warning ("given privilege has no name");
+                } else {
+                        g_warning ("no privilege with name '%s'", privilege_name);
+                }
+                current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                goto out;
+        }
+
+        libpolkit_privilege_file_entry_debug (pfe);
+
+        current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+        current_control = LIBPOLKIT_MODULE_CONTROL_ADVISE; /* start with advise */
+
+        /* visit modules */
+        for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
+                PolKitModuleInterface *module_interface = i->data;
+                PolKitModuleCanSessionAccessResource func;
+
+                func = libpolkit_module_get_func_can_session_access_resource (module_interface);
+                if (func != NULL) {
+                        PolKitModuleControl module_control;
+                        PolKitResult module_result;
+
+                        _pk_debug ("Asking module '%s'", libpolkit_module_get_name (module_interface));
+
+                        module_control = libpolkit_module_interface_get_control (module_interface);
+                        module_result = func (module_interface,
+                                              pk_context,
+                                              privilege, 
+                                              resource, 
+                                              session);
+
+                        /* if a module returns _UNKNOWN_PRIVILEGE, it means that it doesn't
+                         * have an opinion about the query; e.g. polkit-module-allow-all(8)
+                         * will return this if it's confined to only consider certain privileges
+                         * or certain users.
+                         */
+                        if (module_result != LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE) {
+
+                                if (current_control == LIBPOLKIT_MODULE_CONTROL_ADVISE &&
+                                    module_control == LIBPOLKIT_MODULE_CONTROL_ADVISE) {
+
+                                        /* take the less strict result */
+                                        if (current_result < module_result) {
+                                                current_result = module_result;
+                                        }
+
+                                } else if (current_control == LIBPOLKIT_MODULE_CONTROL_ADVISE &&
+                                           module_control == LIBPOLKIT_MODULE_CONTROL_MANDATORY) {
+                                        
+                                        /* here we just override */
+                                        current_result = module_result;
+
+                                        /* we are now in mandatory mode */
+                                        current_control = LIBPOLKIT_MODULE_CONTROL_MANDATORY;
+                                }
+                        }
+                }
+        }
+
+        /* Never return UNKNOWN_PRIVILEGE to user */
+        if (current_result == LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE)
+                current_result = LIBPOLKIT_RESULT_NO;
+
+out:
+        _pk_debug ("... result was %s", libpolkit_result_to_string_representation (current_result));
+        return current_result;
+}
+
+/**
+ * libpolkit_context_can_caller_access_resource:
+ * @pk_context: the PolicyKit context
+ * @privilege: the type of access to check for
+ * @resource: the resource in question
+ * @caller: the resource in question
+ *
+ * Determine if a given caller can access a given resource in a given way.
+ *
+ * Returns: A #PolKitResult specifying if, and how, the caller can
+ * access the resource in the given way
+ */
+PolKitResult
+libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
+                                              PolKitPrivilege *privilege,
+                                              PolKitResource  *resource,
+                                              PolKitCaller    *caller)
+{
+        PolKitPrivilegeCache *cache;
+        PolKitPrivilegeFileEntry *pfe;
+        PolKitResult current_result;
+        PolKitModuleControl current_control;
+        GSList *i;
+
+        current_result = LIBPOLKIT_RESULT_NO;
+
+        cache = libpolkit_context_get_privilege_cache (pk_context);
+        if (cache == NULL)
+                goto out;
+
+        _pk_debug ("entering libpolkit_can_caller_access_resource()");
+        libpolkit_privilege_debug (privilege);
+        libpolkit_resource_debug (resource);
+        libpolkit_caller_debug (caller);
+
+        pfe = libpolkit_privilege_cache_get_entry (cache, privilege);
+        if (pfe == NULL) {
+                char *privilege_name;
+                if (!libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
+                        g_warning ("given privilege has no name");
+                } else {
+                        g_warning ("no privilege with name '%s'", privilege_name);
+                }
+                current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                goto out;
+        }
+
+        libpolkit_privilege_file_entry_debug (pfe);
+
+        current_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+        current_control = LIBPOLKIT_MODULE_CONTROL_ADVISE; /* start with advise */
+
+        /* visit modules */
+        for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
+                PolKitModuleInterface *module_interface = i->data;
+                PolKitModuleCanCallerAccessResource func;
+
+                func = libpolkit_module_get_func_can_caller_access_resource (module_interface);
+                if (func != NULL) {
+                        PolKitModuleControl module_control;
+                        PolKitResult module_result;
+
+                        _pk_debug ("Asking module '%s'", libpolkit_module_get_name (module_interface));
+
+                        module_control = libpolkit_module_interface_get_control (module_interface);
+                        module_result = func (module_interface,
+                                              pk_context,
+                                              privilege, 
+                                              resource, 
+                                              caller);
+
+                        /* if a module returns _UNKNOWN_PRIVILEGE, it means that it doesn't
+                         * have an opinion about the query; e.g. polkit-module-allow-all(8)
+                         * will return this if it's confined to only consider certain privileges
+                         * or certain users.
+                         */
+                        if (module_result != LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE) {
+
+                                if (current_control == LIBPOLKIT_MODULE_CONTROL_ADVISE &&
+                                    module_control == LIBPOLKIT_MODULE_CONTROL_ADVISE) {
+
+                                        /* take the less strict result */
+                                        if (current_result < module_result) {
+                                                current_result = module_result;
+                                        }
+
+                                } else if (current_control == LIBPOLKIT_MODULE_CONTROL_ADVISE &&
+                                           module_control == LIBPOLKIT_MODULE_CONTROL_MANDATORY) {
+                                        
+                                        /* here we just override */
+                                        current_result = module_result;
+
+                                        /* we are now in mandatory mode */
+                                        current_control = LIBPOLKIT_MODULE_CONTROL_MANDATORY;
+                                }
+                        }
+                }
+        }
+
+        /* Never return UNKNOWN_PRIVILEGE to user */
+        if (current_result == LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE)
+                current_result = LIBPOLKIT_RESULT_NO;
+out:
+        _pk_debug ("... result was %s", libpolkit_result_to_string_representation (current_result));
+        return current_result;
 }

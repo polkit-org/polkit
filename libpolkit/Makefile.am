@@ -8,6 +8,7 @@ INCLUDES = \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
+	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
@@ -28,10 +29,11 @@ libpolkitinclude_HEADERS =              		\
 	libpolkit-privilege-file-entry.h		\
 	libpolkit-privilege-file.h			\
 	libpolkit-privilege-cache.h			\
-	libpolkit-privilege-default.h
+	libpolkit-privilege-default.h			\
+	libpolkit-module.h
 
 libpolkit_la_SOURCES =                  	              				\
-	libpolkit.h				libpolkit.c				\
+	libpolkit.h									\
 	libpolkit-error.h			libpolkit-error.c			\
 	libpolkit-result.h			libpolkit-result.c			\
 	libpolkit-context.h			libpolkit-context.c			\
@@ -44,9 +46,10 @@ libpolkit_la_SOURCES =                  	              				\
 	libpolkit-privilege-file.h		libpolkit-privilege-file.c		\
 	libpolkit-privilege-cache.h		libpolkit-privilege-cache.c		\
 	libpolkit-privilege-default.h		libpolkit-privilege-default.c		\
-	libpolkit-debug.h			libpolkit-debug.c
+	libpolkit-debug.h			libpolkit-debug.c			\
+	libpolkit-module.h			libpolkit-module.c
 
-libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@
+libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ -ldl
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

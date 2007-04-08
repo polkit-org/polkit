@@ -54,7 +54,6 @@ static const struct {
 {
         {LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE, "unknown"},
         {LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW, "not_authorized"},
-        {LIBPOLKIT_RESULT_YES, "yes"},
         {LIBPOLKIT_RESULT_NO, "no"},
         {LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH, "auth_root"},
         {LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION, "auth_root_keep_session"},
@@ -62,6 +61,7 @@ static const struct {
         {LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH, "auth_self"},
         {LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION, "auth_self_keep_session"},
         {LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS, "auth_self_keep_always"},
+        {LIBPOLKIT_RESULT_YES, "yes"},
         {0, NULL}
 };
 
@@ -111,8 +111,6 @@ libpolkit_result_from_string_representation (const char *string, PolKitResult *o
         }
 
         return FALSE;
-
 found:
         return TRUE;
-
 }

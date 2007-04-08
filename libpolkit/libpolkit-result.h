@@ -32,7 +32,6 @@
  * PolKitResult:
  * @LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE: The passed privilege is unknown.
  * @LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW: The caller of libpolkit is not sufficiently privilege to know the answer.
- * @LIBPOLKIT_RESULT_YES: Access granted.
  * @LIBPOLKIT_RESULT_NO: Access denied.
  * @LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH: Access denied, but authentication of the caller as 
  * root will grant access to only that caller.
@@ -46,15 +45,18 @@
  * his user will grant access for the remainder of the session the caller stems from.
  * @LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS: Access denied, but authentication of the caller as
  * his user will grant access to the user of the caller in the future.
+ * @LIBPOLKIT_RESULT_YES: Access granted.
  * @LIBPOLKIT_RESULT_N_RESULTS: Number of result codes
  *
- * Result codes from queries to PolicyKit.
+ * Result codes from queries to PolicyKit. These are ordered and we
+ * say that a result A is "more strict" than a result B, if A has a
+ * lower numerical value. (e.g. #LIBPOLKIT_RESULT_NO is more strict
+ * than #LIBPOLKIT_RESULT_YES).
  */
 typedef enum
 {
         LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE,
         LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
-        LIBPOLKIT_RESULT_YES,
         LIBPOLKIT_RESULT_NO,
         LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH,
         LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION,
@@ -62,6 +64,7 @@ typedef enum
         LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH,
         LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION,
         LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS,
+        LIBPOLKIT_RESULT_YES,
         LIBPOLKIT_RESULT_N_RESULTS
 } PolKitResult;
 

@@ -31,6 +31,14 @@
 #include <sys/types.h>
 #include <glib.h>
 
+#include <libpolkit/libpolkit-error.h>
+#include <libpolkit/libpolkit-result.h>
+#include <libpolkit/libpolkit-context.h>
+#include <libpolkit/libpolkit-privilege.h>
+#include <libpolkit/libpolkit-resource.h>
+#include <libpolkit/libpolkit-seat.h>
+#include <libpolkit/libpolkit-session.h>
+#include <libpolkit/libpolkit-caller.h>
 #include <libpolkit/libpolkit-privilege-cache.h>
 
 struct PolKitContext;
@@ -126,18 +134,52 @@ typedef void (*PolKitContextFileMonitorRemoveWatch) (PolKitContext              
 
 
 PolKitContext *libpolkit_context_new                (void);
-gboolean       libpolkit_context_init               (PolKitContext                       *pk_context, 
-                                                     GError                             **error);
-PolKitContext *libpolkit_context_ref                (PolKitContext                        *pk_context);
-void           libpolkit_context_unref              (PolKitContext                        *pk_context);
 void           libpolkit_context_set_config_changed (PolKitContext                        *pk_context, 
                                                      PolKitContextConfigChangedCB          cb, 
                                                      gpointer                              user_data);
 void           libpolkit_context_set_file_monitor   (PolKitContext                        *pk_context, 
                                                      PolKitContextFileMonitorAddWatch      add_watch_func,
                                                      PolKitContextFileMonitorRemoveWatch   remove_watch_func);
+gboolean       libpolkit_context_init               (PolKitContext                        *pk_context, 
+                                                     GError                              **error);
+PolKitContext *libpolkit_context_ref                (PolKitContext                        *pk_context);
+void           libpolkit_context_unref              (PolKitContext                        *pk_context);
 
 PolKitPrivilegeCache *libpolkit_context_get_privilege_cache (PolKitContext *pk_context);
+
+/**
+ * PolKitSeatVisitorCB:
+ * @seat: the seat
+ * @resources_associated_with_seat: A NULL terminated array of resources associated with the seat
+ * @user_data: user data
+ *
+ * Visitor function for libpolkit_get_seat_resource_association(). The caller should _not_ unref the passed objects.
+ */
+typedef void (*PolKitSeatVisitorCB) (PolKitSeat      *seat,
+                                     PolKitResource **resources_associated_with_seat,
+                                     gpointer         user_data);
+
+PolKitResult
+libpolkit_context_get_seat_resource_association (PolKitContext       *pk_context,
+                                                 PolKitSeatVisitorCB  visitor,
+                                                 gpointer            *user_data);
+
+PolKitResult
+libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
+                                                    PolKitResource  *resource,
+                                                    PolKitSeat      *seat);
+
+PolKitResult
+libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
+                                               PolKitPrivilege *privilege,
+                                               PolKitResource  *resource,
+                                               PolKitSession   *session);
+
+PolKitResult
+libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
+                                              PolKitPrivilege *privilege,
+                                              PolKitResource  *resource,
+                                              PolKitCaller    *caller);
 
 #endif /* LIBPOLKIT_CONTEXT_H */
 

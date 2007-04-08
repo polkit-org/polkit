@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <sys/time.h>
 
 #include "libpolkit-debug.h"
 
@@ -61,6 +62,15 @@ _pk_debug (const char *format, ...)
         }
 
         if (show_debug) {
+                struct timeval tnow;
+                struct tm *tlocaltime;
+                struct timezone tzone;
+                char tbuf[256];
+                gettimeofday (&tnow, &tzone);
+                tlocaltime = localtime ((time_t *) &tnow.tv_sec);
+                strftime (tbuf, sizeof (tbuf), "%H:%M:%S", tlocaltime);
+		fprintf (stdout, "%s.%03d: ", tbuf, (int)(tnow.tv_usec/1000));
+
                 va_start (args, format);
                 vfprintf (stdout, format, args);
                 va_end (args);

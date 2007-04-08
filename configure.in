@@ -174,6 +174,10 @@ doc/spec/Makefile
 doc/spec/polkit-spec.xml.in
 doc/man/Makefile
 privileges/Makefile
+modules/Makefile
+modules/default/Makefile
+modules/allow-all/Makefile
+modules/deny-all/Makefile
 ])
 
 dnl ==========================================================================

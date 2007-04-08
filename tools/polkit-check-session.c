@@ -178,7 +178,7 @@ main (int argc, char *argv[])
         libpolkit_resource_set_resource_type (resource, resource_type);
         libpolkit_resource_set_resource_id (resource, resource_id);
 
-        allowed = libpolkit_can_session_access_resource (pol_ctx, privilege, resource, session);
+        allowed = libpolkit_context_can_session_access_resource (pol_ctx, privilege, resource, session);
 
         if (allowed)
                 return 0;
