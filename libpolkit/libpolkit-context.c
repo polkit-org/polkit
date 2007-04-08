@@ -43,6 +43,13 @@
 #include "libpolkit-module.h"
 
 /**
+ * SECTION:libpolkit
+ * @short_description: Centralized policy management.
+ *
+ * libpolkit is a C library for centralized policy management.
+ **/
+
+/**
  * SECTION:libpolkit-context
  * @short_description: Context.
  *
@@ -545,11 +552,24 @@ libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
                         _pk_debug ("Asking module '%s'", libpolkit_module_get_name (module_interface));
 
                         module_control = libpolkit_module_interface_get_control (module_interface);
-                        module_result = func (module_interface,
-                                              pk_context,
-                                              privilege, 
-                                              resource, 
-                                              session);
+
+                        if (libpolkit_module_interface_check_builtin_confinement_for_session (
+                                    module_interface,
+                                    pk_context,
+                                    privilege,
+                                    resource,
+                                    session)) {
+                                /* module is confined by built-in options */
+                                module_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                                _pk_debug ("Module '%s' confined by built-in's", 
+                                           libpolkit_module_get_name (module_interface));
+                        } else {
+                                module_result = func (module_interface,
+                                                      pk_context,
+                                                      privilege, 
+                                                      resource, 
+                                                      session);
+                        }
 
                         /* if a module returns _UNKNOWN_PRIVILEGE, it means that it doesn't
                          * have an opinion about the query; e.g. polkit-module-allow-all(8)
@@ -653,11 +673,24 @@ libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
                         _pk_debug ("Asking module '%s'", libpolkit_module_get_name (module_interface));
 
                         module_control = libpolkit_module_interface_get_control (module_interface);
-                        module_result = func (module_interface,
-                                              pk_context,
-                                              privilege, 
-                                              resource, 
-                                              caller);
+
+                        if (libpolkit_module_interface_check_builtin_confinement_for_caller (
+                                    module_interface,
+                                    pk_context,
+                                    privilege,
+                                    resource,
+                                    caller)) {
+                                /* module is confined by built-in options */
+                                module_result = LIBPOLKIT_RESULT_UNKNOWN_PRIVILEGE;
+                                _pk_debug ("Module '%s' confined by built-in's", 
+                                           libpolkit_module_get_name (module_interface));
+                        } else {
+                                module_result = func (module_interface,
+                                                      pk_context,
+                                                      privilege, 
+                                                      resource, 
+                                                      caller);
+                        }
 
                         /* if a module returns _UNKNOWN_PRIVILEGE, it means that it doesn't
                          * have an opinion about the query; e.g. polkit-module-allow-all(8)

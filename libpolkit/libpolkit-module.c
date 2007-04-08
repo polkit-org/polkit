@@ -34,6 +34,9 @@
 #  include <config.h>
 #endif
 #include <dlfcn.h>
+#include <regex.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "libpolkit-debug.h"
 #include "libpolkit-module.h"
@@ -58,7 +61,113 @@ struct PolKitModuleInterface
         PolKitModuleIsResourceAssociatedWithSeat   func_is_resource_associated_with_seat;
         PolKitModuleCanSessionAccessResource       func_can_session_access_resource;
         PolKitModuleCanCallerAccessResource        func_can_caller_access_resource;
+
+        gboolean builtin_have_privilege_regex;
+        regex_t  builtin_privilege_regex_compiled;
+
+        GSList *builtin_users;
 };
+
+static uid_t
+_util_name_to_uid (const char *username, gid_t *default_gid)
+{
+        int rc;
+        uid_t res;
+        char *buf = NULL;
+        unsigned int bufsize;
+        struct passwd pwd;
+        struct passwd *pwdp;
+
+        res = (uid_t) -1;
+
+        bufsize = sysconf (_SC_GETPW_R_SIZE_MAX);
+        buf = g_new0 (char, bufsize);
+                
+        rc = getpwnam_r (username, &pwd, buf, bufsize, &pwdp);
+        if (rc != 0 || pwdp == NULL) {
+                /*g_warning ("getpwnam_r() returned %d", rc);*/
+                goto out;
+        }
+
+        res = pwdp->pw_uid;
+        if (default_gid != NULL)
+                *default_gid = pwdp->pw_gid;
+
+out:
+        g_free (buf);
+        return res;
+}
+
+static void
+_parse_builtin_remove_option (int *argc, char *argv[], int position)
+{
+        int n;
+        for (n = position; n < *argc; n++)
+                argv[n] = argv[n+1];
+        (*argc)--;
+}
+
+static gboolean
+_parse_builtin (PolKitModuleInterface *mi, int *argc, char *argv[])
+{
+        int n;
+        gboolean ret;
+
+        ret = FALSE;
+
+        for (n = 1; n < *argc; ) {
+                if (g_str_has_prefix (argv[n], "privilege=")) {
+                        const char *regex;
+
+                        if (mi->builtin_have_privilege_regex) {
+                                _pk_debug ("Already have option 'privilege='");
+                                goto error;
+                        }
+
+                        regex = argv[n] + 10;
+                        if (regcomp (&(mi->builtin_privilege_regex_compiled), regex, REG_EXTENDED) != 0) {
+                                _pk_debug ("Regex '%s' didn't compile", regex);
+                                goto error;
+                        }
+                        mi->builtin_have_privilege_regex = TRUE;
+
+                        _pk_debug ("Compiled regex '%s' for option 'privilege=' OK", regex);
+
+                        _parse_builtin_remove_option (argc, argv, n);
+                } else if (g_str_has_prefix (argv[n], "user=")) {
+                        const char *user;
+                        uid_t uid;
+                        GSList *i;
+
+                        user = argv[n] + 5;
+                        uid = _util_name_to_uid (user, NULL);
+                        if ((int) uid == -1) {
+                                _pk_debug ("Unknown user name '%s'", user);
+                                goto error;
+                        }
+
+                        for (i = mi->builtin_users; i != NULL; i = g_slist_next (i)) {
+                                uid_t uid_in_list = GPOINTER_TO_INT (i->data);
+                                if (uid_in_list == uid) {
+                                        _pk_debug ("Already have user '%s'", user);
+                                        goto error;
+                                }
+                        }                        
+
+                        _pk_debug ("adding uid %d", uid);
+                        mi->builtin_users = g_slist_prepend (mi->builtin_users, GINT_TO_POINTER (uid));
+
+                        _parse_builtin_remove_option (argc, argv, n);
+                } else {
+                        n++;
+                }
+        }
+
+        ret = TRUE;
+
+error:
+        return ret;
+}
 
 /**
  * libpolkit_module_interface_load_module:
@@ -109,6 +218,11 @@ libpolkit_module_interface_load_module (const char *name, PolKitModuleControl mo
         
         if (mi->func_shutdown == NULL) {
                 _pk_debug ("Module '%s' didn't set shutdown function", name);
+                goto error;
+        }
+
+        if (!_parse_builtin (mi, &argc, argv)) {
+                _pk_debug ("Error parsing built-in module options for '%s'", name);
                 goto error;
         }
 
@@ -192,6 +306,11 @@ libpolkit_module_interface_unref (PolKitModuleInterface *module_interface)
         module_interface->refcount--;
         if (module_interface->refcount > 0) 
                 return;
+
+        /* builtins */
+        if (module_interface->builtin_have_privilege_regex)
+                regfree (&module_interface->builtin_privilege_regex_compiled);
+        g_slist_free (module_interface->builtin_users);
 
         /* shutdown the module and unload it */
         if (module_interface->func_shutdown != NULL)
@@ -488,3 +607,140 @@ libpolkit_module_get_user_data   (PolKitModuleInterface *module_interface)
         return module_interface->module_user_data;
 }
 
+static gboolean 
+_check_privilege (PolKitModuleInterface *module_interface, PolKitPrivilege *privilege)
+{
+        gboolean ret;
+
+        ret = FALSE;
+
+        if (module_interface->builtin_have_privilege_regex) {
+                char *privilege_name;
+                if (libpolkit_privilege_get_privilege_id (privilege, &privilege_name)) {
+                        if (regexec (&module_interface->builtin_privilege_regex_compiled, 
+                                     privilege_name, 0, NULL, 0) == 0) {
+                                ret = TRUE;
+                        }
+                }
+        } else {
+                ret = TRUE;
+        }
+
+        return ret;
+}
+
+/*----*/
+
+static gboolean
+_check_uid_in_list (GSList *list, uid_t given_uid)
+{
+        GSList *i;
+
+        for (i = list; i != NULL; i = g_slist_next (i)) {
+                uid_t uid = GPOINTER_TO_INT (i->data);
+                if (given_uid == uid)
+                        return TRUE;                
+        }
+        return FALSE;
+}
+
+static gboolean
+_check_users_for_session (PolKitModuleInterface *module_interface, PolKitSession *session)
+{
+        uid_t uid;
+        GSList *list;
+        if ((list = module_interface->builtin_users) == NULL)
+                return TRUE;
+        if (session == NULL)
+                return FALSE;
+        if (!libpolkit_session_get_uid (session, &uid))
+                return FALSE;
+        return _check_uid_in_list (list, uid);
+}
+
+static gboolean
+_check_users_for_caller (PolKitModuleInterface *module_interface, PolKitCaller *caller)
+{
+        uid_t uid;
+        GSList *list;
+        if ((list = module_interface->builtin_users) == NULL)
+                return TRUE;
+        if (caller == NULL)
+                return FALSE;
+        if (!libpolkit_caller_get_uid (caller, &uid))
+                return FALSE;
+        return _check_uid_in_list (list, uid);
+}
+
+
+/**
+ * libpolkit_module_interface_check_builtin_confinement_for_session:
+ * @module_interface: the given module
+ * @pk_context: the PolicyKit context
+ * @privilege: the type of access to check for
+ * @resource: the resource in question
+ * @session: the session in question
+ * 
+ * Check whether some of the built-in module options (e.g. privilege="hal-storage-*", 
+ * user=davidz) confines the given module, e.g. whether it should be skipped.
+ * 
+ * Returns: TRUE if, and only if, the module is confined from handling the request
+ **/
+gboolean
+libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
+                                                                  PolKitContext   *pk_context,
+                                                                  PolKitPrivilege *privilege,
+                                                                  PolKitResource  *resource,
+                                                                  PolKitSession   *session)
+{
+        gboolean ret;
+        ret = TRUE;
+
+        g_return_val_if_fail (module_interface != NULL, ret);
+
+        if (!_check_privilege (module_interface, privilege))
+                goto out;
+        if (!_check_users_for_session (module_interface, session))
+                goto out;
+
+        /* not confined */
+        ret = FALSE;
+out:
+        return ret;
+}
+
+/**
+ * libpolkit_module_interface_check_builtin_confinement_for_caller:
+ * @module_interface: the given module
+ * @pk_context: the PolicyKit context
+ * @privilege: the type of access to check for
+ * @resource: the resource in question
+ * @caller: the resource in question
+ * 
+ * Check whether some of the built-in module options (e.g. privilege="hal-storage-*", 
+ * user=davidz) confines the given module, e.g. whether it should be skipped.
+ * 
+ * Returns: TRUE if, and only if, the module is confined from handling the request
+ **/
+gboolean
+libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
+                                                                 PolKitContext   *pk_context,
+                                                                 PolKitPrivilege *privilege,
+                                                                 PolKitResource  *resource,
+                                                                 PolKitCaller    *caller)
+{
+        gboolean ret;
+        ret = TRUE;
+
+        g_return_val_if_fail (module_interface != NULL, ret);
+
+        if (!_check_privilege (module_interface, privilege))
+                goto out;
+        if (!_check_users_for_caller (module_interface, caller))
+                goto out;
+
+        /* not confined */
+        ret = FALSE;
+out:
+        return ret;
+}

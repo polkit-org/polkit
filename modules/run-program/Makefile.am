@@ -12,14 +12,14 @@ INCLUDES = \
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
 polkitmoduledir = $(libdir)/PolicyKit/modules
-polkitmodule_LTLIBRARIES = 				\
-	polkit-module-deny-all.la		\
+polkitmodule_LTLIBRARIES = 			\
+	polkit-module-run-program.la		\
 	$(NULL)
 
 
-polkit_module_deny_all_la_SOURCES = polkit-module-deny-all.c
-polkit_module_deny_all_la_LDFLAGS = -no-undefined -module -avoid-version
-polkit_module_deny_all_la_LIBADD = $(top_builddir)/libpolkit/libpolkit.la @GLIB_LIBS@
+polkit_module_run_program_la_SOURCES = polkit-module-run-program.c
+polkit_module_run_program_la_LDFLAGS = -no-undefined -module -avoid-version
+polkit_module_run_program_la_LIBADD = $(top_builddir)/libpolkit/libpolkit.la @GLIB_LIBS@
 
 clean-local :
 	rm -f *~

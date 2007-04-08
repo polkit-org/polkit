@@ -189,4 +189,19 @@ PolKitModuleInterface *libpolkit_module_interface_load_module (const char *name,
 
 PolKitModuleControl libpolkit_module_interface_get_control (PolKitModuleInterface *module_interface);
 
+
+gboolean
+libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
+                                                                  PolKitContext   *pk_context,
+                                                                  PolKitPrivilege *privilege,
+                                                                  PolKitResource  *resource,
+                                                                  PolKitSession   *session);
+
+gboolean
+libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
+                                                                 PolKitContext   *pk_context,
+                                                                 PolKitPrivilege *privilege,
+                                                                 PolKitResource  *resource,
+                                                                 PolKitCaller    *caller);
+
 #endif /* LIBPOLKIT_MODULE_H */

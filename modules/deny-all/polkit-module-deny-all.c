@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-module-allow-all.c : PolicyKit module that says YES to everything
+ * polkit-module-allow-all.c : PolicyKit module that says NO to everything
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -59,7 +59,7 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
                                      PolKitResource        *resource,
                                      PolKitSession         *session)
 {
-        return LIBPOLKIT_RESULT_YES;
+        return LIBPOLKIT_RESULT_NO;
 }
 
 static PolKitResult
@@ -69,7 +69,7 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
                                     PolKitResource        *resource,
                                     PolKitCaller          *caller)
 {
-        return LIBPOLKIT_RESULT_YES;
+        return LIBPOLKIT_RESULT_NO;
 }
 
 gboolean

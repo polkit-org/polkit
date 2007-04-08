@@ -178,6 +178,7 @@ modules/Makefile
 modules/default/Makefile
 modules/allow-all/Makefile
 modules/deny-all/Makefile
+modules/run-program/Makefile
 ])
 
 dnl ==========================================================================
