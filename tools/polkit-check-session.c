@@ -43,15 +43,17 @@ usage (int argc, char *argv[])
 	fprintf (stderr,
                  "\n"
                  "usage : polkit-check-session\n"
+                 "          [--session <session>] --action <action>\n"
+                 "          [--action-param <key>=<value>]"
                  "          --resource-type <type> --resource-id <id>\n"
-                 "          --action <action> [--session <session>]\n"
                  "          [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
+                 "        --session        ConsoleKit object path of session\n"
+                 "        --action         Requested action\n"
+                 "        --action-param   Action parameters (may occur multiple times)\n"
                  "        --resource-type  Type of resource\n"
                  "        --resource-id    Identifier of resource\n"
-                 "        --action         Requested action\n"
-                 "        --session        ConsoleKit object path of session\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
@@ -78,6 +80,10 @@ main (int argc, char *argv[])
         PolKitAction *action;
         gboolean allowed;
         GError *g_error;
+        GPtrArray *params;
+        int n;
+        char *param_key;
+        char *param_value;
 
 	if (argc <= 1) {
 		usage (argc, argv);
@@ -86,6 +92,7 @@ main (int argc, char *argv[])
 
         cookie = getenv ("XDG_SESSION_COOKIE");
 
+        params = g_ptr_array_new ();
 	while (1) {
 		int c;
 		int option_index = 0;
@@ -94,6 +101,7 @@ main (int argc, char *argv[])
 			{"resource-type", 1, NULL, 0},
 			{"resource-id", 1, NULL, 0},
 			{"action", 1, NULL, 0},
+			{"action-param", 1, NULL, 0},
 			{"session", 1, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
@@ -120,6 +128,18 @@ main (int argc, char *argv[])
 				resource_id = strdup (optarg);
 			} else if (strcmp (opt, "action") == 0) {
 				action_id = strdup (optarg);
+			} else if (strcmp (opt, "action-param") == 0) {
+				param_key = strdup (optarg);
+                                param_value = NULL;
+                                for (n = 0; param_key[n] != '=' && param_key[n] != '\0'; n++)
+                                        ;
+                                if (param_key[n] == '\0')
+                                        usage (argc, argv);
+                                param_key[n] = '\0';
+                                param_value = param_key + n + 1;
+                                g_ptr_array_add (params, g_strdup (param_key));
+                                g_ptr_array_add (params, g_strdup (param_value));
+                                g_free (param_key);
 			} else if (strcmp (opt, "session") == 0) {
 				session_id = strdup (optarg);
 			}
@@ -173,6 +193,16 @@ main (int argc, char *argv[])
 
         action = libpolkit_action_new ();
         libpolkit_action_set_action_id (action, action_id);
+        for (n = 0; n < (int) params->len; n += 2) {
+                char *key;
+                char *value;
+                key = params->pdata[n];
+                value = params->pdata[n+1];
+                libpolkit_action_set_param (action, key, value);
+                g_free (key);
+                g_free (value);
+        }
+        g_ptr_array_free (params, TRUE);
 
         resource = libpolkit_resource_new ();
         libpolkit_resource_set_resource_type (resource, resource_type);

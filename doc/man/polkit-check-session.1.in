@@ -22,18 +22,21 @@ depending on the distribution.
 .SH OPTIONS
 The following options are supported:
 .TP
+.I "--action"
+The action to check.
+.TP
+.I "--action-param <key>=<value>"
+Append parameters to action.
+.TP
+.I "--session"
+The session to check for. Must be a ConsoleKit object path. If
+ommitted the current session is used.
+.TP
 .I "--resource-type"
 Type of resource.
 .TP
 .I "--resource"
 Identifier of resource.
-.TP
-.I "--action"
-The action to check.
-.TP
-.I "--session"
-The session to check for. Must be a ConsoleKit object path. If
-ommitted the current session is used.
 .TP
 .I "--help"
 Print out usage.

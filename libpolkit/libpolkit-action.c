@@ -56,6 +56,7 @@ struct PolKitAction
 {
         int refcount;
         char *id;
+        GHashTable *params;
 };
 
 /**
@@ -71,6 +72,10 @@ libpolkit_action_new (void)
         PolKitAction *action;
         action = g_new0 (PolKitAction, 1);
         action->refcount = 1;
+        action->params = g_hash_table_new_full (g_str_hash, 
+                                                g_str_equal,
+                                                g_free,
+                                                g_free);
         return action;
 }
 
@@ -106,6 +111,7 @@ libpolkit_action_unref (PolKitAction *action)
         if (action->refcount > 0) 
                 return;
         g_free (action->id);
+        g_hash_table_destroy (action->params);
         g_free (action);
 }
 
@@ -157,3 +163,77 @@ libpolkit_action_debug (PolKitAction *action)
         g_return_if_fail (action != NULL);
         _pk_debug ("PolKitAction: refcount=%d id=%s", action->refcount, action->id);
 }
+
+/**
+ * libpolkit_action_set_param:
+ * @action: the action
+ * @key: key
+ * @value: value
+ * 
+ * Set a parameter (a key/value pair) associated with the action.
+ **/
+void
+libpolkit_action_set_param (PolKitAction *action, const char *key, const char *value)
+{
+        g_return_if_fail (action != NULL);
+        g_return_if_fail (key != NULL);
+
+        g_hash_table_insert (action->params, g_strdup (key), g_strdup (value));
+}
+
+/**
+ * libpolkit_action_get_param:
+ * @action: the action
+ * @key: key
+ * 
+ * Get a parameter (a key/value pair) associated with the action.
+ * 
+ * Returns: the value or #NULL if the parameter wasn't set.
+ **/
+const char *
+libpolkit_action_get_param (PolKitAction *action, const char *key)
+{
+        const char *value;
+
+        g_return_val_if_fail (action != NULL, NULL);
+        g_return_val_if_fail (key != NULL, NULL);
+
+        value = g_hash_table_lookup (action->params, key);
+        return value;
+}
+
+typedef struct {
+        PolKitAction *action;
+        PolKitActionParamForeachFunc cb;
+        gpointer user_data;
+} HashClosure;
+
+static void
+_hash_cb (gpointer key, gpointer value, gpointer user_data)
+{
+        HashClosure *data = user_data;
+        data->cb (data->action, key, value, data->user_data);
+}
+
+/**
+ * libpolkit_action_param_foreach:
+ * @action: the action
+ * @cb: function to call
+ * @user_data: user data
+ * 
+ * Calls the given function for each parameter on the object.
+ **/
+void
+libpolkit_action_param_foreach (PolKitAction *action, PolKitActionParamForeachFunc cb, gpointer user_data)
+{
+        HashClosure data;
+
+        g_return_if_fail (action != NULL);
+        g_return_if_fail (cb != NULL);
+
+        data.action = action;
+        data.cb = cb;
+        data.user_data = user_data;
+        g_hash_table_foreach (action->params, _hash_cb, &data);
+}
+

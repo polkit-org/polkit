@@ -101,6 +101,11 @@ the system message bus.
 .B POLKIT_ACTION_ID
 An identifier for the action
 .TP
+.B POLKIT_ACTION_<KEY_NAME>=<value-name>
+All action parameters are put in the environment; the key is
+uppercased and hyphen and period characters are replaced with
+underscores.
+.TP
 .B POLKIT_RESOURCE_ID
 Resource identifier
 .TP

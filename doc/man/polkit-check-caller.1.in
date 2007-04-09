@@ -22,18 +22,21 @@ depending on the distribution.
 .SH OPTIONS
 The following options are supported:
 .TP
+.I "--action"
+The action to check.
+.TP
+.I "--action-param <key>=<value>"
+Append parameters to action.
+.TP
+.I "--caller"
+The caller to check for. Must be the callers unique name on the D-Bus
+system message bus.
+.TP
 .I "--resource-type"
 Type of resource.
 .TP
 .I "--resource"
 Identifier of resource.
-.TP
-.I "--action"
-The action to check.
-.TP
-.I "--caller"
-The caller to check for. Must be the callers unique name on the D-Bus
-system message bus.
 .TP
 .I "--help"
 Print out usage.
