@@ -62,20 +62,13 @@ struct PolKitPolicyFileEntry
         PolKitPolicyDefault *defaults;
 };
 
-/**
- * libpolkit_policy_file_entry_new:
- * @key_file: a #GKeyFile object
- * @action: action to look for in key_file
- * @error: return location for error
- * 
- * Create a new #PolKitPolicyFileEntry object. If the given
- * @key_file object does not contain the requisite sections, a human
- * readable explanation of why will be set in @error.
- * 
- * Returns: the new object or #NULL if error is set
- **/
 PolKitPolicyFileEntry *
-libpolkit_policy_file_entry_new (GKeyFile *key_file, const char *action, GError **error)
+_libpolkit_policy_file_entry_new (GKeyFile *key_file, const char *action, PolKitError **error);
+
+extern PolKitPolicyDefault *_libpolkit_policy_default_new (GKeyFile *key_file, const char *action, PolKitError **error);
+
+extern PolKitPolicyFileEntry *
+_libpolkit_policy_file_entry_new (GKeyFile *key_file, const char *action, PolKitError **error)
 {
         PolKitPolicyFileEntry *pfe;
 
@@ -83,7 +76,7 @@ libpolkit_policy_file_entry_new (GKeyFile *key_file, const char *action, GError 
         pfe->refcount = 1;
         pfe->action = g_strdup (action);
 
-        pfe->defaults = libpolkit_policy_default_new (key_file, action, error);
+        pfe->defaults = _libpolkit_policy_default_new (key_file, action, error);
         if (pfe->defaults == NULL)
                 goto error;
 

@@ -26,7 +26,7 @@
 #ifndef LIBPOLKIT_RESULT_H
 #define LIBPOLKIT_RESULT_H
 
-#include <glib.h>
+#include <stdbool.h>
 
 /**
  * PolKitResult:
@@ -71,7 +71,7 @@ typedef enum
 const char *
 libpolkit_result_to_string_representation (PolKitResult result);
 
-gboolean
+bool
 libpolkit_result_from_string_representation (const char *string, PolKitResult *out_result);
 
 #endif /* LIBPOLKIT_RESULT_H */

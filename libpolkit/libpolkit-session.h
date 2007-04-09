@@ -26,10 +26,8 @@
 #ifndef LIBPOLKIT_SESSION_H
 #define LIBPOLKIT_SESSION_H
 
-#include <stdio.h>
-#include <unistd.h>
+#include <stdbool.h>
 #include <sys/types.h>
-#include <glib.h>
 #include <dbus/dbus.h>
 
 #include <libpolkit/libpolkit-seat.h>
@@ -45,15 +43,15 @@ void           libpolkit_session_unref              (PolKitSession *session);
 void           libpolkit_session_set_uid            (PolKitSession *session, uid_t           uid);
 void           libpolkit_session_set_seat           (PolKitSession *session, PolKitSeat     *seat);
 void           libpolkit_session_set_ck_objref      (PolKitSession *session, const char     *ck_objref);
-void           libpolkit_session_set_ck_is_active   (PolKitSession *session, gboolean        is_active);
-void           libpolkit_session_set_ck_is_local    (PolKitSession *session, gboolean        is_local);
+void           libpolkit_session_set_ck_is_active   (PolKitSession *session, bool            is_active);
+void           libpolkit_session_set_ck_is_local    (PolKitSession *session, bool            is_local);
 void           libpolkit_session_set_ck_remote_host (PolKitSession *session, const char     *remote_host);
-gboolean       libpolkit_session_get_uid            (PolKitSession *session, uid_t          *out_uid);
-gboolean       libpolkit_session_get_seat           (PolKitSession *session, PolKitSeat    **out_seat);
-gboolean       libpolkit_session_get_ck_objref      (PolKitSession *session, char          **out_ck_objref);
-gboolean       libpolkit_session_get_ck_is_active   (PolKitSession *session, gboolean       *out_is_active);
-gboolean       libpolkit_session_get_ck_is_local    (PolKitSession *session, gboolean       *out_is_local);
-gboolean       libpolkit_session_get_ck_remote_host (PolKitSession *session, char          **out_remote_host);
+bool           libpolkit_session_get_uid            (PolKitSession *session, uid_t          *out_uid);
+bool           libpolkit_session_get_seat           (PolKitSession *session, PolKitSeat    **out_seat);
+bool           libpolkit_session_get_ck_objref      (PolKitSession *session, char          **out_ck_objref);
+bool           libpolkit_session_get_ck_is_active   (PolKitSession *session, bool           *out_is_active);
+bool           libpolkit_session_get_ck_is_local    (PolKitSession *session, bool           *out_is_local);
+bool           libpolkit_session_get_ck_remote_host (PolKitSession *session, char          **out_remote_host);
 
 void           libpolkit_session_debug              (PolKitSession *session);
 

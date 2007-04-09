@@ -37,6 +37,8 @@
 
 #include <libpolkit/libpolkit.h>
 
+#include <glib.h>
+
 static void
 usage (int argc, char *argv[])
 {
@@ -78,7 +80,7 @@ main (int argc, char *argv[])
         PolKitResource *resource;
         PolKitAction *action;
         gboolean allowed;
-        GError *g_error;
+        PolKitError *p_error;
         GPtrArray *params;
         int n;
         char *param_key;
@@ -166,11 +168,11 @@ main (int argc, char *argv[])
 		return 1;
 	}
 
-        g_error = NULL;
+        p_error = NULL;
         pol_ctx = libpolkit_context_new ();
-        if (!libpolkit_context_init (pol_ctx, &g_error)) {
-		fprintf (stderr, "error: libpolkit_context_init: %s\n", g_error->message);
-                g_error_free (g_error);
+        if (!libpolkit_context_init (pol_ctx, &p_error)) {
+		fprintf (stderr, "error: libpolkit_context_init: %s\n", polkit_error_get_error_message (p_error));
+                polkit_error_free (p_error);
                 return 1;
         }
 

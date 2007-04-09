@@ -26,18 +26,12 @@
 #ifndef LIBPOLKIT_POLICY_FILE_ENTRY_H
 #define LIBPOLKIT_POLICY_FILE_ENTRY_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
-
 #include <libpolkit/libpolkit-result.h>
 #include <libpolkit/libpolkit-policy-default.h>
 
 struct PolKitPolicyFileEntry;
 typedef struct PolKitPolicyFileEntry PolKitPolicyFileEntry;
 
-PolKitPolicyFileEntry *libpolkit_policy_file_entry_new   (GKeyFile *key_file, const char *action, GError **error);
 PolKitPolicyFileEntry *libpolkit_policy_file_entry_ref   (PolKitPolicyFileEntry *policy_file_entry);
 void                   libpolkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry);
 void                   libpolkit_policy_file_entry_debug (PolKitPolicyFileEntry *policy_file_entry);

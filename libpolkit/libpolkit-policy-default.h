@@ -26,22 +26,17 @@
 #ifndef LIBPOLKIT_POLICY_DEFAULT_H
 #define LIBPOLKIT_POLICY_DEFAULT_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
-
 #include <libpolkit/libpolkit-result.h>
 #include <libpolkit/libpolkit-action.h>
 #include <libpolkit/libpolkit-resource.h>
 #include <libpolkit/libpolkit-session.h>
 #include <libpolkit/libpolkit-caller.h>
+#include <libpolkit/libpolkit-error.h>
 
 struct PolKitPolicyDefault;
 typedef struct PolKitPolicyDefault PolKitPolicyDefault;
 
-PolKitPolicyDefault *libpolkit_policy_default_new   (GKeyFile *key_file, const char *action, GError **error);
-PolKitPolicyDefault *libpolkit_policy_default_ref   (PolKitPolicyDefault *policy_default);
+PolKitPolicyDefault    *libpolkit_policy_default_ref   (PolKitPolicyDefault *policy_default);
 void                    libpolkit_policy_default_unref (PolKitPolicyDefault *policy_default);
 void                    libpolkit_policy_default_debug (PolKitPolicyDefault *policy_default);
 

@@ -159,7 +159,7 @@ libpolkit_resource_set_resource_id (PolKitResource *resource, const char  *resou
  * 
  * Returns: TRUE iff the value was returned.
  **/
-gboolean
+bool
 libpolkit_resource_get_resource_type (PolKitResource *resource, char **out_resource_type)
 {
         g_return_val_if_fail (resource != NULL, FALSE);
@@ -181,7 +181,7 @@ libpolkit_resource_get_resource_type (PolKitResource *resource, char **out_resou
  * 
  * Returns: TRUE iff the value was returned.
  **/
-gboolean 
+bool
 libpolkit_resource_get_resource_id (PolKitResource *resource, char **out_resource_id)
 {
         g_return_val_if_fail (resource != NULL, FALSE);

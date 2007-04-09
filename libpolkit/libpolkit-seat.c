@@ -135,13 +135,13 @@ libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_seat_get_ck_objref (PolKitSeat *seat, char **out_ck_objref)
 {
-        g_return_val_if_fail (seat != NULL, FALSE);
-        g_return_val_if_fail (out_ck_objref != NULL, FALSE);
+        g_return_val_if_fail (seat != NULL, false);
+        g_return_val_if_fail (out_ck_objref != NULL, false);
         *out_ck_objref = seat->ck_objref;
-        return TRUE;
+        return true;
 }
 
 /**

@@ -64,20 +64,14 @@ struct PolKitPolicyCache
 
 
 static void
-add_entries_from_file (PolKitPolicyCache *policy_cache,
-                       PolKitPolicyFile  *policy_file)
+_append_entry (PolKitPolicyFile       *policy_file,
+               PolKitPolicyFileEntry  *policy_file_entry,
+               void                   *user_data)
 {
-        GSList *i;
+        PolKitPolicyCache *policy_cache = user_data;
 
-        g_return_if_fail (policy_cache != NULL);
-        g_return_if_fail (policy_file != NULL);
-
-        for (i = libpolkit_policy_file_get_entries (policy_file); i != NULL; i = g_slist_next (i)) {
-                PolKitPolicyFileEntry  *policy_file_entry = i->data;
-                libpolkit_policy_file_entry_ref (policy_file_entry);
-                policy_cache->priv_entries = g_slist_append (policy_cache->priv_entries, 
-                                                                policy_file_entry);
-        }
+        libpolkit_policy_file_entry_ref (policy_file_entry);
+        policy_cache->priv_entries = g_slist_append (policy_cache->priv_entries, policy_file_entry);
 }
 
 /**
@@ -90,17 +84,24 @@ add_entries_from_file (PolKitPolicyCache *policy_cache,
  * Returns: #NULL if @error was set, otherwise the #PolKitPolicyCache object
  **/
 PolKitPolicyCache *
-libpolkit_policy_cache_new (const char *dirname, GError **error)
+libpolkit_policy_cache_new (const char *dirname, PolKitError **error)
 {
         const char *file;
         GDir *dir;
         PolKitPolicyCache *pc;
+        GError *g_error;
 
         pc = g_new0 (PolKitPolicyCache, 1);
         pc->refcount = 1;
 
-        dir = g_dir_open (dirname, 0, error);
+        g_error = NULL;
+        dir = g_dir_open (dirname, 0, &g_error);
         if (dir == NULL) {
+                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "Cannot load policy files from directory %s: %s",
+                                        dirname,
+                                        g_error->message);
+                g_error_free (g_error);
                 goto out;
         }
         while ((file = g_dir_read_name (dir)) != NULL) {
@@ -123,7 +124,8 @@ libpolkit_policy_cache_new (const char *dirname, GError **error)
                         goto out;
                 }
 
-                add_entries_from_file (pc, pf);
+                /* steal entries */
+                libpolkit_policy_file_entry_foreach (pf, _append_entry, pc);
                 libpolkit_policy_file_unref (pf);
         }
         g_dir_close (dir);

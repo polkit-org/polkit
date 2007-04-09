@@ -34,6 +34,7 @@
 #  include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,18 +45,96 @@
 #include <errno.h>
 
 #include <glib.h>
+
 #include "libpolkit-error.h"
 
+/**
+ * PolKitError:
+ *
+ * Objects of this class are used for error reporting.
+ **/
+struct PolKitError
+{
+        bool is_static;
+        PolKitErrorCode error_code;
+        char *error_message;
+};
+
+//static PolKitError _oom_error = {true, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory"};
 
 /**
- * libpolkit_error_quark:
+ * polkit_error_get_error_code:
+ * @error: the error object
  * 
- * Returns error domain for PolicyKit library.
+ * Returns the error code.
  * 
- * Returns: The error domain
+ * Returns: A value from the #PolKitErrorCode enumeration.
  **/
-GQuark
-libpolkit_error_quark (void)
+PolKitErrorCode 
+polkit_error_get_error_code (PolKitError *error)
 {
-        return g_quark_from_static_string ("libpolkit-error-quark");
+        g_return_val_if_fail (error != NULL, -1);
+        return error->error_code;
 }
+
+/**
+ * polkit_error_get_error_message:
+ * @error: the error object
+ * 
+ * Get the error message.
+ * 
+ * Returns: A string describing the error. Caller shall not free this string.
+ **/
+const char *
+polkit_error_get_error_message (PolKitError *error)
+{
+        g_return_val_if_fail (error != NULL, NULL);
+        return error->error_message;
+}
+
+/**
+ * polkit_error_free:
+ * @error: the error
+ * 
+ * Free an error.
+ **/
+void
+polkit_error_free (PolKitError *error)
+{
+        g_return_if_fail (error != NULL);
+        if (!error->is_static) {
+                g_free (error->error_message);
+                g_free (error);
+        }
+}
+
+/**
+ * polkit_error_set_error:
+ * @error: the error object
+ * @error_code: A value from the #PolKitErrorCode enumeration.
+ * @format: printf style formatting string
+ * @Varargs: printf style arguments
+ * 
+ * Sets an error. If OOM, the error will be set to a pre-allocated OOM error.
+ **/
+void
+polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...)
+{
+        va_list args;
+        PolKitError *e;
+
+        if (*error == NULL)
+                return;
+
+        e = g_new0 (PolKitError, 1);
+        e->is_static = false;
+        e->error_code = error_code;
+        va_start (args, format);
+        e->error_message = g_strdup_vprintf (format, args);
+        va_end (args);
+
+        *error = e;
+}
+
+
+

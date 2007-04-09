@@ -26,11 +26,6 @@
 #ifndef LIBPOLKIT_DEBUG_H
 #define LIBPOLKIT_DEBUG_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
-
 void _pk_debug (const char *format, ...) __attribute__((__format__ (__printf__, 1, 2)));
 
 #endif /* LIBPOLKIT_DEBUG_H */

@@ -26,10 +26,8 @@
 #ifndef LIBPOLKIT_CALLER_H
 #define LIBPOLKIT_CALLER_H
 
-#include <stdio.h>
-#include <unistd.h>
+#include <stdbool.h>
 #include <sys/types.h>
-#include <glib.h>
 #include <dbus/dbus.h>
 
 #include <libpolkit/libpolkit-session.h>
@@ -46,11 +44,11 @@ void              libpolkit_caller_set_uid             (PolKitCaller   *caller, 
 void              libpolkit_caller_set_pid             (PolKitCaller   *caller, pid_t           pid);
 void              libpolkit_caller_set_selinux_context (PolKitCaller   *caller, const char     *selinux_context);
 void              libpolkit_caller_set_ck_session      (PolKitCaller   *caller, PolKitSession  *session);
-gboolean          libpolkit_caller_get_dbus_name       (PolKitCaller   *caller, char          **out_dbus_name);
-gboolean          libpolkit_caller_get_uid             (PolKitCaller   *caller, uid_t          *out_uid);
-gboolean          libpolkit_caller_get_pid             (PolKitCaller   *caller, pid_t          *out_pid);
-gboolean          libpolkit_caller_get_selinux_context (PolKitCaller   *caller, char          **out_selinux_context);
-gboolean          libpolkit_caller_get_ck_session      (PolKitCaller   *caller, PolKitSession **out_session);
+bool              libpolkit_caller_get_dbus_name       (PolKitCaller   *caller, char          **out_dbus_name);
+bool              libpolkit_caller_get_uid             (PolKitCaller   *caller, uid_t          *out_uid);
+bool              libpolkit_caller_get_pid             (PolKitCaller   *caller, pid_t          *out_pid);
+bool              libpolkit_caller_get_selinux_context (PolKitCaller   *caller, char          **out_selinux_context);
+bool              libpolkit_caller_get_ck_session      (PolKitCaller   *caller, PolKitSession **out_session);
 
 void              libpolkit_caller_debug               (PolKitCaller   *caller);
 

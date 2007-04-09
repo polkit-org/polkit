@@ -27,26 +27,18 @@
 #  include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <pwd.h>
-#include <grp.h>
-#include <unistd.h>
-#include <errno.h>
-
 #include <libpolkit/libpolkit-module.h>
+#include <glib.h>
 
 /* The symbol that libpolkit looks up when loading this module */
-gboolean libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
+bool libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
 
 typedef struct {
         int program_argc;
         char **program_argv;
 } UserData;
 
-static gboolean
+static bool
 _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
 {
         int n;
@@ -61,18 +53,18 @@ _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
                         if (!g_shell_parse_argv (program, 
                                                  &user_data->program_argc, 
                                                  &user_data->program_argv, NULL)) {
-                                printf ("Cannot parse '%s' - skipping\n", program);
+                                g_warning ("Cannot parse '%s' - skipping", program);
                                 goto error;
                         }
 
                         if (!g_file_test (user_data->program_argv[0], 
                                           G_FILE_TEST_IS_EXECUTABLE|G_FILE_TEST_IS_REGULAR)) {
-                                printf ("Program '%s' is not an executable file - skipping\n",
-                                        user_data->program_argv[0]);
+                                g_warning ("Program '%s' is not an executable file - skipping",
+                                           user_data->program_argv[0]);
                                 goto error;
                         }
 
-                        printf ("program = '%s'\n", user_data->program_argv[0]);
+                        g_debug ("program = '%s'", user_data->program_argv[0]);
 
                         /* TODO:
                          * O_o o_O... we could monitor the executable file :-) and trigger config changes!
@@ -85,12 +77,12 @@ _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
 
         libpolkit_module_set_user_data (module_interface, user_data);
 
-        return TRUE;
+        return true;
 error:
         if (user_data->program_argv != NULL)
                 g_strfreev (user_data->program_argv);
         g_free (user_data);
-        return FALSE;
+        return false;
 }
 
 static void
@@ -128,7 +120,7 @@ _add_action_param_to_env (PolKitAction *action, const char *key, const char *val
         g_free (upper);
 }
 
-static gboolean
+static bool
 _add_action_to_env (PolKitAction *action, GPtrArray *envp)
 {
         char *p_id;
@@ -137,12 +129,12 @@ _add_action_to_env (PolKitAction *action, GPtrArray *envp)
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_ACTION_ID=%s", p_id));
 
         libpolkit_action_param_foreach (action, _add_action_param_to_env, envp);
-        return TRUE;
+        return true;
 error:
-        return FALSE;
+        return false;
 }
 
-static gboolean
+static bool
 _add_resource_to_env (PolKitResource *resource, GPtrArray *envp)
 {
         char *r_type;
@@ -153,30 +145,30 @@ _add_resource_to_env (PolKitResource *resource, GPtrArray *envp)
                 goto error;
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_RESOURCE_TYPE=%s", r_type));
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_RESOURCE_ID=%s", r_id));
-        return TRUE;
+        return true;
 error:
-        return FALSE;
+        return false;
 }
 
-static gboolean
+static bool
 _add_seat_to_env (PolKitSeat *seat, GPtrArray *envp)
 {
         char *s_ck_objref;
         if (!libpolkit_seat_get_ck_objref (seat, &s_ck_objref))
                 goto error;
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_SEAT_CK_OBJREF=%s", s_ck_objref));
-        return TRUE;
+        return true;
 error:
-        return FALSE;
+        return false;
 }
 
-static gboolean
+static bool
 _add_session_to_env (PolKitSession *session, GPtrArray *envp)
 {
         uid_t s_uid;
         char *s_ck_objref;
-        gboolean s_ck_is_active;
-        gboolean s_ck_is_local;
+        bool s_ck_is_active;
+        bool s_ck_is_local;
         char *s_ck_remote_host;
         PolKitSeat *s_seat;
 
@@ -202,12 +194,12 @@ _add_session_to_env (PolKitSession *session, GPtrArray *envp)
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_SESSION_CK_IS_LOCAL=%d", s_ck_is_local));
         if (!s_ck_is_local)
                 g_ptr_array_add (envp, g_strdup_printf ("POLKIT_SESSION_CK_REMOTE_HOST=%s", s_ck_remote_host));
-        return TRUE;
+        return true;
 error:
-        return FALSE;
+        return false;
 }
 
-static gboolean
+static bool
 _add_caller_to_env (PolKitCaller *caller, GPtrArray *envp)
 {
         uid_t c_uid;
@@ -235,23 +227,23 @@ _add_caller_to_env (PolKitCaller *caller, GPtrArray *envp)
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_CALLER_DBUS_NAME=%s", c_dbus_name));
         if (c_selinux_context != NULL)
                 g_ptr_array_add (envp, g_strdup_printf ("POLKIT_CALLER_SELINUX_CONTEXT=%s", c_selinux_context));
-        return TRUE;
+        return true;
 error:
-        return FALSE;
+        return false;
 }
 
-static gboolean
+static bool
 _run_program (UserData *user_data, char **envp, PolKitResult *result)
 {
         int n;
         int exit_status;
         GError *g_error;
         char *prog_stdout;
-        gboolean ret;
+        bool ret;
 
         g_error = NULL;
         prog_stdout = NULL;
-        ret = FALSE;
+        ret = false;
 
         if (!g_spawn_sync ("/",
                            user_data->program_argv,
@@ -263,7 +255,7 @@ _run_program (UserData *user_data, char **envp, PolKitResult *result)
                            NULL,
                            &exit_status,
                            &g_error)) {
-                printf ("error spawning '%s': %s\n", user_data->program_argv[0], g_error->message);
+                g_warning ("error spawning '%s': %s", user_data->program_argv[0], g_error->message);
                 g_error_free (g_error);
                 goto error;
         }
@@ -278,11 +270,11 @@ _run_program (UserData *user_data, char **envp, PolKitResult *result)
         prog_stdout[n] = '\0';
 
         if (!libpolkit_result_from_string_representation (prog_stdout, result)) {
-                printf ("malformed result '%s' from program\n", prog_stdout);
+                g_warning ("malformed result '%s' from program", prog_stdout);
                 goto error;
         }
 
-        ret = TRUE;
+        ret = true;
 error:
         g_free (prog_stdout);
         return ret;
@@ -364,12 +356,12 @@ error:
         return result;
 }
 
-gboolean
+bool
 libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
 {
-        gboolean ret;
+        bool ret;
 
-        ret = FALSE;
+        ret = false;
         if (module_interface == NULL)
                 goto out;
 
@@ -378,7 +370,7 @@ libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
         libpolkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
         libpolkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
 
-        ret = TRUE;
+        ret = true;
 out:
         return ret;
 }

@@ -26,11 +26,7 @@
 #ifndef LIBPOLKIT_MODULE_H
 #define LIBPOLKIT_MODULE_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
-
+#include <stdbool.h>
 #include <libpolkit/libpolkit.h>
 
 struct PolKitModuleInterface;
@@ -46,7 +42,7 @@ typedef struct PolKitModuleInterface PolKitModuleInterface;
  *
  * Returns: Whether the module was initialized.
  **/
-typedef gboolean (*PolKitModuleInitialize) (PolKitModuleInterface *module_interface, 
+typedef bool     (*PolKitModuleInitialize) (PolKitModuleInterface *module_interface, 
                                             int                    argc, 
                                             char                  *argv[]);
 
@@ -72,7 +68,7 @@ typedef void (*PolKitModuleShutdown) (PolKitModuleInterface *module_interface);
 typedef PolKitResult (*PolKitModuleGetSeatResourceAssociation) (PolKitModuleInterface *module_interface,
                                                                 PolKitContext         *pk_context,
                                                                 PolKitSeatVisitorCB    visitor,
-                                                                gpointer              *user_data);
+                                                                void                  *user_data);
 
 /**
  * PolKitModuleIsResourceAssociatedWithSeat:
@@ -131,8 +127,8 @@ PolKitModuleInterface *libpolkit_module_interface_ref   (PolKitModuleInterface *
 void                   libpolkit_module_interface_unref (PolKitModuleInterface *module_interface);
 const char            *libpolkit_module_get_name        (PolKitModuleInterface *module_interface);
 
-void                   libpolkit_module_set_user_data   (PolKitModuleInterface *module_interface, gpointer user_data);
-gpointer               libpolkit_module_get_user_data   (PolKitModuleInterface *module_interface);
+void                   libpolkit_module_set_user_data   (PolKitModuleInterface *module_interface, void *user_data);
+void                  *libpolkit_module_get_user_data   (PolKitModuleInterface *module_interface);
 
 void libpolkit_module_set_func_initialize                       (PolKitModuleInterface               *module_interface, 
                                                                  PolKitModuleInitialize               func);
@@ -180,7 +176,7 @@ typedef enum
 const char *
 libpolkit_module_control_to_string_representation (PolKitModuleControl module_control);
 
-gboolean
+bool
 libpolkit_module_control_from_string_representation (const char *string, PolKitModuleControl *out_module_control);
 
 PolKitModuleInterface *libpolkit_module_interface_load_module (const char *name, 
@@ -190,14 +186,14 @@ PolKitModuleInterface *libpolkit_module_interface_load_module (const char *name,
 PolKitModuleControl libpolkit_module_interface_get_control (PolKitModuleInterface *module_interface);
 
 
-gboolean
+bool
 libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
                                                                   PolKitContext   *pk_context,
                                                                   PolKitAction *action,
                                                                   PolKitResource  *resource,
                                                                   PolKitSession   *session);
 
-gboolean
+bool
 libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
                                                                  PolKitContext   *pk_context,
                                                                  PolKitAction *action,

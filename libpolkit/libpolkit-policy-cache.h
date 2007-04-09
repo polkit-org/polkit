@@ -26,18 +26,14 @@
 #ifndef LIBPOLKIT_POLICY_CACHE_H
 #define LIBPOLKIT_POLICY_CACHE_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
-
+#include <libpolkit/libpolkit-error.h>
 #include <libpolkit/libpolkit-action.h>
 #include <libpolkit/libpolkit-policy-file-entry.h>
 
 struct PolKitPolicyCache;
 typedef struct PolKitPolicyCache PolKitPolicyCache;
 
-PolKitPolicyCache *libpolkit_policy_cache_new                   (const char *dirname, GError **error);
+PolKitPolicyCache *libpolkit_policy_cache_new                   (const char *dirname, PolKitError **error);
 PolKitPolicyCache *libpolkit_policy_cache_ref                   (PolKitPolicyCache *policy_cache);
 void               libpolkit_policy_cache_unref                 (PolKitPolicyCache *policy_cache);
 void               libpolkit_policy_cache_debug                 (PolKitPolicyCache *policy_cache);

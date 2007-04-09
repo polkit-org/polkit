@@ -26,10 +26,7 @@
 #ifndef LIBPOLKIT_RESOURCE_H
 #define LIBPOLKIT_RESOURCE_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
+#include <stdbool.h>
 
 struct PolKitResource;
 typedef struct PolKitResource PolKitResource;
@@ -39,8 +36,8 @@ PolKitResource *libpolkit_resource_ref               (PolKitResource *resource);
 void            libpolkit_resource_unref             (PolKitResource *resource);
 void            libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *resource_type);
 void            libpolkit_resource_set_resource_id   (PolKitResource *resource, const char  *resource_id);
-gboolean        libpolkit_resource_get_resource_type (PolKitResource *resource, char       **out_resource_type);
-gboolean        libpolkit_resource_get_resource_id   (PolKitResource *resource, char       **out_resource_id);
+bool            libpolkit_resource_get_resource_type (PolKitResource *resource, char       **out_resource_type);
+bool            libpolkit_resource_get_resource_id   (PolKitResource *resource, char       **out_resource_id);
 
 void            libpolkit_resource_debug             (PolKitResource *resource);
 

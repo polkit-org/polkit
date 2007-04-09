@@ -26,20 +26,30 @@
 #ifndef LIBPOLKIT_POLICY_FILE_H
 #define LIBPOLKIT_POLICY_FILE_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
-
+#include <libpolkit/libpolkit-error.h>
 #include <libpolkit/libpolkit-policy-file-entry.h>
 
 struct PolKitPolicyFile;
 typedef struct PolKitPolicyFile PolKitPolicyFile;
 
-PolKitPolicyFile *libpolkit_policy_file_new         (const char          *path, GError **error);
-PolKitPolicyFile *libpolkit_policy_file_ref         (PolKitPolicyFile *policy_file);
-GSList           *libpolkit_policy_file_get_entries (PolKitPolicyFile *policy_file);
-void              libpolkit_policy_file_unref       (PolKitPolicyFile *policy_file);
+/**
+ * PolKitPolicyFileEntryForeachFunc:
+ * @policy_file: the policy file
+ * @policy_file_entry: the entry
+ * @user_data: user data
+ *
+ * Type for function used in libpolkit_policy_file_entry_foreach().
+ **/
+typedef void (*PolKitPolicyFileEntryForeachFunc) (PolKitPolicyFile      *policy_file, 
+                                                  PolKitPolicyFileEntry *policy_file_entry,
+                                                  void                  *user_data);
+
+PolKitPolicyFile *libpolkit_policy_file_new           (const char       *path, PolKitError **error);
+PolKitPolicyFile *libpolkit_policy_file_ref           (PolKitPolicyFile *policy_file);
+void              libpolkit_policy_file_unref         (PolKitPolicyFile *policy_file);
+void              libpolkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
+                                                       PolKitPolicyFileEntryForeachFunc  cb,
+                                                       void                              *user_data);
 
 #endif /* LIBPOLKIT_POLICY_FILE_H */
 

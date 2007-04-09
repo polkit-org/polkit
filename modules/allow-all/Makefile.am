@@ -9,7 +9,7 @@ INCLUDES = \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
-	@GLIB_CFLAGS@ @DBUS_CFLAGS@
+	@DBUS_CFLAGS@
 
 polkitmoduledir = $(libdir)/PolicyKit/modules
 polkitmodule_LTLIBRARIES = 				\
@@ -19,7 +19,7 @@ polkitmodule_LTLIBRARIES = 				\
 
 polkit_module_allow_all_la_SOURCES = polkit-module-allow-all.c
 polkit_module_allow_all_la_LDFLAGS = -no-undefined -module -avoid-version
-polkit_module_allow_all_la_LIBADD = $(top_builddir)/libpolkit/libpolkit.la @GLIB_LIBS@
+polkit_module_allow_all_la_LIBADD = $(top_builddir)/libpolkit/libpolkit.la
 
 clean-local :
 	rm -f *~

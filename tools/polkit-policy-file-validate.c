@@ -25,6 +25,7 @@
 #  include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,16 +54,17 @@ usage (int argc, char *argv[])
                  "If not, the program exits with a non-zero exit code.\n");
 }
 
-static gboolean
+static bool
 validate_file (const char *file)
 {
         PolKitPolicyFile *priv_file;
-        GError *error = NULL;
+        PolKitError *error;
 
+        error = NULL;
         priv_file = libpolkit_policy_file_new (file, &error);
         if (priv_file == NULL) {
-                printf ("%s did not validate: %s\n", file, error->message);
-                g_error_free (error);
+                printf ("%s did not validate: %s\n", file, polkit_error_get_error_message (error));
+                polkit_error_free (error);
                 return FALSE;
         }
         libpolkit_policy_file_unref (priv_file);

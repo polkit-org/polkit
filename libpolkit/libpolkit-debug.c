@@ -34,10 +34,12 @@
 #  include <config.h>
 #endif
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <time.h>
 
 #include "libpolkit-debug.h"
 
@@ -51,13 +53,13 @@ void
 _pk_debug (const char *format, ...)
 {
         va_list args;
-        static gboolean show_debug = FALSE;
-        static gboolean init = FALSE;
+        static bool show_debug = false;
+        static bool init = false;
 
         if (!init) {
-                init = TRUE;
+                init = true;
                 if (getenv ("POLKIT_DEBUG") != NULL) {
-                        show_debug = TRUE;
+                        show_debug = true;
                 }
         }
 

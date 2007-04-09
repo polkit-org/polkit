@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * libpolkit-error.h : GError error codes from PolicyKit
+ * libpolkit-error.h : error reporting from PolicyKit
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -26,28 +26,25 @@
 #ifndef LIBPOLKIT_ERROR_H
 #define LIBPOLKIT_ERROR_H
 
-#include <glib.h>
-
 /**
- * PolKitError:
+ * PolKitErrorCode:
+ * @POLKIT_ERROR_OUT_OF_MEMORY: Out of memory
  * @POLKIT_ERROR_POLICY_FILE_INVALID: There was an error parsing the given policy file
  *
  * Error codes returned by PolicyKit
  */
 typedef enum
 {      
+        POLKIT_ERROR_OUT_OF_MEMORY,
         POLKIT_ERROR_POLICY_FILE_INVALID
-} PolKitError;
+} PolKitErrorCode;
 
-/**
- * POLKIT_ERROR:
- *
- * Error domain for PolicyKit library. Errors in this domain will be
- * from the #PolKitError enumeration. See GError for details.
- **/
-#define POLKIT_ERROR libpolkit_error_quark()
+struct PolKitError;
+typedef struct PolKitError PolKitError;
 
-GQuark libpolkit_error_quark (void);
+PolKitErrorCode  polkit_error_get_error_code (PolKitError *error);
+const char      *polkit_error_get_error_message (PolKitError *error);
+void             polkit_error_free (PolKitError *error);
+void             polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...) __attribute__((__format__ (__printf__, 3, 4)));
 
-
-#endif /* LIBPOLKIT_RESULT_H */
+#endif /* LIBPOLKIT_ERROR_H */

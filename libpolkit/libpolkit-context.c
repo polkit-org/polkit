@@ -66,7 +66,7 @@ struct PolKitContext
         int refcount;
 
         PolKitContextConfigChangedCB config_changed_cb;
-        gpointer config_changed_user_data;
+        void *config_changed_user_data;
 
         PolKitContextFileMonitorAddWatch      file_monitor_add_watch_func;
         PolKitContextFileMonitorRemoveWatch   file_monitor_remove_watch_func;
@@ -94,7 +94,7 @@ libpolkit_context_new (void)
         return pk_context;
 }
 
-static gboolean
+static bool
 unload_modules (PolKitContext *pk_context)
 {
         GSList *i;
@@ -109,11 +109,11 @@ unload_modules (PolKitContext *pk_context)
         return TRUE;
 }
 
-static gboolean
-load_modules (PolKitContext *pk_context, GError **error)
+static bool
+load_modules (PolKitContext *pk_context, PolKitError **error)
 {
         const char *config_file;
-        gboolean ret;
+        bool ret;
         char *buf;
         char *end;
         char line[256];
@@ -122,17 +122,24 @@ load_modules (PolKitContext *pk_context, GError **error)
         gsize len;
         int line_number;
         int mod_number;
+        GError *g_error;
 
         ret = FALSE;
         buf = NULL;
         mod_number = 0;
 
         config_file = PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf";
+        g_error = NULL;
         if (!g_file_get_contents (config_file,
                                   &buf,
                                   &len,
-                                  error)) {
+                                  &g_error)) {
                 _pk_debug ("Cannot load PolicyKit configuration file at '%s'", config_file);
+                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "Cannot load PolicyKit configuration file at '%s': %s",
+                                        config_file,
+                                        g_error->message);
+                g_error_free (g_error);
                 goto out;
         }
 
@@ -223,7 +230,7 @@ static void
 _config_file_events (PolKitContext                 *pk_context,
                      PolKitContextFileMonitorEvent  event_mask,
                      const char                    *path,
-                     gpointer                       user_data)
+                     void                          *user_data)
 {
         _pk_debug ("Config file changed");
         unload_modules (pk_context);
@@ -239,7 +246,7 @@ static void
 _policy_dir_events (PolKitContext                 *pk_context,
                        PolKitContextFileMonitorEvent  event_mask,
                        const char                    *path,
-                       gpointer                       user_data)
+                       void                          *user_data)
 {
         /* mark cache of policy files as stale.. (will be populated on-demand, see _get_cache()) */
         if (pk_context->priv_cache != NULL) {
@@ -265,8 +272,8 @@ _policy_dir_events (PolKitContext                 *pk_context,
  *
  * Returns: #FALSE if @error was set, otherwise #TRUE
  **/
-gboolean
-libpolkit_context_init (PolKitContext *pk_context, GError **error)
+bool
+libpolkit_context_init (PolKitContext *pk_context, PolKitError **error)
 {
         const char *dirname;
 
@@ -373,8 +380,8 @@ libpolkit_context_unref (PolKitContext *pk_context)
  **/
 void
 libpolkit_context_set_config_changed (PolKitContext                *pk_context, 
-                                      PolKitContextConfigChangedCB cb, 
-                                      gpointer                     user_data)
+                                      PolKitContextConfigChangedCB  cb, 
+                                      void                         *user_data)
 {
         g_return_if_fail (pk_context != NULL);
         pk_context->config_changed_cb = cb;
@@ -414,7 +421,7 @@ libpolkit_context_get_policy_cache (PolKitContext *pk_context)
         g_return_val_if_fail (pk_context != NULL, NULL);
 
         if (pk_context->priv_cache == NULL) {
-                GError *error;
+                PolKitError *error;
 
                 _pk_debug ("Populating cache from directory %s", pk_context->policy_dir);
 
@@ -422,8 +429,8 @@ libpolkit_context_get_policy_cache (PolKitContext *pk_context)
                 pk_context->priv_cache = libpolkit_policy_cache_new (pk_context->policy_dir, &error);
                 if (pk_context->priv_cache == NULL) {
                         g_warning ("Error loading policy files from %s: %s", 
-                                   pk_context->policy_dir, error->message);
-                        g_error_free (error);
+                                   pk_context->policy_dir, polkit_error_get_error_message (error));
+                        polkit_error_free (error);
                 } else {
                         libpolkit_policy_cache_debug (pk_context->priv_cache);
                 }
@@ -459,7 +466,7 @@ libpolkit_context_get_policy_cache (PolKitContext *pk_context)
 PolKitResult
 libpolkit_context_get_seat_resource_association (PolKitContext       *pk_context,
                                                  PolKitSeatVisitorCB  visitor,
-                                                 gpointer            *user_data)
+                                                 void                *user_data)
 {
         return LIBPOLKIT_RESULT_YES;
 }

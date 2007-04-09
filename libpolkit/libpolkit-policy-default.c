@@ -64,7 +64,7 @@ struct PolKitPolicyDefault
 };
 
 static gboolean
-parse_default (const char *key, char *s, const char *group, PolKitResult* target, GError **error)
+parse_default (const char *key, char *s, const char *group, PolKitResult* target, PolKitError **error)
 {
         gboolean ret;
 
@@ -86,14 +86,14 @@ parse_default (const char *key, char *s, const char *group, PolKitResult* target
                 }
                 s2 = g_string_free (str, FALSE);
 
-                g_set_error (error, 
-                             POLKIT_ERROR, 
-                             POLKIT_ERROR_POLICY_FILE_INVALID,
-                             "Value '%s' is not allowed for key '%s' in group '%s' - supported values are: %s", 
-                             s, 
-                             key,
-                             group,
-                             s2);
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "Value '%s' is not allowed for key '%s' in group '%s'; "
+                                        "supported values are: %s", 
+                                        s, 
+                                        key,
+                                        group,
+                                        s2);
                 g_free (s2);
         }
         
@@ -101,24 +101,17 @@ parse_default (const char *key, char *s, const char *group, PolKitResult* target
         return ret;
 }
 
-/**
- * libpolkit_policy_default_new:
- * @key_file: a #GKeyFile object
- * @action: action to look up defaults for in key_file
- * @error: return location for error
- * 
- * Create a new #PolKitPolicyDefault object.
- * 
- * Returns: the new object or #NULL if error is set
- **/
+extern PolKitPolicyDefault *_libpolkit_policy_default_new (GKeyFile *key_file, const char *action, PolKitError **error);
+
 PolKitPolicyDefault *
-libpolkit_policy_default_new (GKeyFile *key_file, const char *action, GError **error)
+_libpolkit_policy_default_new (GKeyFile *key_file, const char *action, PolKitError **error)
 {
         const char *key;
         const char *group;
         char *s;
         char buf[256];
         PolKitPolicyDefault *pd;
+        GError *g_error;
 
         pd = g_new0 (PolKitPolicyDefault, 1);
         pd->refcount = 1;
@@ -126,29 +119,37 @@ libpolkit_policy_default_new (GKeyFile *key_file, const char *action, GError **e
         g_snprintf (buf, sizeof (buf), "Action %s", action);
         group = buf;
 
+        g_error = NULL;
         key = "AllowRemoteInactive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
+        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
                 goto error;
         if (!parse_default (key, s, group, &pd->default_remote_inactive, error))
                 goto error;
         key = "AllowRemoteActive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
+        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
                 goto error;
         if (!parse_default (key, s, group, &pd->default_remote_active, error))
                 goto error;
         key = "AllowLocalInactive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
+        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
                 goto error;
         if (!parse_default (key, s, group, &pd->default_local_inactive, error))
                 goto error;
         key = "AllowLocalActive";
-        if ((s = g_key_file_get_string (key_file, group, key, error)) == NULL)
+        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
                 goto error;
         if (!parse_default (key, s, group, &pd->default_local_active, error))
                 goto error;
 
         return pd;
 error:
+        if (g_error != NULL) {
+                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "Missing key in policy file: %s",
+                                        g_error->message);
+                g_error_free (g_error);
+        }
+
         if (pd != NULL)
                 libpolkit_policy_default_ref (pd);
         return NULL;
@@ -231,8 +232,8 @@ libpolkit_policy_default_can_session_access_resource (PolKitPolicyDefault *polic
                                                          PolKitResource         *resource,
                                                          PolKitSession          *session)
 {
-        gboolean is_local;
-        gboolean is_active;
+        bool is_local;
+        bool is_active;
         PolKitResult ret;
 
         ret = LIBPOLKIT_RESULT_NO;
@@ -283,8 +284,8 @@ libpolkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy
                                                         PolKitResource         *resource,
                                                         PolKitCaller           *caller)
 {
-        gboolean is_local;
-        gboolean is_active;
+        bool is_local;
+        bool is_active;
         PolKitSession *session;
         PolKitResult ret;
 

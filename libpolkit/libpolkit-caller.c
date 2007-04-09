@@ -205,7 +205,7 @@ libpolkit_caller_set_ck_session (PolKitCaller *caller, PolKitSession *session)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_caller_get_dbus_name (PolKitCaller *caller, char **out_dbus_name)
 {
         g_return_val_if_fail (caller != NULL, FALSE);
@@ -223,7 +223,7 @@ libpolkit_caller_get_dbus_name (PolKitCaller *caller, char **out_dbus_name)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_caller_get_uid (PolKitCaller *caller, uid_t *out_uid)
 {
         g_return_val_if_fail (caller != NULL, FALSE);
@@ -241,7 +241,7 @@ libpolkit_caller_get_uid (PolKitCaller *caller, uid_t *out_uid)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_caller_get_pid (PolKitCaller *caller, pid_t *out_pid)
 {
         g_return_val_if_fail (caller != NULL, FALSE);
@@ -260,7 +260,7 @@ libpolkit_caller_get_pid (PolKitCaller *caller, pid_t *out_pid)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_caller_get_selinux_context (PolKitCaller *caller, char **out_selinux_context)
 {
         g_return_val_if_fail (caller != NULL, FALSE);
@@ -279,7 +279,7 @@ libpolkit_caller_get_selinux_context (PolKitCaller *caller, char **out_selinux_c
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_caller_get_ck_session (PolKitCaller *caller, PolKitSession **out_session)
 {
         g_return_val_if_fail (caller != NULL, FALSE);

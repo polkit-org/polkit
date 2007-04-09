@@ -40,10 +40,11 @@
 #include "libpolkit-error.h"
 #include "libpolkit-result.h"
 #include "libpolkit-policy-file.h"
+#include "libpolkit-policy-file-entry.h"
 
 /**
  * SECTION:libpolkit-policy-file
- * @short_description: Policys files.
+ * @short_description: Policy files.
  *
  * This class is used to represent a policy files.
  **/
@@ -60,6 +61,10 @@ struct PolKitPolicyFile
         GSList *entries;
 };
 
+extern PolKitPolicyFileEntry *_libpolkit_policy_file_entry_new   (GKeyFile *keyfile, 
+                                                                  const char *action, 
+                                                                  PolKitError **error);
+
 /**
  * libpolkit_policy_file_new:
  * @path: path to policy file
@@ -72,29 +77,36 @@ struct PolKitPolicyFile
  * Returns: the new object or #NULL if error is set
  **/
 PolKitPolicyFile *
-libpolkit_policy_file_new (const char *path, GError **error)
+libpolkit_policy_file_new (const char *path, PolKitError **error)
 {
         GKeyFile *key_file;
         PolKitPolicyFile *pf;
         char **groups;
         gsize groups_len;
         int n;
+        GError *g_error;
 
         pf = NULL;
         key_file = NULL;
         groups = NULL;
 
         if (!g_str_has_suffix (path, ".policy")) {
-                g_set_error (error, 
-                             POLKIT_ERROR, 
-                             POLKIT_ERROR_POLICY_FILE_INVALID,
-                             "Policy files must have extension .policy");
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "Policy files must have extension .policy; file '%s' doesn't", path);
                 goto error;
         }
 
+        g_error = NULL;
         key_file = g_key_file_new ();
-        if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, error))
+        if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, &g_error)) {
+                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "Cannot load PolicyKit policy file at '%s': %s",
+                                        path,
+                                        g_error->message);
+                g_error_free (g_error);
                 goto error;
+        }
 
         pf = g_new0 (PolKitPolicyFile, 1);
         pf->refcount = 1;
@@ -108,23 +120,21 @@ libpolkit_policy_file_new (const char *path, GError **error)
                 PolKitPolicyFileEntry *pfe;
 
                 if (!g_str_has_prefix (groups[n], "Action ")) {
-                        g_set_error (error, 
-                                     POLKIT_ERROR, 
-                                     POLKIT_ERROR_POLICY_FILE_INVALID,
-                                     "Unknown group of name '%s'", groups[n]);
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_POLICY_FILE_INVALID,
+                                                "Unknown group of name '%s'", groups[n]);
                         goto error;
                 }
 
                 action = groups[n] + 7; /* "Action " */
                 if (strlen (action) == 0) {
-                        g_set_error (error, 
-                                     POLKIT_ERROR, 
-                                     POLKIT_ERROR_POLICY_FILE_INVALID,
-                                     "Zero-length action name");
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_POLICY_FILE_INVALID,
+                                                "Zero-length action name");
                         goto error;
                 }
 
-                pfe = libpolkit_policy_file_entry_new (key_file, action, error);
+                pfe = _libpolkit_policy_file_entry_new (key_file, action, error);
                 if (pfe == NULL)
                         goto error;
                 pf->entries = g_slist_prepend (pf->entries, pfe);
@@ -184,17 +194,25 @@ libpolkit_policy_file_unref (PolKitPolicyFile *policy_file)
 }
 
 /**
- * libpolkit_policy_file_get_entries:
+ * libpolkit_policy_file_entry_foreach:
  * @policy_file: the policy file object
+ * @cb: callback to invoke for each entry
+ * @user_data: user data
  * 
- * Get the entries stemming from the given file.
- * 
- * Returns: A #GSList of the entries.
+ * Visits all entries in a policy file.
  **/
-GSList *
-libpolkit_policy_file_get_entries (PolKitPolicyFile *policy_file)
+void
+libpolkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
+                                     PolKitPolicyFileEntryForeachFunc  cb,
+                                     void                              *user_data)
 {
-        g_return_val_if_fail (policy_file != NULL, NULL);
-        return policy_file->entries;
-}
+        GSList *i;
 
+        g_return_if_fail (policy_file != NULL);
+        g_return_if_fail (cb != NULL);
+
+        for (i = policy_file->entries; i != NULL; i = g_slist_next (i)) {
+                PolKitPolicyFileEntry *pfe = i->data;
+                cb (policy_file, pfe, user_data);
+        }
+}

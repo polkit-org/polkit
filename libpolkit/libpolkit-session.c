@@ -60,8 +60,8 @@ struct PolKitSession
         uid_t uid;
         PolKitSeat *seat;
         char *ck_objref;
-        gboolean is_active;
-        gboolean is_local;
+        bool is_active;
+        bool is_local;
         char *remote_host;
 };
 
@@ -158,7 +158,7 @@ libpolkit_session_set_ck_objref (PolKitSession *session, const char *ck_objref)
  * Set whether ConsoleKit regard the session as active.
  **/
 void 
-libpolkit_session_set_ck_is_active (PolKitSession *session, gboolean is_active)
+libpolkit_session_set_ck_is_active (PolKitSession *session, bool is_active)
 {
         g_return_if_fail (session != NULL);
         session->is_active = is_active;
@@ -172,7 +172,7 @@ libpolkit_session_set_ck_is_active (PolKitSession *session, gboolean is_active)
  * Set whether ConsoleKit regard the session as local.
  **/
 void 
-libpolkit_session_set_ck_is_local (PolKitSession *session, gboolean is_local)
+libpolkit_session_set_ck_is_local (PolKitSession *session, bool is_local)
 {
         g_return_if_fail (session != NULL);
         session->is_local = is_local;
@@ -224,7 +224,7 @@ libpolkit_session_set_seat (PolKitSession *session, PolKitSeat *seat)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_session_get_uid (PolKitSession *session, uid_t *out_uid)
 {
         g_return_val_if_fail (session != NULL, FALSE);
@@ -242,7 +242,7 @@ libpolkit_session_get_uid (PolKitSession *session, uid_t *out_uid)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_session_get_ck_objref (PolKitSession *session, char **out_ck_objref)
 {
         g_return_val_if_fail (session != NULL, FALSE);
@@ -260,8 +260,8 @@ libpolkit_session_get_ck_objref (PolKitSession *session, char **out_ck_objref)
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
-libpolkit_session_get_ck_is_active (PolKitSession *session, gboolean *out_is_active)
+bool
+libpolkit_session_get_ck_is_active (PolKitSession *session, bool *out_is_active)
 {
         g_return_val_if_fail (session != NULL, FALSE);
         g_return_val_if_fail (out_is_active != NULL, FALSE);
@@ -278,8 +278,8 @@ libpolkit_session_get_ck_is_active (PolKitSession *session, gboolean *out_is_act
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
-libpolkit_session_get_ck_is_local (PolKitSession *session, gboolean *out_is_local)
+bool
+libpolkit_session_get_ck_is_local (PolKitSession *session, bool *out_is_local)
 {
         g_return_val_if_fail (session != NULL, FALSE);
         g_return_val_if_fail (out_is_local != NULL, FALSE);
@@ -298,7 +298,7 @@ libpolkit_session_get_ck_is_local (PolKitSession *session, gboolean *out_is_loca
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_session_get_ck_remote_host (PolKitSession *session, char **out_remote_host)
 {
         g_return_val_if_fail (session != NULL, FALSE);
@@ -317,7 +317,7 @@ libpolkit_session_get_ck_remote_host (PolKitSession *session, char **out_remote_
  * 
  * Returns: TRUE iff the value is returned
  **/
-gboolean
+bool
 libpolkit_session_get_seat (PolKitSession *session, PolKitSeat **out_seat)
 {
         g_return_val_if_fail (session != NULL, FALSE);
@@ -350,8 +350,8 @@ libpolkit_session_new_from_objpath (DBusConnection *con, const char *objpath, ui
         DBusMessage *message;
         DBusMessage *reply;
         char *str;
-        gboolean is_active;
-        gboolean is_local;
+        bool is_active;
+        bool is_local;
         char *remote_host;
         char *seat_path;
 

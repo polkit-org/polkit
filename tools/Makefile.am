@@ -20,7 +20,7 @@ polkit_check_session_SOURCES = polkit-check-session.c
 polkit_check_session_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
 
 polkit_policy_file_validate_SOURCES = polkit-policy-file-validate.c
-polkit_policy_file_validate_LDADD = @GLIB_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+polkit_policy_file_validate_LDADD = $(top_builddir)/libpolkit/libpolkit.la
 
 clean-local :
 	rm -f *~

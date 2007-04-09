@@ -27,24 +27,15 @@
 #  include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <pwd.h>
-#include <grp.h>
-#include <unistd.h>
-#include <errno.h>
-
 #include <libpolkit/libpolkit-module.h>
 
 /* The symbol that libpolkit looks up when loading this module */
-gboolean libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
+bool libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
 
-static gboolean
+static bool
 _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
 {
-        return TRUE;
+        return true;
 }
 
 static void
@@ -72,12 +63,12 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         return LIBPOLKIT_RESULT_NO;
 }
 
-gboolean
+bool
 libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
 {
-        gboolean ret;
+        bool ret;
 
-        ret = FALSE;
+        ret = false;
         if (module_interface == NULL)
                 goto out;
 
@@ -86,7 +77,7 @@ libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
         libpolkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
         libpolkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
 
-        ret = TRUE;
+        ret = true;
 out:
         return ret;
 }

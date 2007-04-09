@@ -140,7 +140,7 @@ libpolkit_action_set_action_id (PolKitAction *action, const char  *action_id)
  * 
  * Returns: TRUE iff the value was returned.
  **/
-gboolean
+bool
 libpolkit_action_get_action_id (PolKitAction *action, char **out_action_id)
 {
         g_return_val_if_fail (action != NULL, FALSE);
@@ -205,7 +205,7 @@ libpolkit_action_get_param (PolKitAction *action, const char *key)
 typedef struct {
         PolKitAction *action;
         PolKitActionParamForeachFunc cb;
-        gpointer user_data;
+        void *user_data;
 } HashClosure;
 
 static void
@@ -224,7 +224,7 @@ _hash_cb (gpointer key, gpointer value, gpointer user_data)
  * Calls the given function for each parameter on the object.
  **/
 void
-libpolkit_action_param_foreach (PolKitAction *action, PolKitActionParamForeachFunc cb, gpointer user_data)
+libpolkit_action_param_foreach (PolKitAction *action, PolKitActionParamForeachFunc cb, void *user_data)
 {
         HashClosure data;
 

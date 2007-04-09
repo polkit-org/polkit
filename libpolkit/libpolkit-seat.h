@@ -26,10 +26,7 @@
 #ifndef LIBPOLKIT_SEAT_H
 #define LIBPOLKIT_SEAT_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
+#include <stdbool.h>
 
 struct PolKitSeat;
 typedef struct PolKitSeat PolKitSeat;
@@ -38,7 +35,7 @@ PolKitSeat *libpolkit_seat_new           (void);
 PolKitSeat *libpolkit_seat_ref           (PolKitSeat *seat);
 void        libpolkit_seat_unref         (PolKitSeat *seat);
 void        libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char  *ck_objref);
-gboolean    libpolkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_objref);
+bool        libpolkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_objref);
 
 void        libpolkit_seat_debug         (PolKitSeat *seat);
 

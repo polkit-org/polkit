@@ -26,11 +26,7 @@
 #ifndef LIBPOLKIT_CONTEXT_H
 #define LIBPOLKIT_CONTEXT_H
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <glib.h>
-
+#include <stdbool.h>
 #include <libpolkit/libpolkit-error.h>
 #include <libpolkit/libpolkit-result.h>
 #include <libpolkit/libpolkit-context.h>
@@ -63,7 +59,7 @@ typedef struct PolKitContext PolKitContext;
  * timeframe.
  */
 typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
-                                              gpointer        user_data);
+                                              void           *user_data);
 
 /**
  * PolKitContextFileMonitorEvent:
@@ -96,7 +92,7 @@ typedef enum
 typedef void (*PolKitContextFileMonitorNotifyFunc) (PolKitContext                 *pk_context,
                                                     PolKitContextFileMonitorEvent  event_mask,
                                                     const char                    *path,
-                                                    gpointer                       user_data);
+                                                    void                          *user_data);
 
 /**
  * PolKitContextFileMonitorAddWatch:
@@ -114,11 +110,11 @@ typedef void (*PolKitContextFileMonitorNotifyFunc) (PolKitContext               
  * be watched. Caller can remove the watch using the supplied function
  * of type #PolKitContextFileMonitorRemoveWatch and the handle.
  */
-typedef guint (*PolKitContextFileMonitorAddWatch) (PolKitContext                     *pk_context,
-                                                   const char                        *path,
-                                                   PolKitContextFileMonitorEvent      event_mask,
-                                                   PolKitContextFileMonitorNotifyFunc notify_cb,
-                                                   gpointer                           user_data);
+typedef int (*PolKitContextFileMonitorAddWatch) (PolKitContext                     *pk_context,
+                                                 const char                        *path,
+                                                 PolKitContextFileMonitorEvent      event_mask,
+                                                 PolKitContextFileMonitorNotifyFunc notify_cb,
+                                                 void                              *user_data);
 
 /**
  * PolKitContextFileMonitorRemoveWatch:
@@ -130,18 +126,18 @@ typedef guint (*PolKitContextFileMonitorAddWatch) (PolKitContext                
  * type #PolKitContextFileMonitorAddWatch.
  */
 typedef void (*PolKitContextFileMonitorRemoveWatch) (PolKitContext                     *pk_context,
-                                                     guint                              watch_id);
+                                                     int                                watch_id);
 
 
 PolKitContext *libpolkit_context_new                (void);
 void           libpolkit_context_set_config_changed (PolKitContext                        *pk_context, 
                                                      PolKitContextConfigChangedCB          cb, 
-                                                     gpointer                              user_data);
+                                                     void                                 *user_data);
 void           libpolkit_context_set_file_monitor   (PolKitContext                        *pk_context, 
                                                      PolKitContextFileMonitorAddWatch      add_watch_func,
                                                      PolKitContextFileMonitorRemoveWatch   remove_watch_func);
-gboolean       libpolkit_context_init               (PolKitContext                        *pk_context, 
-                                                     GError                              **error);
+bool           libpolkit_context_init               (PolKitContext                        *pk_context, 
+                                                     PolKitError                         **error);
 PolKitContext *libpolkit_context_ref                (PolKitContext                        *pk_context);
 void           libpolkit_context_unref              (PolKitContext                        *pk_context);
 
@@ -157,12 +153,12 @@ PolKitPolicyCache *libpolkit_context_get_policy_cache (PolKitContext *pk_context
  */
 typedef void (*PolKitSeatVisitorCB) (PolKitSeat      *seat,
                                      PolKitResource **resources_associated_with_seat,
-                                     gpointer         user_data);
+                                     void            *user_data);
 
 PolKitResult
 libpolkit_context_get_seat_resource_association (PolKitContext       *pk_context,
                                                  PolKitSeatVisitorCB  visitor,
-                                                 gpointer            *user_data);
+                                                 void                *user_data);
 
 PolKitResult
 libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
