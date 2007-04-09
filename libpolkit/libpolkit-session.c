@@ -486,6 +486,7 @@ libpolkit_session_new_from_objpath (DBusConnection *con, const char *objpath, ui
         _pk_debug ("ck seat '%s'", seat_path);
 
         session = libpolkit_session_new ();
+        libpolkit_session_set_ck_objref (session, objpath);
         libpolkit_session_set_ck_is_active (session, is_active);
         libpolkit_session_set_ck_is_local (session, is_local);
         if (!is_local) {
