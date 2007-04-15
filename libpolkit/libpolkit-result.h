@@ -23,10 +23,14 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_RESULT_H
 #define LIBPOLKIT_RESULT_H
 
-#include <stdbool.h>
+#include <libpolkit/libpolkit-types.h>
 
 /**
  * PolKitResult:
@@ -34,17 +38,17 @@
  * @LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW: The caller of libpolkit is not sufficiently privilege to know the answer.
  * @LIBPOLKIT_RESULT_NO: Access denied.
  * @LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH: Access denied, but authentication of the caller as 
- * root will grant access to only that caller.
+ * root will grant access to the resource... but the access isn't permanent
  * @LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION: Access denied, but authentication of the caller as
- * root will grant access for the remainder of the session the caller stems from.
+ * root will grant access to the resource for the remainder of the session
  * @LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS: Access denied, but authentication of the caller as
- * root will grant access to the user of the caller in the future.
+ * root will grant access to the resource in the future.
  * @LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH: Access denied, but authentication of the caller as 
- * his user will grant access to only that caller.
+ * himself will grant access to the resource... but the access isn't permanent
  * @LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION: Access denied, but authentication of the caller as
- * his user will grant access for the remainder of the session the caller stems from.
+ * himself will grant access to the resource for the remainder of the session
  * @LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS: Access denied, but authentication of the caller as
- * his user will grant access to the user of the caller in the future.
+ * himself will grant access to the resource in the future.
  * @LIBPOLKIT_RESULT_YES: Access granted.
  * @LIBPOLKIT_RESULT_N_RESULTS: Number of result codes
  *
@@ -58,12 +62,15 @@ typedef enum
         LIBPOLKIT_RESULT_UNKNOWN_ACTION,
         LIBPOLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
         LIBPOLKIT_RESULT_NO,
+
         LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH,
         LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION,
         LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS,
+
         LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH,
         LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION,
         LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS,
+
         LIBPOLKIT_RESULT_YES,
         LIBPOLKIT_RESULT_N_RESULTS
 } PolKitResult;
@@ -71,7 +78,7 @@ typedef enum
 const char *
 libpolkit_result_to_string_representation (PolKitResult result);
 
-bool
+polkit_bool_t
 libpolkit_result_from_string_representation (const char *string, PolKitResult *out_result);
 
 #endif /* LIBPOLKIT_RESULT_H */

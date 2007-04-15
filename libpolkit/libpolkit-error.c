@@ -34,7 +34,6 @@
 #  include <config.h>
 #endif
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +45,7 @@
 
 #include <glib.h>
 
+#include "libpolkit-types.h"
 #include "libpolkit-error.h"
 
 /**
@@ -55,7 +55,7 @@
  **/
 struct PolKitError
 {
-        bool is_static;
+        polkit_bool_t is_static;
         PolKitErrorCode error_code;
         char *error_message;
 };
@@ -127,7 +127,7 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
                 return;
 
         e = g_new0 (PolKitError, 1);
-        e->is_static = false;
+        e->is_static = FALSE;
         e->error_code = error_code;
         va_start (args, format);
         e->error_message = g_strdup_vprintf (format, args);

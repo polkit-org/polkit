@@ -26,7 +26,22 @@
 #ifndef LIBPOLKIT_H
 #define LIBPOLKIT_H
 
+#define _POLKIT_INSIDE_POLKIT_H 1
+#include <libpolkit/libpolkit-types.h>
+#include <libpolkit/libpolkit-error.h>
+#include <libpolkit/libpolkit-result.h>
 #include <libpolkit/libpolkit-context.h>
+#include <libpolkit/libpolkit-action.h>
+#include <libpolkit/libpolkit-resource.h>
+#include <libpolkit/libpolkit-seat.h>
+#include <libpolkit/libpolkit-session.h>
+#include <libpolkit/libpolkit-caller.h>
+#include <libpolkit/libpolkit-policy-file-entry.h>
+#include <libpolkit/libpolkit-policy-file.h>
+#include <libpolkit/libpolkit-policy-cache.h>
+#include <libpolkit/libpolkit-policy-default.h>
+#include <libpolkit/libpolkit-module.h>
+#undef _POLKIT_INSIDE_POLKIT_H
 
 #endif /* LIBPOLKIT_H */
 

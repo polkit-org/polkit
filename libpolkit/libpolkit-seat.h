@@ -23,21 +23,26 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_SEAT_H
 #define LIBPOLKIT_SEAT_H
 
-#include <stdbool.h>
+#include <libpolkit/libpolkit-types.h>
 
 struct PolKitSeat;
 typedef struct PolKitSeat PolKitSeat;
 
-PolKitSeat *libpolkit_seat_new           (void);
-PolKitSeat *libpolkit_seat_ref           (PolKitSeat *seat);
-void        libpolkit_seat_unref         (PolKitSeat *seat);
-void        libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char  *ck_objref);
-bool        libpolkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_objref);
+PolKitSeat   *libpolkit_seat_new           (void);
+PolKitSeat   *libpolkit_seat_ref           (PolKitSeat *seat);
+void          libpolkit_seat_unref         (PolKitSeat *seat);
+polkit_bool_t libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char  *ck_objref);
+polkit_bool_t libpolkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_objref);
 
-void        libpolkit_seat_debug         (PolKitSeat *seat);
+void          libpolkit_seat_debug         (PolKitSeat *seat);
+polkit_bool_t libpolkit_seat_validate      (PolKitSeat *seat);
 
 #endif /* LIBPOLKIT_SEAT_H */
 

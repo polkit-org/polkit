@@ -228,19 +228,18 @@ libpolkit_policy_default_debug (PolKitPolicyDefault *policy_default)
  **/
 PolKitResult
 libpolkit_policy_default_can_session_access_resource (PolKitPolicyDefault *policy_default,
-                                                         PolKitAction        *action,
-                                                         PolKitResource         *resource,
-                                                         PolKitSession          *session)
+                                                      PolKitAction        *action,
+                                                      PolKitResource         *resource,
+                                                      PolKitSession          *session)
 {
-        bool is_local;
-        bool is_active;
+        polkit_bool_t is_local;
+        polkit_bool_t is_active;
         PolKitResult ret;
 
         ret = LIBPOLKIT_RESULT_NO;
 
         g_return_val_if_fail (policy_default != NULL, ret);
         g_return_val_if_fail (action != NULL, ret);
-        g_return_val_if_fail (resource != NULL, ret);
         g_return_val_if_fail (session != NULL, ret);
 
         if (!libpolkit_session_get_ck_is_local (session, &is_local))
@@ -280,12 +279,12 @@ out:
  **/
 PolKitResult
 libpolkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy_default,
-                                                        PolKitAction        *action,
-                                                        PolKitResource         *resource,
-                                                        PolKitCaller           *caller)
+                                                     PolKitAction        *action,
+                                                     PolKitResource         *resource,
+                                                     PolKitCaller           *caller)
 {
-        bool is_local;
-        bool is_active;
+        polkit_bool_t is_local;
+        polkit_bool_t is_active;
         PolKitSession *session;
         PolKitResult ret;
 
@@ -293,7 +292,6 @@ libpolkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy
 
         g_return_val_if_fail (policy_default != NULL, ret);
         g_return_val_if_fail (action != NULL, ret);
-        g_return_val_if_fail (resource != NULL, ret);
         g_return_val_if_fail (caller != NULL, ret);
 
         if (!libpolkit_caller_get_ck_session (caller, &session))

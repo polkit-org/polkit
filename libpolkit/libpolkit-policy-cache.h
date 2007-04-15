@@ -23,6 +23,10 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_POLICY_CACHE_H
 #define LIBPOLKIT_POLICY_CACHE_H
 

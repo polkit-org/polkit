@@ -39,6 +39,7 @@
 #include <glib.h>
 #include "libpolkit-debug.h"
 #include "libpolkit-seat.h"
+#include "libpolkit-utils.h"
 
 /**
  * SECTION:libpolkit-seat
@@ -116,14 +117,18 @@ libpolkit_seat_unref (PolKitSeat *seat)
  * @ck_objref: the D-Bus object path to the ConsoleKit seat object
  * 
  * Set the D-Bus object path to the ConsoleKit seat object.
+ *
+ * Returns: #TRUE only if the value validated and was set
  **/
-void 
+polkit_bool_t
 libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
 {
-        g_return_if_fail (seat != NULL);
+        g_return_val_if_fail (seat != NULL, FALSE);
+        g_return_val_if_fail (_pk_validate_identifier (ck_objref), FALSE);
         if (seat->ck_objref != NULL)
                 g_free (seat->ck_objref);
         seat->ck_objref = g_strdup (ck_objref);
+        return TRUE;
 }
 
 /**
@@ -135,13 +140,13 @@ libpolkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
  * 
  * Returns: TRUE iff the value is returned
  **/
-bool
+polkit_bool_t
 libpolkit_seat_get_ck_objref (PolKitSeat *seat, char **out_ck_objref)
 {
-        g_return_val_if_fail (seat != NULL, false);
-        g_return_val_if_fail (out_ck_objref != NULL, false);
+        g_return_val_if_fail (seat != NULL, FALSE);
+        g_return_val_if_fail (out_ck_objref != NULL, FALSE);
         *out_ck_objref = seat->ck_objref;
-        return true;
+        return TRUE;
 }
 
 /**
@@ -155,4 +160,20 @@ libpolkit_seat_debug (PolKitSeat *seat)
 {
         g_return_if_fail (seat != NULL);
         _pk_debug ("PolKitSeat: refcount=%d objpath=%s", seat->refcount, seat->ck_objref);
+}
+
+/**
+ * libpolkit_seat_validate:
+ * @seat: the object
+ * 
+ * Validate the object
+ * 
+ * Returns: #TRUE iff the object is valid.
+ **/
+polkit_bool_t
+libpolkit_seat_validate (PolKitSeat *seat)
+{
+        g_return_val_if_fail (seat != NULL, FALSE);
+        g_return_val_if_fail (seat->ck_objref != NULL, FALSE);
+        return TRUE;
 }

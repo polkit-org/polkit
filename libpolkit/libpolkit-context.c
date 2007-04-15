@@ -94,7 +94,7 @@ libpolkit_context_new (void)
         return pk_context;
 }
 
-static bool
+static polkit_bool_t
 unload_modules (PolKitContext *pk_context)
 {
         GSList *i;
@@ -109,11 +109,11 @@ unload_modules (PolKitContext *pk_context)
         return TRUE;
 }
 
-static bool
+static polkit_bool_t
 load_modules (PolKitContext *pk_context, PolKitError **error)
 {
         const char *config_file;
-        bool ret;
+        polkit_bool_t ret;
         char *buf;
         char *end;
         char line[256];
@@ -272,7 +272,7 @@ _policy_dir_events (PolKitContext                 *pk_context,
  *
  * Returns: #FALSE if @error was set, otherwise #TRUE
  **/
-bool
+polkit_bool_t
 libpolkit_context_init (PolKitContext *pk_context, PolKitError **error)
 {
         const char *dirname;
@@ -508,7 +508,7 @@ libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
  */
 PolKitResult
 libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
-                                               PolKitAction *action,
+                                               PolKitAction    *action,
                                                PolKitResource  *resource,
                                                PolKitSession   *session)
 {
@@ -520,13 +520,18 @@ libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
 
         current_result = LIBPOLKIT_RESULT_NO;
 
+        /* resource may actually by NULL */
+        if (action == NULL || session == NULL)
+                goto out;
+
         cache = libpolkit_context_get_policy_cache (pk_context);
         if (cache == NULL)
                 goto out;
 
         _pk_debug ("entering libpolkit_can_session_access_resource()");
         libpolkit_action_debug (action);
-        libpolkit_resource_debug (resource);
+        if (resource != NULL)
+                libpolkit_resource_debug (resource);
         libpolkit_session_debug (session);
 
         pfe = libpolkit_policy_cache_get_entry (cache, action);
@@ -629,7 +634,7 @@ out:
  */
 PolKitResult
 libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
-                                              PolKitAction *action,
+                                              PolKitAction    *action,
                                               PolKitResource  *resource,
                                               PolKitCaller    *caller)
 {
@@ -641,13 +646,18 @@ libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
 
         current_result = LIBPOLKIT_RESULT_NO;
 
+        /* resource may actually by NULL */
+        if (action == NULL || caller == NULL)
+                goto out;
+
         cache = libpolkit_context_get_policy_cache (pk_context);
         if (cache == NULL)
                 goto out;
 
         _pk_debug ("entering libpolkit_can_caller_access_resource()");
         libpolkit_action_debug (action);
-        libpolkit_resource_debug (resource);
+        if (resource != NULL)
+                libpolkit_resource_debug (resource);
         libpolkit_caller_debug (caller);
 
         pfe = libpolkit_policy_cache_get_entry (cache, action);

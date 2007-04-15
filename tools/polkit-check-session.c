@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <libpolkit/libpolkit.h>
+#include <libpolkit-dbus/libpolkit-dbus.h>
 
 #include <glib.h>
 

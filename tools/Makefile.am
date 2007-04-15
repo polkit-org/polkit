@@ -11,16 +11,19 @@ INCLUDES = \
 	@GLIB_CFLAGS@ \
 	@DBUS_CFLAGS@
 
-bin_PROGRAMS = polkit-check-caller polkit-check-session polkit-policy-file-validate
+bin_PROGRAMS = polkit-check-caller polkit-check-session polkit-policy-file-validate polkit-grant
 
 polkit_check_caller_SOURCES = polkit-check-caller.c
-polkit_check_caller_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+polkit_check_caller_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la $(top_builddir)/libpolkit-dbus/libpolkit-dbus.la
 
 polkit_check_session_SOURCES = polkit-check-session.c
-polkit_check_session_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la
+polkit_check_session_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la $(top_builddir)/libpolkit-dbus/libpolkit-dbus.la
 
 polkit_policy_file_validate_SOURCES = polkit-policy-file-validate.c
 polkit_policy_file_validate_LDADD = $(top_builddir)/libpolkit/libpolkit.la
+
+polkit_grant_SOURCES = polkit-grant.c
+polkit_grant_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libpolkit/libpolkit.la $(top_builddir)/libpolkit-grant/libpolkit-grant.la $(top_builddir)/libpolkit-dbus/libpolkit-dbus.la
 
 clean-local :
 	rm -f *~

@@ -94,7 +94,7 @@ libpolkit_result_to_string_representation (PolKitResult result)
  * 
  * Returns: TRUE if the textual representation was valid, otherwise FALSE
  **/
-bool
+polkit_bool_t
 libpolkit_result_from_string_representation (const char *string, PolKitResult *out_result)
 {
         int n;
@@ -110,7 +110,7 @@ libpolkit_result_from_string_representation (const char *string, PolKitResult *o
                 }
         }
 
-        return false;
+        return FALSE;
 found:
-        return true;
+        return TRUE;
 }

@@ -23,10 +23,14 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_ACTION_H
 #define LIBPOLKIT_ACTION_H
 
-#include <stdbool.h>
+#include <libpolkit/libpolkit-types.h>
 
 struct PolKitAction;
 typedef struct PolKitAction PolKitAction;
@@ -48,14 +52,15 @@ typedef void (*PolKitActionParamForeachFunc) (PolKitAction *action,
 PolKitAction *libpolkit_action_new           (void);
 PolKitAction *libpolkit_action_ref           (PolKitAction *action);
 void          libpolkit_action_unref         (PolKitAction *action);
-void          libpolkit_action_set_action_id (PolKitAction *action, const char  *action_id);
-bool          libpolkit_action_get_action_id (PolKitAction *action, char       **out_action_id);
+polkit_bool_t libpolkit_action_set_action_id (PolKitAction *action, const char  *action_id);
+polkit_bool_t libpolkit_action_get_action_id (PolKitAction *action, char       **out_action_id);
 
 void          libpolkit_action_set_param     (PolKitAction *action, const char *key, const char *value);
 const char   *libpolkit_action_get_param     (PolKitAction *action, const char *key);
 void          libpolkit_action_param_foreach (PolKitAction *action, PolKitActionParamForeachFunc cb, void *user_data);
 
 void          libpolkit_action_debug         (PolKitAction *action);
+polkit_bool_t libpolkit_action_validate      (PolKitAction *action);
 
 #endif /* LIBPOLKIT_ACTION_H */
 

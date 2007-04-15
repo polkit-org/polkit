@@ -23,10 +23,14 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_CONTEXT_H
 #define LIBPOLKIT_CONTEXT_H
 
-#include <stdbool.h>
+#include <libpolkit/libpolkit-types.h>
 #include <libpolkit/libpolkit-error.h>
 #include <libpolkit/libpolkit-result.h>
 #include <libpolkit/libpolkit-context.h>
@@ -136,7 +140,7 @@ void           libpolkit_context_set_config_changed (PolKitContext              
 void           libpolkit_context_set_file_monitor   (PolKitContext                        *pk_context, 
                                                      PolKitContextFileMonitorAddWatch      add_watch_func,
                                                      PolKitContextFileMonitorRemoveWatch   remove_watch_func);
-bool           libpolkit_context_init               (PolKitContext                        *pk_context, 
+polkit_bool_t  libpolkit_context_init               (PolKitContext                        *pk_context, 
                                                      PolKitError                         **error);
 PolKitContext *libpolkit_context_ref                (PolKitContext                        *pk_context);
 void           libpolkit_context_unref              (PolKitContext                        *pk_context);

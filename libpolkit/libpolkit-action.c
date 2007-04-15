@@ -39,6 +39,7 @@
 #include <glib.h>
 #include "libpolkit-debug.h"
 #include "libpolkit-action.h"
+#include "libpolkit-utils.h"
 
 /**
  * SECTION:libpolkit-action
@@ -121,14 +122,18 @@ libpolkit_action_unref (PolKitAction *action)
  * @action_id: action identifier
  * 
  * Set the action identifier
+ *
+ * Returns: #TRUE only if the value validated and was set
  **/
-void
+polkit_bool_t
 libpolkit_action_set_action_id (PolKitAction *action, const char  *action_id)
 {
-        g_return_if_fail (action != NULL);
+        g_return_val_if_fail (action != NULL, FALSE);
+        g_return_val_if_fail (_pk_validate_identifier (action_id), FALSE);
         if (action->id != NULL)
                 g_free (action->id);
         action->id = g_strdup (action_id);
+        return TRUE;
 }
 
 /**
@@ -140,7 +145,7 @@ libpolkit_action_set_action_id (PolKitAction *action, const char  *action_id)
  * 
  * Returns: TRUE iff the value was returned.
  **/
-bool
+polkit_bool_t
 libpolkit_action_get_action_id (PolKitAction *action, char **out_action_id)
 {
         g_return_val_if_fail (action != NULL, FALSE);
@@ -237,3 +242,18 @@ libpolkit_action_param_foreach (PolKitAction *action, PolKitActionParamForeachFu
         g_hash_table_foreach (action->params, _hash_cb, &data);
 }
 
+/**
+ * libpolkit_action_validate:
+ * @action: the object
+ * 
+ * Validate the object
+ * 
+ * Returns: #TRUE iff the object is valid.
+ **/
+polkit_bool_t
+libpolkit_action_validate (PolKitAction *action)
+{
+        g_return_val_if_fail (action != NULL, FALSE);
+        g_return_val_if_fail (action->id != NULL, FALSE);
+        return TRUE;
+}

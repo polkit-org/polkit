@@ -39,6 +39,7 @@
 #include <glib.h>
 #include "libpolkit-debug.h"
 #include "libpolkit-resource.h"
+#include "libpolkit-utils.h"
 
 /**
  * SECTION:libpolkit-resource
@@ -122,15 +123,18 @@ libpolkit_resource_unref (PolKitResource *resource)
  * @resource_type: type of resource
  * 
  * Set the type of the resource. TODO: link to wtf this is.
+ *
+ * Returns: #TRUE only if the value validated and was set
  **/
-void
+polkit_bool_t
 libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *resource_type)
 {
-        g_return_if_fail (resource != NULL);
-
+        g_return_val_if_fail (resource != NULL, FALSE);
+        g_return_val_if_fail (_pk_validate_identifier (resource_type), FALSE);
         if (resource->type != NULL)
                 g_free (resource->type);
         resource->type = g_strdup (resource_type);
+        return TRUE;
 }
 
 /**
@@ -139,15 +143,18 @@ libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *res
  * @resource_id: identifier of resource
  * 
  * set the identifier of the resource. TODO: link to wtf this is.
+ *
+ * Returns: #TRUE only if the value validated and was set
  **/
-void
+polkit_bool_t
 libpolkit_resource_set_resource_id (PolKitResource *resource, const char  *resource_id)
 {
-        g_return_if_fail (resource != NULL);
-
+        g_return_val_if_fail (resource != NULL, FALSE);
+        g_return_val_if_fail (_pk_validate_identifier (resource_id), FALSE);
         if (resource->id != NULL)
                 g_free (resource->id);
         resource->id = g_strdup (resource_id);
+        return TRUE;
 }
 
 /**
@@ -159,7 +166,7 @@ libpolkit_resource_set_resource_id (PolKitResource *resource, const char  *resou
  * 
  * Returns: TRUE iff the value was returned.
  **/
-bool
+polkit_bool_t
 libpolkit_resource_get_resource_type (PolKitResource *resource, char **out_resource_type)
 {
         g_return_val_if_fail (resource != NULL, FALSE);
@@ -181,7 +188,7 @@ libpolkit_resource_get_resource_type (PolKitResource *resource, char **out_resou
  * 
  * Returns: TRUE iff the value was returned.
  **/
-bool
+polkit_bool_t
 libpolkit_resource_get_resource_id (PolKitResource *resource, char **out_resource_id)
 {
         g_return_val_if_fail (resource != NULL, FALSE);
@@ -205,4 +212,21 @@ libpolkit_resource_debug (PolKitResource *resource)
 {
         g_return_if_fail (resource != NULL);
         _pk_debug ("PolKitResource: refcount=%d type=%s id=%s", resource->refcount, resource->type, resource->id);
+}
+
+/**
+ * libpolkit_resource_validate:
+ * @resource: the object
+ * 
+ * Validate the object
+ * 
+ * Returns: #TRUE iff the object is valid.
+ **/
+polkit_bool_t
+libpolkit_resource_validate (PolKitResource *resource)
+{
+        g_return_val_if_fail (resource != NULL, FALSE);
+        g_return_val_if_fail (resource->type != NULL, FALSE);
+        g_return_val_if_fail (resource->id != NULL, FALSE);
+        return TRUE;
 }

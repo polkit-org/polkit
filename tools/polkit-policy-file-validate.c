@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <libpolkit/libpolkit-policy-file.h>
+#include <libpolkit/libpolkit.h>
 
 static void
 usage (int argc, char *argv[])

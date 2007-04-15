@@ -23,6 +23,10 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_POLICY_DEFAULT_H
 #define LIBPOLKIT_POLICY_DEFAULT_H
 
@@ -41,13 +45,13 @@ void                    libpolkit_policy_default_unref (PolKitPolicyDefault *pol
 void                    libpolkit_policy_default_debug (PolKitPolicyDefault *policy_default);
 
 PolKitResult libpolkit_policy_default_can_session_access_resource (PolKitPolicyDefault *policy_default,
-                                                                      PolKitAction        *action,
-                                                                      PolKitResource         *resource,
-                                                                      PolKitSession          *session);
+                                                                   PolKitAction        *action,
+                                                                   PolKitResource         *resource,
+                                                                   PolKitSession          *session);
 PolKitResult libpolkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy_default,
-                                                                     PolKitAction        *action,
-                                                                     PolKitResource         *resource,
-                                                                     PolKitCaller           *caller);
+                                                                  PolKitAction        *action,
+                                                                  PolKitResource         *resource,
+                                                                  PolKitCaller           *caller);
 
 /* TODO: export knobs for "default policy" */
 

@@ -10,7 +10,8 @@ INCLUDES = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
-	@GLIB_CFLAGS@ @DBUS_CFLAGS@
+	-DPOLKIT_COMPILATION \
+	@GLIB_CFLAGS@
 
 lib_LTLIBRARIES=libpolkit.la
 
@@ -18,6 +19,7 @@ libpolkitincludedir=$(includedir)/PolicyKit/libpolkit
 
 libpolkitinclude_HEADERS =              		\
 	libpolkit.h					\
+	libpolkit-types.h				\
 	libpolkit-error.h				\
 	libpolkit-result.h				\
 	libpolkit-context.h				\
@@ -34,6 +36,7 @@ libpolkitinclude_HEADERS =              		\
 
 libpolkit_la_SOURCES =                                				\
 	libpolkit.h								\
+					libpolkit-types.h			\
 	libpolkit-error.h		libpolkit-error.c			\
 	libpolkit-result.h		libpolkit-result.c			\
 	libpolkit-context.h		libpolkit-context.c			\
@@ -47,9 +50,10 @@ libpolkit_la_SOURCES =                                				\
 	libpolkit-policy-cache.h	libpolkit-policy-cache.c		\
 	libpolkit-policy-default.h	libpolkit-policy-default.c		\
 	libpolkit-debug.h		libpolkit-debug.c			\
+	libpolkit-utils.h		libpolkit-utils.c			\
 	libpolkit-module.h		libpolkit-module.c
 
-libpolkit_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ -ldl
+libpolkit_la_LIBADD = @GLIB_LIBS@ -ldl
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

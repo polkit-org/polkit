@@ -23,10 +23,14 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_RESOURCE_H
 #define LIBPOLKIT_RESOURCE_H
 
-#include <stdbool.h>
+#include <libpolkit/libpolkit-types.h>
 
 struct PolKitResource;
 typedef struct PolKitResource PolKitResource;
@@ -34,12 +38,14 @@ typedef struct PolKitResource PolKitResource;
 PolKitResource *libpolkit_resource_new               (void);
 PolKitResource *libpolkit_resource_ref               (PolKitResource *resource);
 void            libpolkit_resource_unref             (PolKitResource *resource);
-void            libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *resource_type);
-void            libpolkit_resource_set_resource_id   (PolKitResource *resource, const char  *resource_id);
-bool            libpolkit_resource_get_resource_type (PolKitResource *resource, char       **out_resource_type);
-bool            libpolkit_resource_get_resource_id   (PolKitResource *resource, char       **out_resource_id);
+polkit_bool_t   libpolkit_resource_set_resource_type (PolKitResource *resource, const char  *resource_type);
+polkit_bool_t   libpolkit_resource_set_resource_id   (PolKitResource *resource, const char  *resource_id);
+polkit_bool_t   libpolkit_resource_get_resource_type (PolKitResource *resource, char       **out_resource_type);
+polkit_bool_t   libpolkit_resource_get_resource_id   (PolKitResource *resource, char       **out_resource_id);
 
 void            libpolkit_resource_debug             (PolKitResource *resource);
+
+polkit_bool_t   libpolkit_resource_validate          (PolKitResource *resource);
 
 #endif /* LIBPOLKIT_RESOURCE_H */
 

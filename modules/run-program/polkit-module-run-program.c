@@ -27,18 +27,18 @@
 #  include <config.h>
 #endif
 
-#include <libpolkit/libpolkit-module.h>
+#include <libpolkit/libpolkit.h>
 #include <glib.h>
 
 /* The symbol that libpolkit looks up when loading this module */
-bool libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
+polkit_bool_t libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
 
 typedef struct {
         int program_argc;
         char **program_argv;
 } UserData;
 
-static bool
+static polkit_bool_t
 _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
 {
         int n;
@@ -77,12 +77,12 @@ _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
 
         libpolkit_module_set_user_data (module_interface, user_data);
 
-        return true;
+        return TRUE;
 error:
         if (user_data->program_argv != NULL)
                 g_strfreev (user_data->program_argv);
         g_free (user_data);
-        return false;
+        return FALSE;
 }
 
 static void
@@ -120,7 +120,7 @@ _add_action_param_to_env (PolKitAction *action, const char *key, const char *val
         g_free (upper);
 }
 
-static bool
+static polkit_bool_t
 _add_action_to_env (PolKitAction *action, GPtrArray *envp)
 {
         char *p_id;
@@ -129,12 +129,12 @@ _add_action_to_env (PolKitAction *action, GPtrArray *envp)
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_ACTION_ID=%s", p_id));
 
         libpolkit_action_param_foreach (action, _add_action_param_to_env, envp);
-        return true;
+        return TRUE;
 error:
-        return false;
+        return FALSE;
 }
 
-static bool
+static polkit_bool_t
 _add_resource_to_env (PolKitResource *resource, GPtrArray *envp)
 {
         char *r_type;
@@ -145,30 +145,30 @@ _add_resource_to_env (PolKitResource *resource, GPtrArray *envp)
                 goto error;
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_RESOURCE_TYPE=%s", r_type));
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_RESOURCE_ID=%s", r_id));
-        return true;
+        return TRUE;
 error:
-        return false;
+        return FALSE;
 }
 
-static bool
+static polkit_bool_t
 _add_seat_to_env (PolKitSeat *seat, GPtrArray *envp)
 {
         char *s_ck_objref;
         if (!libpolkit_seat_get_ck_objref (seat, &s_ck_objref))
                 goto error;
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_SEAT_CK_OBJREF=%s", s_ck_objref));
-        return true;
+        return TRUE;
 error:
-        return false;
+        return FALSE;
 }
 
-static bool
+static polkit_bool_t
 _add_session_to_env (PolKitSession *session, GPtrArray *envp)
 {
         uid_t s_uid;
         char *s_ck_objref;
-        bool s_ck_is_active;
-        bool s_ck_is_local;
+        polkit_bool_t s_ck_is_active;
+        polkit_bool_t s_ck_is_local;
         char *s_ck_remote_host;
         PolKitSeat *s_seat;
 
@@ -194,12 +194,12 @@ _add_session_to_env (PolKitSession *session, GPtrArray *envp)
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_SESSION_CK_IS_LOCAL=%d", s_ck_is_local));
         if (!s_ck_is_local)
                 g_ptr_array_add (envp, g_strdup_printf ("POLKIT_SESSION_CK_REMOTE_HOST=%s", s_ck_remote_host));
-        return true;
+        return TRUE;
 error:
-        return false;
+        return FALSE;
 }
 
-static bool
+static polkit_bool_t
 _add_caller_to_env (PolKitCaller *caller, GPtrArray *envp)
 {
         uid_t c_uid;
@@ -227,23 +227,23 @@ _add_caller_to_env (PolKitCaller *caller, GPtrArray *envp)
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_CALLER_DBUS_NAME=%s", c_dbus_name));
         if (c_selinux_context != NULL)
                 g_ptr_array_add (envp, g_strdup_printf ("POLKIT_CALLER_SELINUX_CONTEXT=%s", c_selinux_context));
-        return true;
+        return TRUE;
 error:
-        return false;
+        return FALSE;
 }
 
-static bool
+static polkit_bool_t
 _run_program (UserData *user_data, char **envp, PolKitResult *result)
 {
         int n;
         int exit_status;
         GError *g_error;
         char *prog_stdout;
-        bool ret;
+        polkit_bool_t ret;
 
         g_error = NULL;
         prog_stdout = NULL;
-        ret = false;
+        ret = FALSE;
 
         if (!g_spawn_sync ("/",
                            user_data->program_argv,
@@ -274,7 +274,7 @@ _run_program (UserData *user_data, char **envp, PolKitResult *result)
                 goto error;
         }
 
-        ret = true;
+        ret = TRUE;
 error:
         g_free (prog_stdout);
         return ret;
@@ -301,8 +301,9 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
 
         if (!_add_action_to_env (action, envp))
                 goto error;
-        if (!_add_resource_to_env (resource, envp))
-                goto error;
+        if (resource != NULL)
+                if (!_add_resource_to_env (resource, envp))
+                        goto error;
         if (!_add_session_to_env (session, envp))
                 goto error;
         g_ptr_array_add (envp, g_strdup ("PATH=/usr/bin:/bin"));
@@ -338,8 +339,9 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         envp = g_ptr_array_new ();
         if (!_add_action_to_env (action, envp))
                 goto error;
-        if (!_add_resource_to_env (resource, envp))
-                goto error;
+        if (resource != NULL)
+                if (!_add_resource_to_env (resource, envp))
+                        goto error;
         if (!_add_caller_to_env (caller, envp))
                 goto error;
         g_ptr_array_add (envp, g_strdup ("PATH=/usr/bin:/bin"));
@@ -356,12 +358,12 @@ error:
         return result;
 }
 
-bool
+polkit_bool_t
 libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
 {
-        bool ret;
+        polkit_bool_t ret;
 
-        ret = false;
+        ret = FALSE;
         if (module_interface == NULL)
                 goto out;
 
@@ -370,7 +372,7 @@ libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
         libpolkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
         libpolkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
 
-        ret = true;
+        ret = TRUE;
 out:
         return ret;
 }

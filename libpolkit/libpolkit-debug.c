@@ -25,7 +25,7 @@
 
 /**
  * SECTION:libpolkit-debug
- * @short_description: Debug functions.
+ * @short_description: Internal debug functions for libpolkit.
  *
  * These functions are used for debug purposes
  **/
@@ -34,13 +34,13 @@
 #  include <config.h>
 #endif
 
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
 
+#include "libpolkit-types.h"
 #include "libpolkit-debug.h"
 
 /**
@@ -53,13 +53,13 @@ void
 _pk_debug (const char *format, ...)
 {
         va_list args;
-        static bool show_debug = false;
-        static bool init = false;
+        static polkit_bool_t show_debug = FALSE;
+        static polkit_bool_t init = FALSE;
 
         if (!init) {
-                init = true;
+                init = TRUE;
                 if (getenv ("POLKIT_DEBUG") != NULL) {
-                        show_debug = true;
+                        show_debug = TRUE;
                 }
         }
 

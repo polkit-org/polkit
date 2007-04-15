@@ -23,10 +23,14 @@
  *
  **************************************************************************/
 
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <libpolkit/libpolkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef LIBPOLKIT_MODULE_H
 #define LIBPOLKIT_MODULE_H
 
-#include <stdbool.h>
+#include <libpolkit/libpolkit-types.h>
 #include <libpolkit/libpolkit.h>
 
 struct PolKitModuleInterface;
@@ -42,9 +46,9 @@ typedef struct PolKitModuleInterface PolKitModuleInterface;
  *
  * Returns: Whether the module was initialized.
  **/
-typedef bool     (*PolKitModuleInitialize) (PolKitModuleInterface *module_interface, 
-                                            int                    argc, 
-                                            char                  *argv[]);
+typedef polkit_bool_t     (*PolKitModuleInitialize) (PolKitModuleInterface *module_interface, 
+                                                     int                    argc, 
+                                                     char                  *argv[]);
 
 /**
  * PolKitModuleShutdown:
@@ -176,7 +180,7 @@ typedef enum
 const char *
 libpolkit_module_control_to_string_representation (PolKitModuleControl module_control);
 
-bool
+polkit_bool_t
 libpolkit_module_control_from_string_representation (const char *string, PolKitModuleControl *out_module_control);
 
 PolKitModuleInterface *libpolkit_module_interface_load_module (const char *name, 
@@ -186,14 +190,14 @@ PolKitModuleInterface *libpolkit_module_interface_load_module (const char *name,
 PolKitModuleControl libpolkit_module_interface_get_control (PolKitModuleInterface *module_interface);
 
 
-bool
+polkit_bool_t
 libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
                                                                   PolKitContext   *pk_context,
                                                                   PolKitAction *action,
                                                                   PolKitResource  *resource,
                                                                   PolKitSession   *session);
 
-bool
+polkit_bool_t
 libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
                                                                  PolKitContext   *pk_context,
                                                                  PolKitAction *action,

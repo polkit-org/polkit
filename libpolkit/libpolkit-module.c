@@ -64,7 +64,7 @@ struct PolKitModuleInterface
         PolKitModuleCanSessionAccessResource       func_can_session_access_resource;
         PolKitModuleCanCallerAccessResource        func_can_caller_access_resource;
 
-        bool builtin_have_action_regex;
+        polkit_bool_t builtin_have_action_regex;
         regex_t  builtin_action_regex_compiled;
 
         GSList *builtin_users;
@@ -109,13 +109,13 @@ _parse_builtin_remove_option (int *argc, char *argv[], int position)
         (*argc)--;
 }
 
-static bool
+static polkit_bool_t
 _parse_builtin (PolKitModuleInterface *mi, int *argc, char *argv[])
 {
         int n;
-        bool ret;
+        polkit_bool_t ret;
 
-        ret = false;
+        ret = FALSE;
 
         for (n = 1; n < *argc; ) {
                 if (g_str_has_prefix (argv[n], "action=")) {
@@ -131,7 +131,7 @@ _parse_builtin (PolKitModuleInterface *mi, int *argc, char *argv[])
                                 _pk_debug ("Regex '%s' didn't compile", regex);
                                 goto error;
                         }
-                        mi->builtin_have_action_regex = true;
+                        mi->builtin_have_action_regex = TRUE;
 
                         _pk_debug ("Compiled regex '%s' for option 'action=' OK", regex);
 
@@ -165,7 +165,7 @@ _parse_builtin (PolKitModuleInterface *mi, int *argc, char *argv[])
                 }
         }
 
-        ret = true;
+        ret = TRUE;
 
 error:
         return ret;
@@ -187,7 +187,7 @@ libpolkit_module_interface_load_module (const char *name, PolKitModuleControl mo
 {
         void *handle;
         PolKitModuleInterface *mi;
-        bool (*func) (PolKitModuleInterface *);
+        polkit_bool_t (*func) (PolKitModuleInterface *);
 
         mi = NULL;
 
@@ -556,12 +556,12 @@ libpolkit_module_control_to_string_representation (PolKitModuleControl module_co
  * 
  * Returns: TRUE if the textual representation was valid, otherwise FALSE
  **/
-bool
+polkit_bool_t
 libpolkit_module_control_from_string_representation (const char *string, PolKitModuleControl *out_module_control)
 {
         int n;
 
-        g_return_val_if_fail (out_module_control != NULL, false);
+        g_return_val_if_fail (out_module_control != NULL, FALSE);
 
         for (n = 0; n < LIBPOLKIT_MODULE_CONTROL_N_CONTROLS; n++) {
                 if (mapping[n].str == NULL)
@@ -572,9 +572,9 @@ libpolkit_module_control_from_string_representation (const char *string, PolKitM
                 }
         }
 
-        return false;
+        return FALSE;
 found:
-        return true;
+        return TRUE;
 }
 
 
@@ -609,23 +609,23 @@ libpolkit_module_get_user_data   (PolKitModuleInterface *module_interface)
         return module_interface->module_user_data;
 }
 
-static bool 
+static polkit_bool_t 
 _check_action (PolKitModuleInterface *module_interface, PolKitAction *action)
 {
-        bool ret;
+        polkit_bool_t ret;
 
-        ret = false;
+        ret = FALSE;
 
         if (module_interface->builtin_have_action_regex) {
                 char *action_name;
                 if (libpolkit_action_get_action_id (action, &action_name)) {
                         if (regexec (&module_interface->builtin_action_regex_compiled, 
                                      action_name, 0, NULL, 0) == 0) {
-                                ret = true;
+                                ret = TRUE;
                         }
                 }
         } else {
-                ret = true;
+                ret = TRUE;
         }
 
         return ret;
@@ -633,7 +633,7 @@ _check_action (PolKitModuleInterface *module_interface, PolKitAction *action)
 
 /*----*/
 
-static bool
+static polkit_bool_t
 _check_uid_in_list (GSList *list, uid_t given_uid)
 {
         GSList *i;
@@ -641,36 +641,36 @@ _check_uid_in_list (GSList *list, uid_t given_uid)
         for (i = list; i != NULL; i = g_slist_next (i)) {
                 uid_t uid = GPOINTER_TO_INT (i->data);
                 if (given_uid == uid)
-                        return true;                
+                        return TRUE;                
         }
-        return false;
+        return FALSE;
 }
 
-static bool
+static polkit_bool_t
 _check_users_for_session (PolKitModuleInterface *module_interface, PolKitSession *session)
 {
         uid_t uid;
         GSList *list;
         if ((list = module_interface->builtin_users) == NULL)
-                return true;
+                return TRUE;
         if (session == NULL)
-                return false;
+                return FALSE;
         if (!libpolkit_session_get_uid (session, &uid))
-                return false;
+                return FALSE;
         return _check_uid_in_list (list, uid);
 }
 
-static bool
+static polkit_bool_t
 _check_users_for_caller (PolKitModuleInterface *module_interface, PolKitCaller *caller)
 {
         uid_t uid;
         GSList *list;
         if ((list = module_interface->builtin_users) == NULL)
-                return true;
+                return TRUE;
         if (caller == NULL)
-                return false;
+                return FALSE;
         if (!libpolkit_caller_get_uid (caller, &uid))
-                return false;
+                return FALSE;
         return _check_uid_in_list (list, uid);
 }
 
@@ -688,15 +688,15 @@ _check_users_for_caller (PolKitModuleInterface *module_interface, PolKitCaller *
  * 
  * Returns: TRUE if, and only if, the module is confined from handling the request
  **/
-bool
+polkit_bool_t
 libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
                                                                   PolKitContext   *pk_context,
                                                                   PolKitAction *action,
                                                                   PolKitResource  *resource,
                                                                   PolKitSession   *session)
 {
-        bool ret;
-        ret = true;
+        polkit_bool_t ret;
+        ret = TRUE;
 
         g_return_val_if_fail (module_interface != NULL, ret);
 
@@ -706,7 +706,7 @@ libpolkit_module_interface_check_builtin_confinement_for_session (PolKitModuleIn
                 goto out;
 
         /* not confined */
-        ret = false;
+        ret = FALSE;
 out:
         return ret;
 }
@@ -724,15 +724,15 @@ out:
  * 
  * Returns: TRUE if, and only if, the module is confined from handling the request
  **/
-bool
+polkit_bool_t
 libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
                                                                  PolKitContext   *pk_context,
                                                                  PolKitAction *action,
                                                                  PolKitResource  *resource,
                                                                  PolKitCaller    *caller)
 {
-        bool ret;
-        ret = true;
+        polkit_bool_t ret;
+        ret = TRUE;
 
         g_return_val_if_fail (module_interface != NULL, ret);
 
@@ -742,7 +742,7 @@ libpolkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInt
                 goto out;
 
         /* not confined */
-        ret = false;
+        ret = FALSE;
 out:
         return ret;
 }
