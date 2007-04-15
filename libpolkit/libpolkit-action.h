@@ -35,29 +35,11 @@
 struct PolKitAction;
 typedef struct PolKitAction PolKitAction;
 
-/**
- * PolKitActionParamForeachFunc:
- * @action: the action
- * @key: key of parameter
- * @value: value of parameter
- * @user_data: user data
- *
- * Type for function used in libpolkit_action_param_foreach().
- **/
-typedef void (*PolKitActionParamForeachFunc) (PolKitAction *action, 
-                                              const char *key, 
-                                              const char *value, 
-                                              void *user_data);
-
 PolKitAction *libpolkit_action_new           (void);
 PolKitAction *libpolkit_action_ref           (PolKitAction *action);
 void          libpolkit_action_unref         (PolKitAction *action);
 polkit_bool_t libpolkit_action_set_action_id (PolKitAction *action, const char  *action_id);
 polkit_bool_t libpolkit_action_get_action_id (PolKitAction *action, char       **out_action_id);
-
-void          libpolkit_action_set_param     (PolKitAction *action, const char *key, const char *value);
-const char   *libpolkit_action_get_param     (PolKitAction *action, const char *key);
-void          libpolkit_action_param_foreach (PolKitAction *action, PolKitActionParamForeachFunc cb, void *user_data);
 
 void          libpolkit_action_debug         (PolKitAction *action);
 polkit_bool_t libpolkit_action_validate      (PolKitAction *action);

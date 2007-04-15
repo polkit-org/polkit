@@ -25,9 +25,6 @@ The following options are supported:
 .I "--action"
 The action to check.
 .TP
-.I "--action-param <key>=<value>"
-Append parameters to action.
-.TP
 .I "--session"
 The session to check for. Must be a ConsoleKit object path. If
 ommitted the current session is used.

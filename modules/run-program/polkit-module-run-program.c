@@ -97,29 +97,6 @@ _module_shutdown (PolKitModuleInterface *module_interface)
         }
 }
 
-static void
-_add_action_param_to_env (PolKitAction *action, const char *key, const char *value, gpointer user_data)
-{
-        int n;
-        char *upper;
-        GPtrArray *envp = user_data;
-
-        if (key == NULL || value == NULL)
-                return;
-
-        upper = g_ascii_strup (key, -1);
-        for (n = 0; upper[n] != '\0'; n++) {
-                switch (upper[n]) {
-                case '.':
-                case '-':
-                        upper[n] = '_';
-                        break;
-                }
-        }
-        g_ptr_array_add (envp, g_strdup_printf ("POLKIT_ACTION_PARAM_%s=%s", upper, value));
-        g_free (upper);
-}
-
 static polkit_bool_t
 _add_action_to_env (PolKitAction *action, GPtrArray *envp)
 {
@@ -127,8 +104,6 @@ _add_action_to_env (PolKitAction *action, GPtrArray *envp)
         if (!libpolkit_action_get_action_id (action, &p_id))
                 goto error;
         g_ptr_array_add (envp, g_strdup_printf ("POLKIT_ACTION_ID=%s", p_id));
-
-        libpolkit_action_param_foreach (action, _add_action_param_to_env, envp);
         return TRUE;
 error:
         return FALSE;
