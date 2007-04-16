@@ -497,7 +497,7 @@ libpolkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
  * libpolkit_context_can_session_access_resource:
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question
+ * @resource: the resource in question or #NULL to test for all resources
  * @session: the session in question
  *
  * Determine if a given session can access a given resource in a given way.
@@ -519,9 +519,20 @@ libpolkit_context_can_session_access_resource (PolKitContext   *pk_context,
         GSList *i;
 
         current_result = LIBPOLKIT_RESULT_NO;
+        g_return_val_if_fail (pk_context != NULL, current_result);
 
         /* resource may actually by NULL */
         if (action == NULL || session == NULL)
+                goto out;
+
+
+        /* now validate the incoming objects */
+        if (!libpolkit_action_validate (action))
+                goto out;
+        if (resource == NULL)
+                if (!libpolkit_resource_validate (resource))
+                        goto out;
+        if (!libpolkit_session_validate (session))
                 goto out;
 
         cache = libpolkit_context_get_policy_cache (pk_context);
@@ -624,7 +635,7 @@ out:
  * libpolkit_context_can_caller_access_resource:
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question
+ * @resource: the resource in question or #NULL to test for all resources
  * @caller: the resource in question
  *
  * Determine if a given caller can access a given resource in a given way.
@@ -645,6 +656,7 @@ libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
         GSList *i;
 
         current_result = LIBPOLKIT_RESULT_NO;
+        g_return_val_if_fail (pk_context != NULL, current_result);
 
         /* resource may actually by NULL */
         if (action == NULL || caller == NULL)
@@ -652,6 +664,15 @@ libpolkit_context_can_caller_access_resource (PolKitContext   *pk_context,
 
         cache = libpolkit_context_get_policy_cache (pk_context);
         if (cache == NULL)
+                goto out;
+
+        /* now validate the incoming objects */
+        if (!libpolkit_action_validate (action))
+                goto out;
+        if (resource == NULL)
+                if (!libpolkit_resource_validate (resource))
+                        goto out;
+        if (!libpolkit_caller_validate (caller))
                 goto out;
 
         _pk_debug ("entering libpolkit_can_caller_access_resource()");
