@@ -28,10 +28,10 @@
 #endif
 
 #include <stddef.h>
-#include <libpolkit/libpolkit.h>
+#include <polkit/polkit.h>
 
-/* The symbol that libpolkit looks up when loading this module */
-polkit_bool_t libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
+/* The symbol that polkit looks up when loading this module */
+polkit_bool_t polkit_module_set_functions (PolKitModuleInterface *module_interface);
 
 static polkit_bool_t
 _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
@@ -51,7 +51,7 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
                                      PolKitResource        *resource,
                                      PolKitSession         *session)
 {
-        return LIBPOLKIT_RESULT_YES;
+        return POLKIT_RESULT_YES;
 }
 
 static PolKitResult
@@ -61,11 +61,11 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
                                     PolKitResource        *resource,
                                     PolKitCaller          *caller)
 {
-        return LIBPOLKIT_RESULT_YES;
+        return POLKIT_RESULT_YES;
 }
 
 polkit_bool_t
-libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
+polkit_module_set_functions (PolKitModuleInterface *module_interface)
 {
         polkit_bool_t ret;
 
@@ -73,10 +73,10 @@ libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
         if (module_interface == NULL)
                 goto out;
 
-        libpolkit_module_set_func_initialize (module_interface, _module_init);
-        libpolkit_module_set_func_shutdown (module_interface, _module_shutdown);
-        libpolkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
-        libpolkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
+        polkit_module_set_func_initialize (module_interface, _module_init);
+        polkit_module_set_func_shutdown (module_interface, _module_shutdown);
+        polkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
+        polkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
 
         ret = TRUE;
 out:

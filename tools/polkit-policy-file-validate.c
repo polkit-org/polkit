@@ -36,7 +36,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <libpolkit/libpolkit.h>
+#include <polkit/polkit.h>
 
 static void
 usage (int argc, char *argv[])
@@ -61,13 +61,13 @@ validate_file (const char *file)
         PolKitError *error;
 
         error = NULL;
-        priv_file = libpolkit_policy_file_new (file, &error);
+        priv_file = polkit_policy_file_new (file, &error);
         if (priv_file == NULL) {
                 printf ("%s did not validate: %s\n", file, polkit_error_get_error_message (error));
                 polkit_error_free (error);
                 return FALSE;
         }
-        libpolkit_policy_file_unref (priv_file);
+        polkit_policy_file_unref (priv_file);
         return TRUE;
 }
 

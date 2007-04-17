@@ -31,11 +31,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libpolkit/libpolkit.h>
+#include <polkit/polkit.h>
 #include <glib.h>
 
-/* The symbol that libpolkit looks up when loading this module */
-polkit_bool_t libpolkit_module_set_functions (PolKitModuleInterface *module_interface);
+/* The symbol that polkit looks up when loading this module */
+polkit_bool_t polkit_module_set_functions (PolKitModuleInterface *module_interface);
 
 static polkit_bool_t
 _module_init (PolKitModuleInterface *module_interface, int argc, char *argv[])
@@ -57,7 +57,7 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
                                      PolKitResource        *resource,
                                      PolKitSession         *session)
 {
-        return LIBPOLKIT_RESULT_UNKNOWN_ACTION;
+        return POLKIT_RESULT_UNKNOWN_ACTION;
 }
 
 static PolKitResult
@@ -71,7 +71,7 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         PolKitSession *session;
         PolKitResult result;
 
-        result = LIBPOLKIT_RESULT_UNKNOWN_ACTION;
+        result = POLKIT_RESULT_UNKNOWN_ACTION;
 
         /* file format:
          *
@@ -101,24 +101,24 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         char *dbus_name;
         guint resource_hash;
 
-        if (!libpolkit_action_get_action_id (action, &action_name))
+        if (!polkit_action_get_action_id (action, &action_name))
                 goto out;
-        if (!libpolkit_caller_get_uid (caller, &invoking_user_id))
+        if (!polkit_caller_get_uid (caller, &invoking_user_id))
                 goto out;
 
         if (resource == NULL)
                 goto out;
-        if (!libpolkit_resource_get_resource_type (resource, &resource_type))
+        if (!polkit_resource_get_resource_type (resource, &resource_type))
                 goto out;
-        if (!libpolkit_resource_get_resource_id (resource, &resource_id))
+        if (!polkit_resource_get_resource_id (resource, &resource_id))
                 goto out;
 
         session_name = NULL;
-        if (!libpolkit_caller_get_ck_session (caller, &session))
+        if (!polkit_caller_get_ck_session (caller, &session))
                 goto out;
-        if (!libpolkit_caller_get_dbus_name (caller, &dbus_name))
+        if (!polkit_caller_get_dbus_name (caller, &dbus_name))
                 goto out;
-        if (!libpolkit_session_get_ck_objref (session, &session_objpath))
+        if (!polkit_session_get_ck_objref (session, &session_objpath))
                 goto out;
 
         session_name = g_basename (session_objpath);
@@ -129,7 +129,7 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         /* TODO: FIXME: XXX: this format of storing granted privileges needs be redone
          *
          * this concerns these two files
-         * - libpolkit-grant/polkit-grant-helper.c
+         * - polkit-grant/polkit-grant-helper.c
          * - modules/grant/polkit-module-grant.c
          */
 
@@ -145,7 +145,7 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/dbus_%s_%d_%s_%u.grant", 
                                       dbus_name, invoking_user_id, action_name, resource_hash);
         if (g_file_test (grant_file, G_FILE_TEST_EXISTS)) {
-                result = LIBPOLKIT_RESULT_YES;
+                result = POLKIT_RESULT_YES;
                 g_free (grant_file);
                 goto out;
         }
@@ -154,7 +154,7 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/session_%s_%d_%s_%u.grant", 
                                       session_name, invoking_user_id, action_name, resource_hash);
         if (g_file_test (grant_file, G_FILE_TEST_EXISTS)) {
-                result = LIBPOLKIT_RESULT_YES;
+                result = POLKIT_RESULT_YES;
                 g_free (grant_file);
                 goto out;
         }
@@ -163,7 +163,7 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/uid_%d_%s_%u.grant", 
                                       invoking_user_id, action_name, resource_hash);
         if (g_file_test (grant_file, G_FILE_TEST_EXISTS)) {
-                result = LIBPOLKIT_RESULT_YES;
+                result = POLKIT_RESULT_YES;
                 g_free (grant_file);
                 goto out;
         }
@@ -175,7 +175,7 @@ out:
 }
 
 polkit_bool_t
-libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
+polkit_module_set_functions (PolKitModuleInterface *module_interface)
 {
         polkit_bool_t ret;
 
@@ -183,10 +183,10 @@ libpolkit_module_set_functions (PolKitModuleInterface *module_interface)
         if (module_interface == NULL)
                 goto out;
 
-        libpolkit_module_set_func_initialize (module_interface, _module_init);
-        libpolkit_module_set_func_shutdown (module_interface, _module_shutdown);
-        libpolkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
-        libpolkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
+        polkit_module_set_func_initialize (module_interface, _module_init);
+        polkit_module_set_func_shutdown (module_interface, _module_shutdown);
+        polkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
+        polkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
 
         ret = TRUE;
 out:

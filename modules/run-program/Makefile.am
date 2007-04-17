@@ -19,7 +19,7 @@ polkitmodule_LTLIBRARIES = 			\
 
 polkit_module_run_program_la_SOURCES = polkit-module-run-program.c
 polkit_module_run_program_la_LDFLAGS = -no-undefined -module -avoid-version
-polkit_module_run_program_la_LIBADD = $(top_builddir)/libpolkit/libpolkit.la @GLIB_LIBS@
+polkit_module_run_program_la_LIBADD = $(top_builddir)/polkit/libpolkit.la @GLIB_LIBS@
 
 clean-local :
 	rm -f *~

@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <libpolkit-dbus/libpolkit-dbus.h>
+#include <polkit-dbus/polkit-dbus.h>
 
 #include <glib.h>
 
@@ -149,30 +149,30 @@ main (int argc, char *argv[])
 	}
 
         p_error = NULL;
-        pol_ctx = libpolkit_context_new ();
-        if (!libpolkit_context_init (pol_ctx, &p_error)) {
-		fprintf (stderr, "error: libpolkit_context_init: %s\n", polkit_error_get_error_message (p_error));
+        pol_ctx = polkit_context_new ();
+        if (!polkit_context_init (pol_ctx, &p_error)) {
+		fprintf (stderr, "error: polkit_context_init: %s\n", polkit_error_get_error_message (p_error));
                 polkit_error_free (p_error);
                 return 1;
         }
 
-        action = libpolkit_action_new ();
-        libpolkit_action_set_action_id (action, action_id);
+        action = polkit_action_new ();
+        polkit_action_set_action_id (action, action_id);
 
-        resource = libpolkit_resource_new ();
-        libpolkit_resource_set_resource_type (resource, resource_type);
-        libpolkit_resource_set_resource_id (resource, resource_id);
+        resource = polkit_resource_new ();
+        polkit_resource_set_resource_type (resource, resource_type);
+        polkit_resource_set_resource_id (resource, resource_id);
 
-        caller = libpolkit_caller_new_from_dbus_name (bus, dbus_name, &error);
+        caller = polkit_caller_new_from_dbus_name (bus, dbus_name, &error);
         if (caller == NULL) {
                 if (dbus_error_is_set (&error)) {
-                        fprintf (stderr, "error: libpolkit_caller_new_from_dbus_name(): %s: %s\n", 
+                        fprintf (stderr, "error: polkit_caller_new_from_dbus_name(): %s: %s\n", 
                                  error.name, error.message);
                         return 1;
                 }
         }
 
-        allowed = libpolkit_context_can_caller_access_resource (pol_ctx, action, resource, caller);
+        allowed = polkit_context_can_caller_access_resource (pol_ctx, action, resource, caller);
 
         if (allowed)
                 return 0;

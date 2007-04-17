@@ -1,14 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = libpolkit libpolkit-dbus libpolkit-grant modules doc tools policy
-
-pamdir = $(sysconfdir)/pam.d
-pam_DATA = polkit
-
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libpolkit.pc libpolkit-dbus.pc libpolkit-grant.pc
-
-DISTCLEANFILES = libpolkit.pc libpolkit-dbus.pc libpolkit-grant.pc
+SUBDIRS = data polkit polkit-dbus polkit-grant modules doc tools policy
 
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
@@ -29,7 +21,7 @@ $(srcdir)/ChangeLog:
 
 .PHONY: ChangeLog $(srcdir)/ChangeLog
 
-EXTRA_DIST = HACKING polkit.in libpolkit.pc.in libpolkit-dbus.pc.in libpolkit-grant.pc.in mkinstalldirs ChangeLog
+EXTRA_DIST = HACKING mkinstalldirs ChangeLog
 
 clean-local :
 	rm -f *~

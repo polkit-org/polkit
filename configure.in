@@ -6,7 +6,7 @@ AM_INIT_AUTOMAKE(PolicyKit, 0.3)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
-# libtool versioning - this applies to libpolkit
+# libtool versioning - this applies to all libraries in this package
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
@@ -325,23 +325,24 @@ AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_PASSWORD, "$PAM_FILE_INCLUDE_PASSWORD", [pam
 AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_SESSION, "$PAM_FILE_INCLUDE_SESSION", [pam file session])
 
 AC_OUTPUT([
-libpolkit.pc
-libpolkit-dbus.pc
-libpolkit-grant.pc
 Makefile
-polkit
-libpolkit/Makefile
-libpolkit-dbus/Makefile
-libpolkit-grant/Makefile
+data/Makefile
+data/polkit
+data/polkit.pc
+data/polkit-dbus.pc
+data/polkit-grant.pc
+polkit/Makefile
+polkit-dbus/Makefile
+polkit-grant/Makefile
 tools/Makefile
 doc/Makefile
 doc/api/Makefile
-doc/api/libpolkit/Makefile
-doc/api/libpolkit/version.xml
-doc/api/libpolkit-dbus/Makefile
-doc/api/libpolkit-dbus/version.xml
-doc/api/libpolkit-grant/Makefile
-doc/api/libpolkit-grant/version.xml
+doc/api/polkit/Makefile
+doc/api/polkit/version.xml
+doc/api/polkit-dbus/Makefile
+doc/api/polkit-dbus/version.xml
+doc/api/polkit-grant/Makefile
+doc/api/polkit-grant/version.xml
 doc/spec/Makefile
 doc/spec/polkit-spec.xml.in
 doc/man/Makefile

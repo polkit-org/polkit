@@ -19,7 +19,7 @@ polkitmodule_LTLIBRARIES = 			\
 
 polkit_module_grant_la_SOURCES = polkit-module-grant.c
 polkit_module_grant_la_LDFLAGS = -no-undefined -module -avoid-version
-polkit_module_grant_la_LIBADD = $(top_builddir)/libpolkit/libpolkit.la @GLIB_LIBS@
+polkit_module_grant_la_LIBADD = $(top_builddir)/polkit/libpolkit.la @GLIB_LIBS@
 
 clean-local :
 	rm -f *~

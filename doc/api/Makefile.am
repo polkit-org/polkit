@@ -1,6 +1,6 @@
 ## Process this file with automake to create Makefile.in.
 
-SUBDIRS = libpolkit libpolkit-dbus libpolkit-grant
+SUBDIRS = polkit polkit-dbus polkit-grant
 
 MAINTAINERCLEANFILES =		\
 	*~			\

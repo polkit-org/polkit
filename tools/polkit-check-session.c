@@ -35,7 +35,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <libpolkit-dbus/libpolkit-dbus.h>
+#include <polkit-dbus/polkit-dbus.h>
 
 #include <glib.h>
 
@@ -152,35 +152,35 @@ main (int argc, char *argv[])
 	}
 
         p_error = NULL;
-        pol_ctx = libpolkit_context_new ();
-        if (!libpolkit_context_init (pol_ctx, &p_error)) {
-		fprintf (stderr, "error: libpolkit_context_init: %s\n", polkit_error_get_error_message (p_error));
+        pol_ctx = polkit_context_new ();
+        if (!polkit_context_init (pol_ctx, &p_error)) {
+		fprintf (stderr, "error: polkit_context_init: %s\n", polkit_error_get_error_message (p_error));
                 polkit_error_free (p_error);
                 return 1;
         }
 
         if (session_id != NULL) {
-                session = libpolkit_session_new_from_objpath (bus, session_id, -1, &error);
+                session = polkit_session_new_from_objpath (bus, session_id, -1, &error);
         } else {
                 if (cookie == NULL) {
                         fprintf (stderr, "Not part of a session. Try --session instead.\n");
                         return 1;
                 }
-                session = libpolkit_session_new_from_cookie (bus, cookie, &error);
+                session = polkit_session_new_from_cookie (bus, cookie, &error);
         }
         if (session == NULL) {
-		fprintf (stderr, "error: libpolkit_session_new_from_objpath: %s: %s\n", error.name, error.message);
+		fprintf (stderr, "error: polkit_session_new_from_objpath: %s: %s\n", error.name, error.message);
 		return 1;
         }
 
-        action = libpolkit_action_new ();
-        libpolkit_action_set_action_id (action, action_id);
+        action = polkit_action_new ();
+        polkit_action_set_action_id (action, action_id);
 
-        resource = libpolkit_resource_new ();
-        libpolkit_resource_set_resource_type (resource, resource_type);
-        libpolkit_resource_set_resource_id (resource, resource_id);
+        resource = polkit_resource_new ();
+        polkit_resource_set_resource_type (resource, resource_type);
+        polkit_resource_set_resource_id (resource, resource_id);
 
-        allowed = libpolkit_context_can_session_access_resource (pol_ctx, action, resource, session);
+        allowed = polkit_context_can_session_access_resource (pol_ctx, action, resource, session);
 
         if (allowed)
                 return 0;

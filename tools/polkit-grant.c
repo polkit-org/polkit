@@ -37,8 +37,8 @@
 #include <errno.h>
 #include <termios.h>
 
-#include <libpolkit-dbus/libpolkit-dbus.h>
-#include <libpolkit-grant/libpolkit-grant.h>
+#include <polkit-dbus/polkit-dbus.h>
+#include <polkit-grant/polkit-grant.h>
 
 #include <glib.h>
 
@@ -71,15 +71,15 @@ static void
 conversation_type (PolKitGrant *polkit_grant, PolKitResult auth_type, void *user_data)
 {
         switch (auth_type) {
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
                 printf ("Authentication as root is required.\n");
                 break;
 
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH:
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
                 printf ("Authentication is required.\n");
                 break;
 
@@ -154,11 +154,11 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
         PolKitResult overridden_auth_type;
 
         switch (auth_type) {
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 break;
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
                 printf ("Keep this privilege for the session? [no/session]?\n");
                 getline (&lineptr, &linelen, stdin);
                 if (g_str_has_prefix (lineptr, "no")) {
@@ -171,8 +171,8 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
                 }
                 free (lineptr);
                 break;
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
                 printf ("Keep this privilege for the session or always? [no/session/always]?\n");
                 getline (&lineptr, &linelen, stdin);
                 if (g_str_has_prefix (lineptr, "no")) {
@@ -193,24 +193,24 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
         }
 
         switch (auth_type) {
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
-        case LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
-                overridden_auth_type = LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH;
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
+                overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ROOT_AUTH;
                 if (keep_session)
-                        overridden_auth_type = LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION;
+                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION;
                 else if (keep_always)
-                        overridden_auth_type = LIBPOLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS;
+                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS;
                 break;
 
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH:
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
-        case LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
-                overridden_auth_type = LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH;
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
+                overridden_auth_type = POLKIT_RESULT_ONLY_VIA_SELF_AUTH;
                 if (keep_session)
-                        overridden_auth_type = LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION;
+                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION;
                 else if (keep_always)
-                        overridden_auth_type = LIBPOLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS;
+                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS;
                 break;
 
         default:
@@ -238,7 +238,7 @@ child_watch_func (GPid pid,
                   gpointer user_data)
 {
         PolKitGrant *polkit_grant = user_data;
-        libpolkit_grant_child_func (polkit_grant, pid, WEXITSTATUS (status));
+        polkit_grant_child_func (polkit_grant, pid, WEXITSTATUS (status));
 }
 
 static int
@@ -253,7 +253,7 @@ io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_d
         int fd;
         PolKitGrant *polkit_grant = user_data;
         fd = g_io_channel_unix_get_fd (channel);
-        libpolkit_grant_io_func (polkit_grant, fd);
+        polkit_grant_io_func (polkit_grant, fd);
         return TRUE;
 }
 
@@ -368,31 +368,31 @@ main (int argc, char *argv[])
 	}
 
         p_error = NULL;
-        pol_ctx = libpolkit_context_new ();
-        if (!libpolkit_context_init (pol_ctx, &p_error)) {
-		fprintf (stderr, "error: libpolkit_context_init: %s\n", polkit_error_get_error_message (p_error));
+        pol_ctx = polkit_context_new ();
+        if (!polkit_context_init (pol_ctx, &p_error)) {
+		fprintf (stderr, "error: polkit_context_init: %s\n", polkit_error_get_error_message (p_error));
                 polkit_error_free (p_error);
                 goto error;
         }
 
-        action = libpolkit_action_new ();
-        libpolkit_action_set_action_id (action, action_id);
+        action = polkit_action_new ();
+        polkit_action_set_action_id (action, action_id);
 
-        resource = libpolkit_resource_new ();
-        libpolkit_resource_set_resource_type (resource, resource_type);
-        libpolkit_resource_set_resource_id (resource, resource_id);
+        resource = polkit_resource_new ();
+        polkit_resource_set_resource_type (resource, resource_type);
+        polkit_resource_set_resource_id (resource, resource_id);
 
-        caller = libpolkit_caller_new_from_dbus_name (bus, dbus_bus_get_unique_name (bus), &error);
+        caller = polkit_caller_new_from_dbus_name (bus, dbus_bus_get_unique_name (bus), &error);
         if (caller == NULL) {
                 if (dbus_error_is_set (&error)) {
-                        fprintf (stderr, "error: libpolkit_caller_new_from_dbus_name(): %s: %s\n", 
+                        fprintf (stderr, "error: polkit_caller_new_from_dbus_name(): %s: %s\n", 
                                  error.name, error.message);
                         goto error;
                 }
         }
 
-        polkit_grant = libpolkit_grant_new ();
-        libpolkit_grant_set_functions (polkit_grant,
+        polkit_grant = polkit_grant_new ();
+        polkit_grant_set_functions (polkit_grant,
                                        add_io_watch,
                                        add_child_watch,
                                        remove_watch,
@@ -405,7 +405,7 @@ main (int argc, char *argv[])
                                        conversation_done,
                                        &ud);
         
-        if (!libpolkit_grant_initiate_auth (polkit_grant,
+        if (!polkit_grant_initiate_auth (polkit_grant,
                                             action,
                                             resource,
                                            caller)) {
@@ -414,7 +414,7 @@ main (int argc, char *argv[])
                 goto error;
         }
         g_main_loop_run (ud.loop);
-        libpolkit_grant_unref (polkit_grant);
+        polkit_grant_unref (polkit_grant);
 
         printf ("Privilege grant done.. result=%d\n", ud.gained_privilege);
 

@@ -19,7 +19,7 @@ polkitmodule_LTLIBRARIES = 				\
 
 polkit_module_default_la_SOURCES = polkit-module-default.c
 polkit_module_default_la_LDFLAGS = -no-undefined -module -avoid-version
-polkit_module_default_la_LIBADD = $(top_builddir)/libpolkit/libpolkit.la
+polkit_module_default_la_LIBADD = $(top_builddir)/polkit/libpolkit.la
 
 clean-local :
 	rm -f *~
