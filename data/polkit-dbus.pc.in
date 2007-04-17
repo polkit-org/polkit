@@ -3,9 +3,9 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libpolkit-dbus
+Name: polkit-dbus
 Description: helper library for obtaining seat, session and caller information via D-Bus and ConsoleKit
 Version: @VERSION@
-Requires: libpolkit dbus-1
+Requires: polkit dbus-1
 Libs: -L${libdir} -lpolkit-dbus
 Cflags: -I${includedir}/PolicyKit

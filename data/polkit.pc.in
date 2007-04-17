@@ -3,7 +3,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libpolkit
+Name: polkit
 Description: library for querying system-wide policy
 Version: @VERSION@
 Requires: glib-2.0
