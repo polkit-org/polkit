@@ -61,7 +61,7 @@ validate_file (const char *file)
         PolKitError *error;
 
         error = NULL;
-        priv_file = polkit_policy_file_new (file, &error);
+        priv_file = polkit_policy_file_new (file, TRUE, &error);
         if (priv_file == NULL) {
                 printf ("%s did not validate: %s\n", file, polkit_error_get_error_message (error));
                 polkit_error_free (error);

@@ -45,13 +45,18 @@ void                    polkit_policy_default_unref (PolKitPolicyDefault *policy
 void                    polkit_policy_default_debug (PolKitPolicyDefault *policy_default);
 
 PolKitResult polkit_policy_default_can_session_access_resource (PolKitPolicyDefault *policy_default,
-                                                                   PolKitAction        *action,
-                                                                   PolKitResource         *resource,
-                                                                   PolKitSession          *session);
+                                                                PolKitAction        *action,
+                                                                PolKitResource         *resource,
+                                                                PolKitSession          *session);
 PolKitResult polkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy_default,
-                                                                  PolKitAction        *action,
-                                                                  PolKitResource         *resource,
-                                                                  PolKitCaller           *caller);
+                                                               PolKitAction        *action,
+                                                               PolKitResource         *resource,
+                                                               PolKitCaller           *caller);
+
+PolKitResult polkit_policy_default_get_allow_remote_inactive (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_policy_default_get_allow_remote_active (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_policy_default_get_allow_local_inactive (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_policy_default_get_allow_local_active (PolKitPolicyDefault *policy_default);
 
 /* TODO: export knobs for "default policy" */
 

@@ -37,13 +37,26 @@
 struct PolKitPolicyCache;
 typedef struct PolKitPolicyCache PolKitPolicyCache;
 
-PolKitPolicyCache *polkit_policy_cache_new                   (const char *dirname, PolKitError **error);
-PolKitPolicyCache *polkit_policy_cache_ref                   (PolKitPolicyCache *policy_cache);
-void               polkit_policy_cache_unref                 (PolKitPolicyCache *policy_cache);
-void               polkit_policy_cache_debug                 (PolKitPolicyCache *policy_cache);
+/**
+ * PolKitPolicyCacheForeachFunc:
+ * @policy_cache: the policy cache
+ * @entry: an entry in the cache - do not unref
+ * @user_data: user data passed to polkit_policy_cache_foreach()
+ *
+ * Callback function for polkit_policy_cache_foreach().
+ **/
+typedef void (*PolKitPolicyCacheForeachFunc) (PolKitPolicyCache *policy_cache,
+                                              PolKitPolicyFileEntry *entry,
+                                              void *user_data);
 
-PolKitPolicyFileEntry* polkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache,
-                                                         PolKitAction      *action);
+PolKitPolicyCache     *polkit_policy_cache_ref       (PolKitPolicyCache *policy_cache);
+void                   polkit_policy_cache_unref     (PolKitPolicyCache *policy_cache);
+void                   polkit_policy_cache_debug     (PolKitPolicyCache *policy_cache);
+PolKitPolicyFileEntry* polkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache, 
+                                                      PolKitAction *action);
+void                   polkit_policy_cache_foreach   (PolKitPolicyCache *policy_cache, 
+                                                      PolKitPolicyCacheForeachFunc callback,
+                                                      void *user_data);
 
 #endif /* POLKIT_POLICY_CACHE_H */
 

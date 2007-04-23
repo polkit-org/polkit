@@ -48,7 +48,9 @@ typedef void (*PolKitPolicyFileEntryForeachFunc) (PolKitPolicyFile      *policy_
                                                   PolKitPolicyFileEntry *policy_file_entry,
                                                   void                  *user_data);
 
-PolKitPolicyFile *polkit_policy_file_new           (const char       *path, PolKitError **error);
+PolKitPolicyFile *polkit_policy_file_new           (const char       *path, 
+                                                    polkit_bool_t load_descriptions, 
+                                                    PolKitError **error);
 PolKitPolicyFile *polkit_policy_file_ref           (PolKitPolicyFile *policy_file);
 void              polkit_policy_file_unref         (PolKitPolicyFile *policy_file);
 void              polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,

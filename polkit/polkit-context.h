@@ -135,13 +135,14 @@ typedef void (*PolKitContextFileMonitorRemoveWatch) (PolKitContext              
 
 PolKitContext *polkit_context_new                (void);
 void           polkit_context_set_config_changed (PolKitContext                        *pk_context, 
-                                                     PolKitContextConfigChangedCB          cb, 
-                                                     void                                 *user_data);
+                                                  PolKitContextConfigChangedCB          cb, 
+                                                  void                                 *user_data);
 void           polkit_context_set_file_monitor   (PolKitContext                        *pk_context, 
-                                                     PolKitContextFileMonitorAddWatch      add_watch_func,
-                                                     PolKitContextFileMonitorRemoveWatch   remove_watch_func);
+                                                  PolKitContextFileMonitorAddWatch      add_watch_func,
+                                                  PolKitContextFileMonitorRemoveWatch   remove_watch_func);
+void           polkit_context_set_load_descriptions (PolKitContext                        *pk_context);
 polkit_bool_t  polkit_context_init               (PolKitContext                        *pk_context, 
-                                                     PolKitError                         **error);
+                                                  PolKitError                         **error);
 PolKitContext *polkit_context_ref                (PolKitContext                        *pk_context);
 void           polkit_context_unref              (PolKitContext                        *pk_context);
 
@@ -161,25 +162,25 @@ typedef void (*PolKitSeatVisitorCB) (PolKitSeat      *seat,
 
 PolKitResult
 polkit_context_get_seat_resource_association (PolKitContext       *pk_context,
-                                                 PolKitSeatVisitorCB  visitor,
-                                                 void                *user_data);
+                                              PolKitSeatVisitorCB  visitor,
+                                              void                *user_data);
 
 PolKitResult
 polkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
-                                                    PolKitResource  *resource,
-                                                    PolKitSeat      *seat);
+                                                 PolKitResource  *resource,
+                                                 PolKitSeat      *seat);
 
 PolKitResult
 polkit_context_can_session_access_resource (PolKitContext   *pk_context,
-                                               PolKitAction *action,
-                                               PolKitResource  *resource,
-                                               PolKitSession   *session);
+                                            PolKitAction    *action,
+                                            PolKitResource  *resource,
+                                            PolKitSession   *session);
 
 PolKitResult
 polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
-                                              PolKitAction *action,
-                                              PolKitResource  *resource,
-                                              PolKitCaller    *caller);
+                                           PolKitAction    *action,
+                                           PolKitResource  *resource,
+                                           PolKitCaller    *caller);
 
 #endif /* POLKIT_CONTEXT_H */
 

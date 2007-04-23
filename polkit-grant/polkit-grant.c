@@ -221,11 +221,17 @@ polkit_grant_set_functions (PolKitGrant *polkit_grant,
 void
 polkit_grant_child_func (PolKitGrant *polkit_grant, pid_t pid, int exit_code)
 {
+        polkit_bool_t input_was_bogus;
         g_return_if_fail (polkit_grant != NULL);
         g_return_if_fail (polkit_grant->auth_in_progress);
 
+        if (exit_code >= 2)
+                input_was_bogus = TRUE;
+        else
+                input_was_bogus = FALSE;
+
         polkit_grant->success = (exit_code == 0);
-        polkit_grant->func_done (polkit_grant, polkit_grant->success, polkit_grant->user_data);
+        polkit_grant->func_done (polkit_grant, polkit_grant->success, input_was_bogus, polkit_grant->user_data);
 }
 
 
@@ -355,8 +361,9 @@ polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
 
         pid = polkit_grant->child_pid;
         polkit_grant->child_pid = 0;
-        kill (pid, SIGTERM);
-        polkit_grant->func_done (polkit_grant, FALSE, polkit_grant->user_data);        
+        if (pid > 0)
+                kill (pid, SIGTERM);
+        polkit_grant->func_done (polkit_grant, FALSE, FALSE, polkit_grant->user_data);        
 }
 
 /**

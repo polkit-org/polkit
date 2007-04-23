@@ -53,7 +53,7 @@ libpolkit_la_SOURCES =                                			\
 	polkit-utils.h			polkit-utils.c			\
 	polkit-module.h			polkit-module.c
 
-libpolkit_la_LIBADD = @GLIB_LIBS@ -ldl
+libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@ -ldl
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

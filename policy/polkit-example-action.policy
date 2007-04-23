@@ -1,15 +1,23 @@
-# -*- Conf -*-
-#
-# Example privilege definitions...
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<policyconfig>
 
-[Action polkit-example-privilege]
-AllowRemoteInactive=no
-AllowRemoteActive=auth_root_keep_session
-AllowLocalInactive=auth_self_keep_always
-AllowLocalActive=yes
+  <group id="polkit-example">
+    <description>PolicyKit examples</description>
+    <description_short>PolicyKit</description_short>
 
-[Action polkit-example-privilege2]
-AllowRemoteInactive=no
-AllowRemoteActive=auth_root_keep_session
-AllowLocalInactive=auth_self_keep_always
-AllowLocalActive=yes
+    <policy id="polkit-example-frobnicate">
+      <description>Frobnicate devices</description>
+      <missing>System policy prevents frobnicating the device '%s'.</missing>
+      <apply_to_all_mnemonic>Apply to all _frobnicatable devices</apply_to_all_mnemonic>
+      <defaults>
+        <allow_remote_inactive>no</allow_remote_inactive>
+        <allow_remote_active>no</allow_remote_active>
+        <allow_local_inactive>no</allow_local_inactive>
+        <allow_local_active>auth_self_keep_always</allow_local_active>
+      </defaults>
+    </policy>
+
+  </group>
+</policyconfig>

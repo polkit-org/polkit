@@ -47,6 +47,7 @@
 
 #include "polkit-types.h"
 #include "polkit-error.h"
+#include "polkit-debug.h"
 
 /**
  * PolKitError:
@@ -123,7 +124,7 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
         va_list args;
         PolKitError *e;
 
-        if (*error == NULL)
+        if (error == NULL)
                 return;
 
         e = g_new0 (PolKitError, 1);
@@ -135,6 +136,3 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
 
         *error = e;
 }
-
-
-

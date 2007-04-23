@@ -36,11 +36,14 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <expat.h>
+
 #include <glib.h>
 #include "polkit-error.h"
 #include "polkit-result.h"
 #include "polkit-policy-file.h"
 #include "polkit-policy-file-entry.h"
+#include "polkit-debug.h"
 
 /**
  * SECTION:polkit-policy-file
@@ -61,34 +64,331 @@ struct PolKitPolicyFile
         GSList *entries;
 };
 
-extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (GKeyFile *keyfile, 
-                                                                  const char *action, 
-                                                                  PolKitError **error);
+extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_group_id,
+                                                               const char *action_id, 
+                                                               PolKitResult defaults_allow_remote_inactive,
+                                                               PolKitResult defaults_allow_remote_active,
+                                                               PolKitResult defaults_allow_local_inactive,
+                                                               PolKitResult defaults_allow_local_active);
+
+enum {
+        STATE_NONE,
+        STATE_IN_POLICY_CONFIG,
+        STATE_IN_GROUP,
+        STATE_IN_GROUP_DESCRIPTION,
+        STATE_IN_GROUP_DESCRIPTION_SHORT,
+        STATE_IN_POLICY,
+        STATE_IN_POLICY_DESCRIPTION,
+        STATE_IN_POLICY_MISSING,
+        STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC,
+        STATE_IN_DEFAULTS,
+        STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE,
+        STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE,
+        STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE,
+        STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE
+};
+
+typedef struct {
+        XML_Parser parser;
+        int state;
+        char *group_id;
+        char *action_id;
+
+        PolKitResult defaults_allow_remote_inactive;
+        PolKitResult defaults_allow_remote_active;
+        PolKitResult defaults_allow_local_inactive;
+        PolKitResult defaults_allow_local_active;
+
+        PolKitPolicyFile *pf;
+
+        polkit_bool_t load_descriptions;
+
+        char *group_description;
+        char *group_description_short;
+        char *policy_description;
+        char *policy_missing;
+        char *policy_apply_all_mnemonic;
+} ParserData;
+
+static void
+_start (void *data, const char *el, const char **attr)
+{
+        int state;
+        int num_attr;
+        ParserData *pd = data;
+
+        for (num_attr = 0; attr[num_attr] != NULL; num_attr++)
+                ;
+
+        state = STATE_NONE;
+
+        switch (pd->state) {
+        case STATE_NONE:
+                if (strcmp (el, "policyconfig") == 0) {
+                        state = STATE_IN_POLICY_CONFIG;
+                }
+                break;
+        case STATE_IN_POLICY_CONFIG:
+                if (strcmp (el, "group") == 0) {
+                        if (num_attr != 2 || strcmp (attr[0], "id") != 0)
+                                goto error;
+                        g_free (pd->group_id);
+                        pd->group_id = g_strdup (attr[1]);
+                        state = STATE_IN_GROUP;
+
+                        g_free (pd->group_description);
+                        g_free (pd->group_description_short);
+                        pd->group_description = NULL;
+                        pd->group_description_short = NULL;
+                }
+                break;
+        case STATE_IN_GROUP:
+                if (strcmp (el, "policy") == 0) {
+                        if (num_attr != 2 || strcmp (attr[0], "id") != 0)
+                                goto error;
+                        g_free (pd->action_id);
+                        pd->action_id = g_strdup (attr[1]);
+                        state = STATE_IN_POLICY;
+
+                        pd->policy_description = NULL;
+                        pd->policy_missing = NULL;
+                        pd->policy_apply_all_mnemonic = NULL;
+
+                        /* initialize defaults */
+                        pd->defaults_allow_remote_inactive = POLKIT_RESULT_NO;
+                        pd->defaults_allow_remote_active = POLKIT_RESULT_NO;
+                        pd->defaults_allow_local_inactive = POLKIT_RESULT_NO;
+                        pd->defaults_allow_local_active = POLKIT_RESULT_NO;
+                }
+                else if (strcmp (el, "description") == 0)
+                        state = STATE_IN_GROUP_DESCRIPTION;
+                else if (strcmp (el, "description_short") == 0)
+                        state = STATE_IN_GROUP_DESCRIPTION_SHORT;
+                break;
+        case STATE_IN_GROUP_DESCRIPTION:
+                break;
+        case STATE_IN_GROUP_DESCRIPTION_SHORT:
+                break;
+        case STATE_IN_POLICY:
+                if (strcmp (el, "defaults") == 0)
+                        state = STATE_IN_DEFAULTS;
+                else if (strcmp (el, "description") == 0)
+                        state = STATE_IN_POLICY_DESCRIPTION;
+                else if (strcmp (el, "missing") == 0)
+                        state = STATE_IN_POLICY_MISSING;
+                else if (strcmp (el, "apply_to_all_mnemonic") == 0)
+                        state = STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC;
+                break;
+        case STATE_IN_POLICY_DESCRIPTION:
+                break;
+        case STATE_IN_POLICY_MISSING:
+                break;
+        case STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC:
+                break;
+        case STATE_IN_DEFAULTS:
+                if (strcmp (el, "allow_remote_inactive") == 0)
+                        state = STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE;
+                else if (strcmp (el, "allow_remote_active") == 0)
+                        state = STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE;
+                else if (strcmp (el, "allow_local_inactive") == 0)
+                        state = STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE;
+                else if (strcmp (el, "allow_local_active") == 0)
+                        state = STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE:
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE:
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE:
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE:
+                break;
+        default:
+                break;
+        }
+
+        if (state == STATE_NONE)
+                goto error;
+
+        pd->state = state;
+
+        return;
+error:
+        XML_StopParser (pd->parser, FALSE);
+}
+
+static void
+_cdata (void *data, const char *s, int len)
+{
+        char *str;
+        ParserData *pd = data;
+
+        str = g_strndup (s, len);
+        switch (pd->state) {
+
+        case STATE_IN_GROUP_DESCRIPTION:
+                if (pd->load_descriptions)
+                        pd->group_description = g_strdup (str);
+                break;
+                
+        case STATE_IN_GROUP_DESCRIPTION_SHORT:
+                if (pd->load_descriptions)
+                        pd->group_description_short = g_strdup (str);
+                break;
+
+        case STATE_IN_POLICY_DESCRIPTION:
+                if (pd->load_descriptions)
+                        pd->policy_description = g_strdup (str);
+                break;
+
+        case STATE_IN_POLICY_MISSING:
+                if (pd->load_descriptions)
+                        pd->policy_missing = g_strdup (str);
+                break;
+
+        case STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC:
+                if (pd->load_descriptions)
+                        pd->policy_apply_all_mnemonic = g_strdup (str);
+                break;
+
+                
+
+        case STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE:
+                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_remote_inactive))
+                        goto error;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE:
+                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_remote_active))
+                        goto error;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE:
+                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_local_inactive))
+                        goto error;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE:
+                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_local_active))
+                        goto error;
+                break;
+        default:
+                break;
+        }
+        g_free (str);
+        return;
+error:
+        g_free (str);
+        XML_StopParser (pd->parser, FALSE);
+}
+
+
+extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
+                                                        const char *group_description,
+                                                        const char *group_description_short,
+                                                        const char *policy_description,
+                                                        const char *policy_missing,
+                                                        const char *policy_apply_all_mnemonic);
+
+static void
+_end (void *data, const char *el)
+{
+        int state;
+        ParserData *pd = data;
+
+        state = STATE_NONE;
+
+        switch (pd->state) {
+        case STATE_NONE:
+                break;
+        case STATE_IN_POLICY_CONFIG:
+                state = STATE_NONE;
+                break;
+        case STATE_IN_GROUP:
+                state = STATE_IN_POLICY_CONFIG;
+                break;
+        case STATE_IN_GROUP_DESCRIPTION:
+                state = STATE_IN_GROUP;
+                break;
+        case STATE_IN_GROUP_DESCRIPTION_SHORT:
+                state = STATE_IN_GROUP;
+                break;
+        case STATE_IN_POLICY:
+        {
+                PolKitPolicyFileEntry *pfe;
+
+                pfe = _polkit_policy_file_entry_new (pd->group_id, pd->action_id, 
+                                                     pd->defaults_allow_remote_inactive,
+                                                     pd->defaults_allow_remote_active,
+                                                     pd->defaults_allow_local_inactive,
+                                                     pd->defaults_allow_local_active);
+                if (pfe == NULL)
+                        goto error;
+
+                if (pd->load_descriptions)
+                        _polkit_policy_file_entry_set_descriptions (pfe,
+                                                                    pd->group_description,
+                                                                    pd->group_description_short,
+                                                                    pd->policy_description,
+                                                                    pd->policy_missing,
+                                                                    pd->policy_apply_all_mnemonic);
+
+                pd->pf->entries = g_slist_prepend (pd->pf->entries, pfe);
+
+                state = STATE_IN_GROUP;
+                break;
+        }
+        case STATE_IN_POLICY_DESCRIPTION:
+                state = STATE_IN_POLICY;
+                break;
+        case STATE_IN_POLICY_MISSING:
+                state = STATE_IN_POLICY;
+                break;
+        case STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC:
+                state = STATE_IN_POLICY;
+                break;
+        case STATE_IN_DEFAULTS:
+                state = STATE_IN_POLICY;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE:
+                state = STATE_IN_DEFAULTS;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE:
+                state = STATE_IN_DEFAULTS;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE:
+                state = STATE_IN_DEFAULTS;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE:
+                state = STATE_IN_DEFAULTS;
+                break;
+        default:
+                break;
+        }
+
+        pd->state = state;
+
+        return;
+error:
+        XML_StopParser (pd->parser, FALSE);
+}
+
 
 /**
  * polkit_policy_file_new:
- * @path: path to policy file
- * @error: return location for error
+ * @path: path to file
+ * @load_descriptions: whether descriptions should be loaded
+ * @error: Return location for error
  * 
- * Create a new #PolKitPolicyFile object. If the file does not
- * validate, a human readable explanation of why will be set in
- * @error.
+ * Load a policy file.
  * 
- * Returns: the new object or #NULL if error is set
+ * Returns: The new object or #NULL if error is set
  **/
 PolKitPolicyFile *
-polkit_policy_file_new (const char *path, PolKitError **error)
+polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKitError **error)
 {
-        GKeyFile *key_file;
         PolKitPolicyFile *pf;
-        char **groups;
-        gsize groups_len;
-        int n;
-        GError *g_error;
+        ParserData pd;
+        int xml_res;
 
         pf = NULL;
-        key_file = NULL;
-        groups = NULL;
 
         if (!g_str_has_suffix (path, ".policy")) {
                 polkit_error_set_error (error, 
@@ -97,59 +397,75 @@ polkit_policy_file_new (const char *path, PolKitError **error)
                 goto error;
         }
 
+	char *buf;
+	gsize buflen;
+        GError *g_error;
+
         g_error = NULL;
-        key_file = g_key_file_new ();
-        if (!g_key_file_load_from_file (key_file, path, G_KEY_FILE_NONE, &g_error)) {
+	if (!g_file_get_contents (path, &buf, &buflen, &g_error)) {
                 polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
                                         "Cannot load PolicyKit policy file at '%s': %s",
                                         path,
                                         g_error->message);
                 g_error_free (g_error);
+		goto error;
+        }
+
+        pd.parser = XML_ParserCreate (NULL);
+        if (pd.parser == NULL) {
+                polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
+                                        "Cannot load PolicyKit policy file at '%s': %s",
+                                        path,
+                                        "No memory for parser");
                 goto error;
         }
+	XML_SetUserData (pd.parser, &pd);
+	XML_SetElementHandler (pd.parser, _start, _end);
+	XML_SetCharacterDataHandler (pd.parser, _cdata);
 
         pf = g_new0 (PolKitPolicyFile, 1);
         pf->refcount = 1;
 
-        groups = g_key_file_get_groups(key_file, &groups_len);
-        if (groups == NULL)
-                goto error;
+        pd.state = STATE_NONE;
+        pd.group_id = NULL;
+        pd.action_id = NULL;
+        pd.group_description = NULL;
+        pd.group_description_short = NULL;
+        pd.policy_description = NULL;
+        pd.policy_missing = NULL;
+        pd.policy_apply_all_mnemonic = NULL;
+        pd.pf = pf;
+        pd.load_descriptions = load_descriptions;
 
-        for (n = 0; groups[n] != NULL; n++) {
-                const char *action;
-                PolKitPolicyFileEntry *pfe;
+        xml_res = XML_Parse (pd.parser, buf, buflen, 1);
 
-                if (!g_str_has_prefix (groups[n], "Action ")) {
-                        polkit_error_set_error (error, 
-                                                POLKIT_ERROR_POLICY_FILE_INVALID,
-                                                "Unknown group of name '%s'", groups[n]);
-                        goto error;
-                }
+        g_free (pd.group_id);
+        g_free (pd.action_id);
+        g_free (pd.group_description);
+        g_free (pd.group_description_short);
+        g_free (pd.policy_description);
+        g_free (pd.policy_missing);
+        g_free (pd.policy_apply_all_mnemonic);
 
-                action = groups[n] + 7; /* "Action " */
-                if (strlen (action) == 0) {
-                        polkit_error_set_error (error, 
-                                                POLKIT_ERROR_POLICY_FILE_INVALID,
-                                                "Zero-length action name");
-                        goto error;
-                }
+	if (xml_res == 0) {
+                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "%s:%d: parse error: %s",
+                                        path, 
+                                        (int) XML_GetCurrentLineNumber (pd.parser),
+                                        XML_ErrorString (XML_GetErrorCode (pd.parser)));
 
-                pfe = _polkit_policy_file_entry_new (key_file, action, error);
-                if (pfe == NULL)
-                        goto error;
-                pf->entries = g_slist_prepend (pf->entries, pfe);
-        }
+		XML_ParserFree (pd.parser);
+		g_free (buf);
+		goto error;
+	}
+	XML_ParserFree (pd.parser);
+	g_free (buf);
 
-        g_strfreev (groups);
-        g_key_file_free (key_file);
         return pf;
 error:
-        if (groups != NULL)
-                g_strfreev (groups);
-        if (key_file != NULL)
-                g_key_file_free (key_file);
         if (pf != NULL)
                 polkit_policy_file_unref (pf);
+
         return NULL;
 }
 

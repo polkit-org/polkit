@@ -63,96 +63,26 @@ struct PolKitPolicyDefault
         PolKitResult default_local_active;
 };
 
-static gboolean
-parse_default (const char *key, char *s, const char *group, PolKitResult* target, PolKitError **error)
-{
-        gboolean ret;
-
-        ret = polkit_result_from_string_representation (s, target);
-        if (!ret) {
-                int n;
-                char *s2;
-                GString *str;
-
-                str = g_string_new (NULL);
-                for (n = 0; n < POLKIT_RESULT_N_RESULTS; n++) {
-                        if (n == POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW)
-                                continue;
-
-                        if (str->len > 0) {
-                                g_string_append (str, ", ");
-                        }
-                        g_string_append (str, polkit_result_to_string_representation (n));
-                }
-                s2 = g_string_free (str, FALSE);
-
-                polkit_error_set_error (error, 
-                                        POLKIT_ERROR_POLICY_FILE_INVALID,
-                                        "Value '%s' is not allowed for key '%s' in group '%s'; "
-                                        "supported values are: %s", 
-                                        s, 
-                                        key,
-                                        group,
-                                        s2);
-                g_free (s2);
-        }
-        
-        g_free (s);
-        return ret;
-}
-
-extern PolKitPolicyDefault *_polkit_policy_default_new (GKeyFile *key_file, const char *action, PolKitError **error);
+extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_remote_inactive,
+                                                        PolKitResult defaults_allow_remote_active,
+                                                        PolKitResult defaults_allow_local_inactive,
+                                                        PolKitResult defaults_allow_local_active);
 
 PolKitPolicyDefault *
-_polkit_policy_default_new (GKeyFile *key_file, const char *action, PolKitError **error)
+_polkit_policy_default_new (PolKitResult defaults_allow_remote_inactive,
+                            PolKitResult defaults_allow_remote_active,
+                            PolKitResult defaults_allow_local_inactive,
+                            PolKitResult defaults_allow_local_active)
 {
-        const char *key;
-        const char *group;
-        char *s;
-        char buf[256];
         PolKitPolicyDefault *pd;
-        GError *g_error;
 
         pd = g_new0 (PolKitPolicyDefault, 1);
         pd->refcount = 1;
-
-        g_snprintf (buf, sizeof (buf), "Action %s", action);
-        group = buf;
-
-        g_error = NULL;
-        key = "AllowRemoteInactive";
-        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, group, &pd->default_remote_inactive, error))
-                goto error;
-        key = "AllowRemoteActive";
-        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, group, &pd->default_remote_active, error))
-                goto error;
-        key = "AllowLocalInactive";
-        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, group, &pd->default_local_inactive, error))
-                goto error;
-        key = "AllowLocalActive";
-        if ((s = g_key_file_get_string (key_file, group, key, &g_error)) == NULL)
-                goto error;
-        if (!parse_default (key, s, group, &pd->default_local_active, error))
-                goto error;
-
+        pd->default_remote_inactive = defaults_allow_remote_inactive;
+        pd->default_remote_active = defaults_allow_remote_active;
+        pd->default_local_inactive = defaults_allow_local_inactive;
+        pd->default_local_active = defaults_allow_local_active;
         return pd;
-error:
-        if (g_error != NULL) {
-                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
-                                        "Missing key in policy file: %s",
-                                        g_error->message);
-                g_error_free (g_error);
-        }
-
-        if (pd != NULL)
-                polkit_policy_default_ref (pd);
-        return NULL;
 }
 
 /**
@@ -320,3 +250,64 @@ polkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy_de
 out:
         return ret;
 }
+
+/**
+ * polkit_policy_default_get_allow_remote_inactive:
+ * @policy_default: the object
+ * 
+ * Get default policy.
+ * 
+ * Returns: default policy
+ **/
+PolKitResult
+polkit_policy_default_get_allow_remote_inactive (PolKitPolicyDefault *policy_default)
+{
+        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        return policy_default->default_remote_inactive;
+}
+
+/**
+ * polkit_policy_default_get_allow_remote_active:
+ * @policy_default: the object
+ * 
+ * Get default policy.
+ * 
+ * Returns: default policy
+ **/
+PolKitResult
+polkit_policy_default_get_allow_remote_active (PolKitPolicyDefault *policy_default)
+{
+        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        return policy_default->default_remote_active;
+}
+
+/**
+ * polkit_policy_default_get_allow_local_inactive:
+ * @policy_default: the object
+ * 
+ * Get default policy.
+ * 
+ * Returns: default policy
+ **/
+PolKitResult
+polkit_policy_default_get_allow_local_inactive (PolKitPolicyDefault *policy_default)
+{
+        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        return policy_default->default_local_inactive;
+}
+
+/**
+ * polkit_policy_default_get_allow_local_active:
+ * @policy_default: the object
+ * 
+ * Get default policy.
+ * 
+ * Returns: default policy
+ **/
+PolKitResult
+polkit_policy_default_get_allow_local_active (PolKitPolicyDefault *policy_default)
+{
+        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        return policy_default->default_local_active;
+}
+

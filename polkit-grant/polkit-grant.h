@@ -196,6 +196,7 @@ typedef PolKitResult (*PolKitGrantOverrideGrantType) (PolKitGrant *polkit_grant,
  * PolKitGrantDone:
  * @polkit_grant: the grant object
  * @gained_privilege: whether the privilege was obtained
+ * @invalid_data: whether the input data was bogus (not including bad passwords)
  * @user_data: user data pointed as passed into polkit_grant_set_functions()
  *
  * This function is called when the granting process ends; either if
@@ -204,6 +205,7 @@ typedef PolKitResult (*PolKitGrantOverrideGrantType) (PolKitGrant *polkit_grant,
  **/
 typedef void (*PolKitGrantDone) (PolKitGrant *polkit_grant,
                                  polkit_bool_t gained_privilege,
+                                 polkit_bool_t invalid_data,
                                  void *user_data);
 
 /**

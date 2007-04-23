@@ -74,17 +74,10 @@ _append_entry (PolKitPolicyFile       *policy_file,
         policy_cache->priv_entries = g_slist_append (policy_cache->priv_entries, policy_file_entry);
 }
 
-/**
- * polkit_policy_cache_new:
- * @dirname: directory containing policy files
- * @error: location to return error
- * 
- * Create a new #PolKitPolicyCache object and load information from policy files.
- * 
- * Returns: #NULL if @error was set, otherwise the #PolKitPolicyCache object
- **/
+extern PolKitPolicyCache *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);
+
 PolKitPolicyCache *
-polkit_policy_cache_new (const char *dirname, PolKitError **error)
+_polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error)
 {
         const char *file;
         GDir *dir;
@@ -117,7 +110,7 @@ polkit_policy_cache_new (const char *dirname, PolKitError **error)
                 path = g_strdup_printf ("%s/%s", dirname, file);
 
                 _pk_debug ("Loading %s", path);
-                pf = polkit_policy_file_new (path, error);
+                pf = polkit_policy_file_new (path, load_descriptions, error);
                 g_free (path);
 
                 if (pf == NULL) {
@@ -245,4 +238,29 @@ polkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache,
 
 out:
         return pfe;
+}
+
+/**
+ * polkit_policy_cache_foreach:
+ * @policy_cache: the policy cache
+ * @callback: callback function
+ * @user_data: user data to pass to callback function
+ * 
+ * Visit all entries in the policy cache.
+ **/
+void
+polkit_policy_cache_foreach (PolKitPolicyCache *policy_cache, 
+                             PolKitPolicyCacheForeachFunc callback,
+                             void *user_data)
+{
+        GSList *i;
+        PolKitPolicyFileEntry *pfe;
+
+        g_return_if_fail (policy_cache != NULL);
+        g_return_if_fail (callback != NULL);
+
+        for (i = policy_cache->priv_entries; i != NULL; i = g_slist_next (i)) {
+                pfe = i->data;
+                callback (policy_cache, pfe, user_data);
+        }
 }

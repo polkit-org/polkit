@@ -76,6 +76,8 @@ struct PolKitContext
         PolKitPolicyCache *priv_cache;
 
         GSList *modules;
+
+        polkit_bool_t load_descriptions;
 };
 
 /**
@@ -377,6 +379,8 @@ polkit_context_unref (PolKitContext *pk_context)
  * second) to avoid doing many expensive operations (such as
  * reconfiguring all ACL's for all devices) within a very short
  * timeframe.
+ *
+ * This method must be called before polkit_context_init().
  **/
 void
 polkit_context_set_config_changed (PolKitContext                *pk_context, 
@@ -395,6 +399,8 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
  * @remove_watch_func: the function that the PolicyKit library can invoke to stop watching a file
  * 
  * Register a functions that PolicyKit can use for watching files.
+ *
+ * This method must be called before polkit_context_init().
  **/
 void
 polkit_context_set_file_monitor (PolKitContext                        *pk_context, 
@@ -406,6 +412,23 @@ polkit_context_set_file_monitor (PolKitContext                        *pk_contex
         pk_context->file_monitor_remove_watch_func = remove_watch_func;
 }
 
+/**
+ * polkit_context_set_load_descriptions:
+ * @pk_context: the context
+ * 
+ * Set whether policy descriptions should be loaded. By default these
+ * are not loaded to keep memory use down. 
+ *
+ * This method must be called before polkit_context_init().
+ **/
+void
+polkit_context_set_load_descriptions  (PolKitContext *pk_context)
+{
+        g_return_if_fail (pk_context != NULL);
+        pk_context->load_descriptions = TRUE;
+}
+
+extern PolKitPolicyCache     *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);
 
 /**
  * polkit_context_get_policy_cache:
@@ -426,7 +449,9 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
                 _pk_debug ("Populating cache from directory %s", pk_context->policy_dir);
 
                 error = NULL;
-                pk_context->priv_cache = polkit_policy_cache_new (pk_context->policy_dir, &error);
+                pk_context->priv_cache = _polkit_policy_cache_new (pk_context->policy_dir, 
+                                                                   pk_context->load_descriptions, 
+                                                                   &error);
                 if (pk_context->priv_cache == NULL) {
                         g_warning ("Error loading policy files from %s: %s", 
                                    pk_context->policy_dir, polkit_error_get_error_message (error));
