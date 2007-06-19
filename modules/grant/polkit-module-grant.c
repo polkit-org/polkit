@@ -65,13 +65,15 @@ _module_can_caller_do_action (PolKitModuleInterface *module_interface,
                               PolKitAction          *action,
                               PolKitCaller          *caller)
 {
+        return _polkit_grantdb_check_can_caller_do_action (pk_context, action, caller);
+
+#if 0
         char *grant_file;
         PolKitSession *session;
         PolKitResult result;
 
         result = POLKIT_RESULT_UNKNOWN_ACTION;
 
-#if 0
         /* file format:
          *
          * file: /var/[lib,run]/PolicyKit/grant/<action-name>.grant
@@ -184,9 +186,6 @@ _module_can_caller_do_action (PolKitModuleInterface *module_interface,
         }
         g_free (grant_file);
 #endif
-
-out:
-        return result;
 }
 
 polkit_bool_t

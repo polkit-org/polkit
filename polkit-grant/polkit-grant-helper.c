@@ -363,6 +363,7 @@ main (int argc, char *argv[])
         gid_t egid;
         struct group *group;
         struct passwd *pw;
+        polkit_bool_t dbres;
 
         ret = 3;
 
@@ -461,7 +462,35 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        fprintf (stderr, "OK; TODO: write to database\n");
+        fprintf (stderr, "OK; TODO: write to database: action_id=%s session_id=%s pid=%d\n", 
+                 action_name, session_objpath, caller_pid);
+
+        switch (result) {
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
+                dbres = _polkit_grantdb_write_pid (action_name, caller_pid);
+                break;
+
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
+                dbres = _polkit_grantdb_write_keep_session (action_name, session_objpath);
+                break;
+
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
+                dbres = _polkit_grantdb_write_keep_always (action_name, invoking_user_id);
+                break;
+
+        default:
+                /* should never happen */
+                goto out;
+        }
+
+        if (!dbres) {
+                fprintf (stderr, "polkit-grant-helper: failed to write to grantdb\n");
+                goto out;
+        }
+
 #if 0
         /* TODO: FIXME: XXX: this format of storing granted privileges needs be redone
          *

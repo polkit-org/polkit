@@ -12,6 +12,11 @@ INCLUDES = \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	@GLIB_CFLAGS@ @DBUS_CFLAGS@
 
+noinst_LTLIBRARIES=libpolkit-grant-private.la
+
+libpolkit_grant_private_la_SOURCES =				\
+	polkit-grant-database.h	polkit-grant-database.c
+
 lib_LTLIBRARIES=libpolkit-grant.la
 
 libpolkit_grantincludedir=$(includedir)/PolicyKit/polkit-grant
@@ -20,7 +25,6 @@ libpolkit_grantinclude_HEADERS =              			\
 	polkit-grant.h
 
 libpolkit_grant_la_SOURCES =      				\
-	polkit-grant-database.h	polkit-grant-database.c		\
 	polkit-grant.h		polkit-grant.c
 
 libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la
@@ -30,7 +34,7 @@ libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE
 libexec_PROGRAMS = polkit-grant-helper
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
-polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ @AUTH_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
+polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ @AUTH_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit-grant/libpolkit-grant-private.la
 
 polkit_grant_alwaysdir = $(localstatedir)/lib/PolicyKit
 dist_polkit_grant_always_DATA =
