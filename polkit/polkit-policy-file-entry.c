@@ -63,39 +63,27 @@ struct PolKitPolicyFileEntry
         PolKitPolicyDefault *defaults;
 
         char *group_description;
-        char *group_description_short;
         char *policy_description;
-        char *policy_missing;
-        char *policy_apply_all_mnemonic;
 };
 
 extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
                                                         const char *group_description,
-                                                        const char *group_description_short,
-                                                        const char *policy_description,
-                                                        const char *policy_missing,
-                                                        const char *policy_apply_all_mnemonic);
+                                                        const char *policy_description);
 
 
-extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_remote_inactive,
-                                                        PolKitResult defaults_allow_remote_active,
-                                                        PolKitResult defaults_allow_local_inactive,
-                                                        PolKitResult defaults_allow_local_active);
+extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
+                                                        PolKitResult defaults_allow_active);
 
 extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_group_id,
                                                                const char *action_id, 
-                                                               PolKitResult defaults_allow_remote_inactive,
-                                                               PolKitResult defaults_allow_remote_active,
-                                                               PolKitResult defaults_allow_local_inactive,
-                                                               PolKitResult defaults_allow_local_active);
+                                                               PolKitResult defaults_allow_inactive,
+                                                               PolKitResult defaults_allow_active);
 
 extern PolKitPolicyFileEntry *
 _polkit_policy_file_entry_new   (const char *action_group_id,
                                  const char *action_id, 
-                                 PolKitResult defaults_allow_remote_inactive,
-                                 PolKitResult defaults_allow_remote_active,
-                                 PolKitResult defaults_allow_local_inactive,
-                                 PolKitResult defaults_allow_local_active)
+                                 PolKitResult defaults_allow_inactive,
+                                 PolKitResult defaults_allow_active)
 {
         PolKitPolicyFileEntry *pfe;
 
@@ -104,10 +92,8 @@ _polkit_policy_file_entry_new   (const char *action_group_id,
         pfe->action = g_strdup (action_id);
         pfe->group = g_strdup (action_group_id);
 
-        pfe->defaults = _polkit_policy_default_new (defaults_allow_remote_inactive,
-                                                    defaults_allow_remote_active,
-                                                    defaults_allow_local_inactive,
-                                                    defaults_allow_local_active);
+        pfe->defaults = _polkit_policy_default_new (defaults_allow_inactive,
+                                                    defaults_allow_active);
         if (pfe->defaults == NULL)
                 goto error;
 
@@ -121,17 +107,11 @@ error:
 void 
 _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *policy_file_entry,
                                             const char *group_description,
-                                            const char *group_description_short,
-                                            const char *policy_description,
-                                            const char *policy_missing,
-                                            const char *policy_apply_all_mnemonic)
+                                            const char *policy_description)
 {
         g_return_if_fail (policy_file_entry != NULL);
         policy_file_entry->group_description = g_strdup (group_description);
-        policy_file_entry->group_description_short = g_strdup (group_description_short);
         policy_file_entry->policy_description = g_strdup (policy_description);
-        policy_file_entry->policy_missing = g_strdup (policy_missing);
-        policy_file_entry->policy_apply_all_mnemonic = g_strdup (policy_apply_all_mnemonic);
 }
 
 /**
@@ -154,25 +134,6 @@ polkit_policy_file_get_group_description (PolKitPolicyFileEntry *policy_file_ent
 }
 
 /**
- * polkit_policy_file_get_group_description_short:
- * @policy_file_entry: the object
- * 
- * Get the short description of the group that this policy entry describes.
- *
- * Note, if polkit_context_set_load_descriptions() on the
- * #PolKitContext object used to get this object wasn't called, this
- * method will return #NULL.
- * 
- * Returns: string or #NULL if descriptions are not loaded - caller shall not free this string
- **/
-const char *
-polkit_policy_file_get_group_description_short (PolKitPolicyFileEntry *policy_file_entry)
-{
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
-        return policy_file_entry->group_description_short;
-}
-
-/**
  * polkit_policy_file_get_action_description:
  * @policy_file_entry: the object
  * 
@@ -190,54 +151,6 @@ polkit_policy_file_get_action_description (PolKitPolicyFileEntry *policy_file_en
         g_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->policy_description;
 }
-
-/**
- * polkit_policy_file_get_action_missing:
- * @policy_file_entry: the object
- * 
- * Get a phrase, for the policy entry in question, that can be shown
- * in the user interface explaining that the caller doesn't possess
- * the privilege to perform the given action.
- *
- * The returned string may contain a single %s entry - the caller
- * should use a printf-style function to replace this with a human
- * readable description of the resource in question.
- *
- * Note, if polkit_context_set_load_descriptions() on the
- * #PolKitContext object used to get this object wasn't called, this
- * method will return #NULL.
- * 
- * Returns: string or #NULL if descriptions are not loaded - caller shall not free this string
- **/
-const char *
-polkit_policy_file_get_action_missing (PolKitPolicyFileEntry *policy_file_entry)
-{
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
-        return policy_file_entry->policy_missing;
-}
-
-/**
- * polkit_policy_file_get_action_apply_to_all_mnemonic:
- * @policy_file_entry: the object
- * 
- * Get a phrase, for the policy entry in question, that can be shown
- * in the user interface for a checkbox whether the grant of a
- * privilege should apply to all resources. The string may contain a
- * single underscore to indicate a mnemonic shortcut.
- *
- * Note, if polkit_context_set_load_descriptions() on the
- * #PolKitContext object used to get this object wasn't called, this
- * method will return #NULL.
- * 
- * Returns: string or #NULL if descriptions are not loaded - caller shall not free this string
- **/
-const char *
-polkit_policy_file_get_action_apply_to_all_mnemonic (PolKitPolicyFileEntry *policy_file_entry)
-{
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
-        return policy_file_entry->policy_apply_all_mnemonic;
-}
-
 
 /**
  * polkit_policy_file_entry_ref:
@@ -275,10 +188,7 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
                 polkit_policy_default_unref (policy_file_entry->defaults);
 
         g_free (policy_file_entry->group_description);
-        g_free (policy_file_entry->group_description_short);
         g_free (policy_file_entry->policy_description);
-        g_free (policy_file_entry->policy_missing);
-        g_free (policy_file_entry->policy_apply_all_mnemonic);
 
         g_free (policy_file_entry);
 }

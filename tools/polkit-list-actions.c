@@ -61,39 +61,28 @@ _print_entry (PolKitPolicyCache *policy_cache,
         const char *action_id;
         const char *group_id;
         PolKitPolicyDefault *def;
-        PolKitResult default_remote_inactive;
-        PolKitResult default_remote_active;
-        PolKitResult default_local_inactive;
-        PolKitResult default_local_active;
+        PolKitResult default_inactive;
+        PolKitResult default_active;
 
         action_id = polkit_policy_file_entry_get_id (pfe);
         group_id = polkit_policy_file_entry_get_group_id (pfe);
         def = polkit_policy_file_entry_get_default (pfe);
-        default_remote_inactive = polkit_policy_default_get_allow_remote_inactive (def);
-        default_remote_active = polkit_policy_default_get_allow_remote_active (def);
-        default_local_inactive = polkit_policy_default_get_allow_local_inactive (def);
-        default_local_active = polkit_policy_default_get_allow_local_active (def);
+        default_inactive = polkit_policy_default_get_allow_inactive (def);
+        default_active = polkit_policy_default_get_allow_active (def);
 
         printf ("Policy\n"
                 "------\n"
-                "group                   = %s ('%s') ('%s')\n"
-                "action                  = %s ('%s') ('%s') ('%s')\n"
-                "default_remote_inactive = %s\n"
-                "default_remote_active   = %s\n"
-                "default_local_inactive  = %s\n"
-                "default_local_active    = %s\n"
+                "group             = %s ('%s')\n"
+                "action            = %s ('%s')\n"
+                "default_inactive  = %s\n"
+                "default_active    = %s\n"
                 "\n", 
                 group_id, 
                 polkit_policy_file_get_group_description (pfe),
-                polkit_policy_file_get_group_description_short (pfe),
                 action_id,
                 polkit_policy_file_get_action_description (pfe),
-                polkit_policy_file_get_action_missing (pfe),
-                polkit_policy_file_get_action_apply_to_all_mnemonic (pfe),
-                polkit_result_to_string_representation (default_remote_inactive),
-                polkit_result_to_string_representation (default_remote_active),
-                polkit_result_to_string_representation (default_local_inactive),
-                polkit_result_to_string_representation (default_local_active));
+                polkit_result_to_string_representation (default_inactive),
+                polkit_result_to_string_representation (default_active));
 }
 
 int

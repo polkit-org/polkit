@@ -51,10 +51,8 @@ PolKitResult polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *po
                                                          PolKitAction        *action,
                                                          PolKitCaller        *caller);
 
-PolKitResult polkit_policy_default_get_allow_remote_inactive (PolKitPolicyDefault *policy_default);
-PolKitResult polkit_policy_default_get_allow_remote_active (PolKitPolicyDefault *policy_default);
-PolKitResult polkit_policy_default_get_allow_local_inactive (PolKitPolicyDefault *policy_default);
-PolKitResult polkit_policy_default_get_allow_local_active (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_policy_default_get_allow_active (PolKitPolicyDefault *policy_default);
 
 /* TODO: export knobs for "default policy" */
 

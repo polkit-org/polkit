@@ -413,8 +413,8 @@ polkit_grant_initiate_auth (PolKitGrant  *polkit_grant,
 
         /* TODO: verify incoming args */
 
-        helper_argv[0] = "/home/davidz/Hacking/PolicyKit/polkit-grant/.libs/polkit-grant-helper";
-        // TODO FIXME: helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-grant-helper";
+        /* helper_argv[0] = "/home/davidz/Hacking/PolicyKit/polkit-grant/.libs/polkit-grant-helper"; */
+        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-grant-helper";
         if (dbus_name == NULL)
                 helper_argv[1] = "";
         else

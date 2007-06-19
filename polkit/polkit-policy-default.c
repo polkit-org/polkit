@@ -57,31 +57,23 @@
 struct PolKitPolicyDefault
 {
         int refcount;
-        PolKitResult default_remote_inactive;
-        PolKitResult default_remote_active;
-        PolKitResult default_local_inactive;
-        PolKitResult default_local_active;
+        PolKitResult default_inactive;
+        PolKitResult default_active;
 };
 
-extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_remote_inactive,
-                                                        PolKitResult defaults_allow_remote_active,
-                                                        PolKitResult defaults_allow_local_inactive,
-                                                        PolKitResult defaults_allow_local_active);
+extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
+                                                        PolKitResult defaults_allow_active);
 
 PolKitPolicyDefault *
-_polkit_policy_default_new (PolKitResult defaults_allow_remote_inactive,
-                            PolKitResult defaults_allow_remote_active,
-                            PolKitResult defaults_allow_local_inactive,
-                            PolKitResult defaults_allow_local_active)
+_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
+                            PolKitResult defaults_allow_active)
 {
         PolKitPolicyDefault *pd;
 
         pd = g_new0 (PolKitPolicyDefault, 1);
         pd->refcount = 1;
-        pd->default_remote_inactive = defaults_allow_remote_inactive;
-        pd->default_remote_active = defaults_allow_remote_active;
-        pd->default_local_inactive = defaults_allow_local_inactive;
-        pd->default_local_active = defaults_allow_local_active;
+        pd->default_inactive = defaults_allow_inactive;
+        pd->default_active = defaults_allow_active;
         return pd;
 }
 
@@ -130,15 +122,11 @@ polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
 {
         g_return_if_fail (policy_default != NULL);
         _pk_debug ("PolKitPolicyDefault: refcount=%d\n"
-                   "  default_remote_inactive=%s\n"
-                   "    default_remote_active=%s\n"
-                   "   default_local_inactive=%s\n"
-                   "     default_local_active=%s", 
+                   "   default_inactive=%s\n"
+                   "     default_active=%s", 
                    policy_default->refcount,
-                   polkit_result_to_string_representation (policy_default->default_remote_inactive),
-                   polkit_result_to_string_representation (policy_default->default_remote_active),
-                   polkit_result_to_string_representation (policy_default->default_local_inactive),
-                   polkit_result_to_string_representation (policy_default->default_local_active));
+                   polkit_result_to_string_representation (policy_default->default_inactive),
+                   polkit_result_to_string_representation (policy_default->default_active));
 }
 
 
@@ -175,18 +163,13 @@ polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default
         if (!polkit_session_get_ck_is_active (session, &is_active))
                 goto out;
 
-        if (is_local) {
-                if (is_active) {
-                        ret = policy_default->default_local_active;
-                } else {
-                        ret = policy_default->default_local_inactive;
-                }
+        if (!is_local)
+                goto out;
+
+        if (is_active) {
+                ret = policy_default->default_active;
         } else {
-                if (is_active) {
-                        ret = policy_default->default_remote_active;
-                } else {
-                        ret = policy_default->default_remote_inactive;
-                }
+                ret = policy_default->default_inactive;
         }
 out:
         return ret;
@@ -230,25 +213,21 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
         if (!polkit_session_get_ck_is_active (session, &is_active))
                 goto out;
 
-        if (is_local) {
-                if (is_active) {
-                        ret = policy_default->default_local_active;
-                } else {
-                        ret = policy_default->default_local_inactive;
-                }
+        if (!is_local)
+                goto out;
+
+        if (is_active) {
+                ret = policy_default->default_active;
         } else {
-                if (is_active) {
-                        ret = policy_default->default_remote_active;
-                } else {
-                        ret = policy_default->default_remote_inactive;
-                }
+                ret = policy_default->default_inactive;
         }
+
 out:
         return ret;
 }
 
 /**
- * polkit_policy_default_get_allow_remote_inactive:
+ * polkit_policy_default_get_allow_inactive:
  * @policy_default: the object
  * 
  * Get default policy.
@@ -256,14 +235,14 @@ out:
  * Returns: default policy
  **/
 PolKitResult
-polkit_policy_default_get_allow_remote_inactive (PolKitPolicyDefault *policy_default)
+polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *policy_default)
 {
         g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
-        return policy_default->default_remote_inactive;
+        return policy_default->default_inactive;
 }
 
 /**
- * polkit_policy_default_get_allow_remote_active:
+ * polkit_policy_default_get_allow_active:
  * @policy_default: the object
  * 
  * Get default policy.
@@ -271,39 +250,9 @@ polkit_policy_default_get_allow_remote_inactive (PolKitPolicyDefault *policy_def
  * Returns: default policy
  **/
 PolKitResult
-polkit_policy_default_get_allow_remote_active (PolKitPolicyDefault *policy_default)
+polkit_policy_default_get_allow_active (PolKitPolicyDefault *policy_default)
 {
         g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
-        return policy_default->default_remote_active;
-}
-
-/**
- * polkit_policy_default_get_allow_local_inactive:
- * @policy_default: the object
- * 
- * Get default policy.
- * 
- * Returns: default policy
- **/
-PolKitResult
-polkit_policy_default_get_allow_local_inactive (PolKitPolicyDefault *policy_default)
-{
-        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
-        return policy_default->default_local_inactive;
-}
-
-/**
- * polkit_policy_default_get_allow_local_active:
- * @policy_default: the object
- * 
- * Get default policy.
- * 
- * Returns: default policy
- **/
-PolKitResult
-polkit_policy_default_get_allow_local_active (PolKitPolicyDefault *policy_default)
-{
-        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
-        return policy_default->default_local_active;
+        return policy_default->default_active;
 }
 

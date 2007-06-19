@@ -66,26 +66,19 @@ struct PolKitPolicyFile
 
 extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_group_id,
                                                                const char *action_id, 
-                                                               PolKitResult defaults_allow_remote_inactive,
-                                                               PolKitResult defaults_allow_remote_active,
-                                                               PolKitResult defaults_allow_local_inactive,
-                                                               PolKitResult defaults_allow_local_active);
+                                                               PolKitResult defaults_allow_inactive,
+                                                               PolKitResult defaults_allow_active);
 
 enum {
         STATE_NONE,
         STATE_IN_POLICY_CONFIG,
         STATE_IN_GROUP,
         STATE_IN_GROUP_DESCRIPTION,
-        STATE_IN_GROUP_DESCRIPTION_SHORT,
         STATE_IN_POLICY,
         STATE_IN_POLICY_DESCRIPTION,
-        STATE_IN_POLICY_MISSING,
-        STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC,
         STATE_IN_DEFAULTS,
-        STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE,
-        STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE,
-        STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE,
-        STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE
+        STATE_IN_DEFAULTS_ALLOW_INACTIVE,
+        STATE_IN_DEFAULTS_ALLOW_ACTIVE
 };
 
 typedef struct {
@@ -94,20 +87,15 @@ typedef struct {
         char *group_id;
         char *action_id;
 
-        PolKitResult defaults_allow_remote_inactive;
-        PolKitResult defaults_allow_remote_active;
-        PolKitResult defaults_allow_local_inactive;
-        PolKitResult defaults_allow_local_active;
+        PolKitResult defaults_allow_inactive;
+        PolKitResult defaults_allow_active;
 
         PolKitPolicyFile *pf;
 
         polkit_bool_t load_descriptions;
 
         char *group_description;
-        char *group_description_short;
         char *policy_description;
-        char *policy_missing;
-        char *policy_apply_all_mnemonic;
 } ParserData;
 
 static void
@@ -137,9 +125,7 @@ _start (void *data, const char *el, const char **attr)
                         state = STATE_IN_GROUP;
 
                         g_free (pd->group_description);
-                        g_free (pd->group_description_short);
                         pd->group_description = NULL;
-                        pd->group_description_short = NULL;
                 }
                 break;
         case STATE_IN_GROUP:
@@ -151,57 +137,33 @@ _start (void *data, const char *el, const char **attr)
                         state = STATE_IN_POLICY;
 
                         pd->policy_description = NULL;
-                        pd->policy_missing = NULL;
-                        pd->policy_apply_all_mnemonic = NULL;
 
                         /* initialize defaults */
-                        pd->defaults_allow_remote_inactive = POLKIT_RESULT_NO;
-                        pd->defaults_allow_remote_active = POLKIT_RESULT_NO;
-                        pd->defaults_allow_local_inactive = POLKIT_RESULT_NO;
-                        pd->defaults_allow_local_active = POLKIT_RESULT_NO;
+                        pd->defaults_allow_inactive = POLKIT_RESULT_NO;
+                        pd->defaults_allow_active = POLKIT_RESULT_NO;
                 }
                 else if (strcmp (el, "description") == 0)
                         state = STATE_IN_GROUP_DESCRIPTION;
-                else if (strcmp (el, "description_short") == 0)
-                        state = STATE_IN_GROUP_DESCRIPTION_SHORT;
                 break;
         case STATE_IN_GROUP_DESCRIPTION:
-                break;
-        case STATE_IN_GROUP_DESCRIPTION_SHORT:
                 break;
         case STATE_IN_POLICY:
                 if (strcmp (el, "defaults") == 0)
                         state = STATE_IN_DEFAULTS;
                 else if (strcmp (el, "description") == 0)
                         state = STATE_IN_POLICY_DESCRIPTION;
-                else if (strcmp (el, "missing") == 0)
-                        state = STATE_IN_POLICY_MISSING;
-                else if (strcmp (el, "apply_to_all_mnemonic") == 0)
-                        state = STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC;
                 break;
         case STATE_IN_POLICY_DESCRIPTION:
                 break;
-        case STATE_IN_POLICY_MISSING:
-                break;
-        case STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC:
-                break;
         case STATE_IN_DEFAULTS:
-                if (strcmp (el, "allow_remote_inactive") == 0)
-                        state = STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE;
-                else if (strcmp (el, "allow_remote_active") == 0)
-                        state = STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE;
-                else if (strcmp (el, "allow_local_inactive") == 0)
-                        state = STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE;
-                else if (strcmp (el, "allow_local_active") == 0)
-                        state = STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE;
+                if (strcmp (el, "allow_inactive") == 0)
+                        state = STATE_IN_DEFAULTS_ALLOW_INACTIVE;
+                else if (strcmp (el, "allow_active") == 0)
+                        state = STATE_IN_DEFAULTS_ALLOW_ACTIVE;
                 break;
-        case STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE:
+        case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
                 break;
-        case STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE:
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE:
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE:
+        case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
                 break;
         default:
                 break;
@@ -231,42 +193,17 @@ _cdata (void *data, const char *s, int len)
                         pd->group_description = g_strdup (str);
                 break;
                 
-        case STATE_IN_GROUP_DESCRIPTION_SHORT:
-                if (pd->load_descriptions)
-                        pd->group_description_short = g_strdup (str);
-                break;
-
         case STATE_IN_POLICY_DESCRIPTION:
                 if (pd->load_descriptions)
                         pd->policy_description = g_strdup (str);
                 break;
 
-        case STATE_IN_POLICY_MISSING:
-                if (pd->load_descriptions)
-                        pd->policy_missing = g_strdup (str);
-                break;
-
-        case STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC:
-                if (pd->load_descriptions)
-                        pd->policy_apply_all_mnemonic = g_strdup (str);
-                break;
-
-                
-
-        case STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE:
-                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_remote_inactive))
+        case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
+                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_inactive))
                         goto error;
                 break;
-        case STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE:
-                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_remote_active))
-                        goto error;
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE:
-                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_local_inactive))
-                        goto error;
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE:
-                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_local_active))
+        case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
+                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_active))
                         goto error;
                 break;
         default:
@@ -282,10 +219,7 @@ error:
 
 extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
                                                         const char *group_description,
-                                                        const char *group_description_short,
-                                                        const char *policy_description,
-                                                        const char *policy_missing,
-                                                        const char *policy_apply_all_mnemonic);
+                                                        const char *policy_description);
 
 static void
 _end (void *data, const char *el)
@@ -307,28 +241,20 @@ _end (void *data, const char *el)
         case STATE_IN_GROUP_DESCRIPTION:
                 state = STATE_IN_GROUP;
                 break;
-        case STATE_IN_GROUP_DESCRIPTION_SHORT:
-                state = STATE_IN_GROUP;
-                break;
         case STATE_IN_POLICY:
         {
                 PolKitPolicyFileEntry *pfe;
 
                 pfe = _polkit_policy_file_entry_new (pd->group_id, pd->action_id, 
-                                                     pd->defaults_allow_remote_inactive,
-                                                     pd->defaults_allow_remote_active,
-                                                     pd->defaults_allow_local_inactive,
-                                                     pd->defaults_allow_local_active);
+                                                     pd->defaults_allow_inactive,
+                                                     pd->defaults_allow_active);
                 if (pfe == NULL)
                         goto error;
 
                 if (pd->load_descriptions)
                         _polkit_policy_file_entry_set_descriptions (pfe,
                                                                     pd->group_description,
-                                                                    pd->group_description_short,
-                                                                    pd->policy_description,
-                                                                    pd->policy_missing,
-                                                                    pd->policy_apply_all_mnemonic);
+                                                                    pd->policy_description);
 
                 pd->pf->entries = g_slist_prepend (pd->pf->entries, pfe);
 
@@ -338,25 +264,13 @@ _end (void *data, const char *el)
         case STATE_IN_POLICY_DESCRIPTION:
                 state = STATE_IN_POLICY;
                 break;
-        case STATE_IN_POLICY_MISSING:
-                state = STATE_IN_POLICY;
-                break;
-        case STATE_IN_POLICY_APPLY_TO_ALL_MNEMONIC:
-                state = STATE_IN_POLICY;
-                break;
         case STATE_IN_DEFAULTS:
                 state = STATE_IN_POLICY;
                 break;
-        case STATE_IN_DEFAULTS_ALLOW_REMOTE_INACTIVE:
+        case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
                 state = STATE_IN_DEFAULTS;
                 break;
-        case STATE_IN_DEFAULTS_ALLOW_REMOTE_ACTIVE:
-                state = STATE_IN_DEFAULTS;
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_LOCAL_INACTIVE:
-                state = STATE_IN_DEFAULTS;
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_LOCAL_ACTIVE:
+        case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
                 state = STATE_IN_DEFAULTS;
                 break;
         default:
@@ -430,10 +344,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         pd.group_id = NULL;
         pd.action_id = NULL;
         pd.group_description = NULL;
-        pd.group_description_short = NULL;
         pd.policy_description = NULL;
-        pd.policy_missing = NULL;
-        pd.policy_apply_all_mnemonic = NULL;
         pd.pf = pf;
         pd.load_descriptions = load_descriptions;
 
@@ -442,10 +353,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         g_free (pd.group_id);
         g_free (pd.action_id);
         g_free (pd.group_description);
-        g_free (pd.group_description_short);
         g_free (pd.policy_description);
-        g_free (pd.policy_missing);
-        g_free (pd.policy_apply_all_mnemonic);
 
 	if (xml_res == 0) {
                 polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
