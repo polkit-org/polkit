@@ -143,24 +143,22 @@ polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
 
 
 /**
- * polkit_policy_default_can_session_access_resource:
+ * polkit_policy_default_can_session_do_action:
  * @policy_default: the object
  * @action: the type of access to check for
- * @resource: the resource in question
  * @session: the session in question
  * 
  * Using the default policy for an action, determine if a given
- * session can access a given resource in a given way.
+ * session can do a given action.
  * 
  * Returns: A #PolKitResult - can only be one of
  * #POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
  * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
  **/
 PolKitResult
-polkit_policy_default_can_session_access_resource (PolKitPolicyDefault *policy_default,
-                                                      PolKitAction        *action,
-                                                      PolKitResource         *resource,
-                                                      PolKitSession          *session)
+polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default,
+                                             PolKitAction        *action,
+                                             PolKitSession       *session)
 {
         polkit_bool_t is_local;
         polkit_bool_t is_active;
@@ -195,23 +193,21 @@ out:
 }
 
 /**
- * polkit_policy_default_can_caller_access_resource:
+ * polkit_policy_default_can_caller_do_action:
  * @policy_default: the object
  * @action: the type of access to check for
- * @resource: the resource in question
- * @caller: the resource in question
+ * @caller: the caller in question
  * 
  * Using the default policy for an action, determine if a given
- * caller can access a given resource in a given way.
+ * caller can do a given action.
  * 
  * Returns: A #PolKitResult specifying if, and how, the caller can
- * access the resource in the given way
+ * do the given action.
  **/
 PolKitResult
-polkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy_default,
-                                                     PolKitAction        *action,
-                                                     PolKitResource         *resource,
-                                                     PolKitCaller           *caller)
+polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
+                                            PolKitAction        *action,
+                                            PolKitCaller        *caller)
 {
         polkit_bool_t is_local;
         polkit_bool_t is_active;

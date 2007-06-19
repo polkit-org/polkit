@@ -370,14 +370,12 @@ polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
  * polkit_grant_initiate_auth:
  * @polkit_grant: the object
  * @action: Action requested by caller
- * @resource: Resource in question
  * @caller: Caller in question
  * 
  * Initiate authentication to obtain the privilege for the given
- * @caller to perform the specified @action on the given
- * @resource. The caller of this method must have setup callback
- * functions using the method polkit_grant_set_functions() prior to
- * calling this method.
+ * @caller to perform the specified @action. The caller of this method
+ * must have setup callback functions using the method
+ * polkit_grant_set_functions() prior to calling this method.
  *
  * Implementation-wise, this class uses a secure (e.g. as in that it
  * checks all information and fundamenally don't trust the caller;
@@ -390,21 +388,22 @@ polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
  * Returns: #TRUE only if authentication have been initiated.
  **/
 polkit_bool_t 
-polkit_grant_initiate_auth (PolKitGrant *polkit_grant,
-                               PolKitAction *action,
-                               PolKitResource *resource,
-                               PolKitCaller *caller)
+polkit_grant_initiate_auth (PolKitGrant  *polkit_grant,
+                            PolKitAction *action,
+                            PolKitCaller *caller)
 {
+        pid_t pid;
         char *dbus_name;
         char *action_id;
-        char *resource_type;
-        char *resource_id;
         GError *g_error;
-        const char *helper_argv[6];
+        char *helper_argv[5];
 
         g_return_val_if_fail (polkit_grant != NULL, FALSE);
         /* check that callback functions have been properly set up */
         g_return_val_if_fail (polkit_grant->func_done != NULL, FALSE);
+
+        if (!polkit_caller_get_pid (caller, &pid))
+                goto error;
 
         if (!polkit_caller_get_dbus_name (caller, &dbus_name))
                 goto error;
@@ -412,21 +411,17 @@ polkit_grant_initiate_auth (PolKitGrant *polkit_grant,
         if (!polkit_action_get_action_id (action, &action_id))
                 goto error;
 
-        if (!polkit_resource_get_resource_type (resource, &resource_type))
-                goto error;
-
-        if (!polkit_resource_get_resource_id (resource, &resource_id))
-                goto error;
-
         /* TODO: verify incoming args */
 
-        //helper_argv[0] = "/home/davidz/Hacking/PolicyKit/polkit-grant/.libs/polkit-grant-helper";
-        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-grant-helper";
-        helper_argv[1] = dbus_name;
-        helper_argv[2] = action_id;
-        helper_argv[3] = resource_type;
-        helper_argv[4] = resource_id;
-        helper_argv[5] = NULL;
+        helper_argv[0] = "/home/davidz/Hacking/PolicyKit/polkit-grant/.libs/polkit-grant-helper";
+        // TODO FIXME: helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-grant-helper";
+        if (dbus_name == NULL)
+                helper_argv[1] = "";
+        else
+                helper_argv[1] = dbus_name;
+        helper_argv[2] = g_strdup_printf ("%d", pid);
+        helper_argv[3] = action_id;
+        helper_argv[4] = NULL;
 
         polkit_grant->child_stdin = -1;
         polkit_grant->child_stdout = -1;
@@ -446,8 +441,10 @@ polkit_grant_initiate_auth (PolKitGrant *polkit_grant,
                                        &g_error)) {
                 fprintf (stderr, "Cannot spawn helper: %s.\n", g_error->message);
                 g_error_free (g_error);
+                g_free (helper_argv[2]);
                 goto error;
         }
+        g_free (helper_argv[2]);
 
         polkit_grant->child_watch_id = polkit_grant->func_add_child_watch (polkit_grant, polkit_grant->child_pid);
         if (polkit_grant->child_watch_id == 0)

@@ -538,3 +538,134 @@ out:
         g_free (ck_session_objpath);
         return caller;
 }
+
+PolKitCaller *
+polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
+{
+        PolKitCaller *caller;
+        uid_t uid;
+        char *selinux_context;
+        char *ck_session_objpath;
+        PolKitSession *session;
+        DBusMessage *message;
+        DBusMessage *reply;
+        DBusMessageIter iter;
+        char *str;
+
+        g_return_val_if_fail (con != NULL, NULL);
+        g_return_val_if_fail (error != NULL, NULL);
+        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+
+        selinux_context = NULL;
+        ck_session_objpath = NULL;
+
+        caller = NULL;
+        session = NULL;
+
+        /* TODO: Verify that PID exists */
+
+        /* TODO: FIXME */
+        uid = 500;
+
+        /* TODO: FIXME */
+        selinux_context = g_strdup ("user_u:system_r:hald_t");
+
+	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+						"/org/freedesktop/ConsoleKit/Manager",
+						"org.freedesktop.ConsoleKit.Manager",
+						"GetSessionForUnixProcess");
+	dbus_message_iter_init_append (message, &iter);
+	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &pid);
+	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+	if (reply == NULL || dbus_error_is_set (error)) {
+		g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
+		dbus_message_unref (message);
+		if (reply != NULL)
+			dbus_message_unref (reply);
+		/* OK, this is not a catastrophe; just means the caller is not a 
+                 * member of any session or that ConsoleKit is not available.. 
+                 */
+		goto not_in_session;
+	}
+	dbus_message_iter_init (reply, &iter);
+	dbus_message_iter_get_basic (&iter, &str);
+	ck_session_objpath = g_strdup (str);
+	dbus_message_unref (message);
+	dbus_message_unref (reply);
+
+        session = polkit_session_new_from_objpath (con, ck_session_objpath, uid, error);
+        if (session == NULL) {
+                g_warning ("Got a session objpath but couldn't construct session object!");
+                goto out;
+        }
+        if (!polkit_session_validate (session)) {
+                polkit_session_unref (session);
+                session = NULL;
+                goto out;
+        }
+
+not_in_session:
+
+        caller = polkit_caller_new ();
+        if (caller == NULL) {
+                if (session != NULL) {
+                        polkit_session_unref (session);
+                        session = NULL;
+                }
+                goto out;
+        }
+
+        if (!polkit_caller_set_uid (caller, uid)) {
+                if (session != NULL) {
+                        polkit_session_unref (session);
+                        session = NULL;
+                }
+                polkit_caller_unref (caller);
+                caller = NULL;
+                goto out;
+        }
+        if (!polkit_caller_set_pid (caller, pid)) {
+                if (session != NULL) {
+                        polkit_session_unref (session);
+                        session = NULL;
+                }
+                polkit_caller_unref (caller);
+                caller = NULL;
+                goto out;
+        }
+        if (selinux_context != NULL) {
+                if (!polkit_caller_set_selinux_context (caller, selinux_context)) {
+                        if (session != NULL) {
+                                polkit_session_unref (session);
+                                session = NULL;
+                        }
+                        polkit_caller_unref (caller);
+                        caller = NULL;
+                        goto out;
+                }
+        }
+        if (session != NULL) {
+                if (!polkit_caller_set_ck_session (caller, session)) {
+                        if (session != NULL) {
+                                polkit_session_unref (session);
+                                session = NULL;
+                        }
+                        polkit_caller_unref (caller);
+                        caller = NULL;
+                        goto out;
+                }
+                polkit_session_unref (session); /* caller object now own this object */
+                session = NULL;
+        }
+
+        if (!polkit_caller_validate (caller)) {
+                polkit_caller_unref (caller);
+                caller = NULL;
+                goto out;
+        }
+
+out:
+        g_free (selinux_context);
+        g_free (ck_session_objpath);
+        return caller;
+}

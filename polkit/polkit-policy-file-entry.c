@@ -197,7 +197,7 @@ polkit_policy_file_get_action_description (PolKitPolicyFileEntry *policy_file_en
  * 
  * Get a phrase, for the policy entry in question, that can be shown
  * in the user interface explaining that the caller doesn't possess
- * the privilege to perform the given action on the given resource.
+ * the privilege to perform the given action.
  *
  * The returned string may contain a single %s entry - the caller
  * should use a printf-style function to replace this with a human

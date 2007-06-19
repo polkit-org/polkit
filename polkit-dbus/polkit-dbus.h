@@ -35,6 +35,8 @@ PolKitSession *polkit_session_new_from_cookie    (DBusConnection *con, const cha
 
 PolKitCaller  *polkit_caller_new_from_dbus_name  (DBusConnection *con, const char *dbus_name, DBusError *error);
 
+PolKitCaller  *polkit_caller_new_from_pid  (DBusConnection *con, pid_t pid, DBusError *error);
+
 
 #endif /* POLKIT_DBUS_H */
 

@@ -46,28 +46,23 @@ usage (int argc, char *argv[])
                  "\n"
                  "usage : polkit-check-session\n"
                  "          [--session <session>] --action <action>\n"
-                 "          --resource-type <type> --resource-id <id>\n"
                  "          [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
                  "        --session        ConsoleKit object path of session\n"
                  "        --action         Requested action\n"
-                 "        --resource-type  Type of resource\n"
-                 "        --resource-id    Identifier of resource\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
-                 "Determine if a given session can access a given resource in a given\n"
-                 "way. If no session is given, the current session is used. If access\n"
-                 "is allowed, this program exits with exit code 0. If no access is allowed\n"
+                 "Determine if a given callers in a given session can do a given action.\n"
+                 "If no session is given, the current session is used. If access is\n"
+                 "allowed, this program exits with exit code 0. If no access is allowed\n"
                  "or an error occurs, the program exits with a non-zero exit code.\n");
 }
 
 int
 main (int argc, char *argv[])
 {
-        char *resource_type = NULL;
-        char *resource_id = NULL;
         char *action_id = NULL;
         char *session_id = NULL;
         char *cookie = NULL;
@@ -76,7 +71,6 @@ main (int argc, char *argv[])
 	DBusError error;
         PolKitContext *pol_ctx;
         PolKitSession *session;
-        PolKitResource *resource;
         PolKitAction *action;
         gboolean allowed;
         PolKitError *p_error;
@@ -93,8 +87,6 @@ main (int argc, char *argv[])
 		int option_index = 0;
 		const char *opt;
 		static struct option long_options[] = {
-			{"resource-type", 1, NULL, 0},
-			{"resource-id", 1, NULL, 0},
 			{"action", 1, NULL, 0},
 			{"session", 1, NULL, 0},
 			{"version", 0, NULL, 0},
@@ -116,10 +108,6 @@ main (int argc, char *argv[])
 				return 0;
 			} else if (strcmp (opt, "version") == 0) {
 				is_version = TRUE;
-			} else if (strcmp (opt, "resource-type") == 0) {
-				resource_type = strdup (optarg);
-			} else if (strcmp (opt, "resource-id") == 0) {
-				resource_id = strdup (optarg);
 			} else if (strcmp (opt, "action") == 0) {
 				action_id = strdup (optarg);
 			} else if (strcmp (opt, "session") == 0) {
@@ -139,7 +127,7 @@ main (int argc, char *argv[])
 		return 0;
 	}
 
-	if (resource_type == NULL || resource_id == NULL || action_id == NULL) {
+	if (action_id == NULL) {
 		usage (argc, argv);
 		return 1;
 	}
@@ -176,11 +164,7 @@ main (int argc, char *argv[])
         action = polkit_action_new ();
         polkit_action_set_action_id (action, action_id);
 
-        resource = polkit_resource_new ();
-        polkit_resource_set_resource_type (resource, resource_type);
-        polkit_resource_set_resource_id (resource, resource_id);
-
-        allowed = polkit_context_can_session_access_resource (pol_ctx, action, resource, session);
+        allowed = polkit_context_can_session_do_action (pol_ctx, action, session);
 
         if (allowed)
                 return 0;

@@ -49,13 +49,10 @@ usage (int argc, char *argv[])
                  "\n"
                  "usage : polkit-grant\n"
                  "          --action <action>\n"
-                 "          --resource-type <type> --resource-id <id>\n"
                  "          [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
                  "        --action         Requested action\n"
-                 "        --resource-type  Type of resource\n"
-                 "        --resource-id    Identifier of resource\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
@@ -285,15 +282,12 @@ int
 main (int argc, char *argv[])
 {
         char *action_id = NULL;
-        char *resource_type = NULL;
-        char *resource_id = NULL;
         gboolean is_version = FALSE;
         DBusConnection *bus;
 	DBusError error;
         PolKitContext *pol_ctx;
         PolKitCaller *caller;
         PolKitAction *action;
-        PolKitResource *resource;
         PolKitError *p_error;
         PolKitGrant *polkit_grant;
         int ret;
@@ -312,8 +306,6 @@ main (int argc, char *argv[])
 		const char *opt;
 		static struct option long_options[] = {
 			{"action", 1, NULL, 0},
-                        {"resource-type", 1, NULL, 0},
-                        {"resource-id", 1, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
@@ -335,10 +327,6 @@ main (int argc, char *argv[])
 				is_version = TRUE;
 			} else if (strcmp (opt, "action") == 0) {
 				action_id = strdup (optarg);
-			} else if (strcmp (opt, "resource-type") == 0) {
-				resource_type = strdup (optarg);
-			} else if (strcmp (opt, "resource-id") == 0) {
-				resource_id = strdup (optarg);
 			}
 			break;
 
@@ -353,7 +341,7 @@ main (int argc, char *argv[])
 		return 0;
 	}
 
-	if (action_id == NULL || resource_type == NULL || resource_id == NULL) {
+	if (action_id == NULL) {
 		usage (argc, argv);
                 goto error;
 	}
@@ -377,10 +365,6 @@ main (int argc, char *argv[])
 
         action = polkit_action_new ();
         polkit_action_set_action_id (action, action_id);
-
-        resource = polkit_resource_new ();
-        polkit_resource_set_resource_type (resource, resource_type);
-        polkit_resource_set_resource_id (resource, resource_id);
 
         caller = polkit_caller_new_from_dbus_name (bus, dbus_bus_get_unique_name (bus), &error);
         if (caller == NULL) {
@@ -406,9 +390,8 @@ main (int argc, char *argv[])
                                        &ud);
         
         if (!polkit_grant_initiate_auth (polkit_grant,
-                                            action,
-                                            resource,
-                                           caller)) {
+                                         action,
+                                         caller)) {
                 printf ("Failed to initiate privilege grant.\n");
                 ret = 1;
                 goto error;

@@ -20,6 +20,7 @@ libpolkit_grantinclude_HEADERS =              			\
 	polkit-grant.h
 
 libpolkit_grant_la_SOURCES =      				\
+	polkit-grant-database.h	polkit-grant-database.c		\
 	polkit-grant.h		polkit-grant.c
 
 libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la

@@ -24,7 +24,6 @@ libpolkitinclude_HEADERS =              		\
 	polkit-result.h					\
 	polkit-context.h				\
 	polkit-action.h					\
-	polkit-resource.h				\
 	polkit-seat.h					\
 	polkit-session.h				\
 	polkit-caller.h					\
@@ -41,7 +40,6 @@ libpolkit_la_SOURCES =                                			\
 	polkit-result.h			polkit-result.c			\
 	polkit-context.h		polkit-context.c		\
 	polkit-action.h			polkit-action.c			\
-	polkit-resource.h		polkit-resource.c		\
 	polkit-seat.h			polkit-seat.c			\
 	polkit-session.h		polkit-session.c		\
 	polkit-caller.h			polkit-caller.c			\

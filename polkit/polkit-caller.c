@@ -339,7 +339,5 @@ polkit_caller_validate (PolKitCaller *caller)
 {
         g_return_val_if_fail (caller != NULL, FALSE);
         g_return_val_if_fail (caller->pid > 0, FALSE);
-        g_return_val_if_fail (caller->dbus_name != NULL, FALSE);
-        /* NOTE TODO FIXME: remove need to have a dbus name set */
         return TRUE;
 }

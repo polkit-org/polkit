@@ -73,7 +73,6 @@
     <xi:include href="xml/polkit-policy-file-entry.xml"/>
     <xi:include href="xml/polkit-policy-default.xml"/>
     <xi:include href="xml/polkit-policy-cache.xml"/>
-    <xi:include href="xml/polkit-resource.xml"/>
     <xi:include href="xml/polkit-seat.xml"/>
     <xi:include href="xml/polkit-session.xml"/>
     <xi:include href="xml/polkit-caller.xml"/>

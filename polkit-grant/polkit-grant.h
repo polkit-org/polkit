@@ -330,9 +330,9 @@ void          polkit_grant_set_functions (PolKitGrant *polkit_grant,
                                           PolKitGrantOverrideGrantType func_override_grant_type,
                                           PolKitGrantDone func_done,
                                           void *user_data);
-polkit_bool_t polkit_grant_initiate_auth (PolKitGrant *polkit_grant,
+
+polkit_bool_t polkit_grant_initiate_auth (PolKitGrant  *polkit_grant,
                                           PolKitAction *action,
-                                          PolKitResource *resource,
                                           PolKitCaller *caller);
 
 void          polkit_grant_cancel_auth   (PolKitGrant *polkit_grant);

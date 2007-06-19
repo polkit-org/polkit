@@ -46,28 +46,22 @@ usage (int argc, char *argv[])
                  "\n"
                  "usage : polkit-check-caller\n"
                  "          --caller <dbus-name> --action <action>\n"
-                 "          --resource-type <type> --resource-id <id>\n"
                  "          [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
                  "        --caller         Unique name of caller on the system bus\n"
                  "        --action         Requested action\n"
-                 "        --resource-type  Type of resource\n"
-                 "        --resource-id    Identifier of resource\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
                  "\n"
-                 "Determine if a given caller can access a given resource in a given\n"
-                 "way. If access is allowed, this program exits with exit code 0. If\n"
-                 "no access is allowed or an error occurs, the program exits with\n"
-                 "a non-zero exit code.\n");
+                 "Determine if a given caller can do a given action. If access is \n"
+                 "allowed, this program exits with exit code 0. If no access is allowed\n"
+                 "or an error occurs, the program exits with a non-zero exit code.\n");
 }
 
 int
 main (int argc, char *argv[])
 {
-        char *resource_type = NULL;
-        char *resource_id = NULL;
         char *action_id = NULL;
         char *dbus_name = NULL;
         gboolean is_version = FALSE;
@@ -75,7 +69,6 @@ main (int argc, char *argv[])
 	DBusError error;
         PolKitContext *pol_ctx;
         PolKitCaller *caller;
-        PolKitResource *resource;
         PolKitAction *action;
         gboolean allowed;
         PolKitError *p_error;
@@ -90,8 +83,6 @@ main (int argc, char *argv[])
 		int option_index = 0;
 		const char *opt;
 		static struct option long_options[] = {
-			{"resource-type", 1, NULL, 0},
-			{"resource-id", 1, NULL, 0},
 			{"action", 1, NULL, 0},
 			{"caller", 1, NULL, 0},
 			{"version", 0, NULL, 0},
@@ -113,10 +104,6 @@ main (int argc, char *argv[])
 				return 0;
 			} else if (strcmp (opt, "version") == 0) {
 				is_version = TRUE;
-			} else if (strcmp (opt, "resource-type") == 0) {
-				resource_type = strdup (optarg);
-			} else if (strcmp (opt, "resource-id") == 0) {
-				resource_id = strdup (optarg);
 			} else if (strcmp (opt, "action") == 0) {
 				action_id = strdup (optarg);
 			} else if (strcmp (opt, "caller") == 0) {
@@ -136,7 +123,7 @@ main (int argc, char *argv[])
 		return 0;
 	}
 
-	if (resource_type == NULL || resource_id == NULL || action_id == NULL || dbus_name == NULL) {
+	if (action_id == NULL || dbus_name == NULL) {
 		usage (argc, argv);
 		return 1;
 	}
@@ -159,10 +146,6 @@ main (int argc, char *argv[])
         action = polkit_action_new ();
         polkit_action_set_action_id (action, action_id);
 
-        resource = polkit_resource_new ();
-        polkit_resource_set_resource_type (resource, resource_type);
-        polkit_resource_set_resource_id (resource, resource_id);
-
         caller = polkit_caller_new_from_dbus_name (bus, dbus_name, &error);
         if (caller == NULL) {
                 if (dbus_error_is_set (&error)) {
@@ -172,7 +155,7 @@ main (int argc, char *argv[])
                 }
         }
 
-        allowed = polkit_context_can_caller_access_resource (pol_ctx, action, resource, caller);
+        allowed = polkit_context_can_caller_do_action (pol_ctx, action, caller);
 
         if (allowed)
                 return 0;

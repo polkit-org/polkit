@@ -59,10 +59,8 @@ struct PolKitModuleInterface
 
         PolKitModuleInitialize                     func_initialize;
         PolKitModuleShutdown                       func_shutdown;
-        PolKitModuleGetSeatResourceAssociation     func_get_seat_resource_association;
-        PolKitModuleIsResourceAssociatedWithSeat   func_is_resource_associated_with_seat;
-        PolKitModuleCanSessionAccessResource       func_can_session_access_resource;
-        PolKitModuleCanCallerAccessResource        func_can_caller_access_resource;
+        PolKitModuleCanSessionDoAction       func_can_session_do_action;
+        PolKitModuleCanCallerDoAction        func_can_caller_do_action;
 
         polkit_bool_t builtin_have_action_regex;
         regex_t  builtin_action_regex_compiled;
@@ -348,67 +346,38 @@ polkit_module_set_func_initialize (PolKitModuleInterface  *module_interface,
  **/
 void 
 polkit_module_set_func_shutdown (PolKitModuleInterface *module_interface, 
-                                    PolKitModuleShutdown   func)
+                                 PolKitModuleShutdown   func)
 {
         g_return_if_fail (module_interface != NULL);
         module_interface->func_shutdown = func;
 }
 
 /**
- * polkit_module_set_func_get_seat_resource_association:
+ * polkit_module_set_func_can_session_do_action:
  * @module_interface: the module interface 
  * @func: the function pointer
  * 
  * Set the function pointer.
  **/
-void 
-polkit_module_set_func_get_seat_resource_association (PolKitModuleInterface                   *module_interface,
-                                                         PolKitModuleGetSeatResourceAssociation  func)
+void polkit_module_set_func_can_session_do_action (PolKitModuleInterface          *module_interface,
+                                                   PolKitModuleCanSessionDoAction  func)
 {
         g_return_if_fail (module_interface != NULL);
-        module_interface->func_get_seat_resource_association = func;
+        module_interface->func_can_session_do_action = func;
 }
 
 /**
- * polkit_module_set_func_is_resource_associated_with_seat:
+ * polkit_module_set_func_can_caller_do_action:
  * @module_interface: the module interface 
  * @func: the function pointer
  * 
  * Set the function pointer.
  **/
-void polkit_module_set_func_is_resource_associated_with_seat (PolKitModuleInterface               *module_interface,
-                                                                 PolKitModuleIsResourceAssociatedWithSeat func)
+void polkit_module_set_func_can_caller_do_action (PolKitModuleInterface         *module_interface,
+                                                  PolKitModuleCanCallerDoAction  func)
 {
         g_return_if_fail (module_interface != NULL);
-        module_interface->func_is_resource_associated_with_seat = func;
-}
-
-/**
- * polkit_module_set_func_can_session_access_resource:
- * @module_interface: the module interface 
- * @func: the function pointer
- * 
- * Set the function pointer.
- **/
-void polkit_module_set_func_can_session_access_resource (PolKitModuleInterface                *module_interface,
-                                                            PolKitModuleCanSessionAccessResource  func)
-{
-        g_return_if_fail (module_interface != NULL);
-        module_interface->func_can_session_access_resource = func;
-}
-
-/**
- * polkit_module_set_func_can_caller_access_resource:
- * @module_interface: the module interface 
- * @func: the function pointer
- * 
- * Set the function pointer.
- **/
-void polkit_module_set_func_can_caller_access_resource (PolKitModuleInterface               *module_interface,
-                                                           PolKitModuleCanCallerAccessResource  func)
-{
-        g_return_if_fail (module_interface != NULL);
-        module_interface->func_can_caller_access_resource = func;
+        module_interface->func_can_caller_do_action = func;
 }
 
 /**
@@ -442,63 +411,33 @@ polkit_module_get_func_shutdown (PolKitModuleInterface *module_interface)
 }
 
 /**
- * polkit_module_get_func_get_seat_resource_association:
+ * polkit_module_get_func_can_session_do_action:
  * @module_interface: the module interface 
  * 
  * Get the function pointer.
  * 
  * Returns: Function pointer or #NULL if it's unavailable or an error occured 
  **/
-PolKitModuleGetSeatResourceAssociation
-polkit_module_get_func_get_seat_resource_association (PolKitModuleInterface *module_interface)
+PolKitModuleCanSessionDoAction
+polkit_module_get_func_can_session_do_action (PolKitModuleInterface *module_interface)
 {
         g_return_val_if_fail (module_interface != NULL, NULL);
-        return module_interface->func_get_seat_resource_association;
+        return module_interface->func_can_session_do_action;
 }
 
 /**
- * polkit_module_get_func_is_resource_associated_with_seat:
- * @module_interface: the module interface 
- * 
- * Get the function pointer.
- * 
- * Returns: Function pointer or #NULL if it's unavailable or an error occured 
- **/
-PolKitModuleIsResourceAssociatedWithSeat
-polkit_module_get_func_is_resource_associated_with_seat (PolKitModuleInterface *module_interface)
-{
-        g_return_val_if_fail (module_interface != NULL, NULL);
-        return module_interface->func_is_resource_associated_with_seat;
-}
-
-/**
- * polkit_module_get_func_can_session_access_resource:
- * @module_interface: the module interface 
- * 
- * Get the function pointer.
- * 
- * Returns: Function pointer or #NULL if it's unavailable or an error occured 
- **/
-PolKitModuleCanSessionAccessResource
-polkit_module_get_func_can_session_access_resource (PolKitModuleInterface *module_interface)
-{
-        g_return_val_if_fail (module_interface != NULL, NULL);
-        return module_interface->func_can_session_access_resource;
-}
-
-/**
- * polkit_module_get_func_can_caller_access_resource:
+ * polkit_module_get_func_can_caller_do_action:
  * @module_interface: the module interface 
  * 
  * Get the function pointer.
  * 
  * Returns: Function pointer or #NULL if it's unavailable or an error occured
  **/
-PolKitModuleCanCallerAccessResource
-polkit_module_get_func_can_caller_access_resource (PolKitModuleInterface *module_interface)
+PolKitModuleCanCallerDoAction
+polkit_module_get_func_can_caller_do_action (PolKitModuleInterface *module_interface)
 {
         g_return_val_if_fail (module_interface != NULL, NULL);
-        return module_interface->func_can_caller_access_resource;
+        return module_interface->func_can_caller_do_action;
 }
 
 
@@ -680,7 +619,6 @@ _check_users_for_caller (PolKitModuleInterface *module_interface, PolKitCaller *
  * @module_interface: the given module
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question
  * @session: the session in question
  * 
  * Check whether some of the built-in module options (e.g. action="hal-storage-*", 
@@ -690,10 +628,9 @@ _check_users_for_caller (PolKitModuleInterface *module_interface, PolKitCaller *
  **/
 polkit_bool_t
 polkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
-                                                                  PolKitContext   *pk_context,
-                                                                  PolKitAction *action,
-                                                                  PolKitResource  *resource,
-                                                                  PolKitSession   *session)
+                                                               PolKitContext   *pk_context,
+                                                               PolKitAction *action,
+                                                               PolKitSession   *session)
 {
         polkit_bool_t ret;
         ret = TRUE;
@@ -716,8 +653,7 @@ out:
  * @module_interface: the given module
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question
- * @caller: the resource in question
+ * @caller: the caller in question
  * 
  * Check whether some of the built-in module options (e.g. action="hal-storage-*", 
  * user=davidz) confines the given module, e.g. whether it should be skipped.
@@ -726,10 +662,9 @@ out:
  **/
 polkit_bool_t
 polkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
-                                                                 PolKitContext   *pk_context,
-                                                                 PolKitAction *action,
-                                                                 PolKitResource  *resource,
-                                                                 PolKitCaller    *caller)
+                                                                 PolKitContext      *pk_context,
+                                                                 PolKitAction       *action,
+                                                                 PolKitCaller       *caller)
 {
         polkit_bool_t ret;
         ret = TRUE;

@@ -35,7 +35,6 @@
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-context.h>
 #include <polkit/polkit-action.h>
-#include <polkit/polkit-resource.h>
 #include <polkit/polkit-seat.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
@@ -148,39 +147,15 @@ void           polkit_context_unref              (PolKitContext                 
 
 PolKitPolicyCache *polkit_context_get_policy_cache (PolKitContext *pk_context);
 
-/**
- * PolKitSeatVisitorCB:
- * @seat: the seat
- * @resources_associated_with_seat: A NULL terminated array of resources associated with the seat
- * @user_data: user data
- *
- * Visitor function for polkit_get_seat_resource_association(). The caller should _not_ unref the passed objects.
- */
-typedef void (*PolKitSeatVisitorCB) (PolKitSeat      *seat,
-                                     PolKitResource **resources_associated_with_seat,
-                                     void            *user_data);
+PolKitResult
+polkit_context_can_session_do_action (PolKitContext   *pk_context,
+                                      PolKitAction    *action,
+                                      PolKitSession   *session);
 
 PolKitResult
-polkit_context_get_seat_resource_association (PolKitContext       *pk_context,
-                                              PolKitSeatVisitorCB  visitor,
-                                              void                *user_data);
-
-PolKitResult
-polkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
-                                                 PolKitResource  *resource,
-                                                 PolKitSeat      *seat);
-
-PolKitResult
-polkit_context_can_session_access_resource (PolKitContext   *pk_context,
-                                            PolKitAction    *action,
-                                            PolKitResource  *resource,
-                                            PolKitSession   *session);
-
-PolKitResult
-polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
-                                           PolKitAction    *action,
-                                           PolKitResource  *resource,
-                                           PolKitCaller    *caller);
+polkit_context_can_caller_do_action (PolKitContext   *pk_context,
+                                     PolKitAction    *action,
+                                     PolKitCaller    *caller);
 
 #endif /* POLKIT_CONTEXT_H */
 

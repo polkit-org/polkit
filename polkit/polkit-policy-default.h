@@ -32,7 +32,6 @@
 
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-action.h>
-#include <polkit/polkit-resource.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
 #include <polkit/polkit-error.h>
@@ -44,14 +43,13 @@ PolKitPolicyDefault    *polkit_policy_default_ref   (PolKitPolicyDefault *policy
 void                    polkit_policy_default_unref (PolKitPolicyDefault *policy_default);
 void                    polkit_policy_default_debug (PolKitPolicyDefault *policy_default);
 
-PolKitResult polkit_policy_default_can_session_access_resource (PolKitPolicyDefault *policy_default,
-                                                                PolKitAction        *action,
-                                                                PolKitResource         *resource,
-                                                                PolKitSession          *session);
-PolKitResult polkit_policy_default_can_caller_access_resource (PolKitPolicyDefault *policy_default,
-                                                               PolKitAction        *action,
-                                                               PolKitResource         *resource,
-                                                               PolKitCaller           *caller);
+PolKitResult polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default,
+                                                          PolKitAction        *action,
+                                                          PolKitSession       *session);
+
+PolKitResult polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
+                                                         PolKitAction        *action,
+                                                         PolKitCaller        *caller);
 
 PolKitResult polkit_policy_default_get_allow_remote_inactive (PolKitPolicyDefault *policy_default);
 PolKitResult polkit_policy_default_get_allow_remote_active (PolKitPolicyDefault *policy_default);

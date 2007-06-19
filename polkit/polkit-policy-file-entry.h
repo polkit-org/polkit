@@ -45,10 +45,7 @@ const char            *polkit_policy_file_entry_get_group_id (PolKitPolicyFileEn
 PolKitPolicyDefault   *polkit_policy_file_entry_get_default  (PolKitPolicyFileEntry *policy_file_entry);
 
 const char            *polkit_policy_file_get_group_description (PolKitPolicyFileEntry *policy_file_entry);
-const char            *polkit_policy_file_get_group_description_short (PolKitPolicyFileEntry *policy_file_entry);
 const char            *polkit_policy_file_get_action_description (PolKitPolicyFileEntry *policy_file_entry);
-const char            *polkit_policy_file_get_action_missing (PolKitPolicyFileEntry *policy_file_entry);
-const char            *polkit_policy_file_get_action_apply_to_all_mnemonic (PolKitPolicyFileEntry *policy_file_entry);
 
 
 #endif /* POLKIT_POLICY_FILE_ENTRY_H */

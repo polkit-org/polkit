@@ -59,72 +59,36 @@ typedef polkit_bool_t     (*PolKitModuleInitialize) (PolKitModuleInterface *modu
 typedef void (*PolKitModuleShutdown) (PolKitModuleInterface *module_interface);
 
 /**
- * PolKitModuleGetSeatResourceAssociation:
- * @module_interface: the module interface
- * @pk_context: the PolicyKit context
- * @visitor: visitor function
- * @user_data: user data
- *
- * Type of PolicyKit module function to implement polkit_get_seat_resource_association().
- *
- * Returns: the #PolKitResult
- **/
-typedef PolKitResult (*PolKitModuleGetSeatResourceAssociation) (PolKitModuleInterface *module_interface,
-                                                                PolKitContext         *pk_context,
-                                                                PolKitSeatVisitorCB    visitor,
-                                                                void                  *user_data);
-
-/**
- * PolKitModuleIsResourceAssociatedWithSeat:
- * @module_interface: the module interface
- * @pk_context: the PolicyKit context
- * @resource: the resource in question
- * @seat: the seat
- *
- * Type of PolicyKit module function to implement polkit_is_resource_associated_with_seat().
- *
- * Returns: the #PolKitResult
- **/
-typedef PolKitResult (*PolKitModuleIsResourceAssociatedWithSeat) (PolKitModuleInterface *module_interface,
-                                                                  PolKitContext         *pk_context,
-                                                                  PolKitResource        *resource,
-                                                                  PolKitSeat            *seat);
-
-/**
- * PolKitModuleCanSessionAccessResource:
+ * PolKitModuleCanSessionAccessDoAction:
  * @module_interface: the module interface
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question
  * @session: the session in question
  *
- * Type of PolicyKit module function to implement polkit_can_session_access_resource().
+ * Type of PolicyKit module function to implement polkit_can_session_access_do_action().
  *
  * Returns: the #PolKitResult
  **/
-typedef PolKitResult (*PolKitModuleCanSessionAccessResource) (PolKitModuleInterface *module_interface,
-                                                              PolKitContext         *pk_context,
-                                                              PolKitAction       *action,
-                                                              PolKitResource        *resource,
-                                                              PolKitSession         *session);
+typedef PolKitResult (*PolKitModuleCanSessionDoAction) (PolKitModuleInterface *module_interface,
+                                                        PolKitContext         *pk_context,
+                                                        PolKitAction          *action,
+                                                        PolKitSession         *session);
 
 /**
- * PolKitModuleCanCallerAccessResource:
+ * PolKitModuleCanCallerAccessDoAction:
  * @module_interface: the module interface
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question
- * @caller: the resource in question
+ * @caller: the caller in question
  *
- * Type of PolicyKit module function to implement polkit_can_caller_access_resource().
+ * Type of PolicyKit module function to implement polkit_can_caller_do_action().
  *
  * Returns: the #PolKitResult
  **/
-typedef PolKitResult (*PolKitModuleCanCallerAccessResource) (PolKitModuleInterface *module_interface,
-                                                             PolKitContext         *pk_context,
-                                                             PolKitAction       *action,
-                                                             PolKitResource        *resource,
-                                                             PolKitCaller          *caller);
+typedef PolKitResult (*PolKitModuleCanCallerDoAction) (PolKitModuleInterface *module_interface,
+                                                       PolKitContext         *pk_context,
+                                                       PolKitAction          *action,
+                                                       PolKitCaller          *caller);
 
 PolKitModuleInterface *polkit_module_interface_new   (void);
 PolKitModuleInterface *polkit_module_interface_ref   (PolKitModuleInterface *module_interface);
@@ -134,25 +98,19 @@ const char            *polkit_module_get_name        (PolKitModuleInterface *mod
 void                   polkit_module_set_user_data   (PolKitModuleInterface *module_interface, void *user_data);
 void                  *polkit_module_get_user_data   (PolKitModuleInterface *module_interface);
 
-void polkit_module_set_func_initialize                       (PolKitModuleInterface               *module_interface, 
-                                                                 PolKitModuleInitialize               func);
-void polkit_module_set_func_shutdown                         (PolKitModuleInterface               *module_interface, 
-                                                                 PolKitModuleShutdown                 func);
-void polkit_module_set_func_get_seat_resource_association    (PolKitModuleInterface               *module_interface,
-                                                                 PolKitModuleGetSeatResourceAssociation func);
-void polkit_module_set_func_is_resource_associated_with_seat (PolKitModuleInterface               *module_interface,
-                                                                 PolKitModuleIsResourceAssociatedWithSeat func);
-void polkit_module_set_func_can_session_access_resource      (PolKitModuleInterface               *module_interface,
-                                                                 PolKitModuleCanSessionAccessResource func);
-void polkit_module_set_func_can_caller_access_resource       (PolKitModuleInterface               *module_interface,
-                                                                 PolKitModuleCanCallerAccessResource  func);
+void polkit_module_set_func_initialize                 (PolKitModuleInterface               *module_interface, 
+                                                        PolKitModuleInitialize               func);
+void polkit_module_set_func_shutdown                   (PolKitModuleInterface               *module_interface, 
+                                                        PolKitModuleShutdown                 func);
+void polkit_module_set_func_can_session_do_action      (PolKitModuleInterface               *module_interface,
+                                                        PolKitModuleCanSessionDoAction       func);
+void polkit_module_set_func_can_caller_do_action       (PolKitModuleInterface               *module_interface,
+                                                        PolKitModuleCanCallerDoAction        func);
 
 PolKitModuleInitialize polkit_module_get_func_initialize (PolKitModuleInterface *module_interface);
 PolKitModuleShutdown polkit_module_get_func_shutdown (PolKitModuleInterface *module_interface);
-PolKitModuleGetSeatResourceAssociation polkit_module_get_func_get_seat_resource_association (PolKitModuleInterface *module_interface);
-PolKitModuleIsResourceAssociatedWithSeat polkit_module_get_func_is_resource_associated_with_seat (PolKitModuleInterface *module_interface);
-PolKitModuleCanSessionAccessResource polkit_module_get_func_can_session_access_resource (PolKitModuleInterface *module_interface);
-PolKitModuleCanCallerAccessResource polkit_module_get_func_can_caller_access_resource (PolKitModuleInterface *module_interface);
+PolKitModuleCanSessionDoAction polkit_module_get_func_can_session_do_action (PolKitModuleInterface *module_interface);
+PolKitModuleCanCallerDoAction polkit_module_get_func_can_caller_do_action (PolKitModuleInterface *module_interface);
 
 /**
  * PolKitModuleControl:
@@ -193,15 +151,13 @@ PolKitModuleControl polkit_module_interface_get_control (PolKitModuleInterface *
 polkit_bool_t
 polkit_module_interface_check_builtin_confinement_for_session (PolKitModuleInterface *module_interface,
                                                                   PolKitContext   *pk_context,
-                                                                  PolKitAction *action,
-                                                                  PolKitResource  *resource,
+                                                                  PolKitAction    *action,
                                                                   PolKitSession   *session);
 
 polkit_bool_t
 polkit_module_interface_check_builtin_confinement_for_caller (PolKitModuleInterface *module_interface,
                                                                  PolKitContext   *pk_context,
-                                                                 PolKitAction *action,
-                                                                 PolKitResource  *resource,
+                                                                 PolKitAction    *action,
                                                                  PolKitCaller    *caller);
 
 #endif /* POLKIT_MODULE_H */

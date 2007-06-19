@@ -41,6 +41,8 @@
 
 #include <polkit-dbus/polkit-dbus.h>
 
+#include "polkit-grant-database.h"
+
 static int
 conversation_function (int n,
                        const struct pam_message **msg,
@@ -146,12 +148,16 @@ do_auth (const char *user_to_auth)
 		goto error;
 	}
 
+#if 0
+        /* Hmm, this fails; TODO: investigate */
+
 	/* permitted access? */
 	rc = pam_acct_mgmt (pam_h, 0);
 	if (rc != PAM_SUCCESS) {
 		fprintf (stderr, "pam_acct_mgmt failed: %s\n", pam_strerror (pam_h, rc));
 		goto error;
 	}
+#endif
 
         /* did we auth the right user? */
 	rc = pam_get_item (pam_h, PAM_USER, &authed_user);
@@ -174,9 +180,8 @@ error:
 
 static polkit_bool_t
 verify_with_polkit (const char *dbus_name,
+                    pid_t caller_pid,
                     const char *action_name,
-                    const char *resource_type,
-                    const char *resource_name,
                     PolKitResult *result,
                     char **out_session_objpath)
 {
@@ -187,7 +192,6 @@ verify_with_polkit (const char *dbus_name,
         DBusError error;
         PolKitContext *pol_ctx;
         PolKitAction *action;
-        PolKitResource *resource;
 
         dbus_error_init (&error);
         bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
@@ -200,18 +204,18 @@ verify_with_polkit (const char *dbus_name,
         action = polkit_action_new ();
         polkit_action_set_action_id (action, action_name);
 
-        if (resource_type != NULL && resource_name != NULL) {
-                resource = polkit_resource_new ();
-                polkit_resource_set_resource_type (resource, resource_type);
-                polkit_resource_set_resource_id (resource, resource_name);
+        if (dbus_name != NULL && strlen (dbus_name) > 0) {
+                caller = polkit_caller_new_from_dbus_name (bus, dbus_name, &error);
+                if (caller == NULL) {
+                        fprintf (stderr, "cannot get caller from dbus name\n");
+                        goto out;
+                }
         } else {
-                resource = NULL;
-        }
-
-        caller = polkit_caller_new_from_dbus_name (bus, dbus_name, &error);
-        if (caller == NULL) {
-                fprintf (stderr, "cannot get caller from dbus name\n");
-                goto out;
+                caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
+                if (caller == NULL) {
+                        fprintf (stderr, "cannot get caller from pid\n");
+                        goto out;
+                }
         }
 
         if (!polkit_caller_get_ck_session (caller, &session)) {
@@ -234,7 +238,7 @@ verify_with_polkit (const char *dbus_name,
                 goto out;
         }
 
-        *result = polkit_context_can_caller_access_resource (pol_ctx, action, resource, caller);
+        *result = polkit_context_can_caller_do_action (pol_ctx, action, caller);
 
         if (*result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH &&
             *result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION &&
@@ -242,7 +246,8 @@ verify_with_polkit (const char *dbus_name,
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION &&
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) {
-                fprintf (stderr, "given auth type is bogus\n");
+                fprintf (stderr, "given auth type (%d -> %s) is bogus\n", 
+                         *result, polkit_result_to_string_representation (*result));
                 goto out;
         }
 
@@ -329,12 +334,11 @@ error:
         return FALSE;
 }
 
-/* synopsis: /usr/libexec/polkit-grant-helper <auth-type> <dbus-name> <action-name> <resource-type> <resource-name>
+/* synopsis: polkit-grant-helper <auth-type> <dbus-name> <pid> <action-name>
  *
- * <dbus-name>     : unique name of caller on the system message bus to grant privilege to
+ * <dbus-name>     : unique name of caller on the system message bus to grant privilege to (may be blank)
+ * <pid>           : process id of caller to grant privilege to
  * <action-name>   : the PolicyKit action
- * <resource-type> : resource-type
- * <resource-name> : resource-name
  *
  * PAM interaction happens via stdin/stdout.
  *
@@ -349,11 +353,10 @@ main (int argc, char *argv[])
 {
         int ret;
         uid_t invoking_user_id;
+        pid_t caller_pid;
         const char *invoking_user_name;
         const char *dbus_name;
         const char *action_name;
-        const char *resource_type;
-        const char *resource_name;
         PolKitResult result;
         const char *user_to_auth;
         char *session_objpath;
@@ -363,7 +366,7 @@ main (int argc, char *argv[])
 
         ret = 3;
 
-        if (argc != 5) {
+        if (argc != 4) {
                 fprintf (stderr, "wrong use\n");
                 goto out;
         }
@@ -408,14 +411,12 @@ main (int argc, char *argv[])
         setenv ("PATH", "/bin:/usr/bin", 1);
 
         dbus_name = argv[1];
-        action_name = argv[2];
-        resource_type = argv[3];
-        resource_name = argv[4];
+        caller_pid = atoi(argv[2]); /* TODO: use safer function? */
+        action_name = argv[3];
 
         fprintf (stderr, "dbus_name = %s\n", dbus_name);
+        fprintf (stderr, "caller_pid = %d\n", caller_pid);
         fprintf (stderr, "action_name = %s\n", action_name);
-        fprintf (stderr, "resource_type = %s\n", resource_type);
-        fprintf (stderr, "resource_name = %s\n", resource_name);
 
         ret = 2;
 
@@ -423,7 +424,7 @@ main (int argc, char *argv[])
          * 
          * verify that the given thing to auth for really supports grant by auth in the requested way
          */
-        if (!verify_with_polkit (dbus_name, action_name, resource_type, resource_name, &result, &session_objpath))
+        if (!verify_with_polkit (dbus_name, caller_pid, action_name, &result, &session_objpath))
                 goto out;
 
         /* tell user about the grant details; e.g. whether it's auth_self_keep_always or auth_self etc. */
@@ -439,6 +440,8 @@ main (int argc, char *argv[])
                 user_to_auth = invoking_user_name;
         }
 
+        ret = 1;
+
         /* OK, start auth! */
         if (!do_auth (user_to_auth))
                 goto out;
@@ -452,9 +455,14 @@ main (int argc, char *argv[])
                  polkit_result_to_string_representation (result));
         fflush (stdout);
         
-        if (!get_and_validate_override_details (&result))
+        if (!get_and_validate_override_details (&result)) {
+                /* if this fails it means bogus input from user */
+                ret = 2;
                 goto out;
+        }
 
+        fprintf (stderr, "OK; TODO: write to database\n");
+#if 0
         /* TODO: FIXME: XXX: this format of storing granted privileges needs be redone
          *
          * this concerns these two files
@@ -507,8 +515,10 @@ main (int argc, char *argv[])
         fprintf (stderr, "file is '%s'\n", grant_file);
         FILE *f = fopen (grant_file, "w");
         fclose (f);
+#endif
 
         ret = 0;
 out:
+        fprintf (stderr, "exiting with code %d\n", ret);
         return ret;
 }

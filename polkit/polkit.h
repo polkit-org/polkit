@@ -32,7 +32,6 @@
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-context.h>
 #include <polkit/polkit-action.h>
-#include <polkit/polkit-resource.h>
 #include <polkit/polkit-seat.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>

@@ -464,78 +464,22 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
         return pk_context->priv_cache;
 }
 
-
 /**
- * polkit_context_get_seat_resource_association:
- * @pk_context: the PolicyKit context
- * @visitor: visitor function
- * @user_data: user data
- *
- * Retrieve information about what resources are associated to what
- * seats. Note that a resource may be associated to more than one
- * seat. This information stems from user configuration and consumers
- * of this information that know better (e.g. HAL) may choose to
- * override it. 
- *
- * Typically, this information is used to e.g. bootstrap the system
- * insofar that it can be used to start login greeters on the given
- * video hardware (e.g. resources) on the given user-configured seats.
- *
- * If a resource is not associated with any seat, it is assumed to be
- * available to any local seat.
- *
- * Returns: A #PolKitResult - can only be one of
- * #POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW or
- * #POLKIT_RESULT_YES (if the callback was invoked)
- */
-PolKitResult
-polkit_context_get_seat_resource_association (PolKitContext       *pk_context,
-                                                 PolKitSeatVisitorCB  visitor,
-                                                 void                *user_data)
-{
-        return POLKIT_RESULT_YES;
-}
-
-/**
- * polkit_context_is_resource_associated_with_seat:
- * @pk_context: the PolicyKit context
- * @resource: the resource in question
- * @seat: the seat
- *
- * Determine if a given resource is associated with a given seat. The
- * same comments noted in polkit_get_seat_resource_association() about the
- * source purely being user configuration applies here as well.
- *
- * Returns: A #PolKitResult - can only be one of
- * #POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
- * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
- */
-PolKitResult
-polkit_context_is_resource_associated_with_seat (PolKitContext   *pk_context,
-                                                    PolKitResource  *resource,
-                                                    PolKitSeat      *seat)
-{
-        return POLKIT_RESULT_NO;
-}
-
-/**
- * polkit_context_can_session_access_resource:
+ * polkit_context_can_session_do_action:
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question or #NULL to test for all resources
  * @session: the session in question
  *
- * Determine if a given session can access a given resource in a given way.
+ * Determine if a given session can do a given action.
  *
  * Returns: A #PolKitResult - can only be one of
  * #POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
  * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
  */
 PolKitResult
-polkit_context_can_session_access_resource (PolKitContext   *pk_context,
-                                               PolKitAction    *action,
-                                               PolKitResource  *resource,
-                                               PolKitSession   *session)
+polkit_context_can_session_do_action (PolKitContext   *pk_context,
+                                      PolKitAction    *action,
+                                      PolKitSession   *session)
 {
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
@@ -546,17 +490,12 @@ polkit_context_can_session_access_resource (PolKitContext   *pk_context,
         current_result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, current_result);
 
-        /* resource may actually by NULL */
         if (action == NULL || session == NULL)
                 goto out;
-
 
         /* now validate the incoming objects */
         if (!polkit_action_validate (action))
                 goto out;
-        if (resource == NULL)
-                if (!polkit_resource_validate (resource))
-                        goto out;
         if (!polkit_session_validate (session))
                 goto out;
 
@@ -564,10 +503,8 @@ polkit_context_can_session_access_resource (PolKitContext   *pk_context,
         if (cache == NULL)
                 goto out;
 
-        _pk_debug ("entering polkit_can_session_access_resource()");
+        _pk_debug ("entering polkit_can_session_do_action()");
         polkit_action_debug (action);
-        if (resource != NULL)
-                polkit_resource_debug (resource);
         polkit_session_debug (session);
 
         pfe = polkit_policy_cache_get_entry (cache, action);
@@ -590,9 +527,9 @@ polkit_context_can_session_access_resource (PolKitContext   *pk_context,
         /* visit modules */
         for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
                 PolKitModuleInterface *module_interface = i->data;
-                PolKitModuleCanSessionAccessResource func;
+                PolKitModuleCanSessionDoAction func;
 
-                func = polkit_module_get_func_can_session_access_resource (module_interface);
+                func = polkit_module_get_func_can_session_do_action (module_interface);
                 if (func != NULL) {
                         PolKitModuleControl module_control;
                         PolKitResult module_result;
@@ -605,7 +542,6 @@ polkit_context_can_session_access_resource (PolKitContext   *pk_context,
                                     module_interface,
                                     pk_context,
                                     action,
-                                    resource,
                                     session)) {
                                 /* module is confined by built-in options */
                                 module_result = POLKIT_RESULT_UNKNOWN_ACTION;
@@ -615,7 +551,6 @@ polkit_context_can_session_access_resource (PolKitContext   *pk_context,
                                 module_result = func (module_interface,
                                                       pk_context,
                                                       action, 
-                                                      resource, 
                                                       session);
                         }
 
@@ -657,22 +592,20 @@ out:
 }
 
 /**
- * polkit_context_can_caller_access_resource:
+ * polkit_context_can_caller_do_action:
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
- * @resource: the resource in question or #NULL to test for all resources
- * @caller: the resource in question
+ * @caller: the caller in question
  *
- * Determine if a given caller can access a given resource in a given way.
+ * Determine if a given caller can do a given action.
  *
  * Returns: A #PolKitResult specifying if, and how, the caller can
- * access the resource in the given way
+ * do a specific action
  */
 PolKitResult
-polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
-                                              PolKitAction    *action,
-                                              PolKitResource  *resource,
-                                              PolKitCaller    *caller)
+polkit_context_can_caller_do_action (PolKitContext   *pk_context,
+                                     PolKitAction    *action,
+                                     PolKitCaller    *caller)
 {
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
@@ -683,7 +616,6 @@ polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
         current_result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, current_result);
 
-        /* resource may actually by NULL */
         if (action == NULL || caller == NULL)
                 goto out;
 
@@ -694,16 +626,11 @@ polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
         /* now validate the incoming objects */
         if (!polkit_action_validate (action))
                 goto out;
-        if (resource == NULL)
-                if (!polkit_resource_validate (resource))
-                        goto out;
         if (!polkit_caller_validate (caller))
                 goto out;
 
-        _pk_debug ("entering polkit_can_caller_access_resource()");
+        _pk_debug ("entering polkit_can_caller_do_action()");
         polkit_action_debug (action);
-        if (resource != NULL)
-                polkit_resource_debug (resource);
         polkit_caller_debug (caller);
 
         pfe = polkit_policy_cache_get_entry (cache, action);
@@ -726,9 +653,9 @@ polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
         /* visit modules */
         for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
                 PolKitModuleInterface *module_interface = i->data;
-                PolKitModuleCanCallerAccessResource func;
+                PolKitModuleCanCallerDoAction func;
 
-                func = polkit_module_get_func_can_caller_access_resource (module_interface);
+                func = polkit_module_get_func_can_caller_do_action (module_interface);
                 if (func != NULL) {
                         PolKitModuleControl module_control;
                         PolKitResult module_result;
@@ -741,7 +668,6 @@ polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
                                     module_interface,
                                     pk_context,
                                     action,
-                                    resource,
                                     caller)) {
                                 /* module is confined by built-in options */
                                 module_result = POLKIT_RESULT_UNKNOWN_ACTION;
@@ -751,7 +677,6 @@ polkit_context_can_caller_access_resource (PolKitContext   *pk_context,
                                 module_result = func (module_interface,
                                                       pk_context,
                                                       action, 
-                                                      resource, 
                                                       caller);
                         }
 

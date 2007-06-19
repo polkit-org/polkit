@@ -17,7 +17,11 @@ polkitmodule_LTLIBRARIES = 			\
 	$(NULL)
 
 
-polkit_module_grant_la_SOURCES = polkit-module-grant.c
+polkit_module_grant_la_SOURCES = \
+	$(top_srcdir)/polkit-grant/polkit-grant-database.h	$(top_srcdir)/polkit-grant/polkit-grant-database.c  \
+	polkit-module-grant.c
+
+
 polkit_module_grant_la_LDFLAGS = -no-undefined -module -avoid-version
 polkit_module_grant_la_LIBADD = $(top_builddir)/polkit/libpolkit.la @GLIB_LIBS@
 
