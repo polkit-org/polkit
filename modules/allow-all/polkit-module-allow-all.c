@@ -45,21 +45,19 @@ _module_shutdown (PolKitModuleInterface *module_interface)
 }
 
 static PolKitResult
-_module_can_session_access_resource (PolKitModuleInterface *module_interface,
-                                     PolKitContext         *pk_context,
-                                     PolKitAction          *action,
-                                     PolKitResource        *resource,
-                                     PolKitSession         *session)
+_module_can_session_do_action (PolKitModuleInterface *module_interface,
+                               PolKitContext         *pk_context,
+                               PolKitAction          *action,
+                               PolKitSession         *session)
 {
         return POLKIT_RESULT_YES;
 }
 
 static PolKitResult
-_module_can_caller_access_resource (PolKitModuleInterface *module_interface,
-                                    PolKitContext         *pk_context,
-                                    PolKitAction          *action,
-                                    PolKitResource        *resource,
-                                    PolKitCaller          *caller)
+_module_can_caller_do_action (PolKitModuleInterface *module_interface,
+                              PolKitContext         *pk_context,
+                              PolKitAction          *action,
+                              PolKitCaller          *caller)
 {
         return POLKIT_RESULT_YES;
 }
@@ -75,8 +73,8 @@ polkit_module_set_functions (PolKitModuleInterface *module_interface)
 
         polkit_module_set_func_initialize (module_interface, _module_init);
         polkit_module_set_func_shutdown (module_interface, _module_shutdown);
-        polkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
-        polkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
+        polkit_module_set_func_can_session_do_action (module_interface, _module_can_session_do_action);
+        polkit_module_set_func_can_caller_do_action (module_interface, _module_can_caller_do_action);
 
         ret = TRUE;
 out:

@@ -110,22 +110,6 @@ error:
 }
 
 static polkit_bool_t
-_add_resource_to_env (PolKitResource *resource, GPtrArray *envp)
-{
-        char *r_type;
-        char *r_id;
-        if (!polkit_resource_get_resource_type (resource, &r_type))
-                goto error;
-        if (!polkit_resource_get_resource_id (resource, &r_id))
-                goto error;
-        g_ptr_array_add (envp, g_strdup_printf ("POLKIT_RESOURCE_TYPE=%s", r_type));
-        g_ptr_array_add (envp, g_strdup_printf ("POLKIT_RESOURCE_ID=%s", r_id));
-        return TRUE;
-error:
-        return FALSE;
-}
-
-static polkit_bool_t
 _add_seat_to_env (PolKitSeat *seat, GPtrArray *envp)
 {
         char *s_ck_objref;
@@ -257,10 +241,9 @@ error:
 
 
 static PolKitResult
-_module_can_session_access_resource (PolKitModuleInterface *module_interface,
+_module_can_session_do_action (PolKitModuleInterface *module_interface,
                                      PolKitContext         *pk_context,
                                      PolKitAction          *action,
-                                     PolKitResource        *resource,
                                      PolKitSession         *session)
 {
         PolKitResult result;
@@ -276,9 +259,6 @@ _module_can_session_access_resource (PolKitModuleInterface *module_interface,
 
         if (!_add_action_to_env (action, envp))
                 goto error;
-        if (resource != NULL)
-                if (!_add_resource_to_env (resource, envp))
-                        goto error;
         if (!_add_session_to_env (session, envp))
                 goto error;
         g_ptr_array_add (envp, g_strdup ("PATH=/usr/bin:/bin"));
@@ -297,10 +277,9 @@ error:
 }
 
 static PolKitResult
-_module_can_caller_access_resource (PolKitModuleInterface *module_interface,
+_module_can_caller_do_action (PolKitModuleInterface *module_interface,
                                     PolKitContext         *pk_context,
                                     PolKitAction          *action,
-                                    PolKitResource        *resource,
                                     PolKitCaller          *caller)
 {
         PolKitResult result;
@@ -314,9 +293,6 @@ _module_can_caller_access_resource (PolKitModuleInterface *module_interface,
         envp = g_ptr_array_new ();
         if (!_add_action_to_env (action, envp))
                 goto error;
-        if (resource != NULL)
-                if (!_add_resource_to_env (resource, envp))
-                        goto error;
         if (!_add_caller_to_env (caller, envp))
                 goto error;
         g_ptr_array_add (envp, g_strdup ("PATH=/usr/bin:/bin"));
@@ -344,8 +320,8 @@ polkit_module_set_functions (PolKitModuleInterface *module_interface)
 
         polkit_module_set_func_initialize (module_interface, _module_init);
         polkit_module_set_func_shutdown (module_interface, _module_shutdown);
-        polkit_module_set_func_can_session_access_resource (module_interface, _module_can_session_access_resource);
-        polkit_module_set_func_can_caller_access_resource (module_interface, _module_can_caller_access_resource);
+        polkit_module_set_func_can_session_do_action (module_interface, _module_can_session_do_action);
+        polkit_module_set_func_can_caller_do_action (module_interface, _module_can_caller_do_action);
 
         ret = TRUE;
 out:
