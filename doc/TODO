@@ -21,6 +21,8 @@
  - Add missing details to the spec document
    - provide some real world examples e.g. how the example from
      the PolicyKit-gnome app works. Preferably in tutorial form.
+   - more detailed description of the internals, e.g. the dirs
+     /var/lib/PolicyKit and /var/run/PolicyKit
 
  - Clean up all man pages
 
@@ -28,6 +30,12 @@
    be nicer)
 
  - Make sure API coverage is 100%
+
+ - Have support for systems that don't use the root account; e.g.
+   instead of authenticating as root, authenticate any user in
+   e.g. the 'wheel' group. Probably means we need a combobox in the UI
+   bits (e.g. PolicyKit-gnome + friends) for selecting the user to
+   auth as.
 
  - Go to 1.0 soon
 
