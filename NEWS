@@ -1,9 +1,19 @@
 ==========
-PolicyKit 0.1 ""
+PolicyKit 0.3 "No Man's Land"
 ==========
 
-WRITE ME
+Released on June 20th 2007.
 
-Requirements for PolicyKit 0.1 "" (and git master)
+This is the first release of PolicyKit. 
 
+WARNING WARNING WARNING: do not use this software in a stable
+distribution; there are still security sensitive things that needs to
+be audited.
+
+Requirements for PolicyKit 0.3 "No Man's Land"
+
+ - dbus             >= 0.90
  - glib             >= 2.6.0
+ - ConsoleKit       >= 0.2.1
+ - expat            >= 1.95.8
+
