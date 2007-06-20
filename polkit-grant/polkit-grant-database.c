@@ -198,7 +198,7 @@ _polkit_grantdb_write_keep_always (const char *action_id, uid_t uid)
         char *grant_file;
         polkit_bool_t ret = FALSE;
 
-        grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/uid%d/%s.grant", 
+        grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/uid%d-%s.grant", 
                                       getuid(), action_id);
         if (grant_file == NULL) {
                 fprintf (stderr, "Out of memory\n");
@@ -283,7 +283,7 @@ _polkit_grantdb_check_can_caller_do_action (PolKitContext         *pk_context,
 
         /* finally, check what _keep_always may have left */
         if (session_objpath != NULL) {
-                grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/uid%d/%s.grant", 
+                grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/uid%d-%s.grant", 
                                               invoking_user_id, action_id);
                 if (grant_file == NULL) {
                         fprintf (stderr, "Out of memory\n");
