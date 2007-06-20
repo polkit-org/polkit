@@ -1,2 +1,32 @@
 
-TODO: write me
+ - Verify the security model
+
+ - Audit all code; especially the setgid helper
+
+ - Completely rework the lower layer that reads machine-local
+   configuration; right now we have the notion of PolicyKit modules;
+   am almost certain that needs to go. Especially in the light of the
+   fact that we no longer care about Objects/PolKitResource. Probably
+   some simple XML will do; no need to load .so files I think
+
+ - Granted privileges are currently world-visible; see
+   https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=244941
+   for details. This may just be a Fedora-ism. Alternatively, depending
+   on what the FHS says, punt it to the distros and ask them to clean
+   up the directories during boot?
+
+ - Add missing details to the spec document
+   - provide some real world examples e.g. how the example from
+     the PolicyKit-gnome app works. Preferably in tutorial form.
+
+ - Clean up all man pages
+
+ - Polish the commandline tools (especially polkit-list-actions could
+   be nicer)
+
+ - Make sure API coverage is 100%
+
+ - Go to 1.0 soon
+
+ - Potentially drop the glib dependency (it's not visible in the
+   external API)
