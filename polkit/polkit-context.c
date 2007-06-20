@@ -283,7 +283,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
         if (dirname != NULL) {
                 pk_context->policy_dir = g_strdup (dirname);
         } else {
-                pk_context->policy_dir = g_strdup (PACKAGE_SYSCONF_DIR "/PolicyKit/policy");
+                pk_context->policy_dir = g_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
         }
         _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
@@ -307,7 +307,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 
                 /* Config file changes */
                 pk_context->file_monitor_add_watch_func (pk_context, 
-                                                         PACKAGE_SYSCONF_DIR "/PolicyKit",
+                                                         PACKAGE_DATA_DIR "/PolicyKit",
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE|
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE|
                                                          POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE,
