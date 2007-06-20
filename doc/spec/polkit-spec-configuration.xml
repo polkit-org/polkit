@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<chapter id="polkit-conf">
+  <title>PolicyKit configuration</title>
+
+  <sect1>
+    <title>Declaring Actions</title>
+    
+    <para>
+      A Mechanism needs to declare what Actions it supports. This is
+      achieved by dropping one or more XML files with the suffix <literal>.policy</literal>
+      into the <literal>/usr/share/PolicyKit/policy</literal> directory. An example:
+    </para>
+    <programlisting>
+      <![CDATA[
+<policyconfig>
+  <group id="polkit-gnome-examples">
+    <description>PolicyKit examples for PolicyKit-gnome</description>
+
+    <policy id="polkit-gnome-examples-frobnicate">
+      <description>Let the example Frobnicate</description>
+      <defaults>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_self</allow_active>
+      </defaults>
+    </policy>
+
+    <policy id="polkit-gnome-examples-tweak">
+      <description>Let the example Tweak</description>
+      <defaults>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_root</allow_active>
+      </defaults>
+    </policy>
+
+    <policy id="polkit-gnome-examples-twiddle">
+      <description>Twiddle</description>
+      <defaults>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_root_keep_always</allow_active>
+      </defaults>
+    </policy>
+
+    <policy id="polkit-gnome-examples-punch">
+      <description>Punch</description>
+      <defaults>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_self_keep_session</allow_active>
+      </defaults>
+    </policy>
+
+  </group>
+</policyconfig> 
+]]>
+    </programlisting>
+    <para>
+      Here's a more real-world example from HAL:
+    </para>
+    <programlisting>
+      <![CDATA[
+<policyconfig> 
+  <group id="hal-storage">
+    <description>Storage Drives and Media</description>
+
+    <policy id="hal-storage-mount-fixed">
+      <description>Mount file systems from internal drives</description>
+      <defaults>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_root_keep_always</allow_active>
+      </defaults>
+    </policy>
+
+    <policy id="hal-storage-unmount-others">
+      <description>Unmount file systems mounted by other users</description>
+      <defaults>
+        <allow_inactive>no</allow_inactive>
+        <allow_active>auth_root_keep_always</allow_active>
+      </defaults>
+    </policy>
+
+  </group>
+</policyconfig> 
+]]>
+    </programlisting>
+    <para>
+      The policy declaration includes:
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>Action Identifier:</emphasis> This identifies
+            the action - it needs to be namespaced accordingly using
+            some unique name of the mechanism. This could be
+            e.g. <literal>dialup-connect-trusted</literal>
+            or <literal>dialup-connect-untrusted</literal>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>Defaults:</emphasis>
+            The <literal>allow_inactive</literal>
+            and <literal>allow_active</literal> specify the default
+            answer that <literal>libpolkit</literal> will return for
+            respectively inactive and active sessions. See below for
+            valid values and their meaning.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>Grouping:</emphasis> This is purely for
+            organizational purposes. The group identifier needs to be
+            properly namespaced as well.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>Textual descriptions:</emphasis> Simply included
+            for convenience and organizational purposes (TODO: think
+            about i18n).
+          </para>
+        </listitem>
+      </itemizedlist>
+      The following values for the defaults are
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>no</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_self</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_self_keep_session</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_self_keep_always</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_root</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_root_keep_session</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_root_keep_always</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>yes</emphasis>
+          </para>
+        </listitem>
+      </itemizedlist>
+      The main point here is that individual upstream software
+      projects can provide sensible defaults, e.g. it's sensible for
+      the example with a dial-up mechanism to configure
+      the <literal>dialup-connect-trusted</literal> Action to
+      return <emphasis>yes</emphasis> for local active sessions and
+      the Action
+      <literal>dialup-connect-untrusted</literal> to perhaps
+      return <emphasis>auth_root_keep_session</emphasis>. See
+      <xref linkend="beyond-defaults"/> for how individual machines
+      and sites can customize this.
+    </para>
+
+    <para>
+      The <literal>polkit-list-actions</literal>(1) tool will list all
+      the Actions known to <literal>libpolkit</literal> in a
+      convenient format.
+    </para>
+  </sect1>
+
+  <sect1 id="beyond-defaults">
+    <title>Beyond the Defaults</title>
+
+    <para>
+      TODO: To be written. Will include how machines and sites can
+      tweak what answer <literal>libpolkit</literal> returns depending
+      on the Action and Subject. For example it includes 1) locking
+      down a guest account; 2) discriminating depending on uid, gid,
+      SELinux context, exec-path.
+    </para>
+  </sect1>
+
+</chapter>

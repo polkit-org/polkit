@@ -2,7 +2,9 @@
 FIGURE_FILES =
 
 SPEC_XML_EXTRA_FILES =			\
-	polkit-spec-introduction.xml
+	polkit-spec-introduction.xml	\
+	polkit-spec-model.xml		\
+	polkit-spec-configuration.xml
 
 if DOCBOOK_DOCS_ENABLED
 

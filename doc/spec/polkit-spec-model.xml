@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<chapter id="model">
+  <title>PolicyKit Model</title>
+
+  <sect1>
+    <title>Mechanims vs. Policy</title>
+    
+    <para>
+      PolicyKit assumes a model where a program is split into two
+      parts.  One part, the Mechanism, runs privileged (with no user
+      interface elements) and the other part, the policy agent, runs
+      unprivileged. The two parts of the program are in different
+      processes and communicate through some IPC mechanism such as
+      pipes or the system message bus (D-Bus). In some instances the
+      Mechanism can be considered part of the core OS and the policy
+      agent part of the desktop stack.
+    </para>
+
+    <para>
+      A Mechanism should never trust any application that tries to
+      use; it needs to carefully verify all data and requests passed
+      to it from the application. This is the model employed by HAL
+      and NetworkManager:
+    </para>
+      
+    <para>
+      (TODO: diagram showing g-p-m, g-v-m, nm-applet, HAL and NM)
+    </para>
+      
+    <para>
+      This model also applies to other security sensitive
+      applications:
+    </para>
+    
+    <para>
+      (TODO: diagram showing 1) gnome-screensaver / PAM-stack +
+      /sbin/unix_chkpwd; and 2) gdm + gdm-greeter; 3) mount(8); 4)
+      other setuid examples)
+    </para>
+
+    <para>
+      In general, such an architecture is thought of as secure as long
+      as the Mechanism (and it's dependent libraries) have been
+      verified to be secure.
+    </para>
+
+  </sect1>
+
+  <sect1>
+    <title>Concepts</title>
+    
+    <para>
+      Typically the entities that a Mechanism cares about can be split
+      into three groups:
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>Subject</emphasis>: the entity requesting the
+            Action; ie. an unprivileged application. To make a
+            decision about whether to carry out the Action, the
+            Mechanism needs to know as much about the Subject as
+            possible, e.g. UNIX user id, UNIX process id, possible
+            security attributes (such as SELinux security context) and
+            other data such as if the Subject is a participant in a
+            local or remote desktop session, whether said desktop
+            session is currently active and so forth.
+          </para>
+        </listitem>
+        
+        <listitem>
+          <para>
+            <emphasis>Object</emphasis>: some canonical representation
+            of the Object; some Objects represent tangible things such
+            as a UNIX device file, other Objects can be more abstract
+            and represent e.g. a network connection to a specific
+            destination, a reference to the power management
+            subsystem, a reference to a piece of software tracked by
+            the native package manager.
+          </para>
+        </listitem>
+        
+        <listitem>
+          <para>
+            <emphasis>Action:</emphasis> what the Subject is
+            attempting to do to the Object; this depends of the nature
+            of the Object and examples include mounting a block
+            device, formatting a block device with a file system,
+            establishing a dial-up connection to connect to private or
+            public networks, putting the system into a suspended
+            state, installing an unsigned piece of software, updating
+            the system with signed software, changing the timezone,
+            gaining access to a webcam and so forth.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+      (TODO: mention that libpolkit represents the Subject as either a
+      Caller (e.g. a process) or a Session (e.g. a group of processes
+      in a desktop session) and what the implications are here;
+      e.g. for granting/removing ACL's on device
+      nodes. etc. etc. etc.)
+    </para>
+    
+    <para>
+      One way to think about a Mechanism is that the Mechanism is
+      split into an enforcer and a decider component. When an
+      application attempts to access the Mechanism, the enforcer
+      component will only carry out the Action if the decider
+      component (supplied with the appropriate input parameters about
+      the Subject, Object and Action) says it's OK.
+    </para>
+  </sect1>
+  
+  <sect1>
+    <title>Theory of Operation</title>
+    
+    <para>
+      The core of PolicyKit is implemented as a shared library that
+      Mechanisms can link to and use as the decider component. There's
+      a small set of (extensible) data structures that establish a
+      vocabulary for <literal>libpolkit</literal> and the Mechanism to
+      describe the Subject and Action in question. The Mechanism
+      should think about <literal>libpolkit</literal> as a black box;
+      it's sole purpose is to answer whether a given Subject is
+      permitted to do a specific Action. The answer, obviously, comes
+      from a configuration source read by the library and maintained
+      by the system administrator; see <xref linkend="polkit-conf"/>
+      for details on PolicyKit configuration.
+    </para>
+    
+    <para>
+      The answer from <literal>libpolkit</literal> is not limited to a
+      boolean value; essentially the following values can be returned
+      <itemizedlist>
+        <listitem>
+          <para>
+            <emphasis>Yes:</emphasis> It is ok for the Mechanism to
+            carry out the Action requsted by the given Subject.
+          </para>
+          
+          <para>
+            <emphasis>No:</emphasis> The Mechanism should not carry
+            out the Action requested by the given Subject.
+          </para>
+          
+          <para>
+            <emphasis>Require authentication:</emphasis> The Subject
+            (e.g. the UI application) needs to ask the user to
+            authenticate in order for the Mechanism to carry out this
+            Action.
+          </para>
+        </listitem>
+      </itemizedlist>
+      In addition,
+      <itemizedlist>
+        <listitem>
+          <para>
+            Authentication can be specified (in the return value
+            from <literal>libpolkit</literal>) as either user
+            authentication (user puts in his own password) or super
+            user authentication (user puts in the root password or a
+            user in an administrator group authenticates).
+          </para>
+          
+          <para>
+            The authorization can be kept (this is also specified in
+            the return value from <literal>libpolkit</literal>) either
+            1) indefinitely (e.g. it persists across reboots and
+            different desktop sessions); 2) for the remainer of the
+            desktop session the Subject is part of; or 3) confined to
+            the process life-time of the Subject.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </para>
+    
+    <para>
+      To facilitate the authentication step, there's a shared library
+      called <literal>libpolkit-grant</literal>. Given an Action, this
+      library uses a privileged helper (as in it's a <literal>setgid
+      polkit</literal> application) to authenticate the user (using
+      PAM) and upon successful authentication leave a cookie
+      specifying that the given Action can be carried out. It is the
+      presence and contents of this cookie that will
+      allow <literal>libpolkit</literal> to
+      return <emphasis>Yes</emphasis> when the Subject asks the
+      Mechanism to carry out the Action again.
+    </para>
+    
+    <para>
+      In order to keep the PolicyKit model reasonably simple, there is
+      no representation of the Object. Instead, a Mechanism that cares
+      about Objects (and many don't; for example, Mechanisms to change
+      the timezone, punch a hole in the firewall or add a user all
+      operate on a singleton Object: the system as a whole) must
+      instead divide a given Action into multiple sub-Actions
+      depending on the nature of the Object.
+    </para>
+    
+    <para>
+      For example, consider a Mechanism for dial-up networking. Here,
+      the Subject is a UI applet running in a desktop session, the
+      Object is the phone number to dial and the Action is to
+      establish the connection (another Action could be to hang-up an
+      existing connection). Suppose that the Mechanism has a
+      white-list of phone numbers that are trusted; this could simply
+      be a
+      directory <literal>/var/lib/dialup-helper/trusted-dialup.d</literal>
+      where the system administrator can drop simple text or XML files
+      with phone numbers that are considered safe to dial. If the
+      phone number given by the client matches this white-list, the
+      Mechanism chooses the Action to
+      be <literal>dialup-connect-trusted</literal>. If it's not in the
+      white-list, the Action will be
+      <literal>dialup-connect-untrusted</literal>.  Hence, depending
+      on how PolicyKit is configured it may return different answers
+      since these are different Actions; one sensible thing in a
+      default desktop rollout would be to always allow the
+      Action <literal>dialup-connect-trusted</literal> for local
+      active sessions and always require authentication for the Action
+      <literal>dialup-connect-untrusted</literal>.
+    </para>
+
+    <para>
+      When authentication is involved, the interaction diagram for
+      having a Mechanism carry out an Action on behalf of a Subject
+      looks roughly like this
+    </para>
+    <para>
+      TODO: include diagram
+    </para>
+  </sect1>
+  
+</chapter>
