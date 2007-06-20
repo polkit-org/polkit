@@ -1,4 +1,6 @@
 
+ - Have someone review the external API
+
  - Verify the security model
 
  - Audit all code; especially the setgid helper
@@ -7,7 +9,8 @@
    configuration; right now we have the notion of PolicyKit modules;
    am almost certain that needs to go. Especially in the light of the
    fact that we no longer care about Objects/PolKitResource. Probably
-   some simple XML will do; no need to load .so files I think
+   some simple XML will do; no need to load .so files I think. Keep
+   It Simple.
 
  - Granted privileges are currently world-visible; see
    https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=244941
