@@ -14,7 +14,7 @@ polkit-policy-file-validate \- check access
 
 \fIpolkit-policy-file-validate\fP is used to validate PolicyKit
 policy definition files. These are normally stored in the
-.I "@sysconfdir@/PolicyKit/policy"
+.I "@datadir@/PolicyKit/policy"
 directory. For more information about the big picture
 refer to the \fIPolicyKit spec\fP which can be found in
 .I "@docdir@/spec/polkit-spec.html"

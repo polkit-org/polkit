@@ -1,5 +1,5 @@
 
-polkit_privilegedir = $(sysconfdir)/PolicyKit/policy
+polkit_privilegedir = $(datadir)/PolicyKit/policy
 
 dist_polkit_privilege_DATA =
 

@@ -39,7 +39,6 @@
 #include <polkit/polkit-policy-file.h>
 #include <polkit/polkit-policy-cache.h>
 #include <polkit/polkit-policy-default.h>
-#include <polkit/polkit-module.h>
 #undef _POLKIT_INSIDE_POLKIT_H
 
 #endif /* POLKIT_H */

@@ -30,8 +30,7 @@ libpolkitinclude_HEADERS =              		\
 	polkit-policy-file-entry.h			\
 	polkit-policy-file.h				\
 	polkit-policy-cache.h				\
-	polkit-policy-default.h				\
-	polkit-module.h
+	polkit-policy-default.h
 
 libpolkit_la_SOURCES =                                			\
 	polkit.h							\
@@ -48,8 +47,7 @@ libpolkit_la_SOURCES =                                			\
 	polkit-policy-cache.h		polkit-policy-cache.c		\
 	polkit-policy-default.h		polkit-policy-default.c		\
 	polkit-debug.h			polkit-debug.c			\
-	polkit-utils.h			polkit-utils.c			\
-	polkit-module.h			polkit-module.c
+	polkit-utils.h			polkit-utils.c
 
 libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@ -ldl
 

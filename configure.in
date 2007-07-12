@@ -361,12 +361,6 @@ doc/spec/Makefile
 doc/spec/polkit-spec.xml.in
 doc/man/Makefile
 policy/Makefile
-modules/Makefile
-modules/default/Makefile
-modules/allow-all/Makefile
-modules/deny-all/Makefile
-modules/run-program/Makefile
-modules/grant/Makefile
 ])
 
 dnl ==========================================================================

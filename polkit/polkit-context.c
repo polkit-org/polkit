@@ -40,7 +40,6 @@
 #include "polkit-debug.h"
 #include "polkit-context.h"
 #include "polkit-policy-cache.h"
-#include "polkit-module.h"
 
 /**
  * SECTION:polkit
@@ -75,8 +74,6 @@ struct PolKitContext
 
         PolKitPolicyCache *priv_cache;
 
-        GSList *modules;
-
         polkit_bool_t load_descriptions;
 };
 
@@ -96,138 +93,6 @@ polkit_context_new (void)
         return pk_context;
 }
 
-static polkit_bool_t
-unload_modules (PolKitContext *pk_context)
-{
-        GSList *i;
-        for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
-                PolKitModuleInterface *module_interface = i->data;
-                polkit_module_interface_unref (module_interface);
-        }
-        g_slist_free (pk_context->modules);
-        pk_context->modules = NULL;
-        _pk_debug ("Unloaded modules");
-
-        return TRUE;
-}
-
-static polkit_bool_t
-load_modules (PolKitContext *pk_context, PolKitError **error)
-{
-        const char *config_file;
-        polkit_bool_t ret;
-        char *buf;
-        char *end;
-        char line[256];
-        char *p;
-        char *q;
-        gsize len;
-        int line_number;
-        int mod_number;
-        GError *g_error;
-
-        ret = FALSE;
-        buf = NULL;
-        mod_number = 0;
-
-        config_file = PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf";
-        g_error = NULL;
-        if (!g_file_get_contents (config_file,
-                                  &buf,
-                                  &len,
-                                  &g_error)) {
-                _pk_debug ("Cannot load PolicyKit configuration file at '%s'", config_file);
-                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
-                                        "Cannot load PolicyKit configuration file at '%s': %s",
-                                        config_file,
-                                        g_error->message);
-                g_error_free (g_error);
-                goto out;
-        }
-
-        end = buf + len;
-
-        /* parse the config file; one line at a time (yes, this is super ugly code) */
-        p = buf;
-        line_number = -1;
-        while (TRUE) {
-                int argc;
-                char **tokens;
-                char *module_name;
-                char *module_path;
-                PolKitModuleControl module_control;
-                PolKitModuleInterface *module_interface;
-
-                line_number++;
-
-                q = p;
-                while (*q != '\n' && q != '\0' && q < end)
-                        q++;
-                if (*q == '\0' || q >= end) {
-                        /* skip last line if it's not terminated by whitespace */
-                        break;
-                }
-                if ((unsigned int) (q - p) > sizeof(line) - 1) {
-                        _pk_debug ("Line is too long; skipping it");
-                        continue;
-                }
-                strncpy (line, p, q - p);
-                line[q - p] = '\0';
-                p = q + 1;
-
-                /* remove leading and trailing white space */
-                g_strstrip (line);
-
-                /* comments, blank lines are fine; just skip them */
-                if (line[0] == '#' || strlen (line) == 0) {
-                        continue;
-                }
-
-                /*_pk_debug ("Looking at line: '%s'", line);*/
-
-                if (!g_shell_parse_argv (line, &argc, &tokens, NULL)) {
-                        _pk_debug ("Cannot parse line %d - skipping", line_number);
-                        continue;
-                }
-                if (argc < 2) {
-                        _pk_debug ("Line %d is malformed - skipping line", line_number);
-                        g_strfreev (tokens);
-                        continue;
-                }
-                if (!polkit_module_control_from_string_representation (tokens[0], &module_control)) {
-                        _pk_debug ("Unknown module_control '%s' at line %d - skipping line", tokens[0], line_number);
-                        g_strfreev (tokens);
-                        continue;
-                }
-                module_name = tokens[1];
-
-                module_path = g_strdup_printf (PACKAGE_LIB_DIR "/PolicyKit/modules/%s", module_name);
-                _pk_debug ("MODULE: number=%d control=%d name=%s argc=%d", 
-                           mod_number, module_control, module_name, argc - 1);
-                module_interface = polkit_module_interface_load_module (module_path, 
-                                                                           module_control, 
-                                                                           argc - 1, 
-                                                                           tokens + 1);
-                g_free (module_path);
-
-                if (module_interface != NULL) {
-                        pk_context->modules = g_slist_append (pk_context->modules, module_interface);
-                        mod_number++;
-                }
-                g_strfreev (tokens);
-
-        }
-
-        ret = TRUE;
-
-out:
-        if (buf != NULL)
-                g_free (buf);
-
-        _pk_debug ("Loaded %d modules in total", mod_number);
-        return ret;
-}
-
 static void
 _config_file_events (PolKitContext                 *pk_context,
                      PolKitContextFileMonitorEvent  event_mask,
@@ -235,8 +100,6 @@ _config_file_events (PolKitContext                 *pk_context,
                      void                          *user_data)
 {
         _pk_debug ("Config file changed");
-        unload_modules (pk_context);
-        load_modules (pk_context, NULL);
 
         /* signal that our configuration (may have) changed */
         if (pk_context->config_changed_cb) {
@@ -269,8 +132,8 @@ _policy_dir_events (PolKitContext                 *pk_context,
  * @error: return location for error
  * 
  * Initializes a new context; loads PolicyKit files from
- * /etc/PolicyKit/policy unless the environment variable
- * $POLKIT_POLICY_DIR points to a location.
+ * /usr/share/PolicyKit/policy unless the environment variable
+ * $POLKIT_POLICY_DIR points to another location.
  *
  * Returns: #FALSE if @error was set, otherwise #TRUE
  **/
@@ -286,10 +149,6 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                 pk_context->policy_dir = g_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
         }
         _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
-
-        /* Load modules */
-        if (!load_modules (pk_context, error))
-                goto error;
 
         /* don't populate the cache until it's needed.. */
 
@@ -316,11 +175,14 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
         }
 
         return TRUE;
+
+#if 0
 error:
         if (pk_context != NULL)
                 polkit_context_unref (pk_context);
 
         return FALSE;
+#endif
 }
 
 /**
@@ -355,8 +217,6 @@ polkit_context_unref (PolKitContext *pk_context)
         pk_context->refcount--;
         if (pk_context->refcount > 0) 
                 return;
-
-        unload_modules (pk_context);
 
         g_free (pk_context);
 }
@@ -484,8 +344,6 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
         PolKitResult current_result;
-        PolKitModuleControl current_control;
-        GSList *i;
 
         current_result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, current_result);
@@ -522,8 +380,8 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         polkit_policy_file_entry_debug (pfe);
 
         current_result = POLKIT_RESULT_UNKNOWN_ACTION;
-        current_control = POLKIT_MODULE_CONTROL_ADVISE; /* start with advise */
 
+#if 0
         /* visit modules */
         for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
                 PolKitModuleInterface *module_interface = i->data;
@@ -581,6 +439,7 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
                         }
                 }
         }
+#endif
 
         /* Never return UNKNOWN_ACTION to user */
         if (current_result == POLKIT_RESULT_UNKNOWN_ACTION)
@@ -610,8 +469,6 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
         PolKitResult current_result;
-        PolKitModuleControl current_control;
-        GSList *i;
 
         current_result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, current_result);
@@ -648,8 +505,8 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         polkit_policy_file_entry_debug (pfe);
 
         current_result = POLKIT_RESULT_UNKNOWN_ACTION;
-        current_control = POLKIT_MODULE_CONTROL_ADVISE; /* start with advise */
 
+#if 0
         /* visit modules */
         for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
                 PolKitModuleInterface *module_interface = i->data;
@@ -707,6 +564,7 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                         }
                 }
         }
+#endif
 
         /* Never return UNKNOWN_ACTION to user */
         if (current_result == POLKIT_RESULT_UNKNOWN_ACTION)

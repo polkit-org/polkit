@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = data polkit polkit-dbus polkit-grant modules doc tools policy
+SUBDIRS = data polkit polkit-dbus polkit-grant doc tools policy
 
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
