@@ -1,0 +1,2 @@
+#!/bin/sh
+touch @localstatedir@/lib/PolicyKit/reload

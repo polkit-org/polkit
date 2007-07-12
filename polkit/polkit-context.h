@@ -53,6 +53,9 @@ typedef struct PolKitContext PolKitContext;
  * permissions / acl's they have set in response to policy decisions
  * made from information provided by PolicyKit.
  *
+ * The user must have set up watches using #polkit_context_set_io_watch_functions
+ * for this to work.
+ *
  * Note that this function may be called many times within a short
  * interval due to how file monitoring works if e.g. the user is
  * editing a configuration file (editors typically create back-up
@@ -65,97 +68,101 @@ typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
                                               void           *user_data);
 
 /**
- * PolKitContextFileMonitorEvent:
- * @POLKIT_CONTEXT_FILE_MONITOR_EVENT_NONE: TODO
- * @POLKIT_CONTEXT_FILE_MONITOR_EVENT_ACCESS: watch when a file is accessed
- * @POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE: watch when a file is created
- * @POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE: watch when a file is deleted
- * @POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE: watch when a file changes
+ * PolKitContextAddIOWatch:
+ * @pk_context: the polkit context
+ * @fd: the file descriptor to watch
  *
- * File monitoring events.
+ * Type for function supplied by the application to integrate a watch
+ * on a file descriptor into the applications main loop. The
+ * application must call polkit_grant_io_func() when there is data
+ * to read from the file descriptor.
+ *
+ * For glib mainloop, the function will typically look like this:
+ *
+ * <programlisting>
+ * static gboolean
+ * io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
+ * {
+ *         int fd;
+ *         PolKitContext *pk_context = user_data;
+ *         fd = g_io_channel_unix_get_fd (channel);
+ *         polkit_context_io_func (pk_context, fd);
+ *         return TRUE;
+ * }
+ * 
+ * static int 
+ * io_add_watch (PolKitContext *pk_context, int fd)
+ * {
+ *         guint id = 0;
+ *         GIOChannel *channel;
+ *         channel = g_io_channel_unix_new (fd);
+ *         if (channel == NULL)
+ *                 goto out;
+ *         id = g_io_add_watch (channel, G_IO_IN, io_watch_have_data, pk_context);
+ *         if (id == 0) {
+ *                 g_io_channel_unref (channel);
+ *                 goto out;
+ *         }
+ *         g_io_channel_unref (channel);
+ * out:
+ *         return id;
+ * }
+ * </programlisting>
+ *
+ * Returns: 0 if the watch couldn't be set up; otherwise an unique
+ * identifier for the watch.
  **/
-typedef enum
-{
-        POLKIT_CONTEXT_FILE_MONITOR_EVENT_NONE    = 1 << 0,
-        POLKIT_CONTEXT_FILE_MONITOR_EVENT_ACCESS  = 1 << 1,
-        POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE  = 1 << 2,
-        POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE  = 1 << 3,
-        POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE  = 1 << 4,
-} PolKitContextFileMonitorEvent;
+typedef int (*PolKitContextAddIOWatch) (PolKitContext *pk_context, int fd);
 
 /**
- * PolKitContextFileMonitorNotifyFunc:
- * @pk_context: PolicyKit context
- * @event_mask: event that happened
- * @path: the path to the monitored file
- * @user_data: the user data supplied to the function of type #PolKitContextFileMonitorAddWatch
+ * PolKitContextRemoveIOWatch:
+ * @pk_context: the context object
+ * @watch_id: the id obtained from using the supplied function
+ * of type #PolKitContextAddIOWatch
  *
- * Callback when an event happens on a file that is monitored.
+ * Type for function supplied by the application to remove a watch set
+ * up via the supplied function of type #PolKitContextAddIOWatch
+ *
+ * For the glib mainloop, the function will typically look like this:
+ *
+ * <programlisting>
+ * static void 
+ * io_remove_watch (PolKitContext *pk_context, int watch_id)
+ * {
+ *         g_source_remove (watch_id);
+ * }
+ * </programlisting>
+ *
  **/
-typedef void (*PolKitContextFileMonitorNotifyFunc) (PolKitContext                 *pk_context,
-                                                    PolKitContextFileMonitorEvent  event_mask,
-                                                    const char                    *path,
-                                                    void                          *user_data);
-
-/**
- * PolKitContextFileMonitorAddWatch:
- * @pk_context: PolicyKit context
- * @path: path to file/directory to monitor for events
- * @event_mask: events to look for
- * @notify_cb: function to call on events
- * @user_data: user data
- *
- * The type of a function that PolicyKit can use to watch file
- * events. This function must call the supplied @notify_cb function
- * (and pass @path and @user_data) on events
- *
- * Returns: A handle for the watch. If zero it means the file cannot
- * be watched. Caller can remove the watch using the supplied function
- * of type #PolKitContextFileMonitorRemoveWatch and the handle.
- */
-typedef int (*PolKitContextFileMonitorAddWatch) (PolKitContext                     *pk_context,
-                                                 const char                        *path,
-                                                 PolKitContextFileMonitorEvent      event_mask,
-                                                 PolKitContextFileMonitorNotifyFunc notify_cb,
-                                                 void                              *user_data);
-
-/**
- * PolKitContextFileMonitorRemoveWatch:
- * @pk_context: PolicyKit context
- * @watch_id: the watch id
- *
- * The type of a function that PolicyKit can use to stop monitoring
- * file events. Pass the handle obtained from the supplied function of
- * type #PolKitContextFileMonitorAddWatch.
- */
-typedef void (*PolKitContextFileMonitorRemoveWatch) (PolKitContext                     *pk_context,
-                                                     int                                watch_id);
+typedef void (*PolKitContextRemoveIOWatch) (PolKitContext *pk_context, int watch_id);
 
 
-PolKitContext *polkit_context_new                (void);
-void           polkit_context_set_config_changed (PolKitContext                        *pk_context, 
-                                                  PolKitContextConfigChangedCB          cb, 
-                                                  void                                 *user_data);
-void           polkit_context_set_file_monitor   (PolKitContext                        *pk_context, 
-                                                  PolKitContextFileMonitorAddWatch      add_watch_func,
-                                                  PolKitContextFileMonitorRemoveWatch   remove_watch_func);
-void           polkit_context_set_load_descriptions (PolKitContext                        *pk_context);
-polkit_bool_t  polkit_context_init               (PolKitContext                        *pk_context, 
-                                                  PolKitError                         **error);
-PolKitContext *polkit_context_ref                (PolKitContext                        *pk_context);
-void           polkit_context_unref              (PolKitContext                        *pk_context);
+PolKitContext *polkit_context_new                    (void);
+void           polkit_context_set_config_changed     (PolKitContext                        *pk_context, 
+                                                      PolKitContextConfigChangedCB          cb, 
+                                                      void                                 *user_data);
+void           polkit_context_set_io_watch_functions (PolKitContext                        *pk_context,
+                                                      PolKitContextAddIOWatch               io_add_watch_func,
+                                                      PolKitContextRemoveIOWatch            io_remove_watch_func);
+void           polkit_context_set_load_descriptions  (PolKitContext                        *pk_context);
+polkit_bool_t  polkit_context_init                   (PolKitContext                        *pk_context, 
+                                                      PolKitError                         **error);
+PolKitContext *polkit_context_ref                    (PolKitContext                        *pk_context);
+void           polkit_context_unref                  (PolKitContext                        *pk_context);
 
-PolKitPolicyCache *polkit_context_get_policy_cache (PolKitContext *pk_context);
+void           polkit_context_io_func                (PolKitContext *pk_context, int fd);
+
+PolKitPolicyCache *polkit_context_get_policy_cache   (PolKitContext *pk_context);
 
 PolKitResult
-polkit_context_can_session_do_action (PolKitContext   *pk_context,
-                                      PolKitAction    *action,
-                                      PolKitSession   *session);
+polkit_context_can_session_do_action                 (PolKitContext   *pk_context,
+                                                      PolKitAction    *action,
+                                                      PolKitSession   *session);
 
 PolKitResult
-polkit_context_can_caller_do_action (PolKitContext   *pk_context,
-                                     PolKitAction    *action,
-                                     PolKitCaller    *caller);
+polkit_context_can_caller_do_action                  (PolKitContext   *pk_context,
+                                                      PolKitAction    *action,
+                                                      PolKitCaller    *caller);
 
 #endif /* POLKIT_CONTEXT_H */
 

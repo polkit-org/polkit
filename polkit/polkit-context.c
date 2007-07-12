@@ -35,6 +35,7 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/inotify.h>
 
 #include <glib.h>
 #include "polkit-debug.h"
@@ -67,14 +68,19 @@ struct PolKitContext
         PolKitContextConfigChangedCB config_changed_cb;
         void *config_changed_user_data;
 
-        PolKitContextFileMonitorAddWatch      file_monitor_add_watch_func;
-        PolKitContextFileMonitorRemoveWatch   file_monitor_remove_watch_func;
+        PolKitContextAddIOWatch      io_add_watch_func;
+        PolKitContextRemoveIOWatch   io_remove_watch_func;
 
         char *policy_dir;
 
         PolKitPolicyCache *priv_cache;
 
         polkit_bool_t load_descriptions;
+
+        int inotify_fd;
+        int inotify_fd_watch_id;
+
+        int inotify_reload_wd;
 };
 
 /**
@@ -92,40 +98,6 @@ polkit_context_new (void)
         pk_context->refcount = 1;
         return pk_context;
 }
-
-static void
-_config_file_events (PolKitContext                 *pk_context,
-                     PolKitContextFileMonitorEvent  event_mask,
-                     const char                    *path,
-                     void                          *user_data)
-{
-        _pk_debug ("Config file changed");
-
-        /* signal that our configuration (may have) changed */
-        if (pk_context->config_changed_cb) {
-                pk_context->config_changed_cb (pk_context, pk_context->config_changed_user_data);
-        }
-}
-
-static void
-_policy_dir_events (PolKitContext                 *pk_context,
-                       PolKitContextFileMonitorEvent  event_mask,
-                       const char                    *path,
-                       void                          *user_data)
-{
-        /* mark cache of policy files as stale.. (will be populated on-demand, see _get_cache()) */
-        if (pk_context->priv_cache != NULL) {
-                _pk_debug ("Something happened in %s - invalidating cache", pk_context->policy_dir);
-                polkit_policy_cache_unref (pk_context->priv_cache);
-                pk_context->priv_cache = NULL;
-        }
-
-        /* signal that our configuration (may have) changed */
-        if (pk_context->config_changed_cb) {
-                pk_context->config_changed_cb (pk_context, pk_context->config_changed_user_data);
-        }
-}
-
 /**
  * polkit_context_init:
  * @pk_context: the context object
@@ -150,39 +122,41 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
         }
         _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
-        /* don't populate the cache until it's needed.. */
+        /* we don't populate the cache until it's needed.. */
+        if (pk_context->io_add_watch_func != NULL) {
+                pk_context->inotify_fd = inotify_init ();
+                if (pk_context->inotify_fd < 0) {
+                        _pk_debug ("failed to initialize inotify: %s", strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
 
-        if (pk_context->file_monitor_add_watch_func == NULL) {
-                _pk_debug ("No file monitor; cannot monitor '%s' for .policy file changes", pk_context->policy_dir);
-        } else {
-                /* Watch when policy definitions file change */
-                pk_context->file_monitor_add_watch_func (pk_context, 
-                                                         pk_context->policy_dir,
-                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE|
-                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE|
-                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE,
-                                                         _policy_dir_events,
-                                                         NULL);
+                /* create a watch on /var/lib/PolicyKit/reload */
+                pk_context->inotify_reload_wd = inotify_add_watch (pk_context->inotify_fd, 
+                                                                   PACKAGE_LOCALSTATEDIR "/lib/PolicyKit/reload", 
+                                                                   IN_MODIFY | IN_CREATE | IN_ATTRIB);
+                if (pk_context->inotify_reload_wd < 0) {
+                        _pk_debug ("failed to add watch on file '" PACKAGE_LOCALSTATEDIR "/lib/PolicyKit/reload': %s",
+                                   strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
 
-                /* Config file changes */
-                pk_context->file_monitor_add_watch_func (pk_context, 
-                                                         PACKAGE_DATA_DIR "/PolicyKit",
-                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_CREATE|
-                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_DELETE|
-                                                         POLKIT_CONTEXT_FILE_MONITOR_EVENT_CHANGE,
-                                                         _config_file_events,
-                                                         NULL);
+                pk_context->inotify_fd_watch_id = pk_context->io_add_watch_func (pk_context, pk_context->inotify_fd);
+                if (pk_context->inotify_fd_watch_id == 0) {
+                        _pk_debug ("failed to add io watch");
+                        /* TODO: set error */
+                        goto error;
+                }
         }
 
         return TRUE;
 
-#if 0
 error:
         if (pk_context != NULL)
                 polkit_context_unref (pk_context);
 
         return FALSE;
-#endif
 }
 
 /**
@@ -244,8 +218,8 @@ polkit_context_unref (PolKitContext *pk_context)
  **/
 void
 polkit_context_set_config_changed (PolKitContext                *pk_context, 
-                                      PolKitContextConfigChangedCB  cb, 
-                                      void                         *user_data)
+                                   PolKitContextConfigChangedCB  cb, 
+                                   void                         *user_data)
 {
         g_return_if_fail (pk_context != NULL);
         pk_context->config_changed_cb = cb;
@@ -253,23 +227,77 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
 }
 
 /**
- * polkit_context_set_file_monitor:
- * @pk_context: the context object
- * @add_watch_func: the function that the PolicyKit library can invoke to start watching a file
- * @remove_watch_func: the function that the PolicyKit library can invoke to stop watching a file
+ * polkit_context_io_func:
+ * @pk_context: the object
+ * @fd: the file descriptor passed to the supplied function of type #PolKitContextAddIOWatch.
  * 
- * Register a functions that PolicyKit can use for watching files.
+ * Method that the application must call when there is data to read
+ * from a file descriptor registered with the supplied function of
+ * type #PolKitContextAddIOWatch.
+ **/
+void 
+polkit_context_io_func (PolKitContext *pk_context, int fd)
+{
+        g_return_if_fail (pk_context != NULL);
+
+        _pk_debug ("polkit_context_io_func: data on fd %d", fd);
+
+        if (fd == pk_context->inotify_fd) {
+/* size of the event structure, not counting name */
+#define EVENT_SIZE  (sizeof (struct inotify_event))
+/* reasonable guess as to size of 1024 events */
+#define BUF_LEN        (1024 * (EVENT_SIZE + 16))
+                char buf[BUF_LEN];
+                int len;
+                int i = 0;
+again:
+                len = read (fd, buf, BUF_LEN);
+                if (len < 0) {
+                        if (errno == EINTR) {
+                                goto again;
+                        } else {
+                                _pk_debug ("read: %s", strerror (errno));
+                        }
+                } else if (len > 0) {
+                        /* BUF_LEN too small? */
+                }
+                while (i < len) {
+                        struct inotify_event *event;
+                        event = (struct inotify_event *) &buf[i];
+                        _pk_debug ("wd=%d mask=%u cookie=%u len=%u",
+                                   event->wd, event->mask, event->cookie, event->len);
+
+                        if (event->wd == pk_context->inotify_reload_wd) {
+                                _pk_debug ("config changed!");
+                                if (pk_context->config_changed_cb != NULL) {
+                                        pk_context->config_changed_cb (pk_context, 
+                                                                       pk_context->config_changed_user_data);
+                                }
+                        }
+
+                        i += EVENT_SIZE + event->len;
+                }
+        }
+}
+
+/**
+ * polkit_context_set_io_watch_functions:
+ * @pk_context: the context object
+ * @io_add_watch_func: the function that the PolicyKit library can invoke to start watching a file descriptor
+ * @io_remove_watch_func: the function that the PolicyKit library can invoke to stop watching a file descriptor
+ * 
+ * Register a functions that PolicyKit can use for watching IO descriptors.
  *
  * This method must be called before polkit_context_init().
  **/
 void
-polkit_context_set_file_monitor (PolKitContext                        *pk_context, 
-                                    PolKitContextFileMonitorAddWatch      add_watch_func,
-                                    PolKitContextFileMonitorRemoveWatch   remove_watch_func)
+polkit_context_set_io_watch_functions (PolKitContext                        *pk_context, 
+                                       PolKitContextAddIOWatch               io_add_watch_func,
+                                       PolKitContextRemoveIOWatch            io_remove_watch_func)
 {
         g_return_if_fail (pk_context != NULL);
-        pk_context->file_monitor_add_watch_func = add_watch_func;
-        pk_context->file_monitor_remove_watch_func = remove_watch_func;
+        pk_context->io_add_watch_func = io_add_watch_func;
+        pk_context->io_remove_watch_func = io_remove_watch_func;
 }
 
 /**

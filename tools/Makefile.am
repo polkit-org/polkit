@@ -13,6 +13,8 @@ INCLUDES = \
 
 bin_PROGRAMS = polkit-check-caller polkit-check-session polkit-policy-file-validate polkit-grant polkit-list-actions
 
+bin_SCRIPTS = polkit-reload-config
+
 polkit_check_caller_SOURCES = polkit-check-caller.c
 polkit_check_caller_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
 
@@ -27,6 +29,16 @@ polkit_grant_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la
 
 polkit_list_actions_SOURCES = polkit-list-actions.c
 polkit_list_actions_LDADD = $(GLIB) $(top_builddir)/polkit/libpolkit.la
+
+polkit-reload-config: polkit-reload-config.in Makefile
+	$(edit) $< >$@
+
+edit = sed \
+	-e 's|@docdir[@]|$(docdir)|g' \
+	-e 's|@sbindir[@]|$(sbindir)|g' \
+	-e 's|@sysconfdir[@]|$(sysconfdir)|g' \
+	-e 's|@datadir[@]|$(datadir)|g' \
+	-e 's|@localstatedir[@]|$(localstatedir)|g'
 
 clean-local :
 	rm -f *~
