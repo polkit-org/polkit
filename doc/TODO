@@ -5,13 +5,6 @@
 
  - Audit all code; especially the setgid helper
 
- - Completely rework the lower layer that reads machine-local
-   configuration; right now we have the notion of PolicyKit modules;
-   am almost certain that needs to go. Especially in the light of the
-   fact that we no longer care about Objects/PolKitResource. Probably
-   some simple XML will do; no need to load .so files I think. Keep
-   It Simple.
-
  - Granted privileges are currently world-visible; see
    https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=244941
    for details. This may just be a Fedora-ism. Alternatively, depending
@@ -37,7 +30,49 @@
    bits (e.g. PolicyKit-gnome + friends) for selecting the user to
    auth as.
 
+ - Potentially drop the glib dependency (it's not visible in the
+   external API). This is mainly to be able to handle OOM for
+   mechanisms that will need this (such as dbus-daemon)
+
+ - add support for additional <match> attributes
+   in /etc/PolicyKit/PolicyKit.conf
+
+   - <match timeofday="0900-1700">
+     Matches 9am through 5pm local time
+
+   - <match weekday="Mon-Fri">
+     Matches only on Monday->Friday both inclusive
+
+   - <match selinux_context="regexp">
+     Match on caller's SELinux context
+
+   - <match caller_exe="regexp">
+     Matches the path of the executable the caller stems from
+
+   - <match group="regexp">
+     Match on group
+
+   - <match session_active="true|false">
+     Only if the caller is in an active session (or not)
+
+   - <match seat_local="true|false">
+     Only if the caller is on a local seat (or not)
+
+   ... And of course the we need the ULTIMATE copout
+
+   - <match run_program="">
+     Run a program to make the decision; details are exported in the
+     environment. Program cannot assume to run as root or in a specific
+     security context; it will need to use a helper a'la
+     pam_unix_password.so
+
+ - Reconsider adding k/v dictionaries to Actions; e.g. the Mechanism for
+   dial-up networking can attach the key/value pair
+
+     "phone_number" -> "555-123-4567"
+
+   The is a bit like Objects mentioned in the spec (and what we used
+   to have as PolKitResource) but a bit more blurry. It may just work.
+
  - Go to 1.0 soon
 
- - Potentially drop the glib dependency (it's not visible in the
-   external API)
