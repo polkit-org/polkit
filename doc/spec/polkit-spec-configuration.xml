@@ -30,7 +30,7 @@
       <description>Let the example Tweak</description>
       <defaults>
         <allow_inactive>no</allow_inactive>
-        <allow_active>auth_root</allow_active>
+        <allow_active>auth_admin</allow_active>
       </defaults>
     </policy>
 
@@ -38,7 +38,7 @@
       <description>Twiddle</description>
       <defaults>
         <allow_inactive>no</allow_inactive>
-        <allow_active>auth_root_keep_always</allow_active>
+        <allow_active>auth_admin_keep_always</allow_active>
       </defaults>
     </policy>
 
@@ -67,7 +67,7 @@
       <description>Mount file systems from internal drives</description>
       <defaults>
         <allow_inactive>no</allow_inactive>
-        <allow_active>auth_root_keep_always</allow_active>
+        <allow_active>auth_admin_keep_always</allow_active>
       </defaults>
     </policy>
 
@@ -75,7 +75,7 @@
       <description>Unmount file systems mounted by other users</description>
       <defaults>
         <allow_inactive>no</allow_inactive>
-        <allow_active>auth_root_keep_always</allow_active>
+        <allow_active>auth_admin_keep_always</allow_active>
       </defaults>
     </policy>
 
@@ -144,17 +144,17 @@
         </listitem>
         <listitem>
           <para>
-            <emphasis>auth_root</emphasis>
+            <emphasis>auth_admin</emphasis>
           </para>
         </listitem>
         <listitem>
           <para>
-            <emphasis>auth_root_keep_session</emphasis>
+            <emphasis>auth_admin_keep_session</emphasis>
           </para>
         </listitem>
         <listitem>
           <para>
-            <emphasis>auth_root_keep_always</emphasis>
+            <emphasis>auth_admin_keep_always</emphasis>
           </para>
         </listitem>
         <listitem>
@@ -170,7 +170,7 @@
       return <emphasis>yes</emphasis> for local active sessions and
       the Action
       <literal>dialup-connect-untrusted</literal> to perhaps
-      return <emphasis>auth_root_keep_session</emphasis>. See
+      return <emphasis>auth_admin_keep_session</emphasis>. See
       <xref linkend="beyond-defaults"/> for how individual machines
       and sites can customize this.
     </para>

@@ -68,10 +68,10 @@ static void
 conversation_type (PolKitGrant *polkit_grant, PolKitResult auth_type, void *user_data)
 {
         switch (auth_type) {
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
-                printf ("Authentication as root is required.\n");
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
+                printf ("Authentication as admin is required.\n");
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
@@ -151,10 +151,10 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
         PolKitResult overridden_auth_type;
 
         switch (auth_type) {
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 break;
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
                 printf ("Keep this privilege for the session? [no/session]?\n");
                 getline (&lineptr, &linelen, stdin);
@@ -168,7 +168,7 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
                 }
                 free (lineptr);
                 break;
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
                 printf ("Keep this privilege for the session or always? [no/session/always]?\n");
                 getline (&lineptr, &linelen, stdin);
@@ -190,14 +190,14 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
         }
 
         switch (auth_type) {
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
-                overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ROOT_AUTH;
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
+                overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH;
                 if (keep_session)
-                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION;
+                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION;
                 else if (keep_always)
-                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS;
+                        overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS;
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:

@@ -240,9 +240,9 @@ verify_with_polkit (const char *dbus_name,
 
         *result = polkit_context_can_caller_do_action (pol_ctx, action, caller);
 
-        if (*result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH &&
-            *result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION &&
-            *result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS &&
+        if (*result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
+            *result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION &&
+            *result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS &&
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION &&
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) {
@@ -284,19 +284,19 @@ get_and_validate_override_details (PolKitResult *result)
          *
          */
         switch (*result) {
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH)
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH)
                         goto error;
                 break;
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH &&
-                    desired_result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION)
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION)
                         goto error;
                 break;
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH &&
-                    desired_result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION &&
-                    desired_result != POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS)
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS)
                         goto error;
                 break;
 
@@ -433,9 +433,10 @@ main (int argc, char *argv[])
         fflush (stdout);
 
         /* figure out what user to auth */
-        if (result == POLKIT_RESULT_ONLY_VIA_ROOT_AUTH ||
-            result == POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION ||
-            result == POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS) {
+        if (result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+            result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
+            result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
+                /* TODO: with wheel support, figure out what user to auth */
                 user_to_auth = "root";
         } else {
                 user_to_auth = invoking_user_name;
@@ -466,18 +467,18 @@ main (int argc, char *argv[])
                  action_name, session_objpath, caller_pid);
 
         switch (result) {
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 dbres = _polkit_grantdb_write_pid (action_name, caller_pid);
                 break;
 
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
                 dbres = _polkit_grantdb_write_keep_session (action_name, session_objpath);
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
                 dbres = _polkit_grantdb_write_keep_always (action_name, invoking_user_id);
                 break;
 
@@ -518,20 +519,20 @@ main (int argc, char *argv[])
         g_free (resource_str_to_hash);
 
         switch (result) {
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/dbus_%s_%d_%s_%u.grant", 
                                               dbus_name, invoking_user_id, action_name, resource_hash);
                 break;
 
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
                 grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/session_%s_%d_%s_%u.grant", 
                                               session_name, invoking_user_id, action_name, resource_hash);
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
-        case POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
                 grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/uid_%d_%s_%u.grant", 
                                               invoking_user_id, action_name, resource_hash);
                 break;

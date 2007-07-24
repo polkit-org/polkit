@@ -37,25 +37,32 @@
  * @POLKIT_RESULT_UNKNOWN_ACTION: The passed action is unknown.
  * @POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW: The caller of polkit is not sufficiently privilege to know the answer.
  * @POLKIT_RESULT_NO: Access denied.
- * @POLKIT_RESULT_ONLY_VIA_ROOT_AUTH: Access denied, but authentication of the caller as 
- * root will grant access to the resource... but the access isn't permanent
- * @POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION: Access denied, but authentication of the caller as
- * root will grant access to the resource for the remainder of the session
- * @POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS: Access denied, but authentication of the caller as
- * root will grant access to the resource in the future.
- * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH: Access denied, but authentication of the caller as 
- * himself will grant access to the resource... but the access isn't permanent
- * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION: Access denied, but authentication of the caller as
- * himself will grant access to the resource for the remainder of the session
- * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS: Access denied, but authentication of the caller as
- * himself will grant access to the resource in the future.
+ * @POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH: Access denied, but
+ * authentication by the caller as administrator (e.g. root or a
+ * member in the wheel group depending on configuration) will grant
+ * access to the process the caller is originating from.
+ * @POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION: Access denied, but
+ * authentication by the caller as administrator (e.g. root or a
+ * member in the wheel group depending on configuration) will grant
+ * access for the remainder of the session
+ * @POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS: Access denied, but
+ * authentication by the caller as administrator (e.g. root or a
+ * member in the wheel group depending on configuration) will grant
+ * access in the future.
+ * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH: Access denied, but
+ * authentication by the caller as himself will grant access to the
+ * process the caller is originating from.
+ * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION: Access denied, but
+ * authentication by the caller as himself will grant access to the
+ * resource for the remainder of the session
+ * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS: Access denied, but
+ * authentication by the caller as himself will grant access to the
+ * resource in the future.
  * @POLKIT_RESULT_YES: Access granted.
  * @POLKIT_RESULT_N_RESULTS: Number of result codes
  *
- * Result codes from queries to PolicyKit. These are ordered and we
- * say that a result A is "more strict" than a result B, if A has a
- * lower numerical value. (e.g. #POLKIT_RESULT_NO is more strict
- * than #POLKIT_RESULT_YES).
+ * Result codes from queries to PolicyKit. This enumeration may grow
+ * in the future.
  */
 typedef enum
 {
@@ -63,9 +70,9 @@ typedef enum
         POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
         POLKIT_RESULT_NO,
 
-        POLKIT_RESULT_ONLY_VIA_ROOT_AUTH,
-        POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_SESSION,
-        POLKIT_RESULT_ONLY_VIA_ROOT_AUTH_KEEP_ALWAYS,
+        POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH,
+        POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION,
+        POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS,
 
         POLKIT_RESULT_ONLY_VIA_SELF_AUTH,
         POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION,

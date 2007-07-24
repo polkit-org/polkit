@@ -25,7 +25,7 @@
  - Make sure API coverage is 100%
 
  - Have support for systems that don't use the root account; e.g.
-   instead of authenticating as root, authenticate any user in
+   instead of authenticating as root, authenticate a user in
    e.g. the 'wheel' group. Probably means we need a combobox in the UI
    bits (e.g. PolicyKit-gnome + friends) for selecting the user to
    auth as.
@@ -73,6 +73,8 @@
 
    The is a bit like Objects mentioned in the spec (and what we used
    to have as PolKitResource) but a bit more blurry. It may just work.
+
+ - Be more forgiving about bad policy files and bad config files. Hard problem.
 
  - Go to 1.0 soon
 

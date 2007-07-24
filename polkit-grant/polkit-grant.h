@@ -180,7 +180,7 @@ typedef void (*PolKitGrantConversationTextInfo) (PolKitGrant *polkit_grant,
  * </programlisting>
  *
  * Of course, these examples also applies to
- * #POLKIT_RESULT_ONLY_VIA_ROOT_AUTH and friends.
+ * #POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH and friends.
  *
  * Returns: the desired type of what privilege to obtain; note that it
  * won't work asking for more privileges than what @grant_type
