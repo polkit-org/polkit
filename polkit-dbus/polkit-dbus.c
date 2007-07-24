@@ -40,9 +40,17 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
 #include <time.h>
 #include <glib.h>
 #include <string.h>
+
+#ifdef HAVE_SELINUX
+#include <selinux/selinux.h>
+#endif
 
 #include "polkit-dbus.h"
 
@@ -551,6 +559,11 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
         DBusMessage *reply;
         DBusMessageIter iter;
         char *str;
+        char *proc_path;
+        struct stat statbuf;
+#ifdef HAVE_SELINUX
+        security_context_t secon;
+#endif
 
         g_return_val_if_fail (con != NULL, NULL);
         g_return_val_if_fail (error != NULL, NULL);
@@ -558,17 +571,27 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
 
         selinux_context = NULL;
         ck_session_objpath = NULL;
-
         caller = NULL;
         session = NULL;
+        proc_path = NULL;
 
-        /* TODO: Verify that PID exists */
+        proc_path = g_strdup_printf ("/proc/%d", pid);
+        if (stat (proc_path, &statbuf) != 0) {
+                g_warning ("Cannot lookup information for pid %d: %s", pid, strerror (errno));
+                goto out;
+        }
+        uid = statbuf.st_uid;
 
-        /* TODO: FIXME */
-        uid = 500;
-
-        /* TODO: FIXME */
-        selinux_context = g_strdup ("user_u:system_r:hald_t");
+#ifdef HAVE_SELINUX
+        if (getpidcon (pid, &secon) != 0) {
+                g_warning ("Cannot lookup SELinux context for pid %d: %s", pid, strerror (errno));
+                goto out;
+        }
+        selinux_context = g_strdup (secon);
+        freecon (secon);
+#else
+        selinux_context = NULL;
+#endif
 
 	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
 						"/org/freedesktop/ConsoleKit/Manager",
@@ -667,5 +690,6 @@ not_in_session:
 out:
         g_free (selinux_context);
         g_free (ck_session_objpath);
+        g_free (proc_path);
         return caller;
 }
