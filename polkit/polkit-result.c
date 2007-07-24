@@ -69,7 +69,11 @@ static const struct {
  * polkit_result_to_string_representation:
  * @result: the given result to get a textual representation of
  * 
- * Gives a textual representation of a #PolKitResult object.
+ * Gives a textual representation of a #PolKitResult object. This
+ * string is not suitable for displaying to an end user (it's not
+ * localized for starters) but is useful for serialization as it can
+ * be converted back to a #PolKitResult object using
+ * polkit_result_from_string_representation().
  * 
  * Returns: string representing the result (do not free) or #NULL if the given result is invalid
  **/
@@ -89,7 +93,8 @@ polkit_result_to_string_representation (PolKitResult result)
  * @string: textual representation of a #PolKitResult object
  * @out_result: return location for #PolKitResult
  * 
- * Given a textual representation of a #PolKitResult object, find the #PolKitResult value.
+ * Given a textual representation of a #PolKitResult object, find the
+ * #PolKitResult value.
  * 
  * Returns: TRUE if the textual representation was valid, otherwise FALSE
  **/

@@ -26,10 +26,16 @@
 
 /**
  * SECTION:polkit-dbus
- * @short_description: Helper library for obtaining seat, session and caller information via D-Bus and ConsoleKit.
+ * @short_description: Helper library for obtaining seat, session and
+ * caller information via D-Bus and ConsoleKit.
  *
  * Helper library for obtaining seat, session and caller information
- * via D-Bus and ConsoleKit.
+ * via D-Bus and ConsoleKit. This library is only useful when writing
+ * a mechanism. If the mechanism itself is a daemon exposing a remote
+ * services (via e.g. D-Bus) it's often a better idea, to reduce
+ * roundtrips, to track and cache caller information and construct
+ * #PolKitCaller objects yourself based on this information (for an
+ * example of this, see the hald sources on how this can be done).
  **/
 
 #ifdef HAVE_CONFIG_H
@@ -547,6 +553,21 @@ out:
         return caller;
 }
 
+/**
+ * polkit_caller_new_from_pid:
+ * @con: D-Bus system bus connection
+ * @dbus_name: process id
+ * @error: D-Bus error
+ * 
+ * This function will construct a #PolKitCaller object by querying
+ * both information in /proc (on Linux) and the ConsoleKit daemon for
+ * information about a given process. Note that this will do a lot of
+ * blocking IO so it is best avoided if your process already
+ * tracks/caches all the information.
+ * 
+ * Returns: the new object or #NULL if an error occured (in which case
+ * @error will be set)
+ **/
 PolKitCaller *
 polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
 {

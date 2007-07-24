@@ -48,14 +48,30 @@
  * SECTION:polkit
  * @short_description: Centralized policy management.
  *
- * polkit is a C library for centralized policy management.
+ * libpolkit is a C library for centralized policy management.
  **/
 
 /**
  * SECTION:polkit-context
  * @short_description: Context.
  *
- * This class is used to represent the interface to PolicyKit.
+ * This class is used to represent the interface to PolicyKit - it is
+ * used by Mechanisms that use PolicyKit for making
+ * decisions. Typically, it's used as a singleton:
+ *
+ * <itemizedlist>
+ * <listitem>The mechanism starts up and uses polkit_context_new() to create a new context</listitem>
+ * <listitem>If the mechanism is a long running daemon, it should use polkit_context_set_config_changed() to register a callback when configuration changes. This is useful if, for example, the mechanism needs to revise decisions based on earlier answers from libpolkit. For example, a daemon that manages permissions on <literal>/dev</literal> may want to add/remove ACL's when configuration changes; for example, the system administrator could have changed the PolicyKit configuration file <literal>/etc/PolicyKit/PolicyKit.conf</literal> such that some user is now privileged to access a specific device.</listitem>
+ * <listitem>If polkit_context_set_config_changed() is used, the mechanism must also use polkit_context_set_io_watch_functions() to integrate libpolkit into the mainloop.</listitem>
+ * <listitem>The mechanism needs to call polkit_context_init() such that libpolkit can load configuration files and properly initialize.</listitem>
+ * <listitem>Whenever the mechanism needs to make a decision whether a caller is allowed to make a perform some action, the mechanism prepares a #PolKitAction and #PolKitCaller object (or #PolKitSession if applicable) and calls polkit_context_can_caller_do_action() (or polkit_context_can_session_do_action() if applicable). The mechanism may use the libpolkit-dbus library (specifically the polkit_caller_new_from_dbus_name() or polkit_caller_new_from_pid() functions) but may opt, for performance reasons, to construct #PolKitCaller (or #PolKitSession if applicable) from it's own cache of information.</listitem>
+ * <listitem>The mechanism will get a #PolKitResult object back that describes whether it should carry out the action. This result stems from a number of sources, see the PolicyKit specification document for details.</listitem>
+ * <listitem>If the result is #POLKIT_RESULT_YES, the mechanism should carry out the action. If the result is not #POLKIT_RESULT_YES nor #POLKIT_RESULT_UNKNOWN (this would never be returned but is mentioned here for completeness), the mechanism should throw an expcetion to the caller detailing the #PolKitResult as a textual string using polkit_result_to_string_representation(). For example, if the mechanism is using D-Bus it could throw an com.some-mechanism.DeniedByPolicy exception with the #PolKitResult textual representation in the detail field. Then the caller can interpret this exception and then act on it (for example it can attempt to gain that privilege).</listitem>
+ * </itemizedlist>
+ *
+ * For more information about using PolicyKit in mechanisms and
+ * callers, refer to the PolicyKit-gnome project which includes a
+ * sample application on how to use this in the GNOME desktop.
  **/
 
 /**
@@ -317,7 +333,8 @@ polkit_context_set_io_watch_functions (PolKitContext                        *pk_
  * @pk_context: the context
  * 
  * Set whether policy descriptions should be loaded. By default these
- * are not loaded to keep memory use down. 
+ * are not loaded to keep memory use down. TODO: specify whether they
+ * are localized and how.
  *
  * This method must be called before polkit_context_init().
  **/

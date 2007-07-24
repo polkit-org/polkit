@@ -40,6 +40,13 @@
 
 #include <polkit/polkit-grant-database.h>
 
+/**
+ * SECTION:polkit-grant-database
+ * @short_description: Local grant database
+ *
+ * This private class is used to represent the grant database and provides read/write functions to access it.
+ **/
+
 /* TODO FIXME: this is Linux specific */
 static unsigned long long 
 get_start_time_for_pid (pid_t pid)

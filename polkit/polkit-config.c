@@ -45,6 +45,13 @@
 #include "polkit-debug.h"
 #include "polkit-error.h"
 
+/**
+ * SECTION:polkit-config
+ * @short_description: Configuration file.
+ *
+ * This class is used to represent the /etc/PolicyKit/PolicyKit.conf configuration file.
+ **/
+
 enum {
         STATE_NONE,
         STATE_IN_CONFIG,
@@ -55,6 +62,11 @@ enum {
 struct ConfigNode;
 typedef struct ConfigNode ConfigNode;
 
+/**
+ * PolKitConfig:
+ *
+ * This class represents the system-wide configuration file for PolicyKit.
+ **/
 struct PolKitConfig
 {
         int refcount;
@@ -111,6 +123,7 @@ struct ConfigNode
 
         GSList *children;
 };
+
 
 static ConfigNode *
 config_node_new (void)
@@ -322,6 +335,14 @@ error:
         XML_StopParser (pd->parser, FALSE);
 }
 
+/**
+ * polkit_config_new:
+ * @error: return location for error
+ * 
+ * Create a new object representing the /etc/PolicyKit/PolicyKit.conf configuration file.
+ * 
+ * Returns: the configuration file object
+ **/
 PolKitConfig *
 polkit_config_new (PolKitError **error)
 {
@@ -397,6 +418,14 @@ error:
         return NULL;
 }
 
+/**
+ * polkit_config_ref:
+ * @pk_config: the object
+ * 
+ * Increase reference count.
+ * 
+ * Returns: the object
+ **/
 PolKitConfig *
 polkit_config_ref (PolKitConfig *pk_config)
 {
@@ -405,6 +434,14 @@ polkit_config_ref (PolKitConfig *pk_config)
         return pk_config;
 }
 
+/**
+ * polkit_config_unref:
+ * @pk_config: the object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
 void
 polkit_config_unref (PolKitConfig *pk_config)
 {
@@ -509,6 +546,18 @@ out:
         return result;
 }
 
+/**
+ * polkit_config_can_session_do_action:
+ * @pk_config: the PolicyKit context
+ * @action: the type of access to check for
+ * @session: the session in question
+ *
+ * Determine if the /etc/PolicyKit/PolicyKit.conf configuration file
+ * says that a given session can do a given action.
+ *
+ * Returns: A #PolKitResult - returns #POLKIT_RESULT_UNKNOWN if there
+ * was no match in the configuration file.
+ */
 PolKitResult
 polkit_config_can_session_do_action (PolKitConfig   *pk_config,
                                      PolKitAction   *action,
@@ -522,6 +571,18 @@ polkit_config_can_session_do_action (PolKitConfig   *pk_config,
         return result;
 }
 
+/**
+ * polkit_config_can_caller_do_action:
+ * @pk_config: the PolicyKit context
+ * @action: the type of access to check for
+ * @caller: the caller in question
+ *
+ * Determine if the /etc/PolicyKit/PolicyKit.conf configuration file
+ * says that a given caller can do a given action.
+ *
+ * Returns: A #PolKitResult - returns #POLKIT_RESULT_UNKNOWN if there
+ * was no match in the configuration file.
+ */
 PolKitResult
 polkit_config_can_caller_do_action (PolKitConfig   *pk_config,
                                     PolKitAction   *action,
