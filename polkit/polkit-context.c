@@ -373,7 +373,6 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
  * Determine if a given session can do a given action.
  *
  * Returns: A #PolKitResult - can only be one of
- * #POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
  * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
  */
 PolKitResult
@@ -414,7 +413,7 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
                 } else {
                         g_warning ("no action with name '%s'", action_name);
                 }
-                result = POLKIT_RESULT_UNKNOWN_ACTION;
+                result = POLKIT_RESULT_UNKNOWN;
                 goto out;
         }
 
@@ -422,7 +421,7 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
 
         /* check if the config file specifies a result */
         result = polkit_config_can_session_do_action (pk_context->config, action, session);
-        if (result != POLKIT_RESULT_UNKNOWN_ACTION)
+        if (result != POLKIT_RESULT_UNKNOWN)
                 goto found;
 
         /* if no, just use the defaults */
@@ -434,8 +433,8 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         result = polkit_policy_default_can_session_do_action (policy_default, action, session);
 
 found:
-        /* Never return UNKNOWN_ACTION to user */
-        if (result == POLKIT_RESULT_UNKNOWN_ACTION)
+        /* Never return UNKNOWN to user */
+        if (result == POLKIT_RESULT_UNKNOWN)
                 result = POLKIT_RESULT_NO;
 
 out:
@@ -492,7 +491,7 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                 } else {
                         g_warning ("no action with name '%s'", action_name);
                 }
-                result = POLKIT_RESULT_UNKNOWN_ACTION;
+                result = POLKIT_RESULT_UNKNOWN;
                 goto out;
         }
 
@@ -500,12 +499,12 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
 
         /* first, check if the grant database specifies a result */
         result = _polkit_grantdb_check_can_caller_do_action (pk_context, action, caller);
-        if (result != POLKIT_RESULT_UNKNOWN_ACTION)
+        if (result != POLKIT_RESULT_UNKNOWN)
                 goto found;
 
         /* second, check if the config file specifies a result */
         result = polkit_config_can_caller_do_action (pk_context->config, action, caller);
-        if (result != POLKIT_RESULT_UNKNOWN_ACTION)
+        if (result != POLKIT_RESULT_UNKNOWN)
                 goto found;
 
         /* if no, just use the defaults */
@@ -518,8 +517,8 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
 
 found:
 
-        /* Never return UNKNOWN_ACTION to user */
-        if (result == POLKIT_RESULT_UNKNOWN_ACTION)
+        /* Never return UNKNOWN to user */
+        if (result == POLKIT_RESULT_UNKNOWN)
                 result = POLKIT_RESULT_NO;
 out:
         _pk_debug ("... result was %s", polkit_result_to_string_representation (result));

@@ -52,8 +52,7 @@ static const struct {
         const char *str;
 } mapping[] = 
 {
-        {POLKIT_RESULT_UNKNOWN_ACTION, "unknown"},
-        {POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW, "not_authorized"},
+        {POLKIT_RESULT_UNKNOWN, "unknown"},
         {POLKIT_RESULT_NO, "no"},
         {POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH, "auth_admin"},
         {POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION, "auth_admin_keep_session"},

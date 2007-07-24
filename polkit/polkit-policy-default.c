@@ -140,7 +140,6 @@ polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
  * session can do a given action.
  * 
  * Returns: A #PolKitResult - can only be one of
- * #POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
  * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
  **/
 PolKitResult

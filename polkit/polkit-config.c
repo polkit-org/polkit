@@ -431,7 +431,7 @@ config_node_test (ConfigNode *node, PolKitAction *action, PolKitCaller *caller, 
         char *str2;
         uid_t uid;
 
-        result = POLKIT_RESULT_UNKNOWN_ACTION;
+        result = POLKIT_RESULT_UNKNOWN;
         recurse = FALSE;
 
         switch (node->node_type) {
@@ -499,7 +499,7 @@ config_node_test (ConfigNode *node, PolKitAction *action, PolKitCaller *caller, 
                 for (i = node->children; i != NULL; i = g_slist_next (i)) {
                         ConfigNode *child_node = i->data;
                         result = config_node_test (child_node, action, caller, session);
-                        if (result != POLKIT_RESULT_UNKNOWN_ACTION) {
+                        if (result != POLKIT_RESULT_UNKNOWN) {
                                 goto out;
                         }
                 }
@@ -518,7 +518,7 @@ polkit_config_can_session_do_action (PolKitConfig   *pk_config,
         if (pk_config->top_config_node != NULL)
                 result = config_node_test (pk_config->top_config_node, action, NULL, session);
         else
-                result = POLKIT_RESULT_UNKNOWN_ACTION;
+                result = POLKIT_RESULT_UNKNOWN;
         return result;
 }
 
@@ -531,6 +531,6 @@ polkit_config_can_caller_do_action (PolKitConfig   *pk_config,
         if (pk_config->top_config_node != NULL)
                 result = config_node_test (pk_config->top_config_node, action, caller, NULL);
         else
-                result = POLKIT_RESULT_UNKNOWN_ACTION;
+                result = POLKIT_RESULT_UNKNOWN;
         return result;
 }

@@ -34,8 +34,8 @@
 
 /**
  * PolKitResult:
- * @POLKIT_RESULT_UNKNOWN_ACTION: The passed action is unknown.
- * @POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW: The caller of polkit is not sufficiently privilege to know the answer.
+ * @POLKIT_RESULT_UNKNOWN: The result is unknown / cannot be
+ * computed. This is mostly used internally in libpolkit.
  * @POLKIT_RESULT_NO: Access denied.
  * @POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH: Access denied, but
  * authentication by the caller as administrator (e.g. root or a
@@ -66,8 +66,8 @@
  */
 typedef enum
 {
-        POLKIT_RESULT_UNKNOWN_ACTION,
-        POLKIT_RESULT_NOT_AUTHORIZED_TO_KNOW,
+        POLKIT_RESULT_UNKNOWN,
+
         POLKIT_RESULT_NO,
 
         POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH,

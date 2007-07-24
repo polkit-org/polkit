@@ -229,7 +229,7 @@ _polkit_grantdb_check_can_caller_do_action (PolKitContext         *pk_context,
         unsigned long long pid_start_time;
 
         grant_file = NULL;
-        result = POLKIT_RESULT_UNKNOWN_ACTION;
+        result = POLKIT_RESULT_UNKNOWN;
 
         if (caller == NULL)
                 goto out;
