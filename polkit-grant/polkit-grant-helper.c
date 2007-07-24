@@ -41,7 +41,7 @@
 
 #include <polkit-dbus/polkit-dbus.h>
 
-#include "polkit-grant-database.h"
+#include <polkit/polkit-grant-database.h>
 
 static int
 conversation_function (int n,

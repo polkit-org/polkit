@@ -38,9 +38,11 @@
 #include <sys/inotify.h>
 
 #include <glib.h>
+#include "polkit-config.h"
 #include "polkit-debug.h"
 #include "polkit-context.h"
 #include "polkit-policy-cache.h"
+#include "polkit-grant-database.h"
 
 /**
  * SECTION:polkit
@@ -75,11 +77,12 @@ struct PolKitContext
 
         PolKitPolicyCache *priv_cache;
 
+        PolKitConfig *config;
+
         polkit_bool_t load_descriptions;
 
         int inotify_fd;
         int inotify_fd_watch_id;
-
         int inotify_reload_wd;
 };
 
@@ -122,7 +125,17 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
         }
         _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
-        /* we don't populate the cache until it's needed.. */
+        /* NOTE: we don't populate the cache until it's needed.. */
+
+        /* Load configuration file */
+        pk_context->config = polkit_config_new (error);
+        if (pk_context->config == NULL) {
+                _pk_debug ("failed to load configuration file: %s", strerror (errno));
+                /* TODO: set error. TODO: should we error out if the config file is bad?!? Or recover and go without a config file? */
+                goto error;
+        }
+
+        /* if the client provided watch functions, use inotify to create a watch on /var/lib/PolicyKit/reload */
         if (pk_context->io_add_watch_func != NULL) {
                 pk_context->inotify_fd = inotify_init ();
                 if (pk_context->inotify_fd < 0) {
@@ -131,12 +144,11 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         goto error;
                 }
 
-                /* create a watch on /var/lib/PolicyKit/reload */
                 pk_context->inotify_reload_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                   PACKAGE_LOCALSTATEDIR "/lib/PolicyKit/reload", 
+                                                                   PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload", 
                                                                    IN_MODIFY | IN_CREATE | IN_ATTRIB);
                 if (pk_context->inotify_reload_wd < 0) {
-                        _pk_debug ("failed to add watch on file '" PACKAGE_LOCALSTATEDIR "/lib/PolicyKit/reload': %s",
+                        _pk_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload': %s",
                                    strerror (errno));
                         /* TODO: set error */
                         goto error;
@@ -371,10 +383,11 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
 {
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
-        PolKitResult current_result;
+        PolKitPolicyDefault *policy_default;
+        PolKitResult result;
 
-        current_result = POLKIT_RESULT_NO;
-        g_return_val_if_fail (pk_context != NULL, current_result);
+        result = POLKIT_RESULT_NO;
+        g_return_val_if_fail (pk_context != NULL, result);
 
         if (action == NULL || session == NULL)
                 goto out;
@@ -401,81 +414,33 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
                 } else {
                         g_warning ("no action with name '%s'", action_name);
                 }
-                current_result = POLKIT_RESULT_UNKNOWN_ACTION;
+                result = POLKIT_RESULT_UNKNOWN_ACTION;
                 goto out;
         }
 
         polkit_policy_file_entry_debug (pfe);
 
-        current_result = POLKIT_RESULT_UNKNOWN_ACTION;
+        /* check if the config file specifies a result */
+        result = polkit_config_can_session_do_action (pk_context->config, action, session);
+        if (result != POLKIT_RESULT_UNKNOWN_ACTION)
+                goto found;
 
-#if 0
-        /* visit modules */
-        for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
-                PolKitModuleInterface *module_interface = i->data;
-                PolKitModuleCanSessionDoAction func;
-
-                func = polkit_module_get_func_can_session_do_action (module_interface);
-                if (func != NULL) {
-                        PolKitModuleControl module_control;
-                        PolKitResult module_result;
-
-                        _pk_debug ("Asking module '%s'", polkit_module_get_name (module_interface));
-
-                        module_control = polkit_module_interface_get_control (module_interface);
-
-                        if (polkit_module_interface_check_builtin_confinement_for_session (
-                                    module_interface,
-                                    pk_context,
-                                    action,
-                                    session)) {
-                                /* module is confined by built-in options */
-                                module_result = POLKIT_RESULT_UNKNOWN_ACTION;
-                                _pk_debug ("Module '%s' confined by built-in's", 
-                                           polkit_module_get_name (module_interface));
-                        } else {
-                                module_result = func (module_interface,
-                                                      pk_context,
-                                                      action, 
-                                                      session);
-                        }
-
-                        /* if a module returns _UNKNOWN_ACTION, it means that it doesn't
-                         * have an opinion about the query; e.g. polkit-module-allow-all(8)
-                         * will return this if it's confined to only consider certain actions
-                         * or certain users.
-                         */
-                        if (module_result != POLKIT_RESULT_UNKNOWN_ACTION) {
-
-                                if (current_control == POLKIT_MODULE_CONTROL_ADVISE &&
-                                    module_control == POLKIT_MODULE_CONTROL_ADVISE) {
-
-                                        /* take the less strict result */
-                                        if (current_result < module_result) {
-                                                current_result = module_result;
-                                        }
-
-                                } else if (current_control == POLKIT_MODULE_CONTROL_ADVISE &&
-                                           module_control == POLKIT_MODULE_CONTROL_MANDATORY) {
-                                        
-                                        /* here we just override */
-                                        current_result = module_result;
-
-                                        /* we are now in mandatory mode */
-                                        current_control = POLKIT_MODULE_CONTROL_MANDATORY;
-                                }
-                        }
-                }
+        /* if no, just use the defaults */
+        policy_default = polkit_policy_file_entry_get_default (pfe);
+        if (policy_default == NULL) {
+                g_warning ("no default policy for action!");
+                goto out;
         }
-#endif
+        result = polkit_policy_default_can_session_do_action (policy_default, action, session);
 
+found:
         /* Never return UNKNOWN_ACTION to user */
-        if (current_result == POLKIT_RESULT_UNKNOWN_ACTION)
-                current_result = POLKIT_RESULT_NO;
+        if (result == POLKIT_RESULT_UNKNOWN_ACTION)
+                result = POLKIT_RESULT_NO;
 
 out:
-        _pk_debug ("... result was %s", polkit_result_to_string_representation (current_result));
-        return current_result;
+        _pk_debug ("... result was %s", polkit_result_to_string_representation (result));
+        return result;
 }
 
 /**
@@ -496,10 +461,11 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
 {
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
-        PolKitResult current_result;
+        PolKitResult result;
+        PolKitPolicyDefault *policy_default;
 
-        current_result = POLKIT_RESULT_NO;
-        g_return_val_if_fail (pk_context != NULL, current_result);
+        result = POLKIT_RESULT_NO;
+        g_return_val_if_fail (pk_context != NULL, result);
 
         if (action == NULL || caller == NULL)
                 goto out;
@@ -526,78 +492,36 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                 } else {
                         g_warning ("no action with name '%s'", action_name);
                 }
-                current_result = POLKIT_RESULT_UNKNOWN_ACTION;
+                result = POLKIT_RESULT_UNKNOWN_ACTION;
                 goto out;
         }
 
         polkit_policy_file_entry_debug (pfe);
 
-        current_result = POLKIT_RESULT_UNKNOWN_ACTION;
+        /* first, check if the grant database specifies a result */
+        result = _polkit_grantdb_check_can_caller_do_action (pk_context, action, caller);
+        if (result != POLKIT_RESULT_UNKNOWN_ACTION)
+                goto found;
 
-#if 0
-        /* visit modules */
-        for (i = pk_context->modules; i != NULL; i = g_slist_next (i)) {
-                PolKitModuleInterface *module_interface = i->data;
-                PolKitModuleCanCallerDoAction func;
+        /* second, check if the config file specifies a result */
+        result = polkit_config_can_caller_do_action (pk_context->config, action, caller);
+        if (result != POLKIT_RESULT_UNKNOWN_ACTION)
+                goto found;
 
-                func = polkit_module_get_func_can_caller_do_action (module_interface);
-                if (func != NULL) {
-                        PolKitModuleControl module_control;
-                        PolKitResult module_result;
-
-                        _pk_debug ("Asking module '%s'", polkit_module_get_name (module_interface));
-
-                        module_control = polkit_module_interface_get_control (module_interface);
-
-                        if (polkit_module_interface_check_builtin_confinement_for_caller (
-                                    module_interface,
-                                    pk_context,
-                                    action,
-                                    caller)) {
-                                /* module is confined by built-in options */
-                                module_result = POLKIT_RESULT_UNKNOWN_ACTION;
-                                _pk_debug ("Module '%s' confined by built-in's", 
-                                           polkit_module_get_name (module_interface));
-                        } else {
-                                module_result = func (module_interface,
-                                                      pk_context,
-                                                      action, 
-                                                      caller);
-                        }
-
-                        /* if a module returns _UNKNOWN_ACTION, it means that it doesn't
-                         * have an opinion about the query; e.g. polkit-module-allow-all(8)
-                         * will return this if it's confined to only consider certain actions
-                         * or certain users.
-                         */
-                        if (module_result != POLKIT_RESULT_UNKNOWN_ACTION) {
-
-                                if (current_control == POLKIT_MODULE_CONTROL_ADVISE &&
-                                    module_control == POLKIT_MODULE_CONTROL_ADVISE) {
-
-                                        /* take the less strict result */
-                                        if (current_result < module_result) {
-                                                current_result = module_result;
-                                        }
-
-                                } else if (current_control == POLKIT_MODULE_CONTROL_ADVISE &&
-                                           module_control == POLKIT_MODULE_CONTROL_MANDATORY) {
-                                        
-                                        /* here we just override */
-                                        current_result = module_result;
-
-                                        /* we are now in mandatory mode */
-                                        current_control = POLKIT_MODULE_CONTROL_MANDATORY;
-                                }
-                        }
-                }
+        /* if no, just use the defaults */
+        policy_default = polkit_policy_file_entry_get_default (pfe);
+        if (policy_default == NULL) {
+                g_warning ("no default policy for action!");
+                goto out;
         }
-#endif
+        result = polkit_policy_default_can_caller_do_action (policy_default, action, caller);
+
+found:
 
         /* Never return UNKNOWN_ACTION to user */
-        if (current_result == POLKIT_RESULT_UNKNOWN_ACTION)
-                current_result = POLKIT_RESULT_NO;
+        if (result == POLKIT_RESULT_UNKNOWN_ACTION)
+                result = POLKIT_RESULT_NO;
 out:
-        _pk_debug ("... result was %s", polkit_result_to_string_representation (current_result));
-        return current_result;
+        _pk_debug ("... result was %s", polkit_result_to_string_representation (result));
+        return result;
 }
