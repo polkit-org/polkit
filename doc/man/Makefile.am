@@ -1,7 +1,7 @@
 
 if MAN_PAGES_ENABLED
 
-MAN_IN_FILES = polkit-check-caller.1.in polkit-check-session.1.in polkit-policy-file-validate.1.in PolicyKit.8.in polkit-reload-config.1.in
+MAN_IN_FILES = polkit-check-caller.1.in polkit-check-session.1.in polkit-policy-file-validate.1.in PolicyKit.8.in PolicyKit.conf.5.in polkit-reload-config.1.in polkit-list-actions.1.in
 
 man_MANS = $(MAN_IN_FILES:.in=)
 

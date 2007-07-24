@@ -186,11 +186,15 @@
     <title>Beyond the Defaults</title>
 
     <para>
-      TODO: To be written. Will include how machines and sites can
-      tweak what answer <literal>libpolkit</literal> returns depending
-      on the Action and Subject. For example it includes 1) locking
-      down a guest account; 2) discriminating depending on uid, gid,
-      SELinux context, exec-path.
+      System administrators and sites can tweak what
+      answer <literal>libpolkit</literal> returns depending on the
+      Action and Subject and other factors through the configuration
+      file <literal>/etc/PolicyKit/PolicyKit.conf</literal>. The
+      configuration file format, along with examples, is described in
+      the associated manual page of the same name. Note that this file
+      is not supposed to be modified by individual packages, it is
+      solely the responsibility of the system administrator to make
+      changes to this file.
     </para>
   </sect1>
 

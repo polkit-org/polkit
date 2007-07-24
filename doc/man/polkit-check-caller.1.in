@@ -13,9 +13,8 @@ polkit-check-caller \- check access
 .SH DESCRIPTION
 
 \fIpolkit-check-caller\fP can be used to determine if a given caller
-can access a given resource in a given way. For more information about
-the big picture refer to the \fIPolicyKit spec\fP which can be found
-in
+can a given action. For more information about the big picture refer
+to the \fIPolicyKit spec\fP which can be found in
 .I "@docdir@/spec/polkit-spec.html"
 depending on the distribution.
 

@@ -22,11 +22,6 @@ on how to subscribe.
 
 .SH SEE ALSO
 .PP
-\&\fIpolkit-module-builtins\fR\|(8),
-\&\fIpolkit-module-default\fR\|(8),
-\&\fIpolkit-module-allow-all\fR\|(8),
-\&\fIpolkit-module-deny-all\fR\|(8),
-\&\fIpolkit-module-run-program\fR\|(8),
 \&\fIpolkit-check-caller\fR\|(1),
 \&\fIpolkit-check-session\fR\|(1),
 \&\fIpolkit-policy-file-validate\fR\|(1),
