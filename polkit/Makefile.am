@@ -66,6 +66,12 @@ clean-local :
 # Create /var/lib/PolicyKit/reload file; this is being watched by libpolkit
 # for config file changes.
 install-data-local:
+	-mkdir $(DESTDIR)$(localstatedir)/lib/PolicyKit
+	-mkdir $(DESTDIR)$(localstatedir)/run/PolicyKit
+	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/PolicyKit
+	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/run/PolicyKit
+	-chmod 775 $(DESTDIR)$(localstatedir)/lib/PolicyKit
+	-chmod 775 $(DESTDIR)$(localstatedir)/run/PolicyKit
 	touch $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
 	-chmod 755 $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
 

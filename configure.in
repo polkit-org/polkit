@@ -181,7 +181,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(polkit_user,[  --with-polkit-user=<user>  user for PolicyKit])
 if test -z "$with_polkit_user" ; then
-    POLKIT_USER=polkit
+    POLKIT_USER=polkituser
 else
     POLKIT_USER=$with_polkit_user
 fi
@@ -190,7 +190,7 @@ AC_DEFINE_UNQUOTED(POLKIT_USER, "$POLKIT_USER", [User for PolicyKit])
 
 AC_ARG_WITH(polkit_group,[  --with-polkit-group=<grp>  group for PolicyKit])
 if test -z "$with_polkit_group" ; then
-    POLKIT_GROUP=polkit
+    POLKIT_GROUP=polkituser
 else
     POLKIT_GROUP=$with_polkit_group
 fi

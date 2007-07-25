@@ -31,13 +31,6 @@ libexec_PROGRAMS = polkit-grant-helper
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
 polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ @AUTH_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit/libpolkit-grant-private.la
 
-polkit_grant_alwaysdir = $(localstatedir)/lib/PolicyKit
-dist_polkit_grant_always_DATA =
-
-polkit_grant_sessiondir = $(localstatedir)/run/PolicyKit
-dist_polkit_grant_session_DATA =
-
-
 clean-local :
 	rm -f *~ $(BUILT_SOURCES)
 
@@ -48,7 +41,3 @@ clean-local :
 install-data-local:
 	-chown :$(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-grant-helper
-	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/PolicyKit
-	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/run/PolicyKit
-	-chmod 775 $(DESTDIR)$(localstatedir)/lib/PolicyKit
-	-chmod 775 $(DESTDIR)$(localstatedir)/run/PolicyKit
