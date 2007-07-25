@@ -33,6 +33,8 @@ polkit_list_actions_LDADD = $(GLIB) $(top_builddir)/polkit/libpolkit.la
 polkit-reload-config: polkit-reload-config.in Makefile
 	$(edit) $< >$@
 
+EXTRA_DIST = polkit-reload-config.in
+
 edit = sed \
 	-e 's|@docdir[@]|$(docdir)|g' \
 	-e 's|@sbindir[@]|$(sbindir)|g' \
@@ -41,5 +43,4 @@ edit = sed \
 	-e 's|@localstatedir[@]|$(localstatedir)|g'
 
 clean-local :
-	rm -f *~
-
+	rm -f *~ polkit-reload-config

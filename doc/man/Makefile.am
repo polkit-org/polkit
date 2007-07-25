@@ -10,7 +10,7 @@ endif # MAN_PAGES_ENABLED
 EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES)
 
 clean-local:
-	rm -f *~ *.1 *.8
+	rm -f *~ *.1 *.5 *.8
 
 %: %.in Makefile
 	$(edit) $< >$@
