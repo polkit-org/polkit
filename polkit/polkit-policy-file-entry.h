@@ -44,9 +44,9 @@ const char            *polkit_policy_file_entry_get_id       (PolKitPolicyFileEn
 const char            *polkit_policy_file_entry_get_group_id (PolKitPolicyFileEntry *policy_file_entry);
 PolKitPolicyDefault   *polkit_policy_file_entry_get_default  (PolKitPolicyFileEntry *policy_file_entry);
 
-const char            *polkit_policy_file_get_group_description (PolKitPolicyFileEntry *policy_file_entry);
-const char            *polkit_policy_file_get_action_description (PolKitPolicyFileEntry *policy_file_entry);
-const char            *polkit_policy_file_get_action_message (PolKitPolicyFileEntry *policy_file_entry);
+const char            *polkit_policy_file_entry_get_group_description (PolKitPolicyFileEntry *policy_file_entry);
+const char            *polkit_policy_file_entry_get_action_description (PolKitPolicyFileEntry *policy_file_entry);
+const char            *polkit_policy_file_entry_get_action_message (PolKitPolicyFileEntry *policy_file_entry);
 
 
 #endif /* POLKIT_POLICY_FILE_ENTRY_H */

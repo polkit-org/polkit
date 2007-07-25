@@ -78,9 +78,9 @@ _print_entry (PolKitPolicyCache *policy_cache,
                 "default_active    = %s\n"
                 "\n", 
                 group_id, 
-                polkit_policy_file_get_group_description (pfe),
+                polkit_policy_file_entry_get_group_description (pfe),
                 action_id,
-                polkit_policy_file_get_action_description (pfe),
+                polkit_policy_file_entry_get_action_description (pfe),
                 polkit_result_to_string_representation (default_inactive),
                 polkit_result_to_string_representation (default_active));
 }
