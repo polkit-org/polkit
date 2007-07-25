@@ -556,7 +556,7 @@ out:
 /**
  * polkit_caller_new_from_pid:
  * @con: D-Bus system bus connection
- * @dbus_name: process id
+ * @pid: process id
  * @error: D-Bus error
  * 
  * This function will construct a #PolKitCaller object by querying
