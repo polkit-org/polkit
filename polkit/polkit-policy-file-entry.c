@@ -64,11 +64,13 @@ struct PolKitPolicyFileEntry
 
         char *group_description;
         char *policy_description;
+        char *policy_message;
 };
 
 extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
                                                         const char *group_description,
-                                                        const char *policy_description);
+                                                        const char *policy_description,
+                                                        const char *policy_message);
 
 
 extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
@@ -107,11 +109,13 @@ error:
 void 
 _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *policy_file_entry,
                                             const char *group_description,
-                                            const char *policy_description)
+                                            const char *policy_description,
+                                            const char *policy_message)
 {
         g_return_if_fail (policy_file_entry != NULL);
         policy_file_entry->group_description = g_strdup (group_description);
         policy_file_entry->policy_description = g_strdup (policy_description);
+        policy_file_entry->policy_message = g_strdup (policy_message);
 }
 
 /**
@@ -137,7 +141,10 @@ polkit_policy_file_get_group_description (PolKitPolicyFileEntry *policy_file_ent
  * polkit_policy_file_get_action_description:
  * @policy_file_entry: the object
  * 
- * Get the description of the action that this policy entry describes.
+ * Get the description of the action that this policy entry describes. This
+ * is intended to be used in policy editors, for example "Mount internal
+ * volumes". Contrast with polkit_policy_file_get_action_message(). The
+ * textual string will be returned in the current locale.
  *
  * Note, if polkit_context_set_load_descriptions() on the
  * #PolKitContext object used to get this object wasn't called, this
@@ -150,6 +157,29 @@ polkit_policy_file_get_action_description (PolKitPolicyFileEntry *policy_file_en
 {
         g_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->policy_description;
+}
+
+/**
+ * polkit_policy_file_get_action_message:
+ * @policy_file_entry: the object
+ * 
+ * Get the message describing the action that this policy entry
+ * describes. This is to be used in dialogs, for example "System
+ * Policy prevents mounting this volume". Contrast with
+ * polkit_policy_file_get_action_description(). The textual string
+ * will be returned in the current locale.
+ *
+ * Note, if polkit_context_set_load_descriptions() on the
+ * #PolKitContext object used to get this object wasn't called, this
+ * method will return #NULL.
+ * 
+ * Returns: string or #NULL if descriptions are not loaded - caller shall not free this string
+ **/
+const char *
+polkit_policy_file_get_action_message (PolKitPolicyFileEntry *policy_file_entry)
+{
+        g_return_val_if_fail (policy_file_entry != NULL, NULL);
+        return policy_file_entry->policy_message;
 }
 
 /**

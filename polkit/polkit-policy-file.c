@@ -76,6 +76,7 @@ enum {
         STATE_IN_GROUP_DESCRIPTION,
         STATE_IN_POLICY,
         STATE_IN_POLICY_DESCRIPTION,
+        STATE_IN_POLICY_MESSAGE,
         STATE_IN_DEFAULTS,
         STATE_IN_DEFAULTS_ALLOW_INACTIVE,
         STATE_IN_DEFAULTS_ALLOW_ACTIVE
@@ -96,6 +97,7 @@ typedef struct {
 
         char *group_description;
         char *policy_description;
+        char *policy_message;
 } ParserData;
 
 static void
@@ -137,6 +139,7 @@ _start (void *data, const char *el, const char **attr)
                         state = STATE_IN_POLICY;
 
                         pd->policy_description = NULL;
+                        pd->policy_message = NULL;
 
                         /* initialize defaults */
                         pd->defaults_allow_inactive = POLKIT_RESULT_NO;
@@ -152,8 +155,12 @@ _start (void *data, const char *el, const char **attr)
                         state = STATE_IN_DEFAULTS;
                 else if (strcmp (el, "description") == 0)
                         state = STATE_IN_POLICY_DESCRIPTION;
+                else if (strcmp (el, "message") == 0)
+                        state = STATE_IN_POLICY_MESSAGE;
                 break;
         case STATE_IN_POLICY_DESCRIPTION:
+                break;
+        case STATE_IN_POLICY_MESSAGE:
                 break;
         case STATE_IN_DEFAULTS:
                 if (strcmp (el, "allow_inactive") == 0)
@@ -189,13 +196,27 @@ _cdata (void *data, const char *s, int len)
         switch (pd->state) {
 
         case STATE_IN_GROUP_DESCRIPTION:
-                if (pd->load_descriptions)
+                if (pd->load_descriptions) {
+                        if (pd->group_description != NULL)
+                                g_free (pd->group_description);
                         pd->group_description = g_strdup (str);
+                }
                 break;
                 
         case STATE_IN_POLICY_DESCRIPTION:
-                if (pd->load_descriptions)
+                if (pd->load_descriptions) {
+                        if (pd->policy_description != NULL)
+                                g_free (pd->policy_description);
                         pd->policy_description = g_strdup (str);
+                }
+                break;
+
+        case STATE_IN_POLICY_MESSAGE:
+                if (pd->load_descriptions) {
+                        if (pd->policy_message != NULL)
+                                g_free (pd->policy_message);
+                        pd->policy_message = g_strdup (str);
+                }
                 break;
 
         case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
@@ -219,7 +240,8 @@ error:
 
 extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
                                                         const char *group_description,
-                                                        const char *policy_description);
+                                                        const char *policy_description,
+                                                        const char *policy_message);
 
 static void
 _end (void *data, const char *el)
@@ -254,7 +276,8 @@ _end (void *data, const char *el)
                 if (pd->load_descriptions)
                         _polkit_policy_file_entry_set_descriptions (pfe,
                                                                     pd->group_description,
-                                                                    pd->policy_description);
+                                                                    pd->policy_description,
+                                                                    pd->policy_message);
 
                 pd->pf->entries = g_slist_prepend (pd->pf->entries, pfe);
 
@@ -262,6 +285,9 @@ _end (void *data, const char *el)
                 break;
         }
         case STATE_IN_POLICY_DESCRIPTION:
+                state = STATE_IN_POLICY;
+                break;
+        case STATE_IN_POLICY_MESSAGE:
                 state = STATE_IN_POLICY;
                 break;
         case STATE_IN_DEFAULTS:
@@ -345,6 +371,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         pd.action_id = NULL;
         pd.group_description = NULL;
         pd.policy_description = NULL;
+        pd.policy_message = NULL;
         pd.pf = pf;
         pd.load_descriptions = load_descriptions;
 
@@ -354,6 +381,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         g_free (pd.action_id);
         g_free (pd.group_description);
         g_free (pd.policy_description);
+        g_free (pd.policy_message);
 
 	if (xml_res == 0) {
                 polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
