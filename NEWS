@@ -1,4 +1,44 @@
 ==========
+PolicyKit 0.4 "Off the Grid"
+==========
+
+Released on July 25th 2007.
+
+This is the second release of PolicyKit. 
+
+WARNING WARNING WARNING: do not use this software in a stable
+distribution; there are still security sensitive things that needs to
+be audited.
+
+Changes from PolicyKit 0.3 "No Man's Land"
+
+David Zeuthen (16):
+      post-release version bump
+      remove the notion of modules
+      replace configuration reload mechanism
+      get proper pid and SELinux context
+      add support for an /etc/PolicyKit/PolicyKit.conf config file
+      document the /etc/PolicyKit/PolicyKit.conf file with a manual page
+      update TODO
+      switch from VIA_ROOT to VIA_ADMIN
+      remove RESULT_NOT_AUTHORIZED_TO_KNOW and s/RESULT_UNKNOWN_ACTION/RESULT_UNKNOWN/
+      fix up some of the docs
+      change default username
+      fix typo
+      require that policy files also provide a <message> element
+      fix docs
+      fix up proper naming of some methods on the PolKitPolicyFileEntry class
+      for PolKitContext, mention that a mechanism need to provide .policy files
+
+Requirements for PolicyKit 0.4 ""
+
+ - dbus             >= 0.90
+ - glib             >= 2.6.0
+ - ConsoleKit       >= 0.2.1
+ - expat            >= 1.95.8
+ - libselinux       >= 1.30   (optional)
+
+==========
 PolicyKit 0.3 "No Man's Land"
 ==========
 
