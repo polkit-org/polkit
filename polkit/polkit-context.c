@@ -60,6 +60,7 @@
  * decisions. Typically, it's used as a singleton:
  *
  * <itemizedlist>
+ * <listitem>First, the Mechanism need to declare one or more PolicyKit Actions by dropping a <literal>.policy</literal> file into <literal>/usr/share/PolicyKit/policy</literal>. This is described in the PolicyKit specification.</listitem>
  * <listitem>The mechanism starts up and uses polkit_context_new() to create a new context</listitem>
  * <listitem>If the mechanism is a long running daemon, it should use polkit_context_set_config_changed() to register a callback when configuration changes. This is useful if, for example, the mechanism needs to revise decisions based on earlier answers from libpolkit. For example, a daemon that manages permissions on <literal>/dev</literal> may want to add/remove ACL's when configuration changes; for example, the system administrator could have changed the PolicyKit configuration file <literal>/etc/PolicyKit/PolicyKit.conf</literal> such that some user is now privileged to access a specific device.</listitem>
  * <listitem>If polkit_context_set_config_changed() is used, the mechanism must also use polkit_context_set_io_watch_functions() to integrate libpolkit into the mainloop.</listitem>
