@@ -12,7 +12,7 @@ be audited.
 
 Changes from PolicyKit 0.3 "No Man's Land"
 
-David Zeuthen (16):
+David Zeuthen (18):
       post-release version bump
       remove the notion of modules
       replace configuration reload mechanism
@@ -29,6 +29,8 @@ David Zeuthen (16):
       fix docs
       fix up proper naming of some methods on the PolKitPolicyFileEntry class
       for PolKitContext, mention that a mechanism need to provide .policy files
+      update NEWS
+      actually reload config and policy files when they change
 
 Requirements for PolicyKit 0.4 ""
 

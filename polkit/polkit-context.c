@@ -297,7 +297,29 @@ again:
                                    event->wd, event->mask, event->cookie, event->len);
 
                         if (event->wd == pk_context->inotify_reload_wd) {
+                                PolKitConfig *new_config;
+
                                 _pk_debug ("config changed!");
+
+                                /* purge existing policy files */
+                                _pk_debug ("purging policy files");
+                                if (pk_context->priv_cache == NULL) {
+                                        polkit_policy_cache_unref (pk_context->priv_cache);
+                                        pk_context->priv_cache = NULL;
+                                }
+
+                                /* Reload configuration file */
+                                _pk_debug ("reload configuration file");
+                                new_config = polkit_config_new (NULL);
+                                if (pk_context->config == NULL) {
+                                        _pk_debug ("failed to reload configuration file: %s", strerror (errno));
+                                        /* TODO: set error. TODO: should we error out if the config file is bad?!? Or recover and go without a config file? */
+                                } else {
+                                        if (pk_context->config != NULL)
+                                                polkit_config_unref (pk_context->config);
+                                        pk_context->config = new_config;
+                                }
+
                                 if (pk_context->config_changed_cb != NULL) {
                                         pk_context->config_changed_cb (pk_context, 
                                                                        pk_context->config_changed_user_data);
