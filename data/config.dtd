@@ -1,0 +1,18 @@
+<!-- Document Type for PolicyKit configuration file -->
+
+<!-- <config> is the top-level element of the config file. -->
+<!ELEMENT config (match|return)* >
+<!ATTLIST config 
+    version (0.1) #REQUIRED
+>
+
+<!ELEMENT match (match|return)* >
+<!ATTLIST match 
+          action     CDATA #IMPLIED
+          user       CDATA #IMPLIED
+>
+
+<!ELEMENT return (#PCDATA) >
+<!ATTLIST return
+          result    (no|auth_root|auth_root_keep_session|auth_root_keep_always|auth_self|auth_self_keep_session|auth_self_keep_always|yes) #REQUIRED
+>
