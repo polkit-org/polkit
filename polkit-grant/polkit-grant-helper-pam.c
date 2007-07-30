@@ -71,12 +71,14 @@ main (int argc, char *argv[])
                 goto error;
         }
 
+#if 0
         /* check we're running with a non-tty stdin */
         if (isatty (STDIN_FILENO) != 0) {
                 syslog (LOG_NOTICE, "inappropriate use of helper, stdin is a tty [uid=%d]", getuid ());
                 fprintf (stderr, "polkit-grant-helper-pam: inappropriate use of helper, stdin is a tty. This incident has been logged.\n");
                 goto error;
         }
+#endif
 
         /* get user to auth */
         if (fgets (user_to_auth, sizeof user_to_auth, stdin) == NULL)
