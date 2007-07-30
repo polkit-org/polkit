@@ -446,10 +446,13 @@ echo "
 echo "NOTE: Remember to create user '${POLKIT_USER}' and group '${POLKIT_GROUP}' before 'make install'"
 echo
 
-echo "NOTE: ${libexecdir}/polkit-grant-helper will be owner by group"
+echo "NOTE: ${libexecdir}/polkit-grant-helper will be owned by group"
 echo "      '${POLKIT_USER}', and installed with mode 2755 (setgid binary)."
 echo "      The directories ${localstatedir}/run/PolicyKit and ${localstatedir}/lib/PolicyKit will be"
 echo "      owned by user '${POLKIT_USER}' and group '${POLKIT_GROUP}' and will be of mode 775."
+echo
+
+echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be setuid root."
 echo
 
 echo "NOTE: For packaging, remember to retain the modes and ownership."

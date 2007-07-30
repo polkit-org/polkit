@@ -26,18 +26,25 @@ libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpo
 
 libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
-libexec_PROGRAMS = polkit-grant-helper
+libexec_PROGRAMS = polkit-grant-helper polkit-grant-helper-pam
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
-polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ @AUTH_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit/libpolkit-grant-private.la
+polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit/libpolkit-grant-private.la
+
+polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
+polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
 
 clean-local :
 	rm -f *~ $(BUILT_SOURCES)
 
-# Hmm.. we could make the directories 750 and require that all mechanisms using
-# libpolkit (e.g. with a need for polkit-module-grant.so to look there) just
-# be part of $(POLKIT_GROUP)...
+# polkit-grant-helper needs to be setgid polkituser to be able to
+# write cookies to /var/lib/PolicyKit and /var/run/PolicyKit
+#
+# polkit-grant-helper-pam need to be setuid root because it's used to
+# authenticate not only the invoking user, but possibly also root
+# and/or other users.
 #
 install-data-local:
 	-chown :$(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-grant-helper
+	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam

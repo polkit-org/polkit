@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-grant-helper.c : setgid grant helper for PolicyKit
+ * polkit-grant-helper.c : setgid polkituser grant helper for PolicyKit
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -36,151 +36,132 @@
 #include <security/pam_appl.h>
 #include <grp.h>
 #include <pwd.h>
+#include <syslog.h>
+#include <errno.h>
+#include <string.h>
 
 #include <glib.h>
 
 #include <polkit-dbus/polkit-dbus.h>
-
 #include <polkit/polkit-grant-database.h>
 
-static int
-conversation_function (int n,
-                       const struct pam_message **msg,
-                       struct pam_response **resp,
-                       void *data)
-{
-        struct pam_response *aresp;
-        char buf[PAM_MAX_RESP_SIZE];
-        int i;
+/* Development aid: define PGH_DEBUG to get debugging output. Do _NOT_
+ * enable this in production builds; it may leak passwords and other
+ * sensitive information.
+ */
+#undef PGH_DEBUG
+/* #define PGH_DEBUG */
 
-        data = data;
-        if (n <= 0 || n > PAM_MAX_NUM_MSG)
-                return PAM_CONV_ERR;
+/* synopsis: polkit-grant-helper <pid> <action-name>
+ *
+ * <pid>           : process id of caller to grant privilege to
+ * <action-name>   : the PolicyKit action
+ *
+ * Error/debug messages goes to stderr. Interaction with the program
+ * launching this helper happens via stdin/stdout using the following
+ * protocol:
+ *
+ * If auth fails, we exit with code 1.
+ * If input is not valid we exit with code 2.
+ * If any other error occur we exit with code 3
+ * If privilege was granted, we exit code 0.
+ */
 
-        if ((aresp = calloc(n, sizeof *aresp)) == NULL)
-                return PAM_BUF_ERR;
 
-        for (i = 0; i < n; ++i) {
-                aresp[i].resp_retcode = 0;
-                aresp[i].resp = NULL;
-                switch (msg[i]->msg_style) {
-                case PAM_PROMPT_ECHO_OFF:
-                        fprintf (stdout, "PAM_PROMPT_ECHO_OFF ");
-                        goto conv1;
-                case PAM_PROMPT_ECHO_ON:
-                        fprintf (stdout, "PAM_PROMPT_ECHO_ON ");
-                conv1:
-                        fputs (msg[i]->msg, stdout);
-                        if (strlen (msg[i]->msg) > 0 &&
-                            msg[i]->msg[strlen (msg[i]->msg) - 1] != '\n')
-                                fputc ('\n', stdout);
-                        fflush (stdout);
-
-                        if (fgets (buf, sizeof buf, stdin) == NULL)
-                                goto error;
-                        if (strlen (buf) > 0 &&
-                            buf[strlen (buf) - 1] == '\n')
-                                buf[strlen (buf) - 1] = '\0';
-
-                        aresp[i].resp = strdup (buf);
-                        if (aresp[i].resp == NULL)
-                                goto error;
-                        break;
-
-                case PAM_ERROR_MSG:
-                        fprintf (stdout, "PAM_ERROR_MSG ");
-                        goto conv2;
-
-                case PAM_TEXT_INFO:
-                        fprintf (stdout, "PAM_TEXT_INFO ");
-                conv2:
-                        fputs(msg[i]->msg, stdout);
-                        if (strlen(msg[i]->msg) > 0 &&
-                            msg[i]->msg[strlen (msg[i]->msg) - 1] != '\n')
-                                fputc ('\n', stdout);
-
-                        fflush (stdout);
-                        break;
-                default:
-                        goto error;
-                }
-        }
-        *resp = aresp;
-        return PAM_SUCCESS;
-
-error:
-        for (i = 0; i < n; ++i) {
-                if (aresp[i].resp != NULL) {
-                        memset (aresp[i].resp, 0, strlen(aresp[i].resp));
-                        free (aresp[i].resp);
-                }
-        }
-        memset (aresp, 0, n * sizeof *aresp);
-        *resp = NULL;
-        return PAM_CONV_ERR;
-}
-
+/* the authentication itself is done via a setuid root helper; this is
+ * to make the code running as uid 0 easier to audit. */
 static polkit_bool_t
 do_auth (const char *user_to_auth)
 {
-	struct pam_conv pam_conversation;
-	pam_handle_t *pam_h;
-        const void *authed_user;
-	int rc;
+        int helper_pid;
+        int helper_stdin;
+        int helper_stdout;
+        GError *g_error;
+        char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-pam", NULL};
+        char buf[256];
+        FILE *child_stdin;
+        FILE *child_stdout;
+        gboolean ret;
 
-	pam_conversation.conv        = conversation_function;
-	pam_conversation.appdata_ptr = NULL;
+        child_stdin = NULL;
+        child_stdout = NULL;
+        ret = FALSE;
 
-        /* start the pam stack */
-	rc = pam_start ("polkit",
-			user_to_auth, 
-			&pam_conversation,
-			&pam_h);
-	if (rc != PAM_SUCCESS) {
-		fprintf (stderr, "pam_start failed: %s\n", pam_strerror (pam_h, rc));
-		goto error;
-	}
+        g_error = NULL;
+        if (!g_spawn_async_with_pipes (NULL,
+                                       (char **) helper_argv,
+                                       NULL,
+                                       0,
+                                       NULL,
+                                       NULL,
+                                       &helper_pid,
+                                       &helper_stdin,
+                                       &helper_stdout,
+                                       NULL,
+                                       &g_error)) {
+                fprintf (stderr, "polkit-grant-helper: cannot spawn helper: %s\n", g_error->message);
+                g_error_free (g_error);
+                g_free (helper_argv[1]);
+                goto out;
+        }
 
-	/* is user really user? */
-	rc = pam_authenticate (pam_h, 0);
-	if (rc != PAM_SUCCESS) {
-		fprintf (stderr, "pam_authenticated failed: %s\n", pam_strerror (pam_h, rc));
-		goto error;
-	}
+        child_stdin = fdopen (helper_stdin, "w");
+        if (child_stdin == NULL) {
+                fprintf (stderr, "polkit-grant-helper: fdopen (helper_stdin) failed: %s\n", strerror (errno));
+                goto out;
+        }
+        child_stdout = fdopen (helper_stdout, "r");
+        if (child_stdout == NULL) {
+                fprintf (stderr, "polkit-grant-helper: fdopen (helper_stdout) failed: %s\n", strerror (errno));
+                goto out;
+        }
 
-#if 0
-        /* Hmm, this fails; TODO: investigate */
+        /* First, tell the pam helper what user we wish to auth */
+        fprintf (child_stdin, "%s\n", user_to_auth);
+        fflush (child_stdin);
 
-	/* permitted access? */
-	rc = pam_acct_mgmt (pam_h, 0);
-	if (rc != PAM_SUCCESS) {
-		fprintf (stderr, "pam_acct_mgmt failed: %s\n", pam_strerror (pam_h, rc));
-		goto error;
-	}
-#endif
+        /* now act as middle man between our parent and our child */
 
-        /* did we auth the right user? */
-	rc = pam_get_item (pam_h, PAM_USER, &authed_user);
-	if (rc != PAM_SUCCESS) {
-		fprintf (stderr, "pam_get_item failed: %s\n", pam_strerror (pam_h, rc));
-		goto error;
-	}
+        while (TRUE) {
+                /* read from child */
+                if (fgets (buf, sizeof buf, child_stdout) == NULL)
+                        goto out;
+#ifdef PGH_DEBUG
+                fprintf (stderr, "received: '%s' from child; sending to parent\n", buf);
+#endif /* PGH_DEBUG */
+                /* see if we're done? */
+                if (strcmp (buf, "SUCCESS\n") == 0) {
+                        ret = TRUE;
+                        goto out;
+                }
+                if (strcmp (buf, "FAILURE\n") == 0) {
+                        goto out;
+                }
+                /* send to parent */
+                fprintf (stdout, buf);
+                fflush (stdout);
+                
+                /* read from parent */
+                if (fgets (buf, sizeof buf, stdin) == NULL)
+                        goto out;
+#ifdef PGH_DEBUG
+                fprintf (stderr, "received: '%s' from parent; sending to child\n", buf);
+#endif /* PGH_DEBUG */
+                /* send to child */
+                fprintf (child_stdin, buf);
+                fflush (child_stdin);
+        }
 
-	if (strcmp (authed_user, user_to_auth) != 0) {
-                fprintf (stderr, "Tried to auth user '%s' but we got auth for user '%s' instead",
-                         user_to_auth, (const char *) authed_user);
-		goto error;
-	}
-
-        return TRUE;
-        /* TODO: we should probably clean up */
-error:
-        return FALSE;
+out:
+        if (child_stdin != NULL)
+                fclose (child_stdin);
+        if (child_stdout != NULL)
+                fclose (child_stdout);
+        return ret;
 }
 
 static polkit_bool_t
-verify_with_polkit (const char *dbus_name,
-                    pid_t caller_pid,
+verify_with_polkit (pid_t caller_pid,
                     const char *action_name,
                     PolKitResult *result,
                     char **out_session_objpath)
@@ -196,46 +177,37 @@ verify_with_polkit (const char *dbus_name,
         dbus_error_init (&error);
         bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
         if (bus == NULL) {
-                fprintf (stderr, "cannot connect to system bus: %s: %s\n", error.name, error.message);
+                fprintf (stderr, "polkit-grant-helper: cannot connect to system bus: %s: %s\n", 
+                         error.name, error.message);
                 dbus_error_free (&error);
-                goto out;
+                goto error;
         }
 
         action = polkit_action_new ();
         polkit_action_set_action_id (action, action_name);
 
-        if (dbus_name != NULL && strlen (dbus_name) > 0) {
-                caller = polkit_caller_new_from_dbus_name (bus, dbus_name, &error);
-                if (caller == NULL) {
-                        fprintf (stderr, "cannot get caller from dbus name\n");
-                        goto out;
-                }
-        } else {
-                caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
-                if (caller == NULL) {
-                        fprintf (stderr, "cannot get caller from pid\n");
-                        goto out;
-                }
+        caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
+        if (caller == NULL) {
+                fprintf (stderr, "polkit-grant-helper: cannot get caller from pid\n");
+                goto error;
         }
 
         if (!polkit_caller_get_ck_session (caller, &session)) {
-                fprintf (stderr, "caller is not in a session\n");
-                goto out;
+                fprintf (stderr, "polkit-grant-helper: caller is not in a session\n");
+                goto error;
         }
         if (!polkit_session_get_ck_objref (session, &str)) {
-                fprintf (stderr, "cannot get session ck objpath\n");
-                goto out;
+                fprintf (stderr, "polkit-grant-helper: cannot get session ck objpath\n");
+                goto error;
         }
         *out_session_objpath = g_strdup (str);
         if (*out_session_objpath == NULL)
-                goto out;
-
-        //polkit_caller_debug (caller);
+                goto error;
 
         pol_ctx = polkit_context_new ();
         if (!polkit_context_init (pol_ctx, NULL)) {
-                fprintf (stderr, "cannot init polkit\n");
-                goto out;
+                fprintf (stderr, "polkit-grant-helper: cannot initialize polkit\n");
+                goto error;
         }
 
         *result = polkit_context_can_caller_do_action (pol_ctx, action, caller);
@@ -246,14 +218,15 @@ verify_with_polkit (const char *dbus_name,
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION &&
             *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) {
-                fprintf (stderr, "given auth type (%d -> %s) is bogus\n", 
+                fprintf (stderr, "polkit-grant-helper: given auth type (%d -> %s) is bogus\n", 
                          *result, polkit_result_to_string_representation (*result));
-                goto out;
+                goto error;
         }
 
-        return TRUE;
         /* TODO: we should probably clean up */
-out:
+
+        return TRUE;
+error:
         return FALSE;
 }
 
@@ -269,19 +242,18 @@ get_and_validate_override_details (PolKitResult *result)
             buf[strlen (buf) - 1] == '\n')
                 buf[strlen (buf) - 1] = '\0';
         
-        fprintf (stderr, "User said '%s'\n", buf);
+        fprintf (stderr, "polkit-grant-helper: caller said '%s'\n", buf);
 
         if (!polkit_result_from_string_representation (buf, &desired_result))
                 goto error;
 
-        fprintf (stderr, "Testing for voluntarily downgrade from '%s' to '%s'\n",
+        fprintf (stderr, "polkit-grant-helper: testing for voluntarily downgrade from '%s' to '%s'\n",
                  polkit_result_to_string_representation (*result),
                  polkit_result_to_string_representation (desired_result));
 
         /* See the huge comment in main() below... 
          *
          * it comes down to this... users can only choose a more restricted granting type...
-         *
          */
         switch (*result) {
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
@@ -322,7 +294,7 @@ get_and_validate_override_details (PolKitResult *result)
         }
 
         if (*result != desired_result) {
-                fprintf (stderr, "Voluntarily downgrading from '%s' to '%s'\n",
+                fprintf (stderr, "polkit-grant-helper: voluntarily downgrading from '%s' to '%s'\n",
                          polkit_result_to_string_representation (*result),
                          polkit_result_to_string_representation (desired_result));
         }
@@ -334,102 +306,111 @@ error:
         return FALSE;
 }
 
-/* synopsis: polkit-grant-helper <auth-type> <dbus-name> <pid> <action-name>
- *
- * <dbus-name>     : unique name of caller on the system message bus to grant privilege to (may be blank)
- * <pid>           : process id of caller to grant privilege to
- * <action-name>   : the PolicyKit action
- *
- * PAM interaction happens via stdin/stdout.
- *
- * If auth fails, we exit with code 1.
- * If input is not valid we exit with code 2.
- * If any other error occur we exit with code 3
- * If privilege was grant, we exit code 0.
- */
-
 int
 main (int argc, char *argv[])
 {
         int ret;
         uid_t invoking_user_id;
         pid_t caller_pid;
+        gid_t egid;
+        struct group *group;
+        char *endp;
         const char *invoking_user_name;
-        const char *dbus_name;
         const char *action_name;
         PolKitResult result;
         const char *user_to_auth;
         char *session_objpath;
-        gid_t egid;
-        struct group *group;
         struct passwd *pw;
         polkit_bool_t dbres;
 
         ret = 3;
 
-        if (argc != 4) {
-                fprintf (stderr, "wrong use\n");
+        /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
+        if (clearenv () != 0)
+                goto out;
+        /* set a minimal environment */
+        setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
+
+        openlog ("polkit-grant-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
+
+        /* check for correct invocation */
+        if (argc != 3) {
+                syslog (LOG_NOTICE, "inappropriate use of helper, wrong number of arguments [uid=%d]", getuid ());
+                fprintf (stderr, "polkit-grant-helper: wrong number of arguments. This incident has been logged.\n");
+                goto out;
+        }
+
+        /* check we're running with a non-tty stdin */
+        if (isatty (STDIN_FILENO) != 0) {
+                syslog (LOG_NOTICE, "inappropriate use of helper, stdin is a tty [uid=%d]", getuid ());
+                fprintf (stderr, "polkit-grant-helper: inappropriate use of helper, stdin is a tty. This incident has been logged.\n");
                 goto out;
         }
 
         /* check user */
         invoking_user_id = getuid ();
         if (invoking_user_id == 0) {
-                fprintf (stderr, "it only makes sense to run polkit-grant-helper as non-root\n");
+                fprintf (stderr, "polkit-grant-helper: it only makes sense to run polkit-grant-helper as non-root\n");
                 goto out;
         }
+
+        /* check that we are setgid polkituser */
+        egid = getegid ();
+        group = getgrgid (egid);
+        if (group == NULL) {
+                fprintf (stderr, "polkit-grant-helper: cannot lookup group info for gid %d\n", egid);
+                goto out;
+        }
+        if (strcmp (group->gr_name, POLKIT_GROUP) != 0) {
+                fprintf (stderr, "polkit-grant-helper: needs to be setgid " POLKIT_GROUP "\n");
+                goto out;
+        }
+
         pw = getpwuid (invoking_user_id);
         if (pw == NULL) {
-                fprintf (stderr, "cannot lookup passwd info for uid %d\n", invoking_user_id);
+                fprintf (stderr, "polkit-grant-helper: cannot lookup passwd info for uid %d\n", invoking_user_id);
                 goto out;
         }
         invoking_user_name = strdup (pw->pw_name);
         if (invoking_user_name == NULL) {
-                fprintf (stderr, "OOM allocating memory for invoking user name\n");
+                fprintf (stderr, "polkit-grant-helper: OOM allocating memory for invoking user name\n");
                 goto out;
         }
 
-        fprintf (stderr, "invoking user '%s'\n", invoking_user_name);
-
-        /* check group */
-        egid = getegid ();
-        group = getgrgid (egid);
-        if (group == NULL) {
-                fprintf (stderr, "cannot lookup group info for gid %d\n", egid);
+        caller_pid = strtol (argv[1], &endp, 10);
+        if (endp == NULL || endp == argv[1] || *endp != '\0') {
+                fprintf (stderr, "polkit-grant-helper: cannot parse pid\n");
                 goto out;
         }
-        if (strcmp (group->gr_name, POLKIT_GROUP) != 0) {
-                fprintf (stderr, "polkit-grant-helper needs to be setgid " POLKIT_GROUP "\n");
-                goto out;
-        }
+        action_name = argv[2];
 
-        fprintf (stderr, "Hello world %d %d %d %d!\n", getuid(), geteuid(), getgid(), getegid());
-
-        /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
-        if (clearenv () != 0)
-                goto out;
-        /* hmm; seems like some library (libdbus) don't like environ==NULL .. TODO: file bug */
-        setenv ("PATH", "/bin:/usr/bin", 1);
-
-        dbus_name = argv[1];
-        caller_pid = atoi(argv[2]); /* TODO: use safer function? */
-        action_name = argv[3];
-
-        fprintf (stderr, "dbus_name = %s\n", dbus_name);
-        fprintf (stderr, "caller_pid = %d\n", caller_pid);
-        fprintf (stderr, "action_name = %s\n", action_name);
+#ifdef PGH_DEBUG
+        fprintf (stderr, "polkit-grant-helper: invoking user   = %d ('%s')\n", invoking_user_id, invoking_user_name);
+        fprintf (stderr, "polkit-grant-helper: caller_pid      = %d\n", caller_pid);
+        fprintf (stderr, "polkit-grant-helper: action_name     = '%s'\n", action_name);
+#endif /* PGH_DEBUG */
 
         ret = 2;
 
-        /* we don't trust the user one bit...so..
-         * 
-         * verify that the given thing to auth for really supports grant by auth in the requested way
+        /* Use libpolkit to
+         *
+         * - figure out if the caller can really auth to do the action
+         * - learn what ConsoleKit session the caller belongs to
          */
-        if (!verify_with_polkit (dbus_name, caller_pid, action_name, &result, &session_objpath))
+        if (!verify_with_polkit (caller_pid, action_name, &result, &session_objpath))
                 goto out;
 
-        /* tell user about the grant details; e.g. whether it's auth_self_keep_always or auth_self etc. */
-        fprintf (stdout, "POLKIT_GRANT_HELPER_TELL_TYPE %s\n", polkit_result_to_string_representation (result));
+#ifdef PGH_DEBUG
+        fprintf (stderr, "polkit-grant-helper: polkit result   = '%s'\n", 
+                 polkit_result_to_string_representation (result));
+        fprintf (stderr, "polkit-grant-helper: session_objpath = '%s'\n", session_objpath);
+#endif /* PGH_DEBUG */
+
+        /* tell the caller about the grant details; e.g. whether
+         * it's auth_self_keep_always or auth_self etc.
+         */
+        fprintf (stdout, "POLKIT_GRANT_HELPER_TELL_TYPE %s\n", 
+                 polkit_result_to_string_representation (result));
         fflush (stdout);
 
         /* figure out what user to auth */
@@ -444,14 +425,16 @@ main (int argc, char *argv[])
 
         ret = 1;
 
-        /* OK, start auth! */
+        /* Start authentication */
         if (!do_auth (user_to_auth))
                 goto out;
 
-        /* ask user if he want to slim down grant type... 
-         * e.g. he might want to go from auth_self_keep_always to auth_self_keep_session..
+        /* Ask caller if he want to slim down grant type...  e.g. he
+         * might want to go from auth_self_keep_always to
+         * auth_self_keep_session..
          *
-         * See docs for the PolKitGrantOverrideGrantType callback type for use cases.
+         * See docs for the PolKitGrantOverrideGrantType callback type
+         * for use cases; it's in polkit-grant/polkit-grant.h
          */
         fprintf (stdout, "POLKIT_GRANT_HELPER_ASK_OVERRIDE_GRANT_TYPE %s\n", 
                  polkit_result_to_string_representation (result));
@@ -463,23 +446,37 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        fprintf (stderr, "OK; TODO: write to database: action_id=%s session_id=%s pid=%d\n", 
-                 action_name, session_objpath, caller_pid);
+#ifdef PGH_DEBUG
+        fprintf (stderr, "polkit-grant-helper: adding grant: action_id=%s session_id=%s pid=%d result='%s'\n", 
+                 action_name, session_objpath, caller_pid, polkit_result_to_string_representation (result));
+#endif /* PGH_DEBUG */
 
         switch (result) {
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 dbres = _polkit_grantdb_write_pid (action_name, caller_pid);
+                if (dbres) {
+                        syslog (LOG_INFO, "granted use of action='%s' to pid '%d' [uid=%d] [auth='%s']",
+                                action_name, caller_pid, invoking_user_id, user_to_auth);
+                }
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
                 dbres = _polkit_grantdb_write_keep_session (action_name, session_objpath);
+                if (dbres) {
+                        syslog (LOG_INFO, "granted use of action='%s' to session '%s' [uid=%d] [auth='%s']",
+                                action_name, session_objpath, invoking_user_id, user_to_auth);
+                }
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
                 dbres = _polkit_grantdb_write_keep_always (action_name, invoking_user_id);
+                if (dbres) {
+                        syslog (LOG_INFO, "granted use of action='%s' to uid %d [auth='%s']", 
+                                action_name, invoking_user_id, user_to_auth);
+                }
                 break;
 
         default:
@@ -492,63 +489,10 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-#if 0
-        /* TODO: FIXME: XXX: this format of storing granted privileges needs be redone
-         *
-         * this concerns these two files
-         * - polkit-grant/polkit-grant-helper.c
-         * - modules/grant/polkit-module-grant.c
-         */
-
-        /*
-         * /var/lib/PolicyKit/uid_<uid>_<action>_<resource-hash>.grant
-         *                    uid_<uid>_<action>.grant
-         *
-         * /var/run/PolicyKit/session_<session>_<uid>_<action>_<resource-hash>.grant
-         *                    session_<session>_<uid>_<action>.grant
-         *                    dbus_<dbusname>_<uid>_<action>_<resource-hash>.grant
-         */
-
-        char *grant_file;
-        const char *session_name;
-        char *resource_str_to_hash;
-        guint resource_hash;
-        session_name = g_basename (session_objpath);
-        resource_str_to_hash = g_strdup_printf ("%s:%s", resource_type, resource_name);
-        resource_hash = g_str_hash (resource_str_to_hash);
-        g_free (resource_str_to_hash);
-
-        switch (result) {
-        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
-        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
-                grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/dbus_%s_%d_%s_%u.grant", 
-                                              dbus_name, invoking_user_id, action_name, resource_hash);
-                break;
-
-        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
-        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
-                grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/session_%s_%d_%s_%u.grant", 
-                                              session_name, invoking_user_id, action_name, resource_hash);
-                break;
-
-        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
-        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
-                grant_file = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/uid_%d_%s_%u.grant", 
-                                              invoking_user_id, action_name, resource_hash);
-                break;
-        default:
-                /* should never happen */
-                goto out;
-        }
-
-        umask (~0464);
-        fprintf (stderr, "file is '%s'\n", grant_file);
-        FILE *f = fopen (grant_file, "w");
-        fclose (f);
-#endif
-
         ret = 0;
 out:
-        fprintf (stderr, "exiting with code %d\n", ret);
+#ifdef PGH_DEBUG
+        fprintf (stderr, "polkit-grant-helper: exiting with code %d\n", ret);
+#endif /* PGH_DEBUG */
         return ret;
 }
