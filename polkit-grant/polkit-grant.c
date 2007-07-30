@@ -138,7 +138,9 @@ polkit_grant_unref (PolKitGrant *polkit_grant)
                 polkit_grant->func_remove_watch (polkit_grant, polkit_grant->child_watch_id);
         }
         if (polkit_grant->child_pid > 0) {
+                int status;
                 kill (polkit_grant->child_pid, SIGTERM);
+                waitpid (polkit_grant->child_pid, &status, 0);
         }
         if (polkit_grant->child_stdout_f != NULL) {
                 fclose (polkit_grant->child_stdout_f);
@@ -221,9 +223,14 @@ polkit_grant_set_functions (PolKitGrant *polkit_grant,
 void
 polkit_grant_child_func (PolKitGrant *polkit_grant, pid_t pid, int exit_code)
 {
+        int status;
         polkit_bool_t input_was_bogus;
+
         g_return_if_fail (polkit_grant != NULL);
         g_return_if_fail (polkit_grant->auth_in_progress);
+
+        g_debug ("pid %d terminated", pid);
+        waitpid (pid, &status, 0);
 
         if (exit_code >= 2)
                 input_was_bogus = TRUE;
@@ -361,8 +368,11 @@ polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
 
         pid = polkit_grant->child_pid;
         polkit_grant->child_pid = 0;
-        if (pid > 0)
+        if (pid > 0) {
+                int status;
                 kill (pid, SIGTERM);
+                waitpid (pid, &status, 0);
+        }
         polkit_grant->func_done (polkit_grant, FALSE, FALSE, polkit_grant->user_data);        
 }
 
