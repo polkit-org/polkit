@@ -58,8 +58,71 @@
  * <action-name>   : the PolicyKit action
  *
  * Error/debug messages goes to stderr. Interaction with the program
- * launching this helper happens via stdin/stdout using the following
- * protocol:
+ * launching this helper happens via stdin/stdout. A rough high-level
+ * interaction diagram looks like this (120 character width):
+ *
+ *  Program using
+ *  libpolkit-grant                    polkit-grant-helper                  polkit-grant-helper-pam
+ *  -------------                      -------------------                  -----------------------
+ *
+ *   Spawn polkit-grant-helper
+ *   with args <pid>, <action-name> -->
+ *
+ *                                   Create PolKitCaller object
+ *                                   from <pid>. Involves querying
+ *                                   ConsoleKit over the system
+ *                                   message-bus. Verify that
+ *                                   the caller qualifies for
+ *                                   for authentication to gain
+ *                                   the right to do the Action.
+ *
+ *                      <-- Tell libpolkit-grant about grant details, e.g.
+ *                          {self,admin}_{,keep_session,keep_always}
+ *                          using stdout
+ *
+ *   Receive grant details on stdin.
+ *   Caller prepares UI dialog depending
+ *   on grant details.
+ *
+ *                                       Spawn polkit-grant-helper-pam
+ *                                       with no args -->
+ *
+ *                                       Write username to auth as
+ *                                       on stdout -->
+ *                                        
+ *                                                                         Receive username on stdin.
+ *                                                                         Start the PAM stack
+ * auth_in_progess:
+ *                                                                         Write a PAM request on stdout, one off
+ *                                                                         - PAM_PROMPT_ECHO_OFF
+ *                                                                         - PAM_PROMPT_ECHO_ON
+ *                                                                         - PAM_ERROR_MSG
+ *                                                                         - PAM_TEXT_INFO
+ *
+ *                                       Receive PAM request on stdin.
+ *                                       Send it to libpolkit-grant on stdout
+ *
+ *   Receive PAM request on stdin.
+ *   Program deals with it.
+ *   Write reply on stdout
+ *
+ *                                       Receive PAM reply on stdin
+ *                                       Send PAM reply on stdout
+ *
+ *                                                                         Deal with PAM reply on stdin.
+ *                                                                         Now either
+ *                                                                         - GOTO auth_in_progress; or
+ *                                                                         - Write SUCCESS|FAILURE on stdout and then
+ *                                                                           die
+ *                                                                         
+ *                                       Receive either SUCCESS or
+ *                                       FAILURE on stdin. If FAILURE
+ *                                       is received, then die with exit
+ *                                       code 1. If SUCCESS, leave a cookie
+ *                                       in /var/{lib,run}/PolicyKit indicating
+ *                                       the grant was successful and die with
+ *                                       exit code 0
+ *
  *
  * If auth fails, we exit with code 1.
  * If input is not valid we exit with code 2.
