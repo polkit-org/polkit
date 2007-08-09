@@ -39,6 +39,7 @@
 #include <syslog.h>
 #include <errno.h>
 #include <string.h>
+#include <utime.h>
 
 #include <glib.h>
 
@@ -551,6 +552,12 @@ main (int argc, char *argv[])
                 fprintf (stderr, "polkit-grant-helper: failed to write to grantdb\n");
                 goto out;
         }
+
+        /* touch the /var/lib/PolicyKit/reload file */
+        if (utime (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload", NULL) != 0) {
+                fprintf (stderr, "polkit-grant-helper: cannot touch " PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload: %s\n", strerror (errno));
+        }
+
 
         ret = 0;
 out:
