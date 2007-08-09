@@ -219,7 +219,7 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
 }
 
 static void 
-conversation_done (PolKitGrant *polkit_grant, polkit_bool_t gained_privilege, void *user_data)
+conversation_done (PolKitGrant *polkit_grant, polkit_bool_t gained_privilege, polkit_bool_t invalid_data, void *user_data)
 {
         UserData *ud = user_data;
         ud->gained_privilege = gained_privilege;
