@@ -72,6 +72,7 @@ install-data-local:
 	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/run/PolicyKit
 	-chmod 775 $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-chmod 775 $(DESTDIR)$(localstatedir)/run/PolicyKit
-	touch $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
-	-chmod 755 $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
+	-touch $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
+	-chown :$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
+	-chmod 664 $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
 
