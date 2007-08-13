@@ -60,6 +60,7 @@ struct PolKitGrant
         PolKitGrantAddChildWatch func_add_child_watch;
         PolKitGrantRemoveWatch func_remove_watch;
         PolKitGrantType func_type;
+        PolKitGrantSelectAdminUser func_select_admin_user;
         PolKitGrantConversationPromptEchoOff func_prompt_echo_off;
         PolKitGrantConversationPromptEchoOn func_prompt_echo_on;
         PolKitGrantConversationErrorMessage func_error_message;
@@ -77,7 +78,7 @@ struct PolKitGrant
         int io_watch_id;
 
         gboolean success;
-        gboolean auth_in_progress;
+        gboolean helper_is_running;
 };
 
 /**
@@ -162,6 +163,7 @@ polkit_grant_unref (PolKitGrant *polkit_grant)
  * @func_add_child_watch: Callback function
  * @func_remove_watch: Callback function
  * @func_type: Callback function
+ * @func_select_admin_user: Callback function
  * @func_prompt_echo_off: Callback function
  * @func_prompt_echo_on: Callback function
  * @func_error_message: Callback function
@@ -174,23 +176,25 @@ polkit_grant_unref (PolKitGrant *polkit_grant)
  **/
 void
 polkit_grant_set_functions (PolKitGrant *polkit_grant,
-                               PolKitGrantAddIOWatch func_add_io_watch,
-                               PolKitGrantAddChildWatch func_add_child_watch,
-                               PolKitGrantRemoveWatch func_remove_watch,
-                               PolKitGrantType func_type,
-                               PolKitGrantConversationPromptEchoOff func_prompt_echo_off,
-                               PolKitGrantConversationPromptEchoOn func_prompt_echo_on,
-                               PolKitGrantConversationErrorMessage func_error_message,
-                               PolKitGrantConversationTextInfo func_text_info,
-                               PolKitGrantOverrideGrantType func_override_grant_type,
-                               PolKitGrantDone func_done,
-                               void *user_data)
+                            PolKitGrantAddIOWatch func_add_io_watch,
+                            PolKitGrantAddChildWatch func_add_child_watch,
+                            PolKitGrantRemoveWatch func_remove_watch,
+                            PolKitGrantType func_type,
+                            PolKitGrantSelectAdminUser func_select_admin_user,
+                            PolKitGrantConversationPromptEchoOff func_prompt_echo_off,
+                            PolKitGrantConversationPromptEchoOn func_prompt_echo_on,
+                            PolKitGrantConversationErrorMessage func_error_message,
+                            PolKitGrantConversationTextInfo func_text_info,
+                            PolKitGrantOverrideGrantType func_override_grant_type,
+                            PolKitGrantDone func_done,
+                            void *user_data)
 {
         g_return_if_fail (polkit_grant != NULL);
         g_return_if_fail (func_add_io_watch != NULL);
         g_return_if_fail (func_add_child_watch != NULL);
         g_return_if_fail (func_remove_watch != NULL);
         g_return_if_fail (func_type != NULL);
+        g_return_if_fail (func_select_admin_user != NULL);
         g_return_if_fail (func_prompt_echo_off != NULL);
         g_return_if_fail (func_prompt_echo_on != NULL);
         g_return_if_fail (func_error_message != NULL);
@@ -200,6 +204,7 @@ polkit_grant_set_functions (PolKitGrant *polkit_grant,
         polkit_grant->func_add_child_watch = func_add_child_watch;
         polkit_grant->func_remove_watch = func_remove_watch;
         polkit_grant->func_type = func_type;
+        polkit_grant->func_select_admin_user = func_select_admin_user;
         polkit_grant->func_prompt_echo_off = func_prompt_echo_off;
         polkit_grant->func_prompt_echo_on = func_prompt_echo_on;
         polkit_grant->func_error_message = func_error_message;
@@ -227,7 +232,7 @@ polkit_grant_child_func (PolKitGrant *polkit_grant, pid_t pid, int exit_code)
         polkit_bool_t input_was_bogus;
 
         g_return_if_fail (polkit_grant != NULL);
-        g_return_if_fail (polkit_grant->auth_in_progress);
+        g_return_if_fail (polkit_grant->helper_is_running);
 
         g_debug ("pid %d terminated", pid);
         waitpid (pid, &status, 0);
@@ -238,6 +243,7 @@ polkit_grant_child_func (PolKitGrant *polkit_grant, pid_t pid, int exit_code)
                 input_was_bogus = FALSE;
 
         polkit_grant->success = (exit_code == 0);
+        polkit_grant->helper_is_running = FALSE;
         polkit_grant->func_done (polkit_grant, polkit_grant->success, input_was_bogus, polkit_grant->user_data);
 }
 
@@ -259,22 +265,23 @@ polkit_grant_io_func (PolKitGrant *polkit_grant, int fd)
         char *id;
         size_t id_len;
         char *response;
+        char *response_prefix;
 
         g_return_if_fail (polkit_grant != NULL);
-        g_return_if_fail (polkit_grant->auth_in_progress);
+        g_return_if_fail (polkit_grant->helper_is_running);
 
         while (getline (&line, &line_len, polkit_grant->child_stdout_f) != -1) {
                 if (strlen (line) > 0 &&
                     line[strlen (line) - 1] == '\n')
                         line[strlen (line) - 1] = '\0';
                 
-                //printf ("from child '%s'\n", line);
-                
                 response = NULL;
+                response_prefix = NULL;
                 
                 id = "PAM_PROMPT_ECHO_OFF ";
                 if (g_str_has_prefix (line, id)) {
                         id_len = strlen (id);
+                        response_prefix = "";
                         response = polkit_grant->func_prompt_echo_off (polkit_grant, 
                                                                        line + id_len, 
                                                                        polkit_grant->user_data);
@@ -284,6 +291,7 @@ polkit_grant_io_func (PolKitGrant *polkit_grant, int fd)
                 id = "PAM_PROMPT_ECHO_ON ";
                 if (g_str_has_prefix (line, id)) {
                         id_len = strlen (id);
+                        response_prefix = "";
                         response = polkit_grant->func_prompt_echo_on (polkit_grant, 
                                                                       line + id_len, 
                                                                       polkit_grant->user_data);
@@ -311,13 +319,33 @@ polkit_grant_io_func (PolKitGrant *polkit_grant, int fd)
                 id = "POLKIT_GRANT_HELPER_TELL_TYPE ";
                 if (g_str_has_prefix (line, id)) {
                         PolKitResult result;
+                        char *result_textual;
+
                         id_len = strlen (id);
-                        if (!polkit_result_from_string_representation (line + id_len, &result)) {
+                        result_textual = line + id_len;
+                        if (!polkit_result_from_string_representation (result_textual, &result)) {
                                 /* TODO: danger will robinson */
                         }
+
                         polkit_grant->func_type (polkit_grant, 
                                                  result,
                                                  polkit_grant->user_data);
+                        goto processed;
+                }
+
+                id = "POLKIT_GRANT_HELPER_TELL_ADMIN_USERS ";
+                if (g_str_has_prefix (line, id)) {
+                        char **admin_users;
+
+                        id_len = strlen (id);
+                        admin_users = g_strsplit (line + id_len, " ", 0);
+
+                        response_prefix = "POLKIT_GRANT_CALLER_SELECT_ADMIN_USER ";
+                        response = polkit_grant->func_select_admin_user (polkit_grant, 
+                                                                         admin_users,
+                                                                         polkit_grant->user_data);
+                        g_strfreev (admin_users);
+
                         goto processed;
                 }
 
@@ -332,19 +360,27 @@ polkit_grant_io_func (PolKitGrant *polkit_grant, int fd)
                         override = polkit_grant->func_override_grant_type (polkit_grant, 
                                                                            result, 
                                                                            polkit_grant->user_data);
+                        response_prefix = "POLKIT_GRANT_CALLER_PASS_OVERRIDE_GRANT_TYPE ";
                         response = g_strdup (polkit_result_to_string_representation (override));
                         goto processed;
                 }
 
         processed:
-                if (response != NULL) {
+                if (response != NULL && response_prefix != NULL) {
+                        char *buf;
+                        gboolean add_newline;
+
                         /* add a newline if there isn't one already... */
+                        add_newline = FALSE;
                         if (response[strlen (response) - 1] != '\n') {
-                                char *old = response;
-                                response = g_strdup_printf ("%s\n", response);
-                                g_free (old);
+                                add_newline = TRUE;
                         }
-                        write (polkit_grant->child_stdin, response, strlen (response));
+                        buf = g_strdup_printf ("%s%s%c",
+                                               response_prefix,
+                                               response,
+                                               add_newline ? '\n' : '\0');
+                        write (polkit_grant->child_stdin, buf, strlen (buf));
+                        g_free (buf);
                         free (response);
                 }
         }
@@ -364,7 +400,7 @@ polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
 {
         GPid pid;
         g_return_if_fail (polkit_grant != NULL);
-        g_return_if_fail (polkit_grant->auth_in_progress);
+        g_return_if_fail (polkit_grant->helper_is_running);
 
         pid = polkit_grant->child_pid;
         polkit_grant->child_pid = 0;
@@ -372,6 +408,7 @@ polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
                 int status;
                 kill (pid, SIGTERM);
                 waitpid (pid, &status, 0);
+                polkit_grant->helper_is_running = FALSE;
         }
         polkit_grant->func_done (polkit_grant, FALSE, FALSE, polkit_grant->user_data);        
 }
@@ -463,7 +500,7 @@ polkit_grant_initiate_auth (PolKitGrant  *polkit_grant,
         
         polkit_grant->success = FALSE;
 
-        polkit_grant->auth_in_progress = TRUE;
+        polkit_grant->helper_is_running = TRUE;
 
         return TRUE;
 error:

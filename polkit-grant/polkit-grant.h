@@ -50,6 +50,25 @@ typedef void (*PolKitGrantType) (PolKitGrant *polkit_grant,
                                  void *user_data);
 
 /**
+ * PolKitGrantSelectAdminUser:
+ * @polkit_grant: the grant object
+ * @admin_users: a NULL-terminated array of users that can be used for
+ * authentication for admin grants.
+ * @user_data: user data pointed as passed into polkit_grant_set_functions()
+ *
+ * Type for callback function that describes the possible users that
+ * can be chosen for authentication when administrator privileges are
+ * required. 
+ *
+ * Returns: the chosen user; must be allocated with malloc(3) and will
+ * be freed by the #PolKitGrant class.
+ **/
+typedef char* (*PolKitGrantSelectAdminUser) (PolKitGrant *polkit_grant,
+                                             char **admin_users,
+                                             void *user_data);
+
+
+/**
  * PolKitGrantConversationPromptEchoOff:
  * @polkit_grant: the grant object
  * @prompt: prompt passed by the authentication layer; do not free this string
@@ -323,6 +342,7 @@ void          polkit_grant_set_functions (PolKitGrant *polkit_grant,
                                           PolKitGrantAddChildWatch func_add_child_watch,
                                           PolKitGrantRemoveWatch func_remove_watch,
                                           PolKitGrantType func_type,
+                                          PolKitGrantSelectAdminUser func_select_admin_user,
                                           PolKitGrantConversationPromptEchoOff func_prompt_echo_off,
                                           PolKitGrantConversationPromptEchoOn func_prompt_echo_on,
                                           PolKitGrantConversationErrorMessage func_error_message,

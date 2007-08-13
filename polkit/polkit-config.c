@@ -49,7 +49,10 @@
  * SECTION:polkit-config
  * @short_description: Configuration file.
  *
- * This class is used to represent the /etc/PolicyKit/PolicyKit.conf configuration file.
+ * This class is used to represent the /etc/PolicyKit/PolicyKit.conf
+ * configuration file. Applications using PolicyKit should never use
+ * this class; it's only here for integration with other PolicyKit
+ * components.
  **/
 
 enum {
@@ -57,6 +60,7 @@ enum {
         STATE_IN_CONFIG,
         STATE_IN_MATCH,
         STATE_IN_RETURN,
+        STATE_IN_DEFINE_ADMIN_AUTH,
 };
 
 struct ConfigNode;
@@ -65,7 +69,10 @@ typedef struct ConfigNode ConfigNode;
 /**
  * PolKitConfig:
  *
- * This class represents the system-wide configuration file for PolicyKit.
+ * This class represents the system-wide configuration file for
+ * PolicyKit. Applications using PolicyKit should never use this
+ * class; it's only here for integration with other PolicyKit
+ * components.
  **/
 struct PolKitConfig
 {
@@ -90,6 +97,7 @@ enum {
         NODE_TYPE_TOP,
         NODE_TYPE_MATCH,
         NODE_TYPE_RETURN,
+        NODE_TYPE_DEFINE_ADMIN_AUTH,
 };
 
 enum {
@@ -101,6 +109,12 @@ static const char * const match_names[] =
 {
         "action",
         "user",
+};
+
+static const char * const define_admin_auth_names[] = 
+{
+        "user",
+        "group",
 };
 
 struct ConfigNode
@@ -118,6 +132,11 @@ struct ConfigNode
                 struct {
                         PolKitResult result;
                 } node_return;
+
+                struct {
+                        PolKitConfigAdminAuthType admin_type;
+                        char *data;
+                } node_define_admin_auth;
 
         } data;
 
@@ -161,6 +180,14 @@ config_node_dump_real (ConfigNode *node, unsigned int indent)
                            polkit_result_to_string_representation (node->data.node_return.result),
                            node->data.node_return.result);
                 break;
+        case NODE_TYPE_DEFINE_ADMIN_AUTH:
+                _pk_debug ("%sDEFINE_ADMIN_AUTH %s (%d) with '%s'", 
+                           buf, 
+                           define_admin_auth_names[node->data.node_define_admin_auth.admin_type],
+                           node->data.node_define_admin_auth.admin_type,
+                           node->data.node_define_admin_auth.data);
+                break;
+                break;
         }
 
         for (i = node->children; i != NULL; i = g_slist_next (i)) {
@@ -190,6 +217,9 @@ config_node_unref (ConfigNode *node)
                 break;
         case NODE_TYPE_RETURN:
                 break;
+        case NODE_TYPE_DEFINE_ADMIN_AUTH:
+                g_free (node->data.node_define_admin_auth.data);
+                break;
         }
 
         for (i = node->children; i != NULL; i = g_slist_next (i)) {
@@ -208,7 +238,7 @@ _start (void *data, const char *el, const char **attr)
         ParserData *pd = data;
         ConfigNode *node;
 
-        _pk_debug ("_start for node '%s'", el);
+        _pk_debug ("_start for node '%s' (at depth=%d)", el, pd->stack_depth);
 
         for (num_attr = 0; attr[num_attr] != NULL; num_attr++)
                 ;
@@ -280,6 +310,28 @@ _start (void *data, const char *el, const char **attr)
                         _pk_debug ("parsed return node ('%s' (%d))",
                                    attr[1],
                                    node->data.node_return.result);
+                } else if ((strcmp (el, "define_admin_auth") == 0) && (num_attr == 2)) {
+
+                        node = config_node_new ();
+                        node->node_type = NODE_TYPE_DEFINE_ADMIN_AUTH;
+                        if (strcmp (attr[0], "user") == 0) {
+                                node->data.node_define_admin_auth.admin_type = POLKIT_CONFIG_ADMIN_AUTH_TYPE_USER;
+                        } else if (strcmp (attr[0], "group") == 0) {
+                                node->data.node_define_admin_auth.admin_type = POLKIT_CONFIG_ADMIN_AUTH_TYPE_GROUP;
+                        } else {
+                                _pk_debug ("Unknown define_admin_auth rule '%s'", attr[0]);
+                                goto error;
+                        }
+
+                        node->data.node_define_admin_auth.data = g_strdup (attr[1]);
+
+                        state = STATE_IN_DEFINE_ADMIN_AUTH;
+                        _pk_debug ("parsed define_admin_auth node ('%s' (%d) -> '%s')", 
+                                   attr[0], 
+                                   node->data.node_define_admin_auth.admin_type,
+                                   node->data.node_define_admin_auth.data);
+
+
                 }
                 break;
         }
@@ -301,7 +353,7 @@ _start (void *data, const char *el, const char **attr)
         }
 
         pd->stack_depth++;
-        _pk_debug ("state = %d", pd->state);
+        _pk_debug ("now in state=%d (after _start, depth=%d)", pd->state, pd->stack_depth);
         return;
 
 error:
@@ -321,15 +373,18 @@ _end (void *data, const char *el)
 {
         ParserData *pd = data;
 
-        _pk_debug ("_end for node '%s'", el);
+        _pk_debug ("_end for node '%s' (at depth=%d)", el, pd->stack_depth);
 
         --pd->stack_depth;
         if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH) {
                 _pk_debug ("reached max depth?");
                 goto error;
         }
-        pd->state = pd->state_stack[pd->stack_depth];
-        _pk_debug ("state = %d", pd->state);
+        if (pd->stack_depth > 0)
+                pd->state = pd->state_stack[pd->stack_depth - 1];
+        else
+                pd->state = STATE_NONE;
+        _pk_debug ("now in state=%d (after _end, depth=%d)", pd->state, pd->stack_depth);
         return;
 error:
         XML_StopParser (pd->parser, FALSE);
@@ -456,78 +511,95 @@ polkit_config_unref (PolKitConfig *pk_config)
         g_free (pk_config);
 }
 
-/* exactly one of the parameters caller and session must be NULL */
-static PolKitResult
-config_node_test (ConfigNode *node, PolKitAction *action, PolKitCaller *caller, PolKitSession *session)
+static gboolean
+config_node_match (ConfigNode *node, 
+                  PolKitAction *action, 
+                  PolKitCaller *caller, 
+                  PolKitSession *session)
 {
-        gboolean match;
-        gboolean recurse;
-        PolKitResult result;
         char *str;
         char *str1;
         char *str2;
         uid_t uid;
+        gboolean match;
 
-        result = POLKIT_RESULT_UNKNOWN;
+        match = FALSE;
+        str1 = NULL;
+        str2 = NULL;
+        switch (node->data.node_match.match_type) {
+
+        case MATCH_TYPE_ACTION:
+                if (!polkit_action_get_action_id (action, &str))
+                        goto out;
+                str1 = g_strdup (str);
+                break;
+
+        case MATCH_TYPE_USER:
+                if (caller != NULL) {
+                        if (!polkit_caller_get_uid (caller, &uid))
+                                goto out;
+                } else if (session != NULL) {
+                        if (!polkit_session_get_uid (session, &uid))
+                                goto out;
+                } else
+                        goto out;
+                
+                str1 = g_strdup_printf ("%d", uid);
+                {
+                        struct passwd pd;
+                        struct passwd* pwdptr=&pd;
+                        struct passwd* tempPwdPtr;
+                        char pwdbuffer[256];
+                        int  pwdlinelen = sizeof(pwdbuffer);
+                        
+                        if ((getpwuid_r (uid, pwdptr, pwdbuffer, pwdlinelen, &tempPwdPtr)) !=0 )
+                                goto out;
+                        str2 = g_strdup (pd.pw_name);
+                }
+                break;
+        }
+        
+        if (str1 != NULL) {
+                if (regexec (&(node->data.node_match.preq), str1, 0, NULL, 0) == 0)
+                        match = TRUE;
+        }
+        if (!match && str2 != NULL) {
+                if (regexec (&(node->data.node_match.preq), str2, 0, NULL, 0) == 0)
+                        match = TRUE;
+        }
+
+out:
+        g_free (str1);
+        g_free (str2);
+        return match;
+}
+
+
+/* exactly one of the parameters caller and session must be NULL */
+static PolKitResult
+config_node_test (ConfigNode *node, 
+                  PolKitAction *action, 
+                  PolKitCaller *caller, 
+                  PolKitSession *session)
+{
+        gboolean recurse;
+        PolKitResult result;
+
         recurse = FALSE;
+        result = POLKIT_RESULT_UNKNOWN;
 
         switch (node->node_type) {
         case NODE_TYPE_TOP:
                 recurse = TRUE;
                 break;
         case NODE_TYPE_MATCH:
-                match = FALSE;
-                str1 = NULL;
-                str2 = NULL;
-                switch (node->data.node_match.match_type) {
-                case MATCH_TYPE_ACTION:
-                        if (!polkit_action_get_action_id (action, &str))
-                                goto out;
-                        str1 = g_strdup (str);
-                        break;
-                case MATCH_TYPE_USER:
-                        if (caller != NULL) {
-                                if (!polkit_caller_get_uid (caller, &uid))
-                                        goto out;
-                        } else if (session != NULL) {
-                                if (!polkit_session_get_uid (session, &uid))
-                                        goto out;
-                        } else
-                                goto out;
-
-                        str1 = g_strdup_printf ("%d", uid);
-                        {
-                                struct passwd pd;
-                                struct passwd* pwdptr=&pd;
-                                struct passwd* tempPwdPtr;
-                                char pwdbuffer[256];
-                                int  pwdlinelen = sizeof(pwdbuffer);
-
-                                if ((getpwuid_r (uid, pwdptr, pwdbuffer, pwdlinelen, &tempPwdPtr)) !=0 )
-                                        goto out;
-                                str2 = g_strdup (pd.pw_name);
-                        }
-                        break;
-                }
-
-                if (str1 != NULL) {
-                        if (regexec (&(node->data.node_match.preq), str1, 0, NULL, 0) == 0)
-                                match = TRUE;
-                }
-                if (!match && str2 != NULL) {
-                        if (regexec (&(node->data.node_match.preq), str2, 0, NULL, 0) == 0)
-                                match = TRUE;
-                }
-              
-
-                if (match)
+                if (config_node_match (node, action, caller, session))
                         recurse = TRUE;
-
-                g_free (str1);
-                g_free (str2);
                 break;
         case NODE_TYPE_RETURN:
                 result = node->data.node_return.result;
+                break;
+        default:
                 break;
         }
 
@@ -553,7 +625,7 @@ out:
  * @session: the session in question
  *
  * Determine if the /etc/PolicyKit/PolicyKit.conf configuration file
- * says that a given session can do a given action.
+ * says that a given session can do a given action. 
  *
  * Returns: A #PolKitResult - returns #POLKIT_RESULT_UNKNOWN if there
  * was no match in the configuration file.
@@ -595,3 +667,88 @@ polkit_config_can_caller_do_action (PolKitConfig   *pk_config,
                 result = POLKIT_RESULT_UNKNOWN;
         return result;
 }
+
+
+static polkit_bool_t
+config_node_determine_admin_auth (ConfigNode *node, 
+                                  PolKitAction                *action,
+                                  PolKitCaller                *caller,
+                                  PolKitConfigAdminAuthType   *out_admin_auth_type,
+                                  const char                 **out_data)
+{
+        gboolean recurse;
+        gboolean result_set;
+
+        recurse = FALSE;
+        result_set = FALSE;
+
+        switch (node->node_type) {
+        case NODE_TYPE_TOP:
+                recurse = TRUE;
+                break;
+        case NODE_TYPE_MATCH:
+                if (config_node_match (node, action, caller, NULL))
+                        recurse = TRUE;
+                break;
+        case NODE_TYPE_DEFINE_ADMIN_AUTH:
+                if (out_admin_auth_type != NULL)
+                        *out_admin_auth_type = node->data.node_define_admin_auth.admin_type;
+                if (out_data != NULL)
+                        *out_data = node->data.node_define_admin_auth.data;
+                result_set = TRUE;
+                break;
+        default:
+                break;
+        }
+
+        if (recurse) {
+                GSList *i;
+                for (i = node->children; i != NULL; i = g_slist_next (i)) {
+                        ConfigNode *child_node = i->data;
+
+                        result_set = config_node_determine_admin_auth (child_node, 
+                                                                       action, 
+                                                                       caller, 
+                                                                       out_admin_auth_type,
+                                                                       out_data) || result_set;
+                }
+        }
+
+        return result_set;
+}
+
+/**
+ * polkit_config_determine_auth_type:
+ * @pk_config: the PolicyKit context
+ * @action: the type of access to check for
+ * @caller: the caller in question
+ * @out_admin_auth_type: return location for the authentication type
+ * @out_data: return location for the match value of the given
+ * authentication type. Caller shall not manipulate or free this
+ * string.
+ *
+ * Determine what "Authenticate as admin" means for a given caller and
+ * a given action. This basically returns the result of the
+ * "define_admin_auth" in the configuration file when drilling down
+ * for a specific caller / action.
+ *
+ * Returns: TRUE if value was returned
+ */
+polkit_bool_t
+polkit_config_determine_admin_auth_type (PolKitConfig                *pk_config,
+                                         PolKitAction                *action,
+                                         PolKitCaller                *caller,
+                                         PolKitConfigAdminAuthType   *out_admin_auth_type,
+                                         const char                 **out_data)
+{
+        if (pk_config->top_config_node != NULL) {
+                return config_node_determine_admin_auth (pk_config->top_config_node,
+                                                         action, 
+                                                         caller, 
+                                                         out_admin_auth_type,
+                                                         out_data);
+        } else {
+                return FALSE;
+        }
+}
+

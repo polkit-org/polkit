@@ -3,7 +3,8 @@
 
  - Verify the security model
 
- - Audit all code; especially the setgid helper
+ - Audit all code; especially the setgid polkit_user helper and setuid
+   root pam specific helper
 
  - Granted privileges are currently world-visible; see
    https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=244941
@@ -23,12 +24,6 @@
    be nicer)
 
  - Make sure API coverage is 100%
-
- - Have support for systems that don't use the root account; e.g.
-   instead of authenticating as root, authenticate a user in
-   e.g. the 'wheel' group. Probably means we need a combobox in the UI
-   bits (e.g. PolicyKit-gnome + friends) for selecting the user to
-   auth as.
 
  - Potentially drop the glib dependency (it's not visible in the
    external API). This is mainly to be able to handle OOM for

@@ -39,6 +39,7 @@
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
 #include <polkit/polkit-policy-cache.h>
+#include <polkit/polkit-config.h>
 
 struct PolKitContext;
 typedef struct PolKitContext PolKitContext;
@@ -154,15 +155,15 @@ void           polkit_context_io_func                (PolKitContext *pk_context,
 
 PolKitPolicyCache *polkit_context_get_policy_cache   (PolKitContext *pk_context);
 
-PolKitResult
-polkit_context_can_session_do_action                 (PolKitContext   *pk_context,
+PolKitResult polkit_context_can_session_do_action    (PolKitContext   *pk_context,
                                                       PolKitAction    *action,
                                                       PolKitSession   *session);
 
-PolKitResult
-polkit_context_can_caller_do_action                  (PolKitContext   *pk_context,
+PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_context,
                                                       PolKitAction    *action,
                                                       PolKitCaller    *caller);
+
+PolKitConfig *polkit_context_get_config (PolKitContext *pk_context);
 
 #endif /* POLKIT_CONTEXT_H */
 

@@ -36,7 +36,8 @@ libpolkitinclude_HEADERS =              		\
 	polkit-policy-file-entry.h			\
 	polkit-policy-file.h				\
 	polkit-policy-cache.h				\
-	polkit-policy-default.h
+	polkit-policy-default.h				\
+	polkit-config.h
 
 libpolkit_la_SOURCES =                                			\
 	polkit.h							\

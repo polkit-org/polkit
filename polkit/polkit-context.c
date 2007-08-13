@@ -564,3 +564,23 @@ out:
         _pk_debug ("... result was %s", polkit_result_to_string_representation (result));
         return result;
 }
+
+/**
+ * polkit_context_get_config:
+ * @pk_context: the PolicyKit context
+ *
+ * Returns an object that provides access to the
+ * /etc/PolicyKit/PolicyKit.conf configuration files. Applications
+ * using PolicyKit should never use this method; it's only here for
+ * integration with other PolicyKit components.
+ *
+ * Returns: A #PolKitConfig object
+ */
+PolKitConfig *
+polkit_context_get_config (PolKitContext *pk_context)
+{
+        g_return_val_if_fail (pk_context != NULL, NULL);
+        return pk_context->config;
+}
+
+

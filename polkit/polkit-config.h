@@ -30,10 +30,11 @@
 #ifndef POLKIT_CONFIG_H
 #define POLKIT_CONFIG_H
 
+#include <sys/types.h>
+#include <regex.h>
 #include <polkit/polkit-error.h>
 #include <polkit/polkit-types.h>
 #include <polkit/polkit-result.h>
-#include <polkit/polkit-context.h>
 #include <polkit/polkit-action.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
@@ -54,6 +55,28 @@ PolKitResult
 polkit_config_can_caller_do_action                  (PolKitConfig   *pk_config,
                                                      PolKitAction    *action,
                                                      PolKitCaller    *caller);
+
+/**
+ * PolKitConfigAdminAuthType:
+ * @POLKIT_CONFIG_ADMIN_AUTH_TYPE_USER: Authentication as
+ * administrator matches one or more users
+ * @POLKIT_CONFIG_ADMIN_AUTH_TYPE_GROUP: Authentication as
+ * administrator matches users from one or more groups
+ *
+ * This enumeration reflects results defined in the
+ * "define_admin_auth" configuration element.
+ */
+typedef enum
+{
+        POLKIT_CONFIG_ADMIN_AUTH_TYPE_USER,
+        POLKIT_CONFIG_ADMIN_AUTH_TYPE_GROUP
+} PolKitConfigAdminAuthType;
+
+polkit_bool_t polkit_config_determine_admin_auth_type (PolKitConfig                *pk_config,
+                                                       PolKitAction                *action,
+                                                       PolKitCaller                *caller,
+                                                       PolKitConfigAdminAuthType   *out_admin_auth_type,
+                                                       const char                 **out_data);
 
 #endif /* POLKIT_CONFIG_H */
 

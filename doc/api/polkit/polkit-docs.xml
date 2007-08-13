@@ -76,7 +76,7 @@
     <xi:include href="xml/polkit-seat.xml"/>
     <xi:include href="xml/polkit-session.xml"/>
     <xi:include href="xml/polkit-caller.xml"/>
-    <xi:include href="xml/polkit-module.xml"/>
+    <xi:include href="xml/polkit-config.xml"/>
   </reference>
 
   <index>

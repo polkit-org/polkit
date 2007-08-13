@@ -78,12 +78,23 @@
  *                                   the right to do the Action.
  *
  *                      <-- Tell libpolkit-grant about grant details, e.g.
- *                          {self,admin}_{,keep_session,keep_always}
- *                          using stdout
+ *                          {self,admin}_{,keep_session,keep_always} +
+ *                          what users can authenticate using stdout
  *
  *   Receive grant details on stdin.
  *   Caller prepares UI dialog depending
  *   on grant details.
+ *
+ *                                     if admin_users is not empty, wait for
+ *                                     user name of admin user to auth on stdin
+ *
+ *   if admin_users is not empty, write
+ *   user name of admin user to auth on stdout -->
+ *
+ *
+ *                                       verify that given username is
+ *                                       in admin_users
+ *
  *
  *                                       Spawn polkit-grant-helper-pam
  *                                       with no args -->
@@ -132,8 +143,13 @@
  */
 
 
-/* the authentication itself is done via a setuid root helper; this is
- * to make the code running as uid 0 easier to audit. */
+/** 
+ * do_auth:
+ * 
+ * the authentication itself is done via a setuid root helper; this is
+ * to make the code running as uid 0 easier to audit. 
+ *
+ */
 static polkit_bool_t
 do_auth (const char *user_to_auth)
 {
@@ -208,6 +224,7 @@ do_auth (const char *user_to_auth)
                 /* read from parent */
                 if (fgets (buf, sizeof buf, stdin) == NULL)
                         goto out;
+
 #ifdef PGH_DEBUG
                 fprintf (stderr, "received: '%s' from parent; sending to child\n", buf);
 #endif /* PGH_DEBUG */
@@ -224,11 +241,32 @@ out:
         return ret;
 }
 
+/**
+ * verify_with_polkit:
+ * @caller_pid: the process id of the caller
+ * @action_name: name of the action
+ * @result: return location for result AKA how the user can auth
+ * @out_session_objpath: return location for ConsoleKit session identifier
+ * @out_admin_users: return location for a NULL-terminated array of
+ * strings that can be user to auth as admin. Is set to NULL if the
+ * super user (e.g. uid 0) should be user to auth as admin.
+ *
+ * Verify that the given caller can authenticate to gain a privilege
+ * to do the given action. If the authentication requires
+ * administrator privileges, also return a list of users that can be
+ * used to do this cf. the <define_admin_auth/> element in the
+ * configuration file; see the PolicyKit.conf(5) manual page for
+ * details.
+ *
+ * Returns: TRUE if, and only if, the given caller can authenticate to
+ * gain a privilege to do the given action.
+ */
 static polkit_bool_t
 verify_with_polkit (pid_t caller_pid,
                     const char *action_name,
                     PolKitResult *result,
-                    char **out_session_objpath)
+                    char **out_session_objpath,
+                    char ***out_admin_users)
 {
         PolKitCaller *caller;
         PolKitSession *session;
@@ -287,6 +325,103 @@ verify_with_polkit (pid_t caller_pid,
                 goto error;
         }
 
+        *out_admin_users = NULL;
+
+        /* for admin auth, get a list of users that can be used - this is basically evaluating the
+         * <define_admin_auth/> directives in the config file...
+         */
+        if (*result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+            *result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
+            *result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
+                PolKitConfig *pk_config;
+                PolKitConfigAdminAuthType admin_auth_type;
+                const char *admin_auth_data;
+
+                pk_config = polkit_context_get_config (pol_ctx);
+                if (polkit_config_determine_admin_auth_type (pk_config, 
+                                                             action, 
+                                                             caller, 
+                                                             &admin_auth_type, 
+                                                             &admin_auth_data)) {
+#ifdef PGH_DEBUG
+                        fprintf (stderr, "polkit-grant-helper: admin_auth_type=%d data='%s'\n", admin_auth_type, admin_auth_data);
+#endif /* PGH_DEBUG */
+                        switch (admin_auth_type) {
+                        case POLKIT_CONFIG_ADMIN_AUTH_TYPE_USER:
+                                if (admin_auth_data != NULL)
+                                        *out_admin_users = g_strsplit (admin_auth_data, "|", 0);
+                                break;
+                        case POLKIT_CONFIG_ADMIN_AUTH_TYPE_GROUP:
+                                if (admin_auth_data != NULL) {
+                                        int n;
+                                        char **groups;
+                                        GSList *i;
+                                        GSList *users;
+
+
+                                        users = NULL;
+                                        groups = g_strsplit (admin_auth_data, "|", 0);
+                                        for (n = 0; groups[n] != NULL; n++)  {
+                                                int m;
+                                                struct group *group;
+
+                                                /* This is fine; we're a single-threaded app */
+                                                if ((group = getgrnam (groups[n])) == NULL)
+                                                        continue;
+
+                                                for (m = 0; group->gr_mem[m] != NULL; m++) {
+                                                        const char *user;
+                                                        gboolean found;
+
+                                                        user = group->gr_mem[m];
+                                                        found = FALSE;
+
+#ifdef PGH_DEBUG
+                                                        fprintf (stderr, "polkit-grant-helper: examining member '%s' of group '%s'\n", user, groups[n]);
+#endif /* PGH_DEBUG */
+
+                                                        /* skip user 'root' since he is often member of 'wheel' etc. */
+                                                        if (strcmp (user, "root") == 0)
+                                                                continue;
+                                                        /* TODO: we should probably only consider users with an uid
+                                                         * in a given "safe" range, e.g. between 500 and 32000 or
+                                                         * something like that...
+                                                         */
+
+                                                        for (i = users; i != NULL; i = g_slist_next (i)) {
+                                                                if (strcmp (user, (const char *) i->data) == 0) {
+                                                                        found = TRUE;
+                                                                        break;
+                                                                }
+                                                        }
+                                                        if (found)
+                                                                continue;
+
+#ifdef PGH_DEBUG
+                                                        fprintf (stderr, "polkit-grant-helper: added user '%s'\n", user);
+#endif /* PGH_DEBUG */
+
+                                                        users = g_slist_prepend (users, g_strdup (user));
+                                                }
+
+                                        }
+                                        g_strfreev (groups);
+
+                                        users = g_slist_sort (users, (GCompareFunc) strcmp);
+
+                                        *out_admin_users = g_new0 (char *, g_slist_length (users) + 1);
+                                        for (i = users, n = 0; i != NULL; i = g_slist_next (i)) {
+                                                (*out_admin_users)[n++] = i->data;
+                                        }
+
+                                        g_slist_free (users);
+                                }
+                                break;
+                        }
+                }
+        }
+        
+
         /* TODO: we should probably clean up */
 
         return TRUE;
@@ -298,6 +433,7 @@ static polkit_bool_t
 get_and_validate_override_details (PolKitResult *result)
 {
         char buf[256];
+        char *textual_result;
         PolKitResult desired_result;
 
         if (fgets (buf, sizeof buf, stdin) == NULL)
@@ -305,10 +441,17 @@ get_and_validate_override_details (PolKitResult *result)
         if (strlen (buf) > 0 &&
             buf[strlen (buf) - 1] == '\n')
                 buf[strlen (buf) - 1] = '\0';
-        
-        fprintf (stderr, "polkit-grant-helper: caller said '%s'\n", buf);
 
-        if (!polkit_result_from_string_representation (buf, &desired_result))
+        if (strncmp (buf, 
+                     "POLKIT_GRANT_CALLER_PASS_OVERRIDE_GRANT_TYPE ", 
+                     sizeof "POLKIT_GRANT_CALLER_PASS_OVERRIDE_GRANT_TYPE " - 1) != 0) {
+                goto error;
+        }
+        textual_result = buf + sizeof "POLKIT_GRANT_CALLER_PASS_OVERRIDE_GRANT_TYPE " - 1;
+
+        fprintf (stderr, "polkit-grant-helper: caller said '%s'\n", textual_result);
+
+        if (!polkit_result_from_string_representation (textual_result, &desired_result))
                 goto error;
 
         fprintf (stderr, "polkit-grant-helper: testing for voluntarily downgrade from '%s' to '%s'\n",
@@ -386,6 +529,7 @@ main (int argc, char *argv[])
         char *session_objpath;
         struct passwd *pw;
         polkit_bool_t dbres;
+        char **admin_users;
 
         ret = 3;
 
@@ -461,8 +605,18 @@ main (int argc, char *argv[])
          * - figure out if the caller can really auth to do the action
          * - learn what ConsoleKit session the caller belongs to
          */
-        if (!verify_with_polkit (caller_pid, action_name, &result, &session_objpath))
+        if (!verify_with_polkit (caller_pid, action_name, &result, &session_objpath, &admin_users))
                 goto out;
+
+#ifdef PGH_DEBUG
+        if (admin_users != NULL) {
+                int n;
+                fprintf (stderr, "polkit-grant-helper: admin_users: ");
+                for (n = 0; admin_users[n] != NULL; n++)
+                        fprintf (stderr, "'%s' ", admin_users[n]);
+                fprintf (stderr, "\n");
+        }
+#endif /* PGH_DEBUG */
 
 #ifdef PGH_DEBUG
         fprintf (stderr, "polkit-grant-helper: polkit result   = '%s'\n", 
@@ -477,21 +631,70 @@ main (int argc, char *argv[])
                  polkit_result_to_string_representation (result));
         fflush (stdout);
 
-        /* figure out what user to auth */
-        if (result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
-            result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
-            result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
-                /* TODO: with wheel support, figure out what user to auth */
-                user_to_auth = "root";
+        /* if admin auth is required, tell caller about possible users */
+        if (admin_users != NULL) {
+                int n;
+                fprintf (stdout, "POLKIT_GRANT_HELPER_TELL_ADMIN_USERS");
+                for (n = 0; admin_users[n] != NULL; n++)
+                        fprintf (stdout, " %s", admin_users[n]);
+                fprintf (stdout, "\n");
+                fflush (stdout);
+        }
+
+
+        /* wait for libpolkit-grant to tell us what user to use */
+        if (admin_users != NULL) {
+                int n;
+                char buf[256];
+
+#ifdef PGH_DEBUG
+                fprintf (stderr, "waiting for admin user name...\n");
+#endif /* PGH_DEBUG */
+
+                /* read from parent */
+                if (fgets (buf, sizeof buf, stdin) == NULL)
+                        goto out;
+                if (strlen (buf) > 0 && buf[strlen (buf) - 1] == '\n')
+                        buf[strlen (buf) - 1] = '\0';
+
+                if (strncmp (buf, 
+                             "POLKIT_GRANT_CALLER_SELECT_ADMIN_USER ", 
+                             sizeof "POLKIT_GRANT_CALLER_SELECT_ADMIN_USER " - 1) != 0) {
+                        goto out;
+                }
+
+                user_to_auth = strdup (buf) + sizeof "POLKIT_GRANT_CALLER_SELECT_ADMIN_USER " - 1;
+#ifdef PGH_DEBUG
+                fprintf (stderr, "libpolkit-grant wants to auth as '%s'\n", user_to_auth);
+#endif /* PGH_DEBUG */
+
+                /* now sanity check that returned user is actually in admin_users */
+                for (n = 0; admin_users[n] != NULL; n++) {
+                        if (strcmp (admin_users[n], user_to_auth) == 0)
+                                break;
+                }
+                if (admin_users[n] == NULL) {
+                        ret = 2;
+                        goto out;
+                }
+
         } else {
-                user_to_auth = invoking_user_name;
+                /* figure out what user to auth */
+                if (result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+                    result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
+                    result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
+                        user_to_auth = "root";
+                } else {
+                        user_to_auth = invoking_user_name;
+                }
         }
 
         ret = 1;
 
         /* Start authentication */
-        if (!do_auth (user_to_auth))
+        if (!do_auth (user_to_auth)) {
                 goto out;
+        }
 
         /* Ask caller if he want to slim down grant type...  e.g. he
          * might want to go from auth_self_keep_always to
