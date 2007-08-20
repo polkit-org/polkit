@@ -71,7 +71,7 @@ conversation_type (PolKitGrant *polkit_grant, PolKitResult auth_type, void *user
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
-                printf ("Authentication as admin is required.\n");
+                printf ("Authentication as an administrative user is required.\n");
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
@@ -84,6 +84,25 @@ conversation_type (PolKitGrant *polkit_grant, PolKitResult auth_type, void *user
                 /* should never happen */
                 exit (1);
         }
+}
+
+static char *
+conversation_select_admin_user (PolKitGrant *polkit_grant, char **admin_users, void *user_data)
+{
+        int n;
+        char *user;
+        char *lineptr = NULL;
+        size_t linelen = 0;
+
+        printf ("The following users qualify as administrative users:\n");
+        for (n = 0; admin_users[n] != NULL; n++) {
+                printf ("%s\n", admin_users[n]);
+        }
+        printf ("Select user: ");
+        getline (&lineptr, &linelen, stdin);
+        user = strdup (lineptr);
+        free (lineptr);
+        return user;
 }
 
 static char *
@@ -113,6 +132,7 @@ conversation_pam_prompt_echo_off (PolKitGrant *polkit_grant, const char *request
 
         result = strdup (lineptr);
         free (lineptr);
+        printf ("\n");
         return result;
 }
 
@@ -126,6 +146,7 @@ conversation_pam_prompt_echo_on (PolKitGrant *polkit_grant, const char *request,
         getline (&lineptr, &linelen, stdin);
         result = strdup (lineptr);
         free (lineptr);
+        printf ("\n");
         return result;
 }
 
@@ -346,6 +367,8 @@ main (int argc, char *argv[])
                 goto error;
 	}
 
+        printf ("Attempting to gain the privilege for %s.\n", action_id);
+
         ud.loop = g_main_loop_new (NULL, TRUE);
 
         dbus_error_init (&error);
@@ -377,17 +400,18 @@ main (int argc, char *argv[])
 
         polkit_grant = polkit_grant_new ();
         polkit_grant_set_functions (polkit_grant,
-                                       add_io_watch,
-                                       add_child_watch,
-                                       remove_watch,
-                                       conversation_type,
-                                       conversation_pam_prompt_echo_off,
-                                       conversation_pam_prompt_echo_on,
-                                       conversation_pam_error_msg,
-                                       conversation_pam_text_info,
-                                       conversation_override_grant_type,
-                                       conversation_done,
-                                       &ud);
+                                    add_io_watch,
+                                    add_child_watch,
+                                    remove_watch,
+                                    conversation_type,
+                                    conversation_select_admin_user,
+                                    conversation_pam_prompt_echo_off,
+                                    conversation_pam_prompt_echo_on,
+                                    conversation_pam_error_msg,
+                                    conversation_pam_text_info,
+                                    conversation_override_grant_type,
+                                    conversation_done,
+                                    &ud);
         
         if (!polkit_grant_initiate_auth (polkit_grant,
                                          action,
@@ -399,7 +423,10 @@ main (int argc, char *argv[])
         g_main_loop_run (ud.loop);
         polkit_grant_unref (polkit_grant);
 
-        printf ("Privilege grant done.. result=%d\n", ud.gained_privilege);
+        if (ud.gained_privilege)
+                printf ("Successfully gained the privilege for %s.\n", action_id);
+        else
+                printf ("Failed to gain the privilege for %s.\n", action_id);
 
         ret = ud.gained_privilege ? 0 : 1;
 
