@@ -390,9 +390,15 @@ _end (void *data, const char *el)
                 if (pfe == NULL)
                         goto error;
 
-                group_description = _localize (pd->group_descriptions, pd->group_description_nolang, pd->lang);
-                policy_description = _localize (pd->policy_descriptions, pd->policy_description_nolang, pd->lang);
-                policy_message = _localize (pd->policy_messages, pd->policy_message_nolang, pd->lang);
+                if (pd->load_descriptions) {
+                        group_description = _localize (pd->group_descriptions, pd->group_description_nolang, pd->lang);
+                        policy_description = _localize (pd->policy_descriptions, pd->policy_description_nolang, pd->lang);
+                        policy_message = _localize (pd->policy_messages, pd->policy_message_nolang, pd->lang);
+                } else {
+                        group_description = NULL;
+                        policy_description = NULL;
+                        policy_message = NULL;
+                }
 
                 if (pd->load_descriptions)
                         _polkit_policy_file_entry_set_descriptions (pfe,
