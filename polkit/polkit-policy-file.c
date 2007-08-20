@@ -85,6 +85,7 @@ enum {
 typedef struct {
         XML_Parser parser;
         int state;
+
         char *group_id;
         char *action_id;
 
@@ -95,10 +96,54 @@ typedef struct {
 
         polkit_bool_t load_descriptions;
 
-        char *group_description;
-        char *policy_description;
-        char *policy_message;
+        GHashTable *group_descriptions;
+        GHashTable *policy_descriptions;
+        GHashTable *policy_messages;
+
+        char *group_description_nolang;
+        char *policy_description_nolang;
+        char *policy_message_nolang;
+
+        /* the language according to $LANG (e.g. en_US, da_DK, fr, en_CA minus the encoding) */
+        char *lang;
+
+        /* the value of xml:lang for the thing we're reading in _cdata() */
+        char *elem_lang;
 } ParserData;
+
+static void
+pd_unref_action_data (ParserData *pd)
+{
+        g_free (pd->action_id);
+        pd->action_id = NULL;
+        g_free (pd->policy_description_nolang);
+        pd->policy_description_nolang = NULL;
+        g_free (pd->policy_message_nolang);
+        pd->policy_message_nolang = NULL;
+        if (pd->policy_descriptions != NULL) {
+                g_hash_table_destroy (pd->policy_descriptions);
+                pd->policy_descriptions = NULL;
+        }
+        if (pd->policy_messages != NULL) {
+                g_hash_table_destroy (pd->policy_messages);
+                pd->policy_messages = NULL;
+        }
+}
+
+static void
+pd_unref_group_data (ParserData *pd)
+{
+        pd_unref_action_data (pd);
+
+        g_free (pd->group_id);
+        pd->group_id = NULL;
+        g_free (pd->group_description_nolang);
+        pd->group_description_nolang = NULL;
+        if (pd->group_descriptions != NULL) {
+                g_hash_table_destroy (pd->group_descriptions);
+                pd->group_descriptions = NULL;
+        }
+}
 
 static void
 _start (void *data, const char *el, const char **attr)
@@ -122,41 +167,50 @@ _start (void *data, const char *el, const char **attr)
                 if (strcmp (el, "group") == 0) {
                         if (num_attr != 2 || strcmp (attr[0], "id") != 0)
                                 goto error;
-                        g_free (pd->group_id);
-                        pd->group_id = g_strdup (attr[1]);
                         state = STATE_IN_GROUP;
 
-                        g_free (pd->group_description);
-                        pd->group_description = NULL;
+                        pd_unref_group_data (pd);
+                        pd->group_id = g_strdup (attr[1]);
+                        pd->group_descriptions = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
                 }
                 break;
         case STATE_IN_GROUP:
                 if (strcmp (el, "policy") == 0) {
                         if (num_attr != 2 || strcmp (attr[0], "id") != 0)
                                 goto error;
-                        g_free (pd->action_id);
-                        pd->action_id = g_strdup (attr[1]);
                         state = STATE_IN_POLICY;
 
-                        pd->policy_description = NULL;
-                        pd->policy_message = NULL;
+                        pd_unref_action_data (pd);
+                        pd->action_id = g_strdup (attr[1]);
+                        pd->policy_descriptions = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+                        pd->policy_messages = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
                         /* initialize defaults */
                         pd->defaults_allow_inactive = POLKIT_RESULT_NO;
                         pd->defaults_allow_active = POLKIT_RESULT_NO;
-                }
-                else if (strcmp (el, "description") == 0)
+                } else if (strcmp (el, "description") == 0) {
+                        if (num_attr == 2 && strcmp (attr[0], "xml:lang") == 0) {
+                                pd->elem_lang = g_strdup (attr[1]);
+                        }
                         state = STATE_IN_GROUP_DESCRIPTION;
+                }
                 break;
         case STATE_IN_GROUP_DESCRIPTION:
                 break;
         case STATE_IN_POLICY:
                 if (strcmp (el, "defaults") == 0)
                         state = STATE_IN_DEFAULTS;
-                else if (strcmp (el, "description") == 0)
+                else if (strcmp (el, "description") == 0) {
+                        if (num_attr == 2 && strcmp (attr[0], "xml:lang") == 0) {
+                                pd->elem_lang = g_strdup (attr[1]);
+                        }
                         state = STATE_IN_POLICY_DESCRIPTION;
-                else if (strcmp (el, "message") == 0)
+                } else if (strcmp (el, "message") == 0) {
+                        if (num_attr == 2 && strcmp (attr[0], "xml:lang") == 0) {
+                                pd->elem_lang = g_strdup (attr[1]);
+                        }
                         state = STATE_IN_POLICY_MESSAGE;
+                }
                 break;
         case STATE_IN_POLICY_DESCRIPTION:
                 break;
@@ -197,25 +251,35 @@ _cdata (void *data, const char *s, int len)
 
         case STATE_IN_GROUP_DESCRIPTION:
                 if (pd->load_descriptions) {
-                        if (pd->group_description != NULL)
-                                g_free (pd->group_description);
-                        pd->group_description = g_strdup (str);
+
+                        if (pd->elem_lang == NULL) {
+                                g_free (pd->group_description_nolang);
+                                pd->group_description_nolang = g_strdup (str);
+                        } else {
+                                g_hash_table_insert (pd->group_descriptions, g_strdup (pd->elem_lang), g_strdup (str));
+                        }
                 }
                 break;
                 
         case STATE_IN_POLICY_DESCRIPTION:
                 if (pd->load_descriptions) {
-                        if (pd->policy_description != NULL)
-                                g_free (pd->policy_description);
-                        pd->policy_description = g_strdup (str);
+                        if (pd->elem_lang == NULL) {
+                                g_free (pd->policy_description_nolang);
+                                pd->policy_description_nolang = g_strdup (str);
+                        } else {
+                                g_hash_table_insert (pd->policy_descriptions, g_strdup (pd->elem_lang), g_strdup (str));
+                        }
                 }
                 break;
 
         case STATE_IN_POLICY_MESSAGE:
                 if (pd->load_descriptions) {
-                        if (pd->policy_message != NULL)
-                                g_free (pd->policy_message);
-                        pd->policy_message = g_strdup (str);
+                        if (pd->elem_lang == NULL) {
+                                g_free (pd->policy_message_nolang);
+                                pd->policy_message_nolang = g_strdup (str);
+                        } else {
+                                g_hash_table_insert (pd->policy_messages, g_strdup (pd->elem_lang), g_strdup (str));
+                        }
                 }
                 break;
 
@@ -243,6 +307,53 @@ extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *p
                                                         const char *policy_description,
                                                         const char *policy_message);
 
+/**
+ * _localize:
+ * @translations: a mapping from xml:lang to the value, e.g. 'da' -> 'Smadre', 'en_CA' -> 'Punch, Aye!'
+ * @untranslated: the untranslated value, e.g. 'Punch'
+ * @lang: the locale we're interested in, e.g. 'da_DK', 'da', 'en_CA', 'en_US'; basically just $LANG
+ * with the encoding cut off. Maybe be NULL.
+ *
+ * Pick the correct translation to use.
+ *
+ * Returns: the localized string to use
+ */
+static const char *
+_localize (GHashTable *translations, const char *untranslated, const char *lang)
+{
+        const char *result;
+        char *lang2;
+        int n;
+
+        if (lang == NULL) {
+                result = untranslated;
+                goto out;
+        }
+
+        /* first see if we have the translation */
+        result = g_hash_table_lookup (translations, lang);
+        if (result != NULL)
+                goto out;
+
+        /* we could have a translation for 'da' but lang=='da_DK'; cut off the last part and try again */
+        lang2 = g_strdup (lang);
+        for (n = 0; lang2[n] != '\0'; n++) {
+                if (lang2[n] == '_') {
+                        lang2[n] = '\0';
+                        break;
+                }
+        }
+        result = g_hash_table_lookup (translations, lang2);
+        g_free (lang2);
+        if (result != NULL)
+                goto out;
+
+        /* fall back to untranslated */
+        result = untranslated;
+out:
+        return result;
+}
+
 static void
 _end (void *data, const char *el)
 {
@@ -250,6 +361,9 @@ _end (void *data, const char *el)
         ParserData *pd = data;
 
         state = STATE_NONE;
+
+        g_free (pd->elem_lang);
+        pd->elem_lang = NULL;
 
         switch (pd->state) {
         case STATE_NONE:
@@ -265,6 +379,9 @@ _end (void *data, const char *el)
                 break;
         case STATE_IN_POLICY:
         {
+                const char *group_description;
+                const char *policy_description;
+                const char *policy_message;
                 PolKitPolicyFileEntry *pfe;
 
                 pfe = _polkit_policy_file_entry_new (pd->group_id, pd->action_id, 
@@ -273,11 +390,15 @@ _end (void *data, const char *el)
                 if (pfe == NULL)
                         goto error;
 
+                group_description = _localize (pd->group_descriptions, pd->group_description_nolang, pd->lang);
+                policy_description = _localize (pd->policy_descriptions, pd->policy_description_nolang, pd->lang);
+                policy_message = _localize (pd->policy_messages, pd->policy_message_nolang, pd->lang);
+
                 if (pd->load_descriptions)
                         _polkit_policy_file_entry_set_descriptions (pfe,
-                                                                    pd->group_description,
-                                                                    pd->policy_description,
-                                                                    pd->policy_message);
+                                                                    group_description,
+                                                                    policy_description,
+                                                                    policy_message);
 
                 pd->pf->entries = g_slist_prepend (pd->pf->entries, pfe);
 
@@ -327,6 +448,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         PolKitPolicyFile *pf;
         ParserData pd;
         int xml_res;
+        char *lang;
 
         pf = NULL;
 
@@ -351,6 +473,9 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
 		goto error;
         }
 
+        /* clear parser data */
+        memset (&pd, 0, sizeof (ParserData));
+
         pd.parser = XML_ParserCreate (NULL);
         if (pd.parser == NULL) {
                 polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
@@ -366,22 +491,23 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         pf = g_new0 (PolKitPolicyFile, 1);
         pf->refcount = 1;
 
+        /* init parser data */
         pd.state = STATE_NONE;
-        pd.group_id = NULL;
-        pd.action_id = NULL;
-        pd.group_description = NULL;
-        pd.policy_description = NULL;
-        pd.policy_message = NULL;
         pd.pf = pf;
         pd.load_descriptions = load_descriptions;
+        lang = getenv ("LANG");
+        if (lang != NULL) {
+                int n;
+                pd.lang = g_strdup (lang);
+                for (n = 0; pd.lang[n] != '\0'; n++) {
+                        if (pd.lang[n] == '.') {
+                                pd.lang[n] = '\0';
+                                break;
+                        }
+                }
+        }
 
         xml_res = XML_Parse (pd.parser, buf, buflen, 1);
-
-        g_free (pd.group_id);
-        g_free (pd.action_id);
-        g_free (pd.group_description);
-        g_free (pd.policy_description);
-        g_free (pd.policy_message);
 
 	if (xml_res == 0) {
                 polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
@@ -396,12 +522,12 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
 	}
 	XML_ParserFree (pd.parser);
 	g_free (buf);
-
+        pd_unref_group_data (&pd);
         return pf;
 error:
         if (pf != NULL)
                 polkit_policy_file_unref (pf);
-
+        pd_unref_group_data (&pd);
         return NULL;
 }
 
