@@ -449,14 +449,18 @@ get_and_validate_override_details (PolKitResult *result)
         }
         textual_result = buf + sizeof "POLKIT_GRANT_CALLER_PASS_OVERRIDE_GRANT_TYPE " - 1;
 
+#ifdef PGH_DEBUG
         fprintf (stderr, "polkit-grant-helper: caller said '%s'\n", textual_result);
+#endif /* PGH_DEBUG */
 
         if (!polkit_result_from_string_representation (textual_result, &desired_result))
                 goto error;
 
+#ifdef PGH_DEBUG
         fprintf (stderr, "polkit-grant-helper: testing for voluntarily downgrade from '%s' to '%s'\n",
                  polkit_result_to_string_representation (*result),
                  polkit_result_to_string_representation (desired_result));
+#endif /* PGH_DEBUG */
 
         /* See the huge comment in main() below... 
          *
@@ -500,11 +504,13 @@ get_and_validate_override_details (PolKitResult *result)
                 goto error;
         }
 
+#ifdef PGH_DEBUG
         if (*result != desired_result) {
                 fprintf (stderr, "polkit-grant-helper: voluntarily downgrading from '%s' to '%s'\n",
                          polkit_result_to_string_representation (*result),
                          polkit_result_to_string_representation (desired_result));
         }
+#endif /* PGH_DEBUG */
 
         *result = desired_result;
 

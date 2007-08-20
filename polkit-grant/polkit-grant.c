@@ -234,7 +234,7 @@ polkit_grant_child_func (PolKitGrant *polkit_grant, pid_t pid, int exit_code)
         g_return_if_fail (polkit_grant != NULL);
         g_return_if_fail (polkit_grant->helper_is_running);
 
-        g_debug ("pid %d terminated", pid);
+        /* g_debug ("pid %d terminated", pid); */
         waitpid (pid, &status, 0);
 
         if (exit_code >= 2)
