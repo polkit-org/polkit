@@ -69,11 +69,5 @@
    The is a bit like Objects mentioned in the spec (and what we used
    to have as PolKitResource) but a bit more blurry. It may just work.
 
- - Be more forgiving about bad policy files and bad config files. Hard 
-   problem; it's potentially security sensitive. At least we probably
-   need to spam the syslog
-
- - policy descriptions and localization
-
  - Go to 1.0 soon
 

@@ -17,12 +17,16 @@ to determine whether a caller is privileged to use the mechanism in the way spec
 .I action
 identifier.
 
-Changes to this configuration file are not immediately propagated; the
-utility \&\fIpolkit-reload-config\fR\|(1) can be used to notify
-running processes of the changes to the configuration file.
+Changes to this configuration file are immediately propagated to
+running processes using the \&\fIlibpolkit\fR\|(3) library. If the
+configuration file is invalid, processes using this library will log
+this fact to the system logger and the library will only only return
+.B no
+as the answer to processes using it.
 
 .B TODO: 
-we need to have a tool to verify the PolicyKit.conf file.
+we need to have a tool to verify the PolicyKit.conf file is well
+formed.
 
 For more information about the big picture refer to the \fIPolicyKit
 spec\fP which can be found in

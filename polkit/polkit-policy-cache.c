@@ -35,6 +35,7 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <syslog.h>
 
 #include <glib.h>
 #include "polkit-debug.h"
@@ -100,6 +101,7 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
         while ((file = g_dir_read_name (dir)) != NULL) {
                 char *path;
                 PolKitPolicyFile *pf;
+                PolKitError *pk_error;
 
                 if (!g_str_has_suffix (file, ".policy"))
                         continue;
@@ -110,11 +112,17 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
                 path = g_strdup_printf ("%s/%s", dirname, file);
 
                 _pk_debug ("Loading %s", path);
-                pf = polkit_policy_file_new (path, load_descriptions, error);
+                pk_error = NULL;
+                pf = polkit_policy_file_new (path, load_descriptions, &pk_error);
                 g_free (path);
 
                 if (pf == NULL) {
-                        goto out;
+                        _pk_debug ("libpolkit: ignoring malformed policy file: %s", 
+                                   polkit_error_get_error_message (pk_error));
+                        syslog (LOG_ALERT, "libpolkit: ignoring malformed policy file: %s", 
+                                polkit_error_get_error_message (pk_error));
+                        polkit_error_free (pk_error);
+                        continue;
                 }
 
                 /* steal entries */

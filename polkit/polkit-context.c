@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/inotify.h>
+#include <syslog.h>
 
 #include <glib.h>
 #include "polkit-config.h"
@@ -100,7 +101,10 @@ struct PolKitContext
 
         int inotify_fd;
         int inotify_fd_watch_id;
-        int inotify_reload_wd;
+        int inotify_config_wd;
+        int inotify_policy_wd;
+        int inotify_grant_perm_wd;
+        int inotify_grant_temp_wd;
 };
 
 /**
@@ -118,6 +122,23 @@ polkit_context_new (void)
         pk_context->refcount = 1;
         return pk_context;
 }
+
+static void
+_load_config_file (PolKitContext *pk_context)
+{
+        PolKitError *pk_error;
+
+        pk_context->config = polkit_config_new (&pk_error);
+        /* if configuration file was bad, log it */
+        if (pk_context->config == NULL) {
+                _pk_debug ("failed to load configuration file: %s", 
+                           polkit_error_get_error_message (pk_error));
+                syslog (LOG_ALERT, "libpolkit: failed to load configuration file: %s", 
+                        polkit_error_get_error_message (pk_error));
+                polkit_error_free (pk_error);
+        }
+}
+
 /**
  * polkit_context_init:
  * @pk_context: the context object
@@ -145,14 +166,8 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
         /* NOTE: we don't populate the cache until it's needed.. */
 
         /* Load configuration file */
-        pk_context->config = polkit_config_new (error);
-        if (pk_context->config == NULL) {
-                _pk_debug ("failed to load configuration file: %s", strerror (errno));
-                /* TODO: set error. TODO: should we error out if the config file is bad?!? Or recover and go without a config file? */
-                goto error;
-        }
+        _load_config_file (pk_context);
 
-        /* if the client provided watch functions, use inotify to create a watch on /var/lib/PolicyKit/reload */
         if (pk_context->io_add_watch_func != NULL) {
                 pk_context->inotify_fd = inotify_init ();
                 if (pk_context->inotify_fd < 0) {
@@ -161,11 +176,45 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         goto error;
                 }
 
-                pk_context->inotify_reload_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                   PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload", 
+                /* Watch the /etc/PolicyKit/PolicyKit.conf file */
+                pk_context->inotify_config_wd = inotify_add_watch (pk_context->inotify_fd, 
+                                                                   PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf", 
                                                                    IN_MODIFY | IN_CREATE | IN_ATTRIB);
-                if (pk_context->inotify_reload_wd < 0) {
-                        _pk_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload': %s",
+                if (pk_context->inotify_config_wd < 0) {
+                        _pk_debug ("failed to add watch on file '" PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf': %s",
+                                   strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
+
+                /* Watch the /usr/share/PolicyKit/policy directory */
+                pk_context->inotify_policy_wd = inotify_add_watch (pk_context->inotify_fd, 
+                                                                   PACKAGE_DATA_DIR "/PolicyKit/policy", 
+                                                                   IN_MODIFY | IN_CREATE | IN_DELETE | IN_ATTRIB);
+                if (pk_context->inotify_policy_wd < 0) {
+                        _pk_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/PolicyKit/policy': %s",
+                                   strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
+
+                /* Watch the /var/lib/PolicyKit directory */
+                pk_context->inotify_grant_perm_wd = inotify_add_watch (pk_context->inotify_fd, 
+                                                                       PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 
+                                                                       IN_MODIFY | IN_CREATE | IN_DELETE| IN_ATTRIB);
+                if (pk_context->inotify_grant_perm_wd < 0) {
+                        _pk_debug ("failed to add watch on directory '" PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit': %s",
+                                   strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
+
+                /* Watch the /var/run/PolicyKit directory */
+                pk_context->inotify_grant_temp_wd = inotify_add_watch (pk_context->inotify_fd, 
+                                                                       PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
+                                                                       IN_MODIFY | IN_CREATE | IN_DELETE| IN_ATTRIB);
+                if (pk_context->inotify_grant_temp_wd < 0) {
+                        _pk_debug ("failed to add watch on directory '" PACKAGE_LOCALSTATE_DIR "/run/PolicyKit': %s",
                                    strerror (errno));
                         /* TODO: set error */
                         goto error;
@@ -267,9 +316,13 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
 void 
 polkit_context_io_func (PolKitContext *pk_context, int fd)
 {
+        gboolean config_changed;
+
         g_return_if_fail (pk_context != NULL);
 
         _pk_debug ("polkit_context_io_func: data on fd %d", fd);
+
+        config_changed = FALSE;
 
         if (fd == pk_context->inotify_fd) {
 /* size of the event structure, not counting name */
@@ -296,38 +349,31 @@ again:
                         _pk_debug ("wd=%d mask=%u cookie=%u len=%u",
                                    event->wd, event->mask, event->cookie, event->len);
 
-                        if (event->wd == pk_context->inotify_reload_wd) {
-                                PolKitConfig *new_config;
-
-                                _pk_debug ("config changed!");
-
-                                /* purge existing policy files */
-                                _pk_debug ("purging policy files");
-                                if (pk_context->priv_cache == NULL) {
-                                        polkit_policy_cache_unref (pk_context->priv_cache);
-                                        pk_context->priv_cache = NULL;
-                                }
-
-                                /* Reload configuration file */
-                                _pk_debug ("reload configuration file");
-                                new_config = polkit_config_new (NULL);
-                                if (pk_context->config == NULL) {
-                                        _pk_debug ("failed to reload configuration file: %s", strerror (errno));
-                                        /* TODO: set error. TODO: should we error out if the config file is bad?!? Or recover and go without a config file? */
-                                } else {
-                                        if (pk_context->config != NULL)
-                                                polkit_config_unref (pk_context->config);
-                                        pk_context->config = new_config;
-                                }
-
-                                if (pk_context->config_changed_cb != NULL) {
-                                        pk_context->config_changed_cb (pk_context, 
-                                                                       pk_context->config_changed_user_data);
-                                }
-                        }
+                        _pk_debug ("config changed!");
+                        config_changed = TRUE;
 
                         i += EVENT_SIZE + event->len;
                 }
+        }
+
+        if (config_changed) {
+                /* purge existing policy files */
+                        _pk_debug ("purging policy files");
+                        if (pk_context->priv_cache != NULL) {
+                                polkit_policy_cache_unref (pk_context->priv_cache);
+                                pk_context->priv_cache = NULL;
+                        }
+                        
+                        /* Purge old config and reload configuration file */
+                        _pk_debug ("reloading configuration file");
+                        if (pk_context->config != NULL)
+                                polkit_config_unref (pk_context->config);
+                        _load_config_file (pk_context);
+                        
+                        if (pk_context->config_changed_cb != NULL) {
+                                pk_context->config_changed_cb (pk_context, 
+                                                               pk_context->config_changed_user_data);
+                        }
         }
 }
 
@@ -428,6 +474,10 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, result);
 
+        /* if the configuration file is malformed, always say no */
+        if (pk_context->config == NULL)
+                goto out;
+
         if (action == NULL || session == NULL)
                 goto out;
 
@@ -506,6 +556,10 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, result);
 
+        /* if the configuration file is malformed, always say no */
+        if (pk_context->config == NULL)
+                goto out;
+
         if (action == NULL || caller == NULL)
                 goto out;
 
@@ -574,12 +628,12 @@ out:
  * using PolicyKit should never use this method; it's only here for
  * integration with other PolicyKit components.
  *
- * Returns: A #PolKitConfig object
+ * Returns: A #PolKitConfig object or NULL if the configuration file
+ * is malformed.
  */
 PolKitConfig *
 polkit_context_get_config (PolKitContext *pk_context)
 {
-        g_return_val_if_fail (pk_context != NULL, NULL);
         return pk_context->config;
 }
 

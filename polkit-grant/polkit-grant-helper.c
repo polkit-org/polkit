@@ -338,6 +338,10 @@ verify_with_polkit (pid_t caller_pid,
                 const char *admin_auth_data;
 
                 pk_config = polkit_context_get_config (pol_ctx);
+                /* if the configuration file is malformed, bail out */
+                if (pk_config == NULL)
+                        goto error;
+
                 if (polkit_config_determine_admin_auth_type (pk_config, 
                                                              action, 
                                                              caller, 
@@ -761,12 +765,6 @@ main (int argc, char *argv[])
                 fprintf (stderr, "polkit-grant-helper: failed to write to grantdb\n");
                 goto out;
         }
-
-        /* touch the /var/lib/PolicyKit/reload file */
-        if (utime (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload", NULL) != 0) {
-                fprintf (stderr, "polkit-grant-helper: cannot touch " PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/reload: %s\n", strerror (errno));
-        }
-
 
         ret = 0;
 out:

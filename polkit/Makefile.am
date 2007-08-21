@@ -64,8 +64,6 @@ libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 clean-local :
 	rm -f *~ $(BUILT_SOURCES)
 
-# Create /var/lib/PolicyKit/reload file; this is being watched by libpolkit
-# for config file changes.
 install-data-local:
 	-mkdir -p $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-mkdir -p $(DESTDIR)$(localstatedir)/run/PolicyKit
@@ -73,7 +71,4 @@ install-data-local:
 	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/run/PolicyKit
 	-chmod 775 $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-chmod 775 $(DESTDIR)$(localstatedir)/run/PolicyKit
-	-touch $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
-	-chown :$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
-	-chmod 664 $(DESTDIR)$(localstatedir)/lib/PolicyKit/reload
 
