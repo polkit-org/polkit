@@ -14,72 +14,38 @@
     </para>
     <programlisting>
       <![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 <policyconfig>
-  <group id="polkit-gnome-examples">
-    <description>PolicyKit examples for PolicyKit-gnome</description>
 
-    <policy id="polkit-gnome-examples-frobnicate">
-      <description>Let the example Frobnicate</description>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_self</allow_active>
-      </defaults>
-    </policy>
+  <action id="org.gnome.policykit.examples.frobnicate">
+    <description>Frobnicate</description>
+    <description xml:lang="da">Frobniker</description>
+    <description xml:lang="en_CA">Frobnicate, Aye!</description>
+    <message>System policy prevents the PolicyKit-gnome example helper from Frobnicating</message>
+    <message xml:lang="da">System indstillinger forhindrer PolicyKit-gnome eksempel hjælper i at Frobnikere!</message>
+    <message xml:lang="en_CA">System policy prevents the PolicyKit-gnome example helper from Frobnicating, Aye!</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_self</allow_active>
+    </defaults>
+  </action>
+  
+  <action id="org.gnome.policykit.examples.tweak">
+    <description>Tweak</description>
+    <description xml:lang="da">Tvæk</description>
+    <description xml:lang="en_CA">Tweak, Aye!</description>
+    <message>System policy prevents the PolicyKit-gnome example helper from Tweaking</message>
+    <message xml:lang="da">System indstillinger forhindrer PolicyKit-gnome eksempel hjælper i at Tvække!</message>
+    <message xml:lang="en_CA">System policy prevents the PolicyKit-gnome example helper from Tweaking, Aye!</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+  </action>
 
-    <policy id="polkit-gnome-examples-tweak">
-      <description>Let the example Tweak</description>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_admin</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="polkit-gnome-examples-twiddle">
-      <description>Twiddle</description>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_admin_keep_always</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="polkit-gnome-examples-punch">
-      <description>Punch</description>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_self_keep_session</allow_active>
-      </defaults>
-    </policy>
-
-  </group>
-</policyconfig> 
-]]>
-    </programlisting>
-    <para>
-      Here's a more real-world example from HAL:
-    </para>
-    <programlisting>
-      <![CDATA[
-<policyconfig> 
-  <group id="hal-storage">
-    <description>Storage Drives and Media</description>
-
-    <policy id="hal-storage-mount-fixed">
-      <description>Mount file systems from internal drives</description>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_admin_keep_always</allow_active>
-      </defaults>
-    </policy>
-
-    <policy id="hal-storage-unmount-others">
-      <description>Unmount file systems mounted by other users</description>
-      <defaults>
-        <allow_inactive>no</allow_inactive>
-        <allow_active>auth_admin_keep_always</allow_active>
-      </defaults>
-    </policy>
-
-  </group>
 </policyconfig> 
 ]]>
     </programlisting>
@@ -89,10 +55,22 @@
         <listitem>
           <para>
             <emphasis>Action Identifier:</emphasis> This identifies
-            the action - it needs to be namespaced accordingly using
-            some unique name of the mechanism. This could be
-            e.g. <literal>dialup-connect-trusted</literal>
-            or <literal>dialup-connect-untrusted</literal>.
+            the action and can only contain the
+            characters <literal>[a-z][0-9].-</literal>,
+            e.g. lower-case ASCII, digits, period and hyphen. In
+            addition the identifier needs to start with a lower-case
+            ASCII character. The rationale for having everything is
+            lower case is to make it easy to make a distinction
+            between PolicyKit actions and D-Bus methods / interfaces
+            as the latter is normally using CamelCase.
+          </para><para> 
+            In order for the identifier to be unique, it is
+            recommended that a revser domain name is chosen, for
+            example if the company Acme Inc. has a product called
+            Frakker that exports two Actions Blit and Blop the action
+            names should be chosen
+            as <literal>com.acme.frakker.blit</literal>
+            and <literal>com.acme.frakker.blop</literal>.
           </para>
         </listitem>
         <listitem>
@@ -107,16 +85,12 @@
         </listitem>
         <listitem>
           <para>
-            <emphasis>Grouping:</emphasis> This is purely for
-            organizational purposes. The group identifier needs to be
-            properly namespaced as well.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
             <emphasis>Textual descriptions:</emphasis> Simply included
-            for convenience and organizational purposes (TODO: think
-            about i18n).
+            for convenience and organizational
+            purposes. Standard <literal>xml:lang</literal> mechnanisms
+            are used to convey localized strings (note that intltool
+            0.36 or greater includes native support for
+            handling <literal>.policy</literal> files).
           </para>
         </listitem>
       </itemizedlist>
@@ -166,10 +140,10 @@
       The main point here is that individual upstream software
       projects can provide sensible defaults, e.g. it's sensible for
       the example with a dial-up mechanism to configure
-      the <literal>dialup-connect-trusted</literal> Action to
+      the <literal>org.freedesktop.networkmanager.dialup-trusted</literal> Action to
       return <emphasis>yes</emphasis> for local active sessions and
       the Action
-      <literal>dialup-connect-untrusted</literal> to perhaps
+      <literal>org.freedesktop.networkmanager.dialup-untrusted</literal> to perhaps
       return <emphasis>auth_admin_keep_session</emphasis>. See
       <xref linkend="beyond-defaults"/> for how individual machines
       and sites can customize this.
@@ -178,7 +152,10 @@
     <para>
       The <literal>polkit-list-actions</literal>(1) tool will list all
       the Actions known to <literal>libpolkit</literal> in a
-      convenient format.
+      convenient
+      format. The <literal>polkit-policy-file-validate</literal>(1)
+      tool can be used to check policy files as part of the software
+      release and installation process.
     </para>
   </sect1>
 

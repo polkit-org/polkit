@@ -59,16 +59,13 @@ struct PolKitPolicyFileEntry
 {
         int refcount;
         char *action;
-        char *group;
         PolKitPolicyDefault *defaults;
 
-        char *group_description;
         char *policy_description;
         char *policy_message;
 };
 
 extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
-                                                        const char *group_description,
                                                         const char *policy_description,
                                                         const char *policy_message);
 
@@ -76,14 +73,12 @@ extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *p
 extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
                                                         PolKitResult defaults_allow_active);
 
-extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_group_id,
-                                                               const char *action_id, 
+extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
                                                                PolKitResult defaults_allow_inactive,
                                                                PolKitResult defaults_allow_active);
 
 extern PolKitPolicyFileEntry *
-_polkit_policy_file_entry_new   (const char *action_group_id,
-                                 const char *action_id, 
+_polkit_policy_file_entry_new   (const char *action_id, 
                                  PolKitResult defaults_allow_inactive,
                                  PolKitResult defaults_allow_active)
 {
@@ -92,7 +87,6 @@ _polkit_policy_file_entry_new   (const char *action_group_id,
         pfe = g_new0 (PolKitPolicyFileEntry, 1);
         pfe->refcount = 1;
         pfe->action = g_strdup (action_id);
-        pfe->group = g_strdup (action_group_id);
 
         pfe->defaults = _polkit_policy_default_new (defaults_allow_inactive,
                                                     defaults_allow_active);
@@ -108,33 +102,12 @@ error:
 
 void 
 _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *policy_file_entry,
-                                            const char *group_description,
                                             const char *policy_description,
                                             const char *policy_message)
 {
         g_return_if_fail (policy_file_entry != NULL);
-        policy_file_entry->group_description = g_strdup (group_description);
         policy_file_entry->policy_description = g_strdup (policy_description);
         policy_file_entry->policy_message = g_strdup (policy_message);
-}
-
-/**
- * polkit_policy_file_entry_get_group_description:
- * @policy_file_entry: the object
- * 
- * Get the description of the group that this policy entry describes.
- *
- * Note, if polkit_context_set_load_descriptions() on the
- * #PolKitContext object used to get this object wasn't called, this
- * method will return #NULL.
- * 
- * Returns: string or #NULL if descriptions are not loaded - caller shall not free this string
- **/
-const char *
-polkit_policy_file_entry_get_group_description (PolKitPolicyFileEntry *policy_file_entry)
-{
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
-        return policy_file_entry->group_description;
 }
 
 /**
@@ -217,7 +190,6 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
         if (policy_file_entry->defaults != NULL)
                 polkit_policy_default_unref (policy_file_entry->defaults);
 
-        g_free (policy_file_entry->group_description);
         g_free (policy_file_entry->policy_description);
 
         g_free (policy_file_entry);
@@ -253,22 +225,6 @@ polkit_policy_file_entry_get_id (PolKitPolicyFileEntry *policy_file_entry)
         g_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->action;
 }
-
-/**
- * polkit_policy_file_entry_get_group_id:
- * @policy_file_entry: the file entry
- * 
- * Get the action group identifier.
- * 
- * Returns: A string - caller shall not free this string.
- **/
-const char *
-polkit_policy_file_entry_get_group_id (PolKitPolicyFileEntry *policy_file_entry)
-{
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
-        return policy_file_entry->group;
-}
-
 
 /**
  * polkit_policy_file_entry_get_default:

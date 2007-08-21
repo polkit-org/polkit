@@ -170,6 +170,41 @@ polkit_action_debug (PolKitAction *action)
 }
 
 /**
+ * polkit_action_validate_id:
+ * @action_id: the action identifier to validate
+ * 
+ * Validate whether an action identifier is well formed. To be well
+ * formed, an action identifier needs to start with a lower case ASCII
+ * character and can only contain the characters "[a-z][0-9].-".
+ * 
+ * Returns: #TRUE iff the action identifier is well formed
+ **/
+polkit_bool_t
+polkit_action_validate_id (const char *action_id)
+{
+        int n;
+
+        g_return_val_if_fail (action_id != NULL, FALSE);
+
+        /* validate that the form of the action identifier is correct */
+        if (!g_ascii_islower (action_id[0]))
+                goto malformed;
+
+        for (n = 1; action_id[n] != '\0'; n++) {
+                if (! (g_ascii_islower (action_id[n]) ||
+                       g_ascii_isdigit (action_id[n]) ||
+                       action_id[n] == '.' ||
+                       action_id[n] == '-'))
+                        goto malformed;
+        }
+
+        return TRUE;
+
+malformed:
+        return FALSE;
+}
+
+/**
  * polkit_action_validate:
  * @action: the object
  * 
@@ -182,5 +217,9 @@ polkit_action_validate (PolKitAction *action)
 {
         g_return_val_if_fail (action != NULL, FALSE);
         g_return_val_if_fail (action->id != NULL, FALSE);
-        return TRUE;
+
+        return polkit_action_validate_id (action->id);
 }
+
+
+

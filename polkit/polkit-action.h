@@ -44,6 +44,8 @@ polkit_bool_t polkit_action_get_action_id (PolKitAction *action, char       **ou
 void          polkit_action_debug         (PolKitAction *action);
 polkit_bool_t polkit_action_validate      (PolKitAction *action);
 
+polkit_bool_t polkit_action_validate_id   (const char   *action_id);
+
 #endif /* POLKIT_ACTION_H */
 
 
