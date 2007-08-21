@@ -22,12 +22,12 @@ on how to subscribe.
 
 .SH SEE ALSO
 .PP
+\&\fIPolicyKit.conf\fR\|(5),
+\&\fIpolkit-list-actions\fR\|(1),
 \&\fIpolkit-check-caller\fR\|(1),
 \&\fIpolkit-check-session\fR\|(1),
 \&\fIpolkit-policy-file-validate\fR\|(1),
-\&\fIdbus-daemon\fR\|(1),
-\&\fIhald\fR\|(8)
-
+\&\fIpolkit-grant\fR\|(1)
 
 .SH AUTHOR
 Written by David Zeuthen <david@fubar.dk> with a lot of help from many

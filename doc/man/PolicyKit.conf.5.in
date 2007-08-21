@@ -1,4 +1,4 @@
-.\" 
+.\" -*- Nroff -*-
 .\" PolicyKit.conf manual page.
 .\" Copyright (C) 2007 David Zeuthen <david@fubar.dk>
 .\"
@@ -68,15 +68,12 @@ the value part. The following attributes are supported:
 .I
 .TP
 .B user
-This matches on the user. Both the UNIX uid (e.g. 500) and the user
-name (e.g. davidz) are tried in the matching process. For example .B
-user="davidz|504" matches the UNIX user with uid 504 and the UNIX user
-with the name "davidz".
+This matches on the user's login name.
 .TP
 .B action
 For matching on the action, for example
-.B action="hal-storage-*"
-will match on all actions whose name begins with the string with "hal-storage-".
+.B action="org.freedesktop.hal.storage.*"
+will match on all actions whose name begins with the string with "org.freedesktop.hal.storage.".
 
 .PP
 
@@ -176,7 +173,7 @@ actions installed on the system.
 
   <config version="0.1">
 .br
-    <match user="davidz|504">
+    <match user="davidz|bateman">
 .br
       <return result="yes"/>
 .br
@@ -185,19 +182,18 @@ actions installed on the system.
   </config>
 .br
 
-The two UNIX users "davidz" and user with UNIX uid 504 will be allowed
-to do any action.
+The two UNIX users "davidz" and "bateman" to do any action.
 
 .I MOUNTING FIXED DRIVES
 
 Suppose the action
-.I hal-storage-mount-fixed
+.I org.freedesktop.hal.storage.mount-fixed
 is used by \&\fIhald\fR\|(8) to determine whether mounting internal
 hard drives are allowed. Then this configuration file
 
   <config version="0.1">
 .br
-    <match action="hal-storage-mount-fixed">
+    <match action="org.freedesktop.hal.storage.mount-fixed">
       <match user="davidz">
 .br
         <return result="yes"/>
