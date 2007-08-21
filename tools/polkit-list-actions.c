@@ -59,26 +59,21 @@ _print_entry (PolKitPolicyCache *policy_cache,
               void *user_data)
 {
         const char *action_id;
-        const char *group_id;
         PolKitPolicyDefault *def;
         PolKitResult default_inactive;
         PolKitResult default_active;
 
         action_id = polkit_policy_file_entry_get_id (pfe);
-        group_id = polkit_policy_file_entry_get_group_id (pfe);
         def = polkit_policy_file_entry_get_default (pfe);
         default_inactive = polkit_policy_default_get_allow_inactive (def);
         default_active = polkit_policy_default_get_allow_active (def);
 
         printf ("Policy\n"
                 "------\n"
-                "group             = %s ('%s')\n"
                 "action            = %s ('%s')\n"
                 "default_inactive  = %s\n"
                 "default_active    = %s\n"
                 "\n", 
-                group_id, 
-                polkit_policy_file_entry_get_group_description (pfe),
                 action_id,
                 polkit_policy_file_entry_get_action_description (pfe),
                 polkit_result_to_string_representation (default_inactive),
