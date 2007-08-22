@@ -157,6 +157,61 @@
       tool can be used to check policy files as part of the software
       release and installation process.
     </para>
+
+    <sect2>
+      <title>Annotations</title>
+      <para>
+        When declaring an Action, one can also annotate it with one or
+        more key/value pairs: 
+      </para>
+    <programlisting>
+      <![CDATA[
+  <action id="com.example.blahblaster.run-as-root">
+    <description>Run the graphical BlahBlaster application as the super user</description>
+    <message>System policy prevents the BlahBlaster application</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.PolicyKit.run-as-superuser.path">/usr/bin/BlahBlaster</annotate>
+  </action>
+]]>
+    </programlisting>
+      <para>
+        This is useful when writing an extensible Mechanism that other
+        applications wants to use. The example declaration above is
+        dealing with an (hypothetical and setuid root) mechanism,
+        let's call it
+        <literal>run-as-superuser</literal>, that can start graphical
+        applications as uid 0. Suppose the user invokes it like this
+      </para>
+      <programlisting>
+        run-as-superuser /usr/bin/BlahBlaster
+      </programlisting>
+      <para>
+        Now, the <literal>run-as-superuser</literal> mechanism is only
+        passed a path to the application to start. In order to
+        determine if the calling user is allowed to run the given
+        application as root, we need to determine the PolicyKit Action
+        and then use libpolkit as usual to get an answer (and possibly
+        make the user authenticate to gain the privilege to run the
+        application). By using annotations,
+        the <literal>run-as-superuser</literal> mechanism can query
+        what the action is simply by searching for the Action that has
+        an annotation
+        where <literal>org.freedesktop.PolicyKit.run-as-superuser.path</literal>
+        equals the given path,
+        e.g. <literal>/usr/bin/BlahBlaster</literal>. It then becomes
+        part of the documentation for
+        the <literal>run-as-superuser</literal> program to specify
+        that applications wanting to use it, simply just needs to
+        provide a PolicyKit <literal>.policy</literal> file that
+        declares an Action with an
+        annotation <literal>org.freedesktop.PolicyKit.run-as-superuser.path</literal>
+        whose value is the path to the binary.
+      </para>
+
+    </sect2>
   </sect1>
 
   <sect1 id="beyond-defaults">

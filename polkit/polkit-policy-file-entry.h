@@ -36,6 +36,20 @@
 struct PolKitPolicyFileEntry;
 typedef struct PolKitPolicyFileEntry PolKitPolicyFileEntry;
 
+/**
+ * PolKitPolicyFileEntryAnnotationsForeachFunc:
+ * @policy_file_entry: the policy file entry
+ * @key: key of the annotation
+ * @value: corrosponding value of the annotation
+ * @user_data: user data passed to polkit_policy_file_entry_annotations_foreach()
+ *
+ * Callback function for polkit_policy_file_entry_annotations_foreach().
+ **/
+typedef void (*PolKitPolicyFileEntryAnnotationsForeachFunc) (PolKitPolicyFileEntry *policy_file_entry,
+                                                             const char *key,
+                                                             const char *value,
+                                                             void *user_data);
+
 PolKitPolicyFileEntry *polkit_policy_file_entry_ref   (PolKitPolicyFileEntry *policy_file_entry);
 void                   polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry);
 void                   polkit_policy_file_entry_debug (PolKitPolicyFileEntry *policy_file_entry);
@@ -45,6 +59,12 @@ PolKitPolicyDefault   *polkit_policy_file_entry_get_default  (PolKitPolicyFileEn
 
 const char            *polkit_policy_file_entry_get_action_description (PolKitPolicyFileEntry *policy_file_entry);
 const char            *polkit_policy_file_entry_get_action_message (PolKitPolicyFileEntry *policy_file_entry);
+
+void                   polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file_entry,
+                                                                     PolKitPolicyFileEntryAnnotationsForeachFunc cb,
+                                                                     void *user_data);
+const char            *polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entry,
+                                                                const char *key);
 
 
 #endif /* POLKIT_POLICY_FILE_ENTRY_H */

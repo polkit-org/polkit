@@ -66,7 +66,8 @@ struct PolKitPolicyFile
 
 extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
                                                                PolKitResult defaults_allow_inactive,
-                                                               PolKitResult defaults_allow_active);
+                                                               PolKitResult defaults_allow_active,
+                                                               GHashTable *annotations);
 
 enum {
         STATE_NONE,
@@ -76,7 +77,8 @@ enum {
         STATE_IN_ACTION_MESSAGE,
         STATE_IN_DEFAULTS,
         STATE_IN_DEFAULTS_ALLOW_INACTIVE,
-        STATE_IN_DEFAULTS_ALLOW_ACTIVE
+        STATE_IN_DEFAULTS_ALLOW_ACTIVE,
+        STATE_IN_ANNOTATE
 };
 
 typedef struct {
@@ -103,6 +105,9 @@ typedef struct {
 
         /* the value of xml:lang for the thing we're reading in _cdata() */
         char *elem_lang;
+
+        char *annotate_key;
+        GHashTable *annotations;
 } ParserData;
 
 static void
@@ -121,6 +126,12 @@ pd_unref_action_data (ParserData *pd)
         if (pd->policy_messages != NULL) {
                 g_hash_table_destroy (pd->policy_messages);
                 pd->policy_messages = NULL;
+        }
+        g_free (pd->annotate_key);
+        pd->annotate_key = NULL;
+        if (pd->annotations != NULL) {
+                g_hash_table_destroy (pd->annotations);
+                pd->annotations = NULL;
         }
 }
 
@@ -174,6 +185,13 @@ _start (void *data, const char *el, const char **attr)
                                 pd->elem_lang = g_strdup (attr[1]);
                         }
                         state = STATE_IN_ACTION_MESSAGE;
+                } else if (strcmp (el, "annotate") == 0) {
+                        if (num_attr != 2 || strcmp (attr[0], "key") != 0)
+                                goto error;
+                        state = STATE_IN_ANNOTATE;
+
+                        g_free (pd->annotate_key);
+                        pd->annotate_key = g_strdup (attr[1]);
                 }
                 break;
         case STATE_IN_ACTION_DESCRIPTION:
@@ -189,6 +207,8 @@ _start (void *data, const char *el, const char **attr)
         case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
                 break;
         case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
+                break;
+        case STATE_IN_ANNOTATE:
                 break;
         default:
                 break;
@@ -243,6 +263,14 @@ _cdata (void *data, const char *s, int len)
                 if (!polkit_result_from_string_representation (str, &pd->defaults_allow_active))
                         goto error;
                 break;
+
+        case STATE_IN_ANNOTATE:
+                if (pd->annotations == NULL) {
+                        pd->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+                }
+                g_hash_table_insert (pd->annotations, g_strdup (pd->annotate_key), g_strdup (str));
+                break;
+
         default:
                 break;
         }
@@ -328,9 +356,13 @@ _end (void *data, const char *el)
                 const char *policy_message;
                 PolKitPolicyFileEntry *pfe;
 
+                /* NOTE: caller takes ownership of the annotations object */
                 pfe = _polkit_policy_file_entry_new (pd->action_id, 
                                                      pd->defaults_allow_inactive,
-                                                     pd->defaults_allow_active);
+                                                     pd->defaults_allow_active,
+                                                     pd->annotations);
+                pd->annotations = NULL;
+
                 if (pfe == NULL)
                         goto error;
 
@@ -366,6 +398,9 @@ _end (void *data, const char *el)
                 break;
         case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
                 state = STATE_IN_DEFAULTS;
+                break;
+        case STATE_IN_ANNOTATE:
+                state = STATE_IN_ACTION;
                 break;
         default:
                 break;

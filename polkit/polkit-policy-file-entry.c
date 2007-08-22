@@ -63,6 +63,7 @@ struct PolKitPolicyFileEntry
 
         char *policy_description;
         char *policy_message;
+        GHashTable *annotations;
 };
 
 extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
@@ -75,12 +76,15 @@ extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_al
 
 extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
                                                                PolKitResult defaults_allow_inactive,
-                                                               PolKitResult defaults_allow_active);
+                                                               PolKitResult defaults_allow_active,
+                                                               GHashTable *annotations);
 
+/* NOTE: we take ownership of the annotations object */
 extern PolKitPolicyFileEntry *
 _polkit_policy_file_entry_new   (const char *action_id, 
                                  PolKitResult defaults_allow_inactive,
-                                 PolKitResult defaults_allow_active)
+                                 PolKitResult defaults_allow_active,
+                                 GHashTable *annotations)
 {
         PolKitPolicyFileEntry *pfe;
 
@@ -92,6 +96,8 @@ _polkit_policy_file_entry_new   (const char *action_id,
                                                     defaults_allow_active);
         if (pfe->defaults == NULL)
                 goto error;
+
+        pfe->annotations = annotations;
 
         return pfe;
 error:
@@ -186,9 +192,14 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
         policy_file_entry->refcount--;
         if (policy_file_entry->refcount > 0) 
                 return;
+
         g_free (policy_file_entry->action);
+
         if (policy_file_entry->defaults != NULL)
                 polkit_policy_default_unref (policy_file_entry->defaults);
+
+        if (policy_file_entry->annotations != NULL)
+                g_hash_table_destroy (policy_file_entry->annotations);
 
         g_free (policy_file_entry->policy_description);
 
@@ -239,4 +250,71 @@ polkit_policy_file_entry_get_default (PolKitPolicyFileEntry *policy_file_entry)
 {
         g_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->defaults;
+}
+
+typedef struct  {
+        PolKitPolicyFileEntry *pfe;
+        PolKitPolicyFileEntryAnnotationsForeachFunc cb;
+        void *user_data;
+} _AnnotationsClosure;
+
+static void
+_annotations_cb (gpointer key,
+                 gpointer value,
+                 gpointer user_data)
+{
+        _AnnotationsClosure *closure = user_data;
+        closure->cb (closure->pfe, (const char *) key, (const char *) value, closure->user_data);
+}
+
+/**
+ * polkit_policy_file_entry_annotations_foreach:
+ * @policy_file_entry: the policy file entry
+ * @cb: callback function
+ * @user_data: user data to pass to the callback function
+ *
+ * Iterate over all annotations on the policy file entry.
+ */
+void
+polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file_entry,
+                                              PolKitPolicyFileEntryAnnotationsForeachFunc cb,
+                                              void *user_data)
+{
+        _AnnotationsClosure closure;
+
+        g_return_if_fail (policy_file_entry != NULL);
+        if (policy_file_entry->annotations == NULL)
+                return;
+
+        closure.pfe = policy_file_entry;
+        closure.cb = cb;
+        closure.user_data = user_data;
+
+        g_hash_table_foreach (policy_file_entry->annotations,
+                              _annotations_cb,
+                              &closure);
+}
+
+/**
+ * polkit_policy_file_entry_get_annotation:
+ * @policy_file_entry: the policy file entry
+ * @key: the key of the annotation
+ *
+ * Look of the value of a given annotation.
+ *
+ * Returns: The value of the annotation or NULL if not found.
+ */
+const char *
+polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entry,
+                                         const char *key)
+{
+        const char *value;
+        g_return_val_if_fail (policy_file_entry != NULL, NULL);
+        g_return_val_if_fail (key != NULL, NULL);
+
+        value = NULL;
+        if (policy_file_entry->annotations != NULL) {
+                value = g_hash_table_lookup (policy_file_entry->annotations, key);
+        }
+        return value;
 }
