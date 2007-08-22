@@ -604,12 +604,16 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
         uid = statbuf.st_uid;
 
 #ifdef HAVE_SELINUX
-        if (getpidcon (pid, &secon) != 0) {
-                g_warning ("Cannot lookup SELinux context for pid %d: %s", pid, strerror (errno));
-                goto out;
-        }
-        selinux_context = g_strdup (secon);
-        freecon (secon);
+	/* only get the context if we are enabled */
+	selinux_context = NULL;
+	if (is_selinux_enabled () != 0) {
+		if (getpidcon (pid, &secon) != 0) {
+			g_warning ("Cannot lookup SELinux context for pid %d: %s", pid, strerror (errno));
+			goto out;
+		}
+		selinux_context = g_strdup (secon);
+		freecon (secon);
+	}
 #else
         selinux_context = NULL;
 #endif
