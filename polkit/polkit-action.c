@@ -43,9 +43,10 @@
 
 /**
  * SECTION:polkit-action
- * @short_description: Actions.
+ * @title: Actions
+ * @short_description: Models what a caller is attempting to do.
  *
- * This class is used to represent an action. TODO: describe what a action really is.
+ * This class is used to represent a PolicyKit action.
  **/
 
 /**

@@ -43,9 +43,10 @@
 
 /**
  * SECTION:polkit-session
- * @short_description: Sessions.
+ * @title: Session
+ * @short_description: Represents a ConsoleKit Session.
  *
- * This class is used to represent a session. TODO: describe session.
+ * This class is used to represent a session.
  **/
 
 /**

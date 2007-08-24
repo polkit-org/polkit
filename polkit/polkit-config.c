@@ -47,7 +47,8 @@
 
 /**
  * SECTION:polkit-config
- * @short_description: Configuration file.
+ * @title: Configuration
+ * @short_description: Represents the system-wide <literal>/etc/PolicyKit/PolicyKit.conf</literal> file.
  *
  * This class is used to represent the /etc/PolicyKit/PolicyKit.conf
  * configuration file. Applications using PolicyKit should never use

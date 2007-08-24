@@ -43,9 +43,10 @@
 
 /**
  * SECTION:polkit-seat
- * @short_description: Seats.
+ * @title: Seat
+ * @short_description: Represents a ConsoleKit Seat.
  *
- * This class is used to represent a seat. TODO: describe seat.
+ * This class is used to represent a seat.
  **/
 
 /**

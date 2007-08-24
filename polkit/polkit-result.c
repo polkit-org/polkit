@@ -25,7 +25,8 @@
 
 /**
  * SECTION:polkit-result
- * @short_description: Result of PolicyKit queries
+ * @title: Results
+ * @short_description: Definition of results of PolicyKit queries.
  *
  * These functions are used to manipulate PolicyKit results.
  **/

@@ -47,7 +47,8 @@
 
 /**
  * SECTION:polkit-policy-file
- * @short_description: Policy files.
+ * @title: Policy Definition Files
+ * @short_description: Represents a set of declared actions.
  *
  * This class is used to represent a policy files.
  **/

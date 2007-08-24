@@ -40,17 +40,21 @@
 
 /**
  * SECTION:polkit-grant
- * @short_description: Obtain privileges through authentication.
+ * @title: PolKitGrant
+ * @short_description: A class used for obtain privileges through
+ * authentication.
  *
  * These functions are used to obtain privileges for a user that is
- * able to successfully authenticate.
+ * able to successfully authenticate. It is only useful for people
+ * writing user interfaces that interfaces with the end user.
  **/
 
 /**
  * PolKitGrant:
  *
  * Objects of this class are used to obtain privileges for a user that
- * is able to successfully authenticate.
+ * is able to successfully authenticate. It is only useful for people
+ * writing user interfaces that interfaces with the end user.
  **/
 struct PolKitGrant
 {

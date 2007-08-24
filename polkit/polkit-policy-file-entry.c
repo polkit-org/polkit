@@ -44,7 +44,8 @@
 
 /**
  * SECTION:polkit-policy-file-entry
- * @short_description: Policy files entries.
+ * @title: Policy File Entry
+ * @short_description: Represents a declared action in a policy file.
  *
  * This class is used to represent a entries in policy files.
  **/

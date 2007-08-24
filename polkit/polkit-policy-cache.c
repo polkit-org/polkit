@@ -44,7 +44,8 @@
 
 /**
  * SECTION:polkit-policy-cache
- * @short_description: Class for holding all policy objects.
+ * @title: Policy Cache
+ * @short_description: Holds the actions defined on the system.
  *
  * This class is used to hold all policy objects (stemming from policy
  * files) and provide look-up functions.

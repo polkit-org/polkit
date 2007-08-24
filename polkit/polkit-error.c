@@ -25,7 +25,8 @@
 
 /**
  * SECTION:polkit-error
- * @short_description: Error codes from PolicyKit.
+ * @title: Error reporting
+ * @short_description: Representation of recoverable errors.
  *
  * Error codes from PolicyKit.
  **/

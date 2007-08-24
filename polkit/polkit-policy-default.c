@@ -43,7 +43,8 @@
 
 /**
  * SECTION:polkit-policy-default
- * @short_description: Defaults policy.
+ * @title: Defaults
+ * @short_description: Models the default policy for an action.
  *
  * This class records the default policy of an action.
  **/

@@ -54,7 +54,8 @@
 
 /**
  * SECTION:polkit-context
- * @short_description: Context.
+ * @title: Context
+ * @short_description: The main interface used to query PolicyKit.
  *
  * This class is used to represent the interface to PolicyKit - it is
  * used by Mechanisms that use PolicyKit for making

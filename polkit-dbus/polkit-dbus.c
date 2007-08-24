@@ -26,8 +26,9 @@
 
 /**
  * SECTION:polkit-dbus
- * @short_description: Helper library for obtaining seat, session and
- * caller information via D-Bus and ConsoleKit.
+ * @title: Caller Determination
+ * @short_description: Obtaining seat, session and caller information
+ * via D-Bus and ConsoleKit.
  *
  * Helper library for obtaining seat, session and caller information
  * via D-Bus and ConsoleKit. This library is only useful when writing

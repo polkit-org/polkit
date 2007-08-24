@@ -32,9 +32,10 @@
 
 /**
  * SECTION:polkit-types
- * @short_description: Basic types.
+ * @title: Basic types
+ * @short_description: Type definitions for common primitive types.
  *
- * Typedefs for common primitive types.
+ * Type definitions for common primitive types.
  **/
 
 /**

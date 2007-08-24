@@ -25,9 +25,11 @@
 
 /**
  * SECTION:polkit-caller
- * @short_description: Callers on the system message bus.
+ * @title: Caller
+ * @short_description: Represents a process requesting a mechanism to do something.
  *
- * This class is used to represent a caller in another process connected to the system message bus.
+ * This class is used to represent a caller in another process that is
+ * calling into a mechanism to make the mechanism do something.
  **/
 
 #ifdef HAVE_CONFIG_H
@@ -52,7 +54,7 @@
  * PolKitCaller:
  *
  * Objects of this class are used to record information about a caller
- * on the system bus.
+ * in another process.
  **/
 struct PolKitCaller
 {
