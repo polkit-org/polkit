@@ -55,7 +55,7 @@
  *
  * Objects of this class are used for error reporting.
  **/
-struct PolKitError
+struct _PolKitError
 {
         polkit_bool_t is_static;
         PolKitErrorCode error_code;

@@ -35,8 +35,8 @@
 
 #include <sys/types.h>
 
-struct PolKitSession;
-typedef struct PolKitSession PolKitSession;
+struct _PolKitSession;
+typedef struct _PolKitSession PolKitSession;
 
 PolKitSession *polkit_session_new                (void);
 PolKitSession *polkit_session_ref                (PolKitSession *session);

@@ -55,7 +55,7 @@
  * Objects of this class are used to record information about a
  * seat.
  **/
-struct PolKitSeat
+struct _PolKitSeat
 {
         int refcount;
         char *ck_objref;

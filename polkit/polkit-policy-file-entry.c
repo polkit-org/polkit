@@ -56,7 +56,7 @@
  * Objects of this class are used to record information about a
  * policy.
  **/
-struct PolKitPolicyFileEntry
+struct _PolKitPolicyFileEntry
 {
         int refcount;
         char *action;

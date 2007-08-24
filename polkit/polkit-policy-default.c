@@ -55,7 +55,7 @@
  * Objects of this class are used to record information about a
  * default policy for an action.
  **/
-struct PolKitPolicyDefault
+struct _PolKitPolicyDefault
 {
         int refcount;
         PolKitResult default_inactive;

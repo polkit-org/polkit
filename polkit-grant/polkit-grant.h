@@ -28,8 +28,8 @@
 
 #include <polkit/polkit.h>
 
-struct PolKitGrant;
-typedef struct PolKitGrant PolKitGrant;
+struct _PolKitGrant;
+typedef struct _PolKitGrant PolKitGrant;
 
 /**
  * PolKitGrantType:

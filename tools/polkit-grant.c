@@ -306,7 +306,7 @@ _print_grants (const char *action_id,
                time_t when, 
                PolKitGrantDbGrantType grant_type,
                pid_t pid,
-               unsigned long long pid_time,
+               polkit_uint64_t pid_time,
                const char *session_id,
                void *user_data)
 {

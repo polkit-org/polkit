@@ -32,8 +32,8 @@
 
 #include <polkit/polkit-types.h>
 
-struct PolKitSeat;
-typedef struct PolKitSeat PolKitSeat;
+struct _PolKitSeat;
+typedef struct _PolKitSeat PolKitSeat;
 
 PolKitSeat   *polkit_seat_new           (void);
 PolKitSeat   *polkit_seat_ref           (PolKitSeat *seat);

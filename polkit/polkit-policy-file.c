@@ -59,7 +59,7 @@
  * Objects of this class are used to record information about a
  * policy file.
  **/
-struct PolKitPolicyFile
+struct _PolKitPolicyFile
 {
         int refcount;
         GSList *entries;

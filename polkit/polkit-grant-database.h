@@ -40,7 +40,11 @@ polkit_bool_t _polkit_grantdb_write_pid (const char *action_id, pid_t pid);
 
 /**
  * PolKitGrantDbGrantType:
- * 
+ * @POLKIT_GRANTDB_GRANT_TYPE_PROCESS: The privilege was granted to a process
+ * @POLKIT_GRANTDB_GRANT_TYPE_SESSION: The privilege was granted to session
+ * @POLKIT_GRANTDB_GRANT_TYPE_ALWAYS: The privilege was granted permanently
+ *
+ * Defines the type and scope of a privilege grant.
  */
 typedef enum {
         POLKIT_GRANTDB_GRANT_TYPE_PROCESS,
@@ -51,13 +55,12 @@ typedef enum {
 /**
  * PolKitGrantDbForeachFunc:
  * @action_id: Identifer for the action granted
+ * @uid: the UNIX process id, or -1 if the passed grant_type is not POLKIT_GRANTDB_GRANT_TYPE_ALWAYS
  * @when: when the privilege was granted
  * @grant_type: the type of grant; one of #PolKitGrantDbGrantType
  * @pid: the process id, or -1 if the passed grant_type is not POLKIT_GRANTDB_GRANT_TYPE_PROCESS
  * @pid_time: the start time of the process (only if pid is set)
  * @session_id: the session id, or NULL if the passed grant_type is not POLKIT_GRANTDB_GRANT_TYPE_SESSION
- * @uid: the UNIX process id, or -1 if the passed grant_type is not POLKIT_GRANTDB_GRANT_TYPE_ALWAYS
- * 
  * @user_data: user data passed to polkit_grantdb_foreach()
  *
  * Callback function for polkit_policy_cache_foreach().
@@ -67,7 +70,7 @@ typedef void (*PolKitGrantDbForeachFunc) (const char *action_id,
                                           time_t when, 
                                           PolKitGrantDbGrantType grant_type,
                                           pid_t pid, 
-                                          unsigned long long pid_time,
+                                          polkit_uint64_t pid_time,
                                           const char *session_id,
                                           void *user_data);
 

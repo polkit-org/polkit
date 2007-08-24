@@ -41,8 +41,8 @@
 #include <polkit/polkit-policy-cache.h>
 #include <polkit/polkit-config.h>
 
-struct PolKitContext;
-typedef struct PolKitContext PolKitContext;
+struct _PolKitContext;
+typedef struct _PolKitContext PolKitContext;
 
 /**
  * PolKitContextConfigChangedCB:

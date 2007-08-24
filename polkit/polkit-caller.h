@@ -34,8 +34,8 @@
 #include <polkit/polkit-session.h>
 #include <sys/types.h>
 
-struct PolKitCaller;
-typedef struct PolKitCaller PolKitCaller;
+struct _PolKitCaller;
+typedef struct _PolKitCaller PolKitCaller;
 
 PolKitCaller     *polkit_caller_new                 (void);
 PolKitCaller     *polkit_caller_ref                 (PolKitCaller   *caller);

@@ -34,8 +34,8 @@
 #include <polkit/polkit-action.h>
 #include <polkit/polkit-policy-file-entry.h>
 
-struct PolKitPolicyCache;
-typedef struct PolKitPolicyCache PolKitPolicyCache;
+struct _PolKitPolicyCache;
+typedef struct _PolKitPolicyCache PolKitPolicyCache;
 
 /**
  * PolKitPolicyCacheForeachFunc:

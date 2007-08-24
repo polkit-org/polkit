@@ -33,8 +33,8 @@
 #include <polkit/polkit-error.h>
 #include <polkit/polkit-policy-file-entry.h>
 
-struct PolKitPolicyFile;
-typedef struct PolKitPolicyFile PolKitPolicyFile;
+struct _PolKitPolicyFile;
+typedef struct _PolKitPolicyFile PolKitPolicyFile;
 
 /**
  * PolKitPolicyFileEntryForeachFunc:

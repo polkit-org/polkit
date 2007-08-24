@@ -55,7 +55,7 @@
  * Objects of this class are used to record information about a
  * session.
  **/
-struct PolKitSession
+struct _PolKitSession
 {
         int refcount;
         uid_t uid;

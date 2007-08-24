@@ -75,7 +75,7 @@ typedef struct ConfigNode ConfigNode;
  * class; it's only here for integration with other PolicyKit
  * components.
  **/
-struct PolKitConfig
+struct _PolKitConfig
 {
         int refcount;
         ConfigNode *top_config_node;
@@ -717,7 +717,7 @@ config_node_determine_admin_auth (ConfigNode *node,
 }
 
 /**
- * polkit_config_determine_auth_type:
+ * polkit_config_determine_admin_auth_type:
  * @pk_config: the PolicyKit context
  * @action: the type of access to check for
  * @caller: the caller in question

@@ -57,7 +57,7 @@
  * Instances of this class are used to hold all policy objects
  * (stemming from policy files) and provide look-up functions.
  **/
-struct PolKitPolicyCache
+struct _PolKitPolicyCache
 {
         int refcount;
 
@@ -208,7 +208,7 @@ polkit_policy_cache_debug (PolKitPolicyCache *policy_cache)
 /**
  * polkit_policy_cache_get_entry_by_id:
  * @policy_cache: the cache
- * @action: the action identifier
+ * @action_id: the action identifier
  * 
  * Given a action identifier, find the object describing the
  * definition of the policy; e.g. data stemming from files in

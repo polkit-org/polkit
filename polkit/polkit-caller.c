@@ -56,7 +56,7 @@
  * Objects of this class are used to record information about a caller
  * in another process.
  **/
-struct PolKitCaller
+struct _PolKitCaller
 {
         int refcount;
         char *dbus_name;

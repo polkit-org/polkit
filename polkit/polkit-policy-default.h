@@ -36,8 +36,8 @@
 #include <polkit/polkit-caller.h>
 #include <polkit/polkit-error.h>
 
-struct PolKitPolicyDefault;
-typedef struct PolKitPolicyDefault PolKitPolicyDefault;
+struct _PolKitPolicyDefault;
+typedef struct _PolKitPolicyDefault PolKitPolicyDefault;
 
 PolKitPolicyDefault    *polkit_policy_default_ref   (PolKitPolicyDefault *policy_default);
 void                    polkit_policy_default_unref (PolKitPolicyDefault *policy_default);

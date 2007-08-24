@@ -39,8 +39,8 @@
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
 
-struct PolKitConfig;
-typedef struct PolKitConfig PolKitConfig;
+struct _PolKitConfig;
+typedef struct _PolKitConfig PolKitConfig;
 
 PolKitConfig  *polkit_config_new                    (const char *path, PolKitError **error);
 PolKitConfig  *polkit_config_ref                    (PolKitConfig *pk_config);

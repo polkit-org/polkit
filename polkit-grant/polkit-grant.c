@@ -56,7 +56,7 @@
  * is able to successfully authenticate. It is only useful for people
  * writing user interfaces that interfaces with the end user.
  **/
-struct PolKitGrant
+struct _PolKitGrant
 {
         int refcount;
 
@@ -87,7 +87,6 @@ struct PolKitGrant
 
 /**
  * polkit_grant_new:
- * @void: 
  * 
  * Creates a #PolKitGrant object.
  * 

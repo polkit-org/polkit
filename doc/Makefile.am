@@ -13,7 +13,7 @@ DOC_MODULE=polkit
 DOC_MAIN_SGML_FILE=polkit-docs.xml
 
 # Extra options to supply to gtkdoc-scan
-#SCAN_OPTIONS=--deprecated-guards="CAIRO_DISABLE_DEPRECATED"
+SCAN_OPTIONS=--ignore-headers=config.h
 
 # The directory containing the source code. Relative to $(srcdir)
 DOC_SOURCE_DIR=..

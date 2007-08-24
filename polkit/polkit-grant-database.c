@@ -49,13 +49,13 @@
  **/
 
 /* TODO FIXME: this is Linux specific */
-static unsigned long long 
+static polkit_uint64_t 
 get_start_time_for_pid (pid_t pid)
 {
         char *filename;
         char *contents;
         gsize length;
-        unsigned long long start_time;
+        polkit_uint64_t start_time;
         GError *error = NULL;
         char **tokens;
         char *p;
@@ -168,7 +168,7 @@ _polkit_grantdb_write_pid (const char *action_id, pid_t pid)
 {
         char *grant_file;
         polkit_bool_t ret = FALSE;
-        unsigned long long pid_start_time;
+        polkit_uint64_t pid_start_time;
 
         pid_start_time = get_start_time_for_pid (pid);
         if (pid_start_time == 0)
@@ -234,7 +234,7 @@ _polkit_grantdb_check_can_caller_do_action (PolKitContext         *pk_context,
         pid_t invoking_process_id;
         PolKitSession *session;
         char *session_objpath;
-        unsigned long long pid_start_time;
+        polkit_uint64_t pid_start_time;
 
         grant_file = NULL;
         result = POLKIT_RESULT_UNKNOWN;
@@ -352,7 +352,7 @@ _polkit_grantdb_foreach (PolKitGrantDbForeachFunc callback, void *user_data)
 
                         if (strncmp (endptr + 1, "pid-", 4) == 0) {
                                 int pid;
-                                unsigned long long pid_time;
+                                polkit_uint64_t pid_time;
 
                                 pid = strtol (endptr + 1 + 4 /*pid-*/, &endptr, 10);
                                 if (endptr == NULL || *endptr != '@')

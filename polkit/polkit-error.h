@@ -43,8 +43,8 @@ typedef enum
         POLKIT_ERROR_POLICY_FILE_INVALID
 } PolKitErrorCode;
 
-struct PolKitError;
-typedef struct PolKitError PolKitError;
+struct _PolKitError;
+typedef struct _PolKitError PolKitError;
 
 PolKitErrorCode  polkit_error_get_error_code (PolKitError *error);
 const char      *polkit_error_get_error_message (PolKitError *error);

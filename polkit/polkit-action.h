@@ -32,8 +32,8 @@
 
 #include <polkit/polkit-types.h>
 
-struct PolKitAction;
-typedef struct PolKitAction PolKitAction;
+struct _PolKitAction;
+typedef struct _PolKitAction PolKitAction;
 
 PolKitAction *polkit_action_new           (void);
 PolKitAction *polkit_action_ref           (PolKitAction *action);

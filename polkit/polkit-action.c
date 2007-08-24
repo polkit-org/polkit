@@ -54,7 +54,7 @@
  *
  * Objects of this class are used to record information about an action.
  **/
-struct PolKitAction
+struct _PolKitAction
 {
         int refcount;
         char *id;

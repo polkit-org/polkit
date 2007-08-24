@@ -45,6 +45,13 @@
  */
 typedef int polkit_bool_t;
 
+/**
+ * polkit_uint64_t:
+ *
+ * Type for unsigned 64 bit integer.
+ */
+typedef unsigned long long polkit_uint64_t;
+
 #ifndef TRUE
 #  define TRUE 1
 #endif

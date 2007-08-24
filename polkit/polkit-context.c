@@ -82,7 +82,7 @@
  *
  * Context object for users of PolicyKit.
  **/
-struct PolKitContext
+struct _PolKitContext
 {
         int refcount;
 
