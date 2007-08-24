@@ -83,7 +83,6 @@ struct PolKitGrant
 
 /**
  * polkit_grant_new:
- * @void: 
  * 
  * Creates a #PolKitGrant object.
  * 

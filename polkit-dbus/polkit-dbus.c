@@ -389,7 +389,7 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
         session = NULL;
 
 	uid = dbus_bus_get_unix_user (con, dbus_name, error);
-	if (uid == ((unsigned long) -1) || dbus_error_is_set (error)) {
+	if (dbus_error_is_set (error)) {
 		g_warning ("Could not get uid for connection: %s %s", error->name, error->message);
 		goto out;
 	}
