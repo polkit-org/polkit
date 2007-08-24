@@ -144,7 +144,7 @@ typedef void (*PolKitGrantConversationTextInfo) (PolKitGrant *polkit_grant,
  * Basically, this callback enables a program to provide an user
  * interface like this:
  *
- * @code 
+ * <programlisting>
  * +------------------------------------------------------------+
  * | You need to authenticate to access the volume 'Frobnicator |
  * | Adventures Vol 2'                                          |
@@ -157,7 +157,7 @@ typedef void (*PolKitGrantConversationTextInfo) (PolKitGrant *polkit_grant,
  * |                                                            |
  * |                                    [Cancel] [Authenticate] |
  * +------------------------------------------------------------+
- * @endcode
+ * </programlisting>
  *
  * This dialog assumes that @grant_type passed was
  * #POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS. By ticking the
@@ -170,7 +170,7 @@ typedef void (*PolKitGrantConversationTextInfo) (PolKitGrant *polkit_grant,
  * #POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION. Then the dialog
  * should look like this:
  *
- * @code
+ * <programlisting>
  * +------------------------------------------------------------+
  * | You need to authenticate to access the volume 'Frobnicator |
  * | Adventures Vol 2'                                          |
@@ -181,13 +181,13 @@ typedef void (*PolKitGrantConversationTextInfo) (PolKitGrant *polkit_grant,
  * |                                                            |
  * |                                    [Cancel] [Authenticate] |
  * +------------------------------------------------------------+
- * @endcode
+ * </programlisting>
  *
  * Finally, if the @grant_type value passed is
  * e.g. #POLKIT_RESULT_ONLY_VIA_SELF_AUTH, there are no options to
  * click.:
  *
- * @code 
+ * <programlisting>
  * +------------------------------------------------------------+
  * | You need to authenticate to access the volume 'Frobnicator |
  * | Adventures Vol 2'                                          |
@@ -196,7 +196,7 @@ typedef void (*PolKitGrantConversationTextInfo) (PolKitGrant *polkit_grant,
  * |                                                            |
  * |                                    [Cancel] [Authenticate] |
  * +------------------------------------------------------------+
- * @endcode
+ * </programlisting>
  *
  * Of course, these examples also applies to
  * #POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH and friends.
@@ -239,7 +239,7 @@ typedef void (*PolKitGrantDone) (PolKitGrant *polkit_grant,
  *
  * For glib mainloop, the function will typically look like this:
  *
- * @code
+ * <programlisting>
  * static void
  * child_watch_func (GPid pid,
  *                   gint status,
@@ -254,7 +254,7 @@ typedef void (*PolKitGrantDone) (PolKitGrant *polkit_grant,
  * {
  *         return g_child_watch_add (pid, child_watch_func, polkit_grant);
  * }
- * @endcode
+ * </programlisting>
  *
  * Returns: 0 if the watch couldn't be set up; otherwise an unique
  * identifier for the watch.
@@ -274,7 +274,7 @@ typedef int (*PolKitGrantAddChildWatch) (PolKitGrant *polkit_grant,
  *
  * For glib mainloop, the function will typically look like this:
  *
- * @code 
+ * <programlisting>
  * static gboolean
  * io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
  * {
@@ -302,7 +302,7 @@ typedef int (*PolKitGrantAddChildWatch) (PolKitGrant *polkit_grant,
  * out:
  *         return id;
  * }
- * @endcode
+ * </programlisting>
  *
  * Returns: 0 if the watch couldn't be set up; otherwise an unique
  * identifier for the watch.
@@ -322,13 +322,13 @@ typedef int (*PolKitGrantAddIOWatch) (PolKitGrant *polkit_grant,
  *
  * For glib mainloop, the function will typically look like this:
  *
- * @code
+ * <programlisting>
  * static void 
  * remove_watch (PolKitGrant *polkit_auth, int watch_id)
  * {
  *         g_source_remove (watch_id);
  * }
- * @endcode
+ * </programlisting>
  *
  **/
 typedef void (*PolKitGrantRemoveWatch) (PolKitGrant *polkit_grant,

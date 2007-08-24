@@ -80,7 +80,7 @@ typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
  *
  * For glib mainloop, the function will typically look like this:
  *
- * @code
+ * <programlisting>
  * static gboolean
  * io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
  * {
@@ -108,7 +108,7 @@ typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
  * out:
  *         return id;
  * }
- * @endcode
+ * </programlisting>
  *
  * Returns: 0 if the watch couldn't be set up; otherwise an unique
  * identifier for the watch.
@@ -126,13 +126,13 @@ typedef int (*PolKitContextAddIOWatch) (PolKitContext *pk_context, int fd);
  *
  * For the glib mainloop, the function will typically look like this:
  *
- * @code
+ * <programlisting>
  * static void 
  * io_remove_watch (PolKitContext *pk_context, int watch_id)
  * {
  *         g_source_remove (watch_id);
  * }
- * @endcode
+ * </programlisting>
  *
  **/
 typedef void (*PolKitContextRemoveIOWatch) (PolKitContext *pk_context, int watch_id);
