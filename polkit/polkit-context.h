@@ -163,7 +163,7 @@ PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_contex
                                                       PolKitAction    *action,
                                                       PolKitCaller    *caller);
 
-PolKitConfig *polkit_context_get_config (PolKitContext *pk_context);
+PolKitConfig *polkit_context_get_config (PolKitContext *pk_context, PolKitError **error);
 
 #endif /* POLKIT_CONTEXT_H */
 

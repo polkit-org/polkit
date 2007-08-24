@@ -337,7 +337,7 @@ verify_with_polkit (pid_t caller_pid,
                 PolKitConfigAdminAuthType admin_auth_type;
                 const char *admin_auth_data;
 
-                pk_config = polkit_context_get_config (pol_ctx);
+                pk_config = polkit_context_get_config (pol_ctx, NULL);
                 /* if the configuration file is malformed, bail out */
                 if (pk_config == NULL)
                         goto error;

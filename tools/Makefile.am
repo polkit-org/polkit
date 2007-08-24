@@ -11,13 +11,10 @@ INCLUDES = \
 	@GLIB_CFLAGS@ \
 	@DBUS_CFLAGS@
 
-bin_PROGRAMS = polkit-check-caller polkit-check-session polkit-policy-file-validate polkit-grant polkit-list-actions
+bin_PROGRAMS = polkit-config-file-validate polkit-policy-file-validate polkit-grant polkit-list-actions
 
-polkit_check_caller_SOURCES = polkit-check-caller.c
-polkit_check_caller_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
-
-polkit_check_session_SOURCES = polkit-check-session.c
-polkit_check_session_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
+polkit_config_file_validate_SOURCES = polkit-config-file-validate.c
+polkit_config_file_validate_LDADD = $(top_builddir)/polkit/libpolkit.la
 
 polkit_policy_file_validate_SOURCES = polkit-policy-file-validate.c
 polkit_policy_file_validate_LDADD = $(top_builddir)/polkit/libpolkit.la

@@ -459,7 +459,7 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, result);
 
-        config = polkit_context_get_config (pk_context);
+        config = polkit_context_get_config (pk_context, NULL);
         /* if the configuration file is malformed, always say no */
         if (config == NULL)
                 goto out;
@@ -544,7 +544,7 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         g_return_val_if_fail (pk_context != NULL, result);
 
         /* if the configuration file is malformed, always say no */
-        config = polkit_context_get_config (pk_context);
+        config = polkit_context_get_config (pk_context, NULL);
         if (config == NULL)
                 goto out;
 
@@ -610,6 +610,7 @@ out:
 /**
  * polkit_context_get_config:
  * @pk_context: the PolicyKit context
+ * @error: Return location for error
  *
  * Returns an object that provides access to the
  * /etc/PolicyKit/PolicyKit.conf configuration files. Applications
@@ -620,20 +621,28 @@ out:
  * is malformed.
  */
 PolKitConfig *
-polkit_context_get_config (PolKitContext *pk_context)
+polkit_context_get_config (PolKitContext *pk_context, PolKitError **error)
 {
         if (pk_context->config == NULL) {
-                PolKitError *pk_error;
+                PolKitError **pk_error;
+                PolKitError *pk_error2;
+
+                pk_error2 = NULL;
+                if (error != NULL)
+                        pk_error = error;
+                else
+                        pk_error = &pk_error2;
 
                 _pk_debug ("loading configuration file");
-                pk_context->config = polkit_config_new (&pk_error);
+                pk_context->config = polkit_config_new (PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf", pk_error);
                 /* if configuration file was bad, log it */
                 if (pk_context->config == NULL) {
                         _pk_debug ("failed to load configuration file: %s", 
-                                   polkit_error_get_error_message (pk_error));
+                                   polkit_error_get_error_message (*pk_error));
                         syslog (LOG_ALERT, "libpolkit: failed to load configuration file: %s", 
-                                polkit_error_get_error_message (pk_error));
-                        polkit_error_free (pk_error);
+                                polkit_error_get_error_message (*pk_error));
+                        if (pk_error == &pk_error2)
+                                polkit_error_free (*pk_error);
                 }
         }
         return pk_context->config;

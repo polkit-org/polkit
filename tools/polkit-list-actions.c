@@ -43,8 +43,7 @@ usage (int argc, char *argv[])
 {
 	fprintf (stderr,
                  "\n"
-                 "usage : polkit-list-actions [--version] [--help]\n"
-                 "\n");
+                 "usage : polkit-list-actions [--action <action>] [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
                  "        --version        Show version and exit\n"

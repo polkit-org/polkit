@@ -1,323 +1,314 @@
-<?xml version='1.0'?>
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
-<article>
-  <section>
+<refentry>
+  <refentryinfo>
     <title>PolicyKit.conf</title>
-    <refentry>
-      <refentryinfo>
-        <title>PolicyKit.conf</title>
-        <date>August 2007</date>
-        <productname>PolicyKit</productname>
-      </refentryinfo>
-
-      <refmeta>
-        <refentrytitle>PolicyKit.conf</refentrytitle>
-        <manvolnum>5</manvolnum>
-        <refmiscinfo class="version"></refmiscinfo>
-      </refmeta>
-
-      <refnamediv>
-        <refname>PolicyKit.conf</refname>
-        <refpurpose>PolicyKit configuration file</refpurpose>
-      </refnamediv>
-
-      <refsect1><title>DESCRIPTION</title> 
-        <para>
-          The <filename>/etc/PolicyKit/PolicyKit.conf</filename>
-          configuration file provides a way for system administrators
-          to override policy for mechanisms that use the PolicyKit
-          library to determine whether a caller is allowed to use the
-          mechanism.
-        </para>
-
-        <para>
-          Changes to this configuration file are immediately
-          propagated to running processes using the PolicyKit
-          library. If the configuration file is invalid, processes
-          using this library will log this fact to the system logger
-          and the library will only only
-          return <emphasis>no</emphasis> as the answer to processes
-          using it.
-        </para>
-
-        <para>
-          The <citerefentry><refentrytitle>polkit-config-file-validate</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-          tool can be used to verify that the configuration file is
-          valid.
-        </para>
-      </refsect1>
-
-      <refsect1>
-        <title>FILE FORMAT</title> 
-        <para>
-          The configuration file is an XML document. It must have the
-          following doctype declaration:
-        </para>
-
-        <programlisting>
-          <![CDATA[
+    <date>August 2007</date>
+    <productname>PolicyKit</productname>
+  </refentryinfo>
+  
+  <refmeta>
+    <refentrytitle>PolicyKit.conf</refentrytitle>
+    <manvolnum>5</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+  
+  <refnamediv>
+    <refname>PolicyKit.conf</refname>
+    <refpurpose>PolicyKit configuration file</refpurpose>
+  </refnamediv>
+  
+  <refsect1><title>DESCRIPTION</title> 
+    <para>
+      The <filename>/etc/PolicyKit/PolicyKit.conf</filename>
+      configuration file provides a way for system administrators to
+      override policy for mechanisms that use the PolicyKit library to
+      determine whether a caller is allowed to use the mechanism.
+    </para>
+    
+    <para>
+      Changes to this configuration file are immediately propagated to
+      running processes using the PolicyKit library. If the
+      configuration file is invalid, processes using this library will
+      log this fact to the system logger and the library will only
+      only return <emphasis>no</emphasis> as the answer to processes
+      using it.
+    </para>
+    
+    <para>
+      The <citerefentry><refentrytitle>polkit-config-file-validate</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      tool can be used to verify that the configuration file is
+      valid.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>FILE FORMAT</title> 
+    <para>
+      The configuration file is an XML document. It must have the
+      following doctype declaration:
+    </para>
+    
+    <programlisting>
+      <![CDATA[
 <!DOCTYPE pkconfig PUBLIC 
  "-//freedesktop//DTD PolicyKit Configuration 1.0//EN"
  "http://hal.freedesktop.org/releases/PolicyKit/1.0/config.dtd">
 ]]>
-        </programlisting>
-
-        <para>
-          The following elements may be present in the configuration file:
-        </para>
-
-        <refsect2>
-          <title>config</title>
-          <para>
-            This is the root element. A single
-            attribute <emphasis>version</emphasis> must be present and
-            must be set to "0.1" at this point. There can only be one
-            <emphasis>config</emphasis> element in the configuration file.
-          </para>
-        </refsect2>
-
-        <refsect2>
-          <title>match</title>
-          <para>
-            This element is for matching information related to the
-            decision making process and includes values describing
-            both the caller and the action. This element can be
-            embedded in both <emphasis>config</emphasis> and
-            other <emphasis>match</emphasis> elements (hence allowing
-            for nested matching).
-          </para>
-          <para>
-            There can only be a single attribute in
-            each <emphasis>match</emphasis> element and POSIX Extended
-            Regular Expression syntax are supported in the value
-            part. The following attributes are supported:
-          </para>
-          
-          <variablelist>
-            <varlistentry>
-              <term><emphasis>user</emphasis></term>
-              <listitem>
-                <para>
-                  This matches on the users login name.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>action</emphasis></term>
-              <listitem>
-                <para>
-                  For matching on the given action being queried for,
-                  for example
-                  <emphasis>action="org.foo.*"</emphasis> will match
-                  on all actions whose action identifier begins with
-                  the string "org.foo.".
-                </para>
-              </listitem>
-            </varlistentry>
-          </variablelist>
-
-        </refsect2>
-
-        <refsect2>
-          <title>return</title>
-          <para>
-            This element is for used to specify what result the
-            PolicyKit library will return. It can only be embedded in
-            <emphasis>config</emphasis> and <emphasis>match</emphasis>
-            elements and can embed no elements
-            itself. The <emphasis>return</emphasis> element is
-            typically used deeply inside a number
-            of <emphasis>match</emphasis> elements. A single attribute,
-            <emphasis>result</emphasis> is supported and it can assume
-            the following values:
-          </para>
-
-          <variablelist>
-            <varlistentry>
-              <term><emphasis>no</emphasis></term>
-              <listitem>
-                <para>
-                  Access denied.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>auth_self</emphasis></term>
-              <listitem>
-                <para>
-                  Access denied, but authentication of the caller as
-                  himself will grant access to only that caller.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>auth_self_keep_session</emphasis></term>
-              <listitem>
-                <para>
-                  Access denied, but authentication of the caller as
-                  himself will grant access to any caller in the
-                  session of the caller belongs to.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>auth_self_keep_always</emphasis></term>
-              <listitem>
-                <para>
-                  Access denied, but authentication of the caller as
-                  himself will grant access any caller with the given
-                  uid in the future.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>auth_admin</emphasis></term>
-              <listitem>
-                <para>
-                  Access denied, but authentication of the caller as
-                  an administrative user will grant access to only
-                  that caller.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>auth_admin_keep_session</emphasis></term>
-              <listitem>
-                <para>
-                  Access denied, but authentication of the caller as
-                  an administrative user will grant access to any caller
-                  in the session of the caller belongs to.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>auth_admin_keep_always</emphasis></term>
-              <listitem>
-                <para>
-                  Access denied, but authentication of the caller as
-                  an administrative user will grant access any caller
-                  with the given uid in the future.
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>yes</emphasis></term>
-              <listitem>
-                <para>
-                  Access granted.
-                </para>
-              </listitem>
-            </varlistentry>
-          </variablelist>
-
-        </refsect2>
-
-        <refsect2>
-          <title>define_admin_auth</title>
-          <para>
-            This element is used to specify the meaning of
-            <emphasis>"authenticate as administrator"</emphasis>. It
-            is normally used at the top-level but can also be used
-            deep inside a number of
-            <emphasis>match</emphasis> elements for conditional
-            behavior.
-          </para>
-
-          <para>
-            There can only be a single attribute in
-            each <emphasis>define_admin_auth</emphasis> element. POSIX
-            Extended Regular Expression syntax
-            is <emphasis>not</emphasis> supported in the value part,
-            however multiple values to match on can be separated with
-            the bar (|) character. The following attributes are
-            supported:
-          </para>
-
-          <variablelist>
-            <varlistentry>
-              <term><emphasis>user</emphasis></term>
-              <listitem>
-                <para>
-                  Administrator authentication means authenticate as
-                  the given user(s). If
-                  no <emphasis>define_admin_auth</emphasis> element is
-                  given, the default is to
-                  use <emphasis>user="root"</emphasis>
-                  e.g. administrator authentication mean authenticate
-                  as the super user.                  
-                </para>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
-              <term><emphasis>group</emphasis></term>
-              <listitem>
-                <para>
-                  Administrator authentication means that any user in
-                  the groups matching the given value can be used to
-                  authenticate. Typically, on a system with the root
-                  account disabled one wants to use something like
-                  <emphasis>group="wheel"</emphasis> to e.g. enable
-                  all UNIX users in the UNIX group
-                  <emphasis>wheel</emphasis> to be able to
-                  authentication whenever administrator authentication
-                  is required.
-                </para>
-              </listitem>
-            </varlistentry>
-          </variablelist>
-
-        </refsect2>
-
-      </refsect1>
-
-      <refsect1>
-        <title>EXAMPLES</title> 
-        <para>
-          For brevity, the standard XML and DOCTYPE headers as well as
-          the top-level <emphasis>config</emphasis> are omitted in the
-          following configuration file examples. The actions used may
-          also be fictional,
-          use <citerefentry><refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-          to learn about the actions available on your system.
-        </para>
-
-        <refsect2>
-          <title>ALLOW EVERYTHING</title>
-          <para>
-            The users "davidz" and "bateman" are allowed to do any
-            action:
-          </para>
-          <programlisting>
-            <![CDATA[
+    </programlisting>
+    
+    <para>
+      The following elements may be present in the configuration file:
+    </para>
+    
+    <refsect2>
+      <title>config</title>
+      <para>
+        This is the root element. A single
+        attribute <emphasis>version</emphasis> must be present and
+        must be set to "0.1" at this point. There can only be one
+        <emphasis>config</emphasis> element in the configuration file.
+      </para>
+    </refsect2>
+    
+    <refsect2>
+      <title>match</title>
+      <para>
+        This element is for matching information related to the
+        decision making process and includes values describing both
+        the caller and the action. This element can be embedded in
+        both <emphasis>config</emphasis> and
+        other <emphasis>match</emphasis> elements (hence allowing for
+        nested matching).
+      </para>
+      <para>
+        There can only be a single attribute in
+        each <emphasis>match</emphasis> element and POSIX Extended
+        Regular Expression syntax are supported in the value part. The
+        following attributes are supported:
+      </para>
+      
+      <variablelist>
+        <varlistentry>
+          <term><emphasis>user</emphasis></term>
+          <listitem>
+            <para>
+              This matches on the users login name.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>action</emphasis></term>
+          <listitem>
+            <para>
+              For matching on the given action being queried for, for
+              example
+              <emphasis>action="org.foo.*"</emphasis> will match
+              on all actions whose action identifier begins with
+              the string "org.foo.".
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      
+    </refsect2>
+    
+    <refsect2>
+      <title>return</title>
+      <para>
+        This element is for used to specify what result the PolicyKit
+        library will return. It can only be embedded in
+        <emphasis>config</emphasis> and <emphasis>match</emphasis>
+        elements and can embed no elements
+        itself. The <emphasis>return</emphasis> element is
+        typically used deeply inside a number
+        of <emphasis>match</emphasis> elements. A single attribute,
+        <emphasis>result</emphasis> is supported and it can assume
+        the following values:
+      </para>
+      
+      <variablelist>
+        <varlistentry>
+          <term><emphasis>no</emphasis></term>
+          <listitem>
+            <para>
+              Access denied.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>auth_self</emphasis></term>
+          <listitem>
+            <para>
+              Access denied, but authentication of the caller as
+              himself will grant access to only that caller.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>auth_self_keep_session</emphasis></term>
+          <listitem>
+            <para>
+              Access denied, but authentication of the caller as
+              himself will grant access to any caller in the
+              session of the caller belongs to.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>auth_self_keep_always</emphasis></term>
+          <listitem>
+            <para>
+              Access denied, but authentication of the caller as
+              himself will grant access any caller with the given
+              uid in the future.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>auth_admin</emphasis></term>
+          <listitem>
+            <para>
+              Access denied, but authentication of the caller as
+              an administrative user will grant access to only
+              that caller.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>auth_admin_keep_session</emphasis></term>
+          <listitem>
+            <para>
+              Access denied, but authentication of the caller as
+              an administrative user will grant access to any caller
+              in the session of the caller belongs to.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>auth_admin_keep_always</emphasis></term>
+          <listitem>
+            <para>
+              Access denied, but authentication of the caller as
+              an administrative user will grant access any caller
+              with the given uid in the future.
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>yes</emphasis></term>
+          <listitem>
+            <para>
+              Access granted.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      
+    </refsect2>
+    
+    <refsect2>
+      <title>define_admin_auth</title>
+      <para>
+        This element is used to specify the meaning of
+        <emphasis>"authenticate as administrator"</emphasis>. It
+        is normally used at the top-level but can also be used
+        deep inside a number of
+        <emphasis>match</emphasis> elements for conditional
+        behavior.
+      </para>
+      
+      <para>
+        There can only be a single attribute in
+        each <emphasis>define_admin_auth</emphasis> element. POSIX
+        Extended Regular Expression syntax
+        is <emphasis>not</emphasis> supported in the value part,
+        however multiple values to match on can be separated with
+        the bar (|) character. The following attributes are
+        supported:
+      </para>
+      
+      <variablelist>
+        <varlistentry>
+          <term><emphasis>user</emphasis></term>
+          <listitem>
+            <para>
+              Administrator authentication means authenticate as
+              the given user(s). If
+              no <emphasis>define_admin_auth</emphasis> element is
+              given, the default is to
+              use <emphasis>user="root"</emphasis>
+              e.g. administrator authentication mean authenticate
+              as the super user.                  
+            </para>
+          </listitem>
+        </varlistentry>
+        
+        <varlistentry>
+          <term><emphasis>group</emphasis></term>
+          <listitem>
+            <para>
+              Administrator authentication means that any user in
+              the groups matching the given value can be used to
+              authenticate. Typically, on a system with the root
+              account disabled one wants to use something like
+              <emphasis>group="wheel"</emphasis> to e.g. enable
+              all UNIX users in the UNIX group
+              <emphasis>wheel</emphasis> to be able to
+              authentication whenever administrator authentication
+              is required.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      
+    </refsect2>
+    
+  </refsect1>
+  
+  <refsect1>
+    <title>EXAMPLES</title> 
+    <para>
+      For brevity, the standard XML and DOCTYPE headers as well as
+      the top-level <emphasis>config</emphasis> are omitted in the
+      following configuration file examples. The actions used may
+      also be fictional,
+      use <citerefentry><refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      to learn about the actions available on your system.
+    </para>
+    
+    <refsect2>
+      <title>ALLOW EVERYTHING</title>
+      <para>
+        The users "davidz" and "bateman" are allowed to do any
+        action:
+      </para>
+      <programlisting>
+        <![CDATA[
 <match user="davidz|bateman">
   <return result="yes"/>
 </match>
 ]]>
-          </programlisting>
-        </refsect2>
+      </programlisting>
+    </refsect2>
 
-        <refsect2>
-          <title>MOUNTING FIXED DRIVES</title>
-          <para>
-            Suppose the
-            action <emphasis>org.freedesktop.hal.storage.mount-fixed</emphasis>
-            is used to determine whether mounting internal hard drives
-            are allowed. Then this configuration file
-
-          </para>
-          <programlisting>
-            <![CDATA[
+    <refsect2>
+      <title>MOUNTING FIXED DRIVES</title>
+      <para>
+        Suppose the
+        action <emphasis>org.freedesktop.hal.storage.mount-fixed</emphasis>
+        is used to determine whether mounting internal hard drives
+        are allowed. Then this configuration file
+        
+      </para>
+      <programlisting>
+        <![CDATA[
 <match action="org.freedesktop.hal.storage.mount-fixed">
   <match user="davidz">
     <return result="yes"/>
@@ -327,54 +318,52 @@
   </match>
 </match>
 ]]>
-          </programlisting>
-          <para>
-            specifies that user "davidz" is always allowed to do the
-            action, while user "freddy" is never allowed to do the
-            action. Other users will be subject to the defaults
-            results specified in the <emphasis>.policy</emphasis> file
-            describing the action.
-          </para>
-
-        </refsect2>
-
-      </refsect1>
-
-      <refsect1>
-        <title>AUTHOR</title> 
-        <para>
-          Written by David Zeuthen <email>david@fubar.dk</email> with
-          a lot of help from many others.
-        </para>
-      </refsect1>
-
-      <refsect1>
-        <title>BUGS</title> 
-        <para>
-          Please send bug reports to either the distribution or the
-          hal mailing list,
-          see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
-          to subscribe.
-        </para>
-      </refsect1>
-
-      <refsect1>
-        <title>SEE ALSO</title>
-        <para>
-          <citerefentry>
-            <refentrytitle>PolicyKit</refentrytitle><manvolnum>8</manvolnum>
-          </citerefentry>, 
-          <citerefentry>
-            <refentrytitle>polkit-config-file-validate</refentrytitle><manvolnum>1</manvolnum>
-          </citerefentry>, 
-          <citerefentry>
-            <refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum>
-          </citerefentry>, 
-          <citerefentry>
-            <refentrytitle>polkit-grant</refentrytitle><manvolnum>1</manvolnum>
-          </citerefentry>
-        </para>
-      </refsect1>
-    </refentry>
-  </section>
-</article>
+      </programlisting>
+      <para>
+        specifies that user "davidz" is always allowed to do the
+        action, while user "freddy" is never allowed to do the
+        action. Other users will be subject to the defaults
+        results specified in the <emphasis>.policy</emphasis> file
+        describing the action.
+      </para>
+      
+    </refsect2>
+    
+  </refsect1>
+  
+  <refsect1>
+    <title>AUTHOR</title> 
+    <para>
+      Written by David Zeuthen <email>david@fubar.dk</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>BUGS</title> 
+    <para>
+      Please send bug reports to either the distribution or the
+      hal mailing list,
+      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+      to subscribe.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>, 
+      <citerefentry>
+        <refentrytitle>polkit-config-file-validate</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>, 
+      <citerefentry>
+        <refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>, 
+      <citerefentry>
+        <refentrytitle>polkit-grant</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

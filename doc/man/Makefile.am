@@ -1,22 +1,25 @@
 
 if MAN_PAGES_ENABLED
 
-MAN_IN_FILES = polkit-check-caller.1.in polkit-check-session.1.in polkit-policy-file-validate.1.in PolicyKit.8.in PolicyKit.conf.5.in polkit-list-actions.1.in
+man_MANS = polkit-grant.1 	         \
+	   polkit-list-actions.1 	 \
+	   polkit-config-file-validate.1 \
+	   polkit-policy-file-validate.1 \
+	   PolicyKit.conf.5		 \
+	   PolicyKit.8
 
-man_MANS = $(MAN_IN_FILES:.in=)
+# TODO: 
+%.1 %.5 %.8 : %.xml
+	$(XSLTPROC) -nonet http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
 endif # MAN_PAGES_ENABLED
 
-EXTRA_DIST=$(man_MANS) $(MAN_IN_FILES)
+EXTRA_DIST= PolicyKit.conf.xml              \
+	    PolicyKit.xml                   \
+	    polkit-config-file-validate.xml \
+	    polkit-grant.xml	            \
+	    polkit-list-actions.xml	    \
+	    polkit-policy-file-validate.xml
 
 clean-local:
 	rm -f *~ *.1 *.5 *.8
-
-%: %.in Makefile
-	$(edit) $< >$@
-
-edit = sed \
-	-e 's|@docdir[@]|$(docdir)|g' \
-	-e 's|@sbindir[@]|$(sbindir)|g' \
-	-e 's|@sysconfdir[@]|$(sysconfdir)|g' \
-	-e 's|@datadir[@]|$(datadir)|g'

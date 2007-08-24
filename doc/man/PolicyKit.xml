@@ -1,74 +1,66 @@
-<?xml version='1.0'?>
-<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-
-<article>
-  <section>
+<refentry>
+  <refentryinfo>
     <title>PolicyKit</title>
-    <refentry>
-      <refentryinfo>
-        <title>PolicyKit</title>
-        <date>August 2007</date>
-        <productname>PolicyKit</productname>
-      </refentryinfo>
+    <date>August 2007</date>
+    <productname>PolicyKit</productname>
+  </refentryinfo>
+  
+  <refmeta>
+    <refentrytitle>PolicyKit</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+  
+  <refnamediv>
+    <refname>PolicyKit</refname>
+    <refpurpose>centralized policy management</refpurpose>
+  </refnamediv>
+  
+  <refsect1><title>DESCRIPTION</title> 
+    <para>
+      For more information about the big picture refer to the
+      PolicyKit specification which can be normally be found
+      under <filename>/usr/share/doc</filename>.
+    </para>
+    
+    <para>
+      <emphasis>TODO:</emphasis> This manual page should contain a
+      simple introduction to PolicyKit for a system administrator
+      audience. Remains to be written.
+    </para>
+  </refsect1>
+  
+  
+  <refsect1><title>AUTHOR</title> 
+    <para>
+      Written by David Zeuthen <email>david@fubar.dk</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>BUGS</title> 
+    <para>
+      Please send bug reports to either the distribution or the
+      hal mailing list,
+      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+      to subscribe.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
+      </citerefentry>, 
+      <citerefentry>
+        <refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>, 
+      <citerefentry>
+        <refentrytitle>polkit-grant</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>
 
-      <refmeta>
-        <refentrytitle>PolicyKit</refentrytitle>
-        <manvolnum>8</manvolnum>
-        <refmiscinfo class="version"></refmiscinfo>
-      </refmeta>
-
-      <refnamediv>
-        <refname>PolicyKit</refname>
-        <refpurpose>centralized policy management</refpurpose>
-      </refnamediv>
-
-      <refsect1><title>DESCRIPTION</title> 
-        <para>
-          For more information about the big picture refer to the
-          PolicyKit specification which can be normally be found
-          under <filename>/usr/share/doc</filename>.
-        </para>
-
-        <para>
-          <emphasis>TODO:</emphasis> This manual page should contain a
-          simple introduction to PolicyKit for a system administrator
-          audience. Remains to be written.
-        </para>
-      </refsect1>
-
-
-      <refsect1><title>AUTHOR</title> 
-        <para>
-          Written by David Zeuthen <email>david@fubar.dk</email> with
-          a lot of help from many others.
-        </para>
-      </refsect1>
-
-      <refsect1>
-        <title>BUGS</title> 
-        <para>
-          Please send bug reports to either the distribution or the
-          hal mailing list,
-          see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
-          to subscribe.
-        </para>
-      </refsect1>
-
-      <refsect1>
-        <title>SEE ALSO</title>
-        <para>
-          <citerefentry>
-            <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
-          </citerefentry>, 
-          <citerefentry>
-            <refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum>
-          </citerefentry>, 
-          <citerefentry>
-            <refentrytitle>polkit-grant</refentrytitle><manvolnum>1</manvolnum>
-          </citerefentry>
-        </para>
-      </refsect1>
-    </refentry>
-  </section>
-</article>

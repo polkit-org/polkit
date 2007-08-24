@@ -392,14 +392,15 @@ error:
 
 /**
  * polkit_config_new:
+ * @path: Path to configuration, typically /etc/PolicyKit/PolicyKit.conf is passed.
  * @error: return location for error
  * 
- * Create a new object representing the /etc/PolicyKit/PolicyKit.conf configuration file.
+ * Load and parse a PolicyKit configuration file.
  * 
  * Returns: the configuration file object
  **/
 PolKitConfig *
-polkit_config_new (PolKitError **error)
+polkit_config_new (const char *path, PolKitError **error)
 {
         ParserData pd;
         int xml_res;
@@ -407,12 +408,9 @@ polkit_config_new (PolKitError **error)
 	char *buf;
 	gsize buflen;
         GError *g_error;
-        const char *path;
 
         /* load and parse the configuration file */
         pk_config = NULL;
-
-        path = PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf";
 
         g_error = NULL;
 	if (!g_file_get_contents (path, &buf, &buflen, &g_error)) {

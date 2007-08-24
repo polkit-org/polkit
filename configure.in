@@ -29,9 +29,19 @@ AC_SYS_LARGEFILE
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
 AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
-AC_ARG_ENABLE(docbook-docs,     [  --enable-docbook-docs   build documentation (requires xmlto)],enable_docbook_docs=$enableval,enable_docbook_docs=no)
+
 AC_ARG_ENABLE(man-pages,        [  --enable-man-pages      build manual pages],enable_man_pages=$enableval,enable_man_pages=yes)
+if test "${enable_man_page}" != no; then
+dnl
+dnl Check for xsltproc
+dnl
+AC_PATH_PROG([XSLTPROC], [xsltproc])
+  if test -z "$XSLTPROC"; then
+    enable_man_pages=no
+  fi
+fi
 AM_CONDITIONAL(MAN_PAGES_ENABLED, test x$enable_man_pages = xyes)
+
 
 GTK_DOC_CHECK([1.3])
 
@@ -140,36 +150,6 @@ AC_CHECK_HEADERS(expat.h, [AC_DEFINE(HAVE_EXPAT_H)],
 AC_CHECK_LIB(expat,XML_ParserCreate,[EXPAT_LIBS="-lexpat"],
 	     [AC_MSG_ERROR([Can't find expat library. Please install expat.])])
 AC_SUBST(EXPAT_LIBS)
-
-# DocBook Documentation
-
-AC_MSG_CHECKING([whether to build DocBook documentation])
-
-AC_PATH_PROG(XMLTO, xmlto, no)
-AC_PATH_PROG(XMLLINT, xmllint, no)
-
-if test x$XMLLINT = xno ; then
-    have_xmllint=no
-else
-    have_xmllint=yes
-fi
-
-if test x$enable_docbook_docs = xauto ; then
-    if test x$have_xmlto = xno || test x$have_xmllint = xno ; then
-        enable_docbook_docs=no
-    else
-        enable_docbook_docs=yes
-    fi
-fi
-
-if test x$enable_docbook_docs = xyes; then
-    if test x$have_xmlto = xno; then
-	AC_MSG_ERROR([Building DocBook docs explicitly required, but xmlto not found])
-    fi
-fi
-
-AM_CONDITIONAL(DOCBOOK_DOCS_ENABLED, test x$enable_docbook_docs = xyes)
-AC_MSG_RESULT(yes)
 
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
@@ -390,15 +370,7 @@ polkit-dbus/Makefile
 polkit-grant/Makefile
 tools/Makefile
 doc/Makefile
-doc/api/Makefile
-doc/api/polkit/Makefile
-doc/api/polkit/version.xml
-doc/api/polkit-dbus/Makefile
-doc/api/polkit-dbus/version.xml
-doc/api/polkit-grant/Makefile
-doc/api/polkit-grant/version.xml
-doc/spec/Makefile
-doc/spec/polkit-spec.xml.in
+doc/version.xml
 doc/man/Makefile
 policy/Makefile
 ])
@@ -421,8 +393,7 @@ echo "
         compiler:                   ${CC}
         cflags:                     ${CFLAGS}
         cppflags:                   ${CPPFLAGS}
-        xmlto:                      ${XMLTO}
-        xmllint:                    ${XMLLINT}
+        xsltproc:                   ${XSLTPROC}
 
         user for PolicyKit:         ${POLKIT_USER}
         group for PolicyKit:        ${POLKIT_GROUP}
@@ -439,7 +410,6 @@ echo "
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}
         Building api docs:          ${enable_gtk_doc}
-        Building docs:              ${enable_docbook_docs}
         Building man pages:         ${enable_man_pages}
 "
 

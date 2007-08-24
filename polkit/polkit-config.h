@@ -42,7 +42,7 @@
 struct PolKitConfig;
 typedef struct PolKitConfig PolKitConfig;
 
-PolKitConfig  *polkit_config_new                    (PolKitError **error);
+PolKitConfig  *polkit_config_new                    (const char *path, PolKitError **error);
 PolKitConfig  *polkit_config_ref                    (PolKitConfig *pk_config);
 void           polkit_config_unref                  (PolKitConfig *pk_config);
 
