@@ -13,7 +13,7 @@
   
   <refnamediv>
     <refname>polkit-list-actions</refname>
-    <refpurpose>manage PolicyKit privilege grants</refpurpose>
+    <refpurpose>List registered PolicyKit actions</refpurpose>
   </refnamediv>
   
   <refsynopsisdiv>

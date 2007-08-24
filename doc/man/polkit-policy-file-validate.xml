@@ -13,7 +13,7 @@
   
   <refnamediv>
     <refname>polkit-policy-file-validate</refname>
-    <refpurpose>manage PolicyKit privilege grants</refpurpose>
+    <refpurpose>Validate a PolicyKit policy file</refpurpose>
   </refnamediv>
   
   <refsynopsisdiv>

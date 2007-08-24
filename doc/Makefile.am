@@ -54,6 +54,9 @@ content_files =  			    \
 	man/polkit-list-actions.xml	    \
 	man/polkit-policy-file-validate.xml \
 	man/polkit-config-file-validate.xml \
+	spec/polkit-spec-configuration.xml  \
+	spec/polkit-spec-introduction.xml   \
+	spec/polkit-spec-model.xml	    \
 	$(NULL)
 
 # Images to copy into HTML directory
