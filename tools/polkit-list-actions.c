@@ -49,14 +49,22 @@ usage (int argc, char *argv[])
                  "\n"
                  "        --version        Show version and exit\n"
                  "        --help           Show this information and exit\n"
+                 "        --action         Show detailed information about a single action\n"
                  "\n"
                  "List the actions registered with PolicyKit.\n");
 }
 
 static void
-_print_entry (PolKitPolicyCache *policy_cache,
-              PolKitPolicyFileEntry *pfe,
-              void *user_data)
+_print_annotations (PolKitPolicyFileEntry *policy_file_entry,
+                    const char *key,
+                    const char *value,
+                    void *user_data)
+{
+        printf ("annotation:       %s -> %s\n", key, value);
+}
+
+static void
+_print_details_for_entry (PolKitPolicyFileEntry *pfe)
 {
         const char *action_id;
         PolKitPolicyDefault *def;
@@ -68,22 +76,43 @@ _print_entry (PolKitPolicyCache *policy_cache,
         default_inactive = polkit_policy_default_get_allow_inactive (def);
         default_active = polkit_policy_default_get_allow_active (def);
 
-        printf ("Policy\n"
-                "------\n"
-                "action            = %s ('%s')\n"
-                "default_inactive  = %s\n"
-                "default_active    = %s\n"
-                "\n", 
+        printf ("action_id:        %s\n"
+                "description:      %s\n"
+                "message:          %s\n"
+                "default_inactive: %s\n"
+                "default_active:   %s\n",
                 action_id,
                 polkit_policy_file_entry_get_action_description (pfe),
+                polkit_policy_file_entry_get_action_message (pfe),
                 polkit_result_to_string_representation (default_inactive),
                 polkit_result_to_string_representation (default_active));
+
+        polkit_policy_file_entry_annotations_foreach (pfe, _print_annotations, NULL);
+}
+
+static void
+_print_entry (PolKitPolicyCache *policy_cache,
+              PolKitPolicyFileEntry *pfe,
+              void *user_data)
+{
+        const char *action_id;
+
+        action_id = polkit_policy_file_entry_get_id (pfe);
+        printf ("%s\n", action_id);
 }
 
 int
 main (int argc, char *argv[])
 {
         int n;
+        int ret;
+        PolKitContext *ctx;
+        PolKitPolicyCache *cache;
+        PolKitError *error;
+        char *action_id;
+
+        ret = 1;
+        action_id = NULL;
 
         for (n = 1; n < argc; n++) {
                 if (strcmp (argv[n], "--help") == 0) {
@@ -94,21 +123,19 @@ main (int argc, char *argv[])
                         printf ("polkit-list-actions " PACKAGE_VERSION "\n");
                         return 0;
                 }
+                if (strcmp (argv[n], "--action") == 0 && n + 1 < argc) {
+                        action_id = argv[n+1];
+                }
 	}
 
-        int ret;
-        ret = 1;
 
-        PolKitContext *ctx;
-        PolKitPolicyCache *cache;
-        PolKitError *error;
         ctx = polkit_context_new ();
         if (ctx == NULL)
                 goto out;
         error = NULL;
         polkit_context_set_load_descriptions (ctx);
         if (!polkit_context_init (ctx, &error)) {
-                printf ("Init failed: %s\n", polkit_error_get_error_message (error));
+                fprintf (stderr, "Init failed: %s\n", polkit_error_get_error_message (error));
                 polkit_context_unref (ctx);
                 goto out;
         }
@@ -119,9 +146,21 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        polkit_policy_cache_foreach (cache, _print_entry, NULL);
+        if (action_id != NULL) {
+                PolKitPolicyFileEntry *pfe;
+                pfe = polkit_policy_cache_get_entry_by_id (cache, action_id);
+                if (pfe == NULL) {
+                        fprintf (stderr, "Cannot find policy file entry for action id '%s'\n", action_id);
+                        goto out;
+                }
+                _print_details_for_entry (pfe);
+        } else {
+                polkit_policy_cache_foreach (cache, _print_entry, NULL);
+        }
 
         polkit_context_unref (ctx);
+
+        ret = 0;
 out:
         return ret;
 }

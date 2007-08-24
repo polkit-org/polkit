@@ -38,4 +38,41 @@ polkit_bool_t _polkit_grantdb_write_keep_session (const char *action_id, const c
 
 polkit_bool_t _polkit_grantdb_write_pid (const char *action_id, pid_t pid);
 
+/**
+ * PolKitGrantDbGrantType:
+ * 
+ */
+typedef enum {
+        POLKIT_GRANTDB_GRANT_TYPE_PROCESS,
+        POLKIT_GRANTDB_GRANT_TYPE_SESSION,
+        POLKIT_GRANTDB_GRANT_TYPE_ALWAYS
+} PolKitGrantDbGrantType;
+
+/**
+ * PolKitGrantDbForeachFunc:
+ * @action_id: Identifer for the action granted
+ * @when: when the privilege was granted
+ * @grant_type: the type of grant; one of #PolKitGrantDbGrantType
+ * @pid: the process id, or -1 if the passed grant_type is not POLKIT_GRANTDB_GRANT_TYPE_PROCESS
+ * @pid_time: the start time of the process (only if pid is set)
+ * @session_id: the session id, or NULL if the passed grant_type is not POLKIT_GRANTDB_GRANT_TYPE_SESSION
+ * @uid: the UNIX process id, or -1 if the passed grant_type is not POLKIT_GRANTDB_GRANT_TYPE_ALWAYS
+ * 
+ * @user_data: user data passed to polkit_grantdb_foreach()
+ *
+ * Callback function for polkit_policy_cache_foreach().
+ **/
+typedef void (*PolKitGrantDbForeachFunc) (const char *action_id, 
+                                          uid_t uid,
+                                          time_t when, 
+                                          PolKitGrantDbGrantType grant_type,
+                                          pid_t pid, 
+                                          unsigned long long pid_time,
+                                          const char *session_id,
+                                          void *user_data);
+
+void _polkit_grantdb_foreach (PolKitGrantDbForeachFunc callback, void *user_data);
+
+polkit_bool_t _polkit_grantdb_delete_for_user (uid_t uid);
+
 #endif /* POLKIT_GRANT_DATABASE_H */

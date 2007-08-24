@@ -23,7 +23,7 @@ polkit_policy_file_validate_SOURCES = polkit-policy-file-validate.c
 polkit_policy_file_validate_LDADD = $(top_builddir)/polkit/libpolkit.la
 
 polkit_grant_SOURCES = polkit-grant.c
-polkit_grant_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-grant/libpolkit-grant.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
+polkit_grant_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-grant/libpolkit-grant.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit/libpolkit-grant-private.la
 
 polkit_list_actions_SOURCES = polkit-list-actions.c
 polkit_list_actions_LDADD = $(GLIB) $(top_builddir)/polkit/libpolkit.la

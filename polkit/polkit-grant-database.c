@@ -39,6 +39,7 @@
 #include <glib.h>
 
 #include <polkit/polkit-grant-database.h>
+#include <polkit/polkit-debug.h>
 
 /**
  * SECTION:polkit-grant-database
@@ -311,4 +312,185 @@ _polkit_grantdb_check_can_caller_do_action (PolKitContext         *pk_context,
 
 out:
         return result;
+}
+
+void 
+_polkit_grantdb_foreach (PolKitGrantDbForeachFunc callback, void *user_data)
+{
+        GDir *dir;
+        const char *name;
+        time_t when;
+
+        g_return_if_fail (callback != NULL);
+
+        _pk_debug ("Looking at run");
+        dir = g_dir_open (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 0, NULL);
+        if (dir != NULL) {
+                while ((name = g_dir_read_name (dir)) != NULL) {
+                        int uid;
+                        char *endptr;
+                        char *action;
+                        char *path;
+                        struct stat statbuf;
+
+                        path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/%s", name);
+                        if (stat (path, &statbuf) != 0) {
+                                g_free (path);
+                                continue;
+                        }
+                        when = statbuf.st_mtime;
+                        g_free (path);
+
+                        if (!g_str_has_prefix (name, "uid"))
+                                continue;
+                        if (!g_str_has_suffix (name, ".grant"))
+                                continue;
+
+                        uid = strtol (name + 3 /* uid */, &endptr, 10);
+                        if (endptr == NULL || *endptr != '-')
+                                continue;
+
+                        if (strncmp (endptr + 1, "pid-", 4) == 0) {
+                                int pid;
+                                unsigned long long pid_time;
+
+                                pid = strtol (endptr + 1 + 4 /*pid-*/, &endptr, 10);
+                                if (endptr == NULL || *endptr != '@')
+                                        continue;
+                                pid_time = strtol (endptr + 1, NULL, 10);
+
+                                while (*endptr != '-' && *endptr != '\0')
+                                        endptr++;
+                                if (*endptr == '\0')
+                                        continue;
+                                action = g_strdup (endptr + 1);
+                                if (strlen (action) < 6) /* .grant */
+                                        continue;
+                                action[strlen(action) - 6] = '\0';
+
+                                callback (action, uid, when, POLKIT_GRANTDB_GRANT_TYPE_PROCESS, 
+                                          pid, pid_time, NULL, user_data);
+
+                                g_free (action);
+                        } else if (strncmp (endptr + 1, "session-", 8) == 0) {
+                                int n;
+                                char *session;
+
+                                session = g_strdup (endptr + 1 + 8);
+                                for (n = 0; session[n] != '-' && session[n] != '\0'; n++)
+                                        ;
+                                session[n] = '\0';
+
+                                action = g_strdup (endptr + 1 + 8 + n + 1);
+                                if (strlen (action) < 6) /* .grant */
+                                        continue;
+                                action[strlen(action) - 6] = '\0';
+
+                                callback (action, uid, when, POLKIT_GRANTDB_GRANT_TYPE_SESSION, 
+                                          (pid_t) -1, 0, session, user_data);
+
+                                g_free (action);
+                                g_free (session);
+                        }
+
+
+                }
+                g_dir_close (dir);
+        }
+
+        _pk_debug ("Looking at lib");
+        dir = g_dir_open (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 0, NULL);
+        if (dir != NULL) {
+                while ((name = g_dir_read_name (dir)) != NULL) {
+                        int uid;
+                        char *action;
+                        char *endptr;
+                        char *path;
+                        struct stat statbuf;
+
+                        path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/%s", name);
+                        if (stat (path, &statbuf) != 0) {
+                                g_free (path);
+                                continue;
+                        }
+                        when = statbuf.st_mtime;
+                        g_free (path);
+
+                        if (!g_str_has_prefix (name, "uid"))
+                                continue;
+                        if (!g_str_has_suffix (name, ".grant"))
+                                continue;
+
+                        uid = strtol (name + 3 /* uid */, &endptr, 10);
+                        if (endptr == NULL || *endptr != '-')
+                                continue;
+                        action = g_strdup (endptr + 1);
+                        if (strlen (action) < 6) /* .grant */
+                                continue;
+                        action[strlen(action) - 6] = '\0';
+                        
+                        callback (action, uid, when, POLKIT_GRANTDB_GRANT_TYPE_ALWAYS, 
+                                  (pid_t) -1, 0, NULL, user_data);
+
+                        g_free (action);
+                }
+                g_dir_close (dir);
+        }
+}
+
+polkit_bool_t
+_polkit_grantdb_delete_for_user (uid_t uid)
+{
+        int n;
+        GDir *dir;
+        const char *name;
+        polkit_bool_t ret;
+
+        ret = FALSE;
+
+        _pk_debug ("deleting grants for uid %d", uid);
+
+        for (n = 0; n < 2; n++) {
+                if (n == 0)
+                        dir = g_dir_open (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 0, NULL);
+                else
+                        dir = g_dir_open (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 0, NULL);
+                if (dir != NULL) {
+                        while ((name = g_dir_read_name (dir)) != NULL) {
+                                uid_t uid_in_grant;
+                                char *endptr;
+                                char *path;
+                                
+                                if (!g_str_has_prefix (name, "uid"))
+                                        continue;
+                                if (!g_str_has_suffix (name, ".grant"))
+                                        continue;
+                                
+                                uid_in_grant = (uid_t) strtol (name + 3 /* uid */, &endptr, 10);
+                                if (endptr == NULL || *endptr != '-')
+                                        continue;
+                                
+                                if (uid_in_grant != uid)
+                                        continue;
+                                
+                                if (n == 0)
+                                        path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit/%s", name);
+                                else
+                                        path = g_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit/%s", name);
+                                if (unlink (path) != 0) {
+                                        _pk_debug ("Error deleting grant file '%s': %s", path, strerror (errno));
+                                        goto out;
+                                }
+                                _pk_debug ("Deleting file %s", path);
+                                g_free (path);
+                                
+                        }
+                        g_dir_close (dir);
+                }
+        }
+
+        ret = TRUE;
+
+out:
+        return ret;
 }

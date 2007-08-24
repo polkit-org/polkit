@@ -205,13 +205,50 @@ polkit_policy_cache_debug (PolKitPolicyCache *policy_cache)
 }
 
 /**
+ * polkit_policy_cache_get_entry_by_id:
+ * @policy_cache: the cache
+ * @action: the action identifier
+ * 
+ * Given a action identifier, find the object describing the
+ * definition of the policy; e.g. data stemming from files in
+ * /usr/share/PolicyKit/policy.
+ * 
+ * Returns: A #PolKitPolicyFileEntry entry on sucess; otherwise
+ * #NULL if the action wasn't identified. Caller shall not unref
+ * this object.
+ **/
+PolKitPolicyFileEntry* 
+polkit_policy_cache_get_entry_by_id (PolKitPolicyCache *policy_cache, const char *action_id)
+{
+        GSList *i;
+        PolKitPolicyFileEntry *pfe;
+
+        g_return_val_if_fail (policy_cache != NULL, NULL);
+        g_return_val_if_fail (action_id != NULL, NULL);
+
+        pfe = NULL;
+
+        for (i = policy_cache->priv_entries; i != NULL; i = g_slist_next (i)) {
+                pfe = i->data;
+                if (strcmp (polkit_policy_file_entry_get_id (pfe), action_id) == 0) {
+                        goto out;
+                }
+        }
+
+        pfe = NULL;
+
+out:
+        return pfe;        
+}
+
+/**
  * polkit_policy_cache_get_entry:
  * @policy_cache: the cache
  * @action: the action
  * 
  * Given a action, find the object describing the definition of the
  * policy; e.g. data stemming from files in
- * /etc/PolicyKit/policy.
+ * /usr/share/PolicyKit/policy.
  * 
  * Returns: A #PolKitPolicyFileEntry entry on sucess; otherwise
  * #NULL if the action wasn't identified. Caller shall not unref
@@ -221,29 +258,20 @@ PolKitPolicyFileEntry*
 polkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache,
                                   PolKitAction      *action)
 {
-        char *priv_id;
-        GSList *i;
+        char *action_id;
         PolKitPolicyFileEntry *pfe;
-
-        pfe = NULL;
 
         /* I'm sure it would be easy to make this O(1)... */
 
         g_return_val_if_fail (policy_cache != NULL, NULL);
         g_return_val_if_fail (action != NULL, NULL);
 
-        if (!polkit_action_get_action_id (action, &priv_id))
-                goto out;
-
-        for (i = policy_cache->priv_entries; i != NULL; i = g_slist_next (i)) {
-                pfe = i->data;
-                if (strcmp (polkit_policy_file_entry_get_id (pfe), priv_id) == 0) {
-                        goto out;
-                }
-        }
-
         pfe = NULL;
 
+        if (!polkit_action_get_action_id (action, &action_id))
+                goto out;
+
+        pfe = polkit_policy_cache_get_entry_by_id (policy_cache, action_id);
 out:
         return pfe;
 }

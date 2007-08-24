@@ -54,6 +54,8 @@ void                   polkit_policy_cache_unref     (PolKitPolicyCache *policy_
 void                   polkit_policy_cache_debug     (PolKitPolicyCache *policy_cache);
 PolKitPolicyFileEntry* polkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache, 
                                                       PolKitAction *action);
+PolKitPolicyFileEntry* polkit_policy_cache_get_entry_by_id (PolKitPolicyCache *policy_cache, 
+                                                            const char *action_id);
 void                   polkit_policy_cache_foreach   (PolKitPolicyCache *policy_cache, 
                                                       PolKitPolicyCacheForeachFunc callback,
                                                       void *user_data);

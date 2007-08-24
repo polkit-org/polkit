@@ -39,6 +39,7 @@
 
 #include <polkit-dbus/polkit-dbus.h>
 #include <polkit-grant/polkit-grant.h>
+#include <polkit/polkit-grant-database.h>
 
 #include <glib.h>
 
@@ -47,16 +48,16 @@ usage (int argc, char *argv[])
 {
 	fprintf (stderr,
                  "\n"
-                 "usage : polkit-grant\n"
-                 "          --action <action>\n"
+                 "usage : polkit-grant [--gain <action>] [--list] [--delete <user>]\n"
                  "          [--version] [--help]\n");
 	fprintf (stderr,
                  "\n"
-                 "        --action         Requested action\n"
-                 "        --version        Show version and exit\n"
-                 "        --help           Show this information and exit\n"
-                 "\n"
-                 "TODO.\n");
+                 "        --gain       Attempt to gain the privilege to do an action\n"
+                 "        --list       List all grants\n"
+                 "        --delete     Delete all grants for a given user\n"
+                 "        --version    Show version and exit\n"
+                 "        --help       Show this information and exit\n"
+                 "\n");
 }
 
 typedef struct {
@@ -299,11 +300,63 @@ remove_watch (PolKitGrant *polkit_auth, int watch_id)
         g_source_remove (watch_id);
 }
 
+static void
+_print_grants (const char *action_id, 
+               uid_t uid,
+               time_t when, 
+               PolKitGrantDbGrantType grant_type,
+               pid_t pid,
+               unsigned long long pid_time,
+               const char *session_id,
+               void *user_data)
+{
+        char *user;
+        char *when_str;
+        struct passwd *passwd;
+
+        passwd = getpwuid (uid);
+        if (passwd != NULL)
+                user = passwd->pw_name;
+        else
+                user = "NON_EXISTING_USER";
+
+        when_str = ctime (&when);
+
+        switch (grant_type) {
+        case POLKIT_GRANTDB_GRANT_TYPE_PROCESS:
+                printf ("process:\n"
+                        "  user:    %s (uid %d)\n"
+                        "  pid:     %d@%lld\n"
+                        "  action:  %s\n"
+                        "  granted: %s\n", 
+                        user, uid, pid, pid_time, action_id, when_str);
+                break;
+        case POLKIT_GRANTDB_GRANT_TYPE_SESSION:
+                printf ("session:\n"
+                        "  user:    %s (uid %d)\n"
+                        "  session: %s\n"
+                        "  action:  %s\n"
+                        "  granted: %s\n", 
+                        user, uid, session_id, action_id, when_str);
+                break;
+        case POLKIT_GRANTDB_GRANT_TYPE_ALWAYS:
+                printf ("always:\n"
+                        "  user:    %s (uid %d)\n"
+                        "  action:  %s\n"
+                        "  granted: %s\n", 
+                        user, uid, action_id, when_str);
+                break;
+        default:
+                break;
+        }
+}
+
+
 int
 main (int argc, char *argv[])
 {
-        char *action_id = NULL;
-        gboolean is_version = FALSE;
+        char *gain_action_id;
+        gboolean is_version;
         DBusConnection *bus;
 	DBusError error;
         PolKitContext *pol_ctx;
@@ -313,27 +366,34 @@ main (int argc, char *argv[])
         PolKitGrant *polkit_grant;
         int ret;
         UserData ud;
+        polkit_bool_t list_grants;
+        char *delete_for_user;
 
-        ret = 2;
+        ret = 1;
 
 	if (argc <= 1) {
 		usage (argc, argv);
-		return 1;
+                goto out;
 	}
 
+        list_grants = FALSE;
+        delete_for_user = NULL;
+        is_version = FALSE;
+        gain_action_id = NULL;
 	while (1) {
 		int c;
 		int option_index = 0;
 		const char *opt;
 		static struct option long_options[] = {
-			{"action", 1, NULL, 0},
+                        {"list", 0, NULL, 0},
+                        {"delete", 1, NULL, 0},
+			{"gain", 1, NULL, 0},
 			{"version", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{NULL, 0, NULL, 0}
 		};
 
-		c = getopt_long (argc, argv, "",
-				 long_options, &option_index);
+		c = getopt_long (argc, argv, "", long_options, &option_index);
 		if (c == -1)
 			break;
 
@@ -346,90 +406,107 @@ main (int argc, char *argv[])
 				return 0;
 			} else if (strcmp (opt, "version") == 0) {
 				is_version = TRUE;
-			} else if (strcmp (opt, "action") == 0) {
-				action_id = strdup (optarg);
+			} else if (strcmp (opt, "gain") == 0) {
+				gain_action_id = strdup (optarg);
+			} else if (strcmp (opt, "list") == 0) {
+                                list_grants = TRUE;
+			} else if (strcmp (opt, "delete") == 0) {
+                                delete_for_user = strdup (optarg);
 			}
 			break;
 
 		default:
 			usage (argc, argv);
-                        goto error;
+                        goto out;
 		}
 	}
 
 	if (is_version) {
 		printf ("polkit-grant " PACKAGE_VERSION "\n");
-		return 0;
+                ret = 0;
+                goto out;
 	}
 
-	if (action_id == NULL) {
-		usage (argc, argv);
-                goto error;
-	}
-
-        printf ("Attempting to gain the privilege for %s.\n", action_id);
-
-        ud.loop = g_main_loop_new (NULL, TRUE);
-
-        dbus_error_init (&error);
-        bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-        if (bus == NULL) {
-		fprintf (stderr, "error: dbus_bus_get(): %s: %s\n", error.name, error.message);
-                goto error;
-	}
-
-        p_error = NULL;
-        pol_ctx = polkit_context_new ();
-        if (!polkit_context_init (pol_ctx, &p_error)) {
-		fprintf (stderr, "error: polkit_context_init: %s\n", polkit_error_get_error_message (p_error));
-                polkit_error_free (p_error);
-                goto error;
-        }
-
-        action = polkit_action_new ();
-        polkit_action_set_action_id (action, action_id);
-
-        caller = polkit_caller_new_from_dbus_name (bus, dbus_bus_get_unique_name (bus), &error);
-        if (caller == NULL) {
-                if (dbus_error_is_set (&error)) {
-                        fprintf (stderr, "error: polkit_caller_new_from_dbus_name(): %s: %s\n", 
-                                 error.name, error.message);
-                        goto error;
+        if (gain_action_id != NULL) {
+                printf ("Attempting to gain the privilege for %s.\n", gain_action_id);
+                
+                ud.loop = g_main_loop_new (NULL, TRUE);
+                
+                dbus_error_init (&error);
+                bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+                if (bus == NULL) {
+                        fprintf (stderr, "error: dbus_bus_get(): %s: %s\n", error.name, error.message);
+                        goto out;
                 }
+                
+                p_error = NULL;
+                pol_ctx = polkit_context_new ();
+                if (!polkit_context_init (pol_ctx, &p_error)) {
+                        fprintf (stderr, "error: polkit_context_init: %s\n", polkit_error_get_error_message (p_error));
+                        polkit_error_free (p_error);
+                        goto out;
+                }
+                
+                action = polkit_action_new ();
+                polkit_action_set_action_id (action, gain_action_id);
+                
+                caller = polkit_caller_new_from_dbus_name (bus, dbus_bus_get_unique_name (bus), &error);
+                if (caller == NULL) {
+                        if (dbus_error_is_set (&error)) {
+                                fprintf (stderr, "error: polkit_caller_new_from_dbus_name(): %s: %s\n", 
+                                         error.name, error.message);
+                                goto out;
+                        }
+                }
+                
+                polkit_grant = polkit_grant_new ();
+                polkit_grant_set_functions (polkit_grant,
+                                            add_io_watch,
+                                            add_child_watch,
+                                            remove_watch,
+                                            conversation_type,
+                                            conversation_select_admin_user,
+                                            conversation_pam_prompt_echo_off,
+                                            conversation_pam_prompt_echo_on,
+                                            conversation_pam_error_msg,
+                                            conversation_pam_text_info,
+                                            conversation_override_grant_type,
+                                            conversation_done,
+                                            &ud);
+                
+                if (!polkit_grant_initiate_auth (polkit_grant,
+                                                 action,
+                                                 caller)) {
+                        printf ("Failed to initiate privilege grant.\n");
+                        ret = 1;
+                        goto out;
+                }
+                g_main_loop_run (ud.loop);
+                polkit_grant_unref (polkit_grant);
+                
+                if (ud.gained_privilege)
+                        printf ("Successfully gained the privilege for %s.\n", gain_action_id);
+                else
+                        printf ("Failed to gain the privilege for %s.\n", gain_action_id);
+                
+                ret = ud.gained_privilege ? 0 : 1;
+        } else if (list_grants) {
+                _polkit_grantdb_foreach (_print_grants, NULL);
+                ret = 0;
+        } else if (delete_for_user != NULL) {
+                struct passwd *passwd;
+                passwd = getpwnam (delete_for_user);
+                if (passwd == NULL) {
+                        printf ("No such user '%s'.\n", delete_for_user);
+                        goto out;
+                }
+                if (!_polkit_grantdb_delete_for_user (passwd->pw_uid)) {
+                        printf ("Error deleting grants for user '%s'. Got root?\n", delete_for_user);
+                }
+        } else {
+		usage (argc, argv);
         }
 
-        polkit_grant = polkit_grant_new ();
-        polkit_grant_set_functions (polkit_grant,
-                                    add_io_watch,
-                                    add_child_watch,
-                                    remove_watch,
-                                    conversation_type,
-                                    conversation_select_admin_user,
-                                    conversation_pam_prompt_echo_off,
-                                    conversation_pam_prompt_echo_on,
-                                    conversation_pam_error_msg,
-                                    conversation_pam_text_info,
-                                    conversation_override_grant_type,
-                                    conversation_done,
-                                    &ud);
-        
-        if (!polkit_grant_initiate_auth (polkit_grant,
-                                         action,
-                                         caller)) {
-                printf ("Failed to initiate privilege grant.\n");
-                ret = 1;
-                goto error;
-        }
-        g_main_loop_run (ud.loop);
-        polkit_grant_unref (polkit_grant);
-
-        if (ud.gained_privilege)
-                printf ("Successfully gained the privilege for %s.\n", action_id);
-        else
-                printf ("Failed to gain the privilege for %s.\n", action_id);
-
-        ret = ud.gained_privilege ? 0 : 1;
-
-error:
+out:
         return ret;
 }
