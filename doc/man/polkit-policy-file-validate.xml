@@ -1,0 +1,104 @@
+<?xml version='1.0'?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article>
+  <section>
+    <title>polkit-policy-file-validate</title>
+    <refentry>
+      <refentryinfo>
+        <title>polkit-policy-file-validate</title>
+        <date>August 2007</date>
+        <productname>PolicyKit</productname>
+      </refentryinfo>
+
+      <refmeta>
+        <refentrytitle>polkit-policy-file-validate</refentrytitle>
+        <manvolnum>1</manvolnum>
+        <refmiscinfo class="version"></refmiscinfo>
+      </refmeta>
+
+      <refnamediv>
+        <refname>polkit-policy-file-validate</refname>
+        <refpurpose>manage PolicyKit privilege grants</refpurpose>
+      </refnamediv>
+
+      <refsynopsisdiv>
+        <cmdsynopsis>
+          <command>polkit-policy-file-validate <replaceable>policy-files</replaceable></command>
+          <arg><option>--version</option></arg>
+          <arg><option>--help</option></arg>
+        </cmdsynopsis>
+      </refsynopsisdiv>
+
+      <refsect1>
+        <title>DESCRIPTION</title> 
+        <para>
+          polkit-policy-file-validate is used to verify that one or
+          more PolicyKit <emphasis>.policy</emphasis> files are valid.
+        </para>
+
+        <para>
+          Normally this tool is used in the software release process
+          (typically during <emphasis>"make check"</emphasis>) and
+          during software installation (e.g. in
+          the <emphasis>%post</emphasis> section of a RPM spec file).
+        </para>
+
+        <para>
+          This program exit with exit code 0 if all the files
+          validate. If not, the program exits with a non-zero exit
+          code.
+        </para>
+      </refsect1>
+
+      <refsect1>
+        <title>OPTIONS</title> 
+        <variablelist>
+          <varlistentry>
+            <term><option>--version</option></term>
+            <listitem>
+              <para>
+                Show version and exit.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>--help</option></term>
+            <listitem>
+              <para>
+                Show usage information and exit.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </refsect1>
+
+      <refsect1>
+        <title>BUGS</title> 
+        <para>
+          Please send bug reports to either the distribution or the
+          hal mailing list,
+          see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+          to subscribe.
+        </para>
+      </refsect1>
+
+      <refsect1>
+        <title>SEE ALSO</title>
+        <para>
+          <citerefentry>
+            <refentrytitle>PolicyKit</refentrytitle><manvolnum>8</manvolnum>
+          </citerefentry>, 
+          <citerefentry>
+            <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
+          </citerefentry>,
+          <citerefentry>
+            <refentrytitle>polkit-config-file-validate</refentrytitle><manvolnum>1</manvolnum>
+          </citerefentry>
+        </para>
+      </refsect1>
+    </refentry>
+  </section>
+</article>

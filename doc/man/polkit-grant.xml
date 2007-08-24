@@ -1,0 +1,125 @@
+<?xml version='1.0'?>
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<article>
+  <section>
+    <title>polkit-grant</title>
+    <refentry>
+      <refentryinfo>
+        <title>polkit-grant</title>
+        <date>August 2007</date>
+        <productname>PolicyKit</productname>
+      </refentryinfo>
+
+      <refmeta>
+        <refentrytitle>polkit-grant</refentrytitle>
+        <manvolnum>1</manvolnum>
+        <refmiscinfo class="version"></refmiscinfo>
+      </refmeta>
+
+      <refnamediv>
+        <refname>polkit-grant</refname>
+        <refpurpose>manage PolicyKit privilege grants</refpurpose>
+      </refnamediv>
+
+      <refsynopsisdiv>
+        <cmdsynopsis>
+          <command>polkit-grant</command>
+          <arg><option>--gain <replaceable>action</replaceable></option></arg>
+          <arg><option>--list</option></arg>
+          <arg><option>--delete <replaceable>user</replaceable></option></arg>
+          <arg><option>--version</option></arg>
+          <arg><option>--help</option></arg>
+        </cmdsynopsis>
+      </refsynopsisdiv>
+
+      <refsect1>
+        <title>DESCRIPTION</title> 
+        <para>
+          polkit-grant is used to inspect and manage the privileges
+          that users obtain through authentication to enable a
+          mechanism to perform a specific action on their behalf.
+        </para>
+      </refsect1>
+
+      <refsect1>
+        <title>OPTIONS</title> 
+        <variablelist>
+          <varlistentry>
+            <term><option>--gain <replaceable>action</replaceable></option></term>
+            <listitem>
+              <para>
+                Attempt to gain the privilege for the user to do an
+                action. This starts an interactive dialog where,
+                among, other things the user is authenticated.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>--list</option></term>
+            <listitem>
+              <para>
+                Lists all the privileges previously granted.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>--delete <replaceable>user</replaceable></option></term>
+            <listitem>
+              <para>
+                Delete all privileges granted to a given user. Needs
+                super user privileges.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>--version</option></term>
+            <listitem>
+              <para>
+                Show version and exit.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><option>--help</option></term>
+            <listitem>
+              <para>
+                Show usage information and exit.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </refsect1>
+
+      <refsect1>
+        <title>BUGS</title> 
+        <para>
+          Please send bug reports to either the distribution or the
+          hal mailing list,
+          see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+          to subscribe.
+        </para>
+      </refsect1>
+
+      <refsect1>
+        <title>SEE ALSO</title>
+        <para>
+          <citerefentry>
+            <refentrytitle>PolicyKit</refentrytitle><manvolnum>8</manvolnum>
+          </citerefentry>, 
+          <citerefentry>
+            <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
+          </citerefentry>, 
+          <citerefentry>
+            <refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum>
+          </citerefentry>
+        </para>
+      </refsect1>
+    </refentry>
+  </section>
+</article>
