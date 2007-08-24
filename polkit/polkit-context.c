@@ -123,22 +123,6 @@ polkit_context_new (void)
         return pk_context;
 }
 
-static void
-_load_config_file (PolKitContext *pk_context)
-{
-        PolKitError *pk_error;
-
-        pk_context->config = polkit_config_new (&pk_error);
-        /* if configuration file was bad, log it */
-        if (pk_context->config == NULL) {
-                _pk_debug ("failed to load configuration file: %s", 
-                           polkit_error_get_error_message (pk_error));
-                syslog (LOG_ALERT, "libpolkit: failed to load configuration file: %s", 
-                        polkit_error_get_error_message (pk_error));
-                polkit_error_free (pk_error);
-        }
-}
-
 /**
  * polkit_context_init:
  * @pk_context: the context object
@@ -165,8 +149,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 
         /* NOTE: we don't populate the cache until it's needed.. */
 
-        /* Load configuration file */
-        _load_config_file (pk_context);
+        /* NOTE: we don't load the configuration file until it's needed */
 
         if (pk_context->io_add_watch_func != NULL) {
                 pk_context->inotify_fd = inotify_init ();
@@ -358,22 +341,23 @@ again:
 
         if (config_changed) {
                 /* purge existing policy files */
-                        _pk_debug ("purging policy files");
-                        if (pk_context->priv_cache != NULL) {
-                                polkit_policy_cache_unref (pk_context->priv_cache);
-                                pk_context->priv_cache = NULL;
-                        }
-                        
-                        /* Purge old config and reload configuration file */
-                        _pk_debug ("reloading configuration file");
-                        if (pk_context->config != NULL)
-                                polkit_config_unref (pk_context->config);
-                        _load_config_file (pk_context);
-                        
-                        if (pk_context->config_changed_cb != NULL) {
-                                pk_context->config_changed_cb (pk_context, 
-                                                               pk_context->config_changed_user_data);
-                        }
+                _pk_debug ("purging policy files");
+                if (pk_context->priv_cache != NULL) {
+                        polkit_policy_cache_unref (pk_context->priv_cache);
+                        pk_context->priv_cache = NULL;
+                }
+                
+                /* Purge existing old config file */
+                _pk_debug ("purging configuration file");
+                if (pk_context->config != NULL) {
+                        polkit_config_unref (pk_context->config);
+                        pk_context->config = NULL;
+                }
+                
+                if (pk_context->config_changed_cb != NULL) {
+                        pk_context->config_changed_cb (pk_context, 
+                                                       pk_context->config_changed_user_data);
+                }
         }
 }
 
@@ -470,12 +454,14 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         PolKitPolicyFileEntry *pfe;
         PolKitPolicyDefault *policy_default;
         PolKitResult result;
+        PolKitConfig *config;
 
         result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, result);
 
+        config = polkit_context_get_config (pk_context);
         /* if the configuration file is malformed, always say no */
-        if (pk_context->config == NULL)
+        if (config == NULL)
                 goto out;
 
         if (action == NULL || session == NULL)
@@ -510,7 +496,7 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         polkit_policy_file_entry_debug (pfe);
 
         /* check if the config file specifies a result */
-        result = polkit_config_can_session_do_action (pk_context->config, action, session);
+        result = polkit_config_can_session_do_action (config, action, session);
         if (result != POLKIT_RESULT_UNKNOWN)
                 goto found;
 
@@ -552,12 +538,14 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         PolKitPolicyFileEntry *pfe;
         PolKitResult result;
         PolKitPolicyDefault *policy_default;
+        PolKitConfig *config;
 
         result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, result);
 
         /* if the configuration file is malformed, always say no */
-        if (pk_context->config == NULL)
+        config = polkit_context_get_config (pk_context);
+        if (config == NULL)
                 goto out;
 
         if (action == NULL || caller == NULL)
@@ -597,7 +585,7 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                 goto found;
 
         /* second, check if the config file specifies a result */
-        result = polkit_config_can_caller_do_action (pk_context->config, action, caller);
+        result = polkit_config_can_caller_do_action (config, action, caller);
         if (result != POLKIT_RESULT_UNKNOWN)
                 goto found;
 
@@ -634,6 +622,20 @@ out:
 PolKitConfig *
 polkit_context_get_config (PolKitContext *pk_context)
 {
+        if (pk_context->config == NULL) {
+                PolKitError *pk_error;
+
+                _pk_debug ("loading configuration file");
+                pk_context->config = polkit_config_new (&pk_error);
+                /* if configuration file was bad, log it */
+                if (pk_context->config == NULL) {
+                        _pk_debug ("failed to load configuration file: %s", 
+                                   polkit_error_get_error_message (pk_error));
+                        syslog (LOG_ALERT, "libpolkit: failed to load configuration file: %s", 
+                                polkit_error_get_error_message (pk_error));
+                        polkit_error_free (pk_error);
+                }
+        }
         return pk_context->config;
 }
 
