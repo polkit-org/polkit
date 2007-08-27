@@ -8,17 +8,18 @@
     <title>About</title>
     
     <para>
-      PolicyKit is a toolkit for defining and handling the policy that
-      allows unprivileged processes to speak to privileged processes:
-      It is a framework for centralizing the decision making process
-      with respect to granting access to privileged operations for
-      unprivileged applications. PolicyKit is specifically targeting
-      applications in rich desktop environments on multi-user
-      UNIX-like operating systems.
+      PolicyKit is an application-level toolkit for defining and
+      handling the policy that allows unprivileged processes to speak
+      to privileged processes: It is a framework for centralizing the
+      decision making process with respect to granting access to
+      privileged operations for unprivileged applications. PolicyKit
+      is specifically targeting applications in rich desktop
+      environments on multi-user UNIX-like operating systems. It does
+      not imply or rely on any exotic kernel features.
     </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="polkit-spec-history">
     <title>History and Prior Art</title>
     
     <para>
@@ -60,7 +61,8 @@
     <title>Defining the Problem</title>
 
     <para>
-      There's a couple of problems with the status quo
+      There's a couple of problems with the mechanisms described in
+      <xref linkend="polkit-spec-history"/>.
 
       <itemizedlist>
         <listitem>
@@ -80,7 +82,7 @@
           <para>
             The way most people use pam-console and sudo is
             fundamentally broken. Full-fledged GTK+ or Qt applications
-            as the super user which means that millions of line of
+            run as the super user which means that millions of line of
             code (including code such as image loaders that
             historically have lots of security problems) runs
             privileged. This is in direct violation of the well-known
@@ -121,7 +123,9 @@
             Without a centralized framework, access control
             configuration is often scattered throughout the system
             which makes it hard for system administrators to grasp how
-            to configure the system.
+            to configure the system. There's literally a bunch of
+            different configuration files all with different formats
+            and semantics.
           </para>
         </listitem>
 
