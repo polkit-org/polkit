@@ -538,6 +538,8 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
         PolKitResult result;
+        PolKitResult result_from_config;
+        PolKitResult result_from_grantdb;
         PolKitPolicyDefault *policy_default;
         PolKitConfig *config;
 
@@ -580,23 +582,44 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
 
         polkit_policy_file_entry_debug (pfe);
 
-        /* first, check if the grant database specifies a result */
-        result = _polkit_grantdb_check_can_caller_do_action (pk_context, action, caller);
-        if (result != POLKIT_RESULT_UNKNOWN)
-                goto found;
+        result_from_config = polkit_config_can_caller_do_action (config, action, caller);
+        result_from_grantdb = _polkit_grantdb_check_can_caller_do_action (pk_context, action, caller);
 
-        /* second, check if the config file specifies a result */
-        result = polkit_config_can_caller_do_action (config, action, caller);
-        if (result != POLKIT_RESULT_UNKNOWN)
+        /* fist, check if the config file specifies a result */
+        if (result_from_config != POLKIT_RESULT_UNKNOWN) {
+                /* it does.. use it.. although try to use an existing grant if there is one */
+                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
+                    result_from_grantdb == POLKIT_RESULT_YES) {
+                        result = POLKIT_RESULT_YES;
+                } else {
+                        result = result_from_config;
+                }
                 goto found;
+        }
 
-        /* if no, just use the defaults */
+        /* use defaults as specified in the .policy file */
         policy_default = polkit_policy_file_entry_get_default (pfe);
         if (policy_default == NULL) {
                 g_warning ("no default policy for action!");
                 goto out;
         }
         result = polkit_policy_default_can_caller_do_action (policy_default, action, caller);
+
+        /* use this result.. although try to use an existing grant if there is one */
+        if ((result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+             result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
+             result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
+             result == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
+             result == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
+             result == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
+            result_from_grantdb == POLKIT_RESULT_YES) {
+                result = POLKIT_RESULT_YES;
+        }
 
 found:
 
