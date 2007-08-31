@@ -10,7 +10,7 @@ AM_MAINTAINER_MODE
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
-LT_CURRENT=1
+LT_CURRENT=2
 LT_REVISION=0
 LT_AGE=0
 AC_SUBST(LT_CURRENT)
