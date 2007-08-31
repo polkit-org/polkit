@@ -42,9 +42,12 @@ clean-local :
 #
 # polkit-grant-helper-pam need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root
-# and/or other users.
+# and/or other users. As only polkit-grant-helper will invoke it
+# we make it owned by the polkitiuser group and non-readable / 
+# non-executable to the world
 #
 install-data-local:
 	-chown :$(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-grant-helper
-	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
+	-chown :$(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
+	-chmod 4750 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
