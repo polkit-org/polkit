@@ -1,4 +1,70 @@
 ==========
+PolicyKit 0.5 "Urban Living"
+==========
+
+Released on August 31st 2007.
+
+This is the third release of PolicyKit. Since 0.4 both source- and
+file-format level incomptible changes have been introduced. Accordingly, 
+the library so-names have been bumped to reflect this. Porting effort
+should be minimal though; see the example in PolicyKit-gnome for details.
+
+WARNING WARNING WARNING: do not use this software in a stable
+distribution; there are still security sensitive things that needs to
+be audited.
+
+Changes from PolicyKit 0.4 "Off the Grid"
+
+Danny Kukawka (3):
+      added missing files to git repo
+      fixed code documentation issues
+      fixed compiler warning about uid_t handling
+
+David Zeuthen (37):
+      move PAM stack usage to separate helper
+      remove the isatty() call so it's easier to audit the helper
+      put back isatty() checks when calling user is not uid 0
+      use waitpid() to avoid Zombie processes
+      provide a high-level interaction diagram of how this works
+      post-release version number bump
+      use correct type for conversation_done() function
+      make the /var/lib/PolicyKit/reload writable for group polkituser
+      when granting privileges, touch the /var/lib/PolicyKit/reload file
+      export PolKitConfig and provide a <define_admin_auth/> config file directive
+      properly support i18n'ed messages from .policy files
+      handle the case where we don't load descriptions
+      make polkit-grant(1) work with <define_admin_user /> feature
+      make libpolkit-grant less noisy
+      rip out group concept from .policy files and rename <policy> element to <action>
+      minor doc cleanups
+      avoid the now defunct group concept in polkit-list-actions
+      gracefully handle bad config/policy files, drop polkit-reload-config, syslog
+      add support for annotations
+      give a little love to polkit-list-actions(1) and polkit-grant(1)
+      Merge branch 'master' of ssh://david@git.freedesktop.org/git/PolicyKit
+      delay loading the configuration until it's needed
+      convert manual page sources to Docbook, add polkit-config-file-validate tool
+      clean up our documentation
+      revert "fixed code documentation issues"
+      fix up manual pages for some trivial errors
+      update inline API docs
+      some more doc fixes
+      make config file override grant database
+      forgot to add doc/version.xml.in
+      also add another missing file
+      also forgot to add polkit-docs.xml
+      minor doc changes
+      add an example of how define_admin_auth is used
+      make polkit-grant-helper-pam out of reach for normal users
+      fix 'make distcheck' by avoiding with man pages on distcheck
+      bump so name
+      update NEWS file
+
+Richard Hughes (1):
+      work when SELinux is disabled
+
+
+==========
 PolicyKit 0.4 "Off the Grid"
 ==========
 
