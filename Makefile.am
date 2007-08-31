@@ -23,5 +23,8 @@ $(srcdir)/ChangeLog:
 
 EXTRA_DIST = HACKING mkinstalldirs ChangeLog
 
+# xsltproc barfs on 'make distcheck'; disable for now
+DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages
+
 clean-local :
 	rm -f *~
