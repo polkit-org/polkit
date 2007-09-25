@@ -295,13 +295,14 @@ fi
 
 AC_SUBST(PAM_MODULE_DIR)
 
-AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat/suse/gentoo)])
+AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat/suse/gentoo/pardus)])
 
 #### Check our operating system (distro-tweaks required)
 if test "z$with_os_type" = "z"; then
 	AC_CHECK_FILE(/etc/redhat-release,distro_type="redhat")
 	AC_CHECK_FILE(/etc/SuSE-release,distro_type="suse")
 	AC_CHECK_FILE(/etc/gentoo-release,distro_type="gentoo")
+	AC_CHECK_FILE(/etc/pardus-release,distro_type="pardus")
 	if test "z$distro_type" = "z"; then
 		echo "Linux distribution autodetection failed, specify the distribution to target using --with-os-type="
 	else
@@ -317,6 +318,8 @@ if test x$with_os_type = x; then
         with_os_type=suse
     elif test x$operating_system = xgentoo ; then
         with_os_type=gentoo
+    elif test x$operating_system = xpardus ; then
+        with_os_type=pardus
     else
         with_os_type=unknown
     fi
@@ -327,6 +330,7 @@ AM_CONDITIONAL(OS_TYPE_UNKNOWN, test x$with_os_type = xunknown, [Running on unkn
 AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red Hat OS'es])
 AM_CONDITIONAL(OS_TYPE_SUSE, test x$with_os_type = xsuse, [Running on SUSE OS'es])
 AM_CONDITIONAL(OS_TYPE_GENTOO, test x$with_os_type = xgentoo, [Running on Gentoo OS'es])
+AM_CONDITIONAL(OS_TYPE_PARDUS, test x$with_os_type = xpardus, [Running on Pardus OS'es])
 
 AC_ARG_WITH(pam-include, [  --with-pam-include=<file>  pam file to include])
 
@@ -336,7 +340,7 @@ if ! test -z "$with_pam_include"; then
    PAM_FILE_INCLUDE_ACCOUNT=$with_pam_include
    PAM_FILE_INCLUDE_PASSWORD=$with_pam_include
    PAM_FILE_INCLUDE_SESSION=$with_pam_include
-elif test x$with_os_type = xredhat -o x$with_os_type = xgentoo ; then
+elif test x$with_os_type = xredhat -o x$with_os_type = xgentoo -o x$with_os_type = xpardus ; then
    PAM_FILE_INCLUDE_AUTH=system-auth
    PAM_FILE_INCLUDE_ACCOUNT=system-auth
    PAM_FILE_INCLUDE_PASSWORD=system-auth
