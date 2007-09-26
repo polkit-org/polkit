@@ -1,4 +1,8 @@
 
+ - Make both XML parsers cope with unknown elements; this is necessary
+   to keep old processes linking in libpolkit work when doing upgrade
+   of PolicyKit where e.g. .policy files with new elements are added.
+
  - Have someone review the external API
 
  - Verify the security model
