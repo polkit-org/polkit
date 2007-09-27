@@ -67,22 +67,26 @@ _print_details_for_entry (PolKitPolicyFileEntry *pfe)
 {
         const char *action_id;
         PolKitPolicyDefault *def;
+        PolKitResult default_any;
         PolKitResult default_inactive;
         PolKitResult default_active;
 
         action_id = polkit_policy_file_entry_get_id (pfe);
         def = polkit_policy_file_entry_get_default (pfe);
+        default_any = polkit_policy_default_get_allow_any (def);
         default_inactive = polkit_policy_default_get_allow_inactive (def);
         default_active = polkit_policy_default_get_allow_active (def);
 
         printf ("action_id:        %s\n"
                 "description:      %s\n"
                 "message:          %s\n"
+                "default_any:      %s\n"
                 "default_inactive: %s\n"
                 "default_active:   %s\n",
                 action_id,
                 polkit_policy_file_entry_get_action_description (pfe),
                 polkit_policy_file_entry_get_action_message (pfe),
+                polkit_result_to_string_representation (default_any),
                 polkit_result_to_string_representation (default_inactive),
                 polkit_result_to_string_representation (default_active));
 
