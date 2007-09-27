@@ -35,6 +35,7 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <syslog.h>
 
 #include <expat.h>
 
@@ -73,6 +74,7 @@ extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *actio
 
 enum {
         STATE_NONE,
+        STATE_UNKNOWN_TAG,
         STATE_IN_POLICY_CONFIG,
         STATE_IN_ACTION,
         STATE_IN_ACTION_DESCRIPTION,
@@ -84,9 +86,15 @@ enum {
         STATE_IN_ANNOTATE
 };
 
+#define PARSER_MAX_DEPTH 32
+
 typedef struct {
         XML_Parser parser;
         int state;
+        int state_stack[PARSER_MAX_DEPTH];
+        int stack_depth;
+
+        const char *path;
 
         char *action_id;
 
@@ -223,11 +231,17 @@ _start (void *data, const char *el, const char **attr)
                 break;
         }
 
-        if (state == STATE_NONE)
-                goto error;
+        if (state == STATE_NONE) {
+                g_warning ("skipping unknown tag <%s> at line %d of %s", 
+                           el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
+                syslog (LOG_ALERT, "libpolkit: skipping unknown tag <%s> at line %d of %s", 
+                        el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
+                state = STATE_UNKNOWN_TAG;
+        }
 
         pd->state = state;
-
+        pd->state_stack[pd->stack_depth] = pd->state;
+        pd->stack_depth++;
         return;
 error:
         XML_StopParser (pd->parser, FALSE);
@@ -349,20 +363,12 @@ out:
 static void
 _end (void *data, const char *el)
 {
-        int state;
         ParserData *pd = data;
-
-        state = STATE_NONE;
 
         g_free (pd->elem_lang);
         pd->elem_lang = NULL;
 
         switch (pd->state) {
-        case STATE_NONE:
-                break;
-        case STATE_IN_POLICY_CONFIG:
-                state = STATE_NONE;
-                break;
         case STATE_IN_ACTION:
         {
                 const char *policy_description;
@@ -394,36 +400,21 @@ _end (void *data, const char *el)
                                                                     policy_message);
 
                 pd->pf->entries = g_slist_prepend (pd->pf->entries, pfe);
-
-                state = STATE_IN_POLICY_CONFIG;
                 break;
         }
-        case STATE_IN_ACTION_DESCRIPTION:
-                state = STATE_IN_ACTION;
-                break;
-        case STATE_IN_ACTION_MESSAGE:
-                state = STATE_IN_ACTION;
-                break;
-        case STATE_IN_DEFAULTS:
-                state = STATE_IN_ACTION;
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_ANY:
-                state = STATE_IN_DEFAULTS;
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
-                state = STATE_IN_DEFAULTS;
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
-                state = STATE_IN_DEFAULTS;
-                break;
-        case STATE_IN_ANNOTATE:
-                state = STATE_IN_ACTION;
-                break;
         default:
                 break;
         }
 
-        pd->state = state;
+        --pd->stack_depth;
+        if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH) {
+                _pk_debug ("reached max depth?");
+                goto error;
+        }
+        if (pd->stack_depth > 0)
+                pd->state = pd->state_stack[pd->stack_depth - 1];
+        else
+                pd->state = STATE_NONE;
 
         return;
 error:
@@ -474,7 +465,9 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         /* clear parser data */
         memset (&pd, 0, sizeof (ParserData));
 
+        pd.path = path;
         pd.parser = XML_ParserCreate (NULL);
+        pd.stack_depth = 0;
         if (pd.parser == NULL) {
                 polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
                                         "Cannot load PolicyKit policy file at '%s': %s",

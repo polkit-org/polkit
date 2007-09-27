@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <sys/inotify.h>
 #include <regex.h>
+#include <syslog.h>
 
 #include <expat.h>
 
@@ -58,6 +59,7 @@
 
 enum {
         STATE_NONE,
+        STATE_UNKNOWN_TAG,
         STATE_IN_CONFIG,
         STATE_IN_MATCH,
         STATE_IN_RETURN,
@@ -87,6 +89,7 @@ typedef struct {
         XML_Parser parser;
         int state;
         PolKitConfig *pk_config;
+        const char *path;
 
         int state_stack[PARSER_MAX_DEPTH];
         ConfigNode *node_stack[PARSER_MAX_DEPTH];
@@ -95,6 +98,7 @@ typedef struct {
 } ParserData;
 
 enum {
+        NODE_TYPE_NOP,
         NODE_TYPE_TOP,
         NODE_TYPE_MATCH,
         NODE_TYPE_RETURN,
@@ -165,6 +169,9 @@ config_node_dump_real (ConfigNode *node, unsigned int indent)
         buf[n] = '\0';
         
         switch (node->node_type) {
+        case NODE_TYPE_NOP:
+                _pk_debug ("%sNOP", buf);
+                break;
         case NODE_TYPE_TOP:
                 _pk_debug ("%sTOP", buf);
                 break;
@@ -210,6 +217,8 @@ config_node_unref (ConfigNode *node)
         GSList *i;
 
         switch (node->node_type) {
+        case NODE_TYPE_NOP:
+                break;
         case NODE_TYPE_TOP:
                 break;
         case NODE_TYPE_MATCH:
@@ -245,7 +254,8 @@ _start (void *data, const char *el, const char **attr)
                 ;
 
         state = STATE_NONE;
-        node = NULL;
+        node = config_node_new ();
+        node->node_type = NODE_TYPE_NOP;
 
         switch (pd->state) {
         case STATE_NONE:
@@ -258,7 +268,6 @@ _start (void *data, const char *el, const char **attr)
                                 goto error;
                         }
 
-                        node = config_node_new ();
                         node->node_type = NODE_TYPE_TOP;
                         pd->pk_config->top_config_node = node;
                 }
@@ -267,7 +276,6 @@ _start (void *data, const char *el, const char **attr)
         case STATE_IN_MATCH:
                 if ((strcmp (el, "match") == 0) && (num_attr == 2)) {
 
-                        node = config_node_new ();
                         node->node_type = NODE_TYPE_MATCH;
                         if (strcmp (attr[0], "action") == 0) {
                                 node->data.node_match.match_type = MATCH_TYPE_ACTION;
@@ -292,7 +300,6 @@ _start (void *data, const char *el, const char **attr)
 
                 } else if ((strcmp (el, "return") == 0) && (num_attr == 2)) {
 
-                        node = config_node_new ();
                         node->node_type = NODE_TYPE_RETURN;
 
                         if (strcmp (attr[0], "result") == 0) {
@@ -313,7 +320,6 @@ _start (void *data, const char *el, const char **attr)
                                    node->data.node_return.result);
                 } else if ((strcmp (el, "define_admin_auth") == 0) && (num_attr == 2)) {
 
-                        node = config_node_new ();
                         node->node_type = NODE_TYPE_DEFINE_ADMIN_AUTH;
                         if (strcmp (attr[0], "user") == 0) {
                                 node->data.node_define_admin_auth.admin_type = POLKIT_CONFIG_ADMIN_AUTH_TYPE_USER;
@@ -337,8 +343,13 @@ _start (void *data, const char *el, const char **attr)
                 break;
         }
 
-        if (state == STATE_NONE || node == NULL)
-                goto error;
+        if (state == STATE_NONE || node == NULL) {
+                g_warning ("skipping unknown tag <%s> at line %d of %s", 
+                           el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
+                syslog (LOG_ALERT, "libpolkit: skipping unknown tag <%s> at line %d of %s", 
+                        el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
+                state = STATE_UNKNOWN_TAG;
+        }
 
         if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH) {
                 _pk_debug ("reached max depth?");
@@ -442,6 +453,7 @@ polkit_config_new (const char *path, PolKitError **error)
         pd.pk_config = pk_config;
         pd.node_stack[0] = NULL;
         pd.stack_depth = 0;
+        pd.path = path;
 
         xml_res = XML_Parse (pd.parser, buf, buflen, 1);
 
@@ -588,6 +600,9 @@ config_node_test (ConfigNode *node,
         result = POLKIT_RESULT_UNKNOWN;
 
         switch (node->node_type) {
+        case NODE_TYPE_NOP:
+                recurse = FALSE;
+                break;
         case NODE_TYPE_TOP:
                 recurse = TRUE;
                 break;
@@ -682,6 +697,9 @@ config_node_determine_admin_auth (ConfigNode *node,
         result_set = FALSE;
 
         switch (node->node_type) {
+        case NODE_TYPE_NOP:
+                recurse = FALSE;
+                break;
         case NODE_TYPE_TOP:
                 recurse = TRUE;
                 break;
