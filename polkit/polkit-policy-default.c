@@ -58,21 +58,25 @@
 struct _PolKitPolicyDefault
 {
         int refcount;
+        PolKitResult default_any;
         PolKitResult default_inactive;
         PolKitResult default_active;
 };
 
-extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
+extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any,
+                                                        PolKitResult defaults_allow_inactive,
                                                         PolKitResult defaults_allow_active);
 
 PolKitPolicyDefault *
-_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
+_polkit_policy_default_new (PolKitResult defaults_allow_any,
+                            PolKitResult defaults_allow_inactive,
                             PolKitResult defaults_allow_active)
 {
         PolKitPolicyDefault *pd;
 
         pd = g_new0 (PolKitPolicyDefault, 1);
         pd->refcount = 1;
+        pd->default_any = defaults_allow_any;
         pd->default_inactive = defaults_allow_inactive;
         pd->default_active = defaults_allow_active;
         return pd;
@@ -123,9 +127,11 @@ polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
 {
         g_return_if_fail (policy_default != NULL);
         _pk_debug ("PolKitPolicyDefault: refcount=%d\n"
+                   "        default_any=%s\n"
                    "   default_inactive=%s\n"
                    "     default_active=%s", 
                    policy_default->refcount,
+                   polkit_result_to_string_representation (policy_default->default_any),
                    polkit_result_to_string_representation (policy_default->default_inactive),
                    polkit_result_to_string_representation (policy_default->default_active));
 }
@@ -157,6 +163,8 @@ polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default
         g_return_val_if_fail (policy_default != NULL, ret);
         g_return_val_if_fail (action != NULL, ret);
         g_return_val_if_fail (session != NULL, ret);
+
+        ret = policy_default->default_any;
 
         if (!polkit_session_get_ck_is_local (session, &is_local))
                 goto out;
@@ -203,6 +211,8 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
         g_return_val_if_fail (action != NULL, ret);
         g_return_val_if_fail (caller != NULL, ret);
 
+        ret = policy_default->default_any;
+
         if (!polkit_caller_get_ck_session (caller, &session))
                 goto out;
         if (session == NULL)
@@ -224,6 +234,21 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
 
 out:
         return ret;
+}
+
+/**
+ * polkit_policy_default_get_allow_any:
+ * @policy_default: the object
+ * 
+ * Get default policy.
+ * 
+ * Returns: default policy
+ **/
+PolKitResult
+polkit_policy_default_get_allow_any (PolKitPolicyDefault *policy_default)
+{
+        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        return policy_default->default_any;
 }
 
 /**

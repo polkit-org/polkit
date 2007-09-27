@@ -72,10 +72,12 @@ extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *p
                                                         const char *policy_message);
 
 
-extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_inactive,
+extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any,
+                                                        PolKitResult defaults_allow_inactive,
                                                         PolKitResult defaults_allow_active);
 
 extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
+                                                               PolKitResult defaults_allow_any,
                                                                PolKitResult defaults_allow_inactive,
                                                                PolKitResult defaults_allow_active,
                                                                GHashTable *annotations);
@@ -83,6 +85,7 @@ extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *actio
 /* NOTE: we take ownership of the annotations object */
 extern PolKitPolicyFileEntry *
 _polkit_policy_file_entry_new   (const char *action_id, 
+                                 PolKitResult defaults_allow_any,
                                  PolKitResult defaults_allow_inactive,
                                  PolKitResult defaults_allow_active,
                                  GHashTable *annotations)
@@ -93,7 +96,8 @@ _polkit_policy_file_entry_new   (const char *action_id,
         pfe->refcount = 1;
         pfe->action = g_strdup (action_id);
 
-        pfe->defaults = _polkit_policy_default_new (defaults_allow_inactive,
+        pfe->defaults = _polkit_policy_default_new (defaults_allow_any,
+                                                    defaults_allow_inactive,
                                                     defaults_allow_active);
         if (pfe->defaults == NULL)
                 goto error;

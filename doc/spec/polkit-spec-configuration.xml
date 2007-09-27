@@ -28,6 +28,7 @@
     <message xml:lang="da">System indstillinger forhindrer PolicyKit-gnome eksempel hjælper i at Frobnikere!</message>
     <message xml:lang="en_CA">System policy prevents the PolicyKit-gnome example helper from Frobnicating, Aye!</message>
     <defaults>
+      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>auth_self</allow_active>
     </defaults>
@@ -41,6 +42,7 @@
     <message xml:lang="da">System indstillinger forhindrer PolicyKit-gnome eksempel hjælper i at Tvække!</message>
     <message xml:lang="en_CA">System policy prevents the PolicyKit-gnome example helper from Tweaking, Aye!</message>
     <defaults>
+      <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
       <allow_active>auth_admin</allow_active>
     </defaults>
@@ -76,11 +78,14 @@
         <listitem>
           <para>
             <emphasis>Defaults:</emphasis>
-            The <literal>allow_inactive</literal>
-            and <literal>allow_active</literal> specify the default
-            answer that <literal>libpolkit</literal> will return for
-            respectively inactive and active sessions. See below for
-            valid values and their meaning.
+            The <literal>allow_any</literal>, <literal>allow_inactive</literal>
+            and <literal>allow_active</literal> tags specify the
+            default answer that <literal>libpolkit</literal> will
+            return for respectively any, inactive and active
+            sessions. See below for valid values and their
+            meaning. Any of these elements, including the
+            enclosing <literal>defaults</literal> elements may be
+            omitted.
           </para>
         </listitem>
         <listitem>

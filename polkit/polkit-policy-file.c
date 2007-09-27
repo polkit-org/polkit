@@ -50,7 +50,7 @@
  * @title: Policy Definition Files
  * @short_description: Represents a set of declared actions.
  *
- * This class is used to represent a policy files.
+ * This class is used to represent a policy file.
  **/
 
 /**
@@ -66,6 +66,7 @@ struct _PolKitPolicyFile
 };
 
 extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
+                                                               PolKitResult defaults_allow_any,
                                                                PolKitResult defaults_allow_inactive,
                                                                PolKitResult defaults_allow_active,
                                                                GHashTable *annotations);
@@ -77,6 +78,7 @@ enum {
         STATE_IN_ACTION_DESCRIPTION,
         STATE_IN_ACTION_MESSAGE,
         STATE_IN_DEFAULTS,
+        STATE_IN_DEFAULTS_ALLOW_ANY,
         STATE_IN_DEFAULTS_ALLOW_INACTIVE,
         STATE_IN_DEFAULTS_ALLOW_ACTIVE,
         STATE_IN_ANNOTATE
@@ -88,6 +90,7 @@ typedef struct {
 
         char *action_id;
 
+        PolKitResult defaults_allow_any;
         PolKitResult defaults_allow_inactive;
         PolKitResult defaults_allow_active;
 
@@ -169,6 +172,7 @@ _start (void *data, const char *el, const char **attr)
                         pd->policy_messages = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
                         /* initialize defaults */
+                        pd->defaults_allow_any = POLKIT_RESULT_NO;
                         pd->defaults_allow_inactive = POLKIT_RESULT_NO;
                         pd->defaults_allow_active = POLKIT_RESULT_NO;
                 }
@@ -200,10 +204,14 @@ _start (void *data, const char *el, const char **attr)
         case STATE_IN_ACTION_MESSAGE:
                 break;
         case STATE_IN_DEFAULTS:
-                if (strcmp (el, "allow_inactive") == 0)
+                if (strcmp (el, "allow_any") == 0)
+                        state = STATE_IN_DEFAULTS_ALLOW_ANY;
+                else if (strcmp (el, "allow_inactive") == 0)
                         state = STATE_IN_DEFAULTS_ALLOW_INACTIVE;
                 else if (strcmp (el, "allow_active") == 0)
                         state = STATE_IN_DEFAULTS_ALLOW_ACTIVE;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_ANY:
                 break;
         case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
                 break;
@@ -256,6 +264,10 @@ _cdata (void *data, const char *s, int len)
                 }
                 break;
 
+        case STATE_IN_DEFAULTS_ALLOW_ANY:
+                if (!polkit_result_from_string_representation (str, &pd->defaults_allow_any))
+                        goto error;
+                break;
         case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
                 if (!polkit_result_from_string_representation (str, &pd->defaults_allow_inactive))
                         goto error;
@@ -359,6 +371,7 @@ _end (void *data, const char *el)
 
                 /* NOTE: caller takes ownership of the annotations object */
                 pfe = _polkit_policy_file_entry_new (pd->action_id, 
+                                                     pd->defaults_allow_any,
                                                      pd->defaults_allow_inactive,
                                                      pd->defaults_allow_active,
                                                      pd->annotations);
@@ -393,6 +406,9 @@ _end (void *data, const char *el)
                 break;
         case STATE_IN_DEFAULTS:
                 state = STATE_IN_ACTION;
+                break;
+        case STATE_IN_DEFAULTS_ALLOW_ANY:
+                state = STATE_IN_DEFAULTS;
                 break;
         case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
                 state = STATE_IN_DEFAULTS;
