@@ -1,4 +1,33 @@
 ==========
+PolicyKit 0.6 "There is no stopping in a red zone"
+==========
+
+Released on October 11th 2007.
+
+This is the fourth release of PolicyKit. There are no major changes
+since 0.5 expect a) better handling of unknown XML tags in the config
+and policy files (we simply ignore unknown sub-trees) to make it
+easier to add features in the future; b) native support for more
+distributions; and c) the addition of a <allow_any> tag to the .policy
+files.
+
+Changes from PolicyKit 0.5 "Urban Living"
+
+David Zeuthen (6):
+      post-release version bump
+      add specifics for the Pardus distro
+      add TODO item detailing how to handle upgrades
+      implement <allow_any> to specify default answer for any user
+      don't fail on unknown XML tags, just skip them
+      make polkit-list-actions print information about <allow_any>
+
+Doug Goldstein (3):
+      gentoo OS type support
+      install hook for setuid/setgid
+      use chgrp instead of chown with group only
+
+
+==========
 PolicyKit 0.5 "Urban Living"
 ==========
 
