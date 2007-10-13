@@ -32,11 +32,12 @@
  *
  * Helper library for obtaining seat, session and caller information
  * via D-Bus and ConsoleKit. This library is only useful when writing
- * a mechanism. If the mechanism itself is a daemon exposing a remote
- * services (via e.g. D-Bus) it's often a better idea, to reduce
- * roundtrips, to track and cache caller information and construct
- * #PolKitCaller objects yourself based on this information (for an
- * example of this, see the hald sources on how this can be done).
+ * a mechanism. 
+ *
+ * If the mechanism itself is a daemon exposing a remote services via
+ * the system message bus it's often a better idea, to reduce
+ * roundtrips, to use the high-level #PolKitTracker class rather than
+ * the low-level function polkit_caller_new_from_dbus_name().
  **/
 
 #ifdef HAVE_CONFIG_H
@@ -60,6 +61,7 @@
 #endif
 
 #include "polkit-dbus.h"
+#include <polkit/polkit-debug.h>
 
 
 /**
@@ -357,7 +359,8 @@ out:
  * both the system bus daemon and the ConsoleKit daemon for
  * information. Note that this will do a lot of blocking IO so it is
  * best avoided if your process already tracks/caches all the
- * information.
+ * information. For example you can use the #PolKitTracker class for
+ * this.
  * 
  * Returns: the new object or #NULL if an error occured (in which case
  * @error will be set)
@@ -718,4 +721,353 @@ out:
         g_free (ck_session_objpath);
         g_free (proc_path);
         return caller;
+}
+
+/**
+ * PolKitTracker:
+ *
+ * Instances of this class are used to cache information about
+ * callers; typically this is used in scenarios where the same caller
+ * is calling into a mechanism multiple times. 
+ *
+ * Thus, an application can use this class to get the #PolKitCaller
+ * object; the class will listen to both NameOwnerChanged and
+ * ActivityChanged signals from the message bus and update / retire
+ * the #PolKitCaller objects.
+ *
+ * An example of how to use #PolKitTracker is provided here. First, build the following program
+ *
+ * <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../examples/tracker-example/tracker-example.c" parse="text"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
+ *
+ * with
+ *
+ * <programlisting>gcc -o tracker-example `pkg-config --cflags --libs dbus-glib-1 polkit-dbus` tracker-example.c</programlisting>
+ *
+ * Then put the following content
+ *
+ * <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../examples/tracker-example/dk.fubar.PolKitTestService.conf" parse="text"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
+ *
+ * in the file <literal>/etc/dbus-1/system.d/dk.fubar.PolKitTestService.conf</literal>. Finally,
+ * create a small Python client like this
+ *
+ * <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../examples/tracker-example/tracker-example-client.py" parse="text"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
+ *
+ * as <literal>tracker-example-client.py</literal>. Now, run <literal>tracker-example</literal>
+ * in one window and <literal>tracker-example-client</literal> in another. The output of
+ * the former should look like this
+ *
+ *
+ * <programlisting>
+ * 18:20:00.414: PolKitCaller: refcount=1 dbus_name=:1.473 uid=500 pid=8636 selinux_context=system_u:system_r:unconfined_t
+ * 18:20:00.414: PolKitSession: refcount=1 uid=0 objpath=/org/freedesktop/ConsoleKit/Session1 is_active=1 is_local=1 remote_host=(null)
+ * 18:20:00.414: PolKitSeat: refcount=1 objpath=/org/freedesktop/ConsoleKit/Seat1
+ * 
+ * 18:20:01.424: PolKitCaller: refcount=1 dbus_name=:1.473 uid=500 pid=8636 selinux_context=system_u:system_r:unconfined_t
+ * 18:20:01.424: PolKitSession: refcount=1 uid=0 objpath=/org/freedesktop/ConsoleKit/Session1 is_active=1 is_local=1 remote_host=(null)
+ * 18:20:01.424: PolKitSeat: refcount=1 objpath=/org/freedesktop/ConsoleKit/Seat1
+ * 
+ * 18:20:02.434: PolKitCaller: refcount=1 dbus_name=:1.473 uid=500 pid=8636 selinux_context=system_u:system_r:unconfined_t
+ * 18:20:02.434: PolKitSession: refcount=1 uid=0 objpath=/org/freedesktop/ConsoleKit/Session1 is_active=0 is_local=1 remote_host=(null)
+ * 18:20:02.434: PolKitSeat: refcount=1 objpath=/org/freedesktop/ConsoleKit/Seat1
+ * 
+ * 18:20:03.445: PolKitCaller: refcount=1 dbus_name=:1.473 uid=500 pid=8636 selinux_context=system_u:system_r:unconfined_t
+ * 18:20:03.445: PolKitSession: refcount=1 uid=0 objpath=/org/freedesktop/ConsoleKit/Session1 is_active=1 is_local=1 remote_host=(null)
+ * 18:20:03.445: PolKitSeat: refcount=1 objpath=/org/freedesktop/ConsoleKit/Seat1
+ * </programlisting>
+ *
+ * The point of the test program is simply to gather caller
+ * information about clients (the small Python program, you may launch
+ * multiple instances of it) that repeatedly calls into the D-Bus
+ * service; if one runs <literal>strace(1)</literal> in front of the
+ * test program one will notice that there is only syscall / IPC
+ * overhead (except for printing to stdout) on the first call from the
+ * client.
+ *
+ * The careful reader will notice that, during the testing session, we
+ * did a quick VT switch away from the session (and back) which is
+ * reflected in the output.
+ **/
+struct _PolKitTracker {
+        int refcount;
+        DBusConnection *con;
+
+        GHashTable *dbus_name_to_caller;
+};
+
+/**
+ * polkit_tracker_new:
+ * 
+ * Creates a new #PolKitTracker object.
+ * 
+ * Returns: the new object
+ **/
+PolKitTracker *
+polkit_tracker_new (void)
+{
+        PolKitTracker *pk_tracker;
+        pk_tracker = g_new0 (PolKitTracker, 1);
+        pk_tracker->refcount = 1;
+        pk_tracker->dbus_name_to_caller = g_hash_table_new_full (g_str_hash, 
+                                                                 g_str_equal,
+                                                                 g_free,
+                                                                 (GDestroyNotify) polkit_caller_unref);
+        return pk_tracker;
+}
+
+/**
+ * polkit_tracker_ref:
+ * @pk_tracker: the tracker object
+ * 
+ * Increase reference count.
+ * 
+ * Returns: the object
+ **/
+PolKitTracker *
+polkit_tracker_ref (PolKitTracker *pk_tracker)
+{
+        g_return_val_if_fail (pk_tracker != NULL, pk_tracker);
+        pk_tracker->refcount++;
+        return pk_tracker;
+}
+
+/**
+ * polkit_tracker_unref:
+ * @pk_tracker: the tracker object
+ * 
+ * Decreases the reference count of the object. If it becomes zero,
+ * the object is freed. Before freeing, reference counts on embedded
+ * objects are decresed by one.
+ **/
+void
+polkit_tracker_unref (PolKitTracker *pk_tracker)
+{
+        g_return_if_fail (pk_tracker != NULL);
+        pk_tracker->refcount--;
+        if (pk_tracker->refcount > 0) 
+                return;
+        g_hash_table_unref (pk_tracker->dbus_name_to_caller);
+        dbus_connection_unref (pk_tracker->con);
+        g_free (pk_tracker);
+}
+
+/**
+ * polkit_tracker_set_system_bus_connection:
+ * @pk_tracker: the tracker object
+ * @con: the connection to the system message bus
+ * 
+ * Tell the #PolKitTracker object to use the given D-Bus connection
+ * when it needs to fetch information from the system message bus and
+ * ConsoleKit services. This is used for priming the cache.
+ */
+void
+polkit_tracker_set_system_bus_connection (PolKitTracker *pk_tracker, DBusConnection *con)
+{
+        g_return_if_fail (pk_tracker != NULL);
+        pk_tracker->con = dbus_connection_ref (con);
+}
+
+/**
+ * polkit_tracker_init:
+ * @pk_tracker: the tracker object
+ * 
+ * Initialize the tracker.
+ */
+void
+polkit_tracker_init (PolKitTracker *pk_tracker)
+{
+        g_return_if_fail (pk_tracker != NULL);
+        /* This is currently a no-op */
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static void
+_set_session_inactive_iter (gpointer key, PolKitCaller *caller, const char *session_objpath)
+{
+        char *objpath;
+        PolKitSession *session;
+        if (!polkit_caller_get_ck_session (caller, &session))
+                return;
+        if (!polkit_session_get_ck_objref (session, &objpath))
+                return;
+        if (strcmp (objpath, session_objpath) != 0)
+                return;
+        polkit_session_set_ck_is_active (session, FALSE);
+}
+
+static void
+_set_session_active_iter (gpointer key, PolKitCaller *caller, const char *session_objpath)
+{
+        char *objpath;
+        PolKitSession *session;
+        if (!polkit_caller_get_ck_session (caller, &session))
+                return;
+        if (!polkit_session_get_ck_objref (session, &objpath))
+                return;
+        if (strcmp (objpath, session_objpath) != 0)
+                return;
+        polkit_session_set_ck_is_active (session, TRUE);
+}
+
+static void
+_update_session_is_active (PolKitTracker *pk_tracker, const char *session_objpath, gboolean is_active)
+{
+        g_hash_table_foreach (pk_tracker->dbus_name_to_caller, 
+                              (GHFunc) (is_active ? _set_session_active_iter : _set_session_inactive_iter),
+                              (gpointer) session_objpath);
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static gboolean
+_remove_caller_by_session_iter (gpointer key, PolKitCaller *caller, const char *session_objpath)
+{
+        char *objpath;
+        PolKitSession *session;
+        if (!polkit_caller_get_ck_session (caller, &session))
+                return FALSE;
+        if (!polkit_session_get_ck_objref (session, &objpath))
+                return FALSE;
+        if (strcmp (objpath, session_objpath) != 0)
+                return FALSE;
+        return TRUE;
+}
+
+static void
+_remove_caller_by_session (PolKitTracker *pk_tracker, const char *session_objpath)
+{
+        g_hash_table_foreach_remove (pk_tracker->dbus_name_to_caller, 
+                                     (GHRFunc) _remove_caller_by_session_iter,
+                                     (gpointer) session_objpath);
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static gboolean
+_remove_caller_by_dbus_name_iter (gpointer key, PolKitCaller *caller, const char *dbus_name)
+{
+        char *name;
+        if (!polkit_caller_get_dbus_name (caller, &name))
+                return FALSE;
+        if (strcmp (name, dbus_name) != 0)
+                return FALSE;
+        return TRUE;
+}
+
+static void
+_remove_caller_by_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name)
+{
+        g_hash_table_foreach_remove (pk_tracker->dbus_name_to_caller, 
+                                     (GHRFunc) _remove_caller_by_dbus_name_iter,
+                                     (gpointer) dbus_name);
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+/**
+ * polkit_tracker_dbus_func:
+ * @pk_tracker: the tracker object
+ * @message: message to pass
+ * 
+ * The owner of the #PolKitTracker object must pass signals from the
+ * system message bus (just NameOwnerChanged will do) and all signals
+ * from the ConsoleKit service into this function.
+ */
+void
+polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
+{
+
+        if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
+		char *name;
+		char *new_service_name;
+		char *old_service_name;
+                
+		if (!dbus_message_get_args (message, NULL,
+					    DBUS_TYPE_STRING, &name,
+					    DBUS_TYPE_STRING, &old_service_name,
+					    DBUS_TYPE_STRING, &new_service_name,
+					    DBUS_TYPE_INVALID)) {
+
+                        /* TODO: should be _pk_critical */
+                        _pk_debug ("The NameOwnerChanged signal on the " DBUS_INTERFACE_DBUS " "
+                                   "interface has the wrong signature! Your system is misconfigured.");
+			goto out;
+		}
+
+                if (strlen (new_service_name) == 0) {
+                        _remove_caller_by_dbus_name (pk_tracker, name);
+                }
+
+        } else if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Session", "ActiveChanged")) {
+                dbus_bool_t is_active;
+                DBusError error;
+                const char *session_objpath;
+
+                dbus_error_init (&error);
+                session_objpath = dbus_message_get_path (message);
+                if (!dbus_message_get_args (message, &error, 
+                                            DBUS_TYPE_BOOLEAN, &is_active, 
+                                            DBUS_TYPE_INVALID)) {
+
+                        /* TODO: should be _pk_critical */
+                        _pk_debug ("The ActiveChanged signal on the org.freedesktop.ConsoleKit.Session "
+                                   "interface for object %s has the wrong signature! "
+                                   "Your system is misconfigured.", session_objpath);
+
+                        /* as a security measure, remove all sessions with this path from the cache;
+                         * cuz then the user of PolKitTracker probably gets to deal with a DBusError
+                         * the next time he tries something...
+                         */
+                        _remove_caller_by_session (pk_tracker, session_objpath);
+                        goto out;
+                }
+
+                /* now go through all Caller objects and update the is_active field as appropriate */
+                _update_session_is_active (pk_tracker, session_objpath, is_active);
+        }
+
+        /* TODO: when ConsoleKit gains the ability to attach/detach a session to a seat (think
+         * hot-desking), we want to update our local caches too 
+         */
+
+out:
+        ;
+}
+
+/**
+ * polkit_tracker_get_caller_from_dbus_name:
+ * @pk_tracker: the tracker object
+ * @dbus_name: unique name on the system message bus
+ * @error: D-Bus error
+ *
+ * This function is similar to polkit_caller_new_from_dbus_name()
+ * except that it uses the cache in #PolKitTracker. So on the second
+ * and subsequent calls, for the same D-Bus name, there will be no
+ * syscall or IPC overhead in calling this function.
+ * 
+ * Returns: A #PolKitCaller object; the caller must use
+ * polkit_caller_unref() on the object when done with it. Returns
+ * #NULL if an error occured (in which case error will be set).
+ */
+PolKitCaller *
+polkit_tracker_get_caller_from_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name, DBusError *error)
+{
+        PolKitCaller *caller;
+
+        g_return_val_if_fail (pk_tracker != NULL, NULL);
+        g_return_val_if_fail (pk_tracker->con != NULL, NULL);
+        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+
+        caller = g_hash_table_lookup (pk_tracker->dbus_name_to_caller, dbus_name);
+        if (caller != NULL)
+                return polkit_caller_ref (caller);
+
+        g_debug ("Have to look up %s...", dbus_name);
+
+        caller = polkit_caller_new_from_dbus_name (pk_tracker->con, dbus_name, error);
+        if (caller == NULL)
+                return NULL;
+
+        g_hash_table_insert (pk_tracker->dbus_name_to_caller, g_strdup (dbus_name), caller);
+        return polkit_caller_ref (caller);
 }

@@ -38,6 +38,21 @@ PolKitCaller  *polkit_caller_new_from_dbus_name  (DBusConnection *con, const cha
 PolKitCaller  *polkit_caller_new_from_pid  (DBusConnection *con, pid_t pid, DBusError *error);
 
 
+
+struct _PolKitTracker;
+typedef struct _PolKitTracker PolKitTracker;
+
+PolKitTracker *polkit_tracker_new                        (void);
+PolKitTracker *polkit_tracker_ref                        (PolKitTracker *pk_tracker);
+void           polkit_tracker_unref                      (PolKitTracker *pk_tracker);
+void           polkit_tracker_set_system_bus_connection  (PolKitTracker *pk_tracker, DBusConnection *con);
+void           polkit_tracker_init                       (PolKitTracker *pk_tracker);
+
+void           polkit_tracker_dbus_func                  (PolKitTracker *pk_tracker, DBusMessage *message);
+
+PolKitCaller  *polkit_tracker_get_caller_from_dbus_name  (PolKitTracker *pk_tracker, const char *dbus_name, DBusError *error);
+
+
 #endif /* POLKIT_DBUS_H */
 
 
