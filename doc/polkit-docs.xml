@@ -55,7 +55,7 @@
     </legalnotice>
   </bookinfo>
 
-  <reference>
+  <reference id="ref-design">
     <title>Design Overview</title>
     <partintro>
       <para>
@@ -68,7 +68,7 @@
     <xi:include href="spec/polkit-spec-configuration.xml" />    
   </reference>
 
-  <reference>
+  <reference id="ref-core">
     <title>Core API Reference</title>
     <partintro>
       <para>
@@ -91,7 +91,7 @@
     <xi:include href="xml/polkit-policy-cache.xml"/>
   </reference>
 
-  <reference>
+  <reference id="ref-convenience">
     <title>Convenience API Reference</title>
     <partintro>
       <para>
@@ -102,7 +102,7 @@
     <xi:include href="xml/polkit-dbus.xml"/>
   </reference>
 
-  <reference>
+  <reference id="ref-granting">
     <title>Authorization and privilege granting API Reference</title>
     <partintro>
       <para>
@@ -116,7 +116,7 @@
     <xi:include href="xml/polkit-grant.xml"/>
   </reference>
 
-  <reference>
+  <reference id="tools-fileformats">
     <title>Tools and file formats</title>
     <partintro>
       <para>

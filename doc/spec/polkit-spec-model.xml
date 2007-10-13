@@ -4,7 +4,7 @@
 <chapter id="model">
   <title>PolicyKit Model</title>
 
-  <sect1>
+  <sect1 id="model-mechanism-vs-policy">
     <title>Mechanims vs. Policy</title>
     
     <para>
@@ -48,7 +48,7 @@
 
   </sect1>
 
-  <sect1>
+  <sect1 id="model-concepts">
     <title>Concepts</title>
     
     <para>
@@ -115,7 +115,7 @@
     </para>
   </sect1>
   
-  <sect1>
+  <sect1 id="model-theory-of-operation">
     <title>Theory of Operation</title>
     
     <para>

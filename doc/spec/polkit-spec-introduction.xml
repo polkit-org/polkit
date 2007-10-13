@@ -4,7 +4,7 @@
 <chapter id="introduction">
   <title>Introduction</title>
   
-  <sect1>
+  <sect1 id="intro-about">
     <title>About</title>
     
     <para>
@@ -57,7 +57,7 @@
     </para>
   </sect1>
 
-  <sect1>
+  <sect1 id="intro-define-problem">
     <title>Defining the Problem</title>
 
     <para>

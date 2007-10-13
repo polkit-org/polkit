@@ -4,7 +4,7 @@
 <chapter id="polkit-conf">
   <title>PolicyKit configuration</title>
 
-  <sect1>
+  <sect1 id="conf-declaring-actions">
     <title>Declaring Actions</title>
     
     <para>
@@ -163,7 +163,7 @@
       release and installation process.
     </para>
 
-    <sect2>
+    <sect2 id="conf-declaring-actions-annotations">
       <title>Annotations</title>
       <para>
         When declaring an Action, one can also annotate it with one or
