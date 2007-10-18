@@ -37,7 +37,8 @@
  * If the mechanism itself is a daemon exposing a remote services via
  * the system message bus it's often a better idea, to reduce
  * roundtrips, to use the high-level #PolKitTracker class rather than
- * the low-level function polkit_caller_new_from_dbus_name().
+ * the low-level functions polkit_caller_new_from_dbus_name() and
+ * polkit_caller_new_from_pid().
  **/
 
 #ifdef HAVE_CONFIG_H
@@ -359,8 +360,7 @@ out:
  * both the system bus daemon and the ConsoleKit daemon for
  * information. Note that this will do a lot of blocking IO so it is
  * best avoided if your process already tracks/caches all the
- * information. For example you can use the #PolKitTracker class for
- * this.
+ * information. You can use the #PolKitTracker class for this.
  * 
  * Returns: the new object or #NULL if an error occured (in which case
  * @error will be set)
@@ -567,7 +567,8 @@ out:
  * both information in /proc (on Linux) and the ConsoleKit daemon for
  * information about a given process. Note that this will do a lot of
  * blocking IO so it is best avoided if your process already
- * tracks/caches all the information.
+ * tracks/caches all the information. You can use the #PolKitTracker
+ * class for this.
  * 
  * Returns: the new object or #NULL if an error occured (in which case
  * @error will be set)
@@ -792,7 +793,44 @@ struct _PolKitTracker {
         DBusConnection *con;
 
         GHashTable *dbus_name_to_caller;
+
+        GHashTable *pid_start_time_to_caller;
 };
+
+typedef struct {
+        pid_t pid;
+        polkit_uint64_t start_time;
+} _PidStartTimePair;
+
+static _PidStartTimePair *
+_pid_start_time_new (pid_t pid, polkit_uint64_t start_time)
+{
+        _PidStartTimePair *obj;
+        obj = g_new (_PidStartTimePair, 1);
+        obj->pid = pid;
+        obj->start_time = start_time;
+        return obj;
+}
+
+static guint
+_pid_start_time_hash (gconstpointer a)
+{
+        int val;
+        _PidStartTimePair *pst = (_PidStartTimePair *) a;
+
+        val = pst->pid + ((int) pst->start_time);
+
+        return g_int_hash (&val);
+}
+
+static gboolean
+_pid_start_time_equal (gconstpointer a, gconstpointer b)
+{
+        _PidStartTimePair *_a = (_PidStartTimePair *) a;
+        _PidStartTimePair *_b = (_PidStartTimePair *) b;
+
+        return (_a->pid == _b->pid) && (_a->start_time == _b->start_time);
+}
 
 /**
  * polkit_tracker_new:
@@ -811,6 +849,10 @@ polkit_tracker_new (void)
                                                                  g_str_equal,
                                                                  g_free,
                                                                  (GDestroyNotify) polkit_caller_unref);
+        pk_tracker->pid_start_time_to_caller = g_hash_table_new_full (_pid_start_time_hash,
+                                                                      _pid_start_time_equal,
+                                                                      g_free,
+                                                                      (GDestroyNotify) polkit_caller_unref);
         return pk_tracker;
 }
 
@@ -846,6 +888,7 @@ polkit_tracker_unref (PolKitTracker *pk_tracker)
         if (pk_tracker->refcount > 0) 
                 return;
         g_hash_table_unref (pk_tracker->dbus_name_to_caller);
+        g_hash_table_unref (pk_tracker->pid_start_time_to_caller);
         dbus_connection_unref (pk_tracker->con);
         g_free (pk_tracker);
 }
@@ -972,10 +1015,15 @@ _remove_caller_by_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name)
  * The owner of the #PolKitTracker object must pass signals from the
  * system message bus (just NameOwnerChanged will do) and all signals
  * from the ConsoleKit service into this function.
+ *
+ * Returns: #TRUE only if there was a change in the ConsoleKit database.
  */
-void
+polkit_bool_t
 polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
 {
+        gboolean ret;
+
+        ret = FALSE;
 
         if (dbus_message_is_signal (message, DBUS_INTERFACE_DBUS, "NameOwnerChanged")) {
 		char *name;
@@ -1003,6 +1051,8 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
                 DBusError error;
                 const char *session_objpath;
 
+                ret = TRUE;
+
                 dbus_error_init (&error);
                 session_objpath = dbus_message_get_path (message);
                 if (!dbus_message_get_args (message, &error, 
@@ -1024,6 +1074,7 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
 
                 /* now go through all Caller objects and update the is_active field as appropriate */
                 _update_session_is_active (pk_tracker, session_objpath, is_active);
+
         }
 
         /* TODO: when ConsoleKit gains the ability to attach/detach a session to a seat (think
@@ -1031,7 +1082,7 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
          */
 
 out:
-        ;
+        return ret;
 }
 
 /**
@@ -1058,16 +1109,146 @@ polkit_tracker_get_caller_from_dbus_name (PolKitTracker *pk_tracker, const char 
         g_return_val_if_fail (pk_tracker->con != NULL, NULL);
         g_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
+        g_debug ("Looking up cache for PolKitCaller for dbus_name %s...", dbus_name);
+
         caller = g_hash_table_lookup (pk_tracker->dbus_name_to_caller, dbus_name);
         if (caller != NULL)
                 return polkit_caller_ref (caller);
 
-        g_debug ("Have to look up %s...", dbus_name);
+        g_debug ("Have to compute PolKitCaller for dbus_name %s...", dbus_name);
 
         caller = polkit_caller_new_from_dbus_name (pk_tracker->con, dbus_name, error);
         if (caller == NULL)
                 return NULL;
 
         g_hash_table_insert (pk_tracker->dbus_name_to_caller, g_strdup (dbus_name), caller);
+        return polkit_caller_ref (caller);
+}
+
+/* TODO FIXME: this is Linux specific */
+static polkit_uint64_t 
+_get_start_time_for_pid (pid_t pid)
+{
+        char *filename;
+        char *contents;
+        gsize length;
+        polkit_uint64_t start_time;
+        GError *error = NULL;
+        char **tokens;
+        char *p;
+        char *endp;
+
+        start_time = 0;
+        contents = NULL;
+
+        filename = g_strdup_printf ("/proc/%d/stat", pid);
+        if (filename == NULL) {
+                fprintf (stderr, "Out of memory\n");
+                goto out;
+        }
+
+        if (!g_file_get_contents (filename, &contents, &length, &error)) {
+                fprintf (stderr, "Cannot get contents of '%s': %s\n", filename, error->message);
+                g_error_free (error);
+                goto out;
+        }
+
+        /* start time is the 19th token after the '(process name)' entry */
+
+        p = strchr (contents, ')');
+        if (p == NULL) {
+                goto out;
+        }
+        p += 2; /* skip ') ' */
+        if (p - contents >= (int) length) {
+                goto out;
+        }
+
+        tokens = g_strsplit (p, " ", 0);
+        if (g_strv_length (tokens) < 20) {
+                goto out;
+        }
+
+        start_time = strtoll (tokens[19], &endp, 10);
+        if (endp == tokens[19]) {
+                goto out;
+        }
+
+        g_strfreev (tokens);
+
+out:
+        g_free (filename);
+        g_free (contents);
+        return start_time;
+}
+
+/**
+ * polkit_tracker_get_caller_from_pid:
+ * @pk_tracker: the tracker object
+ * @pid: UNIX process id to look at
+ * @error: D-Bus error
+ *
+ * This function is similar to polkit_caller_new_from_pid()
+ * except that it uses the cache in #PolKitTracker. So on the second
+ * and subsequent calls, for the same D-Bus name, there will be no
+ * IPC overhead in calling this function. 
+ *
+ * There will be some syscall overhead to lookup the time when the
+ * given process is started (on Linux, looking up /proc/$pid/stat);
+ * this is needed because pid's can be recycled and the cache thus
+ * needs to record this in addition to the pid.
+ * 
+ * Returns: A #PolKitCaller object; the caller must use
+ * polkit_caller_unref() on the object when done with it. Returns
+ * #NULL if an error occured (in which case error will be set).
+ */
+PolKitCaller *
+polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusError *error)
+{
+        PolKitCaller *caller;
+        polkit_uint64_t start_time;
+        _PidStartTimePair *pst;
+
+        g_return_val_if_fail (pk_tracker != NULL, NULL);
+        g_return_val_if_fail (pk_tracker->con != NULL, NULL);
+        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+
+        start_time = _get_start_time_for_pid (pid);
+        if (start_time == 0) {
+                if (error != NULL) {
+                        dbus_set_error (error, 
+                                        "org.freedesktop.PolicyKit",
+                                        "Cannot look up start time for pid %d", pid);
+                }
+                return NULL;
+        }
+
+        pst = _pid_start_time_new (pid, start_time);
+
+        g_debug ("Looking up cache for pid %d (start_time %lld)...", pid, start_time);
+
+        caller = g_hash_table_lookup (pk_tracker->pid_start_time_to_caller, pst);
+        if (caller != NULL) {
+                g_free (pst);
+                return polkit_caller_ref (caller);
+        }
+
+        g_debug ("Have to compute PolKitCaller from pid %d (start_time %lld)...", pid, start_time);
+
+        caller = polkit_caller_new_from_pid (pk_tracker->con, pid, error);
+        if (caller == NULL) {
+                g_free (pst);
+                return NULL;
+        }
+
+        /* TODO: we need to evict old entries.. 
+         *
+         * Say, timestamp the entries in _PidStartTimePair and do
+         * garbage collection every hour or so (e.g. record when we
+         * last did garbage collection and check this time on the next
+         * call into this function).
+         */
+
+        g_hash_table_insert (pk_tracker->pid_start_time_to_caller, pst, caller);
         return polkit_caller_ref (caller);
 }

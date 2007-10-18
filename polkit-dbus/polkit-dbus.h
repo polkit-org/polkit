@@ -48,9 +48,11 @@ void           polkit_tracker_unref                      (PolKitTracker *pk_trac
 void           polkit_tracker_set_system_bus_connection  (PolKitTracker *pk_tracker, DBusConnection *con);
 void           polkit_tracker_init                       (PolKitTracker *pk_tracker);
 
-void           polkit_tracker_dbus_func                  (PolKitTracker *pk_tracker, DBusMessage *message);
+polkit_bool_t  polkit_tracker_dbus_func                  (PolKitTracker *pk_tracker, DBusMessage *message);
 
 PolKitCaller  *polkit_tracker_get_caller_from_dbus_name  (PolKitTracker *pk_tracker, const char *dbus_name, DBusError *error);
+
+PolKitCaller  *polkit_tracker_get_caller_from_pid        (PolKitTracker *pk_tracker, pid_t pid, DBusError *error);
 
 
 #endif /* POLKIT_DBUS_H */
