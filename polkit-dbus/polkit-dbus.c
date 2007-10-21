@@ -1109,13 +1109,13 @@ polkit_tracker_get_caller_from_dbus_name (PolKitTracker *pk_tracker, const char 
         g_return_val_if_fail (pk_tracker->con != NULL, NULL);
         g_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
-        g_debug ("Looking up cache for PolKitCaller for dbus_name %s...", dbus_name);
+        /* g_debug ("Looking up cache for PolKitCaller for dbus_name %s...", dbus_name); */
 
         caller = g_hash_table_lookup (pk_tracker->dbus_name_to_caller, dbus_name);
         if (caller != NULL)
                 return polkit_caller_ref (caller);
 
-        g_debug ("Have to compute PolKitCaller for dbus_name %s...", dbus_name);
+        /* g_debug ("Have to compute PolKitCaller for dbus_name %s...", dbus_name); */
 
         caller = polkit_caller_new_from_dbus_name (pk_tracker->con, dbus_name, error);
         if (caller == NULL)
@@ -1225,7 +1225,7 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
 
         pst = _pid_start_time_new (pid, start_time);
 
-        g_debug ("Looking up cache for pid %d (start_time %lld)...", pid, start_time);
+        /* g_debug ("Looking up cache for pid %d (start_time %lld)...", pid, start_time); */
 
         caller = g_hash_table_lookup (pk_tracker->pid_start_time_to_caller, pst);
         if (caller != NULL) {
@@ -1233,7 +1233,7 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
                 return polkit_caller_ref (caller);
         }
 
-        g_debug ("Have to compute PolKitCaller from pid %d (start_time %lld)...", pid, start_time);
+        /* g_debug ("Have to compute PolKitCaller from pid %d (start_time %lld)...", pid, start_time); */
 
         caller = polkit_caller_new_from_pid (pk_tracker->con, pid, error);
         if (caller == NULL) {
