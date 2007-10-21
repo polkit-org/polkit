@@ -32,6 +32,8 @@
 
 #include <polkit/polkit-types.h>
 
+POLKIT_BEGIN_DECLS
+
 struct _PolKitSeat;
 typedef struct _PolKitSeat PolKitSeat;
 
@@ -43,6 +45,8 @@ polkit_bool_t polkit_seat_get_ck_objref (PolKitSeat *seat, char       **out_ck_o
 
 void          polkit_seat_debug         (PolKitSeat *seat);
 polkit_bool_t polkit_seat_validate      (PolKitSeat *seat);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_SEAT_H */
 

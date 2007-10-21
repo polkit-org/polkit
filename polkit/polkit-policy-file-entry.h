@@ -30,8 +30,11 @@
 #ifndef POLKIT_POLICY_FILE_ENTRY_H
 #define POLKIT_POLICY_FILE_ENTRY_H
 
+#include <polkit/polkit-types.h>
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-policy-default.h>
+
+POLKIT_BEGIN_DECLS
 
 struct _PolKitPolicyFileEntry;
 typedef struct _PolKitPolicyFileEntry PolKitPolicyFileEntry;
@@ -66,6 +69,7 @@ void                   polkit_policy_file_entry_annotations_foreach (PolKitPolic
 const char            *polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entry,
                                                                 const char *key);
 
+POLKIT_END_DECLS
 
 #endif /* POLKIT_POLICY_FILE_ENTRY_H */
 

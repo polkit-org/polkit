@@ -34,6 +34,8 @@
 #include <polkit/polkit-session.h>
 #include <sys/types.h>
 
+POLKIT_BEGIN_DECLS
+
 struct _PolKitCaller;
 typedef struct _PolKitCaller PolKitCaller;
 
@@ -53,5 +55,7 @@ polkit_bool_t     polkit_caller_get_ck_session      (PolKitCaller   *caller, Pol
 
 void              polkit_caller_debug               (PolKitCaller   *caller);
 polkit_bool_t     polkit_caller_validate            (PolKitCaller   *caller);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_H */

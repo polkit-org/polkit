@@ -30,11 +30,14 @@
 #ifndef POLKIT_POLICY_DEFAULT_H
 #define POLKIT_POLICY_DEFAULT_H
 
+#include <polkit/polkit-types.h>
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-action.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
 #include <polkit/polkit-error.h>
+
+POLKIT_BEGIN_DECLS
 
 struct _PolKitPolicyDefault;
 typedef struct _PolKitPolicyDefault PolKitPolicyDefault;
@@ -56,6 +59,8 @@ PolKitResult polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *poli
 PolKitResult polkit_policy_default_get_allow_active (PolKitPolicyDefault *policy_default);
 
 /* TODO: export knobs for "default policy" */
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_POLICY_DEFAULT_H */
 

@@ -30,6 +30,16 @@
 #ifndef POLKIT_TYPES_H
 #define POLKIT_TYPES_H
 
+#ifdef __cplusplus
+#  define POLKIT_BEGIN_DECLS extern "C" {
+#  define POLKIT_END_DECLS }
+#else
+#  define POLKIT_BEGIN_DECLS
+#  define POLKIT_END_DECLS
+#endif
+
+POLKIT_BEGIN_DECLS
+
 /**
  * SECTION:polkit-types
  * @title: Basic types
@@ -58,6 +68,8 @@ typedef unsigned long long polkit_uint64_t;
 #ifndef FALSE
 #  define FALSE 0
 #endif
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_TYPES_H */
 

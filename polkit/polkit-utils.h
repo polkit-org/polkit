@@ -28,9 +28,13 @@
 
 #include <polkit/polkit-types.h>
 
+POLKIT_BEGIN_DECLS
+
 polkit_bool_t _pk_validate_identifier (const char *identifier);
 
 polkit_bool_t _pk_validate_unique_bus_name (const char *unique_bus_name);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_UTILS_H */
 

@@ -30,9 +30,12 @@
 #ifndef POLKIT_POLICY_CACHE_H
 #define POLKIT_POLICY_CACHE_H
 
+#include <polkit/polkit-types.h>
 #include <polkit/polkit-error.h>
 #include <polkit/polkit-action.h>
 #include <polkit/polkit-policy-file-entry.h>
+
+POLKIT_BEGIN_DECLS
 
 struct _PolKitPolicyCache;
 typedef struct _PolKitPolicyCache PolKitPolicyCache;
@@ -56,9 +59,16 @@ PolKitPolicyFileEntry* polkit_policy_cache_get_entry (PolKitPolicyCache *policy_
                                                       PolKitAction *action);
 PolKitPolicyFileEntry* polkit_policy_cache_get_entry_by_id (PolKitPolicyCache *policy_cache, 
                                                             const char *action_id);
+
+PolKitPolicyFileEntry* polkit_policy_cache_get_entry_by_annotation (PolKitPolicyCache *policy_cache, 
+                                                                    const char *annotation_key,
+                                                                    const char *annotation_value);
+
 void                   polkit_policy_cache_foreach   (PolKitPolicyCache *policy_cache, 
                                                       PolKitPolicyCacheForeachFunc callback,
                                                       void *user_data);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_POLICY_CACHE_H */
 

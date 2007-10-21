@@ -41,6 +41,8 @@
 #include <polkit/polkit-policy-cache.h>
 #include <polkit/polkit-config.h>
 
+POLKIT_BEGIN_DECLS
+
 struct _PolKitContext;
 typedef struct _PolKitContext PolKitContext;
 
@@ -164,6 +166,8 @@ PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_contex
                                                       PolKitCaller    *caller);
 
 PolKitConfig *polkit_context_get_config (PolKitContext *pk_context, PolKitError **error);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_CONTEXT_H */
 

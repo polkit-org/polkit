@@ -35,6 +35,8 @@
 
 #include <sys/types.h>
 
+POLKIT_BEGIN_DECLS
+
 struct _PolKitSession;
 typedef struct _PolKitSession PolKitSession;
 
@@ -56,5 +58,7 @@ polkit_bool_t  polkit_session_get_ck_remote_host (PolKitSession *session, char  
 
 void           polkit_session_debug              (PolKitSession *session);
 polkit_bool_t  polkit_session_validate           (PolKitSession *session);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_SESSION_H */

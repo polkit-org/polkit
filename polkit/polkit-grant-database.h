@@ -28,6 +28,8 @@
 
 #include <polkit/polkit.h>
 
+POLKIT_BEGIN_DECLS
+
 PolKitResult _polkit_grantdb_check_can_caller_do_action (PolKitContext         *pk_context,
                                                          PolKitAction          *action,
                                                          PolKitCaller          *caller);
@@ -77,5 +79,7 @@ typedef void (*PolKitGrantDbForeachFunc) (const char *action_id,
 void _polkit_grantdb_foreach (PolKitGrantDbForeachFunc callback, void *user_data);
 
 polkit_bool_t _polkit_grantdb_delete_for_user (uid_t uid);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_GRANT_DATABASE_H */

@@ -28,6 +28,8 @@
 
 #include <polkit/polkit.h>
 
+POLKIT_BEGIN_DECLS
+
 struct _PolKitGrant;
 typedef struct _PolKitGrant PolKitGrant;
 
@@ -360,6 +362,7 @@ void          polkit_grant_cancel_auth   (PolKitGrant *polkit_grant);
 void          polkit_grant_io_func       (PolKitGrant *polkit_grant, int fd);
 void          polkit_grant_child_func    (PolKitGrant *polkit_grant, pid_t pid, int exit_code);
 
+POLKIT_END_DECLS
 
 #endif /* POLKIT_GRANT_H */
 

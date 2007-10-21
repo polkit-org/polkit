@@ -30,6 +30,8 @@
 #include <polkit/polkit.h>
 #include <dbus/dbus.h>
 
+POLKIT_BEGIN_DECLS
+
 PolKitSession *polkit_session_new_from_objpath   (DBusConnection *con, const char *objpath, uid_t uid, DBusError *error);
 PolKitSession *polkit_session_new_from_cookie    (DBusConnection *con, const char *cookie, DBusError *error);
 
@@ -54,6 +56,7 @@ PolKitCaller  *polkit_tracker_get_caller_from_dbus_name  (PolKitTracker *pk_trac
 
 PolKitCaller  *polkit_tracker_get_caller_from_pid        (PolKitTracker *pk_tracker, pid_t pid, DBusError *error);
 
+POLKIT_END_DECLS
 
 #endif /* POLKIT_DBUS_H */
 

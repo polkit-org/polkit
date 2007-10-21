@@ -301,3 +301,45 @@ polkit_policy_cache_foreach (PolKitPolicyCache *policy_cache,
                 callback (policy_cache, pfe, user_data);
         }
 }
+
+/**
+ * polkit_policy_cache_get_entry_by_annotation:
+ * @policy_cache: the policy cache
+ * @annotation_key: the key to check for
+ * @annotation_value: the value to check for
+ *
+ * Find the first policy file entry where a given annotation matches a
+ * given value. Note that there is nothing preventing the existence of
+ * multiple policy file entries matching this criteria; it would
+ * however be a packaging bug if this situation occured.
+ *
+ * Returns: The first #PolKitPolicyFileEntry matching the search
+ * criteria. The caller shall not unref this object. Returns #NULL if
+ * there are no policy file entries matching the search criteria.
+ */
+PolKitPolicyFileEntry* 
+polkit_policy_cache_get_entry_by_annotation (PolKitPolicyCache *policy_cache, 
+                                             const char *annotation_key,
+                                             const char *annotation_value)
+{
+        GSList *i;
+
+        g_return_val_if_fail (policy_cache != NULL, NULL);
+        g_return_val_if_fail (annotation_key != NULL, NULL);
+        g_return_val_if_fail (annotation_value != NULL, NULL);
+
+        for (i = policy_cache->priv_entries; i != NULL; i = g_slist_next (i)) {
+                const char *value;
+                PolKitPolicyFileEntry *pfe = i->data;
+
+                value = polkit_policy_file_entry_get_annotation (pfe, annotation_key);
+                if (value == NULL)
+                        continue;
+
+                if (strcmp (annotation_value, value) == 0) {
+                        return pfe;
+                }
+        }
+
+        return NULL;
+}

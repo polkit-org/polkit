@@ -30,8 +30,11 @@
 #ifndef POLKIT_POLICY_FILE_H
 #define POLKIT_POLICY_FILE_H
 
+#include <polkit/polkit-types.h>
 #include <polkit/polkit-error.h>
 #include <polkit/polkit-policy-file-entry.h>
+
+POLKIT_BEGIN_DECLS
 
 struct _PolKitPolicyFile;
 typedef struct _PolKitPolicyFile PolKitPolicyFile;
@@ -56,6 +59,8 @@ void              polkit_policy_file_unref         (PolKitPolicyFile *policy_fil
 void              polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
                                                        PolKitPolicyFileEntryForeachFunc  cb,
                                                        void                              *user_data);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_POLICY_FILE_H */
 

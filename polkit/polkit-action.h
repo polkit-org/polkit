@@ -32,6 +32,8 @@
 
 #include <polkit/polkit-types.h>
 
+POLKIT_BEGIN_DECLS
+
 struct _PolKitAction;
 typedef struct _PolKitAction PolKitAction;
 
@@ -45,6 +47,8 @@ void          polkit_action_debug         (PolKitAction *action);
 polkit_bool_t polkit_action_validate      (PolKitAction *action);
 
 polkit_bool_t polkit_action_validate_id   (const char   *action_id);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_ACTION_H */
 

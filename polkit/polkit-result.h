@@ -32,6 +32,8 @@
 
 #include <polkit/polkit-types.h>
 
+POLKIT_BEGIN_DECLS
+
 /**
  * PolKitResult:
  * @POLKIT_RESULT_UNKNOWN: The result is unknown / cannot be
@@ -87,5 +89,7 @@ polkit_result_to_string_representation (PolKitResult result);
 
 polkit_bool_t
 polkit_result_from_string_representation (const char *string, PolKitResult *out_result);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_RESULT_H */

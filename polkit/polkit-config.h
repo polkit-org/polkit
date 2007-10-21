@@ -32,12 +32,15 @@
 
 #include <sys/types.h>
 #include <regex.h>
+#include <polkit/polkit-types.h>
 #include <polkit/polkit-error.h>
 #include <polkit/polkit-types.h>
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-action.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
+
+POLKIT_BEGIN_DECLS
 
 struct _PolKitConfig;
 typedef struct _PolKitConfig PolKitConfig;
@@ -77,6 +80,8 @@ polkit_bool_t polkit_config_determine_admin_auth_type (PolKitConfig             
                                                        PolKitCaller                *caller,
                                                        PolKitConfigAdminAuthType   *out_admin_auth_type,
                                                        const char                 **out_data);
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_CONFIG_H */
 

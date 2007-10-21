@@ -30,6 +30,10 @@
 #ifndef POLKIT_ERROR_H
 #define POLKIT_ERROR_H
 
+#include <polkit/polkit-types.h>
+
+POLKIT_BEGIN_DECLS
+
 /**
  * PolKitErrorCode:
  * @POLKIT_ERROR_OUT_OF_MEMORY: Out of memory
@@ -50,5 +54,7 @@ PolKitErrorCode  polkit_error_get_error_code (PolKitError *error);
 const char      *polkit_error_get_error_message (PolKitError *error);
 void             polkit_error_free (PolKitError *error);
 void             polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...) __attribute__((__format__ (__printf__, 3, 4)));
+
+POLKIT_END_DECLS
 
 #endif /* POLKIT_ERROR_H */
