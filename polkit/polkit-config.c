@@ -38,6 +38,7 @@
 #include <sys/inotify.h>
 #include <regex.h>
 #include <syslog.h>
+#include <regex.h>
 
 #include <expat.h>
 

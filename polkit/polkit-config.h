@@ -31,7 +31,6 @@
 #define POLKIT_CONFIG_H
 
 #include <sys/types.h>
-#include <regex.h>
 #include <polkit/polkit-types.h>
 #include <polkit/polkit-error.h>
 #include <polkit/polkit-types.h>
