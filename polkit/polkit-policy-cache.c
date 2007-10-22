@@ -316,6 +316,8 @@ polkit_policy_cache_foreach (PolKitPolicyCache *policy_cache,
  * Returns: The first #PolKitPolicyFileEntry matching the search
  * criteria. The caller shall not unref this object. Returns #NULL if
  * there are no policy file entries matching the search criteria.
+ *
+ * Since: 0.7
  */
 PolKitPolicyFileEntry* 
 polkit_policy_cache_get_entry_by_annotation (PolKitPolicyCache *policy_cache, 

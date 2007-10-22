@@ -131,6 +131,13 @@
     <xi:include href="man/polkit-config-file-validate.xml"/>
   </reference>
 
+  <index role="deprecated">
+    <title>Index of deprecated symbols</title>
+  </index>
+  <index role="0.7">
+    <title>Index of new symbols in 0.7</title>
+  </index>
+
   <index>
     <title>Index</title>
   </index>

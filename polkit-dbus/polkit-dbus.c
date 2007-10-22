@@ -838,6 +838,8 @@ _pid_start_time_equal (gconstpointer a, gconstpointer b)
  * Creates a new #PolKitTracker object.
  * 
  * Returns: the new object
+ *
+ * Since: 0.7
  **/
 PolKitTracker *
 polkit_tracker_new (void)
@@ -863,6 +865,8 @@ polkit_tracker_new (void)
  * Increase reference count.
  * 
  * Returns: the object
+ *
+ * Since: 0.7
  **/
 PolKitTracker *
 polkit_tracker_ref (PolKitTracker *pk_tracker)
@@ -879,6 +883,8 @@ polkit_tracker_ref (PolKitTracker *pk_tracker)
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
  * objects are decresed by one.
+ *
+ * Since: 0.7
  **/
 void
 polkit_tracker_unref (PolKitTracker *pk_tracker)
@@ -901,6 +907,8 @@ polkit_tracker_unref (PolKitTracker *pk_tracker)
  * Tell the #PolKitTracker object to use the given D-Bus connection
  * when it needs to fetch information from the system message bus and
  * ConsoleKit services. This is used for priming the cache.
+ *
+ * Since: 0.7
  */
 void
 polkit_tracker_set_system_bus_connection (PolKitTracker *pk_tracker, DBusConnection *con)
@@ -914,6 +922,8 @@ polkit_tracker_set_system_bus_connection (PolKitTracker *pk_tracker, DBusConnect
  * @pk_tracker: the tracker object
  * 
  * Initialize the tracker.
+ *
+ * Since: 0.7
  */
 void
 polkit_tracker_init (PolKitTracker *pk_tracker)
@@ -1017,6 +1027,8 @@ _remove_caller_by_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name)
  * from the ConsoleKit service into this function.
  *
  * Returns: #TRUE only if there was a change in the ConsoleKit database.
+ *
+ * Since: 0.7
  */
 polkit_bool_t
 polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
@@ -1099,6 +1111,8 @@ out:
  * Returns: A #PolKitCaller object; the caller must use
  * polkit_caller_unref() on the object when done with it. Returns
  * #NULL if an error occured (in which case error will be set).
+ *
+ * Since: 0.7
  */
 PolKitCaller *
 polkit_tracker_get_caller_from_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name, DBusError *error)
@@ -1201,6 +1215,8 @@ out:
  * Returns: A #PolKitCaller object; the caller must use
  * polkit_caller_unref() on the object when done with it. Returns
  * #NULL if an error occured (in which case error will be set).
+ *
+ * Since: 0.7
  */
 PolKitCaller *
 polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusError *error)
