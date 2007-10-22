@@ -19,27 +19,34 @@
     </para>
 
     <para>
+    </para>
+
+    <para>
       A Mechanism should never trust any application that tries to
       use; it needs to carefully verify all data and requests passed
       to it from the application. This is the model employed by HAL
       and NetworkManager:
     </para>
-      
     <para>
-      (TODO: diagram showing g-p-m, g-v-m, nm-applet, HAL and NM)
+      <inlinegraphic fileref="diagram-bus-model.png" format="PNG"/>
     </para>
-      
     <para>
-      This model also applies to other security sensitive
-      applications:
+      This model is not by any means restricted to applications using
+      D-Bus; it applies to most other security sensitive
+      applications. For example, the PAM module for checking your
+      password can run unprivileged and uses a simple and easy to
+      audit privileged helper
+      application, <literal>/sbin/unix_chkpwd</literal> on Red Hat
+      systems, to actually check the password
+      against <literal>/etc/shadow</literal>. In a similar fashion,
+      all
+      <ulink type="http"
+             url="http://en.wikipedia.org/wiki/Setuid">setuid
+             root</ulink> applications carefully check (or at least
+             should) incoming parameters and the environment in which
+             they are launched.
     </para>
     
-    <para>
-      (TODO: diagram showing 1) gnome-screensaver / PAM-stack +
-      /sbin/unix_chkpwd; and 2) gdm + gdm-greeter; 3) mount(8); 4)
-      other setuid examples)
-    </para>
-
     <para>
       In general, such an architecture is thought of as secure as long
       as the Mechanism (and it's dependent libraries) have been
@@ -98,14 +105,6 @@
     </para>
 
     <para>
-      (TODO: mention that libpolkit represents the Subject as either a
-      Caller (e.g. a process) or a Session (e.g. a group of processes
-      in a desktop session) and what the implications are here;
-      e.g. for granting/removing ACL's on device
-      nodes. etc. etc. etc.)
-    </para>
-    
-    <para>
       One way to think about a Mechanism is that the Mechanism is
       split into an enforcer and a decider component. When an
       application attempts to access the Mechanism, the enforcer
@@ -141,12 +140,14 @@
             <emphasis>Yes:</emphasis> It is ok for the Mechanism to
             carry out the Action requsted by the given Subject.
           </para>
-          
+        </listitem>
+        <listitem>
           <para>
             <emphasis>No:</emphasis> The Mechanism should not carry
             out the Action requested by the given Subject.
           </para>
-          
+        </listitem>
+        <listitem>          
           <para>
             <emphasis>Require authentication:</emphasis> The Subject
             (e.g. the UI application) needs to ask the user to
@@ -165,12 +166,13 @@
             user authentication (user puts in the root password or a
             user in an administrator group authenticates).
           </para>
-          
+        </listitem>
+        <listitem>          
           <para>
             The authorization can be kept (this is also specified in
             the return value from <literal>libpolkit</literal>) either
             1) indefinitely (e.g. it persists across reboots and
-            different desktop sessions); 2) for the remainer of the
+            different desktop sessions); 2) for the remainder of the
             desktop session the Subject is part of; or 3) confined to
             the process life-time of the Subject.
           </para>
@@ -188,9 +190,315 @@
       presence and contents of this cookie that will
       allow <literal>libpolkit</literal> to
       return <emphasis>Yes</emphasis> when the Subject asks the
-      Mechanism to carry out the Action again.
+      Mechanism to carry out the Action again. This whole process is
+      best explained by a diagram:
     </para>
     
+    <para>
+      <inlinegraphic fileref="diagram-interaction.png" format="PNG"/>
+    </para>
+
+    <para>
+      Detail on the diagram:
+      <orderedlist>
+        <listitem>
+          <para>
+            The user double clicks an icon on the desktop that
+            resembles a hard drive. As mounting file systems is a
+            privileged operation, the File Manager calls, via the
+            system message bus, into the Mechanism (HAL).
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            The Mechanism identifies the caller, using ConsoleKit, all
+            the relevant information about the caller and stores this
+            information in
+            a <link linkend="polkit-polkit-caller">PolKitCaller</link>
+            object. This information includes
+            <itemizedlist>
+              <listitem>
+                <para>
+                  UNIX user id (uid)
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  UNIX process id (pid)
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  An identifier for the desktop session and whether
+                  the session is active (e.g. currently showing on a
+                  display), whether it's local and if it's remote, the
+                  address of the remote display
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  Optional OS specific attributes such as the SELinux security context.
+                </para>
+              </listitem>
+            </itemizedlist>
+          </para>
+          <para>
+            Second, the Mechanism creates
+            a <link linkend="polkit-polkit-action">PolKitAction</link>
+            object that represents the action that the caller wants
+            the Mechanism to perform on it's behalf. Specifically, for
+            HAL, the D-Bus method call <literal>Mount()</literal> maps
+            into two
+            actions: <literal>org.freedesktop.hal.storage.mount-fixed</literal>
+            and <literal>org.freedesktop.hal.storage.mount-removable</literal>. As
+            the device the user wants to mount is an internal hard
+            disk, HAL
+            picks <literal>org.freedesktop.hal.storage.mount-fixed</literal>
+            and constructs
+            the <link linkend="polkit-polkit-action">PolKitAction</link>
+            object.
+          </para>
+          <para>
+            Third, HAL now calls
+            the <link linkend="polkit-context-can-caller-do-action">polkit_context_can_caller_do_action()</link>
+            function in <literal>libpolkit</literal> and passes
+            the <link linkend="polkit-polkit-action">PolKitAction</link>
+            and <link linkend="polkit-polkit-caller">PolKitCaller</link>
+            objects as parameters. Armed with all this
+            information, <literal>libpolkit</literal> is now in a
+            position to make a decision; see
+            <xref linkend="polkit-conf"/> for how exactly this is
+            done.
+          </para>
+          <para>
+            The result
+            from <literal>libpolkit</literal> is of the
+            type <link linkend="polkit-polkit-result">PolKitResult</link>
+            and tells whether the given caller is allowed to do the
+            given action. If the result is yes
+            (e.g. POLKIT_RESULT_YES), the Mechanism carries out the
+            action on behalf of the caller.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            If the result from <literal>libpolkit</literal> is not
+            yes, the Mechanism sends a reply back to the caller with
+            two pieces of information: 
+            <itemizedlist>
+              <listitem>
+                <para>
+                  The result from <literal>libpolkit</literal> itself.
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  The action that the caller needs to be authorized to
+                  do.
+                </para>
+              </listitem>
+            </itemizedlist>
+            For this example, HAL returns an exception via D-Bus with
+            the
+            name <literal>org.freedesktop.Hal.Device.PermissionDeniedByPolicy</literal>
+            and the detail text
+            string <literal>"org.freedesktop.hal.storage.mount-fixed
+            auth_admin_keep_always"</literal> (assuming the return code
+            was POLKIT_RESULT_AUTH_ADMIN_KEEP_ALWAYS). This enables
+            the caller to take action and acquire authorization to do
+            this action.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            The File Manager receives the exception from the Mechanism
+            and since the exception
+            name <literal>org.freedesktop.Hal.Device.PermissionDeniedByPolicy</literal>
+            is well-defined it decodes the exception detail string to
+            learn that in order to do what the user asked it (by
+            double clicking an icon resembling a hard drive), it needs
+            to make the user authenticate as an administrator in order
+            to be authorized for the
+            action <literal>org.freedesktop.hal.storage.mount-fixed</literal>.
+          </para>
+          <para>
+            The File Manager now proceeds to call into
+            an <emphasis>Authentication Agent</emphasis> and passes
+            two items of information
+            <itemizedlist>
+              <listitem>
+                <para>
+                  The <link linkend="polkit-polkit-result">PolKitResult</link>
+                  that <literal>libpolkit</literal> returned to the
+                  Mechanism and passed on to the File Manager.
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  The <link linkend="polkit-polkit-action">PolKitAction</link>
+                  that <literal>libpolkit</literal> returned to the
+                  Mechanism and passed on to the File Manager.
+                </para>
+              </listitem>
+            </itemizedlist>
+            In fact, the File Manager could implement an
+            Authentication Agent by itself but for both practical
+            reasons (implementing an Authentication Agent is not
+            trivial) and security reasons (it is typically a good idea
+            to have password handling in as few processes as possible)
+            it is preferable to have this done in a separate
+            process. For details on the Authentication Agent for the
+            GNOME desktop, please see the <ulink type="http"
+            url="http://hal.freedesktop.org/docs/PolicyKit-gnome/ref-auth-daemon.html">PolicyKit-gnome</ulink>
+            documentation.
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            The first thing that the Authentication Agent does when it
+            receives a request from an application is to validate the
+            incoming parameters to see if they are correct;
+            essentially it's doing exactly the same check as the
+            Mechanism was doing in step 2;
+            e.g. constructing <link linkend="polkit-polkit-caller">PolKitCaller</link>
+            and <link linkend="polkit-polkit-caller">PolKitAction</link>
+            objects, calling
+            into <link linkend="polkit-context-can-caller-do-action">polkit_context_can_caller_do_action()</link>
+            and examining the
+            returned <link linkend="polkit-polkit-result">PolKitResult</link>.
+          </para>
+          <para>
+            If the parameters check out, the Authentication Agent now
+            pops up a window to explain the user than authentication
+            is required to perform the desired action. Note that the
+            text to put in the dialog stems from files that are not
+            under the users control (see
+            <xref linkend="conf-declaring-actions"/> for details) so
+            there is no chance for any application to spoof the dialog
+            to trick the user into agreeing to authenticate for
+            something while in fact the authentication is about
+            something else.
+          </para>
+          <para>
+            Internally the Authentication Agent uses services provided
+            by the
+            <link linkend="polkit-polkit-grant">PolKitGrant</link>
+            class and is little more than a thin layer above the PAM
+            user API. The authentication itself is performed in a
+            privileged helper program (e.g. running
+            with <ulink type="http"
+            url="http://en.wikipedia.org/wiki/Setgid">setgid</ulink>
+            privileges) that communicates with the (graphical)
+            Authentication Agent through pipes. As such, if the user
+            successfully authenticates, the privileged helper program
+            writes an entry into the Authorization Database (it can do
+            so only because it is privileged). When the user is done
+            with the dialog (either through successful authentication
+            or by cancelling) a reply including whether the
+            authorization was gained is sent back to the File Manager
+          </para>
+          <para>
+            As mentioned, an authorization has a notion of scope which
+            is indicated in
+            the <link linkend="polkit-polkit-result">PolKitResult</link>
+            value from <literal>libpolkit</literal>. The user, when
+            authenticating, can also opt to lessen the scope
+            (e.g. keep the authorization only for the remainder of his
+            desktop session instead of forever)
+            (see <link linkend="PolKitGrantOverrideGrantType">this
+            section</link> for details) but he can never widen it -
+            this is checked and enforced by the privileged helper
+            program. The way the authorization is stored is as
+            follows:
+            <itemizedlist>
+              <listitem>
+                <para>
+                  For POLKIT_RESULT_AUTH_[SELF|ADMIN] the
+                  authorization is limited to the requesting process;
+                  in this example it would be the File Manager. Thus,
+                  the UNIX process id (and start time of the process
+                  to avoid clashes caused by pid recycling) is used as
+                  the primary key in the Authorization
+                  Database. Entries like these are flushed when the
+                  system is restarted.
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  For POLKIT_RESULT_AUTH_[SELF|ADMIN]_KEEP_SESSION the
+                  authorization is limited to processes in the same
+                  desktop session as the calling process (e.g. the
+                  File Manager). The ConsoleKit session identifier is
+                  used as the the primary key in the Authorization
+                  Database. Entries like these are also flushed when
+                  the system is restarted.
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  For POLKIT_RESULT_AUTH_[SELF|ADMIN]_KEEP_ALWAYS the
+                  authorization is limited to processes owned by the
+                  same user as the calling process (e.g. the File
+                  Manager). The UNIX uid of the user is used as the
+                  the primary key in the Authorization Database. These
+                  entries are not flushed when the system is
+                  restarted.
+                </para>
+              </listitem>
+            </itemizedlist>
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
+            If the File Manager is told by the Authentication Agent
+            that the authorization for it to do the
+            action <literal>org.freedesktop.hal.storage.mount-fixed</literal>
+            was obtained (because the user successfully
+            authenticated), it asks the Mechanism (HAL to perform the
+            action again. This time, because an entry now exists in
+            the Authorization Database, the Mechanism (HAL) will
+            receive the answer POLKIT_RESULT_YES
+            from <literal>libpolkit</literal> and carry out the action
+            on behalf of the File Manager.
+          </para>
+        </listitem>
+
+      </orderedlist>
+    </para>
+    
+    <para>
+      Furthermore, as hinted above, any program can check,
+      using <literal>libpolkit</literal>, whether a given caller is
+      authorized to do a specific Action (though users may be limited
+      to asking questions only about themselves; not about other
+      users). This is a feature, not a bug, as it allows to build user
+      interfaces where it's possible to use this information to aid
+      the user in carrying out work.
+    </para>
+    <para>
+      For example, the UI configuration dialog for the desktop clock
+      may provide a button for reconfiguring the system time (which is
+      a privileged operation). Using <literal>libpolkit</literal>, the
+      desktop code can determine, in advance, if the user is
+      authorized to do the
+      Action <literal>org.gnome.clockapplet.mechanism.settime</literal>. If
+      the user is authorized, the desktop will paint an ordinary
+      button <literal>"Set System Time"</literal>, if authentication
+      is required, it can paint another button <literal>"[L] Set
+      System Time..."</literal> where the L is an icon depicting a
+      closed padlock and if the answer is POLKIT_RESULT_NO it can make
+      the button insensitive so it can't be clicked. In fact, the
+      aforementioned PolicyKit-gnome library, provides
+      exactly <ulink type="http"
+      url="http://hal.freedesktop.org/docs/PolicyKit-gnome/PolKitGnomeAction.html">such
+      services</ulink> for GTK+ applications.
+    </para>
+
     <para>
       In order to keep the PolicyKit model reasonably simple, there is
       no representation of the Object. Instead, a Mechanism that cares
@@ -200,7 +508,7 @@
       instead divide a given Action into multiple sub-Actions
       depending on the nature of the Object.
     </para>
-    
+
     <para>
       For example, consider a Mechanism for dial-up networking. Here,
       the Subject is a UI applet running in a desktop session, the
@@ -225,14 +533,6 @@
       <literal>dialup-connect-untrusted</literal>.
     </para>
 
-    <para>
-      When authentication is involved, the interaction diagram for
-      having a Mechanism carry out an Action on behalf of a Subject
-      looks roughly like this
-    </para>
-    <para>
-      TODO: include diagram
-    </para>
   </sect1>
   
 </chapter>

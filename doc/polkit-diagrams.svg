@@ -1,0 +1,1923 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docbase="/home/davidz/Hacking/PolicyKit/doc"
+   sodipodi:docname="polkit-diagrams.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient30011">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop30013" />
+      <stop
+         style="stop-color:#9d9fff;stop-opacity:0;"
+         offset="1"
+         id="stop30015" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient30001">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop30003" />
+      <stop
+         style="stop-color:#ff9d9d;stop-opacity:0;"
+         offset="1"
+         id="stop30005" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient28966">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop28968" />
+      <stop
+         style="stop-color:#9dff9d;stop-opacity:0;"
+         offset="1"
+         id="stop28970" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient22901">
+      <stop
+         style="stop-color:#9da7d7;stop-opacity:1;"
+         offset="0"
+         id="stop22903" />
+      <stop
+         style="stop-color:#9da7d7;stop-opacity:0;"
+         offset="1"
+         id="stop22905" />
+    </linearGradient>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lend"
+       style="overflow:visible;">
+      <path
+         id="path17830"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         transform="scale(0.8) rotate(180) translate(12.5,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path17827"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none"
+         transform="scale(0.8) translate(12.5,0)" />
+    </marker>
+    <linearGradient
+       id="linearGradient14609">
+      <stop
+         id="stop14611"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         id="stop14613"
+         offset="1"
+         style="stop-color:#ff9d9d;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient14599">
+      <stop
+         id="stop14601"
+         offset="0"
+         style="stop-color:#b1c8ff;stop-opacity:1;" />
+      <stop
+         id="stop14603"
+         offset="1"
+         style="stop-color:#ffffff;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient9630">
+      <stop
+         style="stop-color:#030000;stop-opacity:1;"
+         offset="0"
+         id="stop9632" />
+      <stop
+         style="stop-color:#030000;stop-opacity:0;"
+         offset="1"
+         id="stop9634" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3144">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop3146" />
+      <stop
+         style="stop-color:#898585;stop-opacity:0;"
+         offset="1"
+         id="stop3148" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient7620"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,14.768091,-4.73212)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient7664"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,135.98639,-4.73213)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient7684"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,260.23514,-4.73212)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609"
+       id="linearGradient13600"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,73.861991,207.39991)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609"
+       id="linearGradient13602"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,198.11074,207.39991)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient22901"
+       id="radialGradient22907"
+       cx="214.15234"
+       cy="161.40764"
+       fx="214.15234"
+       fy="161.40764"
+       r="34.795188"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient23025"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,18.600748,302.65487)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609"
+       id="linearGradient28994"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,18.600773,481.17778)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966"
+       id="linearGradient28996"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,18.431136,546.16953)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient29026"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,407.77533,303.18174)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609"
+       id="linearGradient29028"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,407.77536,481.70465)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966"
+       id="linearGradient29030"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,407.60572,546.6964)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient30011"
+       id="linearGradient30009"
+       x1="407.16495"
+       y1="793.64789"
+       x2="513.12079"
+       y2="793.64789"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.8453762,0,0,0.6900936,261.57945,20.793414)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient30045"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,17.702047,632.20205)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609"
+       id="linearGradient30047"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,17.702072,810.72493)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966"
+       id="linearGradient30049"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,17.532435,875.71673)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient30079"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,406.70205,631.77348)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient30099"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,577.84491,631.77865)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966"
+       id="linearGradient30111"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,577.38958,697.06866)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient30141"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,13.987768,950.59751)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient30143"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,185.13064,950.60271)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966"
+       id="linearGradient30145"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,184.67531,1015.8927)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient30011"
+       id="linearGradient30155"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.8453762,0,0,0.6900936,-115.27956,642.95653)"
+       x1="407.16495"
+       y1="793.64789"
+       x2="513.12079"
+       y2="793.64789" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient30011"
+       id="linearGradient30207"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.8453762,0,0,0.6900936,255.57759,668.81627)"
+       x1="407.16495"
+       y1="793.64789"
+       x2="513.12079"
+       y2="793.64789" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient30209"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,401.77347,951.20458)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609"
+       id="linearGradient30211"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,401.7735,1129.7274)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966"
+       id="linearGradient30213"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,401.60386,1194.7192)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="284.9253"
+     inkscape:cy="317.35971"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1026"
+     inkscape:window-height="1108"
+     inkscape:window-x="0"
+     inkscape:window-y="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="opacity:1;fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.47417995;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect31304"
+       width="302.2439"
+       height="3.4562778"
+       x="417.59393"
+       y="1105.9136"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="677.01654"
+       y="1086.4985"
+       id="text31306"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="677.01654"
+         y="1086.4985"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31308">User Session</tspan><tspan
+         sodipodi:role="line"
+         x="677.01654"
+         y="1098.9985"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31310">(unprivileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="675.82733"
+       y="1120.5072"
+       id="text31312"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="675.82733"
+         y="1120.5072"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31314">System Context</tspan><tspan
+         sodipodi:role="line"
+         x="675.82733"
+         y="1133.0072"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31316">(privileged)</tspan></text>
+    <rect
+       style="opacity:1;fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.47417995;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect31290"
+       width="302.2439"
+       height="3.4562778"
+       x="417.61426"
+       y="435.89325"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="677.03687"
+       y="416.47827"
+       id="text31292"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="677.03687"
+         y="416.47827"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31294">User Session</tspan><tspan
+         sodipodi:role="line"
+         x="677.03687"
+         y="428.97827"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31296">(unprivileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="675.84766"
+       y="450.48694"
+       id="text31298"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="675.84766"
+         y="450.48694"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31300">System Context</tspan><tspan
+         sodipodi:role="line"
+         x="675.84766"
+         y="462.98694"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31302">(privileged)</tspan></text>
+    <rect
+       style="opacity:1;fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.47417995;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect31262"
+       width="302.2439"
+       height="3.4562778"
+       x="55.903503"
+       y="1106.2942"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="101.32614"
+       y="1086.8793"
+       id="text31264"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="101.32614"
+         y="1086.8793"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31266">User Session</tspan><tspan
+         sodipodi:role="line"
+         x="101.32614"
+         y="1099.3793"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31268">(unprivileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="100.13693"
+       y="1120.8879"
+       id="text31270"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="100.13693"
+         y="1120.8879"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31272">System Context</tspan><tspan
+         sodipodi:role="line"
+         x="100.13693"
+         y="1133.3879"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31274">(privileged)</tspan></text>
+    <rect
+       style="opacity:1;fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.47417995;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect31248"
+       width="302.2439"
+       height="3.4562778"
+       x="55.903503"
+       y="765.45148"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="315.32614"
+       y="746.0365"
+       id="text31250"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="315.32614"
+         y="746.0365"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31252">User Session</tspan><tspan
+         sodipodi:role="line"
+         x="315.32614"
+         y="758.5365"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31254">(unprivileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="314.13693"
+       y="780.04517"
+       id="text31256"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="314.13693"
+         y="780.04517"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31258">System Context</tspan><tspan
+         sodipodi:role="line"
+         x="314.13693"
+         y="792.54517"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31260">(privileged)</tspan></text>
+    <rect
+       style="opacity:1;fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.47417995;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect31216"
+       width="302.2439"
+       height="3.4562778"
+       x="56.020889"
+       y="434.34576"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="315.44351"
+       y="414.93082"
+       id="text31218"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="315.44351"
+         y="414.93082"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31220">User Session</tspan><tspan
+         sodipodi:role="line"
+         x="315.44351"
+         y="427.43082"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31222">(unprivileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="314.2543"
+       y="448.93945"
+       id="text31224"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="314.2543"
+         y="448.93945"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31226">System Context</tspan><tspan
+         sodipodi:role="line"
+         x="314.2543"
+         y="461.43945"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31228">(privileged)</tspan></text>
+    <rect
+       style="opacity:1;fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.63319677;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect15862"
+       width="564.94202"
+       height="3.297261"
+       x="33.201633"
+       y="103.93921"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <rect
+       style="opacity:1;fill:url(#linearGradient7620);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect2160"
+       width="105.40086"
+       height="54.89323"
+       x="53.365585"
+       y="13.976227"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="107.07617"
+       y="38.39238"
+       id="text7646"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="107.07617"
+         y="38.39238"
+         id="tspan7650"
+         style="text-align:center;text-anchor:middle">Networking</tspan><tspan
+         sodipodi:role="line"
+         x="107.07617"
+         y="53.39238"
+         id="tspan7654"
+         style="text-align:center;text-anchor:middle">Applet</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient7664);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect7656"
+       width="105.40086"
+       height="54.89323"
+       x="174.58391"
+       y="13.976227"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="228.29448"
+       y="38.392403"
+       id="text7658"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="228.29448"
+         y="38.392403"
+         id="tspan7662"
+         style="text-align:center;text-anchor:middle">File</tspan><tspan
+         sodipodi:role="line"
+         x="228.29448"
+         y="53.392403"
+         style="text-align:center;text-anchor:middle"
+         id="tspan7668">Manager</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient7684);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect7676"
+       width="105.40086"
+       height="54.89323"
+       x="298.83267"
+       y="13.976227"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="352.54324"
+       y="38.392403"
+       id="text7678"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="352.54324"
+         y="38.392403"
+         style="text-align:center;text-anchor:middle"
+         id="tspan7682">Power</tspan><tspan
+         sodipodi:role="line"
+         x="352.54324"
+         y="53.392403"
+         style="text-align:center;text-anchor:middle"
+         id="tspan7688">Manager</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient13600);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect13584"
+       width="105.40086"
+       height="54.89323"
+       x="112.4595"
+       y="226.10825"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="166.17007"
+       y="250.52441"
+       id="text13586"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="166.17007"
+         y="250.52441"
+         style="text-align:center;text-anchor:middle"
+         id="tspan13590">org.freedesktop.</tspan><tspan
+         sodipodi:role="line"
+         x="166.17007"
+         y="265.52441"
+         style="text-align:center;text-anchor:middle"
+         id="tspan13606">Hal</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient13602);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect13592"
+       width="105.40086"
+       height="54.89323"
+       x="236.70827"
+       y="226.10828"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="290.41885"
+       y="250.52444"
+       id="text13594"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="290.41885"
+         y="250.52444"
+         style="text-align:center;text-anchor:middle"
+         id="tspan13598">org.freedesktop.</tspan><tspan
+         sodipodi:role="line"
+         x="290.41885"
+         y="265.52444"
+         style="text-align:center;text-anchor:middle"
+         id="tspan13610">NetworkManager</tspan></text>
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:url(#radialGradient22907);fill-opacity:1;stroke:#000000;stroke-width:0.89999998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="path13612"
+       sodipodi:cx="214.15234"
+       sodipodi:cy="161.40764"
+       sodipodi:rx="34.345188"
+       sodipodi:ry="34.345188"
+       d="M 248.49753 161.40764 A 34.345188 34.345188 0 1 1  179.80716,161.40764 A 34.345188 34.345188 0 1 1  248.49753 161.40764 z"
+       transform="translate(13.131983,6.28427)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="227.69116"
+       y="158.47198"
+       id="text16841"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="227.69116"
+         y="158.47198"
+         style="text-align:center;text-anchor:middle"
+         id="tspan16845">System</tspan><tspan
+         sodipodi:role="line"
+         x="227.69116"
+         y="173.47198"
+         style="text-align:center;text-anchor:middle"
+         id="tspan16849">Message</tspan><tspan
+         sodipodi:role="line"
+         x="227.69116"
+         y="188.47198"
+         style="text-align:center;text-anchor:middle"
+         id="tspan16851">Bus</tspan></text>
+    <path
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-mid:none;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 122.22846,79.80864 L 186.87822,141.42794"
+       id="path18030"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <path
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-mid:none;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 224.25387,76.73757 L 225.26402,128.25535"
+       id="path18032"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <path
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-mid:none;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 259.6092,138.39749 C 336.3808,75.76803 336.3808,75.76803 336.3808,75.76803"
+       id="path18034"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <path
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-mid:none;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 302.03561,217.18938 L 261.62951,184.8645"
+       id="path18036"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <path
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-mid:none;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 148.49242,218.19954 L 189.90868,187.89496"
+       id="path18038"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="503.40186"
+       y="64.444763"
+       id="text22909"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text22919.png"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="503.40186"
+         y="64.444763"
+         style="font-size:18px;text-align:center;text-anchor:middle"
+         id="tspan22913">User Session</tspan><tspan
+         sodipodi:role="line"
+         x="503.40186"
+         y="86.944763"
+         style="font-size:18px;text-align:center;text-anchor:middle"
+         id="tspan22917">(unprivileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="506.21265"
+       y="128.4534"
+       id="text22919"
+       inkscape:export-xdpi="127.3"
+       inkscape:export-ydpi="127.3"><tspan
+         sodipodi:role="line"
+         x="506.21265"
+         y="128.4534"
+         style="font-size:18px;text-align:center;text-anchor:middle"
+         id="tspan22923">System Context</tspan><tspan
+         sodipodi:role="line"
+         x="506.21265"
+         y="150.9534"
+         style="font-size:18px;text-align:center;text-anchor:middle"
+         id="tspan22927">(privileged)</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient23025);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect22959"
+       width="105.40086"
+       height="54.89323"
+       x="57.198269"
+       y="321.36322"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="109.3157"
+       y="345.77936"
+       id="text22961"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="109.3157"
+         y="345.77936"
+         id="tspan22963"
+         style="text-align:center;text-anchor:middle">File</tspan><tspan
+         sodipodi:role="line"
+         x="109.3157"
+         y="360.77936"
+         style="text-align:center;text-anchor:middle"
+         id="tspan22965">Manager</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 74.682016,381.43904 L 104.24392,491.69186"
+       id="path25955"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="416.05093"
+       y="20.590385"
+       id="text25957"
+       transform="matrix(0.2589804,0.9658826,-0.9658826,0.2589804,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan25959"
+         x="416.05093"
+         y="20.590385">Mount()</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:none;stroke-opacity:1"
+       d="M 116.72967,713.71023 L 150.59062,822.71953"
+       id="path26968"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="734.48871"
+       y="94.180153"
+       id="text26970"
+       transform="matrix(0.2966428,0.9549885,-0.9549885,0.2966428,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan26972"
+         x="734.48871"
+         y="94.180153">Not Privileged</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.6543473px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 554.54111,568.48473 L 601.89116,568.48473"
+       id="path27000"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="580.93542"
+       y="562.5321"
+       id="text27971"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="580.93542"
+         y="562.5321"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan27975">Check</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30009);fill-opacity:1;stroke:#030000;stroke-width:0.42391345;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect27977"
+       width="89.103386"
+       height="37.881466"
+       x="606.02161"
+       y="549.54401"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="651.82117"
+       y="564.31549"
+       id="text27981"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="651.82117"
+         y="564.31549"
+         style="text-align:center;text-anchor:middle"
+         id="tspan27985">Authorization</tspan><tspan
+         sodipodi:role="line"
+         x="651.82117"
+         y="579.31549"
+         style="text-align:center;text-anchor:middle"
+         id="tspan27989">Database</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient28994);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect28980"
+       width="105.40086"
+       height="54.89323"
+       x="57.198269"
+       y="499.88608"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <rect
+       style="opacity:1;fill:url(#linearGradient28996);fill-opacity:1;stroke:#030000;stroke-width:0.35916778;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect28982"
+       width="105.5967"
+       height="22.946213"
+       x="57.100349"
+       y="553.98993"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="110.21804"
+       y="524.30225"
+       id="text28984"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="110.21804"
+         y="524.30225"
+         style="text-align:center;text-anchor:middle"
+         id="tspan28986">org.freedesktop.</tspan><tspan
+         sodipodi:role="line"
+         x="110.21804"
+         y="539.30225"
+         style="text-align:center;text-anchor:middle"
+         id="tspan28988">Hal</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="109.47976"
+       y="568.22235"
+       id="text28990"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="109.47976"
+         y="568.22235"
+         style="text-align:center;text-anchor:middle"
+         id="tspan28992">libpolkit</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient29026);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect28998"
+       width="105.40086"
+       height="54.89323"
+       x="446.37286"
+       y="321.89014"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="498.49026"
+       y="346.30627"
+       id="text29000"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="498.49026"
+         y="346.30627"
+         id="tspan29002"
+         style="text-align:center;text-anchor:middle">File</tspan><tspan
+         sodipodi:role="line"
+         x="498.49026"
+         y="361.30627"
+         style="text-align:center;text-anchor:middle"
+         id="tspan29004">Manager</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 463.8566,381.96591 L 493.4185,492.21873"
+       id="path29006"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="517.3515"
+       y="-355.17126"
+       id="text29008"
+       transform="matrix(0.2589804,0.9658826,-0.9658826,0.2589804,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan29010"
+         x="517.3515"
+         y="-355.17126">Mount()</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient29028);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect29012"
+       width="105.40086"
+       height="54.89323"
+       x="446.37286"
+       y="500.41296"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <rect
+       style="opacity:1;fill:url(#linearGradient29030);fill-opacity:1;stroke:#030000;stroke-width:0.35916778;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect29014"
+       width="105.5967"
+       height="22.946213"
+       x="446.27493"
+       y="554.51678"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="499.39261"
+       y="524.8291"
+       id="text29016"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="499.39261"
+         y="524.8291"
+         style="text-align:center;text-anchor:middle"
+         id="tspan29018">org.freedesktop.</tspan><tspan
+         sodipodi:role="line"
+         x="499.39261"
+         y="539.8291"
+         style="text-align:center;text-anchor:middle"
+         id="tspan29020">Hal</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="498.65433"
+       y="568.74921"
+       id="text29022"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="498.65433"
+         y="568.74921"
+         style="text-align:center;text-anchor:middle"
+         id="tspan29024">libpolkit</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30045);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30017"
+       width="105.40086"
+       height="54.89323"
+       x="56.299564"
+       y="650.9104"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="108.417"
+       y="675.32654"
+       id="text30019"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="108.417"
+         y="675.32654"
+         id="tspan30021"
+         style="text-align:center;text-anchor:middle">File</tspan><tspan
+         sodipodi:role="line"
+         x="108.417"
+         y="690.32654"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30023">Manager</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 73.783317,710.98622 L 103.34522,821.23903"
+       id="path30025"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="734.12262"
+       y="106.80471"
+       id="text30027"
+       transform="matrix(0.2589804,0.9658826,-0.9658826,0.2589804,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan30029"
+         x="734.12262"
+         y="106.80471">Mount()</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30047);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30031"
+       width="105.40086"
+       height="54.89323"
+       x="56.299564"
+       y="829.43323"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <rect
+       style="opacity:1;fill:url(#linearGradient30049);fill-opacity:1;stroke:#030000;stroke-width:0.35916778;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30033"
+       width="105.5967"
+       height="22.946213"
+       x="56.201649"
+       y="883.53711"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="109.31934"
+       y="853.84949"
+       id="text30035"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="109.31934"
+         y="853.84949"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30037">org.freedesktop.</tspan><tspan
+         sodipodi:role="line"
+         x="109.31934"
+         y="868.84949"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30039">Hal</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="108.58106"
+       y="897.76953"
+       id="text30041"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="108.58106"
+         y="897.76953"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30043">libpolkit</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30079);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30051"
+       width="105.40086"
+       height="54.89323"
+       x="445.29956"
+       y="650.48181"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="497.41699"
+       y="674.89795"
+       id="text30053"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="497.41699"
+         y="674.89795"
+         id="tspan30055"
+         style="text-align:center;text-anchor:middle">File</tspan><tspan
+         sodipodi:role="line"
+         x="497.41699"
+         y="689.89795"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30057">Manager</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.6543473px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 557.32498,676.80788 L 604.67503,676.80788"
+       id="path30085"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="579.71936"
+       y="670.85529"
+       id="text30087"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="579.71936"
+         y="670.85529"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan30089">Use</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30099);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30091"
+       width="105.40086"
+       height="54.89323"
+       x="616.44238"
+       y="650.48694"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="668.55981"
+       y="674.90308"
+       id="text30093"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="668.55981"
+         y="674.90308"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30097">Authentication</tspan><tspan
+         sodipodi:role="line"
+         x="668.55981"
+         y="689.90308"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30103">Agent</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30111);fill-opacity:1;stroke:#030000;stroke-width:0.35916778;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30105"
+       width="105.5967"
+       height="22.946213"
+       x="616.05884"
+       y="704.88904"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="668.43817"
+       y="719.12146"
+       id="text30107"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="668.43817"
+         y="719.12146"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30109">libpolkit-grant</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30141);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30113"
+       width="105.40086"
+       height="54.89323"
+       x="52.585289"
+       y="969.30579"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="104.70271"
+       y="993.72192"
+       id="text30115"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="104.70271"
+         y="993.72192"
+         id="tspan30117"
+         style="text-align:center;text-anchor:middle">File</tspan><tspan
+         sodipodi:role="line"
+         x="104.70271"
+         y="1008.7219"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30119">Manager</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.6543473px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 164.61071,995.63194 L 211.96076,995.63194"
+       id="path30121"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="187.00504"
+       y="989.6792"
+       id="text30123"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="187.00504"
+         y="989.6792"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan30125">Use</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30143);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30127"
+       width="105.40086"
+       height="54.89323"
+       x="223.72812"
+       y="969.31091"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="275.84558"
+       y="993.72699"
+       id="text30129"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="275.84558"
+         y="993.72699"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30131">Authentication</tspan><tspan
+         sodipodi:role="line"
+         x="275.84558"
+         y="1008.727"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30133">Agent</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30145);fill-opacity:1;stroke:#030000;stroke-width:0.35916778;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30135"
+       width="105.5967"
+       height="22.946213"
+       x="223.34451"
+       y="1023.7131"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="275.72391"
+       y="1037.9456"
+       id="text30137"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="275.72391"
+         y="1037.9456"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30139">libpolkit-grant</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30155);fill-opacity:1;stroke:#030000;stroke-width:0.42391345;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30147"
+       width="89.103386"
+       height="37.881466"
+       x="229.1626"
+       y="1171.7073"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="274.96222"
+       y="1186.4788"
+       id="text30149"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="274.96222"
+         y="1186.4788"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30151">Authorization</tspan><tspan
+         sodipodi:role="line"
+         x="274.96222"
+         y="1201.4788"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30153">Database</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 254.31223,1055.3785 L 283.87413,1165.6314"
+       id="path30157"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="1091.5134"
+       y="3.301826"
+       id="text30159"
+       transform="matrix(0.2589804,0.9658826,-0.9658826,0.2589804,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan30161"
+         x="1091.5134"
+         y="3.301826">On successful,</tspan><tspan
+         sodipodi:role="line"
+         x="1091.5134"
+         y="18.301826"
+         id="tspan30163">auth, write cookie</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.6543473px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 548.53925,1216.5075 L 595.8893,1216.5075"
+       id="path30165"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="574.93365"
+       y="1210.5551"
+       id="text30167"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="574.93365"
+         y="1210.5551"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan30169">Check</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30207);fill-opacity:1;stroke:#030000;stroke-width:0.42391345;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30171"
+       width="89.103386"
+       height="37.881466"
+       x="600.01978"
+       y="1197.567"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="645.81934"
+       y="1212.3383"
+       id="text30173"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="645.81934"
+         y="1212.3383"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30175">Authorization</tspan><tspan
+         sodipodi:role="line"
+         x="645.81934"
+         y="1227.3383"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30177">Database</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30209);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30179"
+       width="105.40086"
+       height="54.89323"
+       x="440.37097"
+       y="969.91284"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="492.48843"
+       y="994.32898"
+       id="text30181"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="492.48843"
+         y="994.32898"
+         id="tspan30183"
+         style="text-align:center;text-anchor:middle">File</tspan><tspan
+         sodipodi:role="line"
+         x="492.48843"
+         y="1009.329"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30185">Manager</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-opacity:1"
+       d="M 457.85474,1029.9888 L 487.41664,1140.2415"
+       id="path30187"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="1141.7095"
+       y="-181.54793"
+       id="text30189"
+       transform="matrix(0.2589804,0.9658826,-0.9658826,0.2589804,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan30191"
+         x="1141.7095"
+         y="-181.54793">Mount()</tspan></text>
+    <rect
+       style="opacity:1;fill:url(#linearGradient30211);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30193"
+       width="105.40086"
+       height="54.89323"
+       x="440.37097"
+       y="1148.4359"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <rect
+       style="opacity:1;fill:url(#linearGradient30213);fill-opacity:1;stroke:#030000;stroke-width:0.35916778;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30195"
+       width="105.5967"
+       height="22.946213"
+       x="440.27307"
+       y="1202.5397"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="493.39078"
+       y="1172.8521"
+       id="text30197"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="493.39078"
+         y="1172.8521"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30199">org.freedesktop.</tspan><tspan
+         sodipodi:role="line"
+         x="493.39078"
+         y="1187.8521"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30201">Hal</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="492.6525"
+       y="1216.7721"
+       id="text30203"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="492.6525"
+         y="1216.7721"
+         style="text-align:center;text-anchor:middle"
+         id="tspan30205">libpolkit</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:none;stroke-opacity:1"
+       d="M 496.01522,1030.2861 L 529.87617,1139.2954"
+       id="path30221"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="1173.8359"
+       y="-173.60796"
+       id="text30223"
+       transform="matrix(0.2966428,0.9549885,-0.9549885,0.2966428,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan30225"
+         x="1173.8359"
+         y="-173.60796">OK</tspan></text>
+    <rect
+       style="opacity:1;fill:#4c4c4c;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.70579964;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30227"
+       width="717.72656"
+       height="3.224658"
+       x="16.136728"
+       y="610.74988"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <rect
+       style="opacity:1;fill:#4c4c4c;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.70579964;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30229"
+       width="717.72656"
+       height="3.224658"
+       x="9.7081537"
+       y="937.03558"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <rect
+       style="opacity:1;fill:#4c4c4c;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.8039602;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect30231"
+       width="960.48553"
+       height="3.1264975"
+       x="310.69086"
+       y="-371.56323"
+       transform="matrix(0,1,-1,0,0,0)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <rect
+       style="opacity:1;fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.47417995;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:19;stroke-opacity:1"
+       id="rect31276"
+       width="302.2439"
+       height="3.4562778"
+       x="417.58118"
+       y="765.91351"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="677.00378"
+       y="746.49854"
+       id="text31278"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="677.00378"
+         y="746.49854"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31280">User Session</tspan><tspan
+         sodipodi:role="line"
+         x="677.00378"
+         y="758.99854"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31282">(unprivileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="675.81458"
+       y="780.5072"
+       id="text31284"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         x="675.81458"
+         y="780.5072"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31286">System Context</tspan><tspan
+         sodipodi:role="line"
+         x="675.81458"
+         y="793.0072"
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan31288">(privileged)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="5.7142835"
+       y="343.79077"
+       id="text31318"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan31320"
+         x="5.7142835"
+         y="343.79077"
+         style="font-size:36px">1.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="382.24597"
+       y="344.3414"
+       id="text31322"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan31324"
+         x="382.24597"
+         y="344.3414"
+         style="font-size:36px">2.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="5.9801025"
+       y="650.06604"
+       id="text31326"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan31328"
+         x="5.9801025"
+         y="650.06604"
+         style="font-size:36px">3.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="382.51178"
+       y="650.6167"
+       id="text31330"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan31332"
+         x="382.51178"
+         y="650.6167"
+         style="font-size:36px">4.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="5.1229744"
+       y="979.06604"
+       id="text31334"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/doc/text31338.png"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan31336"
+         x="5.1229744"
+         y="979.06604"
+         style="font-size:36px">5.</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="381.65466"
+       y="979.6167"
+       id="text31338"
+       inkscape:export-xdpi="99.129997"
+       inkscape:export-ydpi="99.129997"><tspan
+         sodipodi:role="line"
+         id="tspan31340"
+         x="381.65466"
+         y="979.6167"
+         style="font-size:36px">6.</tspan></text>
+  </g>
+</svg>

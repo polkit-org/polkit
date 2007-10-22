@@ -60,7 +60,9 @@ content_files =  			    \
 	$(NULL)
 
 # Images to copy into HTML directory
-HTML_IMAGES =
+HTML_IMAGES = 				\
+	diagram-bus-model.png		\
+	diagram-interaction.png
 
 # Extra options to supply to gtkdoc-fixref
 FIXXREF_OPTIONS=
