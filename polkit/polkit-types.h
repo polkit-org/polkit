@@ -34,9 +34,26 @@
 #  define POLKIT_BEGIN_DECLS extern "C" {
 #  define POLKIT_END_DECLS }
 #else
+/**
+ * POLKIT_BEGIN_DECLS:
+ *
+ * C++ include header guard
+ */
 #  define POLKIT_BEGIN_DECLS
+/**
+ * POLKIT_END_DECLS:
+ *
+ * C++ include header guard
+ */
 #  define POLKIT_END_DECLS
 #endif
+
+#if    __GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1)
+#define POLKIT_GNUC_DEPRECATED                            \
+  __attribute__((__deprecated__))
+#else
+#define POLKIT_GNUC_DEPRECATED
+#endif /* __GNUC__ */
 
 POLKIT_BEGIN_DECLS
 
