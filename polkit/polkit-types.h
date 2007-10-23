@@ -37,13 +37,13 @@
 /**
  * POLKIT_BEGIN_DECLS:
  *
- * C++ include header guard
+ * C++ include header guard.
  */
 #  define POLKIT_BEGIN_DECLS
 /**
  * POLKIT_END_DECLS:
  *
- * C++ include header guard
+ * C++ include header guard.
  */
 #  define POLKIT_END_DECLS
 #endif
@@ -52,6 +52,11 @@
 #define POLKIT_GNUC_DEPRECATED                            \
   __attribute__((__deprecated__))
 #else
+/**
+ * POLKIT_GNUC_DEPRECATED:
+ *
+ * Used in front of deprecated functions.
+ */
 #define POLKIT_GNUC_DEPRECATED
 #endif /* __GNUC__ */
 

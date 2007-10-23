@@ -158,13 +158,15 @@ void           polkit_context_io_func                (PolKitContext *pk_context,
 
 PolKitPolicyCache *polkit_context_get_policy_cache   (PolKitContext *pk_context);
 
-POLKIT_GNUC_DEPRECATED PolKitResult polkit_context_can_session_do_action    (PolKitContext   *pk_context,
-                                                                             PolKitAction    *action,
-                                                                             PolKitSession   *session);
+POLKIT_GNUC_DEPRECATED
+PolKitResult polkit_context_can_session_do_action    (PolKitContext   *pk_context,
+                                                      PolKitAction    *action,
+                                                      PolKitSession   *session);
 
-POLKIT_GNUC_DEPRECATED PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_context,
-                                                                             PolKitAction    *action,
-                                                                             PolKitCaller    *caller);
+POLKIT_GNUC_DEPRECATED 
+PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_context,
+                                                      PolKitAction    *action,
+                                                      PolKitCaller    *caller);
 
 PolKitConfig *polkit_context_get_config (PolKitContext *pk_context, PolKitError **error);
 
