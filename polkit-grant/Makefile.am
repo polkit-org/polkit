@@ -29,7 +29,7 @@ libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE
 libexec_PROGRAMS = polkit-grant-helper polkit-grant-helper-pam
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
-polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit/libpolkit-grant-private.la
+polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
 
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
 polkit_grant_helper_pam_LDADD = @AUTH_LIBS@

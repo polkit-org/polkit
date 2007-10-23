@@ -40,6 +40,7 @@
 #include <polkit/polkit-caller.h>
 #include <polkit/polkit-policy-cache.h>
 #include <polkit/polkit-config.h>
+#include <polkit/polkit-authorization-db.h>
 
 POLKIT_BEGIN_DECLS
 
@@ -157,15 +158,27 @@ void           polkit_context_io_func                (PolKitContext *pk_context,
 
 PolKitPolicyCache *polkit_context_get_policy_cache   (PolKitContext *pk_context);
 
-PolKitResult polkit_context_can_session_do_action    (PolKitContext   *pk_context,
-                                                      PolKitAction    *action,
-                                                      PolKitSession   *session);
+POLKIT_GNUC_DEPRECATED PolKitResult polkit_context_can_session_do_action    (PolKitContext   *pk_context,
+                                                                             PolKitAction    *action,
+                                                                             PolKitSession   *session);
 
-PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_context,
-                                                      PolKitAction    *action,
-                                                      PolKitCaller    *caller);
+POLKIT_GNUC_DEPRECATED PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_context,
+                                                                             PolKitAction    *action,
+                                                                             PolKitCaller    *caller);
 
 PolKitConfig *polkit_context_get_config (PolKitContext *pk_context, PolKitError **error);
+
+PolKitResult polkit_context_is_caller_authorized (PolKitContext         *pk_context,
+                                                  PolKitAction          *action,
+                                                  PolKitCaller          *caller,
+                                                  polkit_bool_t          revoke_if_oneshot);
+
+PolKitResult polkit_context_is_session_authorized (PolKitContext         *pk_context,
+                                                   PolKitAction          *action,
+                                                   PolKitSession         *session,
+                                                   polkit_bool_t          revoke_if_oneshot);
+
+PolKitAuthorizationDB *polkit_context_get_authorization_db (PolKitContext *pk_context);
 
 POLKIT_END_DECLS
 

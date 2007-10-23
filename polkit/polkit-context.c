@@ -43,7 +43,6 @@
 #include "polkit-debug.h"
 #include "polkit-context.h"
 #include "polkit-policy-cache.h"
-#include "polkit-grant-database.h"
 
 /**
  * SECTION:polkit
@@ -98,6 +97,8 @@ struct _PolKitContext
 
         PolKitConfig *config;
 
+        PolKitAuthorizationDB *authdb;
+
         polkit_bool_t load_descriptions;
 
         int inotify_fd;
@@ -121,6 +122,8 @@ polkit_context_new (void)
         PolKitContext *pk_context;
         pk_context = g_new0 (PolKitContext, 1);
         pk_context->refcount = 1;
+        /* TODO: May want to rethink instantiating this on demand.. */
+        pk_context->authdb = polkit_authorization_db_new ();
         return pk_context;
 }
 
@@ -435,6 +438,56 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
         return pk_context->priv_cache;
 }
 
+
+/**
+ * polkit_context_is_session_authorized:
+ * @pk_context: the PolicyKit context
+ * @action: the type of access to check for
+ * @session: the session in question
+ * @revoke_if_oneshot: TODO
+ *
+ * Determine if any caller from a giver session is authorized to do a
+ * given action.
+ *
+ * Returns: A #PolKitResult specifying if, and how, the caller can
+ * do a specific action. 
+ *
+ * Since: 0.7
+ */
+PolKitResult
+polkit_context_is_session_authorized (PolKitContext         *pk_context,
+                                      PolKitAction          *action,
+                                      PolKitSession         *session,
+                                      polkit_bool_t          revoke_if_oneshot)
+{
+        /* TODO: properly implement */
+        return polkit_context_can_session_do_action (pk_context, action, session);
+}
+
+/**
+ * polkit_context_is_caller_authorized:
+ * @pk_context: the PolicyKit context
+ * @action: the type of access to check for
+ * @caller: the caller in question
+ * @revoke_if_oneshot: TODO
+ *
+ * Determine if a given caller is authorized to do a given action.
+ *
+ * Returns: A #PolKitResult specifying if, and how, the caller can
+ * do a specific action. 
+ *
+ * Since: 0.7
+ */
+PolKitResult
+polkit_context_is_caller_authorized (PolKitContext         *pk_context,
+                                     PolKitAction          *action,
+                                     PolKitCaller          *caller,
+                                     polkit_bool_t          revoke_if_oneshot)
+{
+        /* TODO: properly implement */
+        return polkit_context_can_caller_do_action (pk_context, action, caller);
+}
+
 /**
  * polkit_context_can_session_do_action:
  * @pk_context: the PolicyKit context
@@ -445,6 +498,8 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
  *
  * Returns: A #PolKitResult - can only be one of
  * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
+ *
+ * Deprecated: 0.7: use polkit_context_is_session_authorized() instead.
  */
 PolKitResult
 polkit_context_can_session_do_action (PolKitContext   *pk_context,
@@ -529,6 +584,8 @@ out:
  *
  * Returns: A #PolKitResult specifying if, and how, the caller can
  * do a specific action
+ *
+ * Deprecated: 0.7: use polkit_context_is_caller_authorized() instead.
  */
 PolKitResult
 polkit_context_can_caller_do_action (PolKitContext   *pk_context,
@@ -542,6 +599,7 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         PolKitResult result_from_grantdb;
         PolKitPolicyDefault *policy_default;
         PolKitConfig *config;
+        polkit_bool_t from_authdb;
 
         result = POLKIT_RESULT_NO;
         g_return_val_if_fail (pk_context != NULL, result);
@@ -583,7 +641,15 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         polkit_policy_file_entry_debug (pfe);
 
         result_from_config = polkit_config_can_caller_do_action (config, action, caller);
-        result_from_grantdb = _polkit_grantdb_check_can_caller_do_action (pk_context, action, caller);
+
+        result_from_grantdb = POLKIT_RESULT_UNKNOWN;
+        if (polkit_authorization_db_is_caller_authorized (pk_context->authdb, 
+                                                          action, 
+                                                          caller,
+                                                          &from_authdb)) {
+                if (from_authdb)
+                        result_from_grantdb = POLKIT_RESULT_YES;
+        }
 
         /* fist, check if the config file specifies a result */
         if (result_from_config != POLKIT_RESULT_UNKNOWN) {
@@ -642,7 +708,7 @@ out:
  * integration with other PolicyKit components.
  *
  * Returns: A #PolKitConfig object or NULL if the configuration file
- * is malformed.
+ * is malformed. Caller should not unref this object.
  */
 PolKitConfig *
 polkit_context_get_config (PolKitContext *pk_context, PolKitError **error)
@@ -672,4 +738,20 @@ polkit_context_get_config (PolKitContext *pk_context, PolKitError **error)
         return pk_context->config;
 }
 
-
+/**
+ * polkit_context_get_authorization_db:
+ * @pk_context: the PolicyKit context
+ * 
+ * Returns an object that provides access to the authorization
+ * database. Applications using PolicyKit should never use this
+ * method; it's only here for integration with other PolicyKit
+ * components.
+ *
+ * Returns: A #PolKitAuthorizationDB object. Caller should not unref
+ * this object.
+ */
+PolKitAuthorizationDB *
+polkit_context_get_authorization_db (PolKitContext *pk_context)
+{
+        return pk_context->authdb;
+}

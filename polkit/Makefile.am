@@ -13,12 +13,6 @@ INCLUDES = \
 	-DPOLKIT_COMPILATION \
 	@GLIB_CFLAGS@
 
-
-noinst_LTLIBRARIES=libpolkit-grant-private.la
-
-libpolkit_grant_private_la_SOURCES =				\
-	polkit-grant-database.h	polkit-grant-database.c
-
 lib_LTLIBRARIES=libpolkit.la
 
 libpolkitincludedir=$(includedir)/PolicyKit/polkit
@@ -37,7 +31,9 @@ libpolkitinclude_HEADERS =              		\
 	polkit-policy-file.h				\
 	polkit-policy-cache.h				\
 	polkit-policy-default.h				\
-	polkit-config.h
+	polkit-config.h					\
+	polkit-authorization.h				\
+	polkit-authorization-db.h
 
 libpolkit_la_SOURCES =                                			\
 	polkit.h							\
@@ -55,9 +51,13 @@ libpolkit_la_SOURCES =                                			\
 	polkit-policy-default.h		polkit-policy-default.c		\
 	polkit-debug.h			polkit-debug.c			\
 	polkit-utils.h			polkit-utils.c			\
-	polkit-config.h			polkit-config.c
+	polkit-config.h			polkit-config.c			\
+	polkit-authorization.h		polkit-authorization.c		\
+	polkit-authorization-db.h	polkit-authorization-db.c	\
+	polkit-grant-database.h		polkit-grant-database.c
 
-libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@ libpolkit-grant-private.la
+
+libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

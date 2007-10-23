@@ -44,7 +44,7 @@
 #include <glib.h>
 
 #include <polkit-dbus/polkit-dbus.h>
-#include <polkit/polkit-grant-database.h>
+// #include <polkit/polkit-grant-database.h>
 
 /* Development aid: define PGH_DEBUG to get debugging output. Do _NOT_
  * enable this in production builds; it may leak passwords and other
@@ -243,10 +243,9 @@ out:
 
 /**
  * verify_with_polkit:
- * @caller_pid: the process id of the caller
- * @action_name: name of the action
- * @result: return location for result AKA how the user can auth
- * @out_session_objpath: return location for ConsoleKit session identifier
+ * @caller: the caller
+ * @action: the action
+ * @out_result: return location for result AKA how the user can auth
  * @out_admin_users: return location for a NULL-terminated array of
  * strings that can be user to auth as admin. Is set to NULL if the
  * super user (e.g. uid 0) should be user to auth as admin.
@@ -258,70 +257,26 @@ out:
  * configuration file; see the PolicyKit.conf(5) manual page for
  * details.
  *
- * Returns: TRUE if, and only if, the given caller can authenticate to
+ * Returns: #TRUE if, and only if, the given caller can authenticate to
  * gain a privilege to do the given action.
  */
 static polkit_bool_t
-verify_with_polkit (pid_t caller_pid,
-                    const char *action_name,
-                    PolKitResult *result,
-                    char **out_session_objpath,
+verify_with_polkit (PolKitContext *pol_ctx,
+                    PolKitCaller *caller,
+                    PolKitAction *action,
+                    PolKitResult *out_result,
                     char ***out_admin_users)
 {
-        PolKitCaller *caller;
-        PolKitSession *session;
-        char *str;
-        DBusConnection *bus;
-        DBusError error;
-        PolKitContext *pol_ctx;
-        PolKitAction *action;
+        *out_result = polkit_context_is_caller_authorized (pol_ctx, action, caller, FALSE);
 
-        dbus_error_init (&error);
-        bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-        if (bus == NULL) {
-                fprintf (stderr, "polkit-grant-helper: cannot connect to system bus: %s: %s\n", 
-                         error.name, error.message);
-                dbus_error_free (&error);
-                goto error;
-        }
-
-        action = polkit_action_new ();
-        polkit_action_set_action_id (action, action_name);
-
-        caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
-        if (caller == NULL) {
-                fprintf (stderr, "polkit-grant-helper: cannot get caller from pid\n");
-                goto error;
-        }
-
-        if (!polkit_caller_get_ck_session (caller, &session)) {
-                fprintf (stderr, "polkit-grant-helper: caller is not in a session\n");
-                goto error;
-        }
-        if (!polkit_session_get_ck_objref (session, &str)) {
-                fprintf (stderr, "polkit-grant-helper: cannot get session ck objpath\n");
-                goto error;
-        }
-        *out_session_objpath = g_strdup (str);
-        if (*out_session_objpath == NULL)
-                goto error;
-
-        pol_ctx = polkit_context_new ();
-        if (!polkit_context_init (pol_ctx, NULL)) {
-                fprintf (stderr, "polkit-grant-helper: cannot initialize polkit\n");
-                goto error;
-        }
-
-        *result = polkit_context_can_caller_do_action (pol_ctx, action, caller);
-
-        if (*result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
-            *result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION &&
-            *result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS &&
-            *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
-            *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION &&
-            *result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) {
+        if (*out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
+            *out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION &&
+            *out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS &&
+            *out_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
+            *out_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION &&
+            *out_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) {
                 fprintf (stderr, "polkit-grant-helper: given auth type (%d -> %s) is bogus\n", 
-                         *result, polkit_result_to_string_representation (*result));
+                         *out_result, polkit_result_to_string_representation (*out_result));
                 goto error;
         }
 
@@ -330,9 +285,9 @@ verify_with_polkit (pid_t caller_pid,
         /* for admin auth, get a list of users that can be used - this is basically evaluating the
          * <define_admin_auth/> directives in the config file...
          */
-        if (*result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
-            *result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
-            *result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
+        if (*out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+            *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
+            *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
                 PolKitConfig *pk_config;
                 PolKitConfigAdminAuthType admin_auth_type;
                 const char *admin_auth_data;
@@ -535,11 +490,20 @@ main (int argc, char *argv[])
         const char *invoking_user_name;
         const char *action_name;
         PolKitResult result;
+        PolKitResult original_result;
         const char *user_to_auth;
+        uid_t uid_of_user_to_auth;
         char *session_objpath;
         struct passwd *pw;
         polkit_bool_t dbres;
         char **admin_users;
+        DBusError error;
+        DBusConnection *bus;
+        PolKitContext *context;
+        PolKitAction *action;
+        PolKitCaller *caller;
+        uid_t caller_uid;
+        PolKitSession *session;
 
         ret = 3;
 
@@ -610,12 +574,49 @@ main (int argc, char *argv[])
 
         ret = 2;
 
+        context = polkit_context_new ();
+        if (!polkit_context_init (context, NULL)) {
+                fprintf (stderr, "polkit-grant-helper: cannot initialize polkit\n");
+                goto out;
+        }
+
+        action = polkit_action_new ();
+        polkit_action_set_action_id (action, action_name);
+
+        dbus_error_init (&error);
+        bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
+        if (bus == NULL) {
+                fprintf (stderr, "polkit-grant-helper: cannot connect to system bus: %s: %s\n", 
+                         error.name, error.message);
+                dbus_error_free (&error);
+                goto out;
+        }
+
+        caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
+        if (caller == NULL) {
+                fprintf (stderr, "polkit-grant-helper: cannot get caller from pid: %s: %s\n",
+                         error.name, error.message);
+                goto out;
+        }
+        if (!polkit_caller_get_uid (caller, &caller_uid)) {
+                fprintf (stderr, "polkit-grant-helper: no uid for caller\n");
+                goto out;
+        }
+        if (!polkit_caller_get_ck_session (caller, &session)) {
+                fprintf (stderr, "polkit-grant-helper: caller is not in a session\n");
+                goto out;
+        }
+        if (!polkit_session_get_ck_objref (session, &session_objpath)) {
+                fprintf (stderr, "polkit-grant-helper: caller is not in a session\n");
+                goto out;
+        }
+
         /* Use libpolkit to
          *
          * - figure out if the caller can really auth to do the action
          * - learn what ConsoleKit session the caller belongs to
          */
-        if (!verify_with_polkit (caller_pid, action_name, &result, &session_objpath, &admin_users))
+        if (!verify_with_polkit (context, caller, action, &result, &admin_users))
                 goto out;
 
 #ifdef PGH_DEBUG
@@ -699,12 +700,27 @@ main (int argc, char *argv[])
                 }
         }
 
+        if (strcmp (user_to_auth, "root") == 0) {
+                uid_of_user_to_auth = 0;
+        } else {
+                struct passwd *passwd;
+
+                passwd = getpwnam (user_to_auth);
+                if (passwd == NULL) {
+                        fprintf (stderr, "polkit-grant-helper: can not look up uid for user '%s'\n", user_to_auth);
+                        goto out;
+                }
+                uid_of_user_to_auth = passwd->pw_uid;
+        }
+
         ret = 1;
 
         /* Start authentication */
         if (!do_auth (user_to_auth)) {
                 goto out;
         }
+
+        original_result = result;
 
         /* Ask caller if he want to slim down grant type...  e.g. he
          * might want to go from auth_self_keep_always to
@@ -731,28 +747,41 @@ main (int argc, char *argv[])
         switch (result) {
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
-                dbres = _polkit_grantdb_write_pid (action_name, caller_pid);
+                dbres = polkit_authorization_db_add_entry_process (polkit_context_get_authorization_db (context), 
+                                                                   action, 
+                                                                   caller,
+                                                                   original_result,
+                                                                   uid_of_user_to_auth);
                 if (dbres) {
-                        syslog (LOG_INFO, "granted use of action='%s' to pid '%d' [uid=%d] [auth='%s']",
+                        syslog (LOG_INFO, "granted authorization for %s to pid %d [uid=%d] [auth=%s]",
                                 action_name, caller_pid, invoking_user_id, user_to_auth);
                 }
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
-                dbres = _polkit_grantdb_write_keep_session (action_name, session_objpath);
+                dbres = polkit_authorization_db_add_entry_session (polkit_context_get_authorization_db (context), 
+                                                                   action, 
+                                                                   session,
+                                                                   original_result,
+                                                                   uid_of_user_to_auth);
+
                 if (dbres) {
-                        syslog (LOG_INFO, "granted use of action='%s' to session '%s' [uid=%d] [auth='%s']",
+                        syslog (LOG_INFO, "granted authorization for %s to session %s [uid=%d] [auth=%s]",
                                 action_name, session_objpath, invoking_user_id, user_to_auth);
                 }
                 break;
 
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
-                dbres = _polkit_grantdb_write_keep_always (action_name, invoking_user_id);
+                dbres = polkit_authorization_db_add_entry_always (polkit_context_get_authorization_db (context), 
+                                                                  action, 
+                                                                  caller_uid,
+                                                                  original_result,
+                                                                  uid_of_user_to_auth);
                 if (dbres) {
-                        syslog (LOG_INFO, "granted use of action='%s' to uid %d [auth='%s']", 
-                                action_name, invoking_user_id, user_to_auth);
+                        syslog (LOG_INFO, "granted authorization for %s to uid %d [auth=%s]", 
+                                action_name, caller_uid, user_to_auth);
                 }
                 break;
 

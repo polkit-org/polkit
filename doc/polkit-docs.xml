@@ -89,6 +89,8 @@
     <xi:include href="xml/polkit-policy-file-entry.xml"/>
     <xi:include href="xml/polkit-policy-default.xml"/>
     <xi:include href="xml/polkit-policy-cache.xml"/>
+    <xi:include href="xml/polkit-authorization.xml"/>
+    <xi:include href="xml/polkit-authorization-db.xml"/>
   </reference>
 
   <reference id="ref-convenience">

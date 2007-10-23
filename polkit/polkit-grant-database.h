@@ -30,8 +30,7 @@
 
 POLKIT_BEGIN_DECLS
 
-PolKitResult _polkit_grantdb_check_can_caller_do_action (PolKitContext         *pk_context,
-                                                         PolKitAction          *action,
+PolKitResult _polkit_grantdb_check_can_caller_do_action (PolKitAction          *action,
                                                          PolKitCaller          *caller);
 
 polkit_bool_t _polkit_grantdb_write_keep_always (const char *action_id, uid_t uid);

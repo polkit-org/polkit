@@ -223,8 +223,7 @@ out:
 }
 
 PolKitResult 
-_polkit_grantdb_check_can_caller_do_action (PolKitContext         *pk_context,
-                                            PolKitAction          *action,
+_polkit_grantdb_check_can_caller_do_action (PolKitAction          *action,
                                             PolKitCaller          *caller)
 {
         char *grant_file;

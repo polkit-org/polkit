@@ -40,6 +40,8 @@
 #include <polkit/polkit-policy-cache.h>
 #include <polkit/polkit-policy-default.h>
 #include <polkit/polkit-config.h>
+#include <polkit/polkit-authorization.h>
+#include <polkit/polkit-authorization-db.h>
 #undef _POLKIT_INSIDE_POLKIT_H
 
 #endif /* POLKIT_H */
