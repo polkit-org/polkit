@@ -220,6 +220,11 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
         if (session == NULL) {
                 goto out;
         }
+        if (!polkit_session_set_uid (session, uid)) {
+                polkit_session_unref (session);
+                session = NULL;
+                goto out;
+        }
         if (!polkit_session_set_ck_objref (session, objpath)) {
                 polkit_session_unref (session);
                 session = NULL;
