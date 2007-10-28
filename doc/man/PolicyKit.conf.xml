@@ -279,7 +279,7 @@
       the top-level <emphasis>config</emphasis> are omitted in the
       following configuration file examples. The actions used may
       also be fictional,
-      use <citerefentry><refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      use <citerefentry><refentrytitle>polkit-action</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       to learn about the actions available on your system.
     </para>
     
@@ -378,10 +378,10 @@
         <refentrytitle>polkit-config-file-validate</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-action</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>polkit-grant</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-auth</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

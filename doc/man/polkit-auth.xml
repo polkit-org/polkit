@@ -1,0 +1,187 @@
+<refentry id="polkit-auth.1">
+  <refentryinfo>
+    <title>polkit-auth</title>
+    <date>August 2007</date>
+    <productname>PolicyKit</productname>
+  </refentryinfo>
+  
+  <refmeta>
+    <refentrytitle>polkit-auth</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+  
+  <refnamediv>
+    <refname>polkit-auth</refname>
+    <refpurpose>Manage authorizations</refpurpose>
+  </refnamediv>
+  
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>polkit-auth</command>
+      <arg><option>--obtain <replaceable>action</replaceable></option></arg>
+      <arg><option>--show-obtainable</option></arg>
+      <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --explicit</option></arg>
+      <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --explicit-detail</option></arg>
+      <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --grant <replaceable>action</replaceable></option><arg><option>--constraint <replaceable>constraint</replaceable></option></arg></arg>
+      <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --revoke <replaceable>action</replaceable></option></arg>
+      <arg><option>--version</option></arg>
+      <arg><option>--help</option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  
+  <refsect1>
+    <title>DESCRIPTION</title> 
+    <para>
+      polkit-auth is used to inspect, obtain, grant and revoke
+      PolicyKit authorizations. If invoked without any options, the
+      authorizations of the calling process will be printed.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>OPTIONS</title> 
+    <variablelist>
+      <varlistentry>
+        <term><option>--obtain <replaceable>action</replaceable></option></term>
+        <listitem>
+          <para>
+            Attempt to obtain the authorization to do an action.  This
+            is only useful for implicit authorizations requiring
+            authentication; e.g. when an appropriate stanza in the
+            defaults section of the .policy file for the action
+            specifies
+            <literal>auth_*</literal>.
+          </para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term><option>--show-obtainable</option></term>
+        <listitem>
+          <para>
+             Prints all actions that can be obtained via
+             authentication and for which an authorization does not
+             exist.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option><arg><option>--user <replaceable>user</replaceable></option></arg> --explicit</option></term>
+        <listitem>
+          <para>
+            Show explicit authorizations. Duplicates are not
+            printed. If used with the <option>--user</option> option,
+            the authorization
+            <literal>org.freedesktop.policykit.read</literal> is required.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option><arg><option>--user <replaceable>user</replaceable></option></arg> --explicit-detail</option></term>
+        <listitem>
+          <para>
+            Show detailed information about explicit
+            authorizations. In contrast to
+            the <literal>--explicit</literal>, duplicates are printed
+            as several authorizations with different scope and
+            constraints may exist.
+          </para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term><option><arg><option>--user <replaceable>user</replaceable></option></arg> --grant <replaceable>action</replaceable></option><arg><option>--constraint <replaceable>constraint</replaceable></option></arg></term>
+        <listitem>
+          <para>
+            Grant an authorization for an action. This is different
+            than <literal>--obtain</literal> insofar that
+            the <literal>defaults</literal> stanza of the .policy file
+            is not consulted. Optionally, a constraint on the granted
+            authorization can be specified; allowed values
+            are: <literal>local</literal>,
+            <literal>active</literal>, <literal>local+active</literal>.
+            The authorization needed to grant authorizations is
+            <literal>org.freedesktop.policykit.grant</literal>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option><arg><option>--user <replaceable>user</replaceable></option></arg> --revoke <replaceable>action</replaceable></option></term>
+        <listitem>
+          <para>
+            Revoke all authorizations for an action. If the user is
+            not specified the calling user is used. The
+            authorization <literal>org.freedesktop.policykit.revoke</literal>
+            is needed to revoke authorizations from other users.
+          </para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term><option>--version</option></term>
+        <listitem>
+          <para>
+            Show version and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+      
+      <varlistentry>
+        <term><option>--help</option></term>
+        <listitem>
+          <para>
+            Show this information.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  
+  <refsect1>
+    <title>COMPLETION</title> 
+    <para>
+      PolicyKit ships with a collection of shell functions such that
+      completion on users and actions works when using the
+      <citerefentry>
+        <refentrytitle>bash</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+      shell. For completion to properly work for polkit-auth,
+      arguments should be entered in the order specified in this
+      manual page; for example. <option>--user</option> should be
+      specified before <option>--revoke</option> to complete only on
+      the authorizations the given user has. Note that if the calling
+      user lacks the <literal>org.freedesktop.policykit.read</literal>
+      authorization, the completion function will fall back to
+      completing on all registered actions.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>BUGS</title> 
+    <para>
+      Please send bug reports to either the distribution or the
+      hal mailing list,
+      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+      to subscribe.
+    </para>
+  </refsect1>
+  
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>, 
+      <citerefentry>
+        <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
+      </citerefentry>, 
+      <citerefentry>
+        <refentrytitle>polkit-action</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

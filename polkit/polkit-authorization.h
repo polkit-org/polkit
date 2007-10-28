@@ -34,17 +34,18 @@
 #include <polkit/polkit-types.h>
 #include <polkit/polkit-action.h>
 #include <polkit/polkit-result.h>
+#include <polkit/polkit-authorization-constraint.h>
 
 POLKIT_BEGIN_DECLS
 
 struct _PolKitAuthorization;
 typedef struct _PolKitAuthorization PolKitAuthorization;
 
-PolKitAuthorization *polkit_authorization_ref            (PolKitAuthorization *authorization);
-void                 polkit_authorization_unref          (PolKitAuthorization *authorization);
+PolKitAuthorization *polkit_authorization_ref            (PolKitAuthorization *auth);
+void                 polkit_authorization_unref          (PolKitAuthorization *auth);
 
-void                 polkit_authorization_debug          (PolKitAuthorization *authorization);
-polkit_bool_t        polkit_authorization_validate       (PolKitAuthorization *authorization);
+void                 polkit_authorization_debug          (PolKitAuthorization *auth);
+polkit_bool_t        polkit_authorization_validate       (PolKitAuthorization *auth);
 
 
 /**
@@ -54,10 +55,10 @@ polkit_bool_t        polkit_authorization_validate       (PolKitAuthorization *a
  * @POLKIT_AUTHORIZATION_SCOPE_SESSION: The authorization is limited
  * for processes originating from a given session
  * @POLKIT_AUTHORIZATION_SCOPE_ALWAYS: The authorization is retained
- * indefinitely. TODO: mention that it's only valid if the defaults
- * for the #PolKitAction is the same.
+ * indefinitely.
  *
- * The scope of an authorization; e.g. how it is confined.
+ * The scope of an authorization; e.g. whether it's limited to a
+ * process, a session or unlimited.
  */
 typedef enum {
         POLKIT_AUTHORIZATION_SCOPE_PROCESS,
@@ -65,28 +66,28 @@ typedef enum {
         POLKIT_AUTHORIZATION_SCOPE_ALWAYS,
 } PolKitAuthorizationScope;
 
-PolKitAction *polkit_authorization_get_action_id (PolKitAuthorization *authorization);
+const char *polkit_authorization_get_action_id (PolKitAuthorization *auth);
 
-uid_t polkit_authorization_get_uid (PolKitAuthorization *authorization);
+uid_t polkit_authorization_get_uid (PolKitAuthorization *auth);
 
-time_t polkit_authorization_get_time_of_grant            (PolKitAuthorization *authorization);
+time_t polkit_authorization_get_time_of_grant            (PolKitAuthorization *auth);
+
+PolKitAuthorizationConstraint *polkit_authorization_get_constraint (PolKitAuthorization *auth);
+
+PolKitAuthorizationScope polkit_authorization_get_scope (PolKitAuthorization *auth);
 
 
-PolKitAuthorizationScope polkit_authorization_get_scope (PolKitAuthorization *authorization);
-
-polkit_bool_t polkit_authorization_scope_process_get_pid        (PolKitAuthorization *authorization, 
+polkit_bool_t polkit_authorization_scope_process_get_pid        (PolKitAuthorization *auth, 
                                                                  pid_t *out_pid, 
                                                                  polkit_uint64_t *out_pid_start_time);
 
-polkit_bool_t polkit_authorization_scope_session_get_ck_objref  (PolKitAuthorization *authorization, 
-                                                                 char **out_ck_session_objref);
+const char *polkit_authorization_scope_session_get_ck_objref  (PolKitAuthorization *auth);
 
 
-polkit_bool_t polkit_authorization_was_granted_via_defaults  (PolKitAuthorization *authorization,
-                                                              PolKitResult *out_how,
+polkit_bool_t polkit_authorization_was_granted_via_defaults  (PolKitAuthorization *auth,
                                                               uid_t *out_user_authenticated_as);
 
-polkit_bool_t polkit_authorization_was_granted_explicitly  (PolKitAuthorization *authorization,
+polkit_bool_t polkit_authorization_was_granted_explicitly  (PolKitAuthorization *auth,
                                                             uid_t *out_by_whom);
 
 POLKIT_END_DECLS

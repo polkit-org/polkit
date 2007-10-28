@@ -490,7 +490,6 @@ main (int argc, char *argv[])
         const char *invoking_user_name;
         const char *action_name;
         PolKitResult result;
-        PolKitResult original_result;
         const char *user_to_auth;
         uid_t uid_of_user_to_auth;
         char *session_objpath;
@@ -720,8 +719,6 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        original_result = result;
-
         /* Ask caller if he want to slim down grant type...  e.g. he
          * might want to go from auth_self_keep_always to
          * auth_self_keep_session..
@@ -744,13 +741,15 @@ main (int argc, char *argv[])
                  action_name, session_objpath, caller_pid, polkit_result_to_string_representation (result));
 #endif /* PGH_DEBUG */
 
+        /* make sure write permissions for group is honored */
+        umask (002);
+
         switch (result) {
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 dbres = polkit_authorization_db_add_entry_process (polkit_context_get_authorization_db (context), 
                                                                    action, 
                                                                    caller,
-                                                                   original_result,
                                                                    uid_of_user_to_auth);
                 if (dbres) {
                         syslog (LOG_INFO, "granted authorization for %s to pid %d [uid=%d] [auth=%s]",
@@ -762,8 +761,7 @@ main (int argc, char *argv[])
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
                 dbres = polkit_authorization_db_add_entry_session (polkit_context_get_authorization_db (context), 
                                                                    action, 
-                                                                   session,
-                                                                   original_result,
+                                                                   caller,
                                                                    uid_of_user_to_auth);
 
                 if (dbres) {
@@ -776,8 +774,7 @@ main (int argc, char *argv[])
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
                 dbres = polkit_authorization_db_add_entry_always (polkit_context_get_authorization_db (context), 
                                                                   action, 
-                                                                  caller_uid,
-                                                                  original_result,
+                                                                  caller,
                                                                   uid_of_user_to_auth);
                 if (dbres) {
                         syslog (LOG_INFO, "granted authorization for %s to uid %d [auth=%s]", 

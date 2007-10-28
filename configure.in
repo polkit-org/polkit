@@ -25,6 +25,7 @@ AM_PROG_LIBTOOL
 AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AC_SYS_LARGEFILE
+AM_PROG_CC_C_O
 
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
@@ -366,6 +367,17 @@ AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_ACCOUNT, "$PAM_FILE_INCLUDE_ACCOUNT", [pam f
 AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_PASSWORD, "$PAM_FILE_INCLUDE_PASSWORD", [pam file password])
 AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_SESSION, "$PAM_FILE_INCLUDE_SESSION", [pam file session])
 
+# ********************
+# Internationalisation
+# ********************
+
+IT_PROG_INTLTOOL([0.36.0])
+GETTEXT_PACKAGE=PolicyKit
+AC_SUBST([GETTEXT_PACKAGE])
+AM_GLIB_GNU_GETTEXT
+AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
+
+
 AC_OUTPUT([
 Makefile
 data/Makefile
@@ -381,6 +393,7 @@ doc/Makefile
 doc/version.xml
 doc/man/Makefile
 policy/Makefile
+po/Makefile.in
 ])
 
 dnl ==========================================================================
@@ -421,13 +434,24 @@ echo "
         Building man pages:         ${enable_man_pages}
 "
 
-echo "NOTE: Remember to create user '${POLKIT_USER}' and group '${POLKIT_GROUP}' before 'make install'"
+echo "NOTE: Remember to create user '${POLKIT_USER}' and group '${POLKIT_GROUP}'"
+echo "      before 'make install'"
+echo
+
+echo "NOTE: The directories ${localstatedir}/run/PolicyKit and ${localstatedir}/lib/PolicyKit will be"
+echo "      owned by group '${POLKIT_GROUP}' and will be of mode 770."
+echo
+
+echo "NOTE: ${libexecdir}/polkit-read-auth-helper will be owned by group"
+echo "      '${POLKIT_GROUP}', and installed with mode 2755 (setgid binary)."
+echo
+
+echo "NOTE: ${libexecdir}/polkit-revoke-helper will be owned by group"
+echo "      '${POLKIT_GROUP}', and installed with mode 2755 (setgid binary)."
 echo
 
 echo "NOTE: ${libexecdir}/polkit-grant-helper will be owned by group"
-echo "      '${POLKIT_USER}', and installed with mode 2755 (setgid binary)."
-echo "      The directories ${localstatedir}/run/PolicyKit and ${localstatedir}/lib/PolicyKit will be"
-echo "      owned by user '${POLKIT_USER}' and group '${POLKIT_GROUP}' and will be of mode 775."
+echo "      '${POLKIT_GROUP}', and installed with mode 2755 (setgid binary)."
 echo
 
 echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be setuid root."

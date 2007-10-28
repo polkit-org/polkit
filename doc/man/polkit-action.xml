@@ -1,24 +1,24 @@
-<refentry id="polkit-list-actions.1">
+<refentry id="polkit-action.1">
   <refentryinfo>
-    <title>polkit-list-actions</title>
+    <title>polkit-action</title>
     <date>August 2007</date>
     <productname>PolicyKit</productname>
   </refentryinfo>
   
   <refmeta>
-    <refentrytitle>polkit-list-actions</refentrytitle>
+    <refentrytitle>polkit-action</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="version"></refmiscinfo>
   </refmeta>
   
   <refnamediv>
-    <refname>polkit-list-actions</refname>
+    <refname>polkit-action</refname>
     <refpurpose>List registered PolicyKit actions</refpurpose>
   </refnamediv>
   
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>polkit-list-actions</command>
+      <command>polkit-action</command>
       <arg><option>--action <replaceable>action</replaceable></option></arg>
       <arg><option>--version</option></arg>
       <arg><option>--help</option></arg>
@@ -28,8 +28,8 @@
   <refsect1>
     <title>DESCRIPTION</title> 
     <para>
-      polkit-list-actions is used to list the PolicyKit actions
-      that are registered on the system.
+      polkit-action is used to list the PolicyKit actions that are
+      registered on the system.
     </para>
   </refsect1>
   
@@ -64,6 +64,19 @@
       </varlistentry>
     </variablelist>
   </refsect1>
+
+  <refsect1>
+    <title>COMPLETION</title> 
+    <para>
+      PolicyKit ships with a collection of shell functions such that
+      completion on actions works when using the
+      <citerefentry>
+        <refentrytitle>bash</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+      shell. For polkit-action, completion is enabled for
+      the <option>--action</option> argument.
+    </para>
+  </refsect1>
   
   <refsect1>
     <title>BUGS</title> 
@@ -85,7 +98,7 @@
         <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>polkit-grant</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-auth</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

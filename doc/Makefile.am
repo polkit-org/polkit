@@ -50,8 +50,8 @@ content_files =  			    \
 	version.xml			    \
 	man/PolicyKit.xml		    \
 	man/PolicyKit.conf.xml		    \
-	man/polkit-grant.xml		    \
-	man/polkit-list-actions.xml	    \
+	man/polkit-auth.xml		    \
+	man/polkit-action.xml		    \
 	man/polkit-policy-file-validate.xml \
 	man/polkit-config-file-validate.xml \
 	spec/polkit-spec-configuration.xml  \

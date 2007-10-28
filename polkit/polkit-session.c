@@ -391,5 +391,5 @@ polkit_session_validate (PolKitSession *session)
         }
         ret = TRUE;
 error:
-        return TRUE;
+        return ret;
 }

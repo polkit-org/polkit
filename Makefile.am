@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = data polkit polkit-dbus polkit-grant doc tools policy
+SUBDIRS = data polkit polkit-dbus polkit-grant doc tools policy po
 
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
@@ -21,7 +21,18 @@ $(srcdir)/ChangeLog:
 
 .PHONY: ChangeLog $(srcdir)/ChangeLog
 
-EXTRA_DIST = HACKING mkinstalldirs ChangeLog
+EXTRA_DIST = 			\
+	HACKING 		\
+	mkinstalldirs 		\
+	ChangeLog 		\
+	intltool-extract.in 	\
+	intltool-merge.in 	\
+	intltool-update.in
+
+DISTCLEANFILES = \
+	intltool-extract	\
+	intltool-merge		\
+	intltool-update
 
 # xsltproc barfs on 'make distcheck'; disable for now
 DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages

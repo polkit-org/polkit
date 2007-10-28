@@ -64,11 +64,212 @@
 struct _PolKitAuthorization
 {
         int refcount;
+
+        char *entry_in_auth_file;
+
+        PolKitAuthorizationScope scope;
+        PolKitAuthorizationConstraint *constraint;
+
+        char *action_id;
+        uid_t uid;
+        time_t when;
+        uid_t authenticated_as_uid;
+
+        pid_t pid;
+        polkit_uint64_t pid_start_time;
+
+        polkit_bool_t explicitly_granted;
+        uid_t explicitly_granted_by;
+
+        char *session_id;
 };
+
+extern PolKitAuthorization *_polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid);
+
+extern const char *_polkit_authorization_get_authfile_entry (PolKitAuthorization *auth);
+
+const char *
+_polkit_authorization_get_authfile_entry (PolKitAuthorization *auth)
+{
+        g_return_val_if_fail (auth != NULL, NULL);
+        return auth->entry_in_auth_file;
+}
+
+PolKitAuthorization *
+_polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
+{
+        char **t;
+        guint num_t;
+        char *ep;
+        PolKitAuthorization *auth;
+        int n;
+
+        g_return_val_if_fail (entry_in_auth_file != NULL, NULL);
+
+        auth = g_new0 (PolKitAuthorization, 1);
+        auth->refcount = 1;
+        auth->entry_in_auth_file = g_strdup (entry_in_auth_file);
+        auth->uid = uid;
+
+        t = g_strsplit (entry_in_auth_file, ":", 0);
+        num_t = g_strv_length (t);
+
+/*
+ * pid:
+ *       grant_line = g_strdup_printf ("process:%d:%Lu:%s:%Lu:%d:%s\n", 
+ *                                     caller_pid, 
+ *                                     pid_start_time, 
+ *                                     action_id,
+ *                                     (polkit_uint64_t) now.tv_sec,
+ *                                     user_authenticated_as,
+ *                                     cbuf);
+ */
+        n = 1;
+
+        if (strcmp (t[0], "process") == 0) {
+                if (num_t != 7)
+                        goto error;
+
+                auth->scope = POLKIT_AUTHORIZATION_SCOPE_PROCESS;
+
+                auth->pid = strtoul (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->pid_start_time = strtoull (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                if (!polkit_action_validate_id (t[n]))
+                        goto error;
+                auth->action_id = g_strdup (t[n++]);
+
+                auth->when = strtoull (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->authenticated_as_uid = strtoul (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->constraint = polkit_authorization_constraint_from_string (t[n++]);
+                if (auth->constraint == NULL)
+                        goto error;
+        }
+/*
+ *        grant_line = g_strdup_printf ("session:%s:%s:%Lu:%s:%d:%s\n", 
+ *                                      session_objpath,
+ *                                      action_id,
+ *                                      (polkit_uint64_t) now.tv_sec,
+ *                                      user_authenticated_as,
+ *                                      cbuf);
+ */
+        else if (strcmp (t[0], "session") == 0) {
+                if (num_t != 6)
+                        goto error;
+
+                auth->scope = POLKIT_AUTHORIZATION_SCOPE_SESSION;
+
+                auth->session_id = g_strdup (t[n++]);
+
+                if (!polkit_action_validate_id (t[n]))
+                        goto error;
+                auth->action_id = g_strdup (t[n++]);
+
+                auth->when = strtoull (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->authenticated_as_uid = strtoul (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->constraint = polkit_authorization_constraint_from_string (t[n++]);
+                if (auth->constraint == NULL)
+                        goto error;
+        }
+
+/*
+ * always:
+ *        grant_line = g_strdup_printf ("always:%s:%Lu:%s:%d:%s\n", 
+ *                                      action_id,
+ *                                      (polkit_uint64_t) now.tv_sec,
+ *                                      user_authenticated_as,
+ *                                      cbuf);
+ *
+ */
+        else if (strcmp (t[0], "always") == 0) {
+                if (num_t != 5)
+                        goto error;
+
+                auth->scope = POLKIT_AUTHORIZATION_SCOPE_ALWAYS;
+
+                if (!polkit_action_validate_id (t[n]))
+                        goto error;
+                auth->action_id = g_strdup (t[n++]);
+
+                auth->when = strtoull (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->authenticated_as_uid = strtoul (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->constraint = polkit_authorization_constraint_from_string (t[n++]);
+                if (auth->constraint == NULL)
+                        goto error;
+        }
+/*
+ * grant:
+ *                     "grant:%d:%s:%Lu:%d:%s\n",
+ *                     action_id,
+ *                     (polkit_uint64_t) now.tv_sec,
+ *                     invoking_uid,
+ *                     authc_str) >= (int) sizeof (grant_line)) {
+ *
+ */
+        else if (strcmp (t[0], "grant") == 0) {
+
+                if (num_t != 5)
+                        goto error;
+
+                auth->scope = POLKIT_AUTHORIZATION_SCOPE_ALWAYS;
+                auth->explicitly_granted = TRUE;
+
+                if (!polkit_action_validate_id (t[n]))
+                        goto error;
+                auth->action_id = g_strdup (t[n++]);
+
+                auth->when = strtoull (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->explicitly_granted_by = strtoul (t[n++], &ep, 10);
+                if (*ep != '\0')
+                        goto error;
+
+                auth->constraint = polkit_authorization_constraint_from_string (t[n++]);
+                if (auth->constraint == NULL)
+                        goto error;
+
+        } else {
+                goto error;
+        }
+
+        g_strfreev (t);
+        return auth;
+
+error:
+        g_warning ("Error parsing token %d in '%s'", n, entry_in_auth_file);
+        polkit_authorization_unref (auth);
+        g_strfreev (t);
+        return NULL;
+}
 
 /**
  * polkit_authorization_ref:
- * @authorization: the authorization object
+ * @auth: the authorization object
  * 
  * Increase reference count.
  * 
@@ -77,16 +278,16 @@ struct _PolKitAuthorization
  * Since: 0.7
  **/
 PolKitAuthorization *
-polkit_authorization_ref (PolKitAuthorization *authorization)
+polkit_authorization_ref (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (authorization != NULL, authorization);
-        authorization->refcount++;
-        return authorization;
+        g_return_val_if_fail (auth != NULL, auth);
+        auth->refcount++;
+        return auth;
 }
 
 /**
  * polkit_authorization_unref:
- * @authorization: the authorization object
+ * @auth: the authorization object
  * 
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
@@ -95,33 +296,45 @@ polkit_authorization_ref (PolKitAuthorization *authorization)
  * Since: 0.7
  **/
 void
-polkit_authorization_unref (PolKitAuthorization *authorization)
+polkit_authorization_unref (PolKitAuthorization *auth)
 {
-        g_return_if_fail (authorization != NULL);
-        authorization->refcount--;
-        if (authorization->refcount > 0) 
+        g_return_if_fail (auth != NULL);
+        auth->refcount--;
+        if (auth->refcount > 0) 
                 return;
-        g_free (authorization);
+
+        g_free (auth->entry_in_auth_file);
+        g_free (auth->action_id);
+        g_free (auth->session_id);
+        if (auth->constraint != NULL)
+                polkit_authorization_constraint_unref (auth->constraint);
+        g_free (auth);
 }
 
 /**
  * polkit_authorization_debug:
- * @authorization: the object
+ * @auth: the object
  * 
  * Print debug details
  *
  * Since: 0.7
  **/
 void
-polkit_authorization_debug (PolKitAuthorization *authorization)
+polkit_authorization_debug (PolKitAuthorization *auth)
 {
-        g_return_if_fail (authorization != NULL);
-        _pk_debug ("PolKitAuthorization: refcount=%d", authorization->refcount);
+        g_return_if_fail (auth != NULL);
+        _pk_debug ("PolKitAuthorization: refcount=%d", auth->refcount);
+        _pk_debug (" scope          = %d",  auth->scope);
+        _pk_debug (" pid            = %d",  auth->pid);
+        _pk_debug (" pid_start_time = %Lu", auth->pid_start_time);
+        _pk_debug (" action_id      = %s",  auth->action_id);
+        _pk_debug (" when           = %Lu", (polkit_uint64_t) auth->when);
+        _pk_debug (" auth_as_uid    = %d",  auth->authenticated_as_uid);
 }
 
 /**
  * polkit_authorization_validate:
- * @authorization: the object
+ * @auth: the object
  * 
  * Validate the object
  * 
@@ -130,51 +343,55 @@ polkit_authorization_debug (PolKitAuthorization *authorization)
  * Since: 0.7
  **/
 polkit_bool_t
-polkit_authorization_validate (PolKitAuthorization *authorization)
+polkit_authorization_validate (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (authorization != NULL, FALSE);
+        g_return_val_if_fail (auth != NULL, FALSE);
 
         return TRUE;
 }
 
 /**
  * polkit_authorization_get_action_id:
- * @authorization: the object
+ * @auth: the object
  *
  * Get the action this authorization is for
  *
- * Returns: the #PolKitAction object. Caller should not unref the
- * object; it is owned by the #PolKitAuthorization instance and will
- * by unreffed when that object is unreffed.
+ * Returns: the action id. Caller should not free this string.
  *
  * Since: 0.7
  */ 
-PolKitAction *
-polkit_authorization_get_action_id (PolKitAuthorization *authorization)
+const char *
+polkit_authorization_get_action_id (PolKitAuthorization *auth)
 {
-        return NULL;
+        g_return_val_if_fail (auth != NULL, NULL);
+
+        return auth->action_id;
 }
 
 /**
  * polkit_authorization_get_scope:
- * @authorization: the object
+ * @auth: the object
  *
  * Get the scope of the authorization; e.g. whether it's confined to a
- * single process, a single session or can be retained indefinitely.
+ * single process, a single session or can be retained
+ * indefinitely. Also keep in mind that an authorization is subject to
+ * constraints, see polkit_authorization_get_constraint() for details.
  *
  * Returns: the scope
  *
  * Since: 0.7
  */ 
 PolKitAuthorizationScope
-polkit_authorization_get_scope (PolKitAuthorization *authorization)
+polkit_authorization_get_scope (PolKitAuthorization *auth)
 {
-        return 0;
+        g_return_val_if_fail (auth != NULL, 0);
+
+        return auth->scope;
 }
 
 /**
  * polkit_authorization_scope_process_get_pid:
- * @authorization: the object
+ * @auth: the object
  * @out_pid: return location
  * @out_pid_start_time: return location
  *
@@ -191,35 +408,44 @@ polkit_authorization_get_scope (PolKitAuthorization *authorization)
  * Since: 0.7
  */ 
 polkit_bool_t
-polkit_authorization_scope_process_get_pid (PolKitAuthorization *authorization, 
+polkit_authorization_scope_process_get_pid (PolKitAuthorization *auth, 
                                             pid_t *out_pid, 
                                             polkit_uint64_t *out_pid_start_time)
 {
-        return FALSE;
+        g_return_val_if_fail (auth != NULL, FALSE);
+        g_return_val_if_fail (out_pid != NULL, FALSE);
+        g_return_val_if_fail (out_pid_start_time != NULL, FALSE);
+        g_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_PROCESS, FALSE);
+
+        *out_pid = auth->pid;
+        *out_pid_start_time = auth->pid_start_time;
+
+        return TRUE;
 }
 
 /**
  * polkit_authorization_scope_session_get_ck_objref:
- * @authorization: the object
- * @out_ck_session_objref: return location
+ * @auth: the object
  *
  * Gets the ConsoleKit object path for the session the authorization
  * is confined to.
  *
- * Returns: #TRUE if information was returned
+ * Returns: #NULL if scope wasn't session
  *
  * Since: 0.7
  */ 
-polkit_bool_t
-polkit_authorization_scope_session_get_ck_objref (PolKitAuthorization *authorization, 
-                                                  char **out_ck_session_objref)
+const char *
+polkit_authorization_scope_session_get_ck_objref (PolKitAuthorization *auth)
 {
-        return FALSE;
+        g_return_val_if_fail (auth != NULL, FALSE);
+        g_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_SESSION, FALSE);
+
+        return auth->session_id;
 }
 
 /**
  * polkit_authorization_get_uid:
- * @authorization: the object
+ * @auth: the object
  *
  * Gets the UNIX user id for the user the authorization is confined
  * to.
@@ -229,14 +455,15 @@ polkit_authorization_scope_session_get_ck_objref (PolKitAuthorization *authoriza
  * Since: 0.7
  */ 
 uid_t
-polkit_authorization_get_uid (PolKitAuthorization *authorization)
+polkit_authorization_get_uid (PolKitAuthorization *auth)
 {
-        return 0;
+        g_return_val_if_fail (auth != NULL, 0);
+        return auth->uid;
 }
 
 /**
  * polkit_authorization_get_time_of_grant:
- * @authorization: the object
+ * @auth: the object
  *
  * Returns the point in time the authorization was granted. The value
  * is UNIX time, e.g. number of seconds since the Epoch Jan 1, 1970
@@ -247,21 +474,21 @@ polkit_authorization_get_uid (PolKitAuthorization *authorization)
  * Since: 0.7
  */ 
 time_t
-polkit_authorization_get_time_of_grant (PolKitAuthorization *authorization)
+polkit_authorization_get_time_of_grant (PolKitAuthorization *auth)
 {
-        return 0;
+        g_return_val_if_fail (auth != NULL, 0);
+        return auth->when;
 }
 
 /**
  * polkit_authorization_was_granted_via_defaults:
- * @authorization: the object
- * @out_how: return location
+ * @auth: the object
  * @out_user_authenticated_as: return location
  *
  * Determine if the authorization was obtained by the user by
  * authenticating as himself or an administrator via the the
  * "defaults" section in the <literal>.policy</literal> file for the
- * action (e.g.  "allow_any", "allow_inactive", "allow_active").
+ * action (e.g.  "allow_any", "allow_inactive", "allow_active"). 
  *
  * Compare with polkit_authorization_was_granted_explicitly() - only
  * one of these functions can return #TRUE.
@@ -272,16 +499,22 @@ polkit_authorization_get_time_of_grant (PolKitAuthorization *authorization)
  * Since: 0.7
  */ 
 polkit_bool_t 
-polkit_authorization_was_granted_via_defaults (PolKitAuthorization *authorization,
-                                               PolKitResult *out_how,
+polkit_authorization_was_granted_via_defaults (PolKitAuthorization *auth,
                                                uid_t *out_user_authenticated_as)
 {
-        return FALSE;
+        g_return_val_if_fail (auth != NULL, FALSE);
+        g_return_val_if_fail (out_user_authenticated_as != NULL, FALSE);
+
+        if (auth->explicitly_granted)
+                return FALSE;
+
+        *out_user_authenticated_as = auth->authenticated_as_uid;
+        return TRUE;
 }
 
 /**
  * polkit_authorization_was_granted_explicitly:
- * @authorization: the object
+ * @auth: the object
  * @out_by_whom: return location
  *
  * Determine if the authorization was explicitly granted by a
@@ -296,8 +529,33 @@ polkit_authorization_was_granted_via_defaults (PolKitAuthorization *authorizatio
  * Since: 0.7
  */ 
 polkit_bool_t 
-polkit_authorization_was_granted_explicitly (PolKitAuthorization *authorization,
+polkit_authorization_was_granted_explicitly (PolKitAuthorization *auth,
                                              uid_t *out_by_whom)
 {
-        return FALSE;
+        g_return_val_if_fail (auth != NULL, FALSE);
+        g_return_val_if_fail (out_by_whom != NULL, FALSE);
+
+        if (!auth->explicitly_granted)
+                return FALSE;
+
+        *out_by_whom = auth->explicitly_granted_by;
+
+        return TRUE;
+}
+
+/**
+ * polkit_authorization_get_constraint:
+ * @auth: the object
+ *
+ * Get the constraint associated with an authorization.
+ *
+ * Returns: The constraint. Caller shall not unref this object.
+ *
+ * Since: 0.7
+ */ 
+PolKitAuthorizationConstraint *
+polkit_authorization_get_constraint (PolKitAuthorization *auth)
+{
+        g_return_val_if_fail (auth != NULL, FALSE);
+        return auth->constraint;
 }

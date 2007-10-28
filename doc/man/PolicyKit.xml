@@ -55,10 +55,10 @@
         <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>polkit-list-actions</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-action</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>polkit-grant</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-auth</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

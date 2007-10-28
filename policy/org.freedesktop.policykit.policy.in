@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE policyconfig PUBLIC
+ "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+
+<!-- 
+Policy definitions for core PolicyKit actions
+
+Copyright (c) 2007 David Zeuthen <david@fubar.dk>
+
+NOTE: If you make changes to this file, make sure to validate the file
+using the polkit-policy-file-validate(1) tool. Changes made to this
+file are instantly applied.
+-->
+
+<policyconfig>
+
+  <action id="org.freedesktop.policykit.read">
+    <_description>Read authorizations of other users</_description>
+    <_message>Authentication is required to read authorizations of other users</_message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.policykit.revoke">
+    <_description>Revoke authorizations from other users</_description>
+    <_message>Authentication is required to revoke authorizations other users</_message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.freedesktop.policykit.grant">
+    <_description>Grant authorizations to other users</_description>
+    <_message>Authentication is required to grant authorizations to other users</_message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+
+</policyconfig>

@@ -38,18 +38,39 @@ POLKIT_BEGIN_DECLS
  * PolKitErrorCode:
  * @POLKIT_ERROR_OUT_OF_MEMORY: Out of memory
  * @POLKIT_ERROR_POLICY_FILE_INVALID: There was an error parsing the given policy file
+ * @POLKIT_ERROR_GENERAL_ERROR: A general error code typically
+ * indicating problems with the installation of PolicyKit,
+ * e.g. helpers missing or wrong owner / permission.
+ * @POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS:
+ * An attempt was made to read authorizations for other users and the
+ * calling process is not authorized.
+ * @POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS:
+ * An attempt was made to revoke authorizations for other users and the
+ * calling process is not authorized.
+ * @POLKIT_ERROR_NOT_AUTHORIZED_TO_GRANT_AUTHORIZATION: An attempt was
+ * made to grant an authorization and the calling process is not
+ * authorized.
+ * @POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS: Subject already has an
+ * similar authorization already (modulo time of grant and who granted).
  *
- * Error codes returned by PolicyKit
+ * Errors returned by PolicyKit
  */
 typedef enum
 {      
         POLKIT_ERROR_OUT_OF_MEMORY,
-        POLKIT_ERROR_POLICY_FILE_INVALID
+        POLKIT_ERROR_POLICY_FILE_INVALID,
+        POLKIT_ERROR_GENERAL_ERROR,
+        POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS,
+        POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS,
+        POLKIT_ERROR_NOT_AUTHORIZED_TO_GRANT_AUTHORIZATION,
+        POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS
 } PolKitErrorCode;
 
 struct _PolKitError;
 typedef struct _PolKitError PolKitError;
 
+polkit_bool_t    polkit_error_is_set (PolKitError *error);
+const char      *polkit_error_get_error_name (PolKitError *error);
 PolKitErrorCode  polkit_error_get_error_code (PolKitError *error);
 const char      *polkit_error_get_error_message (PolKitError *error);
 void             polkit_error_free (PolKitError *error);

@@ -90,6 +90,7 @@
     <xi:include href="xml/polkit-policy-default.xml"/>
     <xi:include href="xml/polkit-policy-cache.xml"/>
     <xi:include href="xml/polkit-authorization.xml"/>
+    <xi:include href="xml/polkit-authorization-constraint.xml"/>
     <xi:include href="xml/polkit-authorization-db.xml"/>
   </reference>
 
@@ -127,8 +128,8 @@
     </partintro>
     <xi:include href="man/PolicyKit.xml"/>
     <xi:include href="man/PolicyKit.conf.xml"/>
-    <xi:include href="man/polkit-grant.xml"/>
-    <xi:include href="man/polkit-list-actions.xml"/>
+    <xi:include href="man/polkit-auth.xml"/>
+    <xi:include href="man/polkit-action.xml"/>
     <xi:include href="man/polkit-policy-file-validate.xml"/>
     <xi:include href="man/polkit-config-file-validate.xml"/>
   </reference>

@@ -50,6 +50,9 @@ main (int argc, char *argv[])
 	pam_handle_t *pam_h;
         const void *authed_user;
 
+        rc = 0;
+        pam_h = NULL;
+
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
         if (clearenv () != 0)
                 goto error;
@@ -144,10 +147,12 @@ main (int argc, char *argv[])
         fprintf (stdout, "SUCCESS\n");
         fflush (stdout);
 
-        /* TODO: we should probably clean up */
-
+        pam_end (pam_h, rc);
         return 0;
 error:
+        if (pam_h != NULL)
+                pam_end (pam_h, rc);
+
         fprintf (stdout, "FAILURE\n");
         fflush (stdout);
         return 1;

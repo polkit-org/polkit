@@ -64,6 +64,63 @@
 #include "polkit-dbus.h"
 #include <polkit/polkit-debug.h>
 
+/* TODO FIXME: this is Linux specific */
+static polkit_uint64_t 
+_get_start_time_for_pid (pid_t pid)
+{
+        char *filename;
+        char *contents;
+        gsize length;
+        polkit_uint64_t start_time;
+        GError *error = NULL;
+        char **tokens;
+        char *p;
+        char *endp;
+
+        start_time = 0;
+        contents = NULL;
+
+        filename = g_strdup_printf ("/proc/%d/stat", pid);
+        if (filename == NULL) {
+                fprintf (stderr, "Out of memory\n");
+                goto out;
+        }
+
+        if (!g_file_get_contents (filename, &contents, &length, &error)) {
+                //fprintf (stderr, "Cannot get contents of '%s': %s\n", filename, error->message);
+                g_error_free (error);
+                goto out;
+        }
+
+        /* start time is the 19th token after the '(process name)' entry */
+
+        p = strchr (contents, ')');
+        if (p == NULL) {
+                goto out;
+        }
+        p += 2; /* skip ') ' */
+        if (p - contents >= (int) length) {
+                goto out;
+        }
+
+        tokens = g_strsplit (p, " ", 0);
+        if (g_strv_length (tokens) < 20) {
+                goto out;
+        }
+
+        start_time = strtoll (tokens[19], &endp, 10);
+        if (endp == tokens[19]) {
+                goto out;
+        }
+
+        g_strfreev (tokens);
+
+out:
+        g_free (filename);
+        g_free (contents);
+        return start_time;
+}
+
 
 /**
  * polkit_session_new_from_objpath:
@@ -330,8 +387,7 @@ polkit_session_new_from_cookie (DBusConnection *con, const char *cookie, DBusErr
 	dbus_message_append_args (message, DBUS_TYPE_STRING, &cookie, DBUS_TYPE_INVALID);
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		g_warning ("Error doing Manager.GetSessionForCookie on ConsoleKit: %s: %s", 
-                           error->name, error->message);
+		//g_warning ("Error doing Manager.GetSessionForCookie on ConsoleKit: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -461,7 +517,7 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &pid);
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
+		//g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -636,7 +692,7 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &pid);
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
+		//g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -727,6 +783,155 @@ out:
         g_free (ck_session_objpath);
         g_free (proc_path);
         return caller;
+}
+
+static GSList *
+_get_list_of_sessions (DBusConnection *con, uid_t uid, DBusError *error)
+{
+        GSList *ret;
+        DBusMessage *message;
+        DBusMessage *reply;
+        DBusMessageIter iter;
+        DBusMessageIter iter_array;
+        const char *value;
+
+        ret = NULL;
+
+        message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+                                                "/org/freedesktop/ConsoleKit/Manager",
+                                                "org.freedesktop.ConsoleKit.Manager",
+                                                "GetSessionsForUnixUser");
+	dbus_message_append_args (message, DBUS_TYPE_UINT32, &uid, DBUS_TYPE_INVALID);
+        reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+        if (reply == NULL || dbus_error_is_set (error)) {
+                goto out;
+        }
+
+	dbus_message_iter_init (reply, &iter);
+	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_ARRAY) {
+                g_warning ("Wrong reply from ConsoleKit (not an array)");
+                goto out;
+	}
+
+	dbus_message_iter_recurse (&iter, &iter_array);
+        while (dbus_message_iter_get_arg_type (&iter_array) != DBUS_TYPE_INVALID) {
+
+                if (dbus_message_iter_get_arg_type (&iter_array) != DBUS_TYPE_OBJECT_PATH) {
+                        g_warning ("Wrong reply from ConsoleKit (element is not a string)");
+                        g_slist_foreach (ret, (GFunc) g_free, NULL);
+                        g_slist_free (ret);
+                        goto out;
+                }
+
+		dbus_message_iter_get_basic (&iter_array, &value);
+                ret = g_slist_append (ret, g_strdup (value));
+
+		dbus_message_iter_next (&iter_array);
+        }
+        
+out:
+        if (message != NULL)
+                dbus_message_unref (message);
+        if (reply != NULL)
+                dbus_message_unref (reply);
+        return ret;
+}
+
+static polkit_bool_t
+_polkit_is_authorization_relevant_internal (DBusConnection *con, 
+                                            PolKitAuthorization *auth, 
+                                            GSList *sessions,
+                                            DBusError *error)
+{
+        pid_t pid;
+        polkit_uint64_t pid_start_time;
+        polkit_bool_t ret;
+        polkit_bool_t del_sessions;
+        GSList *i;
+        uid_t uid;
+
+        g_return_val_if_fail (con != NULL, FALSE);
+        g_return_val_if_fail (auth != NULL, FALSE);
+        g_return_val_if_fail (error != NULL, FALSE);
+        g_return_val_if_fail (! dbus_error_is_set (error), FALSE);
+
+        ret = FALSE;
+
+        uid = polkit_authorization_get_uid (auth);
+
+        switch (polkit_authorization_get_scope (auth)) {
+        case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
+                if (!polkit_authorization_scope_process_get_pid (auth,
+                                                                 &pid,
+                                                                 &pid_start_time)) {
+                        /* this should never fail */
+                        g_warning ("Cannot determine (pid,start_time) for authorization");
+                        goto out;
+                }
+                if (_get_start_time_for_pid (pid) == pid_start_time) {
+                        ret = TRUE;
+                        goto out;
+                }
+                break;
+
+        case POLKIT_AUTHORIZATION_SCOPE_SESSION:
+                del_sessions = FALSE;
+                if (sessions == NULL) {
+                        sessions = _get_list_of_sessions (con, uid, error);
+                        del_sessions = TRUE;
+                }
+
+                for (i = sessions; i != NULL; i = i->next) {
+                        char *session_id = i->data;
+                        if (strcmp (session_id, polkit_authorization_scope_session_get_ck_objref (auth)) == 0) {
+                                ret = TRUE;
+                                break;
+                        }
+                }
+
+                if (del_sessions) {
+                        g_slist_foreach (sessions, (GFunc) g_free, NULL);
+                        g_slist_free (sessions);
+                }
+                break;
+
+        case POLKIT_AUTHORIZATION_SCOPE_ALWAYS:
+                ret = TRUE;
+                break;
+        }
+
+out:
+        return ret;
+}
+
+/**
+ * polkit_is_authorization_relevant:
+ * @con: D-Bus system bus connection
+ * @auth: authorization to check for
+ * @error: return location for error
+ *
+ * As explicit authorizations are scoped (process, session or
+ * everything), they become irrelevant once the entity (process or
+ * session) ceases to exist. This function determines whether the
+ * authorization is still relevant; it's useful for reporting
+ * and graphical tools displaying authorizations.
+ *
+ * Note that this may do blocking IO to check for session
+ * authorizations so it is best avoided if your process already
+ * tracks/caches all the information. You can use the
+ * polkit_tracker_is_authorization_relevant() method on the
+ * #PolKitTracker class for this.
+ *
+ * Returns: #TRUE if the authorization still applies, #FALSE if an
+ * error occurred (then error will be set) or if the entity the
+ * authorization refers to has gone out of scope.
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_is_authorization_relevant (DBusConnection *con, PolKitAuthorization *auth, DBusError *error)
+{
+        return _polkit_is_authorization_relevant_internal (con, auth, NULL, error);
 }
 
 /**
@@ -1077,7 +1282,7 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
                                             DBUS_TYPE_INVALID)) {
 
                         /* TODO: should be _pk_critical */
-                        _pk_debug ("The ActiveChanged signal on the org.freedesktop.ConsoleKit.Session "
+                        g_warning ("The ActiveChanged signal on the org.freedesktop.ConsoleKit.Session "
                                    "interface for object %s has the wrong signature! "
                                    "Your system is misconfigured.", session_objpath);
 
@@ -1092,6 +1297,59 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
                 /* now go through all Caller objects and update the is_active field as appropriate */
                 _update_session_is_active (pk_tracker, session_objpath, is_active);
 
+        } else if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Seat", "SessionAdded")) {
+                DBusError error;
+                const char *seat_objpath;
+                const char *session_objpath;
+
+                /* If a session is added, update our list of sessions.. also notify the user.. */
+
+                ret = TRUE;
+
+                dbus_error_init (&error);
+                seat_objpath = dbus_message_get_path (message);
+                if (!dbus_message_get_args (message, &error, 
+                                            DBUS_TYPE_STRING, &session_objpath, 
+                                            DBUS_TYPE_INVALID)) {
+
+                        /* TODO: should be _pk_critical */
+                        g_warning ("The SessionAdded signal on the org.freedesktop.ConsoleKit.Seat "
+                                   "interface for object %s has the wrong signature! "
+                                   "Your system is misconfigured.", seat_objpath);
+
+                        goto out;
+                }
+
+                /* TODO: add to sessions - see polkit_tracker_is_authorization_relevant() */
+
+        } else if (dbus_message_is_signal (message, "org.freedesktop.ConsoleKit.Seat", "SessionRemoved")) {
+                DBusError error;
+                const char *seat_objpath;
+                const char *session_objpath;
+
+                /* If a session is removed, authorizations scoped for that session 
+                 * may become inactive.. so do notify the user about it.. 
+                 */
+
+                ret = TRUE;
+
+                dbus_error_init (&error);
+                seat_objpath = dbus_message_get_path (message);
+                if (!dbus_message_get_args (message, &error, 
+                                            DBUS_TYPE_STRING, &session_objpath, 
+                                            DBUS_TYPE_INVALID)) {
+
+                        /* TODO: should be _pk_critical */
+                        g_warning ("The SessionRemoved signal on the org.freedesktop.ConsoleKit.Seat "
+                                   "interface for object %s has the wrong signature! "
+                                   "Your system is misconfigured.", seat_objpath);
+
+                        goto out;
+                }
+
+                _remove_caller_by_session (pk_tracker, session_objpath);
+
+                /* TODO: remove from sessions - see polkit_tracker_is_authorization_relevant() */
         }
 
         /* TODO: when ConsoleKit gains the ability to attach/detach a session to a seat (think
@@ -1144,62 +1402,6 @@ polkit_tracker_get_caller_from_dbus_name (PolKitTracker *pk_tracker, const char 
         return polkit_caller_ref (caller);
 }
 
-/* TODO FIXME: this is Linux specific */
-static polkit_uint64_t 
-_get_start_time_for_pid (pid_t pid)
-{
-        char *filename;
-        char *contents;
-        gsize length;
-        polkit_uint64_t start_time;
-        GError *error = NULL;
-        char **tokens;
-        char *p;
-        char *endp;
-
-        start_time = 0;
-        contents = NULL;
-
-        filename = g_strdup_printf ("/proc/%d/stat", pid);
-        if (filename == NULL) {
-                fprintf (stderr, "Out of memory\n");
-                goto out;
-        }
-
-        if (!g_file_get_contents (filename, &contents, &length, &error)) {
-                fprintf (stderr, "Cannot get contents of '%s': %s\n", filename, error->message);
-                g_error_free (error);
-                goto out;
-        }
-
-        /* start time is the 19th token after the '(process name)' entry */
-
-        p = strchr (contents, ')');
-        if (p == NULL) {
-                goto out;
-        }
-        p += 2; /* skip ') ' */
-        if (p - contents >= (int) length) {
-                goto out;
-        }
-
-        tokens = g_strsplit (p, " ", 0);
-        if (g_strv_length (tokens) < 20) {
-                goto out;
-        }
-
-        start_time = strtoll (tokens[19], &endp, 10);
-        if (endp == tokens[19]) {
-                goto out;
-        }
-
-        g_strfreev (tokens);
-
-out:
-        g_free (filename);
-        g_free (contents);
-        return start_time;
-}
 
 /**
  * polkit_tracker_get_caller_from_pid:
@@ -1272,4 +1474,44 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
 
         g_hash_table_insert (pk_tracker->pid_start_time_to_caller, pst, caller);
         return polkit_caller_ref (caller);
+}
+
+
+/**
+ * polkit_tracker_is_authorization_relevant:
+ * @pk_tracker: the tracker
+ * @auth: authorization to check for
+ * @error: return location for error
+ *
+ * As explicit authorizations are scoped (process, session or
+ * everything), they become irrelevant once the entity (process or
+ * session) ceases to exist. This function determines whether the
+ * authorization is still relevant; it's useful for reporting
+ * and graphical tools displaying authorizations.
+ *
+ * This function is similar to polkit_is_authorization_relevant() only
+ * that it avoids IPC overhead on the 2nd and subsequent calls when
+ * checking authorizations scoped for a session.
+ *
+ * Returns: #TRUE if the authorization still applies, #FALSE if an
+ * error occurred (then error will be set) or if the entity the
+ * authorization refers to has gone out of scope.
+ *
+ * Since: 0.7
+ */
+polkit_bool_t  
+polkit_tracker_is_authorization_relevant (PolKitTracker *pk_tracker, PolKitAuthorization *auth, DBusError *error)
+{
+
+        g_return_val_if_fail (pk_tracker != NULL, FALSE);
+        g_return_val_if_fail (pk_tracker->con != NULL, FALSE);
+        g_return_val_if_fail (! dbus_error_is_set (error), FALSE);
+
+        /* TODO: optimize... in order to do this sanely we need CK's Manager object to export 
+         * a method GetAllSessions() - otherwise we'd need to key off every uid. 
+         *
+         * It's no biggie we don't have this optimization yet.. it's only used by polkit-auth(1)
+         * and the GNOME utility for managing authorizations.
+         */
+        return _polkit_is_authorization_relevant_internal (pk_tracker->con, auth, NULL, error);
 }

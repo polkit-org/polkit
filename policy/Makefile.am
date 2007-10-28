@@ -1,17 +1,16 @@
 
-polkit_privilegedir = $(datadir)/PolicyKit/policy
+polkit_policydir = $(datadir)/PolicyKit/policy
 
-dist_polkit_privilege_DATA =
+dist_polkit_policy_DATA = org.freedesktop.policykit.policy
+
+@INTLTOOL_POLICY_RULE@
 
 check:
-	for f in $(dist_polkit_privilege_DATA); do \
-          echo "Validating privilege file: $$f"; \
-          $(top_builddir)/tools/polkit-policy-file-validate --file $(srcdir)/$$f; \
-          if [ "$$?" != "0" ]; then \
-            echo "failed"; \
-            exit 1; \
-          fi; \
-        done
+	$(top_builddir)/tools/polkit-policy-file-validate $(dist_polkit_policy_DATA)
 
 clean-local :
 	rm -f *~
+
+DISTCLEANFILES = org.freedesktop.policykit.policy
+
+EXTRA_DIST = org.freedesktop.policykit.policy.in

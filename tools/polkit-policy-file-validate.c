@@ -41,17 +41,9 @@
 static void
 usage (int argc, char *argv[])
 {
-	fprintf (stderr,
-                 "\n"
-                 "usage : polkit-policy-file-validate <policy-files>\n"
-                 "        [--version] [--help]\n");
-	fprintf (stderr,
-                 "\n"
-                 "        --version        Show version and exit\n"
-                 "        --help           Show this information and exit\n"
-                 "\n"
-                 "Validates one or more PolicyKit policy file. Returns 0 if it validates.\n"
-                 "If not, the program exits with a non-zero exit code.\n");
+        execlp ("man", "man", "polkit-policy-file-validate", NULL);
+        fprintf (stderr, "Cannot show man page: %m\n");
+        exit (1);
 }
 
 static bool

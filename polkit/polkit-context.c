@@ -106,7 +106,6 @@ struct _PolKitContext
         int inotify_config_wd;
         int inotify_policy_wd;
         int inotify_grant_perm_wd;
-        int inotify_grant_temp_wd;
 };
 
 /**
@@ -133,22 +132,16 @@ polkit_context_new (void)
  * @error: return location for error
  * 
  * Initializes a new context; loads PolicyKit files from
- * /usr/share/PolicyKit/policy unless the environment variable
- * $POLKIT_POLICY_DIR points to another location.
+ * /usr/share/PolicyKit/policy.
  *
  * Returns: #FALSE if @error was set, otherwise #TRUE
  **/
 polkit_bool_t
 polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 {
-        const char *dirname;
+        g_return_val_if_fail (pk_context != NULL, FALSE);
 
-        dirname = getenv ("POLKIT_POLICY_DIR");
-        if (dirname != NULL) {
-                pk_context->policy_dir = g_strdup (dirname);
-        } else {
-                pk_context->policy_dir = g_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
-        }
+        pk_context->policy_dir = g_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
         _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
         /* NOTE: we don't populate the cache until it's needed.. */
@@ -185,23 +178,12 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         goto error;
                 }
 
-                /* Watch the /var/lib/PolicyKit directory */
+                /* Watch the /var/lib/misc/PolicyKit.reload file */
                 pk_context->inotify_grant_perm_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                       PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 
-                                                                       IN_MODIFY | IN_CREATE | IN_DELETE| IN_ATTRIB);
+                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", 
+                                                                       IN_MODIFY | IN_CREATE | IN_ATTRIB);
                 if (pk_context->inotify_grant_perm_wd < 0) {
-                        _pk_debug ("failed to add watch on directory '" PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit': %s",
-                                   strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-
-                /* Watch the /var/run/PolicyKit directory */
-                pk_context->inotify_grant_temp_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                       PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
-                                                                       IN_MODIFY | IN_CREATE | IN_DELETE| IN_ATTRIB);
-                if (pk_context->inotify_grant_temp_wd < 0) {
-                        _pk_debug ("failed to add watch on directory '" PACKAGE_LOCALSTATE_DIR "/run/PolicyKit': %s",
+                        _pk_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload': %s",
                                    strerror (errno));
                         /* TODO: set error */
                         goto error;
@@ -216,11 +198,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
         }
 
         return TRUE;
-
 error:
-        if (pk_context != NULL)
-                polkit_context_unref (pk_context);
-
         return FALSE;
 }
 
@@ -291,6 +269,8 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
         pk_context->config_changed_user_data = user_data;
 }
 
+extern void _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
+
 /**
  * polkit_context_io_func:
  * @pk_context: the object
@@ -357,6 +337,9 @@ again:
                         polkit_config_unref (pk_context->config);
                         pk_context->config = NULL;
                 }
+
+                /* Purge authorization entries from the cache */
+                _polkit_authorization_db_invalidate_cache (pk_context->authdb);
                 
                 if (pk_context->config_changed_cb != NULL) {
                         pk_context->config_changed_cb (pk_context, 
@@ -509,6 +492,9 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
         PolKitPolicyDefault *policy_default;
+        PolKitResult result_from_config;
+        PolKitResult result_from_grantdb;
+        polkit_bool_t from_authdb;
         PolKitResult result;
         PolKitConfig *config;
 
@@ -551,12 +537,44 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
 
         polkit_policy_file_entry_debug (pfe);
 
-        /* check if the config file specifies a result */
-        result = polkit_config_can_session_do_action (config, action, session);
-        if (result != POLKIT_RESULT_UNKNOWN)
-                goto found;
+        result_from_config = polkit_config_can_session_do_action (config, action, session);
 
-        /* if no, just use the defaults */
+        result_from_grantdb = POLKIT_RESULT_UNKNOWN;
+        if (polkit_authorization_db_is_session_authorized (pk_context->authdb, 
+                                                           action, 
+                                                           session,
+                                                           &from_authdb)) {
+                if (from_authdb)
+                        result_from_grantdb = POLKIT_RESULT_YES;
+        }
+
+        /* Fist, the config file is authoritative.. so only use the
+         * value from the authdb if the config file allows to gain via
+         * authentication 
+         */
+        if (result_from_config != POLKIT_RESULT_UNKNOWN) {
+                /* it does.. use it.. although try to use an existing grant if there is one */
+                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
+                    result_from_grantdb == POLKIT_RESULT_YES) {
+                        result = POLKIT_RESULT_YES;
+                } else {
+                        result = result_from_config;
+                }
+                goto found;
+        }
+
+        /* If we have a positive answer from the authdb, use it */
+        if (result_from_grantdb == POLKIT_RESULT_YES) {
+                result = POLKIT_RESULT_YES;
+                goto found;
+        }
+
+        /* Otherwise, fall back to defaults as specified in the .policy file */
         policy_default = polkit_policy_file_entry_get_default (pfe);
         if (policy_default == NULL) {
                 g_warning ("no default policy for action!");
@@ -651,7 +669,10 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                         result_from_grantdb = POLKIT_RESULT_YES;
         }
 
-        /* fist, check if the config file specifies a result */
+        /* Fist, the config file is authoritative.. so only use the
+         * value from the authdb if the config file allows to gain via
+         * authentication 
+         */
         if (result_from_config != POLKIT_RESULT_UNKNOWN) {
                 /* it does.. use it.. although try to use an existing grant if there is one */
                 if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
@@ -668,24 +689,19 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                 goto found;
         }
 
-        /* use defaults as specified in the .policy file */
+        /* If we have a positive answer from the authdb, use it */
+        if (result_from_grantdb == POLKIT_RESULT_YES) {
+                result = POLKIT_RESULT_YES;
+                goto found;
+        }
+
+        /* Otherwise, fall back to defaults as specified in the .policy file */
         policy_default = polkit_policy_file_entry_get_default (pfe);
         if (policy_default == NULL) {
                 g_warning ("no default policy for action!");
                 goto out;
         }
         result = polkit_policy_default_can_caller_do_action (policy_default, action, caller);
-
-        /* use this result.. although try to use an existing grant if there is one */
-        if ((result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
-             result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
-             result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
-             result == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
-             result == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
-             result == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
-            result_from_grantdb == POLKIT_RESULT_YES) {
-                result = POLKIT_RESULT_YES;
-        }
 
 found:
 

@@ -39,6 +39,7 @@ PolKitCaller  *polkit_caller_new_from_dbus_name  (DBusConnection *con, const cha
 
 PolKitCaller  *polkit_caller_new_from_pid  (DBusConnection *con, pid_t pid, DBusError *error);
 
+polkit_bool_t  polkit_is_authorization_relevant (DBusConnection *con, PolKitAuthorization *auth, DBusError *error);
 
 
 struct _PolKitTracker;
@@ -55,6 +56,8 @@ polkit_bool_t  polkit_tracker_dbus_func                  (PolKitTracker *pk_trac
 PolKitCaller  *polkit_tracker_get_caller_from_dbus_name  (PolKitTracker *pk_tracker, const char *dbus_name, DBusError *error);
 
 PolKitCaller  *polkit_tracker_get_caller_from_pid        (PolKitTracker *pk_tracker, pid_t pid, DBusError *error);
+
+polkit_bool_t  polkit_tracker_is_authorization_relevant  (PolKitTracker *pk_tracker, PolKitAuthorization *auth, DBusError *error);
 
 POLKIT_END_DECLS
 

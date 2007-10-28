@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-list-actions.c : list all registered PolicyKit actions
+ * polkit-action.c : list all registered PolicyKit actions
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -41,16 +41,9 @@
 static void
 usage (int argc, char *argv[])
 {
-	fprintf (stderr,
-                 "\n"
-                 "usage : polkit-list-actions [--action <action>] [--version] [--help]\n");
-	fprintf (stderr,
-                 "\n"
-                 "        --version        Show version and exit\n"
-                 "        --help           Show this information and exit\n"
-                 "        --action         Show detailed information about a single action\n"
-                 "\n"
-                 "List the actions registered with PolicyKit.\n");
+        execlp ("man", "man", "polkit-action", NULL);
+        fprintf (stderr, "Cannot show man page: %m\n");
+        exit (1);
 }
 
 static void
@@ -123,7 +116,7 @@ main (int argc, char *argv[])
                         return 0;
                 }
                 if (strcmp (argv[n], "--version") == 0) {
-                        printf ("polkit-list-actions " PACKAGE_VERSION "\n");
+                        printf ("polkit-action " PACKAGE_VERSION "\n");
                         return 0;
                 }
                 if (strcmp (argv[n], "--action") == 0 && n + 1 < argc) {

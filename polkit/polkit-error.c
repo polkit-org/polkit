@@ -62,7 +62,67 @@ struct _PolKitError
         char *error_message;
 };
 
-//static PolKitError _oom_error = {true, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory"};
+/**
+ * polkit_error_is_set:
+ * @error: the error
+ *
+ * Determine if an error set
+ *
+ * Returns: #TRUE if, and only if, the error is set
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_error_is_set (PolKitError *error)
+{
+        return error != NULL;
+}
+
+/**
+ * polkit_error_get_error_name:
+ * @error: the error
+ * 
+ * Get the CamelCase name for the error;
+ * e.g. #POLKIT_ERROR_OUT_OF_MEMORY maps to "OutOfMemory" and so on.
+ *
+ * Returns: the string
+ *
+ * Since: 0.7
+ */
+const char *
+polkit_error_get_error_name (PolKitError *error)
+{
+        const char *ret;
+        g_return_val_if_fail (error != NULL, NULL);
+
+        switch (error->error_code) {
+        case POLKIT_ERROR_OUT_OF_MEMORY:
+                ret = "OutOfMemory";
+                break;
+        case POLKIT_ERROR_POLICY_FILE_INVALID:
+                ret = "PolicyFileInvalid";
+                break;
+        case POLKIT_ERROR_GENERAL_ERROR:
+                ret = "GeneralError";
+                break;
+        case POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS:
+                ret = "NotAuthorizedToReadAuthorizationsForOtherUsers";
+                break;
+        case POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS:
+                ret = "NotAuthorizedToRevokeAuthorizationsFromOtherUsers";
+                break;
+        case POLKIT_ERROR_NOT_AUTHORIZED_TO_GRANT_AUTHORIZATION:
+                ret = "NotAuthorizedToGrantAuthorization";
+                break;
+        case POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS:
+                ret = "AuthorizationAlreadyExists";
+                break;
+        default:
+                ret = NULL;
+        }
+
+        return ret;
+}
 
 /**
  * polkit_error_get_error_code:
@@ -109,6 +169,9 @@ polkit_error_free (PolKitError *error)
                 g_free (error);
         }
 }
+
+
+//static PolKitError _oom_error = {true, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory"};
 
 /**
  * polkit_error_set_error:

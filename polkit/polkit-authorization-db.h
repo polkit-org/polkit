@@ -36,6 +36,7 @@
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-caller.h>
 #include <polkit/polkit-session.h>
+#include <polkit/polkit-error.h>
 
 POLKIT_BEGIN_DECLS
 
@@ -60,25 +61,70 @@ polkit_bool_t polkit_authorization_db_is_caller_authorized (PolKitAuthorizationD
                                                             PolKitCaller          *caller,
                                                             polkit_bool_t         *out_is_authorized);
 
+/**
+ * PolKitAuthorizationDBForeach:
+ * @authdb: authorization database
+ * @auth: authorization; user shall not unref this object. Unless
+ * reffed by the user it will be destroyed when the callback function
+ * returns.
+ * @user_data: user data passed
+ *
+ * Type of callback function for iterating over authorizations.
+ *
+ * Returns: pass #TRUE to stop iterating
+ */
+typedef polkit_bool_t (*PolKitAuthorizationDBForeach) (PolKitAuthorizationDB *authdb,
+                                                       PolKitAuthorization   *auth, 
+                                                       void                  *user_data);
 
+polkit_bool_t polkit_authorization_db_foreach (PolKitAuthorizationDB       *authdb,
+                                               PolKitAuthorizationDBForeach cb,
+                                               void                        *user_data,
+                                               PolKitError                **error);
+
+polkit_bool_t polkit_authorization_db_foreach_for_uid (PolKitAuthorizationDB       *authdb,
+                                                       uid_t                        uid,
+                                                       PolKitAuthorizationDBForeach cb,
+                                                       void                        *user_data,
+                                                       PolKitError                **error);
+
+polkit_bool_t polkit_authorization_db_foreach_for_action (PolKitAuthorizationDB       *authdb,
+                                                          PolKitAction                *action,
+                                                          PolKitAuthorizationDBForeach cb,
+                                                          void                        *user_data,
+                                                          PolKitError                **error);
+
+polkit_bool_t polkit_authorization_db_foreach_for_action_for_uid (PolKitAuthorizationDB       *authdb,
+                                                                  PolKitAction                *action,
+                                                                  uid_t                        uid,
+                                                                  PolKitAuthorizationDBForeach cb,
+                                                                  void                        *user_data,
+                                                                  PolKitError                **error);
 
 polkit_bool_t polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authdb,
                                                                   PolKitAction          *action,
                                                                   PolKitCaller          *caller,
-                                                                  PolKitResult           how,
                                                                   uid_t                  user_authenticated_as);
 
 polkit_bool_t polkit_authorization_db_add_entry_session          (PolKitAuthorizationDB *authdb,
                                                                   PolKitAction          *action,
-                                                                  PolKitSession         *session,
-                                                                  PolKitResult           how,
+                                                                  PolKitCaller          *caller,
                                                                   uid_t                  user_authenticated_as);
 
 polkit_bool_t polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authdb,
                                                                   PolKitAction          *action,
-                                                                  uid_t                  uid,
-                                                                  PolKitResult           how,
+                                                                  PolKitCaller          *caller,
                                                                   uid_t                  user_authenticated_as);
+
+polkit_bool_t polkit_authorization_db_grant_to_uid           (PolKitAuthorizationDB          *authdb,
+                                                              PolKitAction                   *action,
+                                                              uid_t                           uid,
+                                                              PolKitAuthorizationConstraint  *constraint,
+                                                              PolKitError                   **error);
+
+polkit_bool_t polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
+                                                    PolKitAuthorization *auth,
+                                                    PolKitError **error);
 
 
 POLKIT_END_DECLS
