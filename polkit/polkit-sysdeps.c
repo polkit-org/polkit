@@ -139,7 +139,7 @@ out:
  * Since: 0.7
  */
 int
-polkit_sysdeps_get_exe_for_pid (pid_t pid, char *buf, size_t buf_size)
+polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size)
 {
         int ret;
         char proc_name[32];
@@ -147,12 +147,12 @@ polkit_sysdeps_get_exe_for_pid (pid_t pid, char *buf, size_t buf_size)
         ret = 0;
 
         snprintf (proc_name, sizeof (proc_name), "/proc/%d/exe", pid);
-        ret = readlink (proc_name, buf, buf_size - 1);
+        ret = readlink (proc_name, out_buf, buf_size - 1);
         if (ret == -1) {
                 goto out;
         }
         g_assert (ret >= 0 && ret < (int) buf_size - 1);
-        buf[ret] = '\0';
+        out_buf[ret] = '\0';
 
 out:
         return ret;

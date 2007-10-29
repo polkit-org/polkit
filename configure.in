@@ -236,10 +236,12 @@ AC_DEFINE_UNQUOTED(POLKIT_AUTHDB,"$POLKIT_AUTHDB", [Authorization Database to us
 
 case $POLKIT_AUTHDB in
   dummy)
+    need_pam=no
     AC_DEFINE(POLKIT_AUTHDB_DUMMY, 1, [If using the dummy authorization database])
     ;;
 
   default)
+    need_pam=yes
     AC_DEFINE(POLKIT_AUTHDB_DEFAULT, 1, [If using the default authorization database])
     ;;
 
@@ -271,9 +273,14 @@ PAM_PREFIX=`eval echo $PAM_PREFIX_UNEXPANDED`
 AC_SUBST(PAM_PREFIX)
 
 have_pam=no
-AC_CHECK_LIB(pam, pam_start, have_pam=yes)
+if test "$need_pam" = yes ; then
+  AC_CHECK_LIB(pam, pam_start, have_pam=yes)
+fi
+
 if test x$have_pam = xno; then
-    AC_ERROR([Could not find pam/pam-devel, please install the needed packages.])
+    if test "$need_pam" = yes ; then
+      AC_ERROR([Could not find pam/pam-devel, please install the needed packages.])
+    fi
 else
     AUTH_LIBS="${AUTH_LIBS} -lpam"
     AC_DEFINE(HAVE_PAM, 1, [Define if PAM support is included])
@@ -458,17 +465,23 @@ echo "
         Distribution/OS:            ${with_os_type}
         SELinux support:            ${have_selinux}
 
-        PAM support:                ${have_pam}
-        PAM file auth:              ${PAM_FILE_INCLUDE_AUTH}
+        PAM support:                ${have_pam}"
+
+if test "$have_pam" = yes ; then
+echo "        PAM file auth:              ${PAM_FILE_INCLUDE_AUTH}
         PAM file account:           ${PAM_FILE_INCLUDE_ACCOUNT}
         PAM file password:          ${PAM_FILE_INCLUDE_PASSWORD}
-        PAM file session:           ${PAM_FILE_INCLUDE_SESSION}
+        PAM file session:           ${PAM_FILE_INCLUDE_SESSION}"
+fi
 
+echo "
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}
 "
+
+if test "${POLKIT_AUTHDB}" = default ; then
 
 echo "NOTE: Remember to create user '${POLKIT_USER}' and group '${POLKIT_GROUP}'"
 echo "      before 'make install'"
@@ -490,8 +503,14 @@ echo "NOTE: ${libexecdir}/polkit-grant-helper will be owned by group"
 echo "      '${POLKIT_GROUP}', and installed with mode 2755 (setgid binary)."
 echo
 
+echo "NOTE: ${libexecdir}/polkit-explicit-grant-helper will be owned by group"
+echo "      '${POLKIT_GROUP}', and installed with mode 2755 (setgid binary)."
+echo
+
 echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be setuid root."
 echo
 
 echo "NOTE: For packaging, remember to retain the modes and ownership."
 echo
+
+fi
