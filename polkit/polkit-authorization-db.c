@@ -328,8 +328,11 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
 
                 line = standard_output + n;
 
-                if (strlen (line) >= 2 && line[0] != '#') {
+                if (strlen (line) >= 2 && strncmp (line, "#uid=", 5) == 0) {
+                        uid = (uid_t) atoi (line + 5);
+                }
 
+                if (strlen (line) >= 2 && line[0] != '#') {
                         auth = _polkit_authorization_new_for_uid (line, uid);
                         
                         if (auth != NULL) {

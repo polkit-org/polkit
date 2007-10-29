@@ -92,6 +92,8 @@ _polkit_authorization_get_authfile_entry (PolKitAuthorization *auth)
         return auth->entry_in_auth_file;
 }
 
+#ifdef POLKIT_AUTHDB_DEFAULT
+
 PolKitAuthorization *
 _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 {
@@ -258,11 +260,13 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
         return auth;
 
 error:
-        g_warning ("Error parsing token %d in '%s'", n, entry_in_auth_file);
+        g_warning ("Error parsing token %d from line '%s'", n, entry_in_auth_file);
         polkit_authorization_unref (auth);
         g_strfreev (t);
         return NULL;
 }
+
+#endif /* POLKIT_AUTHDB_DEFAULT */
 
 /**
  * polkit_authorization_ref:

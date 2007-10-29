@@ -117,7 +117,7 @@ out:
 }
 
 static polkit_bool_t
-dump_auths_from_file (const char *path)
+dump_auths_from_file (const char *path, uid_t uid)
 {
         int ret;
         int fd;
@@ -129,6 +129,7 @@ dump_auths_from_file (const char *path)
         ssize_t num_bytes_to_write;
         ssize_t num_bytes_written;
         ssize_t num_bytes_remaining_to_write;
+        polkit_bool_t have_written_uid;
 
         ret = FALSE;
 
@@ -150,22 +151,34 @@ dump_auths_from_file (const char *path)
 
         num_bytes_remaining_to_read = statbuf.st_size;
 
+        have_written_uid = FALSE;
         while (num_bytes_remaining_to_read > 0) {
-                if (num_bytes_remaining_to_read > (ssize_t) sizeof (buf))
-                        num_bytes_to_read = (ssize_t) sizeof (buf);
-                else
-                        num_bytes_to_read = num_bytes_remaining_to_read;
-                
-        again:
-                num_bytes_read = read (fd, buf, num_bytes_to_read);
-                if (num_bytes_read == -1) {
-                        if (errno == EAGAIN || errno == EINTR) {
-                                goto again;
-                        } else {
-                                fprintf (stderr, "polkit-read-auth-helper: error reading file %s: %m\n", path);
-                                close (fd);
-                                goto out;
+
+                /* start with writing the uid - this is necessary when dumping all authorizations via uid=1 */
+                if (!have_written_uid) {
+                        have_written_uid = TRUE;
+                        snprintf (buf, sizeof (buf), "#uid=%d\n", uid);
+                        num_bytes_read = strlen (buf);
+                } else {
+
+                        if (num_bytes_remaining_to_read > (ssize_t) sizeof (buf))
+                                num_bytes_to_read = (ssize_t) sizeof (buf);
+                        else
+                                num_bytes_to_read = num_bytes_remaining_to_read;
+                        
+                again:
+                        num_bytes_read = read (fd, buf, num_bytes_to_read);
+                        if (num_bytes_read == -1) {
+                                if (errno == EAGAIN || errno == EINTR) {
+                                        goto again;
+                                } else {
+                                        fprintf (stderr, "polkit-read-auth-helper: error reading file %s: %m\n", path);
+                                        close (fd);
+                                        goto out;
+                                }
                         }
+
+                        num_bytes_remaining_to_read -= num_bytes_read;
                 }
 
                 /* write to stdout */
@@ -190,11 +203,6 @@ dump_auths_from_file (const char *path)
                         num_bytes_remaining_to_write -= num_bytes_written;
                 }
 
-                
-                
-
-
-                num_bytes_remaining_to_read -= num_bytes_read;
         }
 
 
@@ -229,9 +237,14 @@ dump_auths_all (const char *root)
         }
 
         while ((d = readdir64(dir)) != NULL) {
+                unsigned int n, m;
+                uid_t uid;
                 size_t name_len;
+                char *filename;
+                char username[PATH_MAX];
                 char path[PATH_MAX];
                 static const char suffix[] = ".auths";
+                struct passwd *pw;
 
                 if (d->d_type != DT_REG)
                         continue;
@@ -239,19 +252,54 @@ dump_auths_all (const char *root)
                 if (d->d_name == NULL)
                         continue;
 
-                name_len = strlen (d->d_name);
+                filename = d->d_name;
+                name_len = strlen (filename);
                 if (name_len < sizeof (suffix))
                         continue;
 
-                if (strcmp ((d->d_name + name_len - sizeof (suffix) + 1), suffix) != 0)
+                if (strcmp ((filename + name_len - sizeof (suffix) + 1), suffix) != 0)
                         continue;
 
-                if (snprintf (path, sizeof (path), "%s/%s", root, d->d_name) >= (int) sizeof (path)) {
+                /* find the user name.. */
+                for (n = 0; n < name_len; n++) {
+                        if (filename[n] == '-')
+                                break;
+                }
+                if (filename[n] == '\0') {
+                        fprintf (stderr, "polkit-read-auth-helper: file name '%s' is malformed (1)\n", filename);
+                        continue;
+                }
+                n++;
+                m = n;
+                for ( ; n < name_len; n++) {
+                        if (filename[n] == '.')
+                                break;
+                }
+
+                if (filename[n] == '\0') {
+                        fprintf (stderr, "polkit-read-auth-helper: file name '%s' is malformed (2)\n", filename);
+                        continue;
+                }
+                if (n - m > sizeof (username) - 1) {
+                        fprintf (stderr, "polkit-read-auth-helper: file name '%s' is malformed (3)\n", filename);
+                        continue;
+                }
+                strncpy (username, filename + m, n - m);
+                username[n - m] = '\0';
+
+                pw = getpwnam (username);
+                if (pw == NULL) {
+                        fprintf (stderr, "polkit-read-auth-helper: cannot look up uid for username %s\n", username);
+                        continue;
+                }
+                uid = pw->pw_uid;
+                
+                if (snprintf (path, sizeof (path), "%s/%s", root, filename) >= (int) sizeof (path)) {
                         fprintf (stderr, "polkit-read-auth-helper: string was truncated (1)\n");
                         goto out;
                 }
 
-                if (!dump_auths_from_file (path))
+                if (!dump_auths_from_file (path, uid))
                         goto out;
         }
 
@@ -280,7 +328,7 @@ dump_auths_for_uid (const char *root, uid_t uid)
                 return FALSE;
         }
 
-        return dump_auths_from_file (path);
+        return dump_auths_from_file (path, uid);
 }
 
 
