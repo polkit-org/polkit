@@ -1045,8 +1045,8 @@ polkit_tracker_unref (PolKitTracker *pk_tracker)
         pk_tracker->refcount--;
         if (pk_tracker->refcount > 0) 
                 return;
-        g_hash_table_unref (pk_tracker->dbus_name_to_caller);
-        g_hash_table_unref (pk_tracker->pid_start_time_to_caller);
+        g_hash_table_destroy (pk_tracker->dbus_name_to_caller);
+        g_hash_table_destroy (pk_tracker->pid_start_time_to_caller);
         dbus_connection_unref (pk_tracker->con);
         g_free (pk_tracker);
 }
