@@ -64,64 +64,6 @@
 #include "polkit-dbus.h"
 #include <polkit/polkit-debug.h>
 
-/* TODO FIXME: this is Linux specific */
-static polkit_uint64_t 
-_get_start_time_for_pid (pid_t pid)
-{
-        char *filename;
-        char *contents;
-        gsize length;
-        polkit_uint64_t start_time;
-        GError *error = NULL;
-        char **tokens;
-        char *p;
-        char *endp;
-
-        start_time = 0;
-        contents = NULL;
-
-        filename = g_strdup_printf ("/proc/%d/stat", pid);
-        if (filename == NULL) {
-                fprintf (stderr, "Out of memory\n");
-                goto out;
-        }
-
-        if (!g_file_get_contents (filename, &contents, &length, &error)) {
-                //fprintf (stderr, "Cannot get contents of '%s': %s\n", filename, error->message);
-                g_error_free (error);
-                goto out;
-        }
-
-        /* start time is the 19th token after the '(process name)' entry */
-
-        p = strchr (contents, ')');
-        if (p == NULL) {
-                goto out;
-        }
-        p += 2; /* skip ') ' */
-        if (p - contents >= (int) length) {
-                goto out;
-        }
-
-        tokens = g_strsplit (p, " ", 0);
-        if (g_strv_length (tokens) < 20) {
-                goto out;
-        }
-
-        start_time = strtoll (tokens[19], &endp, 10);
-        if (endp == tokens[19]) {
-                goto out;
-        }
-
-        g_strfreev (tokens);
-
-out:
-        g_free (filename);
-        g_free (contents);
-        return start_time;
-}
-
-
 /**
  * polkit_session_new_from_objpath:
  * @con: D-Bus system bus connection
@@ -868,7 +810,7 @@ _polkit_is_authorization_relevant_internal (DBusConnection *con,
                         g_warning ("Cannot determine (pid,start_time) for authorization");
                         goto out;
                 }
-                if (_get_start_time_for_pid (pid) == pid_start_time) {
+                if (polkit_sysdeps_get_start_time_for_pid (pid) == pid_start_time) {
                         ret = TRUE;
                         goto out;
                 }
@@ -1436,7 +1378,7 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
         g_return_val_if_fail (pk_tracker->con != NULL, NULL);
         g_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
-        start_time = _get_start_time_for_pid (pid);
+        start_time = polkit_sysdeps_get_start_time_for_pid (pid);
         if (start_time == 0) {
                 if (error != NULL) {
                         dbus_set_error (error, 

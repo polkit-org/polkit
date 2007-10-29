@@ -360,30 +360,6 @@ out:
         return ud.obtained_privilege;
 }
 
-static char *
-get_exe_for_pid (pid_t pid)
-{
-        char *result;
-        char buf[PATH_MAX];
-        ssize_t len;
-        char proc_name[32];
-
-        result = NULL;
-
-        snprintf (proc_name, sizeof (proc_name), "/proc/%d/exe", pid);
-        len = readlink (proc_name, buf, sizeof (buf) - 1);
-        if (len == -1) {
-                goto out;
-        }
-        g_assert (len >= 0 && len < PATH_MAX - 1);
-
-        buf[len] = '\0';
-        result = g_strdup (buf);
-
-out:
-        return result;
-}
-
 static const char *
 get_name_from_uid (uid_t uid)
 {
@@ -447,6 +423,7 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 PolKitAuthorizationConstraint *constraint;
                 PolKitAction *pk_action;
                 PolKitResult pk_result;
+                char exe[PATH_MAX];
 
                 pk_action = polkit_action_new ();
                 polkit_action_set_action_id (pk_action, action_id);
@@ -457,7 +434,9 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 switch (polkit_authorization_get_scope (auth)) {
                 case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
                         polkit_authorization_scope_process_get_pid (auth, &pid, &pid_start_time);
-                        printf ("  Scope:       Confined to pid %d (%s)\n", pid, get_exe_for_pid (pid));
+                        if (polkit_sysdeps_get_exe_for_pid (pid, exe, sizeof (exe)) == -1)
+                                strncpy (exe, "unknown", sizeof (exe));
+                        printf ("  Scope:       Confined to pid %d (%s)\n", pid, exe);
 
                         break;
                 case POLKIT_AUTHORIZATION_SCOPE_SESSION:

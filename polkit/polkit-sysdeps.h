@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit.h : library for querying system-wide policy
+ * polkit-sysdeps.h : Various platform specific utility functions
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,28 +23,23 @@
  *
  **************************************************************************/
 
-#ifndef POLKIT_H
-#define POLKIT_H
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
+#endif
 
-#define _POLKIT_INSIDE_POLKIT_H 1
+#ifndef POLKIT_SYSDEPS_H
+#define POLKIT_SYSDEPS_H
+
+#include <sys/types.h>
 #include <polkit/polkit-types.h>
-#include <polkit/polkit-sysdeps.h>
-#include <polkit/polkit-error.h>
-#include <polkit/polkit-result.h>
-#include <polkit/polkit-context.h>
-#include <polkit/polkit-action.h>
-#include <polkit/polkit-seat.h>
-#include <polkit/polkit-session.h>
-#include <polkit/polkit-caller.h>
-#include <polkit/polkit-policy-file-entry.h>
-#include <polkit/polkit-policy-file.h>
-#include <polkit/polkit-policy-cache.h>
-#include <polkit/polkit-policy-default.h>
-#include <polkit/polkit-config.h>
-#include <polkit/polkit-authorization.h>
-#include <polkit/polkit-authorization-db.h>
-#undef _POLKIT_INSIDE_POLKIT_H
 
-#endif /* POLKIT_H */
+POLKIT_BEGIN_DECLS
+
+polkit_uint64_t polkit_sysdeps_get_start_time_for_pid (pid_t pid);
+
+int polkit_sysdeps_get_exe_for_pid (pid_t pid, char *buf, size_t buf_size);
 
 
+POLKIT_END_DECLS
+
+#endif

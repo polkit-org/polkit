@@ -213,63 +213,6 @@ _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb)
                                                          (GDestroyNotify) _free_authlist);
 }
 
-/* TODO FIXME: this is Linux specific */
-static polkit_uint64_t 
-get_start_time_for_pid (pid_t pid)
-{
-        char *filename;
-        char *contents;
-        gsize length;
-        polkit_uint64_t start_time;
-        GError *error = NULL;
-        char **tokens;
-        char *p;
-        char *endp;
-
-        start_time = 0;
-        contents = NULL;
-
-        filename = g_strdup_printf ("/proc/%d/stat", pid);
-        if (filename == NULL) {
-                fprintf (stderr, "Out of memory\n");
-                goto out;
-        }
-
-        if (!g_file_get_contents (filename, &contents, &length, &error)) {
-                fprintf (stderr, "Cannot get contents of '%s': %s\n", filename, error->message);
-                g_error_free (error);
-                goto out;
-        }
-
-        /* start time is the 19th token after the '(process name)' entry */
-
-        p = strchr (contents, ')');
-        if (p == NULL) {
-                goto out;
-        }
-        p += 2; /* skip ') ' */
-        if (p - contents >= (int) length) {
-                goto out;
-        }
-
-        tokens = g_strsplit (p, " ", 0);
-        if (g_strv_length (tokens) < 20) {
-                goto out;
-        }
-
-        start_time = strtoll (tokens[19], &endp, 10);
-        if (endp == tokens[19]) {
-                goto out;
-        }
-
-        g_strfreev (tokens);
-
-out:
-        g_free (filename);
-        g_free (contents);
-        return start_time;
-}
-
 /**
  * _authdb_get_auths_for_uid:
  * @authdb: authorization database
@@ -762,7 +705,7 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
 
         cd.caller = caller;
 
-        cd.caller_pid_start_time = get_start_time_for_pid (cd.caller_pid);
+        cd.caller_pid_start_time = polkit_sysdeps_get_start_time_for_pid (cd.caller_pid);
         if (cd.caller_pid_start_time == 0)
                 return FALSE;
 
@@ -989,7 +932,7 @@ polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authd
         if (!polkit_caller_get_uid (caller, &caller_uid))
                 return FALSE;
 
-        pid_start_time = get_start_time_for_pid (caller_pid);
+        pid_start_time = polkit_sysdeps_get_start_time_for_pid (caller_pid);
         if (pid_start_time == 0)
                 return FALSE;
 
