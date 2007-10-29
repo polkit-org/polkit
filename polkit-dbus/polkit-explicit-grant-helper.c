@@ -45,6 +45,7 @@
 #include <fcntl.h>
 
 #include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit-private.h>
 
 static polkit_bool_t
 check_pid_for_authorization (pid_t caller_pid, const char *action_id)
@@ -107,9 +108,6 @@ out:
 
         return ret;
 }
-
-/* this function is in polkit/polkit-authorization-db.c */
-extern polkit_bool_t _polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transient, uid_t uid, char *str_to_add);
 
 int
 main (int argc, char *argv[])

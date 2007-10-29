@@ -45,9 +45,6 @@
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
 
-extern PolKitAuthorizationDB *_polkit_authorization_db_new              (void);
-extern void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
-
 struct _PolKitAuthorizationDB
 {
         int refcount;

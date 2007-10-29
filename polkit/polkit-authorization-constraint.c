@@ -41,6 +41,7 @@
 #include "polkit-debug.h"
 #include "polkit-authorization-constraint.h"
 #include "polkit-utils.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-authorization-constraint
@@ -79,8 +80,6 @@ static PolKitAuthorizationConstraint _active_constraint = {-1,
 static PolKitAuthorizationConstraint _local_active_constraint = {-1, 
                                                                  POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL |
                                                                  POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE};
-
-extern PolKitAuthorizationConstraint *_polkit_authorization_constraint_new (const char *entry_in_auth_file);
 
 PolKitAuthorizationConstraint *
 _polkit_authorization_constraint_new (const char *entry_in_auth_file)

@@ -42,6 +42,7 @@
 #include "polkit-result.h"
 #include "polkit-policy-file-entry.h"
 #include "polkit-authorization-db.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-policy-file-entry
@@ -68,23 +69,9 @@ struct _PolKitPolicyFileEntry
         GHashTable *annotations;
 };
 
-extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
-                                                        const char *policy_description,
-                                                        const char *policy_message);
-
-
-extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any,
-                                                        PolKitResult defaults_allow_inactive,
-                                                        PolKitResult defaults_allow_active);
-
-extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
-                                                               PolKitResult defaults_allow_any,
-                                                               PolKitResult defaults_allow_inactive,
-                                                               PolKitResult defaults_allow_active,
-                                                               GHashTable *annotations);
 
 /* NOTE: we take ownership of the annotations object */
-extern PolKitPolicyFileEntry *
+PolKitPolicyFileEntry *
 _polkit_policy_file_entry_new   (const char *action_id, 
                                  PolKitResult defaults_allow_any,
                                  PolKitResult defaults_allow_inactive,

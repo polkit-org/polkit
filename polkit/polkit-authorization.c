@@ -41,6 +41,7 @@
 #include "polkit-debug.h"
 #include "polkit-authorization.h"
 #include "polkit-utils.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-authorization
@@ -83,10 +84,6 @@ struct _PolKitAuthorization
 
         char *session_id;
 };
-
-extern PolKitAuthorization *_polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid);
-
-extern const char *_polkit_authorization_get_authfile_entry (PolKitAuthorization *auth);
 
 const char *
 _polkit_authorization_get_authfile_entry (PolKitAuthorization *auth)

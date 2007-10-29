@@ -41,6 +41,7 @@
 #include "polkit-debug.h"
 #include "polkit-policy-file.h"
 #include "polkit-policy-cache.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-policy-cache
@@ -75,8 +76,6 @@ _append_entry (PolKitPolicyFile       *policy_file,
         polkit_policy_file_entry_ref (policy_file_entry);
         policy_cache->priv_entries = g_slist_append (policy_cache->priv_entries, policy_file_entry);
 }
-
-extern PolKitPolicyCache *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);
 
 PolKitPolicyCache *
 _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error)

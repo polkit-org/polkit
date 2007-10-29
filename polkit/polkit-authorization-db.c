@@ -44,9 +44,7 @@
 #include "polkit-debug.h"
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
-
-extern PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
-extern void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-authorization-db
@@ -271,8 +269,6 @@ out:
         g_free (contents);
         return start_time;
 }
-
-extern PolKitAuthorization *_polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid);
 
 /**
  * _authdb_get_auths_for_uid:
@@ -819,9 +815,6 @@ out:
         return ret;
 }
 
-/* this function is also used by polkit-dbus/polkit-explicit-grant-helper */
-extern polkit_bool_t _polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transient, uid_t uid, char *str_to_add);
-
 polkit_bool_t 
 _polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transient, uid_t uid, char *str_to_add)
 {
@@ -1180,9 +1173,6 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
         g_free (grant_line);
         return ret;
 }
-
-
-extern const char *_polkit_authorization_get_authfile_entry (PolKitAuthorization *auth);
 
 /**
  * polkit_authorization_db_revoke_entry:

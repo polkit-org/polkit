@@ -45,6 +45,7 @@
 #include "polkit-policy-file.h"
 #include "polkit-policy-file-entry.h"
 #include "polkit-debug.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-policy-file
@@ -65,12 +66,6 @@ struct _PolKitPolicyFile
         int refcount;
         GSList *entries;
 };
-
-extern PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
-                                                               PolKitResult defaults_allow_any,
-                                                               PolKitResult defaults_allow_inactive,
-                                                               PolKitResult defaults_allow_active,
-                                                               GHashTable *annotations);
 
 enum {
         STATE_NONE,
@@ -307,11 +302,6 @@ error:
         g_free (str);
         XML_StopParser (pd->parser, FALSE);
 }
-
-
-extern void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
-                                                        const char *policy_description,
-                                                        const char *policy_message);
 
 /**
  * _localize:

@@ -38,7 +38,8 @@ libpolkitinclude_HEADERS =              		\
 
 libpolkit_la_SOURCES =                                					\
 	polkit.h									\
-						polkit-types.h				\
+	polkit-private.h								\
+	polkit-types.h									\
 	polkit-error.h				polkit-error.c				\
 	polkit-result.h				polkit-result.c				\
 	polkit-context.h			polkit-context.c			\

@@ -43,9 +43,7 @@
 #include "polkit-debug.h"
 #include "polkit-context.h"
 #include "polkit-policy-cache.h"
-
-extern PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
-extern void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit
@@ -387,8 +385,6 @@ polkit_context_set_load_descriptions  (PolKitContext *pk_context)
         g_return_if_fail (pk_context != NULL);
         pk_context->load_descriptions = TRUE;
 }
-
-extern PolKitPolicyCache     *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);
 
 /**
  * polkit_context_get_policy_cache:

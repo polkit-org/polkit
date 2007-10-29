@@ -40,6 +40,7 @@
 #include "polkit-debug.h"
 #include "polkit-error.h"
 #include "polkit-policy-default.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-policy-default
@@ -62,10 +63,6 @@ struct _PolKitPolicyDefault
         PolKitResult default_inactive;
         PolKitResult default_active;
 };
-
-extern PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any,
-                                                        PolKitResult defaults_allow_inactive,
-                                                        PolKitResult defaults_allow_active);
 
 PolKitPolicyDefault *
 _polkit_policy_default_new (PolKitResult defaults_allow_any,
