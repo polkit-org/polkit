@@ -44,6 +44,7 @@
 #include "polkit-debug.h"
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
+#include "polkit-private.h"
 
 struct _PolKitAuthorizationDB
 {
