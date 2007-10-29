@@ -52,6 +52,14 @@ const char *_polkit_authorization_get_authfile_entry (PolKitAuthorization *auth)
 PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
 void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
 
+void                   _polkit_authorization_db_pfe_foreach   (PolKitPolicyCache *policy_cache, 
+                                                               PolKitPolicyCacheForeachFunc callback,
+                                                               void *user_data);
+
+PolKitPolicyFileEntry* _polkit_authorization_db_pfe_get_by_id (PolKitPolicyCache *policy_cache, 
+                                                               const char *action_id);
+
+
 PolKitPolicyCache     *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);
 
 PolKitPolicyCache *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);

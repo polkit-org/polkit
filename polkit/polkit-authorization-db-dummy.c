@@ -67,6 +67,20 @@ _polkit_authorization_db_new (void)
         return authdb;
 }
 
+void
+_polkit_authorization_db_pfe_foreach   (PolKitPolicyCache *policy_cache, 
+                                        PolKitPolicyCacheForeachFunc callback,
+                                        void *user_data)
+{
+}
+
+PolKitPolicyFileEntry* 
+_polkit_authorization_db_pfe_get_by_id (PolKitPolicyCache *policy_cache, 
+                                        const char *action_id)
+{
+        return NULL;
+}
+
 PolKitAuthorizationDB *
 polkit_authorization_db_ref (PolKitAuthorizationDB *authdb)
 {

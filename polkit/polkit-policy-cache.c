@@ -235,7 +235,10 @@ polkit_policy_cache_get_entry_by_id (PolKitPolicyCache *policy_cache, const char
                 }
         }
 
-        pfe = NULL;
+        if (pfe == NULL) {
+                /* the authdb backend may want to synthesize pfe's */
+                pfe = _polkit_authorization_db_pfe_get_by_id (policy_cache, action_id);
+        }
 
 out:
         return pfe;        
@@ -272,6 +275,7 @@ polkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache,
                 goto out;
 
         pfe = polkit_policy_cache_get_entry_by_id (policy_cache, action_id);
+
 out:
         return pfe;
 }
@@ -299,6 +303,11 @@ polkit_policy_cache_foreach (PolKitPolicyCache *policy_cache,
                 pfe = i->data;
                 callback (policy_cache, pfe, user_data);
         }
+
+        /* the authdb backend may also want to return synthesized pfe's */
+        _polkit_authorization_db_pfe_foreach (policy_cache,
+                                              callback,
+                                              user_data);
 }
 
 /**
