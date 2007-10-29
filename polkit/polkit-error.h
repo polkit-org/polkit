@@ -52,6 +52,8 @@ POLKIT_BEGIN_DECLS
  * authorized.
  * @POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS: Subject already has an
  * similar authorization already (modulo time of grant and who granted).
+ * @POLKIT_ERROR_NOT_SUPPORTED: The operation is not supported by the
+ * authorization database backend
  *
  * Errors returned by PolicyKit
  */
@@ -63,7 +65,8 @@ typedef enum
         POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS,
         POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS,
         POLKIT_ERROR_NOT_AUTHORIZED_TO_GRANT_AUTHORIZATION,
-        POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS
+        POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS,
+        POLKIT_ERROR_NOT_SUPPORTED
 } PolKitErrorCode;
 
 struct _PolKitError;

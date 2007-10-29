@@ -41,6 +41,7 @@
 #include "polkit-error.h"
 #include "polkit-result.h"
 #include "polkit-policy-file-entry.h"
+#include "polkit-authorization-db.h"
 
 /**
  * SECTION:polkit-policy-file-entry
@@ -95,6 +96,15 @@ _polkit_policy_file_entry_new   (const char *action_id,
         pfe = g_new0 (PolKitPolicyFileEntry, 1);
         pfe->refcount = 1;
         pfe->action = g_strdup (action_id);
+
+        if (! (polkit_authorization_db_get_capabilities () & POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN)) {
+                /* if we don't support obtaining authorizations
+                 * through authenticating, then make the defaults
+                 * reflect this ...*/
+                defaults_allow_any = POLKIT_RESULT_NO;
+                defaults_allow_inactive = POLKIT_RESULT_NO;
+                defaults_allow_active = POLKIT_RESULT_NO;
+        }
 
         pfe->defaults = _polkit_policy_default_new (defaults_allow_any,
                                                     defaults_allow_inactive,

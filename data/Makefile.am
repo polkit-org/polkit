@@ -1,7 +1,11 @@
 ## Process this file with automake to produce Makefile.in
 
+# See polkit-grant/Makefile.am for discussion
+#
+if POLKIT_AUTHDB_DEFAULT
 pamdir = $(sysconfdir)/pam.d
 pam_DATA = polkit
+endif
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = polkit.pc polkit-dbus.pc polkit-grant.pc

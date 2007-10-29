@@ -44,6 +44,9 @@
 #include "polkit-context.h"
 #include "polkit-policy-cache.h"
 
+extern PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
+extern void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
+
 /**
  * SECTION:polkit
  * @short_description: Centralized policy management.
@@ -122,7 +125,7 @@ polkit_context_new (void)
         pk_context = g_new0 (PolKitContext, 1);
         pk_context->refcount = 1;
         /* TODO: May want to rethink instantiating this on demand.. */
-        pk_context->authdb = polkit_authorization_db_new ();
+        pk_context->authdb = _polkit_authorization_db_new ();
         return pk_context;
 }
 
@@ -178,6 +181,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         goto error;
                 }
 
+#ifdef POLKIT_AUTHDB_DEFAULT
                 /* Watch the /var/lib/misc/PolicyKit.reload file */
                 pk_context->inotify_grant_perm_wd = inotify_add_watch (pk_context->inotify_fd, 
                                                                        PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", 
@@ -188,6 +192,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         /* TODO: set error */
                         goto error;
                 }
+#endif
 
                 pk_context->inotify_fd_watch_id = pk_context->io_add_watch_func (pk_context, pk_context->inotify_fd);
                 if (pk_context->inotify_fd_watch_id == 0) {
@@ -268,8 +273,6 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
         pk_context->config_changed_cb = cb;
         pk_context->config_changed_user_data = user_data;
 }
-
-extern void _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
 
 /**
  * polkit_context_io_func:

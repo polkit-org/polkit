@@ -45,19 +45,19 @@
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
 
+extern PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
+extern void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
+
 /**
  * SECTION:polkit-authorization-db
  * @title: Authorization Database
  * @short_description: An interface to the database storing authorizations
  *
  * This class is used to represent entries in the authorization
- * database. TODO: needs to be pluggable
+ * database.
  *
  * Since: 0.7
  **/
-
-extern void _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
-
 
 /**
  * PolKitAuthorizationDB:
@@ -82,8 +82,24 @@ _free_authlist (GSList *authlist)
         }
 }
 
+
 /**
- * polkit_authorization_db_new:
+ * polkit_authorization_db_get_capabilities:
+ *
+ * Determine what capabilities the authorization backend has.
+ *
+ * Returns: Flags from the #PolKitAuthorizationDBCapability enumeration
+ *
+ * Since: 0.7
+ */
+PolKitAuthorizationDBCapability
+polkit_authorization_db_get_capabilities (void)
+{
+        return POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN;
+}
+
+/**
+ * _polkit_authorization_db_new:
  * 
  * Create a new #PolKitAuthorizationDB object.
  * 
@@ -92,7 +108,7 @@ _free_authlist (GSList *authlist)
  * Since: 0.7
  **/
 PolKitAuthorizationDB *
-polkit_authorization_db_new (void)
+_polkit_authorization_db_new (void)
 {
         PolKitAuthorizationDB *authdb;
 

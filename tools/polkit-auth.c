@@ -323,6 +323,11 @@ obtain_authorization (const char *action_id)
         
         
         polkit_grant = polkit_grant_new ();
+        if (polkit_grant == NULL) {
+                fprintf (stderr, "polkit-auth: authorization database does not support this operation.\n");
+                goto out;
+        }
+
         polkit_grant_set_functions (polkit_grant,
                                     add_io_watch,
                                     add_child_watch,

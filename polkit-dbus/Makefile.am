@@ -26,6 +26,7 @@ libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(SEL
 
 libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
+if POLKIT_AUTHDB_DEFAULT
 libexec_PROGRAMS = polkit-explicit-grant-helper polkit-revoke-helper polkit-read-auth-helper
 
 polkit_explicit_grant_helper_SOURCES = polkit-explicit-grant-helper.c
@@ -39,9 +40,6 @@ polkit_revoke_helper_LDADD = $(top_builddir)/polkit/libpolkit.la $(top_builddir)
 polkit_read_auth_helper_SOURCES = polkit-read-auth-helper.c
 polkit_read_auth_helper_CFLAGS = @DBUS_CFLAGS@
 polkit_read_auth_helper_LDADD = $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
-
-clean-local :
-	rm -f *~ $(BUILT_SOURCES)
 
 # polkit-explicit-grant-helper needs to be setgid $POLKIT_GROUP to be
 # able to edit authorization files in /var/lib/PolicyKit and
@@ -62,3 +60,7 @@ install-exec-hook:
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-revoke-helper
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-read-auth-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-read-auth-helper
+endif
+
+clean-local :
+	rm -f *~ $(BUILT_SOURCES)

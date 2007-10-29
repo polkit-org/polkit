@@ -55,7 +55,17 @@ libpolkit_la_SOURCES =                                					\
 	polkit-config.h				polkit-config.c				\
 	polkit-authorization.h			polkit-authorization.c			\
 	polkit-authorization-constraint.h	polkit-authorization-constraint.c	\
-	polkit-authorization-db.h		polkit-authorization-db.c
+	polkit-authorization-db.h
+
+if POLKIT_AUTHDB_DUMMY
+libpolkit_la_SOURCES +=                                					\
+						polkit-authorization-db-dummy.c
+endif
+
+if POLKIT_AUTHDB_DEFAULT
+libpolkit_la_SOURCES +=                                					\
+						polkit-authorization-db.c
+endif
 
 libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@
 
@@ -64,6 +74,7 @@ libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 clean-local :
 	rm -f *~ $(BUILT_SOURCES)
 
+if POLKIT_AUTHDB_DEFAULT
 # The directories /var/lib/PolicyKit and /var/run/PolicyKit is where
 # authorizations are stored. They must not be world readable (the
 # polkit-auth-read-helper is used to read it) and the $POLKIT_GROUP
@@ -75,12 +86,13 @@ clean-local :
 # location)
 #
 install-data-local:
+	-touch $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
+	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
+	-chmod 775 $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
 	-mkdir -p $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-mkdir -p $(DESTDIR)$(localstatedir)/run/PolicyKit
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/run/PolicyKit
 	-chmod 770 $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-chmod 770 $(DESTDIR)$(localstatedir)/run/PolicyKit
-	-touch $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
-	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
-	-chmod 775 $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
+endif

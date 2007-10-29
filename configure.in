@@ -219,6 +219,40 @@ fi
 AC_SUBST(SELINUX_LIBS)
 
 dnl ---------------------------------------------------------------------------
+dnl - Select what authorization database to use
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([authdb],
+	    AS_HELP_STRING([--with-authdb=<name>], 
+                           [Authorization database (default/dummy)]))
+if ! test -z "$with_authdb" ; then
+  POLKIT_AUTHDB=$with_authdb
+else
+  POLKIT_AUTHDB=default
+fi
+
+AC_SUBST(POLKIT_AUTHDB)
+AC_DEFINE_UNQUOTED(POLKIT_AUTHDB,"$POLKIT_AUTHDB", [Authorization Database to use])
+
+case $POLKIT_AUTHDB in
+  dummy)
+    AC_DEFINE(POLKIT_AUTHDB_DUMMY, 1, [If using the dummy authorization database])
+    ;;
+
+  default)
+    AC_DEFINE(POLKIT_AUTHDB_DEFAULT, 1, [If using the default authorization database])
+    ;;
+
+  *)
+    AC_MSG_ERROR([Unknown Authorization Database: $POLKIT_AUTHDB])
+    ;;
+esac
+
+AM_CONDITIONAL(POLKIT_AUTHDB_DUMMY, [test x$POLKIT_AUTHDB = xdummy], [Using dummy authdb])
+AM_CONDITIONAL(POLKIT_AUTHDB_DEFAULT, [test x$POLKIT_AUTHDB = xdefault], [Using default authdb])
+
+
+dnl ---------------------------------------------------------------------------
 dnl - Check for PAM
 dnl ---------------------------------------------------------------------------
 
@@ -418,6 +452,8 @@ echo "
 
         user for PolicyKit:         ${POLKIT_USER}
         group for PolicyKit:        ${POLKIT_GROUP}
+
+        authorization database:     ${POLKIT_AUTHDB}
 
         Distribution/OS:            ${with_os_type}
         SELinux support:            ${have_selinux}

@@ -26,6 +26,11 @@ libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpo
 
 libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
+# Only if the authdb backend has the capability POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN
+# then the backend must supply the /usr/libexec/polkit-grant-helper program.. also remember to
+# adjust the PAM stuff in data/Makefile.am
+#
+if POLKIT_AUTHDB_DEFAULT
 libexec_PROGRAMS = polkit-grant-helper polkit-grant-helper-pam
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
@@ -33,9 +38,6 @@ polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpo
 
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
 polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
-
-clean-local :
-	rm -f *~ $(BUILT_SOURCES)
 
 # polkit-grant-helper needs to be setgid polkituser to be able to
 # write cookies to /var/lib/PolicyKit and /var/run/PolicyKit
@@ -51,3 +53,7 @@ install-exec-hook:
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-grant-helper
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
 	-chmod 4750 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
+endif
+
+clean-local :
+	rm -f *~ $(BUILT_SOURCES)

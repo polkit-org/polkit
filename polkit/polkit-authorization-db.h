@@ -43,13 +43,27 @@ POLKIT_BEGIN_DECLS
 struct _PolKitAuthorizationDB;
 typedef struct _PolKitAuthorizationDB PolKitAuthorizationDB;
 
-PolKitAuthorizationDB *polkit_authorization_db_new            (void);
+/**
+ * PolKitAuthorizationDBCapability:
+ * @POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN: Users can obtain
+ * authorizations through authentication
+ *
+ * Capabilities of the authorization database backend.
+ *
+ * Since: 0.7
+ */
+typedef enum
+{
+        POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN = 1 << 0
+} PolKitAuthorizationDBCapability;
+
+PolKitAuthorizationDBCapability polkit_authorization_db_get_capabilities (void);
+
 PolKitAuthorizationDB *polkit_authorization_db_ref            (PolKitAuthorizationDB *authdb);
 void                   polkit_authorization_db_unref          (PolKitAuthorizationDB *authdb);
 
 void                   polkit_authorization_db_debug          (PolKitAuthorizationDB *authdb);
 polkit_bool_t          polkit_authorization_db_validate       (PolKitAuthorizationDB *authdb);
-
 
 polkit_bool_t polkit_authorization_db_is_session_authorized (PolKitAuthorizationDB *authdb,
                                                              PolKitAction          *action,
@@ -72,6 +86,8 @@ polkit_bool_t polkit_authorization_db_is_caller_authorized (PolKitAuthorizationD
  * Type of callback function for iterating over authorizations.
  *
  * Returns: pass #TRUE to stop iterating
+ *
+ * Since: 0.7
  */
 typedef polkit_bool_t (*PolKitAuthorizationDBForeach) (PolKitAuthorizationDB *authdb,
                                                        PolKitAuthorization   *auth, 

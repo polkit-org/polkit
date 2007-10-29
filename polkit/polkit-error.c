@@ -117,6 +117,9 @@ polkit_error_get_error_name (PolKitError *error)
         case POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS:
                 ret = "AuthorizationAlreadyExists";
                 break;
+        case POLKIT_ERROR_NOT_SUPPORTED:
+                ret = "NotSupported";
+                break;
         default:
                 ret = NULL;
         }

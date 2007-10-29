@@ -90,12 +90,17 @@ struct _PolKitGrant
  * 
  * Creates a #PolKitGrant object.
  * 
- * Returns: the new object or #NULL on error.
+ * Returns: the new object or #NULL if the authorization backend
+ * doesn't support obtaining authorizations through authentication.
  **/
 PolKitGrant *
 polkit_grant_new (void)
 {
         PolKitGrant *polkit_grant;
+
+        if (! (polkit_authorization_db_get_capabilities () & POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN))
+                return NULL;
+
         polkit_grant = g_new0 (PolKitGrant, 1);
         polkit_grant->refcount = 1;
         return polkit_grant;
