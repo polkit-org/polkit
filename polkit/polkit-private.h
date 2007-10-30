@@ -87,6 +87,22 @@ void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
                                                  const char *policy_message);
 
 
+#ifdef POLKIT_AUTHDB_DUMMY
+struct _PolKitAuthorizationDB
+{
+        /*< private >*/
+        int refcount;
+};
+#elif POLKIT_AUTHDB_DEFAULT
+struct _PolKitAuthorizationDB
+{
+        /*< private >*/
+        int refcount;
+        GHashTable *uid_to_authlist;
+};
+
+#endif
+
 POLKIT_END_DECLS
 
 #endif /* POLKIT_PRIVATE_H */
