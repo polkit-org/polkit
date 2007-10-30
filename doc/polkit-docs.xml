@@ -73,7 +73,13 @@
     <partintro>
       <para>
 	This part presents the class and function reference for the
-	core PolicyKit library, <literal>libpolkit</literal>.
+	core PolicyKit
+	libraries, <literal>libpolkit</literal>, <literal>libpolkit-grant</literal>
+	and <literal>libpolkit-dbus</literal>. Note that unless
+	explictly stated, a function belongs
+	to <literal>libpolkit</literal>. The split is arranged such
+	that mechanisms checking for authorizations only need to link
+	with <literal>libpolkit</literal>.
       </para>
     </partintro>
     <xi:include href="xml/polkit-types.xml"/>
@@ -84,6 +90,7 @@
     <xi:include href="xml/polkit-seat.xml"/>
     <xi:include href="xml/polkit-session.xml"/>
     <xi:include href="xml/polkit-caller.xml"/>
+    <xi:include href="xml/polkit-dbus.xml"/>
     <xi:include href="xml/polkit-context.xml"/>
     <xi:include href="xml/polkit-config.xml"/>
     <xi:include href="xml/polkit-policy-file.xml"/>
@@ -93,30 +100,6 @@
     <xi:include href="xml/polkit-authorization.xml"/>
     <xi:include href="xml/polkit-authorization-constraint.xml"/>
     <xi:include href="xml/polkit-authorization-db.xml"/>
-  </reference>
-
-  <reference id="ref-convenience">
-    <title>Convenience API Reference</title>
-    <partintro>
-      <para>
-	This part presents the class and function reference for the
-	convenience library <literal>libpolkit-dbus</literal>.
-      </para>
-    </partintro>
-    <xi:include href="xml/polkit-dbus.xml"/>
-  </reference>
-
-  <reference id="ref-granting">
-    <title>Authorization and privilege granting API Reference</title>
-    <partintro>
-      <para>
-	This part presents the class and function reference for the
-	PolicyKit granting library, libpolkit-grant. This library is
-	targetted at desktop developers writing authentication dialogs
-	that users can use to obtain privileges to do specific
-	actions.
-      </para>
-    </partintro>
     <xi:include href="xml/polkit-grant.xml"/>
   </reference>
 

@@ -40,21 +40,27 @@
 
 /**
  * SECTION:polkit-grant
- * @title: PolKitGrant
- * @short_description: A class used for obtain privileges through
+ * @title: Authorizations and Authentication
+ * @short_description: Obtain authorizations through
  * authentication.
  *
- * These functions are used to obtain privileges for a user that is
- * able to successfully authenticate. It is only useful for people
+ * These functions are used to obtain authorizations for a user that
+ * is able to successfully authenticate. It is only useful for people
  * writing user interfaces that interfaces with the end user.
+ *
+ * All of these functions are in the
+ * <literal>libpolkit-grant</literal> library.
  **/
 
 /**
  * PolKitGrant:
  *
- * Objects of this class are used to obtain privileges for a user that
- * is able to successfully authenticate. It is only useful for people
- * writing user interfaces that interfaces with the end user.
+ * Objects of this class are used to obtain authorizations for a user
+ * that is able to successfully authenticate. It is only useful for
+ * people writing user interfaces that interfaces with the end user.
+ *
+ * All of these functions are in the
+ * <literal>libpolkit-grant</literal> library.
  **/
 struct _PolKitGrant
 {
@@ -90,6 +96,8 @@ struct _PolKitGrant
  * 
  * Creates a #PolKitGrant object.
  * 
+ * This function is in <literal>libpolkit-grant</literal>.
+ *
  * Returns: the new object or #NULL if the authorization backend
  * doesn't support obtaining authorizations through authentication.
  **/
@@ -112,6 +120,8 @@ polkit_grant_new (void)
  * 
  * Increase reference count.
  * 
+ * This function is in <literal>libpolkit-grant</literal>.
+ *
  * Returns: the object.
  **/
 PolKitGrant *
@@ -130,6 +140,8 @@ polkit_grant_ref (PolKitGrant *polkit_grant)
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
  * objects are decresed by one.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
  **/
 void
 polkit_grant_unref (PolKitGrant *polkit_grant)
@@ -181,6 +193,8 @@ polkit_grant_unref (PolKitGrant *polkit_grant)
  * @user_data: User data that will be passed to the callback functions.
  * 
  * Set callback functions used for authentication.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
  **/
 void
 polkit_grant_set_functions (PolKitGrant *polkit_grant,
@@ -232,6 +246,8 @@ polkit_grant_set_functions (PolKitGrant *polkit_grant,
  * Method that the application must call when a child process
  * registered with the supplied function of type
  * #PolKitGrantAddChildWatch terminates.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
  **/
 void
 polkit_grant_child_func (PolKitGrant *polkit_grant, pid_t pid, int exit_code)
@@ -264,6 +280,8 @@ polkit_grant_child_func (PolKitGrant *polkit_grant, pid_t pid, int exit_code)
  * Method that the application must call when there is data to read
  * from a file descriptor registered with the supplied function of
  * type #PolKitGrantAddIOWatch.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
  **/
 void 
 polkit_grant_io_func (PolKitGrant *polkit_grant, int fd)
@@ -402,6 +420,8 @@ polkit_grant_io_func (PolKitGrant *polkit_grant, int fd)
  * @polkit_grant: the object
  * 
  * Cancel an authentication in progress
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
  **/
 void
 polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
@@ -439,6 +459,8 @@ polkit_grant_cancel_auth (PolKitGrant *polkit_grant)
  *
  * The caller of this method must iterate the mainloop context in
  * order for authentication to make progress.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
  *
  * Returns: #TRUE only if authentication have been initiated.
  **/

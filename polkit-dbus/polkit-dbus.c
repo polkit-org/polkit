@@ -39,6 +39,8 @@
  * roundtrips, to use the high-level #PolKitTracker class rather than
  * the low-level functions polkit_caller_new_from_dbus_name() and
  * polkit_caller_new_from_pid().
+ *
+ * These functions are in <literal>libpolkit-dbus</literal>.
  **/
 
 #ifdef HAVE_CONFIG_H
@@ -76,6 +78,8 @@
  * of blocking IO so it is best avoided if your process already
  * tracks/caches all the information. If you pass in @uid as a
  * non-negative number, a round trip can be saved.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  * 
  * Returns: the new object or #NULL if an error occured (in which case
  * @error will be set)
@@ -301,6 +305,8 @@ out:
  * the ConsoleKit daemon for information. Note that this will do a lot
  * of blocking IO so it is best avoided if your process already
  * tracks/caches all the information.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  * 
  * Returns: the new object or #NULL if an error occured (in which case
  * @error will be set)
@@ -364,6 +370,8 @@ out:
  * information. Note that this will do a lot of blocking IO so it is
  * best avoided if your process already tracks/caches all the
  * information. You can use the #PolKitTracker class for this.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  * 
  * Returns: the new object or #NULL if an error occured (in which case
  * @error will be set)
@@ -572,6 +580,8 @@ out:
  * blocking IO so it is best avoided if your process already
  * tracks/caches all the information. You can use the #PolKitTracker
  * class for this.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  * 
  * Returns: the new object or #NULL if an error occured (in which case
  * @error will be set)
@@ -868,6 +878,8 @@ out:
  * error occurred (then error will be set) or if the entity the
  * authorization refers to has gone out of scope.
  *
+ * This function is in <literal>libpolkit-dbus</literal>.
+ *
  * Since: 0.7
  */
 polkit_bool_t
@@ -939,6 +951,8 @@ polkit_is_authorization_relevant (DBusConnection *con, PolKitAuthorization *auth
  * The careful reader will notice that, during the testing session, we
  * did a quick VT switch away from the session (and back) which is
  * reflected in the output.
+ *
+ * These functions are in <literal>libpolkit-dbus</literal>.
  **/
 struct _PolKitTracker {
         int refcount;
@@ -988,6 +1002,8 @@ _pid_start_time_equal (gconstpointer a, gconstpointer b)
  * polkit_tracker_new:
  * 
  * Creates a new #PolKitTracker object.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  * 
  * Returns: the new object
  *
@@ -1015,6 +1031,8 @@ polkit_tracker_new (void)
  * @pk_tracker: the tracker object
  * 
  * Increase reference count.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  * 
  * Returns: the object
  *
@@ -1035,6 +1053,8 @@ polkit_tracker_ref (PolKitTracker *pk_tracker)
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
  * objects are decresed by one.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  *
  * Since: 0.7
  **/
@@ -1060,6 +1080,8 @@ polkit_tracker_unref (PolKitTracker *pk_tracker)
  * when it needs to fetch information from the system message bus and
  * ConsoleKit services. This is used for priming the cache.
  *
+ * This function is in <literal>libpolkit-dbus</literal>.
+ *
  * Since: 0.7
  */
 void
@@ -1074,6 +1096,8 @@ polkit_tracker_set_system_bus_connection (PolKitTracker *pk_tracker, DBusConnect
  * @pk_tracker: the tracker object
  * 
  * Initialize the tracker.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  *
  * Since: 0.7
  */
@@ -1177,6 +1201,8 @@ _remove_caller_by_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name)
  * The owner of the #PolKitTracker object must pass signals from the
  * system message bus (just NameOwnerChanged will do) and all signals
  * from the ConsoleKit service into this function.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  *
  * Returns: #TRUE only if there was a change in the ConsoleKit database.
  *
@@ -1317,6 +1343,8 @@ out:
  * polkit_caller_unref() on the object when done with it. Returns
  * #NULL if an error occured (in which case error will be set).
  *
+ * This function is in <literal>libpolkit-dbus</literal>.
+ *
  * Since: 0.7
  */
 PolKitCaller *
@@ -1364,6 +1392,8 @@ polkit_tracker_get_caller_from_dbus_name (PolKitTracker *pk_tracker, const char 
  * Returns: A #PolKitCaller object; the caller must use
  * polkit_caller_unref() on the object when done with it. Returns
  * #NULL if an error occured (in which case error will be set).
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  *
  * Since: 0.7
  */
@@ -1438,6 +1468,8 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
  * Returns: #TRUE if the authorization still applies, #FALSE if an
  * error occurred (then error will be set) or if the entity the
  * authorization refers to has gone out of scope.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
  *
  * Since: 0.7
  */
