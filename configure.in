@@ -136,6 +136,10 @@ PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.0])
 AC_SUBST(DBUS_CFLAGS)
 AC_SUBST(DBUS_LIBS)
 
+PKG_CHECK_MODULES(DBUS_GLIB, [dbus-glib-1 >= 0.73])
+AC_SUBST(DBUS_GLIB_CFLAGS)
+AC_SUBST(DBUS_GLIB_LIBS)
+
 AC_CHECK_FUNCS(getgrouplist)
 
 EXPAT_LIB=""
@@ -429,6 +433,7 @@ data/polkit-grant.pc
 polkit/Makefile
 polkit-dbus/Makefile
 polkit-grant/Makefile
+polkitd/Makefile
 tools/Makefile
 doc/Makefile
 doc/version.xml

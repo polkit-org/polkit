@@ -341,6 +341,8 @@ main (int argc, char *argv[])
         uid_t caller_uid;
         uid_t requesting_info_for_uid;
         char *endp;
+        struct passwd *pw;
+        uid_t uid_for_polkit_user;
 
         ret = 1;
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
@@ -379,6 +381,13 @@ main (int argc, char *argv[])
                 goto out;
         }
 
+        pw = getpwnam (POLKIT_USER);
+        if (pw == NULL) {
+                fprintf (stderr, "polkit-read-auth-helper: cannot lookup uid for " POLKIT_USER "\n");
+                goto out;
+        }
+        uid_for_polkit_user = pw->pw_uid;
+
         /*----------------------------------------------------------------------------------------------------*/
 
         requesting_info_for_uid = strtoul (argv[1], &endp, 10);
@@ -387,8 +396,8 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        /* uid 0 is allowed to read anything */
-        if (caller_uid != 0) {
+        /* uid 0 and user polkituser is allowed to read anything */
+        if (caller_uid != 0 && caller_uid != uid_for_polkit_user) {
                 if (caller_uid != requesting_info_for_uid) {
 
                         /* see if calling user has the
