@@ -51,7 +51,7 @@ polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
 
 polkit_explicit_grant_helper_SOURCES = polkit-explicit-grant-helper.c
 polkit_explicit_grant_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_explicit_grant_helper_LDADD = $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
+polkit_explicit_grant_helper_LDADD = $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit-grant/libpolkit-grant.la
 
 polkit_revoke_helper_SOURCES = polkit-revoke-helper.c
 polkit_revoke_helper_CFLAGS = @DBUS_CFLAGS@
