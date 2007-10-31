@@ -426,7 +426,8 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
  * @session: the session in question
- * @revoke_if_oneshot: TODO
+ * @is_mechanism: Whether the mechanism carrying out the action is
+ * asking. This can be used to revoke one-time-only authorizations.
  *
  * Determine if any caller from a giver session is authorized to do a
  * given action.
@@ -440,7 +441,7 @@ PolKitResult
 polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                       PolKitAction          *action,
                                       PolKitSession         *session,
-                                      polkit_bool_t          revoke_if_oneshot)
+                                      polkit_bool_t          is_mechanism)
 {
         /* TODO: properly implement */
         return polkit_context_can_session_do_action (pk_context, action, session);
@@ -451,7 +452,8 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
  * @caller: the caller in question
- * @revoke_if_oneshot: TODO
+ * @is_mechanism: Whether the mechanism carrying out the action is
+ * asking. This can be used to revoke one-time-only authorizations.
  *
  * Determine if a given caller is authorized to do a given action.
  *
@@ -464,7 +466,7 @@ PolKitResult
 polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                      PolKitAction          *action,
                                      PolKitCaller          *caller,
-                                     polkit_bool_t          revoke_if_oneshot)
+                                     polkit_bool_t          is_mechnanism)
 {
         /* TODO: properly implement */
         return polkit_context_can_caller_do_action (pk_context, action, caller);

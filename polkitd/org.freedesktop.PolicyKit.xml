@@ -9,6 +9,9 @@
       <arg name="action_id" direction="in" type="s"/>
       <!-- IN: process id of caller to check for -->
       <arg name="pid" direction="in" type="u"/>
+      <!-- IN: see parameter 'is_mechanism' in polkit_context_is_caller_authorized()  -->
+      <arg name="is_mechanism" direction="in" type="b"/>
+
       <!-- OUT: the PolKitResult in textual form -->
       <arg name="result" direction="out" type="s"/>
     </method>
@@ -19,9 +22,21 @@
       <arg name="action_id" direction="in" type="s"/>
       <!-- IN: Unique name on the system bus of the caller to check for -->
       <arg name="system_bus_name" direction="in" type="s"/>
+      <!-- IN: see parameter 'is_mechanism' in polkit_context_is_caller_authorized()  -->
+      <arg name="is_mechanism" direction="in" type="b"/>
       <!-- OUT: the PolKitResult in textual form -->
       <arg name="result" direction="out" type="s"/>
     </method>
+
+    <!-- Both methods can throw these exceptions: 
+         
+         org.freedesktop.PolicyKit.GeneralError
+           if e.g. the passed parameters are bogus
+         
+         org.freedesktop.PolicyKit.NotAuthorized
+           if the caller is not authorized to know this; e.g. if he
+           lacks the org.freedesktop.policykit.read authorization
+      -->
 
   </interface>
 </node>

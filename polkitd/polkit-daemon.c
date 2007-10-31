@@ -231,9 +231,7 @@ _filter (DBusConnection *connection, DBusMessage *message, void *user_data)
             (dbus_message_get_interface (message) != NULL &&
              g_str_has_prefix (dbus_message_get_interface (message), "org.freedesktop.ConsoleKit"))) {
                 if (polkit_tracker_dbus_func (daemon->priv->pk_tracker, message)) {
-
                         /* Something has changed! TODO: emit D-Bus signal? */
-                        g_debug ("Something has changed!");
                 }
         }
 
@@ -383,6 +381,7 @@ static gboolean
 is_caller_authorized (PolKitDaemon          *daemon, 
                       const char            *action_id, 
                       PolKitCaller          *pk_caller, 
+                      gboolean               is_mechanism,
                       DBusGMethodInvocation *context)
 {
         gboolean ret;
@@ -433,7 +432,7 @@ is_caller_authorized (PolKitDaemon          *daemon,
 
         pk_action = polkit_action_new ();
         polkit_action_set_action_id (pk_action, action_id);
-        pk_result = polkit_context_is_caller_authorized (daemon->priv->pk_context, pk_action, pk_caller, FALSE);
+        pk_result = polkit_context_is_caller_authorized (daemon->priv->pk_context, pk_action, pk_caller, is_mechanism);
         polkit_action_unref (pk_action);
 
         dbus_g_method_return (context, polkit_result_to_string_representation (pk_result));
@@ -452,6 +451,7 @@ gboolean
 polkit_daemon_is_process_authorized (PolKitDaemon          *daemon,
                                      const char            *action_id, 
                                      guint32                pid,
+                                     gboolean               is_mechanism,
                                      DBusGMethodInvocation *context)
 {
         gboolean ret;
@@ -478,7 +478,7 @@ polkit_daemon_is_process_authorized (PolKitDaemon          *daemon,
                 goto out;
         }
 
-        ret = is_caller_authorized (daemon, action_id, pk_caller, context);
+        ret = is_caller_authorized (daemon, action_id, pk_caller, is_mechanism, context);
 
 out:
         return ret;
@@ -488,6 +488,7 @@ gboolean
 polkit_daemon_is_system_bus_name_authorized (PolKitDaemon          *daemon,
                                              const char            *action_id, 
                                              const char            *system_bus_name,
+                                             gboolean               is_mechanism,
                                              DBusGMethodInvocation *context)
 {
         gboolean ret;
@@ -504,7 +505,6 @@ polkit_daemon_is_system_bus_name_authorized (PolKitDaemon          *daemon,
                 error = g_error_new (POLKIT_DAEMON_ERROR,
                                      POLKIT_DAEMON_ERROR_GENERAL,
                                      "Given system bus name is not a valid unique system bus name");
-                dbus_error_free (&dbus_error);
                 dbus_g_method_return_error (context, error);
                 g_error_free (error);
                 goto out;
@@ -524,7 +524,7 @@ polkit_daemon_is_system_bus_name_authorized (PolKitDaemon          *daemon,
                 goto out;
         }
 
-        ret = is_caller_authorized (daemon, action_id, pk_caller, context);
+        ret = is_caller_authorized (daemon, action_id, pk_caller, is_mechanism, context);
 
 out:
         return ret;
