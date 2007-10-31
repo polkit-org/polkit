@@ -58,6 +58,8 @@ check_for_auth (uid_t caller_uid, pid_t caller_pid)
         PolKitCaller *caller;
         PolKitAction *action;
         PolKitContext *context;
+        PolKitError *pk_error;
+        PolKitResult pk_result;
 
         ret = FALSE;
 
@@ -92,12 +94,33 @@ check_for_auth (uid_t caller_uid, pid_t caller_pid)
                 fprintf (stderr, "polkit-read-auth-helper: cannot allocate PolKitContext\n");
                 goto out;
         }
-        if (!polkit_context_init (context, NULL)) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot initialize polkit\n");
+
+        pk_error = NULL;
+        if (!polkit_context_init (context, &pk_error)) {
+                fprintf (stderr, "polkit-read-auth-helper: cannot initialize polkit context: %s: %s\n",
+                         polkit_error_get_error_name (pk_error),
+                         polkit_error_get_error_message (pk_error));
+                polkit_error_free (pk_error);
                 goto out;
         }
 
-        if (polkit_context_is_caller_authorized (context, action, caller, FALSE) != POLKIT_RESULT_YES) {
+        pk_result = polkit_context_is_caller_authorized (context, action, caller, FALSE, &pk_error);
+        if (polkit_error_is_set (pk_error)) {
+
+                if (polkit_error_get_error_code (pk_error) == 
+                    POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS) {
+                        polkit_error_free (pk_error);
+                        pk_error = NULL;
+                } else {
+                        fprintf (stderr, "polkit-read-auth-helper: cannot determine if caller is authorized: %s: %s\n",
+                                 polkit_error_get_error_name (pk_error),
+                                 polkit_error_get_error_message (pk_error));
+                        polkit_error_free (pk_error);
+                        goto out;
+                }
+        }
+        
+        if (pk_result != POLKIT_RESULT_YES) {
                 /* having 'grant' (which is a lot more powerful) is also sufficient.. this is because 'read'
                  * is required to 'grant' (to check if there's a similar authorization already)
                  */
@@ -105,7 +128,17 @@ check_for_auth (uid_t caller_uid, pid_t caller_pid)
                         fprintf (stderr, "polkit-read-auth-helper: cannot set action_id\n");
                         goto out;
                 }
-                if (polkit_context_is_caller_authorized (context, action, caller, FALSE) != POLKIT_RESULT_YES) {
+
+                pk_result = polkit_context_is_caller_authorized (context, action, caller, FALSE, &pk_error);
+                if (polkit_error_is_set (pk_error)) {
+                        fprintf (stderr, "polkit-read-auth-helper: cannot determine if caller is authorized: %s: %s\n",
+                                 polkit_error_get_error_name (pk_error),
+                                 polkit_error_get_error_message (pk_error));
+                        polkit_error_free (pk_error);
+                        goto out;
+                }
+
+                if (pk_result != POLKIT_RESULT_YES) {
                         goto out;
                 }
         }

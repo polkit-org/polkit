@@ -267,7 +267,17 @@ verify_with_polkit (PolKitContext *pol_ctx,
                     PolKitResult *out_result,
                     char ***out_admin_users)
 {
-        *out_result = polkit_context_is_caller_authorized (pol_ctx, action, caller, FALSE);
+        PolKitError *pk_error;
+
+        pk_error = NULL;
+        *out_result = polkit_context_is_caller_authorized (pol_ctx, action, caller, FALSE, &pk_error);
+        if (polkit_error_is_set (pk_error)) {
+                fprintf (stderr, "polkit-grant-helper: cannot determine if caller is authorized: %s: %s\n",
+                         polkit_error_get_error_name (pk_error),
+                         polkit_error_get_error_message (pk_error));
+                polkit_error_free (pk_error);
+                goto error;
+        }
 
         if (*out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
             *out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION &&

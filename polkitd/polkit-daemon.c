@@ -416,7 +416,8 @@ is_caller_authorized (PolKitDaemon          *daemon,
                 pk_result = polkit_context_is_caller_authorized (daemon->priv->pk_context, 
                                                                  pk_action, 
                                                                  pk_caller_who_wants_to_know, 
-                                                                 FALSE);
+                                                                 FALSE,
+                                                                 NULL);
                 polkit_action_unref (pk_action);
                 if (pk_result != POLKIT_RESULT_YES) {
                         error = g_error_new (POLKIT_DAEMON_ERROR,
@@ -432,7 +433,11 @@ is_caller_authorized (PolKitDaemon          *daemon,
 
         pk_action = polkit_action_new ();
         polkit_action_set_action_id (pk_action, action_id);
-        pk_result = polkit_context_is_caller_authorized (daemon->priv->pk_context, pk_action, pk_caller, is_mechanism);
+        pk_result = polkit_context_is_caller_authorized (daemon->priv->pk_context, 
+                                                         pk_action, 
+                                                         pk_caller, 
+                                                         is_mechanism,
+                                                         NULL);
         polkit_action_unref (pk_action);
 
         dbus_g_method_return (context, polkit_result_to_string_representation (pk_result));

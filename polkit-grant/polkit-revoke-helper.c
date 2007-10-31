@@ -54,13 +54,15 @@ check_for_revoke_authorization (pid_t caller_pid)
         PolKitCaller *caller;
         PolKitAction *action;
         PolKitContext *context;
+        PolKitError *pk_error;
+        PolKitResult pk_result;
 
         ret = FALSE;
 
         dbus_error_init (&error);
         bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
         if (bus == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot connect to system bus: %s: %s\n", 
+                fprintf (stderr, "polkit-revoke-helper: cannot connect to system bus: %s: %s\n", 
                          error.name, error.message);
                 dbus_error_free (&error);
                 goto out;
@@ -68,32 +70,46 @@ check_for_revoke_authorization (pid_t caller_pid)
 
         caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
         if (caller == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot get caller from pid: %s: %s\n",
+                fprintf (stderr, "polkit-revoke-helper: cannot get caller from pid: %s: %s\n",
                          error.name, error.message);
                 goto out;
         }
 
         action = polkit_action_new ();
         if (action == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot allocate PolKitAction\n");
+                fprintf (stderr, "polkit-revoke-helper: cannot allocate PolKitAction\n");
                 goto out;
         }
         if (!polkit_action_set_action_id (action, "org.freedesktop.policykit.revoke")) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot set action_id\n");
+                fprintf (stderr, "polkit-revoke-helper: cannot set action_id\n");
                 goto out;
         }
 
         context = polkit_context_new ();
         if (context == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot allocate PolKitContext\n");
-                goto out;
-        }
-        if (!polkit_context_init (context, NULL)) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot initialize polkit\n");
+                fprintf (stderr, "polkit-revoke-helper: cannot allocate PolKitContext\n");
                 goto out;
         }
 
-        if (polkit_context_is_caller_authorized (context, action, caller, FALSE) != POLKIT_RESULT_YES) {
+        pk_error = NULL;
+        if (!polkit_context_init (context, &pk_error)) {
+                fprintf (stderr, "polkit-revoke-helper: cannot initialize polkit context: %s: %s\n",
+                         polkit_error_get_error_name (pk_error),
+                         polkit_error_get_error_message (pk_error));
+                polkit_error_free (pk_error);
+                goto out;
+        }
+
+        pk_result = polkit_context_is_caller_authorized (context, action, caller, FALSE, &pk_error);
+        if (polkit_error_is_set (pk_error)) {
+                fprintf (stderr, "polkit-revoke-helper: cannot determine if caller is authorized: %s: %s\n",
+                         polkit_error_get_error_name (pk_error),
+                         polkit_error_get_error_message (pk_error));
+                polkit_error_free (pk_error);
+                goto out;
+        }
+        
+        if (pk_result != POLKIT_RESULT_YES) {
                 goto out;
         }
 

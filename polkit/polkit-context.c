@@ -428,6 +428,7 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
  * @session: the session in question
  * @is_mechanism: Whether the mechanism carrying out the action is
  * asking. This can be used to revoke one-time-only authorizations.
+ * @error: return location for error
  *
  * Determine if any caller from a giver session is authorized to do a
  * given action.
@@ -441,7 +442,8 @@ PolKitResult
 polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                       PolKitAction          *action,
                                       PolKitSession         *session,
-                                      polkit_bool_t          is_mechanism)
+                                      polkit_bool_t          is_mechanism,
+                                      PolKitError          **error)
 {
         /* TODO: properly implement */
         return polkit_context_can_session_do_action (pk_context, action, session);
@@ -454,8 +456,13 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
  * @caller: the caller in question
  * @is_mechanism: Whether the mechanism carrying out the action is
  * asking. This can be used to revoke one-time-only authorizations.
+ * @error: return location for error
  *
- * Determine if a given caller is authorized to do a given action.
+ * Determine if a given caller is authorized to do a given
+ * action. 
+ *
+ * This can fail with the following errors: 
+ * #POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS
  *
  * Returns: A #PolKitResult specifying if, and how, the caller can
  * do a specific action. 
@@ -466,7 +473,8 @@ PolKitResult
 polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                      PolKitAction          *action,
                                      PolKitCaller          *caller,
-                                     polkit_bool_t          is_mechnanism)
+                                     polkit_bool_t          is_mechnanism,
+                                     PolKitError          **error)
 {
         /* TODO: properly implement */
         return polkit_context_can_caller_do_action (pk_context, action, caller);
@@ -479,6 +487,9 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
  * @session: the session in question
  *
  * Determine if a given session can do a given action.
+ *
+ * This can fail with the following errors: 
+ * #POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS
  *
  * Returns: A #PolKitResult - can only be one of
  * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.

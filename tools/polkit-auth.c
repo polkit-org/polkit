@@ -427,7 +427,7 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
 
                 pk_action = polkit_action_new ();
                 polkit_action_set_action_id (pk_action, action_id);
-                pk_result = polkit_context_is_caller_authorized (pk_context, pk_action, pk_caller, FALSE);
+                pk_result = polkit_context_is_caller_authorized (pk_context, pk_action, pk_caller, FALSE, NULL);
                 polkit_action_unref (pk_action);
                 printf ("  Authorized:  %s\n", pk_result == POLKIT_RESULT_YES ? "Yes" : "No");
 
@@ -499,7 +499,8 @@ pfe_iterator_cb (PolKitPolicyCache *policy_cache,
         if (polkit_context_is_caller_authorized (pk_context,
                                                  action,
                                                  pk_caller,
-                                                 FALSE) == POLKIT_RESULT_YES) {
+                                                 FALSE,
+                                                 NULL) == POLKIT_RESULT_YES) {
                 printf ("%s\n", polkit_policy_file_entry_get_id (pfe));
         }
 
@@ -519,7 +520,8 @@ pfe_iterator_show_obtainable_cb (PolKitPolicyCache *policy_cache,
         switch (polkit_context_is_caller_authorized (pk_context,
                                                      action,
                                                      pk_caller,
-                                                     FALSE)) {
+                                                     FALSE,
+                                                     NULL)) {
         default:
         case POLKIT_RESULT_UNKNOWN:
         case POLKIT_RESULT_NO:
