@@ -153,7 +153,7 @@ main (int argc, char **argv)
         error = NULL;
         bus = dbus_g_bus_get (DBUS_BUS_SYSTEM, &error);
         if (bus == NULL) {
-                g_warning ("Couldn't connect to session bus: %s", error->message);
+                g_warning ("Couldn't connect to system bus: %s", error->message);
                 g_error_free (error);
                 goto out;
         }

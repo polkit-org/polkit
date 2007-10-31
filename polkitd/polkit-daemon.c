@@ -459,6 +459,8 @@ polkit_daemon_is_process_authorized (PolKitDaemon          *daemon,
         GError *error;
         PolKitCaller *pk_caller;
 
+        reset_killtimer ();
+
         ret = FALSE;
         pk_caller = NULL;
 
@@ -492,6 +494,8 @@ polkit_daemon_is_system_bus_name_authorized (PolKitDaemon          *daemon,
         DBusError dbus_error;
         GError *error;
         PolKitCaller *pk_caller;
+
+        reset_killtimer ();
 
         ret = FALSE;
         pk_caller = NULL;
