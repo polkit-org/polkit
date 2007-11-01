@@ -50,6 +50,8 @@ polkit_bool_t        polkit_authorization_validate       (PolKitAuthorization *a
 
 /**
  * PolKitAuthorizationScope:
+ * @POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT: The authorization is
+ * limited for a single shot for a single process on the system
  * @POLKIT_AUTHORIZATION_SCOPE_PROCESS: The authorization is limited
  * for a single process on the system
  * @POLKIT_AUTHORIZATION_SCOPE_SESSION: The authorization is limited
@@ -61,6 +63,7 @@ polkit_bool_t        polkit_authorization_validate       (PolKitAuthorization *a
  * process, a session or unlimited.
  */
 typedef enum {
+        POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT,
         POLKIT_AUTHORIZATION_SCOPE_PROCESS,
         POLKIT_AUTHORIZATION_SCOPE_SESSION,
         POLKIT_AUTHORIZATION_SCOPE_ALWAYS,

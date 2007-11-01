@@ -52,6 +52,7 @@
  */
 #undef PGH_DEBUG
 /* #define PGH_DEBUG */
+#define PGH_DEBUG
 
 /* synopsis: polkit-grant-helper <pid> <action-name>
  *
@@ -279,9 +280,11 @@ verify_with_polkit (PolKitContext *pol_ctx,
                 goto error;
         }
 
-        if (*out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
+        if (*out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT &&
+            *out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
             *out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION &&
             *out_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS &&
+            *out_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT &&
             *out_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
             *out_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION &&
             *out_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) {
@@ -295,7 +298,8 @@ verify_with_polkit (PolKitContext *pol_ctx,
         /* for admin auth, get a list of users that can be used - this is basically evaluating the
          * <define_admin_auth/> directives in the config file...
          */
-        if (*out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+        if (*out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT ||
+            *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
             *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
             *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
                 PolKitConfig *pk_config;
@@ -436,33 +440,47 @@ get_and_validate_override_details (PolKitResult *result)
          * it comes down to this... users can only choose a more restricted granting type...
          */
         switch (*result) {
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT:
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT)
+                        goto error;
+                break;
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH)
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH)
                         goto error;
                 break;
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
                     desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION)
                         goto error;
                 break;
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH &&
                     desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION &&
                     desired_result != POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS)
                         goto error;
                 break;
 
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT:
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT)
+                        goto error;
+                break;
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH)
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH)
                         goto error;
                 break;
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
                     desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION)
                         goto error;
                 break;
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
-                if (desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
+                if (desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT &&
+                    desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH &&
                     desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION &&
                     desired_result != POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS)
                         goto error;
@@ -700,7 +718,8 @@ main (int argc, char *argv[])
 
         } else {
                 /* figure out what user to auth */
-                if (result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+                if (result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT ||
+                    result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
                     result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
                     result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
                         user_to_auth = "root";
@@ -755,6 +774,18 @@ main (int argc, char *argv[])
         umask (002);
 
         switch (result) {
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT:
+                dbres = polkit_authorization_db_add_entry_process_one_shot (polkit_context_get_authorization_db (context), 
+                                                                            action, 
+                                                                            caller,
+                                                                            uid_of_user_to_auth);
+                if (dbres) {
+                        syslog (LOG_INFO, "granted one shot authorization for %s to pid %d [uid=%d] [auth=%s]",
+                                action_name, caller_pid, invoking_user_id, user_to_auth);
+                }
+                break;
+
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 dbres = polkit_authorization_db_add_entry_process (polkit_context_get_authorization_db (context), 

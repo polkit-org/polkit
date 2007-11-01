@@ -46,7 +46,7 @@
 #include <polkit-dbus/polkit-dbus.h>
 
 static polkit_bool_t
-check_for_revoke_authorization (pid_t caller_pid)
+check_for_authorization (const char *action_id, pid_t caller_pid)
 {
         polkit_bool_t ret;
         DBusError error;
@@ -80,7 +80,7 @@ check_for_revoke_authorization (pid_t caller_pid)
                 fprintf (stderr, "polkit-revoke-helper: cannot allocate PolKitAction\n");
                 goto out;
         }
-        if (!polkit_action_set_action_id (action, "org.freedesktop.policykit.revoke")) {
+        if (!polkit_action_set_action_id (action, action_id)) {
                 fprintf (stderr, "polkit-revoke-helper: cannot set action_id\n");
                 goto out;
         }
@@ -171,6 +171,7 @@ main (int argc, char *argv[])
         char *target_type;
         char *target_value;
         struct passwd *pw;
+        polkit_bool_t is_one_shot;
 
         ret = 1;
 
@@ -252,6 +253,23 @@ found:
 
         /* OK, we're done parsing ... */
 
+        is_one_shot = FALSE;
+        if (strcmp (scope, "process") == 0) {
+                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+        } else if (strcmp (scope, "process-one-shot") == 0) {
+                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+                is_one_shot = TRUE;
+        } else if (strcmp (scope, "session") == 0) {
+                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+        } else if (strcmp (scope, "always") == 0) {
+                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+        } else if (strcmp (scope, "grant") == 0) {
+                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+        } else {
+                fprintf (stderr, "polkit-revoke-helper: unknown scope '%s'\n", scope);
+                goto out;
+        }
+
         if (invoking_uid != 0) {
                 /* Check that the caller is privileged to do this... */
                 if (invoking_uid != uid_to_revoke) {
@@ -262,23 +280,21 @@ found:
                          *
                          * authorization
                          */
-                        if (!check_for_revoke_authorization (getppid ())) {
-                                goto out;
+                        if (!check_for_authorization ("org.freedesktop.policykit.revoke", getppid ())) {
+
+                                /* if it's about revoking a one-shot authorization, it's sufficient to have
+                                 * org.freedesktop.policykit.read - see polkit_context_is_caller_authorized()
+                                 * for why...
+                                 */
+                                if (is_one_shot) {
+                                        if (!check_for_authorization ("org.freedesktop.policykit.read", getppid ())) {
+                                                goto out;
+                                        }
+                                } else {
+                                        goto out;
+                                }
                         }
                 }
-        }
-
-        if (strcmp (scope, "process") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
-        } else if (strcmp (scope, "session") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
-        } else if (strcmp (scope, "always") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
-        } else if (strcmp (scope, "grant") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
-        } else {
-                fprintf (stderr, "polkit-revoke-helper: unknown scope '%s'\n", scope);
-                goto out;
         }
 
         pw = getpwuid (uid_to_revoke);

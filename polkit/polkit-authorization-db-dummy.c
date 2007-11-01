@@ -131,6 +131,7 @@ polkit_bool_t
 polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                                               PolKitAction          *action,
                                               PolKitCaller          *caller,
+                                              polkit_bool_t          revoke_if_one_shot,
                                               polkit_bool_t         *out_is_authorized)
 {
         *out_is_authorized = FALSE;
@@ -177,3 +178,14 @@ polkit_authorization_db_foreach_for_action_for_uid (PolKitAuthorizationDB       
 {
         return FALSE;
 }
+
+polkit_bool_t
+polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
+                                      PolKitAuthorization *auth,
+                                      PolKitError **error)
+{
+        polkit_error_set_error (error, POLKIT_ERROR_NOT_SUPPORTED, "Not supported");
+        return FALSE;
+}
+
+

@@ -381,7 +381,7 @@ static gboolean
 is_caller_authorized (PolKitDaemon          *daemon, 
                       const char            *action_id, 
                       PolKitCaller          *pk_caller, 
-                      gboolean               is_mechanism,
+                      gboolean               revoke_if_one_shot,
                       DBusGMethodInvocation *context)
 {
         gboolean ret;
@@ -436,7 +436,7 @@ is_caller_authorized (PolKitDaemon          *daemon,
         pk_result = polkit_context_is_caller_authorized (daemon->priv->pk_context, 
                                                          pk_action, 
                                                          pk_caller, 
-                                                         is_mechanism,
+                                                         revoke_if_one_shot,
                                                          NULL);
         polkit_action_unref (pk_action);
 
@@ -456,7 +456,7 @@ gboolean
 polkit_daemon_is_process_authorized (PolKitDaemon          *daemon,
                                      const char            *action_id, 
                                      guint32                pid,
-                                     gboolean               is_mechanism,
+                                     gboolean               revoke_if_one_shot,
                                      DBusGMethodInvocation *context)
 {
         gboolean ret;
@@ -483,7 +483,7 @@ polkit_daemon_is_process_authorized (PolKitDaemon          *daemon,
                 goto out;
         }
 
-        ret = is_caller_authorized (daemon, action_id, pk_caller, is_mechanism, context);
+        ret = is_caller_authorized (daemon, action_id, pk_caller, revoke_if_one_shot, context);
 
 out:
         return ret;
@@ -493,7 +493,7 @@ gboolean
 polkit_daemon_is_system_bus_name_authorized (PolKitDaemon          *daemon,
                                              const char            *action_id, 
                                              const char            *system_bus_name,
-                                             gboolean               is_mechanism,
+                                             gboolean               revoke_if_one_shot,
                                              DBusGMethodInvocation *context)
 {
         gboolean ret;
@@ -529,7 +529,7 @@ polkit_daemon_is_system_bus_name_authorized (PolKitDaemon          *daemon,
                 goto out;
         }
 
-        ret = is_caller_authorized (daemon, action_id, pk_caller, is_mechanism, context);
+        ret = is_caller_authorized (daemon, action_id, pk_caller, revoke_if_one_shot, context);
 
 out:
         return ret;

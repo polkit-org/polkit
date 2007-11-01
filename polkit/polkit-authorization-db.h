@@ -73,6 +73,7 @@ polkit_bool_t polkit_authorization_db_is_session_authorized (PolKitAuthorization
 polkit_bool_t polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                                                             PolKitAction          *action,
                                                             PolKitCaller          *caller,
+                                                            polkit_bool_t          revoke_if_one_shot,
                                                             polkit_bool_t         *out_is_authorized);
 
 /**
@@ -116,6 +117,11 @@ polkit_bool_t polkit_authorization_db_foreach_for_action_for_uid (PolKitAuthoriz
                                                                   PolKitAuthorizationDBForeach cb,
                                                                   void                        *user_data,
                                                                   PolKitError                **error);
+
+polkit_bool_t polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authdb,
+                                                                  PolKitAction          *action,
+                                                                  PolKitCaller          *caller,
+                                                                  uid_t                  user_authenticated_as);
 
 polkit_bool_t polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authdb,
                                                                   PolKitAction          *action,

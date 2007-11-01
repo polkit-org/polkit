@@ -812,6 +812,7 @@ _polkit_is_authorization_relevant_internal (DBusConnection *con,
         uid = polkit_authorization_get_uid (auth);
 
         switch (polkit_authorization_get_scope (auth)) {
+        case POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT:
         case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
                 if (!polkit_authorization_scope_process_get_pid (auth,
                                                                  &pid,
@@ -862,11 +863,11 @@ out:
  * @auth: authorization to check for
  * @error: return location for error
  *
- * As explicit authorizations are scoped (process, session or
- * everything), they become irrelevant once the entity (process or
- * session) ceases to exist. This function determines whether the
- * authorization is still relevant; it's useful for reporting
- * and graphical tools displaying authorizations.
+ * As explicit authorizations are scoped (process single shot,
+ * process, session or everything), they become irrelevant once the
+ * entity (process or session) ceases to exist. This function
+ * determines whether the authorization is still relevant; it's useful
+ * for reporting and graphical tools displaying authorizations.
  *
  * Note that this may do blocking IO to check for session
  * authorizations so it is best avoided if your process already
@@ -1455,11 +1456,11 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
  * @auth: authorization to check for
  * @error: return location for error
  *
- * As explicit authorizations are scoped (process, session or
- * everything), they become irrelevant once the entity (process or
- * session) ceases to exist. This function determines whether the
- * authorization is still relevant; it's useful for reporting
- * and graphical tools displaying authorizations.
+ * As explicit authorizations are scoped (process single shot,
+ * process, session or everything), they become irrelevant once the
+ * entity (process or session) ceases to exist. This function
+ * determines whether the authorization is still relevant; it's useful
+ * for reporting and graphical tools displaying authorizations.
  *
  * This function is similar to polkit_is_authorization_relevant() only
  * that it avoids IPC overhead on the 2nd and subsequent calls when

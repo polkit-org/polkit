@@ -39,6 +39,12 @@ POLKIT_BEGIN_DECLS
  * @POLKIT_RESULT_UNKNOWN: The result is unknown / cannot be
  * computed. This is mostly used internally in libpolkit.
  * @POLKIT_RESULT_NO: Access denied.
+ * @POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT: Access denied, but
+ * authentication by the caller as administrator (e.g. root or a
+ * member in the wheel group depending on configuration) will grant
+ * access exactly one time to the process the caller is originating
+ * from. See polkit_context_is_caller_authorized() for discussion (and
+ * limitations) about one-shot authorizations.
  * @POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH: Access denied, but
  * authentication by the caller as administrator (e.g. root or a
  * member in the wheel group depending on configuration) will grant
@@ -51,6 +57,11 @@ POLKIT_BEGIN_DECLS
  * authentication by the caller as administrator (e.g. root or a
  * member in the wheel group depending on configuration) will grant
  * access in the future.
+ * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT: Access denied, but
+ * authentication by the caller as himself will grant access exactly
+ * one time to the process the caller is originating from. See
+ * polkit_context_is_caller_authorized() for discussion (and
+ * limitations) about one-shot authorizations.
  * @POLKIT_RESULT_ONLY_VIA_SELF_AUTH: Access denied, but
  * authentication by the caller as himself will grant access to the
  * process the caller is originating from.
@@ -64,7 +75,7 @@ POLKIT_BEGIN_DECLS
  * @POLKIT_RESULT_N_RESULTS: Number of result codes
  *
  * Result codes from queries to PolicyKit. This enumeration may grow
- * in the future.
+ * in the future. One should never rely on the ordering
  */
 typedef enum
 {
@@ -81,6 +92,10 @@ typedef enum
         POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS,
 
         POLKIT_RESULT_YES,
+
+        POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT,
+        POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT,
+
         POLKIT_RESULT_N_RESULTS
 } PolKitResult;
 

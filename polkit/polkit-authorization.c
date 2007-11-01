@@ -125,11 +125,15 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
  */
         n = 1;
 
-        if (strcmp (t[0], "process") == 0) {
+        if (strcmp (t[0], "process") == 0 ||
+            strcmp (t[0], "process-one-shot") == 0) {
                 if (num_t != 7)
                         goto error;
 
-                auth->scope = POLKIT_AUTHORIZATION_SCOPE_PROCESS;
+                if (strcmp (t[0], "process") == 0)
+                        auth->scope = POLKIT_AUTHORIZATION_SCOPE_PROCESS;
+                else
+                        auth->scope = POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT;
 
                 auth->pid = strtoul (t[n++], &ep, 10);
                 if (*ep != '\0')
@@ -416,7 +420,8 @@ polkit_authorization_scope_process_get_pid (PolKitAuthorization *auth,
         g_return_val_if_fail (auth != NULL, FALSE);
         g_return_val_if_fail (out_pid != NULL, FALSE);
         g_return_val_if_fail (out_pid_start_time != NULL, FALSE);
-        g_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_PROCESS, FALSE);
+        g_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_PROCESS || 
+                              auth->scope == POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT, FALSE);
 
         *out_pid = auth->pid;
         *out_pid_start_time = auth->pid_start_time;
@@ -470,7 +475,7 @@ polkit_authorization_get_uid (PolKitAuthorization *auth)
  * is UNIX time, e.g. number of seconds since the Epoch Jan 1, 1970
  * 0:00 UTC.
  *
- * Returns: #TRUE if information was returned
+ * Returns: When authorization was granted
  *
  * Since: 0.7
  */ 

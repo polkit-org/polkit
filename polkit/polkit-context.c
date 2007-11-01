@@ -426,8 +426,6 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
  * @session: the session in question
- * @is_mechanism: Whether the mechanism carrying out the action is
- * asking. This can be used to revoke one-time-only authorizations.
  * @error: return location for error
  *
  * Determine if any caller from a giver session is authorized to do a
@@ -442,64 +440,7 @@ PolKitResult
 polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                       PolKitAction          *action,
                                       PolKitSession         *session,
-                                      polkit_bool_t          is_mechanism,
                                       PolKitError          **error)
-{
-        /* TODO: properly implement */
-        return polkit_context_can_session_do_action (pk_context, action, session);
-}
-
-/**
- * polkit_context_is_caller_authorized:
- * @pk_context: the PolicyKit context
- * @action: the type of access to check for
- * @caller: the caller in question
- * @is_mechanism: Whether the mechanism carrying out the action is
- * asking. This can be used to revoke one-time-only authorizations.
- * @error: return location for error
- *
- * Determine if a given caller is authorized to do a given
- * action. 
- *
- * This can fail with the following errors: 
- * #POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS
- *
- * Returns: A #PolKitResult specifying if, and how, the caller can
- * do a specific action. 
- *
- * Since: 0.7
- */
-PolKitResult
-polkit_context_is_caller_authorized (PolKitContext         *pk_context,
-                                     PolKitAction          *action,
-                                     PolKitCaller          *caller,
-                                     polkit_bool_t          is_mechnanism,
-                                     PolKitError          **error)
-{
-        /* TODO: properly implement */
-        return polkit_context_can_caller_do_action (pk_context, action, caller);
-}
-
-/**
- * polkit_context_can_session_do_action:
- * @pk_context: the PolicyKit context
- * @action: the type of access to check for
- * @session: the session in question
- *
- * Determine if a given session can do a given action.
- *
- * This can fail with the following errors: 
- * #POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS
- *
- * Returns: A #PolKitResult - can only be one of
- * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
- *
- * Deprecated: 0.7: use polkit_context_is_session_authorized() instead.
- */
-PolKitResult
-polkit_context_can_session_do_action (PolKitContext   *pk_context,
-                                      PolKitAction    *action,
-                                      PolKitSession   *session)
 {
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
@@ -566,9 +507,11 @@ polkit_context_can_session_do_action (PolKitContext   *pk_context,
          */
         if (result_from_config != POLKIT_RESULT_UNKNOWN) {
                 /* it does.. use it.. although try to use an existing grant if there is one */
-                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
@@ -605,23 +548,50 @@ out:
 }
 
 /**
- * polkit_context_can_caller_do_action:
+ * polkit_context_is_caller_authorized:
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
  * @caller: the caller in question
+ * @revoke_if_one_shot: Whether to revoke one-shot authorizations. See
+ * below for discussion.
+ * @error: return location for error
  *
- * Determine if a given caller can do a given action.
+ * Determine if a given caller is authorized to do a given
+ * action. 
+ *
+ * It is important to understand how one-shot authorizations work.
+ * The revoke_if_one_shot parameter, if #TRUE, specifies whether
+ * one-shot authorizations should be revoked if they are used
+ * to make the decision to return #POLKIT_RESULT_YES.
+ *
+ * UI applications wanting to hint whether a caller is authorized must
+ * pass #FALSE here. Mechanisms that wants to check authorizations
+ * before carrying out work on behalf of a caller must pass #TRUE
+ * here.
+ *
+ * As a side-effect, any process with the authorization
+ * org.freedesktop.policykit.read can revoke one-shot authorizations
+ * from other users. Even though the window for doing so is small
+ * (one-shot auths are typically used right away), be careful who you
+ * grant that authorization to.
+ *
+ * This can fail with the following errors: 
+ * #POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS
  *
  * Returns: A #PolKitResult specifying if, and how, the caller can
- * do a specific action
+ * do a specific action. 
  *
- * Deprecated: 0.7: use polkit_context_is_caller_authorized() instead.
+ * Since: 0.7
  */
 PolKitResult
-polkit_context_can_caller_do_action (PolKitContext   *pk_context,
-                                     PolKitAction    *action,
-                                     PolKitCaller    *caller)
+polkit_context_is_caller_authorized (PolKitContext         *pk_context,
+                                     PolKitAction          *action,
+                                     PolKitCaller          *caller,
+                                     polkit_bool_t          revoke_if_one_shot,
+                                     PolKitError          **error)
 {
+
+
         PolKitPolicyCache *cache;
         PolKitPolicyFileEntry *pfe;
         PolKitResult result;
@@ -676,6 +646,7 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
         if (polkit_authorization_db_is_caller_authorized (pk_context->authdb, 
                                                           action, 
                                                           caller,
+                                                          revoke_if_one_shot,
                                                           &from_authdb)) {
                 if (from_authdb)
                         result_from_grantdb = POLKIT_RESULT_YES;
@@ -687,9 +658,11 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
          */
         if (result_from_config != POLKIT_RESULT_UNKNOWN) {
                 /* it does.. use it.. although try to use an existing grant if there is one */
-                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
+                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
+                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
                      result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
@@ -723,6 +696,51 @@ found:
 out:
         _pk_debug ("... result was %s", polkit_result_to_string_representation (result));
         return result;
+}
+
+/**
+ * polkit_context_can_session_do_action:
+ * @pk_context: the PolicyKit context
+ * @action: the type of access to check for
+ * @session: the session in question
+ *
+ * Determine if a given session can do a given action.
+ *
+ * This can fail with the following errors: 
+ * #POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS
+ *
+ * Returns: A #PolKitResult - can only be one of
+ * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
+ *
+ * Deprecated: 0.7: use polkit_context_is_session_authorized() instead.
+ */
+PolKitResult
+polkit_context_can_session_do_action (PolKitContext   *pk_context,
+                                      PolKitAction    *action,
+                                      PolKitSession   *session)
+{
+        return polkit_context_is_session_authorized (pk_context, action, session, NULL);
+}
+
+/**
+ * polkit_context_can_caller_do_action:
+ * @pk_context: the PolicyKit context
+ * @action: the type of access to check for
+ * @caller: the caller in question
+ *
+ * Determine if a given caller can do a given action.
+ *
+ * Returns: A #PolKitResult specifying if, and how, the caller can
+ * do a specific action
+ *
+ * Deprecated: 0.7: use polkit_context_is_caller_authorized() instead.
+ */
+PolKitResult
+polkit_context_can_caller_do_action (PolKitContext   *pk_context,
+                                     PolKitAction    *action,
+                                     PolKitCaller    *caller)
+{
+        return polkit_context_is_caller_authorized (pk_context, action, caller, TRUE, NULL);
 }
 
 /**

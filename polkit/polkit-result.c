@@ -62,6 +62,8 @@ static const struct {
         {POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION, "auth_self_keep_session"},
         {POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS, "auth_self_keep_always"},
         {POLKIT_RESULT_YES, "yes"},
+        {POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT, "auth_admin_one_shot"},
+        {POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT, "auth_self_one_shot"},
         {0, NULL}
 };
 

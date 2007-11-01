@@ -202,6 +202,91 @@ out:
 
 
 /**
+ * polkit_authorization_db_add_entry_process_one_shot:
+ * @authdb: the authorization database
+ * @action: the action
+ * @caller: the caller
+ * @user_authenticated_as: the user that was authenticated
+ *
+ * Write an entry to the authorization database to indicate that the
+ * given caller is authorized for the given action a single time.
+ *
+ * Note that this function should only be used by
+ * <literal>libpolkit-grant</literal> or other sufficiently privileged
+ * processes that deals with managing authorizations. It should never
+ * be used by mechanisms or applications. The caller must have
+ * egid=polkituser and umask set so creating files with mode 0460 will
+ * work.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
+ *
+ * Returns: #TRUE if an entry was written to the authorization
+ * database, #FALSE if the caller of this function is not sufficiently
+ * privileged.
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authdb,
+                                                    PolKitAction          *action,
+                                                    PolKitCaller          *caller,
+                                                    uid_t                  user_authenticated_as)
+{
+        char *action_id;
+        uid_t caller_uid;
+        pid_t caller_pid;
+        char *grant_line;
+        polkit_bool_t ret;
+        polkit_uint64_t pid_start_time;
+        struct timeval now;
+        PolKitAuthorizationConstraint *constraint;
+        char cbuf[256];
+
+        g_return_val_if_fail (authdb != NULL, FALSE);
+        g_return_val_if_fail (action != NULL, FALSE);
+        g_return_val_if_fail (caller != NULL, FALSE);
+
+        if (!polkit_action_get_action_id (action, &action_id))
+                return FALSE;
+
+        if (!polkit_caller_get_pid (caller, &caller_pid))
+                return FALSE;
+
+        if (!polkit_caller_get_uid (caller, &caller_uid))
+                return FALSE;
+
+        pid_start_time = polkit_sysdeps_get_start_time_for_pid (caller_pid);
+        if (pid_start_time == 0)
+                return FALSE;
+
+        if (gettimeofday (&now, NULL) != 0) {
+                g_warning ("Error calling gettimeofday: %m");
+                return FALSE;
+        }
+
+        constraint = polkit_authorization_constraint_get_from_caller (caller);
+        if (polkit_authorization_constraint_to_string (constraint, cbuf, sizeof (cbuf)) >= sizeof (cbuf)) {
+                g_warning ("buffer for auth constraint is too small");
+                return FALSE;
+        }
+
+        grant_line = g_strdup_printf ("process-one-shot:%d:%Lu:%s:%Lu:%d:%s\n", 
+                                      caller_pid, 
+                                      pid_start_time, 
+                                      action_id,
+                                      (polkit_uint64_t) now.tv_sec,
+                                      user_authenticated_as,
+                                      cbuf);
+
+        ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
+                                                      TRUE, 
+                                                      caller_uid, 
+                                                      grant_line);
+        g_free (grant_line);
+        return ret;
+}
+
+/**
  * polkit_authorization_db_add_entry_process:
  * @authdb: the authorization database
  * @action: the action
@@ -444,82 +529,6 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
         return ret;
 }
 
-/**
- * polkit_authorization_db_revoke_entry:
- * @authdb: the authorization database
- * @auth: the authorization to revoke
- * @error: return location for error
- *
- * Removes an authorization from the authorization database. This uses
- * a privileged helper /usr/libexec/polkit-revoke-helper.
- *
- * This function is in <literal>libpolkit-grant</literal>.
- *
- * Returns: #TRUE if the authorization was revoked, #FALSE otherwise and error is set
- *
- * Since: 0.7
- */
-polkit_bool_t
-polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
-                                      PolKitAuthorization   *auth,
-                                      PolKitError           **error)
-{
-        GError *g_error;
-        char *helper_argv[] = {PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper", "", NULL, NULL, NULL};
-        const char *auth_file_entry;
-        gboolean ret;
-        gint exit_status;
-
-        ret = FALSE;
-
-        g_return_val_if_fail (authdb != NULL, FALSE);
-        g_return_val_if_fail (auth != NULL, FALSE);
-
-        auth_file_entry = _polkit_authorization_get_authfile_entry (auth);
-        //g_debug ("should delete line '%s'", auth_file_entry);
-
-        helper_argv[1] = (char *) auth_file_entry;
-        helper_argv[2] = "uid";
-        helper_argv[3] = g_strdup_printf ("%d", polkit_authorization_get_uid (auth));
-
-        g_error = NULL;
-        if (!g_spawn_sync (NULL,         /* const gchar *working_directory */
-                           helper_argv,  /* gchar **argv */
-                           NULL,         /* gchar **envp */
-                           0,            /* GSpawnFlags flags */
-                           NULL,         /* GSpawnChildSetupFunc child_setup */
-                           NULL,         /* gpointer user_data */
-                           NULL,         /* gchar **standard_output */
-                           NULL,         /* gchar **standard_error */
-                           &exit_status, /* gint *exit_status */
-                           &g_error)) {  /* GError **error */
-                polkit_error_set_error (error, 
-                                        POLKIT_ERROR_GENERAL_ERROR, 
-                                        "Error spawning revoke helper: %s",
-                                        g_error->message);
-                g_error_free (g_error);
-                goto out;
-        }
-
-        if (!WIFEXITED (exit_status)) {
-                g_warning ("Revoke helper crashed!");
-                polkit_error_set_error (error, 
-                                        POLKIT_ERROR_GENERAL_ERROR, 
-                                        "Revoke helper crashed!");
-                goto out;
-        } else if (WEXITSTATUS(exit_status) != 0) {
-                polkit_error_set_error (error, 
-                                        POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS, 
-                                        "uid %d is not authorized to revoke authorizations from uid %d (requires org.freedesktop.policykit.revoke)",
-                                        getuid (), polkit_authorization_get_uid (auth));
-        } else {
-                ret = TRUE;
-        }
-        
-out:
-        g_free (helper_argv[3]);
-        return ret;
-}
 
 typedef struct {
         char *action_id;

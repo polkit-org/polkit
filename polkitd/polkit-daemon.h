@@ -67,13 +67,13 @@ PolKitDaemon *polkit_daemon_new                 (gboolean no_exit);
 gboolean polkit_daemon_is_process_authorized         (PolKitDaemon          *daemon,
                                                       const char            *action_id, 
                                                       guint32                pid,
-                                                      gboolean               is_mechanism,
+                                                      gboolean               revoke_if_one_shot,
                                                       DBusGMethodInvocation *context);
 
 gboolean polkit_daemon_is_system_bus_name_authorized (PolKitDaemon          *daemon,
                                                       const char            *action_id, 
                                                       const char            *system_bus_name,
-                                                      gboolean               is_mechanism,
+                                                      gboolean               revoke_if_one_shot,
                                                       DBusGMethodInvocation *context);
 
 G_END_DECLS

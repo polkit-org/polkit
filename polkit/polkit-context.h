@@ -173,13 +173,12 @@ PolKitConfig *polkit_context_get_config (PolKitContext *pk_context, PolKitError 
 PolKitResult polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                                   PolKitAction          *action,
                                                   PolKitCaller          *caller,
-                                                  polkit_bool_t          is_mechanism,
+                                                  polkit_bool_t          revoke_if_one_shot,
                                                   PolKitError          **error);
 
 PolKitResult polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                                    PolKitAction          *action,
                                                    PolKitSession         *session,
-                                                   polkit_bool_t          is_mechanism,
                                                    PolKitError          **error);
 
 PolKitAuthorizationDB *polkit_context_get_authorization_db (PolKitContext *pk_context);

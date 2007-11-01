@@ -49,6 +49,15 @@
 /* PolKitAuthorizationDB structure is defined in polkit/polkit-private.h */
 
 polkit_bool_t
+polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authdb,
+                                                    PolKitAction          *action,
+                                                    PolKitCaller          *caller,
+                                                    uid_t                  user_authenticated_as)
+{
+        return FALSE;
+}
+
+polkit_bool_t
 polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authdb,
                                                     PolKitAction          *action,
                                                     PolKitCaller          *caller,
@@ -85,14 +94,3 @@ polkit_authorization_db_grant_to_uid           (PolKitAuthorizationDB          *
         polkit_error_set_error (error, POLKIT_ERROR_NOT_SUPPORTED, "Not supported");
         return FALSE;
 }
-
-polkit_bool_t
-polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
-                                      PolKitAuthorization *auth,
-                                      PolKitError **error)
-{
-        polkit_error_set_error (error, POLKIT_ERROR_NOT_SUPPORTED, "Not supported");
-        return FALSE;
-}
-
-

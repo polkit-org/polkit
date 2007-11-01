@@ -551,6 +551,7 @@ _check_auth_for_session (PolKitAuthorizationDB *authdb, PolKitAuthorization *aut
 
         switch (polkit_authorization_get_scope (auth))
         {
+        case POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT:
         case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
                 goto no_match;
 
@@ -576,9 +577,8 @@ no_match:
  * @session: the session to check for
  * @out_is_authorized: return location
  *
- * Looks in the authorization database and determine if a processes
- * from the given session are authorized to do the given specific
- * action.
+ * Looks in the authorization database and determine if processes from
+ * the given session are authorized to do the given specific action.
  *
  * Returns: #TRUE if the look up was performed; #FALSE if the caller
  * of this function lacks privileges to ask this question (e.g. asking
@@ -634,16 +634,19 @@ typedef struct {
         polkit_uint64_t caller_pid_start_time;
         char *session_objpath;
         PolKitCaller *caller;
+        polkit_bool_t revoke_if_one_shot;
 } CheckData;
 
 static polkit_bool_t 
 _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
 {
+
         gboolean ret;
         pid_t caller_pid;
         polkit_uint64_t caller_pid_start_time;
         CheckData *cd = (CheckData *) user_data;
         PolKitAuthorizationConstraint *constraint;
+        PolKitError *error;
 
         ret = FALSE;
 
@@ -656,11 +659,26 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
 
         switch (polkit_authorization_get_scope (auth))
         {
+        case POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT:
         case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
                 if (!polkit_authorization_scope_process_get_pid (auth, &caller_pid, &caller_pid_start_time))
                         goto no_match;
                 if (!(caller_pid == cd->caller_pid && caller_pid_start_time == cd->caller_pid_start_time))
                         goto no_match;
+
+                if (polkit_authorization_get_scope (auth) == POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT) {
+
+                        /* it's a match already; revoke if asked to do so */
+                        if (cd->revoke_if_one_shot) {
+                                error = NULL;
+                                if (!polkit_authorization_db_revoke_entry (authdb, auth, &error)) {
+                                        g_warning ("Cannot revoke one-shot auth: %s: %s", 
+                                                   polkit_error_get_error_name (error),
+                                                   polkit_error_get_error_message (error));
+                                        polkit_error_free (error);
+                                }
+                        }
+                }
                 break;
 
         case POLKIT_AUTHORIZATION_SCOPE_SESSION:
@@ -676,6 +694,7 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
 
         ret = TRUE;
 
+
 no_match:
         return ret;
 }
@@ -685,6 +704,8 @@ no_match:
  * @authdb: the authorization database
  * @action: the action to check for
  * @caller: the caller to check for
+ * @revoke_if_one_shot: Whether to revoke one-shot authorizations. See
+ * discussion in polkit_context_is_caller_authorized() for details.
  * @out_is_authorized: return location
  *
  * Looks in the authorization database if the given caller is
@@ -700,6 +721,7 @@ polkit_bool_t
 polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                                               PolKitAction          *action,
                                               PolKitCaller          *caller,
+                                              polkit_bool_t          revoke_if_one_shot,
                                               polkit_bool_t         *out_is_authorized)
 {
         PolKitSession *session;
@@ -723,6 +745,7 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                 return FALSE;
 
         cd.caller = caller;
+        cd.revoke_if_one_shot = revoke_if_one_shot;
 
         cd.caller_pid_start_time = polkit_sysdeps_get_start_time_for_pid (cd.caller_pid);
         if (cd.caller_pid_start_time == 0)
@@ -746,5 +769,80 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                 *out_is_authorized = TRUE;
         }
 
+        return ret;
+}
+
+/**
+ * polkit_authorization_db_revoke_entry:
+ * @authdb: the authorization database
+ * @auth: the authorization to revoke
+ * @error: return location for error
+ *
+ * Removes an authorization from the authorization database. This uses
+ * a privileged helper /usr/libexec/polkit-revoke-helper.
+ *
+ * Returns: #TRUE if the authorization was revoked, #FALSE otherwise and error is set
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
+                                      PolKitAuthorization   *auth,
+                                      PolKitError           **error)
+{
+        GError *g_error;
+        char *helper_argv[] = {PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper", "", NULL, NULL, NULL};
+        const char *auth_file_entry;
+        gboolean ret;
+        gint exit_status;
+
+        ret = FALSE;
+
+        g_return_val_if_fail (authdb != NULL, FALSE);
+        g_return_val_if_fail (auth != NULL, FALSE);
+
+        auth_file_entry = _polkit_authorization_get_authfile_entry (auth);
+        //g_debug ("should delete line '%s'", auth_file_entry);
+
+        helper_argv[1] = (char *) auth_file_entry;
+        helper_argv[2] = "uid";
+        helper_argv[3] = g_strdup_printf ("%d", polkit_authorization_get_uid (auth));
+
+        g_error = NULL;
+        if (!g_spawn_sync (NULL,         /* const gchar *working_directory */
+                           helper_argv,  /* gchar **argv */
+                           NULL,         /* gchar **envp */
+                           0,            /* GSpawnFlags flags */
+                           NULL,         /* GSpawnChildSetupFunc child_setup */
+                           NULL,         /* gpointer user_data */
+                           NULL,         /* gchar **standard_output */
+                           NULL,         /* gchar **standard_error */
+                           &exit_status, /* gint *exit_status */
+                           &g_error)) {  /* GError **error */
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_GENERAL_ERROR, 
+                                        "Error spawning revoke helper: %s",
+                                        g_error->message);
+                g_error_free (g_error);
+                goto out;
+        }
+
+        if (!WIFEXITED (exit_status)) {
+                g_warning ("Revoke helper crashed!");
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_GENERAL_ERROR, 
+                                        "Revoke helper crashed!");
+                goto out;
+        } else if (WEXITSTATUS(exit_status) != 0) {
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS, 
+                                        "uid %d is not authorized to revoke authorizations from uid %d (requires org.freedesktop.policykit.revoke)",
+                                        getuid (), polkit_authorization_get_uid (auth));
+        } else {
+                ret = TRUE;
+        }
+        
+out:
+        g_free (helper_argv[3]);
         return ret;
 }

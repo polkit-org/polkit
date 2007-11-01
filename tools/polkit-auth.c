@@ -67,12 +67,14 @@ static void
 conversation_type (PolKitGrant *polkit_grant, PolKitResult auth_type, void *user_data)
 {
         switch (auth_type) {
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
                 printf ("Authentication as an administrative user is required.\n");
                 break;
 
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
@@ -172,6 +174,8 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
         PolKitResult overridden_auth_type;
 
         switch (auth_type) {
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
                 break;
@@ -213,6 +217,7 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
         }
 
         switch (auth_type) {
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
@@ -223,6 +228,7 @@ conversation_override_grant_type (PolKitGrant *polkit_grant, PolKitResult auth_t
                         overridden_auth_type = POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS;
                 break;
 
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
@@ -432,12 +438,17 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 printf ("  Authorized:  %s\n", pk_result == POLKIT_RESULT_YES ? "Yes" : "No");
 
                 switch (polkit_authorization_get_scope (auth)) {
+                case POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT:
                 case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
                         polkit_authorization_scope_process_get_pid (auth, &pid, &pid_start_time);
                         if (polkit_sysdeps_get_exe_for_pid (pid, exe, sizeof (exe)) == -1)
                                 strncpy (exe, "unknown", sizeof (exe));
-                        printf ("  Scope:       Confined to pid %d (%s)\n", pid, exe);
 
+                        if (polkit_authorization_get_scope (auth) == POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT) {
+                                printf ("  Scope:       Confined to single shot from pid %d (%s)\n", pid, exe);
+                        } else {
+                                printf ("  Scope:       Confined to pid %d (%s)\n", pid, exe);
+                        }
                         break;
                 case POLKIT_AUTHORIZATION_SCOPE_SESSION:
                         printf ("  Scope:       Confined to session %s\n", polkit_authorization_scope_session_get_ck_objref (auth));
@@ -528,9 +539,11 @@ pfe_iterator_show_obtainable_cb (PolKitPolicyCache *policy_cache,
         case POLKIT_RESULT_YES:
                 break;
 
+        case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS:
+        case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
