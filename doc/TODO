@@ -1,29 +1,33 @@
 
- - Have someone review the external API
+ - Add support for overriding defaults. Will require 
+   org.freedesktop.policykit.grant
 
- - Verify the security model
+ - On every polkit_context_is_[caller|session]_authorized we load
+   all .policy XML files. This is bad. Dave Jones will kill us. 
+   We should
 
- - Audit all code; especially the setgid polkit_user helper and setuid
-   root pam specific helper
+   1. Suggest that a single .policy file only contains actions
+      with a given name space com.example.MyApp. We do this
+      by printing a big fat WARNING in polkit-policy-file-validate(1)
+      if it isn't the case.
 
- - Granted privileges are currently world-visible; see
-   https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=244941
-   for details. This may just be a Fedora-ism. Alternatively, depending
-   on what the FHS says, punt it to the distros and ask them to clean
-   up the directories during boot?
+   2. We make the policy cache smart and look for the right .policy
+      file when called from the is_*_authorized path. If it aint there
+      or if it doesn't contain the given action we load all the
+      .policy XML files.
 
- - Add missing details to the spec document
-   - provide some real world examples e.g. how the example from
-     the PolicyKit-gnome app works. Preferably in tutorial form.
-   - more detailed description of the internals, e.g. the dirs
-     /var/lib/PolicyKit and /var/run/PolicyKit
+   3. When we break ABI (for 1.0 or sooner) we turn the WARNING
+      from 1. into an ERROR and drop the "Load all XML files"
+      from the is_*_authorized path. Of course, other paths
+      (iterate over all declared actions; find action by
+      annotation) will still need to load the bulk of the files.
+      But normally only polkit-auth(1) and polkit-action(1)
+      and other management tools will ever do this.
 
- - Clean up all man pages
+ - Write an extensive test suite
 
- - Polish the commandline tools (especially polkit-list-actions could
-   be nicer)
-
- - Make sure API coverage is 100%
+ - Finish up documentation; in particular how results from
+   config files, defaults and authorizations play together
 
  - Potentially drop the glib dependency (it's not visible in the
    external API). This is mainly to be able to handle OOM for
