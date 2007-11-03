@@ -59,7 +59,6 @@ struct _PolKitAction
 {
         int refcount;
         char *id;
-        GHashTable *params;
 };
 
 /**
@@ -75,10 +74,6 @@ polkit_action_new (void)
         PolKitAction *action;
         action = g_new0 (PolKitAction, 1);
         action->refcount = 1;
-        action->params = g_hash_table_new_full (g_str_hash, 
-                                                g_str_equal,
-                                                g_free,
-                                                g_free);
         return action;
 }
 
@@ -114,7 +109,6 @@ polkit_action_unref (PolKitAction *action)
         if (action->refcount > 0) 
                 return;
         g_free (action->id);
-        g_hash_table_destroy (action->params);
         g_free (action);
 }
 
