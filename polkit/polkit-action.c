@@ -40,6 +40,7 @@
 #include "polkit-debug.h"
 #include "polkit-action.h"
 #include "polkit-utils.h"
+#include <polkit/polkit-test.h>
 
 /**
  * SECTION:polkit-action
@@ -130,7 +131,7 @@ polkit_bool_t
 polkit_action_set_action_id (PolKitAction *action, const char  *action_id)
 {
         g_return_val_if_fail (action != NULL, FALSE);
-        g_return_val_if_fail (_pk_validate_identifier (action_id), FALSE);
+        g_return_val_if_fail (polkit_action_validate_id (action_id), FALSE);
         if (action->id != NULL)
                 g_free (action->id);
         action->id = g_strdup (action_id);
@@ -176,7 +177,9 @@ polkit_action_debug (PolKitAction *action)
  * 
  * Validate whether an action identifier is well formed. To be well
  * formed, an action identifier needs to start with a lower case ASCII
- * character and can only contain the characters "[a-z][0-9].-".
+ * character and can only contain the characters "[a-z][0-9].-". It
+ * must be less than or equal 256 bytes in length including the
+ * terminating NUL character.
  * 
  * Returns: #TRUE iff the action identifier is well formed
  **/
@@ -192,6 +195,9 @@ polkit_action_validate_id (const char *action_id)
                 goto malformed;
 
         for (n = 1; action_id[n] != '\0'; n++) {
+                if (n >= 255)
+                        goto malformed;
+
                 if (! (g_ascii_islower (action_id[n]) ||
                        g_ascii_isdigit (action_id[n]) ||
                        action_id[n] == '.' ||
@@ -224,3 +230,34 @@ polkit_action_validate (PolKitAction *action)
 
 
 
+#ifdef POLKIT_BUILD_TESTS
+
+polkit_bool_t
+_test_polkit_action (void)
+{
+        int n;
+        char *valid_action_ids[]   = {"org.example.action",
+                                      "org.example.action-foo", 
+                                      "org.example.action-foo.42", 
+                                      "org.example.42-.foo", 
+                                      "t0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcd",
+                                      NULL};
+        char *invalid_action_ids[] = {"1org.example.action", 
+                                      ".org.example.action", 
+                                      "-org.example.action", 
+                                      "org.example.action_foo", 
+                                      "org.example.something.that.is.too.long.0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                                      NULL};
+
+        for (n = 0; valid_action_ids[n] != NULL; n++) {
+                g_assert (polkit_action_validate_id (valid_action_ids[n]));
+        }
+
+        for (n = 0; invalid_action_ids[n] != NULL; n++) {
+                g_assert (! polkit_action_validate_id (invalid_action_ids[n]));
+        }
+
+        return TRUE;
+}
+
+#endif /* POLKIT_BUILD_TESTS */

@@ -74,8 +74,49 @@ libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
+## note that TESTS has special meaning (stuff to use in make check)
+## so if adding tests not to be run in make check, don't add them to 
+## TESTS
+if POLKIT_BUILD_TESTS
+TESTS_ENVIRONMENT=
+TESTS=polkit-test
+
+if POLKIT_GCOV_ENABLED
+clean-gcov:
+	rm -f *.gcov .libs/*.gcda
+
+.PHONY: coverage-report.txt
+coverage-report.txt :
+	$(top_srcdir)/test/create-coverage-report.sh polkit $(filter %.c,$(libpolkit_la_SOURCES)) > coverage-report.txt
+
+check-coverage : clean-gcov all check coverage-report.txt
+	cat coverage-report.txt
+else
+coverage-report.txt:
+	@echo "Need to reconfigure with --enable-gcov"
+
+check-coverage:
+	@echo "Need to reconfigure with --enable-gcov"
+endif
+
+else
+TESTS=
+endif
+
+## we use noinst_PROGRAMS not check_PROGRAMS so that we build 
+## even when not doing "make check"
+noinst_PROGRAMS=$(TESTS)
+
+polkit_test_SOURCES=				\
+	polkit-test.h		polkit-test.c
+
+polkit_test_LDADD=$(top_builddir)/polkit/libpolkit.la
+polkit_test_LDFLAGS=
+#@R_DYNAMIC_LDFLAG@
+
+
 clean-local :
-	rm -f *~ $(BUILT_SOURCES)
+	rm -f *~ $(BUILT_SOURCES) *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 
 
 if POLKIT_AUTHDB_DEFAULT
 # The directories /var/lib/PolicyKit and /var/run/PolicyKit is where

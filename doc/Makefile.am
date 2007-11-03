@@ -29,12 +29,14 @@ IGNORE_HFILES= \
 # CFLAGS and LDFLAGS for compiling scan program. Only needed
 # if $(DOC_MODULE).types is non-empty.
 INCLUDES = \
+	$(DBUS_GLIB_CFLAGS)	\
 	$(GLIB_CFLAGS)		\
 	-I$(top_srcdir) 	\
 	-I$(top_builddir)	\
 	$(NULL)
 
 GTKDOC_LIBS = \
+	$(DBUS_GLIB_LIBS)			\
 	$(GLIB_LIBS)				\
 	$(top_builddir)/polkit/libpolkit.la	\
 	$(NULL)
@@ -74,7 +76,11 @@ MAINTAINERCLEANFILES =	\
 	polkit-*.txt	\
 	$(NULL)
 
+if ENABLE_GTK_DOC
 include $(top_srcdir)/gtk-doc.make
+else
+EXTRA_DIST =
+endif
 
 # Version information for marking the documentation
 EXTRA_DIST += version.xml.in
