@@ -46,12 +46,14 @@
 
 #include <glib.h>
 #include "polkit-result.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 
 static const struct {
         PolKitResult result;
         const char *str;
-} mapping[] = 
+} mapping[POLKIT_RESULT_N_RESULTS] = 
 {
         {POLKIT_RESULT_UNKNOWN, "unknown"},
         {POLKIT_RESULT_NO, "no"},
@@ -64,7 +66,6 @@ static const struct {
         {POLKIT_RESULT_YES, "yes"},
         {POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT, "auth_admin_one_shot"},
         {POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT, "auth_self_one_shot"},
-        {0, NULL}
 };
 
 
@@ -109,8 +110,6 @@ polkit_result_from_string_representation (const char *string, PolKitResult *out_
         g_return_val_if_fail (out_result != NULL, FALSE);
 
         for (n = 0; n < POLKIT_RESULT_N_RESULTS; n++) {
-                if (mapping[n].str == NULL)
-                        break;
                 if (strcmp (mapping[n].str, string) == 0) {
                         *out_result = mapping[n].result;
                         goto found;
@@ -121,3 +120,33 @@ polkit_result_from_string_representation (const char *string, PolKitResult *out_
 found:
         return TRUE;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        PolKitResult n;
+        PolKitResult m;
+
+        for (n = 0; n < POLKIT_RESULT_N_RESULTS; n++) {
+                g_assert (polkit_result_from_string_representation (polkit_result_to_string_representation (n), &m) && n== m);
+        }
+
+        g_assert (polkit_result_to_string_representation ((PolKitResult) -1) == NULL);
+        g_assert (polkit_result_to_string_representation (POLKIT_RESULT_N_RESULTS) == NULL);
+
+        g_assert (! polkit_result_from_string_representation ("non-exiting-result-id", &m));
+
+
+        return TRUE;
+}
+
+PolKitTest _test_result = {
+        "polkit_result",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */
