@@ -49,6 +49,7 @@ extern PolKitTest _test_error;
 extern PolKitTest _test_result;
 extern PolKitTest _test_seat;
 extern PolKitTest _test_session;
+extern PolKitTest _test_caller;
 
 POLKIT_END_DECLS
 

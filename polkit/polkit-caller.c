@@ -49,6 +49,8 @@
 #include "polkit-debug.h"
 #include "polkit-caller.h"
 #include "polkit-utils.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * PolKitCaller:
@@ -77,8 +79,11 @@ PolKitCaller *
 polkit_caller_new (void)
 {
         PolKitCaller *caller;
-        caller = g_new0 (PolKitCaller, 1);
+        caller = p_new0 (PolKitCaller, 1);
+        if (caller == NULL)
+                goto out;
         caller->refcount = 1;
+out:
         return caller;
 }
 
@@ -114,11 +119,11 @@ polkit_caller_unref (PolKitCaller *caller)
         caller->refcount--;
         if (caller->refcount > 0) 
                 return;
-        g_free (caller->dbus_name);
-        g_free (caller->selinux_context);
+        p_free (caller->dbus_name);
+        p_free (caller->selinux_context);
         if (caller->session != NULL)
                 polkit_session_unref (caller->session);
-        g_free (caller);
+        p_free (caller);
 }
 
 /**
@@ -134,11 +139,19 @@ polkit_bool_t
 polkit_caller_set_dbus_name (PolKitCaller *caller, const char *dbus_name)
 {
         g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (_pk_validate_unique_bus_name (dbus_name), FALSE);
+        g_return_val_if_fail (dbus_name == NULL || _pk_validate_unique_bus_name (dbus_name), FALSE);
         if (caller->dbus_name != NULL)
-                g_free (caller->dbus_name);
-        caller->dbus_name = g_strdup (dbus_name);
-        return TRUE;
+                p_free (caller->dbus_name);
+        if (dbus_name == NULL) {
+                caller->dbus_name = NULL;
+                return TRUE;
+        } else {
+                caller->dbus_name = p_strdup (dbus_name);
+                if (caller->dbus_name == NULL)
+                        return FALSE;
+                else
+                        return TRUE;
+        }
 }
 
 /**
@@ -189,12 +202,20 @@ polkit_caller_set_selinux_context (PolKitCaller *caller, const char *selinux_con
 {
         g_return_val_if_fail (caller != NULL, FALSE);
         /* TODO: probably should have a separate validation function for SELinux contexts */
-        g_return_val_if_fail (_pk_validate_identifier (selinux_context), FALSE);
+        g_return_val_if_fail (selinux_context == NULL || _pk_validate_identifier (selinux_context), FALSE);
 
         if (caller->selinux_context != NULL)
-                g_free (caller->selinux_context);
-        caller->selinux_context = g_strdup (selinux_context);
-        return TRUE;
+                p_free (caller->selinux_context);
+        if (selinux_context == NULL) {
+                caller->selinux_context = NULL;
+                return TRUE;
+        } else {
+                caller->selinux_context = p_strdup (selinux_context);
+                if (caller->selinux_context == NULL)
+                        return FALSE;
+                else
+                        return TRUE;
+        }
 }
 
 /**
@@ -212,7 +233,7 @@ polkit_bool_t
 polkit_caller_set_ck_session (PolKitCaller *caller, PolKitSession *session)
 {
         g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (polkit_session_validate (session), FALSE);
+        g_return_val_if_fail (session == NULL || polkit_session_validate (session), FALSE);
         if (caller->session != NULL)
                 polkit_session_unref (caller->session);
         caller->session = session != NULL ? polkit_session_ref (session) : NULL;
@@ -343,3 +364,92 @@ polkit_caller_validate (PolKitCaller *caller)
         g_return_val_if_fail (caller->pid > 0, FALSE);
         return TRUE;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        char *s;
+        PolKitCaller *c;
+        pid_t pid;
+        uid_t uid;
+        PolKitSeat *seat;
+        PolKitSession *session;
+        PolKitSession *session2;
+
+        if ((c = polkit_caller_new ()) != NULL) {
+                
+                g_assert (! polkit_caller_set_dbus_name (c, "org.invalid.name"));
+                g_assert (polkit_caller_set_dbus_name (c, NULL));
+                if (polkit_caller_set_dbus_name (c, ":1.43")) {
+                        g_assert (polkit_caller_get_dbus_name (c, &s) && strcmp (s, ":1.43") == 0);
+
+                        if (polkit_caller_set_dbus_name (c, ":1.44")) {
+                                g_assert (polkit_caller_get_dbus_name (c, &s) && strcmp (s, ":1.44") == 0);
+                        }
+                }
+
+                g_assert (polkit_caller_set_selinux_context (c, NULL));
+                if (polkit_caller_set_selinux_context (c, "system_u:object_r:bin_t")) {
+                        g_assert (polkit_caller_get_selinux_context (c, &s) && strcmp (s, "system_u:object_r:bin_t") == 0);
+
+                        if (polkit_caller_set_selinux_context (c, "system_u:object_r:httpd_exec_t")) {
+                                g_assert (polkit_caller_get_selinux_context (c, &s) && strcmp (s, "system_u:object_r:httpd_exec_t") == 0);
+                        }
+                }
+
+                g_assert (polkit_caller_set_uid (c, 0));
+                g_assert (polkit_caller_get_uid (c, &uid) && uid == 0);
+                g_assert (polkit_caller_set_pid (c, 1));
+                g_assert (polkit_caller_get_pid (c, &pid) && pid == 1);
+
+                /* validate where caller is not in a session */
+                g_assert (polkit_caller_validate (c));
+                polkit_caller_ref (c);
+                g_assert (polkit_caller_validate (c));
+                polkit_caller_unref (c);
+                g_assert (polkit_caller_validate (c));
+
+                if ((session = polkit_session_new ()) != NULL) {
+                        if (polkit_session_set_ck_objref (session, "/somesession")) {
+                                if ((seat = polkit_seat_new ()) != NULL) {
+                                        if (polkit_seat_set_ck_objref (seat, "/someseat")) {
+                                                g_assert (polkit_session_set_seat (session, seat));
+                                                g_assert (polkit_session_set_ck_is_local (session, TRUE));
+
+                                                g_assert (polkit_caller_set_ck_session (c, NULL));
+                                                g_assert (polkit_caller_get_ck_session (c, &session2) && session2 == NULL);
+
+                                                g_assert (polkit_caller_set_ck_session (c, session));
+                                                g_assert (polkit_caller_set_ck_session (c, session));
+                                                g_assert (polkit_caller_get_ck_session (c, &session2) && session2 == session);
+                                                /* validate where caller is in a session */
+                                                g_assert (polkit_caller_validate (c));
+
+                                                polkit_caller_debug (c);
+
+
+                                        }
+                                        polkit_seat_unref (seat);
+                                }
+                        }
+                        polkit_session_unref (session);
+                }
+
+
+
+                polkit_caller_unref (c);
+        }        
+
+        return TRUE;
+}
+
+PolKitTest _test_caller = {
+        "polkit_caller",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */
