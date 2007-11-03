@@ -257,6 +257,23 @@ _test_polkit_action (void)
                 g_assert (! polkit_action_validate_id (invalid_action_ids[n]));
         }
 
+        PolKitAction *a;
+        char *s;
+        a = polkit_action_new ();
+        g_assert (! polkit_action_get_action_id (a, &s));
+        g_assert (polkit_action_set_action_id (a, "org.example.action"));
+        g_assert (polkit_action_validate (a));
+        polkit_action_ref (a);
+        g_assert (polkit_action_validate (a));
+        polkit_action_unref (a);
+        g_assert (polkit_action_set_action_id (a, "org.example.action2"));
+        g_assert (polkit_action_validate (a));
+        g_assert (polkit_action_get_action_id (a, &s));
+        g_assert (strcmp (s, "org.example.action2") == 0);
+        polkit_action_debug (a);
+        polkit_action_unref (a);
+        a = NULL;
+
         return TRUE;
 }
 
