@@ -40,7 +40,9 @@
 #include "polkit-debug.h"
 #include "polkit-action.h"
 #include "polkit-utils.h"
-#include <polkit/polkit-test.h>
+#include "polkit-utils.h"
+#include "polkit-memory.h"
+#include "polkit-test.h"
 
 /**
  * SECTION:polkit-action
@@ -72,8 +74,11 @@ PolKitAction *
 polkit_action_new (void)
 {
         PolKitAction *action;
-        action = g_new0 (PolKitAction, 1);
+        action = p_new0 (PolKitAction, 1);
+        if (action == NULL)
+                goto out;
         action->refcount = 1;
+out:
         return action;
 }
 
@@ -108,8 +113,8 @@ polkit_action_unref (PolKitAction *action)
         action->refcount--;
         if (action->refcount > 0) 
                 return;
-        g_free (action->id);
-        g_free (action);
+        p_free (action->id);
+        p_free (action);
 }
 
 /**
@@ -127,8 +132,11 @@ polkit_action_set_action_id (PolKitAction *action, const char  *action_id)
         g_return_val_if_fail (action != NULL, FALSE);
         g_return_val_if_fail (polkit_action_validate_id (action_id), FALSE);
         if (action->id != NULL)
-                g_free (action->id);
-        action->id = g_strdup (action_id);
+                p_free (action->id);
+        action->id = p_strdup (action_id);
+        if (action->id == NULL)
+                return FALSE;
+
         return TRUE;
 }
 
@@ -226,8 +234,8 @@ polkit_action_validate (PolKitAction *action)
 
 #ifdef POLKIT_BUILD_TESTS
 
-polkit_bool_t
-_test_polkit_action (void)
+static polkit_bool_t
+_run_test (void)
 {
         int n;
         char *valid_action_ids[]   = {"org.example.action",
@@ -254,21 +262,43 @@ _test_polkit_action (void)
         PolKitAction *a;
         char *s;
         a = polkit_action_new ();
-        g_assert (! polkit_action_get_action_id (a, &s));
-        g_assert (polkit_action_set_action_id (a, "org.example.action"));
-        g_assert (polkit_action_validate (a));
-        polkit_action_ref (a);
-        g_assert (polkit_action_validate (a));
-        polkit_action_unref (a);
-        g_assert (polkit_action_set_action_id (a, "org.example.action2"));
-        g_assert (polkit_action_validate (a));
-        g_assert (polkit_action_get_action_id (a, &s));
-        g_assert (strcmp (s, "org.example.action2") == 0);
-        polkit_action_debug (a);
-        polkit_action_unref (a);
-        a = NULL;
+        if (a == NULL) {
+                /* OOM */
+        } else {
+
+                g_assert (! polkit_action_get_action_id (a, &s));
+
+                if (!polkit_action_set_action_id (a, "org.example.action")) {
+                        /* OOM */
+                } else {
+                        g_assert (polkit_action_validate (a));
+                        polkit_action_ref (a);
+                        g_assert (polkit_action_validate (a));
+                        polkit_action_unref (a);
+                        g_assert (polkit_action_validate (a));
+
+                        if (!polkit_action_set_action_id (a, "org.example.action2")) {
+                                /* OOM */
+                        } else {
+                                g_assert (polkit_action_validate (a));
+                                g_assert (polkit_action_get_action_id (a, &s));
+                                g_assert (strcmp (s, "org.example.action2") == 0);
+                                polkit_action_debug (a);
+                        }
+                }
+
+                polkit_action_unref (a);
+        }
+        
 
         return TRUE;
 }
+
+PolKitTest _test_action = {
+        "polkit_action",
+        NULL,
+        NULL,
+        _run_test
+};
 
 #endif /* POLKIT_BUILD_TESTS */

@@ -41,6 +41,7 @@ libpolkit_la_SOURCES =                                					\
 	polkit.h									\
 	polkit-private.h								\
 	polkit-types.h									\
+	polkit-memory.h				polkit-memory.c				\
 	polkit-sysdeps.h			polkit-sysdeps.c			\
 	polkit-error.h				polkit-error.c				\
 	polkit-result.h				polkit-result.c				\

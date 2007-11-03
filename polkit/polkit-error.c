@@ -50,6 +50,7 @@
 #include "polkit-error.h"
 #include "polkit-debug.h"
 #include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * PolKitError:
@@ -151,13 +152,13 @@ polkit_error_free (PolKitError *error)
 {
         g_return_if_fail (error != NULL);
         if (!error->is_static) {
-                g_free (error->error_message);
-                g_free (error);
+                p_free (error->error_message);
+                p_free (error);
         }
 }
 
 
-//static PolKitError _oom_error = {true, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory"};
+static PolKitError _oom_error = {TRUE, POLKIT_ERROR_OUT_OF_MEMORY, "Pre-allocated OOM error object"};
 
 /**
  * polkit_error_set_error:
@@ -177,24 +178,33 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
         PolKitError *e;
 
         g_return_val_if_fail (error != NULL, FALSE);
+        g_return_val_if_fail (format != NULL, FALSE);
         g_return_val_if_fail (error_code >= 0 && error_code < POLKIT_ERROR_NUM_ERROR_CODES, FALSE);
 
-        e = g_new0 (PolKitError, 1);
-        e->is_static = FALSE;
-        e->error_code = error_code;
-        va_start (args, format);
-        e->error_message = g_strdup_vprintf (format, args);
-        va_end (args);
-
-        *error = e;
+        e = p_new0 (PolKitError, 1);
+        if (e == NULL) {
+                *error = &_oom_error;
+        } else {
+                e->is_static = FALSE;
+                e->error_code = error_code;
+                va_start (args, format);
+                e->error_message = p_strdup_vprintf (format, args);
+                va_end (args);
+                if (e->error_message == NULL) {
+                        p_free (e);
+                        *error = &_oom_error;
+                } else {                
+                        *error = e;
+                }
+        }
 
         return TRUE;
 }
 
 #ifdef POLKIT_BUILD_TESTS
 
-polkit_bool_t
-_test_polkit_error (void)
+static polkit_bool_t
+_run_test (void)
 {
         unsigned int n;
         PolKitError *e;
@@ -208,16 +218,26 @@ _test_polkit_error (void)
         for (n = 0; n < POLKIT_ERROR_NUM_ERROR_CODES; n++) {
                 polkit_error_set_error (&e, n, "Testing error code %d", n);
                 g_assert (polkit_error_is_set (e));
-                g_assert (polkit_error_get_error_code (e) == n);
-                g_assert (strcmp (polkit_error_get_error_name (e), error_names[n]) == 0);
+                g_assert (polkit_error_get_error_code (e) == n || polkit_error_get_error_code (e) == POLKIT_ERROR_OUT_OF_MEMORY);
+                g_assert (strcmp (polkit_error_get_error_name (e), error_names[polkit_error_get_error_code (e)]) == 0);
 
-                snprintf (s, sizeof (s), "Testing error code %d", n);
-                g_assert (strcmp (polkit_error_get_error_message (e), s) == 0);
+                if (polkit_error_get_error_code (e) != POLKIT_ERROR_OUT_OF_MEMORY) {
+                        snprintf (s, sizeof (s), "Testing error code %d", n);
+                        g_assert (strcmp (polkit_error_get_error_message (e), s) == 0);
+                }
 
                 polkit_error_free (e);
         }
 
         return TRUE;
 }
+
+
+PolKitTest _test_error = {
+        "polkit_error",
+        NULL,
+        NULL,
+        _run_test
+};
 
 #endif /* POLKIT_BUILD_TESTS */

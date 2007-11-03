@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-test.h : PolicyKit test
+ * polkit-memory.h : Memory management
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -24,31 +24,36 @@
  **************************************************************************/
 
 #if !defined (POLKIT_COMPILATION)
-#error "polkit-test.h is a private file"
+#error "polkit-memory.h is a private file"
 #endif
 
-#ifndef POLKIT_TEST_H
-#define POLKIT_TEST_H
+#ifndef POLKIT_MEMORY_H
+#define POLKIT_MEMORY_H
 
+#include <stdarg.h>
 #include <polkit/polkit-types.h>
 
 POLKIT_BEGIN_DECLS
 
-polkit_bool_t _test_polkit_action (void);
-polkit_bool_t _test_polkit_error (void);
+void *p_malloc  (size_t bytes);
+void *p_malloc0 (size_t bytes);
+void  p_free    (void *memory);
+char *p_strdup  (const char *s);
 
-typedef struct {
-        const char *name;
-        void (*setup) (void);
-        void (*teardown) (void);
-        polkit_bool_t (*run) (void);
-} PolKitTest;
+#define p_new(type, count)  ((type*)p_malloc (sizeof (type) * (count)));
+#define p_new0(type, count) ((type*)p_malloc0 (sizeof (type) * (count)));
 
-extern PolKitTest _test_action;
-extern PolKitTest _test_error;
+void  _polkit_memory_reset (void);
+int   _polkit_memory_get_current_allocations (void);
+int   _polkit_memory_get_total_allocations (void);
+void  _polkit_memory_fail_nth_alloc (int number);
+
+char* p_strdup_printf  (const char *format, ...);
+char* p_strdup_vprintf (const char *format, va_list args);
+
 
 POLKIT_END_DECLS
 
-#endif /* POLKIT_TEST_H */
+#endif /* POLKIT_MEMORY_H */
 
 

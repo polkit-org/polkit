@@ -26,23 +26,77 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <polkit/polkit-test.h>
+#include <polkit/polkit-memory.h>
+
+#define MAX_TESTS 64
+
+static PolKitTest *tests[] = {
+        &_test_action,
+        &_test_error,
+};
 
 int 
 main (int argc, char *argv[])
 {
         int ret;
-
-        ret = 1;
-        printf ("Running unit tests for libpolkit\n");
-
-        if (!_test_polkit_action ())
-                goto out;
-
-        if (!_test_polkit_error ())
-                goto out;
+        int n;
+        int num_tests;
 
         ret = 0;
-out:
+
+        num_tests = sizeof (tests) / sizeof (PolKitTest*);
+
+        printf ("Running %d unit tests\n", num_tests);
+        for (n = 0; n < num_tests; n++) {
+                int m;
+                int total_allocs;
+                int delta;
+                PolKitTest *test = tests[n];
+
+                _polkit_memory_reset ();
+
+                if (test->setup != NULL)
+                        test->setup ();
+
+                printf ("Running: %s\n", test->name);
+                if (!test->run ()) {
+                        printf ("Failed\n");
+                        ret = 1;
+                        goto test_done;
+                }
+
+                total_allocs = _polkit_memory_get_total_allocations ();
+                printf ("  Unit test made %d allocations in total\n", total_allocs);
+                
+                delta = _polkit_memory_get_current_allocations ();
+                if (delta != 0) {
+                        printf ("  Unit test leaked %d allocations\n", delta);
+                        ret = 1;
+                }
+                
+                for (m = 0; m < total_allocs; m++) {
+                        printf ("  Failing allocation %d of %d\n", m + 1, total_allocs);
+                        
+                        _polkit_memory_reset ();
+                        _polkit_memory_fail_nth_alloc (m);
+                        
+                        if (!test->run ()) {
+                                printf ("  Failed\n");
+                                ret = 1;
+                                continue;
+                        }
+                        
+                        delta = _polkit_memory_get_current_allocations ();
+                        if (delta != 0) {
+                                printf ("  Unit test leaked %d allocations\n", delta);
+                                ret = 1;
+                        }
+                }
+
+        test_done:
+                if (test->teardown != NULL)
+                        test->teardown ();
+        }
 
         return ret;
 }
