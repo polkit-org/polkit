@@ -40,6 +40,8 @@
 #include "polkit-debug.h"
 #include "polkit-seat.h"
 #include "polkit-utils.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * SECTION:polkit-seat
@@ -72,8 +74,11 @@ PolKitSeat *
 polkit_seat_new (void)
 {
         PolKitSeat *seat;
-        seat = g_new0 (PolKitSeat, 1);
+        seat = p_new0 (PolKitSeat, 1);
+        if (seat == NULL)
+                goto out;
         seat->refcount = 1;
+out:
         return seat;
 }
 
@@ -108,8 +113,8 @@ polkit_seat_unref (PolKitSeat *seat)
         seat->refcount--;
         if (seat->refcount > 0) 
                 return;
-        g_free (seat->ck_objref);
-        g_free (seat);
+        p_free (seat->ck_objref);
+        p_free (seat);
 }
 
 /**
@@ -127,9 +132,12 @@ polkit_seat_set_ck_objref (PolKitSeat *seat, const char *ck_objref)
         g_return_val_if_fail (seat != NULL, FALSE);
         g_return_val_if_fail (_pk_validate_identifier (ck_objref), FALSE);
         if (seat->ck_objref != NULL)
-                g_free (seat->ck_objref);
-        seat->ck_objref = g_strdup (ck_objref);
-        return TRUE;
+                p_free (seat->ck_objref);
+        seat->ck_objref = p_strdup (ck_objref);
+        if (seat->ck_objref == NULL)
+                return FALSE;
+        else
+                return TRUE;
 }
 
 /**
@@ -178,3 +186,46 @@ polkit_seat_validate (PolKitSeat *seat)
         g_return_val_if_fail (seat->ck_objref != NULL, FALSE);
         return TRUE;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        char *str;
+        PolKitSeat *s;
+
+        s = polkit_seat_new ();
+        if (s == NULL) {
+                /* OOM */
+        } else {
+                if (! polkit_seat_set_ck_objref (s, "/someseat")) {
+                        /* OOM */
+                } else {
+                        g_assert (polkit_seat_get_ck_objref (s, &str) && strcmp (str, "/someseat") == 0);
+                        g_assert (polkit_seat_validate (s));
+                        polkit_seat_ref (s);
+                        g_assert (polkit_seat_validate (s));
+                        polkit_seat_unref (s);
+                        g_assert (polkit_seat_validate (s));
+                        polkit_seat_debug (s);
+                        if (! polkit_seat_set_ck_objref (s, "/someseat2")) {
+                                /* OOM */
+                        } else {
+                                g_assert (polkit_seat_get_ck_objref (s, &str) && strcmp (str, "/someseat2") == 0);
+                        }
+                }
+                polkit_seat_unref (s);
+        }
+
+        return TRUE;
+}
+
+PolKitTest _test_seat = {
+        "polkit_seat",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

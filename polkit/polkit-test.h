@@ -47,6 +47,7 @@ typedef struct {
 extern PolKitTest _test_action;
 extern PolKitTest _test_error;
 extern PolKitTest _test_result;
+extern PolKitTest _test_seat;
 
 POLKIT_END_DECLS
 
