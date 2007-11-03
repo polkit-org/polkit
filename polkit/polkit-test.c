@@ -23,6 +23,8 @@
  *
  **************************************************************************/
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <polkit/polkit-test.h>
 
 int 
@@ -34,6 +36,9 @@ main (int argc, char *argv[])
         printf ("Running unit tests for libpolkit\n");
 
         if (!_test_polkit_action ())
+                goto out;
+
+        if (!_test_polkit_error ())
                 goto out;
 
         ret = 0;

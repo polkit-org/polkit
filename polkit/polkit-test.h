@@ -34,11 +34,9 @@
 
 POLKIT_BEGIN_DECLS
 
-
-#endif /* POLKIT_BUILD_TESTS */
-
-#ifdef POLKIT_BUILD_TESTS
 polkit_bool_t _test_polkit_action (void);
+polkit_bool_t _test_polkit_error (void);
+
 POLKIT_END_DECLS
 
 #endif /* POLKIT_TEST_H */

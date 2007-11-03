@@ -49,6 +49,7 @@
 #include "polkit-types.h"
 #include "polkit-error.h"
 #include "polkit-debug.h"
+#include "polkit-test.h"
 
 /**
  * PolKitError:
@@ -78,6 +79,17 @@ polkit_error_is_set (PolKitError *error)
         return error != NULL;
 }
 
+static const char *error_names[POLKIT_ERROR_NUM_ERROR_CODES] = {
+        "OutOfMemory",
+        "PolicyFileInvalid",
+        "GeneralError",
+        "NotAuthorizedToReadAuthorizationsForOtherUsers",
+        "NotAuthorizedToRevokeAuthorizationsFromOtherUsers",
+        "NotAuthorizedToGrantAuthorization",
+        "AuthorizationAlreadyExists",
+        "NotSupported"
+};
+
 /**
  * polkit_error_get_error_name:
  * @error: the error
@@ -92,39 +104,10 @@ polkit_error_is_set (PolKitError *error)
 const char *
 polkit_error_get_error_name (PolKitError *error)
 {
-        const char *ret;
         g_return_val_if_fail (error != NULL, NULL);
+        g_return_val_if_fail (error->error_code >= 0 && error->error_code < POLKIT_ERROR_NUM_ERROR_CODES, NULL);
 
-        switch (error->error_code) {
-        case POLKIT_ERROR_OUT_OF_MEMORY:
-                ret = "OutOfMemory";
-                break;
-        case POLKIT_ERROR_POLICY_FILE_INVALID:
-                ret = "PolicyFileInvalid";
-                break;
-        case POLKIT_ERROR_GENERAL_ERROR:
-                ret = "GeneralError";
-                break;
-        case POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS:
-                ret = "NotAuthorizedToReadAuthorizationsForOtherUsers";
-                break;
-        case POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS:
-                ret = "NotAuthorizedToRevokeAuthorizationsFromOtherUsers";
-                break;
-        case POLKIT_ERROR_NOT_AUTHORIZED_TO_GRANT_AUTHORIZATION:
-                ret = "NotAuthorizedToGrantAuthorization";
-                break;
-        case POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS:
-                ret = "AuthorizationAlreadyExists";
-                break;
-        case POLKIT_ERROR_NOT_SUPPORTED:
-                ret = "NotSupported";
-                break;
-        default:
-                ret = NULL;
-        }
-
-        return ret;
+        return error_names[error->error_code];
 }
 
 /**
@@ -184,15 +167,17 @@ polkit_error_free (PolKitError *error)
  * @Varargs: printf style arguments
  * 
  * Sets an error. If OOM, the error will be set to a pre-allocated OOM error.
+ *
+ * Returns: TRUE if the error was set
  **/
-void
+polkit_bool_t
 polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...)
 {
         va_list args;
         PolKitError *e;
 
-        if (error == NULL)
-                return;
+        g_return_val_if_fail (error != NULL, FALSE);
+        g_return_val_if_fail (error_code >= 0 && error_code < POLKIT_ERROR_NUM_ERROR_CODES, FALSE);
 
         e = g_new0 (PolKitError, 1);
         e->is_static = FALSE;
@@ -202,4 +187,37 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
         va_end (args);
 
         *error = e;
+
+        return TRUE;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+polkit_bool_t
+_test_polkit_error (void)
+{
+        unsigned int n;
+        PolKitError *e;
+        char s[256];
+
+        e = NULL;
+        g_assert (! polkit_error_is_set (e));
+        g_assert (! polkit_error_set_error (&e, -1, "Testing"));
+        g_assert (! polkit_error_set_error (&e, POLKIT_ERROR_NUM_ERROR_CODES, "Testing"));
+
+        for (n = 0; n < POLKIT_ERROR_NUM_ERROR_CODES; n++) {
+                polkit_error_set_error (&e, n, "Testing error code %d", n);
+                g_assert (polkit_error_is_set (e));
+                g_assert (polkit_error_get_error_code (e) == n);
+                g_assert (strcmp (polkit_error_get_error_name (e), error_names[n]) == 0);
+
+                snprintf (s, sizeof (s), "Testing error code %d", n);
+                g_assert (strcmp (polkit_error_get_error_message (e), s) == 0);
+
+                polkit_error_free (e);
+        }
+
+        return TRUE;
+}
+
+#endif /* POLKIT_BUILD_TESTS */

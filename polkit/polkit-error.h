@@ -54,6 +54,8 @@ POLKIT_BEGIN_DECLS
  * similar authorization already (modulo time of grant and who granted).
  * @POLKIT_ERROR_NOT_SUPPORTED: The operation is not supported by the
  * authorization database backend
+ * @POLKIT_ERROR_NUM_ERROR_CODES: Number of error codes. This may change
+ * from version to version; do not rely on it.
  *
  * Errors returned by PolicyKit
  */
@@ -66,7 +68,9 @@ typedef enum
         POLKIT_ERROR_NOT_AUTHORIZED_TO_REVOKE_AUTHORIZATIONS_FROM_OTHER_USERS,
         POLKIT_ERROR_NOT_AUTHORIZED_TO_GRANT_AUTHORIZATION,
         POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS,
-        POLKIT_ERROR_NOT_SUPPORTED
+        POLKIT_ERROR_NOT_SUPPORTED,
+
+        POLKIT_ERROR_NUM_ERROR_CODES
 } PolKitErrorCode;
 
 struct _PolKitError;
@@ -77,7 +81,7 @@ const char      *polkit_error_get_error_name (PolKitError *error);
 PolKitErrorCode  polkit_error_get_error_code (PolKitError *error);
 const char      *polkit_error_get_error_message (PolKitError *error);
 void             polkit_error_free (PolKitError *error);
-void             polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...) __attribute__((__format__ (__printf__, 3, 4)));
+polkit_bool_t    polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...) __attribute__((__format__ (__printf__, 3, 4)));
 
 POLKIT_END_DECLS
 
