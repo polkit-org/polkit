@@ -40,6 +40,8 @@
 #include "polkit-debug.h"
 #include "polkit-session.h"
 #include "polkit-utils.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * SECTION:polkit-session
@@ -77,8 +79,11 @@ PolKitSession *
 polkit_session_new (void)
 {
         PolKitSession *session;
-        session = g_new0 (PolKitSession, 1);
+        session = p_new0 (PolKitSession, 1);
+        if (session == NULL)
+                goto out;
         session->refcount = 1;
+out:
         return session;
 }
 
@@ -114,11 +119,11 @@ polkit_session_unref (PolKitSession *session)
         session->refcount--;
         if (session->refcount > 0) 
                 return;
-        g_free (session->ck_objref);
-        g_free (session->remote_host);
+        p_free (session->ck_objref);
+        p_free (session->remote_host);
         if (session->seat != NULL)
                 polkit_seat_unref (session->seat);
-        g_free (session);
+        p_free (session);
 }
 
 /**
@@ -153,9 +158,12 @@ polkit_session_set_ck_objref (PolKitSession *session, const char *ck_objref)
         g_return_val_if_fail (session != NULL, FALSE);
         g_return_val_if_fail (_pk_validate_identifier (ck_objref), FALSE);
         if (session->ck_objref != NULL)
-                g_free (session->ck_objref);
-        session->ck_objref = g_strdup (ck_objref);
-        return TRUE;
+                p_free (session->ck_objref);
+        session->ck_objref = p_strdup (ck_objref);
+        if (session->ck_objref == NULL)
+                return FALSE;
+        else
+                return TRUE;
 }
 
 /**
@@ -210,9 +218,12 @@ polkit_session_set_ck_remote_host (PolKitSession *session, const char *remote_ho
         /* TODO: FIXME: probably need to allow a lot more here */
         g_return_val_if_fail (_pk_validate_identifier (remote_host), FALSE);
         if (session->remote_host != NULL)
-                g_free (session->remote_host);
-        session->remote_host = g_strdup (remote_host);
-        return TRUE;
+                p_free (session->remote_host);
+        session->remote_host = p_strdup (remote_host);
+        if (session->remote_host == NULL)
+                return FALSE;
+        else
+                return TRUE;
 }
 
 /**
@@ -393,3 +404,98 @@ polkit_session_validate (PolKitSession *session)
 error:
         return ret;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        char *str;
+        PolKitSession *s;
+        PolKitSeat *seat;
+        PolKitSeat *seat2;
+        uid_t uid;
+        polkit_bool_t b;
+
+        s = polkit_session_new ();
+        if (s == NULL) {
+                /* OOM */
+        } else {
+                if (! polkit_session_set_ck_objref (s, "/somesession")) {
+                        /* OOM */
+                } else {
+                        g_assert (polkit_session_get_ck_objref (s, &str) && strcmp (str, "/somesession") == 0);
+                        polkit_session_ref (s);
+                        polkit_session_unref (s);
+                        polkit_session_debug (s);
+                        if (! polkit_session_set_ck_objref (s, "/somesession2")) {
+                                /* OOM */
+                        } else {
+                                g_assert (polkit_session_get_ck_objref (s, &str) && strcmp (str, "/somesession2") == 0);
+                        }
+
+                        if ((seat = polkit_seat_new ()) != NULL) {
+                                if (polkit_seat_set_ck_objref (seat, "/someseat")) {
+                                        g_assert (polkit_session_set_seat (s, seat));
+                                        g_assert (polkit_session_get_seat (s, &seat2) && seat == seat2);
+                                }
+                                polkit_seat_unref (seat);
+                                if ((seat = polkit_seat_new ()) != NULL) {
+                                        if (polkit_seat_set_ck_objref (seat, "/someseat2")) {
+                                                g_assert (polkit_session_set_seat (s, seat));
+                                                g_assert (polkit_session_get_seat (s, &seat2) && seat == seat2);
+                                        }
+                                        polkit_seat_unref (seat);
+                                }
+                        }
+
+                        g_assert (polkit_session_set_uid (s, 0));
+                        g_assert (polkit_session_get_uid (s, &uid) && uid == 0);
+                        g_assert (polkit_session_set_ck_is_active (s, TRUE));
+                        g_assert (polkit_session_get_ck_is_active (s, &b) && b == TRUE);
+                        g_assert (polkit_session_set_ck_is_local (s, TRUE));
+                        g_assert (polkit_session_get_ck_is_local (s, &b) && b == TRUE);
+                        g_assert (polkit_session_validate (s));
+
+                        g_assert (polkit_session_set_uid (s, 500));
+                        g_assert (polkit_session_get_uid (s, &uid) && uid == 500);
+                        g_assert (polkit_session_set_ck_is_active (s, FALSE));
+                        g_assert (polkit_session_get_ck_is_active (s, &b) && b == FALSE);
+                        g_assert (polkit_session_set_ck_is_local (s, FALSE));
+                        g_assert (polkit_session_get_ck_is_local (s, &b) && b == FALSE);
+
+                        /* not valid because remote host is not set.. */
+                        g_assert (!polkit_session_validate (s));
+
+
+                        if (polkit_session_set_ck_remote_host (s, "somehost.com")) {
+                                g_assert (polkit_session_get_ck_remote_host (s, &str) && strcmp (str, "somehost.com") == 0);
+                                g_assert (polkit_session_validate (s));
+
+                                /* not valid because remote host is set and local==TRUE */
+                                g_assert (polkit_session_set_ck_is_local (s, TRUE));
+                                g_assert (!polkit_session_validate (s));
+                                g_assert (polkit_session_set_ck_is_local (s, FALSE));
+
+                                if (polkit_session_set_ck_remote_host (s, "somehost2.com")) {
+                                        g_assert (polkit_session_get_ck_remote_host (s, &str) && strcmp (str, "somehost2.com") == 0);
+                                        g_assert (polkit_session_validate (s));
+                                }
+                                polkit_session_debug (s);
+                        }
+
+                }
+                polkit_session_unref (s);
+        }
+
+        return TRUE;
+}
+
+PolKitTest _test_session = {
+        "polkit_session",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

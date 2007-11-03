@@ -35,6 +35,7 @@ static PolKitTest *tests[] = {
         &_test_error,
         &_test_result,
         &_test_seat,
+        &_test_session,
 };
 
 int 
