@@ -43,6 +43,8 @@
 #include "polkit-policy-file-entry.h"
 #include "polkit-authorization-db.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * SECTION:polkit-policy-file-entry
@@ -80,9 +82,15 @@ _polkit_policy_file_entry_new   (const char *action_id,
 {
         PolKitPolicyFileEntry *pfe;
 
-        pfe = g_new0 (PolKitPolicyFileEntry, 1);
+        g_return_val_if_fail (action_id != NULL, NULL);
+
+        pfe = p_new0 (PolKitPolicyFileEntry, 1);
+        if (pfe == NULL)
+                goto error;
         pfe->refcount = 1;
-        pfe->action = g_strdup (action_id);
+        pfe->action = p_strdup (action_id);
+        if (pfe->action == NULL)
+                goto error;
 
         if (! (polkit_authorization_db_get_capabilities () & POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN)) {
                 /* if we don't support obtaining authorizations
@@ -108,14 +116,28 @@ error:
         return NULL;
 }
 
-void 
-_polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *policy_file_entry,
+polkit_bool_t
+_polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
                                             const char *policy_description,
                                             const char *policy_message)
 {
-        g_return_if_fail (policy_file_entry != NULL);
-        policy_file_entry->policy_description = g_strdup (policy_description);
-        policy_file_entry->policy_message = g_strdup (policy_message);
+        g_return_val_if_fail (pfe != NULL, FALSE);
+
+        if (pfe->policy_description != NULL)
+                p_free (pfe->policy_description);
+        if (pfe->policy_message != NULL)
+                p_free (pfe->policy_message);
+
+        pfe->policy_description = p_strdup (policy_description);
+        pfe->policy_message = p_strdup (policy_message);
+
+        if (policy_description != NULL && pfe->policy_description == NULL)
+                return FALSE;
+
+        if (policy_message != NULL && pfe->policy_message == NULL)
+                return FALSE;
+
+        return TRUE;
 }
 
 /**
@@ -195,7 +217,7 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
         if (policy_file_entry->refcount > 0) 
                 return;
 
-        g_free (policy_file_entry->action);
+        p_free (policy_file_entry->action);
 
         if (policy_file_entry->defaults != NULL)
                 polkit_policy_default_unref (policy_file_entry->defaults);
@@ -203,9 +225,10 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
         if (policy_file_entry->annotations != NULL)
                 g_hash_table_destroy (policy_file_entry->annotations);
 
-        g_free (policy_file_entry->policy_description);
+        p_free (policy_file_entry->policy_description);
+        p_free (policy_file_entry->policy_message);
 
-        g_free (policy_file_entry);
+        p_free (policy_file_entry);
 }
 
 /**
@@ -320,3 +343,56 @@ polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entr
         }
         return value;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        PolKitPolicyFileEntry *pfe;
+        PolKitPolicyDefault *d;
+
+        if ((pfe = _polkit_policy_file_entry_new ("org.example-action",
+                                                  POLKIT_RESULT_NO,
+                                                  POLKIT_RESULT_ONLY_VIA_SELF_AUTH,
+                                                  POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH,
+                                                  NULL)) != NULL) {
+
+                g_assert (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example-action") == 0);
+
+                if (_polkit_policy_file_entry_set_descriptions (pfe,
+                                                                "the desc",
+                                                                "the msg")) {
+                        g_assert (strcmp (polkit_policy_file_entry_get_action_description (pfe), "the desc") == 0);
+                        g_assert (strcmp (polkit_policy_file_entry_get_action_message (pfe), "the msg") == 0);
+                }
+
+                if (_polkit_policy_file_entry_set_descriptions (pfe,
+                                                                "the desc2",
+                                                                "the msg2")) {
+                        g_assert (strcmp (polkit_policy_file_entry_get_action_description (pfe), "the desc2") == 0);
+                        g_assert (strcmp (polkit_policy_file_entry_get_action_message (pfe), "the msg2") == 0);
+                }
+
+                g_assert ((d = polkit_policy_file_entry_get_default (pfe)) != NULL);
+                g_assert (polkit_policy_default_get_allow_any (d) == POLKIT_RESULT_NO);
+                g_assert (polkit_policy_default_get_allow_inactive (d) == POLKIT_RESULT_ONLY_VIA_SELF_AUTH);
+                g_assert (polkit_policy_default_get_allow_active (d) == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH);
+
+                polkit_policy_file_entry_ref (pfe);
+                polkit_policy_file_entry_unref (pfe);
+                polkit_policy_file_entry_debug (pfe);
+                polkit_policy_file_entry_unref (pfe);
+        }
+
+        return TRUE;
+}
+
+PolKitTest _test_policy_file_entry = {
+        "polkit_policy_file_entry",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

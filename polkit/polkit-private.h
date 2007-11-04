@@ -32,6 +32,7 @@
 
 #include <glib.h>
 #include <polkit/polkit.h>
+#include <polkit/polkit-memory.h>
 
 POLKIT_BEGIN_DECLS
 
@@ -67,9 +68,9 @@ PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id,
                                                         PolKitResult defaults_allow_active,
                                                         GHashTable *annotations);
 
-void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
-                                                 const char *policy_description,
-                                                 const char *policy_message);
+polkit_bool_t _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
+                                                          const char *policy_description,
+                                                          const char *policy_message);
 
 
 PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any,
@@ -81,10 +82,6 @@ PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id,
                                                         PolKitResult defaults_allow_inactive,
                                                         PolKitResult defaults_allow_active,
                                                         GHashTable *annotations);
-
-void _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
-                                                 const char *policy_description,
-                                                 const char *policy_message);
 
 
 #ifdef POLKIT_AUTHDB_DUMMY
