@@ -37,6 +37,7 @@ static PolKitTest *tests[] = {
         &_test_seat,
         &_test_session,
         &_test_caller,
+        &_test_policy_default,
 };
 
 int 

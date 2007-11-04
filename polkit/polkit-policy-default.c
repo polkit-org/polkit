@@ -41,6 +41,8 @@
 #include "polkit-error.h"
 #include "polkit-policy-default.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * SECTION:polkit-policy-default
@@ -71,11 +73,14 @@ _polkit_policy_default_new (PolKitResult defaults_allow_any,
 {
         PolKitPolicyDefault *pd;
 
-        pd = g_new0 (PolKitPolicyDefault, 1);
+        pd = p_new0 (PolKitPolicyDefault, 1);
+        if (pd == NULL)
+                goto out;
         pd->refcount = 1;
         pd->default_any = defaults_allow_any;
         pd->default_inactive = defaults_allow_inactive;
         pd->default_active = defaults_allow_active;
+out:
         return pd;
 }
 
@@ -110,7 +115,7 @@ polkit_policy_default_unref (PolKitPolicyDefault *policy_default)
         policy_default->refcount--;
         if (policy_default->refcount > 0) 
                 return;
-        g_free (policy_default);
+        p_free (policy_default);
 }
 
 /**
@@ -163,10 +168,8 @@ polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default
 
         ret = policy_default->default_any;
 
-        if (!polkit_session_get_ck_is_local (session, &is_local))
-                goto out;
-        if (!polkit_session_get_ck_is_active (session, &is_active))
-                goto out;
+        polkit_session_get_ck_is_local (session, &is_local);
+        polkit_session_get_ck_is_active (session, &is_active);
 
         if (!is_local)
                 goto out;
@@ -210,15 +213,12 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
 
         ret = policy_default->default_any;
 
-        if (!polkit_caller_get_ck_session (caller, &session))
-                goto out;
+        polkit_caller_get_ck_session (caller, &session);
         if (session == NULL)
                 goto out;
 
-        if (!polkit_session_get_ck_is_local (session, &is_local))
-                goto out;
-        if (!polkit_session_get_ck_is_active (session, &is_active))
-                goto out;
+        polkit_session_get_ck_is_local (session, &is_local);
+        polkit_session_get_ck_is_active (session, &is_active);
 
         if (!is_local)
                 goto out;
@@ -278,3 +278,165 @@ polkit_policy_default_get_allow_active (PolKitPolicyDefault *policy_default)
         return policy_default->default_active;
 }
 
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_ts (PolKitSession *s, PolKitResult any, PolKitResult inactive, PolKitResult active, PolKitResult *ret)
+{
+        PolKitAction *a;
+        PolKitPolicyDefault *d;
+        polkit_bool_t oom;
+
+        oom = TRUE;
+
+        if (s == NULL)
+                goto out;
+
+        if ((a = polkit_action_new ()) != NULL) {
+                if (polkit_action_set_action_id (a, "org.dummy")) {
+                        if ((d = _polkit_policy_default_new (any,
+                                                             inactive,
+                                                             active)) != NULL) {
+                                PolKitCaller *c;
+
+                                *ret = polkit_policy_default_can_session_do_action (d, a, s);
+                                oom = FALSE;
+
+                                if ((c = polkit_caller_new ()) != NULL) {
+                                        g_assert (polkit_policy_default_can_caller_do_action (d, a, c) == any);
+
+                                        g_assert (polkit_caller_set_ck_session (c, s));
+                                        g_assert (polkit_policy_default_can_caller_do_action (d, a, c) == *ret);
+                                        polkit_caller_unref (c);
+                                }
+
+                                polkit_policy_default_ref (d);
+                                polkit_policy_default_get_allow_any (d);
+                                polkit_policy_default_get_allow_inactive (d);
+                                polkit_policy_default_get_allow_active (d);
+                                polkit_policy_default_unref (d);
+                                polkit_policy_default_debug (d);
+                                polkit_policy_default_unref (d);
+                        }
+                }
+                polkit_action_unref (a);
+        }
+
+out:
+        return oom;
+}
+
+static polkit_bool_t
+_run_test (void)
+{
+        PolKitResult ret;
+        PolKitSession *s_active;
+        PolKitSession *s_inactive;
+        PolKitSession *s_active_remote;
+        PolKitSession *s_inactive_remote;
+
+        if ((s_active = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_active, "/session1")) {
+                        polkit_session_unref (s_active);
+                        s_active = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_active, TRUE));
+                        g_assert (polkit_session_set_ck_is_active (s_active, TRUE));
+                }
+        }
+
+        if ((s_inactive = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_inactive, "/session2")) {
+                        polkit_session_unref (s_inactive);
+                        s_inactive = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_inactive, TRUE));
+                        g_assert (polkit_session_set_ck_is_active (s_inactive, FALSE));
+                }
+        }
+
+        if ((s_active_remote = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_active_remote, "/session3") ||
+                    !polkit_session_set_ck_remote_host (s_active_remote, "remotehost.com")) {
+                        polkit_session_unref (s_active_remote);
+                        s_active_remote = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_active_remote, FALSE));
+                        g_assert (polkit_session_set_ck_is_active (s_active_remote, TRUE));
+                }
+        }
+
+        if ((s_inactive_remote = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_inactive_remote, "/session4") ||
+                    !polkit_session_set_ck_remote_host (s_inactive_remote, "remotehost.com")) {
+                        polkit_session_unref (s_inactive_remote);
+                        s_inactive_remote = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_inactive_remote, FALSE));
+                        g_assert (polkit_session_set_ck_is_active (s_inactive_remote, FALSE));
+                }
+        }
+
+        g_assert (_ts (s_active, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_YES);
+        g_assert (_ts (s_inactive, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_NO);
+        g_assert (_ts (s_active_remote, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_NO);
+        g_assert (_ts (s_inactive_remote, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_NO);
+
+        g_assert (_ts (s_active, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_YES);
+        g_assert (_ts (s_inactive, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_YES);
+        g_assert (_ts (s_active_remote, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_NO);
+        g_assert (_ts (s_inactive_remote, 
+                       POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_NO);
+
+        g_assert (_ts (s_active, 
+                       POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_YES);
+        g_assert (_ts (s_inactive, 
+                       POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_YES);
+        g_assert (_ts (s_active_remote, 
+                       POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_YES);
+        g_assert (_ts (s_inactive_remote, 
+                       POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
+                  ret == POLKIT_RESULT_YES);
+
+        if (s_active != NULL)
+                polkit_session_unref (s_active);
+
+        if (s_inactive != NULL)
+                polkit_session_unref (s_inactive);
+
+        if (s_active_remote != NULL)
+                polkit_session_unref (s_active_remote);
+
+        if (s_inactive_remote != NULL)
+                polkit_session_unref (s_inactive_remote);
+
+        return TRUE;
+}
+
+PolKitTest _test_policy_default = {
+        "polkit_policy_default",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */
