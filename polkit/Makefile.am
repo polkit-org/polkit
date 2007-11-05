@@ -20,6 +20,8 @@ libpolkitincludedir=$(includedir)/PolicyKit/polkit
 libpolkitinclude_HEADERS =              		\
 	polkit.h					\
 	polkit-sysdeps.h				\
+	polkit-memory.h					\
+	polkit-hash.h					\
 	polkit-types.h					\
 	polkit-error.h					\
 	polkit-result.h					\
@@ -42,6 +44,7 @@ libpolkit_la_SOURCES =                                					\
 	polkit-private.h								\
 	polkit-types.h									\
 	polkit-memory.h				polkit-memory.c				\
+	polkit-hash.h				polkit-hash.c				\
 	polkit-sysdeps.h			polkit-sysdeps.c			\
 	polkit-error.h				polkit-error.c				\
 	polkit-result.h				polkit-result.c				\

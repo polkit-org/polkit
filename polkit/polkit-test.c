@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <polkit/polkit-test.h>
 #include <polkit/polkit-memory.h>
+#include <polkit/polkit-private.h>
 
 #define MAX_TESTS 64
 
@@ -39,6 +40,7 @@ static PolKitTest *tests[] = {
         &_test_caller,
         &_test_policy_default,
         &_test_policy_file_entry,
+        &_test_hash,
 };
 
 int 

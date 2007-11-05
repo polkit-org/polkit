@@ -33,6 +33,18 @@
 #include <glib.h>
 
 #include <polkit/polkit-memory.h>
+#include <polkit/polkit-private.h>
+
+/**
+ * SECTION:polkit-memory
+ * @title: Memory management
+ * @short_description: Memory management
+ *
+ * Functions used for memory management.
+ *
+ * Since: 0.7
+ **/
+
 
 #ifdef POLKIT_BUILD_TESTS
 
@@ -66,6 +78,16 @@ _polkit_memory_fail_nth_alloc (int number)
         _fail_nth = number;
 }
 
+/**
+ * p_malloc:
+ * @bytes: number of 8-bit bytes to allocate
+ *
+ * Allocate memory
+ *
+ * Returns: memory location or #NULL on OOM. Free with p_free().
+ *
+ * Since: 0.7
+ */
 void *
 p_malloc (size_t bytes)
 {
@@ -85,6 +107,16 @@ p_malloc (size_t bytes)
         return p;
 }
 
+/**
+ * p_malloc0:
+ * @bytes: number of 8-bit bytes to allocate
+ *
+ * Allocate memory and zero it.
+ *
+ * Returns: memory location or #NULL on OOM. Free with p_free().
+ *
+ * Since: 0.7
+ */
 void *
 p_malloc0 (size_t bytes)
 {
@@ -104,6 +136,14 @@ p_malloc0 (size_t bytes)
         return p;
 }
 
+/**
+ * p_free:
+ * @memory: pointer to memory allocated with p_malloc() + friends
+ *
+ * Free memory allocated by p_malloc() + friends.
+ *
+ * Since: 0.7
+ */
 void
 p_free (void *memory)
 {
@@ -113,6 +153,16 @@ p_free (void *memory)
         }
 }
 
+/**
+ * p_strdup:
+ * @s: string
+ *
+ * Duplicate a string. Similar to strdup(3).
+ *
+ * Returns: Allocated memory or #NULL on OOM. Free with p_free().
+ *
+ * Since: 0.7
+ */
 char *
 p_strdup (const char *s)
 {
@@ -183,6 +233,20 @@ p_strdup (const char *s)
 
 #endif /* POLKIT_BUILD_TESTS */
 
+/**
+ * p_strdup_printf:
+ * @format: sprintf(3) format string
+ * @...:  the parameters to insert into the format string.
+ * 
+ * Similar to the standard C sprintf(3) function but safer, since it
+ * calculates the maximum space required and allocates memory to hold
+ * the result. The returned string should be freed when no longer
+ * needed.
+ *
+ * Returns: A newly allocated string or #NULL on OOM. Free with p_free().
+ *
+ * Since: 0.7
+ */
 char* 
 p_strdup_printf (const char *format, ...)
 {
@@ -196,6 +260,20 @@ p_strdup_printf (const char *format, ...)
         return s;
 }
 
+/**
+ * p_strdup_vprintf:
+ * @format: printf(3) format string
+ * @args: list of parameters to insert
+ * 
+ * Similar to the standard C vsprintf(3) function but safer, since it
+ * calculates the maximum space required and allocates memory to hold
+ * the result. The returned string should be freed when no longer
+ * needed.
+ *
+ * Returns: A newly allocated string or #NULL on OOM. Free with p_free().
+ *
+ * Since: 0.7
+ */
 char* 
 p_strdup_vprintf (const char *format, va_list args)
 {

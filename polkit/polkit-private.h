@@ -36,6 +36,11 @@
 
 POLKIT_BEGIN_DECLS
 
+void  _polkit_memory_reset (void);
+int   _polkit_memory_get_current_allocations (void);
+int   _polkit_memory_get_total_allocations (void);
+void  _polkit_memory_fail_nth_alloc (int number);
+
 PolKitAuthorization *_polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid);
 const char *_polkit_authorization_get_authfile_entry (PolKitAuthorization *auth);
 

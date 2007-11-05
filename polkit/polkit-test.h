@@ -37,7 +37,13 @@ POLKIT_BEGIN_DECLS
 polkit_bool_t _test_polkit_action (void);
 polkit_bool_t _test_polkit_error (void);
 
+/**
+ * PolKitTest:
+ *
+ * Test suite abstraction.
+ */
 typedef struct {
+        /*< private >*/
         const char *name;
         void (*setup) (void);
         void (*teardown) (void);
@@ -52,6 +58,7 @@ extern PolKitTest _test_session;
 extern PolKitTest _test_caller;
 extern PolKitTest _test_policy_default;
 extern PolKitTest _test_policy_file_entry;
+extern PolKitTest _test_hash;
 
 POLKIT_END_DECLS
 

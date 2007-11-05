@@ -78,6 +78,13 @@ POLKIT_BEGIN_DECLS
 typedef int polkit_bool_t;
 
 /**
+ * polkit_uint32_t:
+ *
+ * Type for unsigned 32 bit integer.
+ */
+typedef unsigned int polkit_uint32_t;
+
+/**
  * polkit_uint64_t:
  *
  * Type for unsigned 64 bit integer.

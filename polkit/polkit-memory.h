@@ -38,16 +38,30 @@ POLKIT_BEGIN_DECLS
 void *p_malloc  (size_t bytes);
 void *p_malloc0 (size_t bytes);
 void  p_free    (void *memory);
-char *p_strdup  (const char *s);
 
+/**
+ * p_new:
+ * @type: the type of object to allocate
+ * @count: number of objects to allocate
+ *
+ * Allocate memory for @count structures of type @type.
+ *
+ * Returns: Allocated memory, cast to a pointer of #type or #NULL on OOM.
+ */
 #define p_new(type, count)  ((type*)p_malloc (sizeof (type) * (count)));
+
+/**
+ * p_new0:
+ * @type: the type of object to allocate
+ * @count: number of objects to allocate
+ *
+ * Allocate zeroed memory for @count structures of type @type.
+ *
+ * Returns: Allocated memory, cast to a pointer of #type or #NULL on OOM.
+ */
 #define p_new0(type, count) ((type*)p_malloc0 (sizeof (type) * (count)));
 
-void  _polkit_memory_reset (void);
-int   _polkit_memory_get_current_allocations (void);
-int   _polkit_memory_get_total_allocations (void);
-void  _polkit_memory_fail_nth_alloc (int number);
-
+char *p_strdup  (const char *s);
 char* p_strdup_printf  (const char *format, ...);
 char* p_strdup_vprintf (const char *format, va_list args);
 
