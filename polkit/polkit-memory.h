@@ -23,8 +23,8 @@
  *
  **************************************************************************/
 
-#if !defined (POLKIT_COMPILATION)
-#error "polkit-memory.h is a private file"
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
 #endif
 
 #ifndef POLKIT_MEMORY_H
