@@ -78,8 +78,8 @@ struct _PolKitHash
  * polkit_hash_new:
  * @hash_func: The hash function to use
  * @key_equal_func: The function used to determine key equality
- * @key_destroy_func: Function for freeing keys
- * @value_destroy_func: Function for freeing values
+ * @key_destroy_func: Function for freeing keys or #NULL
+ * @value_destroy_func: Function for freeing values or #NULL
  *
  * Creates a new Hash Table.
  *
@@ -202,6 +202,9 @@ polkit_hash_insert (PolKitHash *hash,
         PolKitHashNode **nodep;
         PolKitHashNode *node;
 
+        g_return_val_if_fail (hash != NULL, FALSE);
+        g_return_val_if_fail (key != NULL, FALSE);
+
         ret = FALSE;
 
         bucket = hash->hash_func (key) % hash->num_top_nodes;
@@ -261,6 +264,13 @@ polkit_hash_lookup (PolKitHash *hash, void *key, polkit_bool_t *found)
         void *value;
         PolKitHashNode *node;
 
+        value = NULL;
+        if (found != NULL)
+                *found = FALSE;
+
+        g_return_val_if_fail (hash != NULL, NULL);
+        g_return_val_if_fail (key != NULL, NULL);
+
         bucket = hash->hash_func (key) % hash->num_top_nodes;
 
         node = hash->top_nodes [bucket];
@@ -277,17 +287,46 @@ polkit_hash_lookup (PolKitHash *hash, void *key, polkit_bool_t *found)
                 }
         }
 
-        value = NULL;
-        if (found != NULL)
-                *found = FALSE;
-
 out:
         return value;
 }
 
 
 /**
- * p_direct_hash:
+ * polkit_hash_foreach:
+ * @hash: the hash table
+ * @cb: callback function
+ * @user_data: user data
+ *
+ * Iterate over all elements in a hash table
+ *
+ * Returns: #TRUE only if the callback short-circuited the iteration
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_hash_foreach (PolKitHash *hash, PolKitHashForeachFunc cb, void *user_data)
+{
+        int n;
+
+        g_return_val_if_fail (hash != NULL, FALSE);
+        g_return_val_if_fail (cb != NULL, FALSE);
+
+        for (n = 0; n < hash->num_top_nodes; n++) {
+                PolKitHashNode *node;
+
+                for (node = hash->top_nodes[n]; node != NULL; node = node->next) {
+                        if (cb (hash, node->key, node->value, user_data))
+                                return TRUE;
+                }
+        }
+
+        return FALSE;
+}
+
+
+/**
+ * polkit_hash_direct_hash_func:
  * @key: the key
  *
  * Converts a pointer to a hash value.
@@ -297,14 +336,32 @@ out:
  * Since: 0.7
  */
 polkit_uint32_t 
-p_direct_hash (const void *key)
+polkit_hash_direct_hash_func (const void *key)
 {
         /* TODO: reimplement */
         return g_direct_hash (key);
 }
 
 /**
- * p_str_hash:
+ * polkit_hash_direct_equal_func:
+ * @v1: first value
+ * @v2: second value
+ *
+ * Compares two pointers and return #TRUE if they are equal (same address).
+ *
+ * Returns: #TRUE only if the values are equal
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_hash_direct_equal_func (const void *v1, const void *v2)
+{
+        /* TODO: reimplement */
+        return g_direct_equal (v1, v2);
+}
+
+/**
+ * polkit_hash_str_hash_func:
  * @key: the key
  *
  * Converts a string to a hash value.
@@ -314,59 +371,57 @@ p_direct_hash (const void *key)
  * Since: 0.7
  */
 polkit_uint32_t
-p_str_hash (const void *key)
+polkit_hash_str_hash_func (const void *key)
 {
         /* TODO: reimplement */
         return g_str_hash (key);
 }
 
 /**
- * p_direct_equal:
+ * polkit_hash_str_equal_func:
  * @v1: first value
  * @v2: second value
  *
- * Compares to pointers and return #TRUE if they are equal (same address).
+ * Compares two strings and return #TRUE if they are equal.
  *
  * Returns: #TRUE only if the values are equal
  *
  * Since: 0.7
  */
 polkit_bool_t
-p_direct_equal (const void *v1, const void *v2)
-{
-        /* TODO: reimplement */
-        return g_direct_equal (v1, v2);
-}
-
-/**
- * p_str_equal:
- * @v1: first value
- * @v2: second value
- *
- * Compares to strings and return #TRUE if they are equal.
- *
- * Returns: #TRUE only if the values are equal
- *
- * Since: 0.7
- */
-polkit_bool_t
-p_str_equal (const void *v1, const void *v2)
+polkit_hash_str_equal_func (const void *v1, const void *v2)
 {
         /* TODO: reimplement */
         return g_str_equal (v1, v2);
 }
 
-
 #ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_it1 (PolKitHash *hash, void *key, void *value, void *user_data)
+{
+        int *count = (int *) user_data;
+        *count += 1;
+        return FALSE;
+}
+
+static polkit_bool_t
+_it2 (PolKitHash *hash, void *key, void *value, void *user_data)
+{
+        int *count = (int *) user_data;
+        *count += 1;
+        return TRUE;
+}
 
 static polkit_bool_t
 _run_test (void)
 {
+        int count;
         PolKitHash *h;
         polkit_bool_t found;
 
         /* string hash tables */
-        if ((h = polkit_hash_new (p_str_hash, p_str_equal, p_free, p_free)) != NULL) {
+        if ((h = polkit_hash_new (polkit_hash_str_hash_func, polkit_hash_str_equal_func, p_free, p_free)) != NULL) {
                 int n;
                 char *key;
                 char *value;
@@ -432,6 +487,13 @@ _run_test (void)
                                 g_assert (found && value != NULL && strcmp (value, "val1-replaced") == 0);
                         }
                 }
+
+                count = 0;
+                g_assert (polkit_hash_foreach (h, _it1, &count) == FALSE);
+                g_assert (count == ((sizeof (test_data) / sizeof (char *) - 1) / 2));
+                count = 0;
+                g_assert (polkit_hash_foreach (h, _it2, &count) == TRUE);
+                g_assert (count == 1);
                 
                 polkit_hash_ref (h);
                 polkit_hash_unref (h);
@@ -441,7 +503,7 @@ _run_test (void)
         }
 
         /* direct hash tables */
-        if ((h = polkit_hash_new (p_direct_hash, p_direct_equal, NULL, NULL)) != NULL) {
+        if ((h = polkit_hash_new (polkit_hash_direct_hash_func, polkit_hash_direct_equal_func, NULL, NULL)) != NULL) {
                 if (polkit_hash_insert (h, h, h)) {
                         g_assert ((polkit_hash_lookup (h, h, &found) == h) && found);
                         if (polkit_hash_insert (h, h, NULL)) {

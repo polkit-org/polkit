@@ -42,9 +42,9 @@ typedef struct _PolKitHash PolKitHash;
  * @key: a key
  *
  * The function is passed a key and should return a hash value. The
- * functions p_direct_hash(), p_int_hash() and p_str_hash() provide
- * hash functions which can be used when the key is a pointer, an
- * integer, and char* respectively.
+ * functions polkit_hash_direct_hash_func() and
+ * polkit_hash_str_hash_func() provide hash functions which can be
+ * used when the key is a pointer and an char* respectively.
  *
  * Returns: the hash value corresponding to the key
  *
@@ -57,7 +57,10 @@ typedef polkit_uint32_t (*PolKitHashFunc) (const void *key);
  * @key1: first key
  * @key2: second key
  *
- * Determines if two keys are equal.
+ * Determines if two keys are equal. The functions
+ * polkit_hash_direct_equal_func() and polkit_hash_str_equal_func()
+ * provide equality functions which can be used when the key is a
+ * pointer and an char* respectively.
  *
  * Returns: #TRUE iff the keys are equal
  *
@@ -77,6 +80,24 @@ typedef polkit_bool_t (*PolKitEqualFunc) (const void *key1, const void *key2);
  */
 typedef void (*PolKitFreeFunc) (void *p);
 
+/**
+ * PolKitHashForeachFunc:
+ * @hash: the hash table
+ * @key: key
+ * @value: value
+ * @user_data: user data passed to polkit_hash_foreach()
+ *
+ * Type signature for callback function used in polkit_hash_foreach().
+ *
+ * Returns: Return #TRUE to short-circuit, e.g. stop the iteration.
+ *
+ * Since: 0.7
+ */
+typedef polkit_bool_t (*PolKitHashForeachFunc) (PolKitHash *hash,
+                                                void *key,
+                                                void *value,
+                                                void *user_data);
+
 
 PolKitHash *polkit_hash_new (PolKitHashFunc  hash_func,
                              PolKitEqualFunc key_equal_func,
@@ -90,12 +111,14 @@ polkit_bool_t  polkit_hash_insert (PolKitHash *hash, void *key, void *value);
 
 void          *polkit_hash_lookup (PolKitHash *hash, void *key, polkit_bool_t *found);
 
-polkit_uint32_t p_direct_hash (const void *key);
-polkit_uint32_t p_str_hash (const void *key);
+polkit_bool_t  polkit_hash_foreach (PolKitHash *hash, PolKitHashForeachFunc cb, void *user_data);
 
 
-polkit_bool_t p_direct_equal (const void *v1, const void *v2);
-polkit_bool_t p_str_equal (const void *v1, const void *v2);
+polkit_uint32_t polkit_hash_direct_hash_func  (const void *key);
+polkit_bool_t   polkit_hash_direct_equal_func (const void *v1, const void *v2);
+
+polkit_uint32_t polkit_hash_str_hash_func     (const void *key);
+polkit_bool_t   polkit_hash_str_equal_func    (const void *v1, const void *v2);
 
 POLKIT_END_DECLS
 
