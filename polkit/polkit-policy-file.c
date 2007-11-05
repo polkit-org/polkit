@@ -114,7 +114,7 @@ typedef struct {
         char *elem_lang;
 
         char *annotate_key;
-        GHashTable *annotations;
+        PolKitHash *annotations;
 } ParserData;
 
 static void
@@ -137,7 +137,7 @@ pd_unref_action_data (ParserData *pd)
         g_free (pd->annotate_key);
         pd->annotate_key = NULL;
         if (pd->annotations != NULL) {
-                g_hash_table_destroy (pd->annotations);
+                polkit_hash_unref (pd->annotations);
                 pd->annotations = NULL;
         }
 }
@@ -288,9 +288,12 @@ _cdata (void *data, const char *s, int len)
 
         case STATE_IN_ANNOTATE:
                 if (pd->annotations == NULL) {
-                        pd->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+                        pd->annotations = polkit_hash_new (polkit_hash_str_hash_func, 
+                                                           polkit_hash_str_equal_func, 
+                                                           p_free, 
+                                                           p_free);
                 }
-                g_hash_table_insert (pd->annotations, g_strdup (pd->annotate_key), g_strdup (str));
+                polkit_hash_insert (pd->annotations, p_strdup (pd->annotate_key), p_strdup (str));
                 break;
 
         default:
