@@ -166,16 +166,17 @@ p_free (void *memory)
 char *
 p_strdup (const char *s)
 {
-        void *p;
+        char *p;
         size_t len;
 
-        len = strlen (s) + 1;
+        len = strlen (s);
 
         p = p_malloc (len + 1);
         if (p == NULL)
                 goto out;
 
-        memcpy (p, s, len + 1);
+        memcpy (p, s, len);
+        p[len] = '\0';
 
 out:
         return p;
@@ -197,18 +198,23 @@ out:
 char *
 p_strndup (const char *s, size_t n)
 {
-        void *p;
+        char *p;
         size_t len;
 
-        len = strlen (s) + 1;
-        if (len > n)
-                len = n;
+        for (len = 0; len < n; len++) {
+                if (s[len] == '\0')
+                        break;
+                if (len == n)
+                        break;
+        }
+
 
         p = p_malloc (len + 1);
         if (p == NULL)
                 goto out;
 
-        memcpy (p, s, len + 1);
+        memcpy (p, s, len);
+        p[len] = '\0';
 out:
         return p;
 }
