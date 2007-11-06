@@ -137,6 +137,41 @@ p_malloc0 (size_t bytes)
 }
 
 /**
+ * p_realloc:
+ * @p: memory previously allocated
+ * @bytes: new size
+ *
+ * Reallocate memory; like realloc(3).
+ *
+ * Returns: memory location or #NULL on OOM. Free with p_free().
+ *
+ * Since: 0.7
+ */
+void *
+p_realloc (void *memory, size_t bytes)
+{
+        void *p;
+
+        g_debug ("realloc %p %d", memory, bytes);
+
+        if (memory == NULL)
+                return p_malloc (bytes);
+
+        if (bytes == 0) {
+                p_free (memory);
+                return memory;
+        }
+
+        if (_fail_nth != -1 && _total_allocs == _fail_nth) {
+                return NULL;
+        }
+
+        p = realloc (memory, bytes);
+
+        return p;
+}
+
+/**
  * p_free:
  * @memory: pointer to memory allocated with p_malloc() + friends
  *
@@ -233,6 +268,12 @@ void *
 p_malloc0 (size_t bytes)
 {
         return calloc (1, bytes);
+}
+
+void *
+p_realloc (void *memory, size_t bytes)
+{
+        return realloc (memory, bytes);
 }
 
 void

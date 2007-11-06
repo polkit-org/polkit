@@ -37,6 +37,7 @@ POLKIT_BEGIN_DECLS
 
 void *p_malloc  (size_t bytes);
 void *p_malloc0 (size_t bytes);
+void *p_realloc (void *memory, size_t bytes);
 void  p_free    (void *memory);
 
 /**

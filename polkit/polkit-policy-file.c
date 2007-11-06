@@ -493,7 +493,15 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         }
 
         pd.path = path;
+/* #ifdef POLKIT_BUILD_TESTS
+   TODO: expat appears to leak on certain OOM paths
+*/
+#if 0
+        XML_Memory_Handling_Suite memsuite = {p_malloc, p_realloc, p_free};
+        pd.parser = XML_ParserCreate_MM (NULL, &memsuite, NULL);
+#else
         pd.parser = XML_ParserCreate (NULL);
+#endif
         pd.stack_depth = 0;
         if (pd.parser == NULL) {
                 polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
@@ -541,7 +549,11 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         xml_res = XML_Parse (pd.parser, buf, buflen, 1);
 
 	if (xml_res == 0) {
-                if (pd.is_oom) {
+                if (XML_GetErrorCode (pd.parser) == XML_ERROR_NO_MEMORY) {
+                        polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
+                                                "Out of memory parsing %s",
+                                                path);
+                } else if (pd.is_oom) {
                         polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
                                                 "Out of memory parsing %s",
                                                 path);
