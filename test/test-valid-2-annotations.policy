@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policyconfig>
+
+  <action id="org.example">
+    <description>example 2</description>
+    <message>message 2</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+    <annotate key="the.key1">Some Value 1</annotate>
+    <annotate key="the.key2">Some Value 2</annotate>
+  </action>
+
+</policyconfig>

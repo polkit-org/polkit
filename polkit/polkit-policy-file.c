@@ -143,6 +143,16 @@ pd_unref_action_data (ParserData *pd)
                 polkit_hash_unref (pd->annotations);
                 pd->annotations = NULL;
         }
+        p_free (pd->elem_lang);
+        pd->elem_lang = NULL;
+}
+
+static void
+pd_unref_data (ParserData *pd)
+{
+        pd_unref_action_data (pd);
+        p_free (pd->lang);
+        pd->lang = NULL;
 }
 
 static void
@@ -219,10 +229,6 @@ _start (void *data, const char *el, const char **attr)
                                 goto oom;
                 }
                 break;
-        case STATE_IN_ACTION_DESCRIPTION:
-                break;
-        case STATE_IN_ACTION_MESSAGE:
-                break;
         case STATE_IN_DEFAULTS:
                 if (strcmp (el, "allow_any") == 0)
                         state = STATE_IN_DEFAULTS_ALLOW_ANY;
@@ -231,23 +237,15 @@ _start (void *data, const char *el, const char **attr)
                 else if (strcmp (el, "allow_active") == 0)
                         state = STATE_IN_DEFAULTS_ALLOW_ACTIVE;
                 break;
-        case STATE_IN_DEFAULTS_ALLOW_ANY:
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
-                break;
-        case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
-                break;
-        case STATE_IN_ANNOTATE:
-                break;
         default:
                 break;
         }
 
         if (state == STATE_NONE) {
-                g_warning ("skipping unknown tag <%s> at line %d of %s", 
-                           el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
-                syslog (LOG_ALERT, "libpolkit: skipping unknown tag <%s> at line %d of %s", 
-                        el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
+                //g_warning ("skipping unknown tag <%s> at line %d of %s", 
+                //           el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
+                //syslog (LOG_ALERT, "libpolkit: skipping unknown tag <%s> at line %d of %s", 
+                //        el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
                 state = STATE_UNKNOWN_TAG;
         }
 
@@ -408,9 +406,6 @@ _end (void *data, const char *el)
                         goto oom;
                 pd->annotations = NULL;
 
-                if (pfe == NULL)
-                        goto error;
-
                 if (pd->load_descriptions) {
                         policy_description = _localize (pd->policy_descriptions, pd->policy_description_nolang, pd->lang);
                         policy_message = _localize (pd->policy_messages, pd->policy_message_nolang, pd->lang);
@@ -422,8 +417,10 @@ _end (void *data, const char *el)
                 if (pd->load_descriptions) {
                         if (!_polkit_policy_file_entry_set_descriptions (pfe,
                                                                          policy_description,
-                                                                         policy_message))
+                                                                         policy_message)) {
+                                polkit_policy_file_entry_unref (pfe);
                                 goto oom;
+                        }
                 }
 
                 pd->pf->entries = g_slist_prepend (pd->pf->entries, pfe);
@@ -473,6 +470,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         GError *g_error;
 
         pf = NULL;
+        buf = NULL;
 
         /* clear parser data */
         memset (&pd, 0, sizeof (ParserData));
@@ -509,8 +507,12 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
 	XML_SetCharacterDataHandler (pd.parser, _cdata);
 
         pf = p_new0 (PolKitPolicyFile, 1);
-        if (pf == NULL)
+        if (pf == NULL) {
+                polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
+                                        "Cannot load PolicyKit policy file at '%s': No memory for object",
+                                        path);
                 goto error;
+        }
 
         pf->refcount = 1;
 
@@ -522,8 +524,12 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         if (lang != NULL) {
                 int n;
                 pd.lang = p_strdup (lang);
-                if (pd.lang == NULL)
+                if (pd.lang == NULL) {
+                        polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
+                                                "Cannot load PolicyKit policy file at '%s': No memory for lang",
+                                                path);
                         goto error;
+                }
                 for (n = 0; pd.lang[n] != '\0'; n++) {
                         if (pd.lang[n] == '.') {
                                 pd.lang[n] = '\0';
@@ -547,17 +553,18 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
                                                 XML_ErrorString (XML_GetErrorCode (pd.parser)));
                 }
 		XML_ParserFree (pd.parser);
-		p_free (buf);
 		goto error;
 	}
+
 	XML_ParserFree (pd.parser);
-	p_free (buf);
-        pd_unref_action_data (&pd);
+	g_free (buf);
+        pd_unref_data (&pd);
         return pf;
 error:
         if (pf != NULL)
                 polkit_policy_file_unref (pf);
-        pd_unref_action_data (&pd);
+        pd_unref_data (&pd);
+        g_free (buf);
         return NULL;
 }
 
@@ -627,27 +634,148 @@ polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
 
 #ifdef POLKIT_BUILD_TESTS
 
-#define TEST_DATA_DIR "/home/davidz/Hacking/PolicyKit/test/"
+/* this checks that the policy descriptions read from test-valid-3-lang.policy are correct */
+static void
+_check_pf (PolKitPolicyFile *pf, PolKitPolicyFileEntry *pfe, void *user_data)
+{
+        const char *r_msg;
+        const char *r_desc;
+        char *msg;
+        char *desc;
+        char *lang;
+        int *counter = (int *) user_data;
+        polkit_bool_t is_danish;
+
+        is_danish = FALSE;
+        lang = getenv ("LANG");
+        if (lang != NULL) {
+                if (strcmp (lang, "da_DK.UTF8") == 0 ||
+                    strcmp (lang, "da_DK") == 0 ||
+                    strcmp (lang, "da") == 0)
+                        is_danish = TRUE;
+        }
+        
+
+        if (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example") == 0) {
+                if (is_danish) {
+                        desc = "example (danish)";
+                        msg = "message (danish)";
+                } else {
+                        desc = "example";
+                        msg = "message";
+                }
+                r_desc = polkit_policy_file_entry_get_action_description (pfe);
+                r_msg = polkit_policy_file_entry_get_action_message (pfe);
+
+                if (strcmp (r_desc, desc) == 0 &&
+                    strcmp (r_msg, msg) == 0) 
+                        *counter += 1;
+
+        }  else if (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example2") == 0) {
+                if (is_danish) {
+                        desc = "example 2 (danish)";
+                        msg = "message 2 (danish)";
+                } else {
+                        desc = "example 2";
+                        msg = "message 2";
+                }
+                r_desc = polkit_policy_file_entry_get_action_description (pfe);
+                r_msg = polkit_policy_file_entry_get_action_message (pfe);
+
+                if (strcmp (r_desc, desc) == 0 &&
+                    strcmp (r_msg, msg) == 0) 
+                        *counter += 1;
+        }
+}
 
 static polkit_bool_t
 _run_test (void)
 {
+        int m;
+        unsigned int n;
         PolKitPolicyFile *pf;
         PolKitError *error;
+        const char *valid_files[] = {
+                TEST_DATA_DIR "test-valid-1.policy",
+                TEST_DATA_DIR "test-valid-2-annotations.policy",
+                TEST_DATA_DIR "test-valid-3-lang.policy",
+                TEST_DATA_DIR "test-valid-4-unknown-tags.policy",
+        };
+        const char *invalid_files[] = {
+                TEST_DATA_DIR "non-existant-file.policy",
+                TEST_DATA_DIR "bad.extension",
+                TEST_DATA_DIR "test-invalid-1-action-id.policy",
+                TEST_DATA_DIR "test-invalid-2-bogus-any.policy",
+                TEST_DATA_DIR "test-invalid-3-bogus-inactive.policy",
+                TEST_DATA_DIR "test-invalid-4-bogus-active.policy",
+                TEST_DATA_DIR "test-invalid-5-max-depth.policy",
+        };
 
-        error = NULL;
-        g_assert (polkit_policy_file_new (TEST_DATA_DIR "bad.extension", TRUE, &error) == NULL);
-        g_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY ||
-                  polkit_error_get_error_code (error) == POLKIT_ERROR_POLICY_FILE_INVALID);
-        polkit_error_free (error);
-        error = NULL;
+        for (n = 0; n < sizeof (invalid_files) / sizeof (char*); n++) {
+                error = NULL;
+                g_assert (polkit_policy_file_new (invalid_files[n], TRUE, &error) == NULL);
+                g_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY ||
+                          polkit_error_get_error_code (error) == POLKIT_ERROR_POLICY_FILE_INVALID);
+                polkit_error_free (error);
+        }
+        
+        for (n = 0; n < sizeof (valid_files) / sizeof (char*); n++) {
 
-        if ((pf = polkit_policy_file_new (TEST_DATA_DIR "test-valid-1.policy", TRUE, NULL)) == NULL)
-                goto oom;
+                for (m = 0; m < 6; m++) {
+                        polkit_bool_t load_descriptions;
 
-oom:
-        if (pf != NULL)
-                polkit_policy_file_unref (pf);
+                        /* only run the multiple lang tests for test-valid-3-lang.policy */
+                        if (n != 2) {
+                                if (m > 0)
+                                        break;
+                        }
+
+                        load_descriptions = TRUE;
+                        
+                        switch (m) {
+                        case 0:
+                                unsetenv ("LANG");
+                                break;
+                        case 1:
+                                setenv ("LANG", "da_DK.UTF8", 1);
+                                break;
+                        case 2:
+                                setenv ("LANG", "da_DK", 1);
+                                break;
+                        case 3:
+                                setenv ("LANG", "da", 1);
+                                break;
+                        case 4:
+                                setenv ("LANG", "en_CA", 1);
+                                break;
+                        case 5:
+                                unsetenv ("LANG");
+                                load_descriptions = FALSE;
+                                break;
+                        }
+
+                        error = NULL;
+                        if ((pf = polkit_policy_file_new (valid_files[n], load_descriptions, &error)) == NULL) {
+                                g_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                                polkit_error_free (error);
+                        } else {
+
+                                if (n == 2 && m != 5) {
+                                        int num_passed;
+
+                                        num_passed = 0;
+                                        polkit_policy_file_entry_foreach (pf,
+                                                                          _check_pf,
+                                                                          &num_passed);
+                                        g_assert (num_passed == 2);
+                                }
+
+                                polkit_policy_file_ref (pf);
+                                polkit_policy_file_unref (pf);
+                                polkit_policy_file_unref (pf);
+                        }
+                }
+        }
 
         return TRUE;
 }

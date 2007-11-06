@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policyconfig>
+
+  <action id="org.example">
+    <description>example</description>
+    <message>message</message>
+    <description xml:lang="da">example (danish)</description>
+    <message xml:lang="da">message (danish)</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+
+  <action id="org.example2">
+    <description>example 2</description>
+    <message>message 2</message>
+    <description xml:lang="da">example 2 (danish)</description>
+    <message xml:lang="da">message 2 (danish)</message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin_keep_always</allow_active>
+    </defaults>
+  </action>
+
+</policyconfig>

@@ -11,6 +11,7 @@ INCLUDES = \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	-DPOLKIT_COMPILATION \
+	-DTEST_DATA_DIR=\"$(top_srcdir)/test/\" \
 	@GLIB_CFLAGS@
 
 lib_LTLIBRARIES=libpolkit.la
