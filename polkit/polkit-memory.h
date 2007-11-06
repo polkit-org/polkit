@@ -61,7 +61,8 @@ void  p_free    (void *memory);
  */
 #define p_new0(type, count) ((type*)p_malloc0 (sizeof (type) * (count)));
 
-char *p_strdup  (const char *s);
+char *p_strdup         (const char *s);
+char *p_strndup        (const char *s, size_t n);
 char* p_strdup_printf  (const char *format, ...);
 char* p_strdup_vprintf (const char *format, va_list args);
 

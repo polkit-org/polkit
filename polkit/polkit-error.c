@@ -177,9 +177,11 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
         va_list args;
         PolKitError *e;
 
-        g_return_val_if_fail (error != NULL, FALSE);
         g_return_val_if_fail (format != NULL, FALSE);
         g_return_val_if_fail (error_code >= 0 && error_code < POLKIT_ERROR_NUM_ERROR_CODES, FALSE);
+
+        if (error == NULL)
+                goto out;
 
         e = p_new0 (PolKitError, 1);
         if (e == NULL) {
@@ -198,6 +200,7 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
                 }
         }
 
+out:
         return TRUE;
 }
 

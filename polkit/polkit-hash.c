@@ -70,6 +70,8 @@ struct _PolKitHash
 
         PolKitHashFunc  hash_func;
         PolKitEqualFunc key_equal_func;
+        PolKitCopyFunc  key_copy_func;
+        PolKitCopyFunc  value_copy_func;
         PolKitFreeFunc  key_destroy_func;
         PolKitFreeFunc  value_destroy_func;
 };
@@ -78,6 +80,8 @@ struct _PolKitHash
  * polkit_hash_new:
  * @hash_func: The hash function to use
  * @key_equal_func: The function used to determine key equality
+ * @key_copy_func: Function for copying keys or #NULL
+ * @value_copy_func: Function for copying values or #NULL
  * @key_destroy_func: Function for freeing keys or #NULL
  * @value_destroy_func: Function for freeing values or #NULL
  *
@@ -90,6 +94,8 @@ struct _PolKitHash
 PolKitHash *
 polkit_hash_new (PolKitHashFunc  hash_func,
                  PolKitEqualFunc key_equal_func,
+                 PolKitCopyFunc  key_copy_func,
+                 PolKitCopyFunc  value_copy_func,
                  PolKitFreeFunc  key_destroy_func,
                  PolKitFreeFunc  value_destroy_func)
 {
@@ -104,6 +110,8 @@ polkit_hash_new (PolKitHashFunc  hash_func,
 
         h->refcount = 1;
         h->hash_func = hash_func;
+        h->key_copy_func = key_copy_func;
+        h->value_copy_func = value_copy_func;
         h->key_equal_func = key_equal_func;
         h->key_destroy_func = key_destroy_func;
         h->value_destroy_func = value_destroy_func;
@@ -198,14 +206,32 @@ polkit_hash_insert (PolKitHash *hash,
                     void *value)
 {
         int bucket;
-        polkit_bool_t ret;
         PolKitHashNode **nodep;
         PolKitHashNode *node;
+        void *key_copy;
+        void *value_copy;
 
         g_return_val_if_fail (hash != NULL, FALSE);
         g_return_val_if_fail (key != NULL, FALSE);
 
-        ret = FALSE;
+        key_copy = NULL;
+        value_copy = NULL;
+        if (hash->key_copy_func != NULL) {
+                key_copy = hash->key_copy_func (key);
+                if (key_copy == NULL) {
+                        goto oom;
+                }
+        } else {
+                key_copy = key;
+        }
+        if (hash->value_copy_func != NULL) {
+                value_copy = hash->value_copy_func (value);
+                if (value_copy == NULL) {
+                        goto oom;
+                }
+        } else {
+                value_copy = value;
+        }
 
         bucket = hash->hash_func (key) % hash->num_top_nodes;
 
@@ -221,10 +247,10 @@ polkit_hash_insert (PolKitHash *hash,
                                 hash->key_destroy_func (node->key);
                         if (hash->value_destroy_func != NULL)
                                 hash->value_destroy_func (node->value);
-                        node->key = key;
-                        node->value = value;
 
-                        ret = TRUE;
+                        node->key = key_copy;
+                        node->value = value_copy;
+
                         goto out;
                 } else {
                         node = node->next;
@@ -233,16 +259,23 @@ polkit_hash_insert (PolKitHash *hash,
 
         node = p_new0 (PolKitHashNode, 1);
         if (node == NULL)
-                goto out;
+                goto oom;
 
-        node->key = key;
-        node->value = value;
+        node->key = key_copy;
+        node->value = value_copy;
         *nodep = node;
 
-        ret = TRUE;
-
 out:
-        return ret;
+        return TRUE;
+
+oom:
+        if (key_copy != NULL && hash->key_copy_func != NULL && hash->key_destroy_func != NULL)
+                hash->key_destroy_func (key_copy);
+
+        if (value_copy != NULL && hash->value_copy_func != NULL && hash->value_destroy_func != NULL)
+                hash->value_destroy_func (value_copy);
+
+        return FALSE;
 }
 
 /**
@@ -395,6 +428,20 @@ polkit_hash_str_equal_func (const void *v1, const void *v2)
         return g_str_equal (v1, v2);
 }
 
+/**
+ * polkit_hash_str_copy:
+ * @p: void pointer to string
+ *
+ * Similar to p_strdup() except for types.
+ *
+ * Returns: a void pointer to a copy or #NULL on OOM
+ */
+void *
+polkit_hash_str_copy (const void *p)
+{
+        return (void *) p_strdup ((const char *) p);
+}
+
 #ifdef POLKIT_BUILD_TESTS
 
 static polkit_bool_t
@@ -421,7 +468,9 @@ _run_test (void)
         polkit_bool_t found;
 
         /* string hash tables */
-        if ((h = polkit_hash_new (polkit_hash_str_hash_func, polkit_hash_str_equal_func, p_free, p_free)) != NULL) {
+        if ((h = polkit_hash_new (polkit_hash_str_hash_func, polkit_hash_str_equal_func, 
+                                  polkit_hash_str_copy, polkit_hash_str_copy,
+                                  p_free, p_free)) != NULL) {
                 int n;
                 char *key;
                 char *value;
@@ -441,22 +490,7 @@ _run_test (void)
 
                 /* first insert the values */
                 for (n = 0; test_data [n*2] != NULL; n++) {
-
-                        key = p_strdup (test_data [n*2]);
-
-                        if (key == NULL) {
-                                goto oom;
-                        }
-
-                        value = p_strdup (test_data [n*2 + 1]);
-                        if (value == NULL) {
-                                p_free (key);
-                                goto oom;
-                        }
-
-                        if (!polkit_hash_insert (h, key, value)) {
-                                p_free (key);
-                                p_free (value);
+                        if (!polkit_hash_insert (h, test_data [n*2], test_data [n*2 + 1])) {
                                 goto oom;
                         }
                 }
@@ -473,15 +507,8 @@ _run_test (void)
                 g_assert (polkit_hash_lookup (h, "unknown", &found) == NULL && !found);
 
                 /* replace key */
-                key = p_strdup ("key1");
                 if (key != NULL) {
-                        value = p_strdup ("val1-replaced");
-                        if (value == NULL) {
-                                p_free (key);
-                        } else {
-                                /* this can never fail because on replace no new node is ever created */
-                                g_assert (polkit_hash_insert (h, key, value));
-
+                        if (polkit_hash_insert (h, "key1", "val1-replaced")) {
                                 /* check for replaced value */
                                 value = polkit_hash_lookup (h, "key1", &found);
                                 g_assert (found && value != NULL && strcmp (value, "val1-replaced") == 0);
@@ -503,7 +530,9 @@ _run_test (void)
         }
 
         /* direct hash tables */
-        if ((h = polkit_hash_new (polkit_hash_direct_hash_func, polkit_hash_direct_equal_func, NULL, NULL)) != NULL) {
+        if ((h = polkit_hash_new (polkit_hash_direct_hash_func, polkit_hash_direct_equal_func, 
+                                  NULL, NULL, 
+                                  NULL, NULL)) != NULL) {
                 if (polkit_hash_insert (h, h, h)) {
                         g_assert ((polkit_hash_lookup (h, h, &found) == h) && found);
                         if (polkit_hash_insert (h, h, NULL)) {

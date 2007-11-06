@@ -386,8 +386,8 @@ _run_test (void)
 
         if ((a = polkit_hash_new (polkit_hash_str_hash_func,
                                   polkit_hash_str_equal_func,
-                                  NULL,
-                                  NULL)) == NULL)
+                                  NULL, NULL,
+                                  NULL, NULL)) == NULL)
                 goto oom;
 
         if (!polkit_hash_insert (a, "a1", "v1"))

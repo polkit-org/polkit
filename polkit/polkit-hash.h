@@ -74,11 +74,26 @@ typedef polkit_bool_t (*PolKitEqualFunc) (const void *key1, const void *key2);
  *
  * Specifies the type of function which is called when a data element
  * is destroyed. It is passed the pointer to the data element and
- * should free any memory and resources allocated for it.
+ * should free any memory and resources allocated for it. The function
+ * p_free() or any of the object unref functions can be passed here.
  *
  * Since: 0.7
  */
 typedef void (*PolKitFreeFunc) (void *p);
+
+/**
+ * PolKitCopyFunc:
+ * @p: pointer
+ *
+ * Specifies the type of function which is called when a data element
+ * is to be cloned or reffed. It is passed the pointer to the data
+ * element and should return a new pointer to a reffed or cloned
+ * object. The function polkit_hash_str_copy() or any of the object
+ * ref functions can be passed here.
+ *
+ * Since: 0.7
+ */
+typedef void *(*PolKitCopyFunc) (const void *p);
 
 /**
  * PolKitHashForeachFunc:
@@ -101,6 +116,8 @@ typedef polkit_bool_t (*PolKitHashForeachFunc) (PolKitHash *hash,
 
 PolKitHash *polkit_hash_new (PolKitHashFunc  hash_func,
                              PolKitEqualFunc key_equal_func,
+                             PolKitCopyFunc  key_copy_func,
+                             PolKitCopyFunc  value_copy_func,
                              PolKitFreeFunc  key_destroy_func,
                              PolKitFreeFunc  value_destroy_func);
 
@@ -119,6 +136,7 @@ polkit_bool_t   polkit_hash_direct_equal_func (const void *v1, const void *v2);
 
 polkit_uint32_t polkit_hash_str_hash_func     (const void *key);
 polkit_bool_t   polkit_hash_str_equal_func    (const void *v1, const void *v2);
+void           *polkit_hash_str_copy          (const void *p);
 
 POLKIT_END_DECLS
 

@@ -181,6 +181,38 @@ out:
         return p;
 }
 
+/**
+ * p_strndup:
+ * @s: string
+ * @n: size
+ *
+ * Duplicate a string but copy at most @n characters. If @s is longer
+ * than @n, only @n characters are copied, and a terminating null byte
+ * is added. Similar to strndup(3).
+ *
+ * Returns: Allocated memory or #NULL on OOM. Free with p_free().
+ *
+ * Since: 0.7
+ */
+char *
+p_strndup (const char *s, size_t n)
+{
+        void *p;
+        size_t len;
+
+        len = strlen (s) + 1;
+        if (len > n)
+                len = n;
+
+        p = p_malloc (len + 1);
+        if (p == NULL)
+                goto out;
+
+        memcpy (p, s, len + 1);
+out:
+        return p;
+}
+
 /*--------------------------------------------------------------------------------------------------------------*/
 #else
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -229,6 +261,12 @@ char *
 p_strdup (const char *s)
 {
         return strdup (s);
+}
+
+char *
+p_strndup (const char *s, size_t n)
+{
+        return strndup (s, n);
 }
 
 #endif /* POLKIT_BUILD_TESTS */

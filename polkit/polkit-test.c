@@ -32,6 +32,7 @@
 #define MAX_TESTS 64
 
 static PolKitTest *tests[] = {
+        &_test_hash,
         &_test_action,
         &_test_error,
         &_test_result,
@@ -40,7 +41,7 @@ static PolKitTest *tests[] = {
         &_test_caller,
         &_test_policy_default,
         &_test_policy_file_entry,
-        &_test_hash,
+        &_test_policy_file,
 };
 
 int 
