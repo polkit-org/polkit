@@ -406,8 +406,14 @@ polkit_hash_direct_equal_func (const void *v1, const void *v2)
 polkit_uint32_t
 polkit_hash_str_hash_func (const void *key)
 {
-        /* TODO: reimplement */
-        return g_str_hash (key);
+        const char *p;
+        polkit_uint32_t hash;
+
+        hash = 0;
+        for (p = key; *p != '\0'; p++)
+                hash = hash * 617 ^ *p;
+
+        return hash;
 }
 
 /**
@@ -424,8 +430,7 @@ polkit_hash_str_hash_func (const void *key)
 polkit_bool_t
 polkit_hash_str_equal_func (const void *v1, const void *v2)
 {
-        /* TODO: reimplement */
-        return g_str_equal (v1, v2);
+        return strcmp (v1, v2) == 0;
 }
 
 /**
