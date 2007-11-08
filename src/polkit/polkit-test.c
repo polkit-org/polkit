@@ -31,6 +31,13 @@
 
 #define MAX_TESTS 64
 
+/**
+ * SECTION:polkit-test
+ * @short_description: Testing code for libpolkit
+ *
+ * Testing code for libpolkit.
+ */
+
 static PolKitTest *tests[] = {
         &_test_list,
         &_test_hash,

@@ -35,6 +35,13 @@
 #include <polkit/polkit-memory.h>
 #include <polkit/polkit-hash.h>
 
+/**
+ * SECTION:polkit-private
+ * @short_description: Private symbols for libpolkit
+ *
+ * Private symbols for libpolkit.
+ */
+
 POLKIT_BEGIN_DECLS
 
 void  _polkit_memory_reset (void);
