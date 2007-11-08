@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 INCLUDES = \
-	-I$(top_builddir) -I$(top_srcdir) \
+	-I$(top_builddir)/src -I$(top_srcdir)/src \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -23,7 +23,7 @@ libpolkit_dbusinclude_HEADERS =              			\
 libpolkit_dbus_la_SOURCES =                                	\
 	polkit-dbus.h		polkit-dbus.c
 
-libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(SELINUX_LIBS)
+libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS)
 
 libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
@@ -32,7 +32,7 @@ libexec_PROGRAMS = polkit-read-auth-helper
 
 polkit_read_auth_helper_SOURCES = polkit-read-auth-helper.c
 polkit_read_auth_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_read_auth_helper_LDADD = $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
+polkit_read_auth_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
 
 # polkit-read-auth-helper needs to be setgid $POLKIT_GROUP to be able
 # to read authorization files in /var/lib/PolicyKit and

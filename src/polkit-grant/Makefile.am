@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 INCLUDES = \
-	-I$(top_builddir) -I$(top_srcdir) \
+	-I$(top_builddir)/src -I$(top_srcdir)/src \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -32,7 +32,7 @@ if POLKIT_AUTHDB_DEFAULT
 libpolkit_grant_la_SOURCES += polkit-authorization-db-write.c
 endif
 
-libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la
+libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la
 
 libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 
@@ -44,18 +44,18 @@ if POLKIT_AUTHDB_DEFAULT
 libexec_PROGRAMS = polkit-grant-helper polkit-grant-helper-pam polkit-explicit-grant-helper polkit-revoke-helper 
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
-polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit-grant/libpolkit-grant.la
+polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la
 
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
 polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
 
 polkit_explicit_grant_helper_SOURCES = polkit-explicit-grant-helper.c
 polkit_explicit_grant_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_explicit_grant_helper_LDADD = $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit-grant/libpolkit-grant.la
+polkit_explicit_grant_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la
 
 polkit_revoke_helper_SOURCES = polkit-revoke-helper.c
 polkit_revoke_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_revoke_helper_LDADD = $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la
+polkit_revoke_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
 
 # polkit-grant-helper needs to be setgid polkituser to be able to
 # write cookies to /var/lib/PolicyKit and /var/run/PolicyKit

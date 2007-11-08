@@ -453,9 +453,10 @@ data/polkit
 data/polkit.pc
 data/polkit-dbus.pc
 data/polkit-grant.pc
-polkit/Makefile
-polkit-dbus/Makefile
-polkit-grant/Makefile
+src/Makefile
+src/polkit/Makefile
+src/polkit-dbus/Makefile
+src/polkit-grant/Makefile
 polkitd/Makefile
 tools/Makefile
 doc/Makefile

@@ -16,11 +16,11 @@ DOC_MAIN_SGML_FILE=polkit-docs.xml
 SCAN_OPTIONS=--ignore-headers=config.h
 
 # The directory containing the source code. Relative to $(srcdir)
-DOC_SOURCE_DIR=..
+DOC_SOURCE_DIR=../src
 
 # Used for dependencies
-HFILE_GLOB=$(top_srcdir)/polkit*/*.h
-CFILE_GLOB=$(top_srcdir)/polkit*/*.c
+HFILE_GLOB=$(top_srcdir)/src/polkit*/*.h
+CFILE_GLOB=$(top_srcdir)/src/polkit*/*.c
 
 # Headers to ignore
 IGNORE_HFILES= \
@@ -31,14 +31,14 @@ IGNORE_HFILES= \
 INCLUDES = \
 	$(DBUS_GLIB_CFLAGS)	\
 	$(GLIB_CFLAGS)		\
-	-I$(top_srcdir) 	\
-	-I$(top_builddir)	\
+	-I$(top_srcdir)/src 	\
+	-I$(top_builddir)/src	\
 	$(NULL)
 
 GTKDOC_LIBS = \
 	$(DBUS_GLIB_LIBS)			\
 	$(GLIB_LIBS)				\
-	$(top_builddir)/polkit/libpolkit.la	\
+	$(top_builddir)/src/polkit/libpolkit.la	\
 	$(NULL)
 
 # Extra options to supply to gtkdoc-mkdb

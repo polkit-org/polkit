@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = data polkit polkit-dbus polkit-grant polkitd doc tools policy po test
+SUBDIRS = data src polkitd doc tools policy po test
 
 # Creating ChangeLog from git log (taken from cairo/Makefile.am):
 ChangeLog: $(srcdir)/ChangeLog
@@ -22,8 +22,8 @@ $(srcdir)/ChangeLog:
 if POLKIT_GCOV_ENABLED
 .PHONY: ChangeLog $(srcdir)/ChangeLog coverage-report.txt
 coverage-report.txt :
-	make -C polkit check-coverage
-	cat polkit/coverage-report.txt > coverage-report.txt
+	make -C src/polkit check-coverage
+	cat src/polkit/coverage-report.txt > coverage-report.txt
 
 check-coverage: coverage-report.txt
 	cat coverage-report.txt

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 INCLUDES = \
-	-I$(top_builddir) -I$(top_srcdir) \
+	-I$(top_builddir)/src -I$(top_srcdir)/src \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -28,7 +28,7 @@ polkitd_SOURCES = 					\
 	$(BUILT_SOURCES)
 
 polkitd_CPPFLAGS = 					\
-	-I$(top_srcdir)					\
+	-I$(top_srcdir)/src				\
 	-DG_LOG_DOMAIN=\"polkitd\"			\
 	-DDATADIR=\""$(pkgdatadir)"\"			\
 	-DGNOMELOCALEDIR=\""$(datadir)/locale"\"	\
@@ -36,7 +36,7 @@ polkitd_CPPFLAGS = 					\
 	$(AM_CPPFLAGS)
 
 polkitd_LDADD = 				        \
-	$(DBUS_GLIB_LIBS) $(top_builddir)/polkit/libpolkit.la $(top_builddir)/polkit-dbus/libpolkit-dbus.la $(top_builddir)/polkit-grant/libpolkit-grant.la
+	$(DBUS_GLIB_LIBS) $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la
 
 
 servicedir       = $(datadir)/dbus-1/system-services

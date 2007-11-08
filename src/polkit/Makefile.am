@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 INCLUDES = \
-	-I$(top_builddir) -I$(top_srcdir) \
+	-I$(top_builddir)/src -I$(top_srcdir)/src \
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\" \
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
@@ -117,7 +117,7 @@ noinst_PROGRAMS=$(TESTS)
 polkit_test_SOURCES=				\
 	polkit-test.h		polkit-test.c
 
-polkit_test_LDADD=$(top_builddir)/polkit/libpolkit.la
+polkit_test_LDADD=$(top_builddir)/src/polkit/libpolkit.la
 polkit_test_LDFLAGS=
 #@R_DYNAMIC_LDFLAG@
 
