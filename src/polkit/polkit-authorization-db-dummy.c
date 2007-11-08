@@ -65,11 +65,12 @@ _polkit_authorization_db_new (void)
         return authdb;
 }
 
-void
+polkit_bool_t
 _polkit_authorization_db_pfe_foreach   (PolKitPolicyCache *policy_cache, 
                                         PolKitPolicyCacheForeachFunc callback,
                                         void *user_data)
 {
+        return FALSE;
 }
 
 PolKitPolicyFileEntry* 

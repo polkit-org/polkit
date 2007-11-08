@@ -46,19 +46,21 @@ typedef struct _PolKitPolicyFile PolKitPolicyFile;
  * @user_data: user data
  *
  * Type for function used in polkit_policy_file_entry_foreach().
+ *
+ * Returns: #TRUE to short-circuit, e.g.  stop the iteration
  **/
-typedef void (*PolKitPolicyFileEntryForeachFunc) (PolKitPolicyFile      *policy_file, 
-                                                  PolKitPolicyFileEntry *policy_file_entry,
-                                                  void                  *user_data);
+typedef polkit_bool_t (*PolKitPolicyFileEntryForeachFunc) (PolKitPolicyFile      *policy_file, 
+                                                           PolKitPolicyFileEntry *policy_file_entry,
+                                                           void                  *user_data);
 
 PolKitPolicyFile *polkit_policy_file_new           (const char       *path, 
                                                     polkit_bool_t load_descriptions, 
                                                     PolKitError **error);
 PolKitPolicyFile *polkit_policy_file_ref           (PolKitPolicyFile *policy_file);
 void              polkit_policy_file_unref         (PolKitPolicyFile *policy_file);
-void              polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
-                                                       PolKitPolicyFileEntryForeachFunc  cb,
-                                                       void                              *user_data);
+polkit_bool_t     polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
+                                                    PolKitPolicyFileEntryForeachFunc  cb,
+                                                    void                              *user_data);
 
 POLKIT_END_DECLS
 

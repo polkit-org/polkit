@@ -47,11 +47,13 @@ typedef struct _PolKitPolicyFileEntry PolKitPolicyFileEntry;
  * @user_data: user data passed to polkit_policy_file_entry_annotations_foreach()
  *
  * Callback function for polkit_policy_file_entry_annotations_foreach().
+ *
+ * Returns: Pass #TRUE to short-circuit, e.g. stop the iteration
  **/
-typedef void (*PolKitPolicyFileEntryAnnotationsForeachFunc) (PolKitPolicyFileEntry *policy_file_entry,
-                                                             const char *key,
-                                                             const char *value,
-                                                             void *user_data);
+typedef polkit_bool_t (*PolKitPolicyFileEntryAnnotationsForeachFunc) (PolKitPolicyFileEntry *policy_file_entry,
+                                                                      const char *key,
+                                                                      const char *value,
+                                                                      void *user_data);
 
 PolKitPolicyFileEntry *polkit_policy_file_entry_ref   (PolKitPolicyFileEntry *policy_file_entry);
 void                   polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry);
@@ -63,7 +65,7 @@ PolKitPolicyDefault   *polkit_policy_file_entry_get_default  (PolKitPolicyFileEn
 const char            *polkit_policy_file_entry_get_action_description (PolKitPolicyFileEntry *policy_file_entry);
 const char            *polkit_policy_file_entry_get_action_message (PolKitPolicyFileEntry *policy_file_entry);
 
-void                   polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file_entry,
+polkit_bool_t          polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file_entry,
                                                                      PolKitPolicyFileEntryAnnotationsForeachFunc cb,
                                                                      void *user_data);
 const char            *polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entry,

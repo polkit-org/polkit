@@ -634,27 +634,32 @@ polkit_policy_file_unref (PolKitPolicyFile *policy_file)
  * @user_data: user data
  * 
  * Visits all entries in a policy file.
+ *
+ * Returns: #TRUE if the iteration was short-circuited
  **/
-void
+polkit_bool_t
 polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
                                   PolKitPolicyFileEntryForeachFunc  cb,
                                   void                              *user_data)
 {
         PolKitList *i;
 
-        g_return_if_fail (policy_file != NULL);
-        g_return_if_fail (cb != NULL);
+        g_return_val_if_fail (policy_file != NULL, FALSE);
+        g_return_val_if_fail (cb != NULL, FALSE);
 
         for (i = policy_file->entries; i != NULL; i = i->next) {
                 PolKitPolicyFileEntry *pfe = i->data;
-                cb (policy_file, pfe, user_data);
+                if (cb (policy_file, pfe, user_data))
+                        return TRUE;
         }
+
+        return FALSE;
 }
 
 #ifdef POLKIT_BUILD_TESTS
 
 /* this checks that the policy descriptions read from test-valid-3-lang.policy are correct */
-static void
+static polkit_bool_t
 _check_pf (PolKitPolicyFile *pf, PolKitPolicyFileEntry *pfe, void *user_data)
 {
         const char *r_msg;
@@ -705,6 +710,8 @@ _check_pf (PolKitPolicyFile *pf, PolKitPolicyFileEntry *pfe, void *user_data)
                     strcmp (r_msg, msg) == 0) 
                         *counter += 1;
         }
+
+        return FALSE;
 }
 
 static polkit_bool_t
@@ -715,19 +722,19 @@ _run_test (void)
         PolKitPolicyFile *pf;
         PolKitError *error;
         const char *valid_files[] = {
-                TEST_DATA_DIR "test-valid-1.policy",
-                TEST_DATA_DIR "test-valid-2-annotations.policy",
-                TEST_DATA_DIR "test-valid-3-lang.policy",
-                TEST_DATA_DIR "test-valid-4-unknown-tags.policy",
+                TEST_DATA_DIR "valid/test-valid-1.policy",
+                TEST_DATA_DIR "valid/test-valid-2-annotations.policy",
+                TEST_DATA_DIR "valid/test-valid-3-lang.policy",
+                TEST_DATA_DIR "valid/test-valid-4-unknown-tags.policy",
         };
         const char *invalid_files[] = {
-                TEST_DATA_DIR "non-existant-file.policy",
-                TEST_DATA_DIR "bad.extension",
-                TEST_DATA_DIR "test-invalid-1-action-id.policy",
-                TEST_DATA_DIR "test-invalid-2-bogus-any.policy",
-                TEST_DATA_DIR "test-invalid-3-bogus-inactive.policy",
-                TEST_DATA_DIR "test-invalid-4-bogus-active.policy",
-                TEST_DATA_DIR "test-invalid-5-max-depth.policy",
+                TEST_DATA_DIR "invalid/non-existant-file.policy",
+                TEST_DATA_DIR "invalid/bad.extension",
+                TEST_DATA_DIR "invalid/test-invalid-1-action-id.policy",
+                TEST_DATA_DIR "invalid/test-invalid-2-bogus-any.policy",
+                TEST_DATA_DIR "invalid/test-invalid-3-bogus-inactive.policy",
+                TEST_DATA_DIR "invalid/test-invalid-4-bogus-active.policy",
+                TEST_DATA_DIR "invalid/test-invalid-5-max-depth.policy",
         };
 
         for (n = 0; n < sizeof (invalid_files) / sizeof (char*); n++) {

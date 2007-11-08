@@ -47,10 +47,12 @@ typedef struct _PolKitPolicyCache PolKitPolicyCache;
  * @user_data: user data passed to polkit_policy_cache_foreach()
  *
  * Callback function for polkit_policy_cache_foreach().
+ *
+ * Returns: #TRUE to short-circuit; e.g. stop the iteration
  **/
-typedef void (*PolKitPolicyCacheForeachFunc) (PolKitPolicyCache *policy_cache,
-                                              PolKitPolicyFileEntry *entry,
-                                              void *user_data);
+typedef polkit_bool_t (*PolKitPolicyCacheForeachFunc) (PolKitPolicyCache *policy_cache,
+                                                       PolKitPolicyFileEntry *entry,
+                                                       void *user_data);
 
 PolKitPolicyCache     *polkit_policy_cache_ref       (PolKitPolicyCache *policy_cache);
 void                   polkit_policy_cache_unref     (PolKitPolicyCache *policy_cache);
@@ -64,7 +66,7 @@ PolKitPolicyFileEntry* polkit_policy_cache_get_entry_by_annotation (PolKitPolicy
                                                                     const char *annotation_key,
                                                                     const char *annotation_value);
 
-void                   polkit_policy_cache_foreach   (PolKitPolicyCache *policy_cache, 
+polkit_bool_t          polkit_policy_cache_foreach   (PolKitPolicyCache *policy_cache, 
                                                       PolKitPolicyCacheForeachFunc callback,
                                                       void *user_data);
 

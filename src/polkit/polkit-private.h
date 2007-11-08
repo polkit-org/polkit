@@ -59,7 +59,7 @@ polkit_bool_t _polkit_authorization_db_auth_file_add (const char *root, polkit_b
 PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
 void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
 
-void                   _polkit_authorization_db_pfe_foreach   (PolKitPolicyCache *policy_cache, 
+polkit_bool_t          _polkit_authorization_db_pfe_foreach   (PolKitPolicyCache *policy_cache, 
                                                                PolKitPolicyCacheForeachFunc callback,
                                                                void *user_data);
 

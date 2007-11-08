@@ -290,8 +290,7 @@ _annotations_cb (PolKitHash *hash,
                  void *user_data)
 {
         _AnnotationsClosure *closure = user_data;
-        closure->cb (closure->pfe, (const char *) key, (const char *) value, closure->user_data);
-        return FALSE;
+        return closure->cb (closure->pfe, (const char *) key, (const char *) value, closure->user_data);
 }
 
 /**
@@ -301,25 +300,27 @@ _annotations_cb (PolKitHash *hash,
  * @user_data: user data to pass to the callback function
  *
  * Iterate over all annotations on the policy file entry.
+ *
+ * Returns: #TRUE only if the iteration was short-circuited
  */
-void
+polkit_bool_t
 polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file_entry,
                                               PolKitPolicyFileEntryAnnotationsForeachFunc cb,
                                               void *user_data)
 {
         _AnnotationsClosure closure;
 
-        g_return_if_fail (policy_file_entry != NULL);
+        g_return_val_if_fail (policy_file_entry != NULL, FALSE);
         if (policy_file_entry->annotations == NULL)
-                return;
+                return FALSE;
 
         closure.pfe = policy_file_entry;
         closure.cb = cb;
         closure.user_data = user_data;
 
-        polkit_hash_foreach (policy_file_entry->annotations,
-                             _annotations_cb,
-                             &closure);
+        return polkit_hash_foreach (policy_file_entry->annotations,
+                                    _annotations_cb,
+                                    &closure);
 }
 
 /**
@@ -348,7 +349,7 @@ polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entr
 
 #ifdef POLKIT_BUILD_TESTS
 
-static void
+static polkit_bool_t
 _pfe_cb (PolKitPolicyFileEntry *pfe,
          const char *key,
          const char *value,
@@ -360,9 +361,11 @@ _pfe_cb (PolKitPolicyFileEntry *pfe,
                 *count += 1;
         else if (strcmp (key, "a2") == 0 && strcmp (value, "v2") == 0)
                 *count += 1;
+
+        return FALSE;
 }
 
-static void
+static polkit_bool_t
 _pfe_cb2 (PolKitPolicyFileEntry *pfe,
           const char *key,
           const char *value,
@@ -370,6 +373,8 @@ _pfe_cb2 (PolKitPolicyFileEntry *pfe,
 {
         int *count = (int *) user_data;
         *count += 1;
+
+        return FALSE;
 }
 
 

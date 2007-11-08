@@ -497,7 +497,7 @@ out:
         return FALSE;
 }
 
-static void
+static polkit_bool_t
 pfe_iterator_cb (PolKitPolicyCache *policy_cache,
                  PolKitPolicyFileEntry *pfe,
                  void *user_data)
@@ -516,9 +516,11 @@ pfe_iterator_cb (PolKitPolicyCache *policy_cache,
         }
 
         polkit_action_unref (action);
+
+        return FALSE;
 }
 
-static void
+static polkit_bool_t
 pfe_iterator_show_obtainable_cb (PolKitPolicyCache *policy_cache,
                                  PolKitPolicyFileEntry *pfe,
                                  void *user_data)
@@ -552,6 +554,8 @@ pfe_iterator_show_obtainable_cb (PolKitPolicyCache *policy_cache,
         }
 
         polkit_action_unref (action);
+
+        return FALSE;
 }
 
 

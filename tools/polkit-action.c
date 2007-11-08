@@ -46,13 +46,14 @@ usage (int argc, char *argv[])
         exit (1);
 }
 
-static void
+static polkit_bool_t
 _print_annotations (PolKitPolicyFileEntry *policy_file_entry,
                     const char *key,
                     const char *value,
                     void *user_data)
 {
         printf ("annotation:       %s -> %s\n", key, value);
+        return FALSE;
 }
 
 static void
@@ -86,7 +87,7 @@ _print_details_for_entry (PolKitPolicyFileEntry *pfe)
         polkit_policy_file_entry_annotations_foreach (pfe, _print_annotations, NULL);
 }
 
-static void
+static polkit_bool_t
 _print_entry (PolKitPolicyCache *policy_cache,
               PolKitPolicyFileEntry *pfe,
               void *user_data)
@@ -95,6 +96,8 @@ _print_entry (PolKitPolicyCache *policy_cache,
 
         action_id = polkit_policy_file_entry_get_id (pfe);
         printf ("%s\n", action_id);
+
+        return FALSE;
 }
 
 int

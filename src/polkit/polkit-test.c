@@ -50,6 +50,7 @@ static PolKitTest *tests[] = {
         &_test_policy_default,
         &_test_policy_file_entry,
         &_test_policy_file,
+        &_test_policy_cache,
 };
 
 int 

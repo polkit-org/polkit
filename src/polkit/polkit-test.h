@@ -61,6 +61,7 @@ extern PolKitTest _test_policy_file_entry;
 extern PolKitTest _test_hash;
 extern PolKitTest _test_policy_file;
 extern PolKitTest _test_list;
+extern PolKitTest _test_policy_cache;
 
 POLKIT_END_DECLS
 
