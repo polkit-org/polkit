@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <policyconfig>
 
-  <action id="4org.example">
+  <action id="4org.example.invalid1">
     <description>foo</description>
     <message>bar</message>
     <defaults>

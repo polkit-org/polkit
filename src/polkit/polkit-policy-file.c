@@ -675,7 +675,7 @@ _check_pf (PolKitPolicyFile *pf, PolKitPolicyFileEntry *pfe, void *user_data)
         }
         
 
-        if (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example") == 0) {
+        if (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid3") == 0) {
                 if (is_danish) {
                         desc = "example (danish)";
                         msg = "message (danish)";
@@ -690,7 +690,7 @@ _check_pf (PolKitPolicyFile *pf, PolKitPolicyFileEntry *pfe, void *user_data)
                     strcmp (r_msg, msg) == 0) 
                         *counter += 1;
 
-        }  else if (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example2") == 0) {
+        }  else if (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid3b") == 0) {
                 if (is_danish) {
                         desc = "example 2 (danish)";
                         msg = "message 2 (danish)";

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <policyconfig>
 
-  <action id="org.example">
+  <action id="org.example.valid3">
     <description>example</description>
     <message>message</message>
     <description xml:lang="da">example (danish)</description>
@@ -13,7 +13,7 @@
     </defaults>
   </action>
 
-  <action id="org.example2">
+  <action id="org.example.valid3b">
     <description>example 2</description>
     <message>message 2</message>
     <description xml:lang="da">example 2 (danish)</description>
