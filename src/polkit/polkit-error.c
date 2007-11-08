@@ -232,6 +232,8 @@ _run_test (void)
                 polkit_error_free (e);
         }
 
+        g_assert (polkit_error_set_error (NULL, POLKIT_ERROR_OUT_OF_MEMORY, "This error will never get set"));
+
         return TRUE;
 }
 
