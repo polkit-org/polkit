@@ -138,7 +138,7 @@ p_malloc0 (size_t bytes)
 
 /**
  * p_realloc:
- * @p: memory previously allocated
+ * @memory: memory previously allocated
  * @bytes: new size
  *
  * Reallocate memory; like realloc(3).

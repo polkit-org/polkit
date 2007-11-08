@@ -38,7 +38,7 @@
 /**
  * SECTION:polkit-hash
  * @title: Hash Tables
- * @short_description: Hash Tables.
+ * @short_description: Hash Tables
  *
  * This class provides support for hash tables.
  *

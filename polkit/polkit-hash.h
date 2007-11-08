@@ -91,6 +91,8 @@ typedef void (*PolKitFreeFunc) (void *p);
  * object. The function polkit_hash_str_copy() or any of the object
  * ref functions can be passed here.
  *
+ * Returns: A copy or ref of the object in question
+ *
  * Since: 0.7
  */
 typedef void *(*PolKitCopyFunc) (const void *p);
@@ -140,6 +142,6 @@ void           *polkit_hash_str_copy          (const void *p);
 
 POLKIT_END_DECLS
 
-#endif /* POLKIT_TEST_H */
+#endif /* POLKIT_HASH_H */
 
 

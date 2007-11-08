@@ -47,6 +47,7 @@
 #include "polkit-debug.h"
 #include "polkit-private.h"
 #include "polkit-test.h"
+#include "polkit-list.h"
 
 /**
  * SECTION:polkit-policy-file
@@ -65,7 +66,7 @@
 struct _PolKitPolicyFile
 {
         int refcount;
-        GSList *entries;
+        PolKitList *entries;
 };
 
 enum {
@@ -385,6 +386,7 @@ static void
 _end (void *data, const char *el)
 {
         ParserData *pd = data;
+        PolKitList *l;
 
         p_free (pd->elem_lang);
         pd->elem_lang = NULL;
@@ -423,7 +425,12 @@ _end (void *data, const char *el)
                         }
                 }
 
-                pd->pf->entries = g_slist_prepend (pd->pf->entries, pfe);
+                l = polkit_list_prepend (pd->pf->entries, pfe);
+                if (l == NULL) {
+                        polkit_policy_file_entry_unref (pfe);
+                        goto oom;
+                }
+                pd->pf->entries = l;
                 break;
         }
         default:
@@ -607,16 +614,16 @@ polkit_policy_file_ref (PolKitPolicyFile *policy_file)
 void
 polkit_policy_file_unref (PolKitPolicyFile *policy_file)
 {
-        GSList *i;
+        PolKitList *i;
         g_return_if_fail (policy_file != NULL);
         policy_file->refcount--;
         if (policy_file->refcount > 0) 
                 return;
-        for (i = policy_file->entries; i != NULL; i = g_slist_next (i)) {
+        for (i = policy_file->entries; i != NULL; i = i->next) {
                 polkit_policy_file_entry_unref (i->data);
         }
         if (policy_file->entries != NULL)
-                g_slist_free (policy_file->entries);
+                polkit_list_free (policy_file->entries);
         p_free (policy_file);
 }
 
@@ -633,12 +640,12 @@ polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
                                   PolKitPolicyFileEntryForeachFunc  cb,
                                   void                              *user_data)
 {
-        GSList *i;
+        PolKitList *i;
 
         g_return_if_fail (policy_file != NULL);
         g_return_if_fail (cb != NULL);
 
-        for (i = policy_file->entries; i != NULL; i = g_slist_next (i)) {
+        for (i = policy_file->entries; i != NULL; i = i->next) {
                 PolKitPolicyFileEntry *pfe = i->data;
                 cb (policy_file, pfe, user_data);
         }

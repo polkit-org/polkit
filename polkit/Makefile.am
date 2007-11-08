@@ -23,6 +23,7 @@ libpolkitinclude_HEADERS =              		\
 	polkit-sysdeps.h				\
 	polkit-memory.h					\
 	polkit-hash.h					\
+	polkit-list.h					\
 	polkit-types.h					\
 	polkit-error.h					\
 	polkit-result.h					\
@@ -46,6 +47,7 @@ libpolkit_la_SOURCES =                                					\
 	polkit-types.h									\
 	polkit-memory.h				polkit-memory.c				\
 	polkit-hash.h				polkit-hash.c				\
+	polkit-list.h				polkit-list.c				\
 	polkit-sysdeps.h			polkit-sysdeps.c			\
 	polkit-error.h				polkit-error.c				\
 	polkit-result.h				polkit-result.c				\
