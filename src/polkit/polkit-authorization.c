@@ -42,6 +42,8 @@
 #include "polkit-authorization.h"
 #include "polkit-utils.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * SECTION:polkit-authorization
@@ -105,9 +107,17 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
         g_return_val_if_fail (entry_in_auth_file != NULL, NULL);
 
-        auth = g_new0 (PolKitAuthorization, 1);
+        t = NULL;
+
+        auth = p_new0 (PolKitAuthorization, 1);
+        if (auth == NULL)
+                goto oom;
+
         auth->refcount = 1;
-        auth->entry_in_auth_file = g_strdup (entry_in_auth_file);
+        auth->entry_in_auth_file = p_strdup (entry_in_auth_file);
+        if (auth->entry_in_auth_file == NULL)
+                goto oom;
+
         auth->uid = uid;
 
         t = g_strsplit (entry_in_auth_file, ":", 0);
@@ -145,7 +155,9 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = g_strdup (t[n++]);
+                auth->action_id = p_strdup (t[n++]);
+                if (auth->action_id == NULL)
+                        goto oom;
 
                 auth->when = strtoull (t[n++], &ep, 10);
                 if (*ep != '\0')
@@ -173,11 +185,15 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 auth->scope = POLKIT_AUTHORIZATION_SCOPE_SESSION;
 
-                auth->session_id = g_strdup (t[n++]);
+                auth->session_id = p_strdup (t[n++]);
+                if (auth->session_id == NULL)
+                        goto oom;
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = g_strdup (t[n++]);
+                auth->action_id = p_strdup (t[n++]);
+                if (auth->action_id == NULL)
+                        goto oom;
 
                 auth->when = strtoull (t[n++], &ep, 10);
                 if (*ep != '\0')
@@ -209,7 +225,9 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = g_strdup (t[n++]);
+                auth->action_id = p_strdup (t[n++]);
+                if (auth->action_id == NULL)
+                        goto oom;
 
                 auth->when = strtoull (t[n++], &ep, 10);
                 if (*ep != '\0')
@@ -242,7 +260,9 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = g_strdup (t[n++]);
+                auth->action_id = p_strdup (t[n++]);
+                if (auth->action_id == NULL)
+                        goto oom;
 
                 auth->when = strtoull (t[n++], &ep, 10);
                 if (*ep != '\0')
@@ -264,9 +284,12 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
         return auth;
 
 error:
-        g_warning ("Error parsing token %d from line '%s'", n, entry_in_auth_file);
-        polkit_authorization_unref (auth);
-        g_strfreev (t);
+        //g_warning ("Error parsing token %d from line '%s'", n, entry_in_auth_file);
+oom:
+        if (auth != NULL)
+                polkit_authorization_unref (auth);
+        if (t != NULL)
+                g_strfreev (t);
         return NULL;
 }
 
@@ -308,12 +331,12 @@ polkit_authorization_unref (PolKitAuthorization *auth)
         if (auth->refcount > 0) 
                 return;
 
-        g_free (auth->entry_in_auth_file);
-        g_free (auth->action_id);
-        g_free (auth->session_id);
+        p_free (auth->entry_in_auth_file);
+        p_free (auth->action_id);
+        p_free (auth->session_id);
         if (auth->constraint != NULL)
                 polkit_authorization_constraint_unref (auth->constraint);
-        g_free (auth);
+        p_free (auth);
 }
 
 /**
@@ -565,3 +588,194 @@ polkit_authorization_get_constraint (PolKitAuthorization *auth)
         g_return_val_if_fail (auth != NULL, FALSE);
         return auth->constraint;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+typedef struct {
+        const char *entry;
+        PolKitAuthorizationScope scope;
+        const char *action_id;
+        time_t time_of_grant;
+        pid_t pid;
+        polkit_uint64_t pid_start_time;
+        const char *session;
+        PolKitAuthorizationConstraint *constraint;
+        polkit_bool_t explicit;
+        uid_t from;
+} TestAuth;
+
+static polkit_bool_t
+_run_test (void)
+{
+        const char *invalid_auths[] = {
+                "INVALID_SCOPE",
+
+                /* wrong number of items */
+                "process:",
+                "session:",
+                "always:",
+                "grant:",
+
+                /* malformed components */
+                "process:14485xyz:26817340:org.gnome.policykit.examples.frobnicate:1194631763:500:local+active",
+                "process:14485:26817340xyz:org.gnome.policykit.examples.frobnicate:1194631763:500:local+active",
+                "process:14485:26817340:0xyorg.gnome.policykit.examples.frobnicate:1194631763:500:local+active",
+                "process:14485:26817340:org.gnome.policykit.examples.frobnicate:1194631763xyz:500:local+active",
+                "process:14485:26817340:org.gnome.policykit.examples.frobnicate:1194631763:500xyz:local+active",
+                "process:14485:26817340:org.gnome.policykit.examples.frobnicate:1194631763:500:MALFORMED_CONSTRAINT",
+
+                /* TODO: validate ConsoleKit paths
+                   "session:xyz/org/freedesktop/ConsoleKit/Session1:org.gnome.policykit.examples.punch:1194631779:500:local+active",*/
+                "session:/org/freedesktop/ConsoleKit/Session1:0xyorg.gnome.policykit.examples.punch:1194631779:500:local+active",
+                "session:/org/freedesktop/ConsoleKit/Session1:org.gnome.policykit.examples.punch:1194631779xyz:500:local+active",
+                "session:/org/freedesktop/ConsoleKit/Session1:org.gnome.policykit.examples.punch:1194631779:500xyz:local+active",
+                "session:/org/freedesktop/ConsoleKit/Session1:org.gnome.policykit.examples.punch:1194631779:500:MALFORMED",
+
+                "always:0xyorg.gnome.clockapplet.mechanism.settimezone:1193598494:500:local+active",
+                "always:org.gnome.clockapplet.mechanism.settimezone:xyz1193598494:500:local+active",
+                "always:org.gnome.clockapplet.mechanism.settimezone:1193598494:xyz500:local+active",
+                "always:org.gnome.clockapplet.mechanism.settimezone:1193598494:500:MALFORMED",
+
+                "grant:0xyorg.freedesktop.policykit.read:1194634242:0:none",
+                "grant:org.freedesktop.policykit.read:xyz1194634242:0:none",
+                "grant:org.freedesktop.policykit.read:1194634242:xyz0:none",
+                "grant:org.freedesktop.policykit.read:1194634242:0:MALFORMED",
+
+        };
+        size_t num_invalid_auths = sizeof (invalid_auths) / sizeof (const char *);
+        TestAuth valid_auths[] = {
+                {
+                        "always:org.gnome.clockapplet.mechanism.settimezone:1193598494:500:local+active",
+                        POLKIT_AUTHORIZATION_SCOPE_ALWAYS,
+                        "org.gnome.clockapplet.mechanism.settimezone",
+                        1193598494,
+                        0, 0, NULL,
+                        polkit_authorization_constraint_get_require_local_active (),
+                        FALSE, 500
+                },
+
+                {
+                        "process:14485:26817340:org.gnome.policykit.examples.frobnicate:1194631763:500:local+active",
+                        POLKIT_AUTHORIZATION_SCOPE_PROCESS,
+                        "org.gnome.policykit.examples.frobnicate",
+                        1194631763,
+                        14485, 26817340, NULL,
+                        polkit_authorization_constraint_get_require_local_active (),
+                        FALSE, 500
+                },
+
+                {
+                        "process:14485:26817340:org.gnome.policykit.examples.tweak:1194631774:0:local+active",
+                        POLKIT_AUTHORIZATION_SCOPE_PROCESS,
+                        "org.gnome.policykit.examples.tweak",
+                        1194631774,
+                        14485, 26817340, NULL,
+                        polkit_authorization_constraint_get_require_local_active (),
+                        FALSE, 0
+                },
+
+                {
+                        "session:/org/freedesktop/ConsoleKit/Session1:org.gnome.policykit.examples.punch:1194631779:500:local+active",
+                        POLKIT_AUTHORIZATION_SCOPE_SESSION,
+                        "org.gnome.policykit.examples.punch",
+                        1194631779,
+                        0, 0, "/org/freedesktop/ConsoleKit/Session1",
+                        polkit_authorization_constraint_get_require_local_active (),
+                        FALSE, 500
+                },
+
+                {
+                        "process-one-shot:27860:26974819:org.gnome.policykit.examples.jump:1194633344:500:local+active",
+                        POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT,
+                        "org.gnome.policykit.examples.jump",
+                        1194633344,
+                        27860, 26974819, NULL,
+                        polkit_authorization_constraint_get_require_local_active (),
+                        FALSE, 500
+                },
+
+                {
+                        "grant:org.freedesktop.policykit.read:1194634242:0:none",
+                        POLKIT_AUTHORIZATION_SCOPE_ALWAYS,
+                        "org.freedesktop.policykit.read",
+                        1194634242,
+                        0, 0, NULL,
+                        polkit_authorization_constraint_get_null (),
+                        TRUE, 0
+                },
+
+        };
+        size_t num_valid_auths = sizeof (valid_auths) / sizeof (TestAuth);
+        unsigned int n;
+        pid_t pid;
+        polkit_uint64_t pid_start_time;
+        const char *s;
+        PolKitAuthorizationConstraint *ac;
+        uid_t uid;
+
+        for (n = 0; n < num_valid_auths; n++) {
+                PolKitAuthorization *a;
+                TestAuth *t = &(valid_auths[n]);
+
+                if ((a = _polkit_authorization_new_for_uid (t->entry, 500)) != NULL) {
+
+                        polkit_authorization_debug (a);
+                        polkit_authorization_validate (a);
+
+                        g_assert (t->scope == polkit_authorization_get_scope (a));
+                        g_assert (t->time_of_grant == polkit_authorization_get_time_of_grant (a));
+                        g_assert (500 == polkit_authorization_get_uid (a));
+
+                        switch (t->scope) {
+                        case POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT: /* explicit fallthrough */
+                        case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
+                                g_assert (polkit_authorization_scope_process_get_pid (a, &pid, &pid_start_time) && 
+                                          t->pid == pid && t->pid_start_time == pid_start_time);
+                                break;
+                        case POLKIT_AUTHORIZATION_SCOPE_SESSION:
+                                g_assert ((s = polkit_authorization_scope_session_get_ck_objref (a)) != NULL &&
+                                          strcmp (s, t->session) == 0);
+                                break;
+                        case POLKIT_AUTHORIZATION_SCOPE_ALWAYS:
+                                break;
+                        }
+
+                        g_assert ((s = _polkit_authorization_get_authfile_entry (a)) != NULL && strcmp (t->entry, s) == 0);
+
+                        g_assert ((s = polkit_authorization_get_action_id (a)) != NULL && strcmp (t->action_id, s) == 0);
+
+                        g_assert (t->time_of_grant == polkit_authorization_get_time_of_grant (a));
+
+                        g_assert ((ac = polkit_authorization_get_constraint (a)) != NULL &&
+                                  polkit_authorization_constraint_equal (ac, t->constraint));
+
+                        if (t->explicit) {
+                                g_assert (!polkit_authorization_was_granted_via_defaults (a, &uid));
+                                g_assert (polkit_authorization_was_granted_explicitly (a, &uid) && uid == t->from);
+                        } else {
+                                g_assert (polkit_authorization_was_granted_via_defaults (a, &uid) && uid == t->from);
+                                g_assert (!polkit_authorization_was_granted_explicitly (a, &uid));
+                        }
+
+                        polkit_authorization_ref (a);
+                        polkit_authorization_unref (a);
+                        polkit_authorization_unref (a);
+                }
+        }
+
+        for (n = 0; n < num_invalid_auths; n++) {
+                g_assert (_polkit_authorization_new_for_uid (invalid_auths[n], 500) == NULL);
+        }
+
+        return TRUE;
+}
+
+
+PolKitTest _test_authorization = {
+        "polkit_authorization",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

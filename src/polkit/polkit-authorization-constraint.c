@@ -44,7 +44,7 @@
 #include "polkit-private.h"
 #include "polkit-test.h"
 #include "polkit-memory.h"
-
+ 
 /**
  * SECTION:polkit-authorization-constraint
  * @title: Authorization Constraints
@@ -90,7 +90,7 @@ _polkit_authorization_constraint_new (const char *entry_in_auth_file)
         authc = p_new0 (PolKitAuthorizationConstraint, 1);
         if (authc == NULL)
                 goto oom;
-        authc->refcount = 0;
+        authc->refcount = 1;
 oom:
         return authc;
 }
