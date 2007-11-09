@@ -42,6 +42,8 @@
 #include "polkit-authorization-constraint.h"
 #include "polkit-utils.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
+#include "polkit-memory.h"
 
 /**
  * SECTION:polkit-authorization-constraint
@@ -85,8 +87,11 @@ PolKitAuthorizationConstraint *
 _polkit_authorization_constraint_new (const char *entry_in_auth_file)
 {
         PolKitAuthorizationConstraint *authc;
-        authc = g_new0 (PolKitAuthorizationConstraint, 1);
+        authc = p_new0 (PolKitAuthorizationConstraint, 1);
+        if (authc == NULL)
+                goto oom;
         authc->refcount = 0;
+oom:
         return authc;
 }
 
@@ -130,7 +135,7 @@ polkit_authorization_constraint_unref (PolKitAuthorizationConstraint *authc)
         if (authc->refcount > 0) 
                 return;
 
-        g_free (authc);
+        p_free (authc);
 }
 
 /**
@@ -192,11 +197,8 @@ polkit_authorization_constraint_check_session (PolKitAuthorizationConstraint *au
 
         ret = FALSE;
 
-        if (!polkit_session_get_ck_is_local (session, &is_local))
-                is_local = FALSE;
-
-        if (!polkit_session_get_ck_is_active (session, &is_active))
-                is_active = FALSE;
+        polkit_session_get_ck_is_local (session, &is_local);
+        polkit_session_get_ck_is_active (session, &is_active);
 
         if (authc->flags & POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL)  {
                 if (!is_local)
@@ -363,6 +365,7 @@ polkit_authorization_constraint_to_string (PolKitAuthorizationConstraint *authc,
         g_return_val_if_fail (authc != NULL, buf_size);
 
         switch (authc->flags) {
+        default:
         case 0:
                 return snprintf (out_buf, buf_size, "none");
 
@@ -374,9 +377,6 @@ polkit_authorization_constraint_to_string (PolKitAuthorizationConstraint *authc,
 
         case POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL|POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE:
                 return snprintf (out_buf, buf_size, "local+active");
-
-        default:
-                return buf_size;
         }
 }
 
@@ -440,16 +440,13 @@ polkit_authorization_constraint_get_from_caller (PolKitCaller *caller)
         PolKitAuthorizationConstraint *ret;
 
         /* caller is not in a session so use the null constraint */
-        if (!polkit_caller_get_ck_session (caller, &session)) {
+        if (!polkit_caller_get_ck_session (caller, &session) || session == NULL) {
                 ret = polkit_authorization_constraint_get_null ();
                 goto out;
         }
 
-        /* if we, for some reason, don't know if the user is local or active, prefer maximal constraint */
-        if (!polkit_session_get_ck_is_local (session, &is_local))
-                is_local = TRUE;
-        if (!polkit_session_get_ck_is_active (session, &is_active))
-                is_active = TRUE;
+        polkit_session_get_ck_is_local (session, &is_local);
+        polkit_session_get_ck_is_active (session, &is_active);
 
         if (is_local) {
                 if (is_active) {
@@ -489,3 +486,257 @@ polkit_authorization_constraint_equal (PolKitAuthorizationConstraint *a, PolKitA
 
         return a->flags == b->flags;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_tst1 (PolKitSession *s, PolKitAuthorizationConstraint *ac, polkit_bool_t *out_result)
+{
+        polkit_bool_t oom;
+        PolKitCaller *c;
+
+        oom = TRUE;
+
+        if (s == NULL)
+                goto out;
+
+        *out_result = polkit_authorization_constraint_check_session (ac, s);
+
+        if ((c = polkit_caller_new ()) != NULL) {
+                if (ac->flags == 0)  {
+                        g_assert (polkit_authorization_constraint_check_caller (ac, c) == TRUE);
+                } else {
+                        g_assert (polkit_authorization_constraint_check_caller (ac, c) == FALSE);
+                }
+
+                g_assert (polkit_caller_set_ck_session (c, s));
+                g_assert (*out_result == polkit_authorization_constraint_check_caller (ac, c));
+                polkit_caller_unref (c);
+        }
+
+        oom = FALSE;
+
+out:
+        return oom;
+}
+
+static void
+_tst2 (PolKitAuthorizationConstraint *ac)
+{
+        char buf[256];
+        PolKitAuthorizationConstraint *ac2;
+
+        /* not enough space */
+        g_assert (polkit_authorization_constraint_to_string (ac, buf, 2) >= 2);
+
+        g_assert (polkit_authorization_constraint_to_string (ac, buf, sizeof (buf)) < sizeof (buf));
+        if ((ac2 = polkit_authorization_constraint_from_string (buf)) != NULL) {
+                g_assert (polkit_authorization_constraint_equal (ac, ac2) == TRUE);
+                polkit_authorization_constraint_unref (ac2);
+        }
+}
+
+static polkit_bool_t
+_tst3 (PolKitSession *s, PolKitAuthorizationConstraint *compare_to, polkit_bool_t *ret)
+{
+        PolKitAuthorizationConstraint *ac;
+        polkit_bool_t is_oom;
+        PolKitCaller *c;
+
+        is_oom = TRUE;
+
+        if (s == NULL)
+                goto out;
+
+        if ((c = polkit_caller_new ()) != NULL) {
+                ac = polkit_authorization_constraint_get_from_caller (c);
+                g_assert (polkit_authorization_constraint_equal (ac, polkit_authorization_constraint_get_null ()));
+
+
+                g_assert (polkit_caller_set_ck_session (c, s));
+
+                ac = polkit_authorization_constraint_get_from_caller (c);
+
+                *ret = polkit_authorization_constraint_equal (ac, compare_to);
+
+                polkit_caller_unref (c);
+                polkit_authorization_constraint_unref (ac);
+
+                is_oom = FALSE;
+        }
+
+
+out:
+        return is_oom;
+}
+
+static polkit_bool_t
+_run_test (void)
+{
+        PolKitAuthorizationConstraint *ac;
+        PolKitAuthorizationConstraintFlags flags;
+        PolKitSession *s_active;
+        PolKitSession *s_inactive;
+        PolKitSession *s_active_remote;
+        PolKitSession *s_inactive_remote;
+        polkit_bool_t ret;
+        int n;
+
+        if ((s_active = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_active, "/session1")) {
+                        polkit_session_unref (s_active);
+                        s_active = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_active, TRUE));
+                        g_assert (polkit_session_set_ck_is_active (s_active, TRUE));
+                }
+        }
+
+        if ((s_inactive = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_inactive, "/session2")) {
+                        polkit_session_unref (s_inactive);
+                        s_inactive = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_inactive, TRUE));
+                        g_assert (polkit_session_set_ck_is_active (s_inactive, FALSE));
+                }
+        }
+
+        if ((s_active_remote = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_active_remote, "/session3") ||
+                    !polkit_session_set_ck_remote_host (s_active_remote, "remotehost.com")) {
+                        polkit_session_unref (s_active_remote);
+                        s_active_remote = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_active_remote, FALSE));
+                        g_assert (polkit_session_set_ck_is_active (s_active_remote, TRUE));
+                }
+        }
+
+        if ((s_inactive_remote = polkit_session_new ()) != NULL) {
+                if (!polkit_session_set_ck_objref (s_inactive_remote, "/session4") ||
+                    !polkit_session_set_ck_remote_host (s_inactive_remote, "remotehost.com")) {
+                        polkit_session_unref (s_inactive_remote);
+                        s_inactive_remote = NULL;
+                } else {
+                        g_assert (polkit_session_set_ck_is_local (s_inactive_remote, FALSE));
+                        g_assert (polkit_session_set_ck_is_active (s_inactive_remote, FALSE));
+                }
+        }
+
+        /* null constraint */
+        g_assert ((ac = polkit_authorization_constraint_get_null ()) != NULL);
+        polkit_authorization_constraint_ref (ac);
+        polkit_authorization_constraint_unref (ac);
+        flags = polkit_authorization_constraint_get_flags (ac);
+        g_assert (flags == 0);
+        g_assert (_tst1 (s_active, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_inactive, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_active_remote, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_inactive_remote, ac, &ret) || ret == TRUE);
+        _tst2 (ac);
+
+        /* local constraint */
+        g_assert ((ac = polkit_authorization_constraint_get_require_local ()) != NULL);
+        flags = polkit_authorization_constraint_get_flags (ac);
+        g_assert (flags == POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL);
+        g_assert (_tst1 (s_active, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_inactive, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_active_remote, ac, &ret) || ret == FALSE);
+        g_assert (_tst1 (s_inactive_remote, ac, &ret) || ret == FALSE);
+        _tst2 (ac);
+
+        /* active constraint */
+        g_assert ((ac = polkit_authorization_constraint_get_require_active ()) != NULL);
+        flags = polkit_authorization_constraint_get_flags (ac);
+        g_assert (flags == POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE);
+        g_assert (_tst1 (s_active, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_inactive, ac, &ret) || ret == FALSE);
+        g_assert (_tst1 (s_active_remote, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_inactive_remote, ac, &ret) || ret == FALSE);
+        _tst2 (ac);
+
+        /* local+active constraint */
+        g_assert ((ac = polkit_authorization_constraint_get_require_local_active ()) != NULL);
+        flags = polkit_authorization_constraint_get_flags (ac);
+        g_assert (flags == (POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL|
+                            POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE));
+        g_assert (_tst1 (s_active, ac, &ret) || ret == TRUE);
+        g_assert (_tst1 (s_inactive, ac, &ret) || ret == FALSE);
+        g_assert (_tst1 (s_active_remote, ac, &ret) || ret == FALSE);
+        g_assert (_tst1 (s_inactive_remote, ac, &ret) || ret == FALSE);
+        _tst2 (ac);
+
+        for (n = 0; n < 4; n++) {
+                PolKitSession *s;
+                polkit_bool_t expected[4];
+
+                switch (n) {
+                case 0:
+                        s = s_active;
+                        expected[0] = TRUE;
+                        expected[1] = FALSE;
+                        expected[2] = FALSE;
+                        expected[3] = FALSE;
+                        break;
+                case 1:
+                        s = s_inactive;
+                        expected[0] = FALSE;
+                        expected[1] = TRUE;
+                        expected[2] = FALSE;
+                        expected[3] = FALSE;
+                        break;
+                case 2:
+                        s = s_active_remote;
+                        expected[0] = FALSE;
+                        expected[1] = FALSE;
+                        expected[2] = TRUE;
+                        expected[3] = FALSE;
+                        break;
+                case 3:
+                        s = s_inactive_remote;
+                        expected[0] = FALSE;
+                        expected[1] = FALSE;
+                        expected[2] = FALSE;
+                        expected[3] = TRUE;
+                        break;
+                }
+
+                g_assert (_tst3 (s, polkit_authorization_constraint_get_require_local_active (), &ret) || ret == expected[0]);
+                g_assert (_tst3 (s, polkit_authorization_constraint_get_require_local (), &ret) || ret == expected[1]);
+                g_assert (_tst3 (s, polkit_authorization_constraint_get_require_active (), &ret) || ret == expected[2]);
+                g_assert (_tst3 (s, polkit_authorization_constraint_get_null (), &ret) || ret == expected[3]);
+        }
+
+        if ((ac = _polkit_authorization_constraint_new ("local+active")) != NULL) {
+                polkit_authorization_constraint_validate (ac);
+                polkit_authorization_constraint_debug (ac);
+                polkit_authorization_constraint_ref (ac);
+                polkit_authorization_constraint_unref (ac);
+                polkit_authorization_constraint_unref (ac);
+        }
+        
+        if (s_active != NULL)
+                polkit_session_unref (s_active);
+
+        if (s_inactive != NULL)
+                polkit_session_unref (s_inactive);
+
+        if (s_active_remote != NULL)
+                polkit_session_unref (s_active_remote);
+
+        if (s_inactive_remote != NULL)
+                polkit_session_unref (s_inactive_remote);
+
+        return TRUE;
+}
+
+
+PolKitTest _test_authorization_constraint = {
+        "polkit_authorization_constraint",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */
