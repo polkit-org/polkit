@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-memory.h : Memory management
+ * kit-memory.h : Memory management
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,25 +23,26 @@
  *
  **************************************************************************/
 
-#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
-#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
+#if !defined (KIT_COMPILATION) && !defined(_KIT_INSIDE_KIT_H)
+#error "Only <kit/kit.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef POLKIT_MEMORY_H
-#define POLKIT_MEMORY_H
+#ifndef KIT_MEMORY_H
+#define KIT_MEMORY_H
 
 #include <stdarg.h>
-#include <polkit/polkit-types.h>
+#include <stdlib.h>
+#include <kit/kit.h>
 
-POLKIT_BEGIN_DECLS
+KIT_BEGIN_DECLS
 
-void *p_malloc  (size_t bytes);
-void *p_malloc0 (size_t bytes);
-void *p_realloc (void *memory, size_t bytes);
-void  p_free    (void *memory);
+void *kit_malloc  (size_t bytes);
+void *kit_malloc0 (size_t bytes);
+void *kit_realloc (void *memory, size_t bytes);
+void  kit_free    (void *memory);
 
 /**
- * p_new:
+ * kit_new:
  * @type: the type of object to allocate
  * @count: number of objects to allocate
  *
@@ -49,10 +50,10 @@ void  p_free    (void *memory);
  *
  * Returns: Allocated memory, cast to a pointer of #type or #NULL on OOM.
  */
-#define p_new(type, count)  ((type*)p_malloc (sizeof (type) * (count)));
+#define kit_new(type, count)  ((type*)kit_malloc (sizeof (type) * (count)));
 
 /**
- * p_new0:
+ * kit_new0:
  * @type: the type of object to allocate
  * @count: number of objects to allocate
  *
@@ -60,16 +61,15 @@ void  p_free    (void *memory);
  *
  * Returns: Allocated memory, cast to a pointer of #type or #NULL on OOM.
  */
-#define p_new0(type, count) ((type*)p_malloc0 (sizeof (type) * (count)));
+#define kit_new0(type, count) ((type*)kit_malloc0 (sizeof (type) * (count)));
 
-char *p_strdup         (const char *s);
-char *p_strndup        (const char *s, size_t n);
-char* p_strdup_printf  (const char *format, ...);
-char* p_strdup_vprintf (const char *format, va_list args);
+void  _kit_memory_reset (void);
+int   _kit_memory_get_current_allocations (void);
+int   _kit_memory_get_total_allocations (void);
+void  _kit_memory_fail_nth_alloc (int number);
 
+KIT_END_DECLS
 
-POLKIT_END_DECLS
-
-#endif /* POLKIT_MEMORY_H */
+#endif /* KIT_MEMORY_H */
 
 

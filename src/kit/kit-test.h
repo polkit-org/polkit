@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit.h : library for querying system-wide policy
+ * kit-test.h : PolicyKit test
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,28 +23,39 @@
  *
  **************************************************************************/
 
-#ifndef POLKIT_H
-#define POLKIT_H
+#if !defined (KIT_COMPILATION)
+#error "kit-test.h is a private file."
+#endif
 
-#define _POLKIT_INSIDE_POLKIT_H 1
-#include <polkit/polkit-types.h>
-#include <polkit/polkit-sysdeps.h>
-#include <polkit/polkit-error.h>
-#include <polkit/polkit-result.h>
-#include <polkit/polkit-context.h>
-#include <polkit/polkit-action.h>
-#include <polkit/polkit-seat.h>
-#include <polkit/polkit-session.h>
-#include <polkit/polkit-caller.h>
-#include <polkit/polkit-policy-file-entry.h>
-#include <polkit/polkit-policy-file.h>
-#include <polkit/polkit-policy-cache.h>
-#include <polkit/polkit-policy-default.h>
-#include <polkit/polkit-config.h>
-#include <polkit/polkit-authorization.h>
-#include <polkit/polkit-authorization-db.h>
-#undef _POLKIT_INSIDE_POLKIT_H
+#ifndef KIT_TEST_H
+#define KIT_TEST_H
 
-#endif /* POLKIT_H */
+#include <kit/kit.h>
+
+KIT_BEGIN_DECLS
+
+/**
+ * KitTest:
+ *
+ * Test suite abstraction.
+ */
+typedef struct {
+        /*< private >*/
+        const char *name;
+        void (*setup) (void);
+        void (*teardown) (void);
+        kit_bool_t (*run) (void);
+} KitTest;
+
+extern KitTest _test_memory;
+extern KitTest _test_string;
+extern KitTest _test_hash;
+extern KitTest _test_list;
+extern KitTest _test_file;
+extern KitTest _test_message;
+
+KIT_END_DECLS
+
+#endif /* KIT_TEST_H */
 
 

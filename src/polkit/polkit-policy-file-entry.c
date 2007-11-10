@@ -36,7 +36,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <glib.h>
 #include "polkit-debug.h"
 #include "polkit-error.h"
 #include "polkit-result.h"
@@ -44,7 +43,7 @@
 #include "polkit-authorization-db.h"
 #include "polkit-private.h"
 #include "polkit-test.h"
-#include "polkit-memory.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-policy-file-entry
@@ -68,7 +67,7 @@ struct _PolKitPolicyFileEntry
 
         char *policy_description;
         char *policy_message;
-        PolKitHash *annotations;
+        KitHash *annotations;
 };
 
 
@@ -78,17 +77,17 @@ _polkit_policy_file_entry_new   (const char *action_id,
                                  PolKitResult defaults_allow_any,
                                  PolKitResult defaults_allow_inactive,
                                  PolKitResult defaults_allow_active,
-                                 PolKitHash *annotations)
+                                 KitHash *annotations)
 {
         PolKitPolicyFileEntry *pfe;
 
-        g_return_val_if_fail (action_id != NULL, NULL);
+        kit_return_val_if_fail (action_id != NULL, NULL);
 
-        pfe = p_new0 (PolKitPolicyFileEntry, 1);
+        pfe = kit_new0 (PolKitPolicyFileEntry, 1);
         if (pfe == NULL)
                 goto error;
         pfe->refcount = 1;
-        pfe->action = p_strdup (action_id);
+        pfe->action = kit_strdup (action_id);
         if (pfe->action == NULL)
                 goto error;
 
@@ -121,15 +120,15 @@ _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
                                             const char *policy_description,
                                             const char *policy_message)
 {
-        g_return_val_if_fail (pfe != NULL, FALSE);
+        kit_return_val_if_fail (pfe != NULL, FALSE);
 
         if (pfe->policy_description != NULL)
-                p_free (pfe->policy_description);
+                kit_free (pfe->policy_description);
         if (pfe->policy_message != NULL)
-                p_free (pfe->policy_message);
+                kit_free (pfe->policy_message);
 
-        pfe->policy_description = p_strdup (policy_description);
-        pfe->policy_message = p_strdup (policy_message);
+        pfe->policy_description = kit_strdup (policy_description);
+        pfe->policy_message = kit_strdup (policy_message);
 
         if (policy_description != NULL && pfe->policy_description == NULL)
                 return FALSE;
@@ -158,7 +157,7 @@ _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
 const char *
 polkit_policy_file_entry_get_action_description (PolKitPolicyFileEntry *policy_file_entry)
 {
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->policy_description;
 }
 
@@ -181,7 +180,7 @@ polkit_policy_file_entry_get_action_description (PolKitPolicyFileEntry *policy_f
 const char *
 polkit_policy_file_entry_get_action_message (PolKitPolicyFileEntry *policy_file_entry)
 {
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->policy_message;
 }
 
@@ -196,7 +195,7 @@ polkit_policy_file_entry_get_action_message (PolKitPolicyFileEntry *policy_file_
 PolKitPolicyFileEntry *
 polkit_policy_file_entry_ref (PolKitPolicyFileEntry *policy_file_entry)
 {
-        g_return_val_if_fail (policy_file_entry != NULL, policy_file_entry);
+        kit_return_val_if_fail (policy_file_entry != NULL, policy_file_entry);
         policy_file_entry->refcount++;
         return policy_file_entry;
 }
@@ -212,23 +211,23 @@ polkit_policy_file_entry_ref (PolKitPolicyFileEntry *policy_file_entry)
 void
 polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
 {
-        g_return_if_fail (policy_file_entry != NULL);
+        kit_return_if_fail (policy_file_entry != NULL);
         policy_file_entry->refcount--;
         if (policy_file_entry->refcount > 0) 
                 return;
 
-        p_free (policy_file_entry->action);
+        kit_free (policy_file_entry->action);
 
         if (policy_file_entry->defaults != NULL)
                 polkit_policy_default_unref (policy_file_entry->defaults);
 
         if (policy_file_entry->annotations != NULL)
-                polkit_hash_unref (policy_file_entry->annotations);
+                kit_hash_unref (policy_file_entry->annotations);
 
-        p_free (policy_file_entry->policy_description);
-        p_free (policy_file_entry->policy_message);
+        kit_free (policy_file_entry->policy_description);
+        kit_free (policy_file_entry->policy_message);
 
-        p_free (policy_file_entry);
+        kit_free (policy_file_entry);
 }
 
 /**
@@ -240,7 +239,7 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
 void
 polkit_policy_file_entry_debug (PolKitPolicyFileEntry *policy_file_entry)
 {
-        g_return_if_fail (policy_file_entry != NULL);
+        kit_return_if_fail (policy_file_entry != NULL);
         _pk_debug ("PolKitPolicyFileEntry: refcount=%d action=%s",
                    policy_file_entry->refcount,
                    policy_file_entry->action);
@@ -258,7 +257,7 @@ polkit_policy_file_entry_debug (PolKitPolicyFileEntry *policy_file_entry)
 const char *
 polkit_policy_file_entry_get_id (PolKitPolicyFileEntry *policy_file_entry)
 {
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->action;
 }
 
@@ -273,7 +272,7 @@ polkit_policy_file_entry_get_id (PolKitPolicyFileEntry *policy_file_entry)
 PolKitPolicyDefault *
 polkit_policy_file_entry_get_default (PolKitPolicyFileEntry *policy_file_entry)
 {
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->defaults;
 }
 
@@ -284,7 +283,7 @@ typedef struct  {
 } _AnnotationsClosure;
 
 static polkit_bool_t
-_annotations_cb (PolKitHash *hash,
+_annotations_cb (KitHash *hash,
                  void *key,
                  void *value,
                  void *user_data)
@@ -310,7 +309,7 @@ polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file
 {
         _AnnotationsClosure closure;
 
-        g_return_val_if_fail (policy_file_entry != NULL, FALSE);
+        kit_return_val_if_fail (policy_file_entry != NULL, FALSE);
         if (policy_file_entry->annotations == NULL)
                 return FALSE;
 
@@ -318,7 +317,7 @@ polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file
         closure.cb = cb;
         closure.user_data = user_data;
 
-        return polkit_hash_foreach (policy_file_entry->annotations,
+        return kit_hash_foreach (policy_file_entry->annotations,
                                     _annotations_cb,
                                     &closure);
 }
@@ -337,12 +336,12 @@ polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entr
                                          const char *key)
 {
         const char *value;
-        g_return_val_if_fail (policy_file_entry != NULL, NULL);
-        g_return_val_if_fail (key != NULL, NULL);
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
+        kit_return_val_if_fail (key != NULL, NULL);
 
         value = NULL;
         if (policy_file_entry->annotations != NULL) {
-                value = polkit_hash_lookup (policy_file_entry->annotations, (void *) key, NULL);
+                value = kit_hash_lookup (policy_file_entry->annotations, (void *) key, NULL);
         }
         return value;
 }
@@ -383,22 +382,22 @@ _run_test (void)
 {
         PolKitPolicyFileEntry *pfe;
         PolKitPolicyDefault *d;
-        PolKitHash *a;
+        KitHash *a;
         int count;
 
         a = NULL;
         pfe = NULL;
 
-        if ((a = polkit_hash_new (polkit_hash_str_hash_func,
-                                  polkit_hash_str_equal_func,
-                                  NULL, NULL,
-                                  NULL, NULL)) == NULL)
+        if ((a = kit_hash_new (kit_hash_str_hash_func,
+                               kit_hash_str_equal_func,
+                               NULL, NULL,
+                               NULL, NULL)) == NULL)
                 goto oom;
 
-        if (!polkit_hash_insert (a, "a1", "v1"))
+        if (!kit_hash_insert (a, "a1", "v1"))
                 goto oom;
 
-        if (!polkit_hash_insert (a, "a2", "v2"))
+        if (!kit_hash_insert (a, "a2", "v2"))
                 goto oom;
 
         if ((pfe = _polkit_policy_file_entry_new ("org.example-action",
@@ -410,38 +409,38 @@ _run_test (void)
         /* _file_entry_new assumes ownership of the passed a variable */
         a = NULL;
 
-        g_assert (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example-action") == 0);
+        kit_assert (strcmp (polkit_policy_file_entry_get_id (pfe), "org.example-action") == 0);
         
         if (_polkit_policy_file_entry_set_descriptions (pfe,
                                                         "the desc",
                                                         "the msg")) {
-                g_assert (strcmp (polkit_policy_file_entry_get_action_description (pfe), "the desc") == 0);
-                g_assert (strcmp (polkit_policy_file_entry_get_action_message (pfe), "the msg") == 0);
+                kit_assert (strcmp (polkit_policy_file_entry_get_action_description (pfe), "the desc") == 0);
+                kit_assert (strcmp (polkit_policy_file_entry_get_action_message (pfe), "the msg") == 0);
         }
         
         if (_polkit_policy_file_entry_set_descriptions (pfe,
                                                         "the desc2",
                                                         "the msg2")) {
-                g_assert (strcmp (polkit_policy_file_entry_get_action_description (pfe), "the desc2") == 0);
-                g_assert (strcmp (polkit_policy_file_entry_get_action_message (pfe), "the msg2") == 0);
+                kit_assert (strcmp (polkit_policy_file_entry_get_action_description (pfe), "the desc2") == 0);
+                kit_assert (strcmp (polkit_policy_file_entry_get_action_message (pfe), "the msg2") == 0);
         }
         
-        g_assert ((d = polkit_policy_file_entry_get_default (pfe)) != NULL);
-        g_assert (polkit_policy_default_get_allow_any (d) == POLKIT_RESULT_NO);
-        g_assert (polkit_policy_default_get_allow_inactive (d) == POLKIT_RESULT_ONLY_VIA_SELF_AUTH);
-        g_assert (polkit_policy_default_get_allow_active (d) == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH);
+        kit_assert ((d = polkit_policy_file_entry_get_default (pfe)) != NULL);
+        kit_assert (polkit_policy_default_get_allow_any (d) == POLKIT_RESULT_NO);
+        kit_assert (polkit_policy_default_get_allow_inactive (d) == POLKIT_RESULT_ONLY_VIA_SELF_AUTH);
+        kit_assert (polkit_policy_default_get_allow_active (d) == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH);
         
         polkit_policy_file_entry_ref (pfe);
         polkit_policy_file_entry_unref (pfe);
         polkit_policy_file_entry_debug (pfe);
 
-        g_assert (strcmp (polkit_policy_file_entry_get_annotation (pfe, "a1"), "v1") == 0);
-        g_assert (strcmp (polkit_policy_file_entry_get_annotation (pfe, "a2"), "v2") == 0);
-        g_assert (polkit_policy_file_entry_get_annotation (pfe, "a3") == NULL);
+        kit_assert (strcmp (polkit_policy_file_entry_get_annotation (pfe, "a1"), "v1") == 0);
+        kit_assert (strcmp (polkit_policy_file_entry_get_annotation (pfe, "a2"), "v2") == 0);
+        kit_assert (polkit_policy_file_entry_get_annotation (pfe, "a3") == NULL);
 
         count = 0;
         polkit_policy_file_entry_annotations_foreach (pfe, _pfe_cb, &count);
-        g_assert (count == 2);
+        kit_assert (count == 2);
 
         polkit_policy_file_entry_unref (pfe);
         if ((pfe = _polkit_policy_file_entry_new ("org.example-action-2",
@@ -452,16 +451,16 @@ _run_test (void)
                 goto oom;
         count = 0;
         polkit_policy_file_entry_annotations_foreach (pfe, _pfe_cb2, &count);
-        g_assert (count == 0);
+        kit_assert (count == 0);
         _pfe_cb2 (pfe, NULL, NULL, &count); /* want to get coverage of _pfe_cb2 */
-        g_assert (count == 1);
+        kit_assert (count == 1);
 
 oom:
         if (pfe != NULL)
                 polkit_policy_file_entry_unref (pfe);
 
         if (a != NULL)
-                polkit_hash_unref (a);
+                kit_hash_unref (a);
 
         return TRUE;
 }

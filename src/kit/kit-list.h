@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-list.h : Doubly-linked list
+ * kit-list.h : Doubly-linked list
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,63 +23,63 @@
  *
  **************************************************************************/
 
-#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
-#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
+#if !defined (KIT_COMPILATION) && !defined(_KIT_INSIDE_KIT_H)
+#error "Only <kit/kit.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef POLKIT_LIST_H
-#define POLKIT_LIST_H
+#ifndef KIT_LIST_H
+#define KIT_LIST_H
 
-#include <polkit/polkit-types.h>
+#include <kit/kit.h>
 
-POLKIT_BEGIN_DECLS
+KIT_BEGIN_DECLS
 
-struct _PolKitList;
-typedef struct _PolKitList PolKitList;
+struct _KitList;
+typedef struct _KitList KitList;
 
 /**
- * PolKitList:
- * @data: the value passed in polkit_list_append() and polkit_list_prepend()
+ * KitList:
+ * @data: the value passed in kit_list_append() and kit_list_prepend()
  * @next: the next element in the list or #NULL if this is the last element
  * @prev: the previous element in the list or #NULL if this is the last element
  *
- * Public members of the #PolKitList data structure
+ * Public members of the #KitList data structure
  *
  * Since: 0.7
  */
-struct _PolKitList {
+struct _KitList {
         void *data;
-        PolKitList *next;
-        PolKitList *prev;
+        KitList *next;
+        KitList *prev;
 };
 
 /**
- * PolKitListForeachFunc:
+ * KitListForeachFunc:
  * @list: the list
  * @data: data of link entry
- * @user_data: user data passed to polkit_list_foreach()
+ * @user_data: user data passed to kit_list_foreach()
  *
- * Type signature for callback function used in polkit_list_foreach().
+ * Type signature for callback function used in kit_list_foreach().
  *
  * Returns: Return #TRUE to short-circuit, e.g. stop the iteration.
  *
  * Since: 0.7
  */
-typedef polkit_bool_t (*PolKitListForeachFunc) (PolKitList *list,
-                                                void *data,
-                                                void *user_data);
+typedef kit_bool_t (*KitListForeachFunc) (KitList *list,
+                                          void *data,
+                                          void *user_data);
 
-PolKitList    *polkit_list_append      (PolKitList *list, void *data);
-PolKitList    *polkit_list_prepend     (PolKitList *list, void *data);
-void           polkit_list_free        (PolKitList *list);
-PolKitList    *polkit_list_delete_link (PolKitList *list, PolKitList *link);
+KitList    *kit_list_append      (KitList *list, void *data);
+KitList    *kit_list_prepend     (KitList *list, void *data);
+void        kit_list_free        (KitList *list);
+KitList    *kit_list_delete_link (KitList *list, KitList *link);
 
-size_t         polkit_list_length      (PolKitList *list);
-polkit_bool_t  polkit_list_foreach     (PolKitList *list, PolKitListForeachFunc func, void *user_data);
+size_t      kit_list_length      (KitList *list);
+kit_bool_t  kit_list_foreach     (KitList *list, KitListForeachFunc func, void *user_data);
 
 
-POLKIT_END_DECLS
+KIT_END_DECLS
 
-#endif /* POLKIT_LIST_H */
+#endif /* KIT_LIST_H */
 
 

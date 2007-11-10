@@ -68,6 +68,24 @@
     <xi:include href="spec/polkit-spec-configuration.xml" />    
   </reference>
 
+  <reference id="ref-internal">
+    <title>Internal API Reference</title>
+    <partintro>
+      <para>
+	This part presents the class and function reference for the
+	internal support classes, data structures and functions. These
+	symbols are not exported.
+      </para>
+    </partintro>
+    <xi:include href="xml/kit.xml"/>
+    <xi:include href="xml/kit-memory.xml"/>
+    <xi:include href="xml/kit-string.xml"/>
+    <xi:include href="xml/kit-message.xml"/>
+    <xi:include href="xml/kit-list.xml"/>
+    <xi:include href="xml/kit-hash.xml"/>
+    <xi:include href="xml/kit-file.xml"/>
+  </reference>
+
   <reference id="ref-core">
     <title>Core API Reference</title>
     <partintro>
@@ -84,9 +102,6 @@
     </partintro>
     <xi:include href="xml/polkit-types.xml"/>
     <xi:include href="xml/polkit-sysdeps.xml"/>
-    <xi:include href="xml/polkit-memory.xml"/>
-    <xi:include href="xml/polkit-list.xml"/>
-    <xi:include href="xml/polkit-hash.xml"/>
     <xi:include href="xml/polkit-error.xml"/>
     <xi:include href="xml/polkit-result.xml"/>
     <xi:include href="xml/polkit-action.xml"/>

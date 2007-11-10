@@ -35,13 +35,13 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <ctype.h>
 
-#include <glib.h>
 #include "polkit-debug.h"
 #include "polkit-action.h"
 #include "polkit-utils.h"
 #include "polkit-utils.h"
-#include "polkit-memory.h"
+#include "polkit-private.h"
 #include "polkit-test.h"
 
 /**
@@ -74,7 +74,7 @@ PolKitAction *
 polkit_action_new (void)
 {
         PolKitAction *action;
-        action = p_new0 (PolKitAction, 1);
+        action = kit_new0 (PolKitAction, 1);
         if (action == NULL)
                 goto out;
         action->refcount = 1;
@@ -93,7 +93,7 @@ out:
 PolKitAction *
 polkit_action_ref (PolKitAction *action)
 {
-        g_return_val_if_fail (action != NULL, action);
+        kit_return_val_if_fail (action != NULL, action);
         action->refcount++;
         return action;
 }
@@ -109,12 +109,12 @@ polkit_action_ref (PolKitAction *action)
 void
 polkit_action_unref (PolKitAction *action)
 {
-        g_return_if_fail (action != NULL);
+        kit_return_if_fail (action != NULL);
         action->refcount--;
         if (action->refcount > 0) 
                 return;
-        p_free (action->id);
-        p_free (action);
+        kit_free (action->id);
+        kit_free (action);
 }
 
 /**
@@ -129,11 +129,11 @@ polkit_action_unref (PolKitAction *action)
 polkit_bool_t
 polkit_action_set_action_id (PolKitAction *action, const char  *action_id)
 {
-        g_return_val_if_fail (action != NULL, FALSE);
-        g_return_val_if_fail (polkit_action_validate_id (action_id), FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
+        kit_return_val_if_fail (polkit_action_validate_id (action_id), FALSE);
         if (action->id != NULL)
-                p_free (action->id);
-        action->id = p_strdup (action_id);
+                kit_free (action->id);
+        action->id = kit_strdup (action_id);
         if (action->id == NULL)
                 return FALSE;
 
@@ -152,8 +152,8 @@ polkit_action_set_action_id (PolKitAction *action, const char  *action_id)
 polkit_bool_t
 polkit_action_get_action_id (PolKitAction *action, char **out_action_id)
 {
-        g_return_val_if_fail (action != NULL, FALSE);
-        g_return_val_if_fail (out_action_id != NULL, FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
+        kit_return_val_if_fail (out_action_id != NULL, FALSE);
         if (action->id == NULL)
                 return FALSE;
         *out_action_id = action->id;
@@ -169,7 +169,7 @@ polkit_action_get_action_id (PolKitAction *action, char **out_action_id)
 void
 polkit_action_debug (PolKitAction *action)
 {
-        g_return_if_fail (action != NULL);
+        kit_return_if_fail (action != NULL);
         _pk_debug ("PolKitAction: refcount=%d id=%s", action->refcount, action->id);
 }
 
@@ -190,18 +190,18 @@ polkit_action_validate_id (const char *action_id)
 {
         int n;
 
-        g_return_val_if_fail (action_id != NULL, FALSE);
+        kit_return_val_if_fail (action_id != NULL, FALSE);
 
         /* validate that the form of the action identifier is correct */
-        if (!g_ascii_islower (action_id[0]))
+        if (!islower (action_id[0]))
                 goto malformed;
 
         for (n = 1; action_id[n] != '\0'; n++) {
                 if (n >= 255)
                         goto malformed;
 
-                if (! (g_ascii_islower (action_id[n]) ||
-                       g_ascii_isdigit (action_id[n]) ||
+                if (! (islower (action_id[n]) ||
+                       isdigit (action_id[n]) ||
                        action_id[n] == '.' ||
                        action_id[n] == '-'))
                         goto malformed;
@@ -224,8 +224,8 @@ malformed:
 polkit_bool_t
 polkit_action_validate (PolKitAction *action)
 {
-        g_return_val_if_fail (action != NULL, FALSE);
-        g_return_val_if_fail (action->id != NULL, FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
+        kit_return_val_if_fail (action->id != NULL, FALSE);
 
         return polkit_action_validate_id (action->id);
 }
@@ -252,11 +252,11 @@ _run_test (void)
                                       NULL};
 
         for (n = 0; valid_action_ids[n] != NULL; n++) {
-                g_assert (polkit_action_validate_id (valid_action_ids[n]));
+                kit_assert (polkit_action_validate_id (valid_action_ids[n]));
         }
 
         for (n = 0; invalid_action_ids[n] != NULL; n++) {
-                g_assert (! polkit_action_validate_id (invalid_action_ids[n]));
+                kit_assert (! polkit_action_validate_id (invalid_action_ids[n]));
         }
 
         PolKitAction *a;
@@ -266,23 +266,23 @@ _run_test (void)
                 /* OOM */
         } else {
 
-                g_assert (! polkit_action_get_action_id (a, &s));
+                kit_assert (! polkit_action_get_action_id (a, &s));
 
                 if (!polkit_action_set_action_id (a, "org.example.action")) {
                         /* OOM */
                 } else {
-                        g_assert (polkit_action_validate (a));
+                        kit_assert (polkit_action_validate (a));
                         polkit_action_ref (a);
-                        g_assert (polkit_action_validate (a));
+                        kit_assert (polkit_action_validate (a));
                         polkit_action_unref (a);
-                        g_assert (polkit_action_validate (a));
+                        kit_assert (polkit_action_validate (a));
 
                         if (!polkit_action_set_action_id (a, "org.example.action2")) {
                                 /* OOM */
                         } else {
-                                g_assert (polkit_action_validate (a));
-                                g_assert (polkit_action_get_action_id (a, &s));
-                                g_assert (strcmp (s, "org.example.action2") == 0);
+                                kit_assert (polkit_action_validate (a));
+                                kit_assert (polkit_action_get_action_id (a, &s));
+                                kit_assert (strcmp (s, "org.example.action2") == 0);
                                 polkit_action_debug (a);
                         }
                 }

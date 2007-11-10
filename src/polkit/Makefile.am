@@ -21,9 +21,6 @@ libpolkitincludedir=$(includedir)/PolicyKit/polkit
 libpolkitinclude_HEADERS =              		\
 	polkit.h					\
 	polkit-sysdeps.h				\
-	polkit-memory.h					\
-	polkit-hash.h					\
-	polkit-list.h					\
 	polkit-types.h					\
 	polkit-error.h					\
 	polkit-result.h					\
@@ -45,9 +42,6 @@ libpolkit_la_SOURCES =                                					\
 	polkit.h									\
 	polkit-private.h								\
 	polkit-types.h									\
-	polkit-memory.h				polkit-memory.c				\
-	polkit-hash.h				polkit-hash.c				\
-	polkit-list.h				polkit-list.c				\
 	polkit-sysdeps.h			polkit-sysdeps.c			\
 	polkit-error.h				polkit-error.c				\
 	polkit-result.h				polkit-result.c				\
@@ -77,7 +71,7 @@ libpolkit_la_SOURCES +=                                					\
 						polkit-authorization-db.c
 endif
 
-libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@
+libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@ $(top_builddir)/src/kit/libkit.la
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

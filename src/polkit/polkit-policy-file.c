@@ -36,10 +36,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <syslog.h>
+#include <sys/stat.h>
 
 #include <expat.h>
 
-#include <glib.h>
 #include "polkit-error.h"
 #include "polkit-result.h"
 #include "polkit-policy-file.h"
@@ -47,7 +47,6 @@
 #include "polkit-debug.h"
 #include "polkit-private.h"
 #include "polkit-test.h"
-#include "polkit-list.h"
 
 /**
  * SECTION:polkit-policy-file
@@ -66,7 +65,7 @@
 struct _PolKitPolicyFile
 {
         int refcount;
-        PolKitList *entries;
+        KitList *entries;
 };
 
 enum {
@@ -103,8 +102,8 @@ typedef struct {
 
         polkit_bool_t load_descriptions;
 
-        PolKitHash *policy_descriptions;
-        PolKitHash *policy_messages;
+        KitHash *policy_descriptions;
+        KitHash *policy_messages;
 
         char *policy_description_nolang;
         char *policy_message_nolang;
@@ -116,7 +115,7 @@ typedef struct {
         char *elem_lang;
 
         char *annotate_key;
-        PolKitHash *annotations;
+        KitHash *annotations;
 
         polkit_bool_t is_oom;
 } ParserData;
@@ -124,27 +123,27 @@ typedef struct {
 static void
 pd_unref_action_data (ParserData *pd)
 {
-        p_free (pd->action_id);
+        kit_free (pd->action_id);
         pd->action_id = NULL;
-        p_free (pd->policy_description_nolang);
+        kit_free (pd->policy_description_nolang);
         pd->policy_description_nolang = NULL;
-        p_free (pd->policy_message_nolang);
+        kit_free (pd->policy_message_nolang);
         pd->policy_message_nolang = NULL;
         if (pd->policy_descriptions != NULL) {
-                polkit_hash_unref (pd->policy_descriptions);
+                kit_hash_unref (pd->policy_descriptions);
                 pd->policy_descriptions = NULL;
         }
         if (pd->policy_messages != NULL) {
-                polkit_hash_unref (pd->policy_messages);
+                kit_hash_unref (pd->policy_messages);
                 pd->policy_messages = NULL;
         }
-        p_free (pd->annotate_key);
+        kit_free (pd->annotate_key);
         pd->annotate_key = NULL;
         if (pd->annotations != NULL) {
-                polkit_hash_unref (pd->annotations);
+                kit_hash_unref (pd->annotations);
                 pd->annotations = NULL;
         }
-        p_free (pd->elem_lang);
+        kit_free (pd->elem_lang);
         pd->elem_lang = NULL;
 }
 
@@ -152,7 +151,7 @@ static void
 pd_unref_data (ParserData *pd)
 {
         pd_unref_action_data (pd);
-        p_free (pd->lang);
+        kit_free (pd->lang);
         pd->lang = NULL;
 }
 
@@ -184,17 +183,17 @@ _start (void *data, const char *el, const char **attr)
                                 goto error;
 
                         pd_unref_action_data (pd);
-                        pd->action_id = p_strdup (attr[1]);
+                        pd->action_id = kit_strdup (attr[1]);
                         if (pd->action_id == NULL)
                                 goto oom;
-                        pd->policy_descriptions = polkit_hash_new (polkit_hash_str_hash_func, 
-                                                                   polkit_hash_str_equal_func, 
-                                                                   polkit_hash_str_copy, polkit_hash_str_copy,
-                                                                   p_free, p_free);
-                        pd->policy_messages = polkit_hash_new (polkit_hash_str_hash_func, 
-                                                               polkit_hash_str_equal_func, 
-                                                               polkit_hash_str_copy, polkit_hash_str_copy,
-                                                               p_free, p_free);
+                        pd->policy_descriptions = kit_hash_new (kit_hash_str_hash_func, 
+                                                                kit_hash_str_equal_func, 
+                                                                kit_hash_str_copy, kit_hash_str_copy,
+                                                                kit_free, kit_free);
+                        pd->policy_messages = kit_hash_new (kit_hash_str_hash_func, 
+                                                            kit_hash_str_equal_func, 
+                                                            kit_hash_str_copy, kit_hash_str_copy,
+                                                            kit_free, kit_free);
 
                         /* initialize defaults */
                         pd->defaults_allow_any = POLKIT_RESULT_NO;
@@ -207,14 +206,14 @@ _start (void *data, const char *el, const char **attr)
                         state = STATE_IN_DEFAULTS;
                 } else if (strcmp (el, "description") == 0) {
                         if (num_attr == 2 && strcmp (attr[0], "xml:lang") == 0) {
-                                pd->elem_lang = p_strdup (attr[1]);
+                                pd->elem_lang = kit_strdup (attr[1]);
                                 if (pd->elem_lang == NULL)
                                         goto oom;
                         }
                         state = STATE_IN_ACTION_DESCRIPTION;
                 } else if (strcmp (el, "message") == 0) {
                         if (num_attr == 2 && strcmp (attr[0], "xml:lang") == 0) {
-                                pd->elem_lang = p_strdup (attr[1]);
+                                pd->elem_lang = kit_strdup (attr[1]);
                                 if (pd->elem_lang == NULL)
                                         goto oom;
                         }
@@ -224,8 +223,8 @@ _start (void *data, const char *el, const char **attr)
                                 goto error;
                         state = STATE_IN_ANNOTATE;
 
-                        p_free (pd->annotate_key);
-                        pd->annotate_key = p_strdup (attr[1]);
+                        kit_free (pd->annotate_key);
+                        pd->annotate_key = kit_strdup (attr[1]);
                         if (pd->annotate_key == NULL)
                                 goto oom;
                 }
@@ -266,7 +265,7 @@ _cdata (void *data, const char *s, int len)
         char *str;
         ParserData *pd = data;
 
-        str = p_strndup (s, len);
+        str = kit_strndup (s, len);
         if (str == NULL)
                 goto oom;
 
@@ -275,11 +274,11 @@ _cdata (void *data, const char *s, int len)
         case STATE_IN_ACTION_DESCRIPTION:
                 if (pd->load_descriptions) {
                         if (pd->elem_lang == NULL) {
-                                p_free (pd->policy_description_nolang);
+                                kit_free (pd->policy_description_nolang);
                                 pd->policy_description_nolang = str;
                                 str = NULL;
                         } else {
-                                if (!polkit_hash_insert (pd->policy_descriptions, pd->elem_lang, str))
+                                if (!kit_hash_insert (pd->policy_descriptions, pd->elem_lang, str))
                                         goto oom;
                         }
                 }
@@ -288,11 +287,11 @@ _cdata (void *data, const char *s, int len)
         case STATE_IN_ACTION_MESSAGE:
                 if (pd->load_descriptions) {
                         if (pd->elem_lang == NULL) {
-                                p_free (pd->policy_message_nolang);
+                                kit_free (pd->policy_message_nolang);
                                 pd->policy_message_nolang = str;
                                 str = NULL;
                         } else {
-                                if (!polkit_hash_insert (pd->policy_messages, pd->elem_lang, str))
+                                if (!kit_hash_insert (pd->policy_messages, pd->elem_lang, str))
                                         goto oom;
                         }
                 }
@@ -313,26 +312,26 @@ _cdata (void *data, const char *s, int len)
 
         case STATE_IN_ANNOTATE:
                 if (pd->annotations == NULL) {
-                        pd->annotations = polkit_hash_new (polkit_hash_str_hash_func, 
-                                                           polkit_hash_str_equal_func, 
-                                                           polkit_hash_str_copy, polkit_hash_str_copy,
-                                                           p_free, p_free);
+                        pd->annotations = kit_hash_new (kit_hash_str_hash_func, 
+                                                        kit_hash_str_equal_func, 
+                                                        kit_hash_str_copy, kit_hash_str_copy,
+                                                        kit_free, kit_free);
                         if (pd->annotations == NULL)
                                 goto oom;
                 }
-                if (!polkit_hash_insert (pd->annotations, pd->annotate_key, str))
+                if (!kit_hash_insert (pd->annotations, pd->annotate_key, str))
                         goto oom;
                 break;
 
         default:
                 break;
         }
-        p_free (str);
+        kit_free (str);
         return;
 oom:
         pd->is_oom = TRUE;
 error:
-        p_free (str);
+        kit_free (str);
         XML_StopParser (pd->parser, FALSE);
 }
 
@@ -348,7 +347,7 @@ error:
  * Returns: the localized string to use
  */
 static const char *
-_localize (PolKitHash *translations, const char *untranslated, const char *lang)
+_localize (KitHash *translations, const char *untranslated, const char *lang)
 {
         const char *result;
         char lang2[256];
@@ -360,7 +359,7 @@ _localize (PolKitHash *translations, const char *untranslated, const char *lang)
         }
 
         /* first see if we have the translation */
-        result = (const char *) polkit_hash_lookup (translations, (void *) lang, NULL);
+        result = (const char *) kit_hash_lookup (translations, (void *) lang, NULL);
         if (result != NULL)
                 goto out;
 
@@ -372,7 +371,7 @@ _localize (PolKitHash *translations, const char *untranslated, const char *lang)
                         break;
                 }
         }
-        result = (const char *) polkit_hash_lookup (translations, (void *) lang2, NULL);
+        result = (const char *) kit_hash_lookup (translations, (void *) lang2, NULL);
         if (result != NULL)
                 goto out;
 
@@ -386,9 +385,9 @@ static void
 _end (void *data, const char *el)
 {
         ParserData *pd = data;
-        PolKitList *l;
+        KitList *l;
 
-        p_free (pd->elem_lang);
+        kit_free (pd->elem_lang);
         pd->elem_lang = NULL;
 
         switch (pd->state) {
@@ -425,7 +424,7 @@ _end (void *data, const char *el)
                         }
                 }
 
-                l = polkit_list_prepend (pd->pf->entries, pfe);
+                l = kit_list_prepend (pd->pf->entries, pfe);
                 if (l == NULL) {
                         polkit_policy_file_entry_unref (pfe);
                         goto oom;
@@ -454,7 +453,6 @@ error:
         XML_StopParser (pd->parser, FALSE);
 }
 
-
 /**
  * polkit_policy_file_new:
  * @path: path to file
@@ -473,8 +471,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         int xml_res;
         char *lang;
 	char *buf;
-	gsize buflen;
-        GError *g_error;
+	size_t buflen;
 
         pf = NULL;
         buf = NULL;
@@ -482,20 +479,24 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         /* clear parser data */
         memset (&pd, 0, sizeof (ParserData));
 
-        if (!g_str_has_suffix (path, ".policy")) {
+        if (!kit_str_has_suffix (path, ".policy")) {
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_POLICY_FILE_INVALID,
                                         "Policy files must have extension .policy; file '%s' doesn't", path);
                 goto error;
         }
 
-        g_error = NULL;
-	if (!g_file_get_contents (path, &buf, &buflen, &g_error)) {
-                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
-                                        "Cannot load PolicyKit policy file at '%s': %s",
-                                        path,
-                                        g_error->message);
-                g_error_free (g_error);
+	if (!kit_file_get_contents (path, &buf, &buflen)) {
+                if (errno == ENOMEM) {
+                        polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
+                                                "Cannot load PolicyKit policy file at '%s': %s",
+                                                path,
+                                                "No memory for parser");
+                } else {
+                        polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
+                                                "Cannot load PolicyKit policy file at '%s': %m",
+                                                path);
+                }
 		goto error;
         }
 
@@ -504,7 +505,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
    TODO: expat appears to leak on certain OOM paths
 */
 #if 0
-        XML_Memory_Handling_Suite memsuite = {p_malloc, p_realloc, p_free};
+        XML_Memory_Handling_Suite memsuite = {p_malloc, p_realloc, kit_free};
         pd.parser = XML_ParserCreate_MM (NULL, &memsuite, NULL);
 #else
         pd.parser = XML_ParserCreate (NULL);
@@ -521,7 +522,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
 	XML_SetElementHandler (pd.parser, _start, _end);
 	XML_SetCharacterDataHandler (pd.parser, _cdata);
 
-        pf = p_new0 (PolKitPolicyFile, 1);
+        pf = kit_new0 (PolKitPolicyFile, 1);
         if (pf == NULL) {
                 polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
                                         "Cannot load PolicyKit policy file at '%s': No memory for object",
@@ -538,7 +539,7 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
         lang = getenv ("LANG");
         if (lang != NULL) {
                 int n;
-                pd.lang = p_strdup (lang);
+                pd.lang = kit_strdup (lang);
                 if (pd.lang == NULL) {
                         polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
                                                 "Cannot load PolicyKit policy file at '%s': No memory for lang",
@@ -576,14 +577,14 @@ polkit_policy_file_new (const char *path, polkit_bool_t load_descriptions, PolKi
 	}
 
 	XML_ParserFree (pd.parser);
-	g_free (buf);
+	kit_free (buf);
         pd_unref_data (&pd);
         return pf;
 error:
         if (pf != NULL)
                 polkit_policy_file_unref (pf);
         pd_unref_data (&pd);
-        g_free (buf);
+        kit_free (buf);
         return NULL;
 }
 
@@ -598,7 +599,7 @@ error:
 PolKitPolicyFile *
 polkit_policy_file_ref (PolKitPolicyFile *policy_file)
 {
-        g_return_val_if_fail (policy_file != NULL, policy_file);
+        kit_return_val_if_fail (policy_file != NULL, policy_file);
         policy_file->refcount++;
         return policy_file;
 }
@@ -614,8 +615,8 @@ polkit_policy_file_ref (PolKitPolicyFile *policy_file)
 void
 polkit_policy_file_unref (PolKitPolicyFile *policy_file)
 {
-        PolKitList *i;
-        g_return_if_fail (policy_file != NULL);
+        KitList *i;
+        kit_return_if_fail (policy_file != NULL);
         policy_file->refcount--;
         if (policy_file->refcount > 0) 
                 return;
@@ -623,8 +624,8 @@ polkit_policy_file_unref (PolKitPolicyFile *policy_file)
                 polkit_policy_file_entry_unref (i->data);
         }
         if (policy_file->entries != NULL)
-                polkit_list_free (policy_file->entries);
-        p_free (policy_file);
+                kit_list_free (policy_file->entries);
+        kit_free (policy_file);
 }
 
 /**
@@ -642,10 +643,10 @@ polkit_policy_file_entry_foreach (PolKitPolicyFile                 *policy_file,
                                   PolKitPolicyFileEntryForeachFunc  cb,
                                   void                              *user_data)
 {
-        PolKitList *i;
+        KitList *i;
 
-        g_return_val_if_fail (policy_file != NULL, FALSE);
-        g_return_val_if_fail (cb != NULL, FALSE);
+        kit_return_val_if_fail (policy_file != NULL, FALSE);
+        kit_return_val_if_fail (cb != NULL, FALSE);
 
         for (i = policy_file->entries; i != NULL; i = i->next) {
                 PolKitPolicyFileEntry *pfe = i->data;
@@ -739,8 +740,8 @@ _run_test (void)
 
         for (n = 0; n < sizeof (invalid_files) / sizeof (char*); n++) {
                 error = NULL;
-                g_assert (polkit_policy_file_new (invalid_files[n], TRUE, &error) == NULL);
-                g_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY ||
+                kit_assert (polkit_policy_file_new (invalid_files[n], TRUE, &error) == NULL);
+                kit_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY ||
                           polkit_error_get_error_code (error) == POLKIT_ERROR_POLICY_FILE_INVALID);
                 polkit_error_free (error);
         }
@@ -782,7 +783,7 @@ _run_test (void)
 
                         error = NULL;
                         if ((pf = polkit_policy_file_new (valid_files[n], load_descriptions, &error)) == NULL) {
-                                g_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                                kit_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
                                 polkit_error_free (error);
                         } else {
 
@@ -793,7 +794,7 @@ _run_test (void)
                                         polkit_policy_file_entry_foreach (pf,
                                                                           _check_pf,
                                                                           &num_passed);
-                                        g_assert (num_passed == 2);
+                                        kit_assert (num_passed == 2);
                                 }
 
                                 polkit_policy_file_ref (pf);

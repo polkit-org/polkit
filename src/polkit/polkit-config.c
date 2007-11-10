@@ -46,6 +46,7 @@
 #include "polkit-config.h"
 #include "polkit-debug.h"
 #include "polkit-error.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-config
@@ -496,7 +497,7 @@ error:
 PolKitConfig *
 polkit_config_ref (PolKitConfig *pk_config)
 {
-        g_return_val_if_fail (pk_config != NULL, pk_config);
+        kit_return_val_if_fail (pk_config != NULL, pk_config);
         pk_config->refcount++;
         return pk_config;
 }
@@ -512,7 +513,7 @@ polkit_config_ref (PolKitConfig *pk_config)
 void
 polkit_config_unref (PolKitConfig *pk_config)
 {
-        g_return_if_fail (pk_config != NULL);
+        kit_return_if_fail (pk_config != NULL);
         pk_config->refcount--;
         if (pk_config->refcount > 0) 
                 return;

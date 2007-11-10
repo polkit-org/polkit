@@ -36,13 +36,12 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <glib.h>
 #include "polkit-debug.h"
 #include "polkit-error.h"
 #include "polkit-policy-default.h"
 #include "polkit-private.h"
 #include "polkit-test.h"
-#include "polkit-memory.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-policy-default
@@ -73,7 +72,7 @@ _polkit_policy_default_new (PolKitResult defaults_allow_any,
 {
         PolKitPolicyDefault *pd;
 
-        pd = p_new0 (PolKitPolicyDefault, 1);
+        pd = kit_new0 (PolKitPolicyDefault, 1);
         if (pd == NULL)
                 goto out;
         pd->refcount = 1;
@@ -95,7 +94,7 @@ out:
 PolKitPolicyDefault *
 polkit_policy_default_ref (PolKitPolicyDefault *policy_default)
 {
-        g_return_val_if_fail (policy_default != NULL, policy_default);
+        kit_return_val_if_fail (policy_default != NULL, policy_default);
         policy_default->refcount++;
         return policy_default;
 }
@@ -111,11 +110,11 @@ polkit_policy_default_ref (PolKitPolicyDefault *policy_default)
 void
 polkit_policy_default_unref (PolKitPolicyDefault *policy_default)
 {
-        g_return_if_fail (policy_default != NULL);
+        kit_return_if_fail (policy_default != NULL);
         policy_default->refcount--;
         if (policy_default->refcount > 0) 
                 return;
-        p_free (policy_default);
+        kit_free (policy_default);
 }
 
 /**
@@ -127,7 +126,7 @@ polkit_policy_default_unref (PolKitPolicyDefault *policy_default)
 void
 polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
 {
-        g_return_if_fail (policy_default != NULL);
+        kit_return_if_fail (policy_default != NULL);
         _pk_debug ("PolKitPolicyDefault: refcount=%d\n"
                    "        default_any=%s\n"
                    "   default_inactive=%s\n"
@@ -162,9 +161,9 @@ polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default
 
         ret = POLKIT_RESULT_NO;
 
-        g_return_val_if_fail (policy_default != NULL, ret);
-        g_return_val_if_fail (action != NULL, ret);
-        g_return_val_if_fail (session != NULL, ret);
+        kit_return_val_if_fail (policy_default != NULL, ret);
+        kit_return_val_if_fail (action != NULL, ret);
+        kit_return_val_if_fail (session != NULL, ret);
 
         ret = policy_default->default_any;
 
@@ -207,9 +206,9 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
 
         ret = POLKIT_RESULT_NO;
 
-        g_return_val_if_fail (policy_default != NULL, ret);
-        g_return_val_if_fail (action != NULL, ret);
-        g_return_val_if_fail (caller != NULL, ret);
+        kit_return_val_if_fail (policy_default != NULL, ret);
+        kit_return_val_if_fail (action != NULL, ret);
+        kit_return_val_if_fail (caller != NULL, ret);
 
         ret = policy_default->default_any;
 
@@ -244,7 +243,7 @@ out:
 PolKitResult
 polkit_policy_default_get_allow_any (PolKitPolicyDefault *policy_default)
 {
-        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        kit_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
         return policy_default->default_any;
 }
 
@@ -259,7 +258,7 @@ polkit_policy_default_get_allow_any (PolKitPolicyDefault *policy_default)
 PolKitResult
 polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *policy_default)
 {
-        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        kit_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
         return policy_default->default_inactive;
 }
 
@@ -274,7 +273,7 @@ polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *policy_default)
 PolKitResult
 polkit_policy_default_get_allow_active (PolKitPolicyDefault *policy_default)
 {
-        g_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
+        kit_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
         return policy_default->default_active;
 }
 
@@ -304,10 +303,10 @@ _ts (PolKitSession *s, PolKitResult any, PolKitResult inactive, PolKitResult act
                                 oom = FALSE;
 
                                 if ((c = polkit_caller_new ()) != NULL) {
-                                        g_assert (polkit_policy_default_can_caller_do_action (d, a, c) == any);
+                                        kit_assert (polkit_policy_default_can_caller_do_action (d, a, c) == any);
 
-                                        g_assert (polkit_caller_set_ck_session (c, s));
-                                        g_assert (polkit_policy_default_can_caller_do_action (d, a, c) == *ret);
+                                        kit_assert (polkit_caller_set_ck_session (c, s));
+                                        kit_assert (polkit_policy_default_can_caller_do_action (d, a, c) == *ret);
                                         polkit_caller_unref (c);
                                 }
 
@@ -341,8 +340,8 @@ _run_test (void)
                         polkit_session_unref (s_active);
                         s_active = NULL;
                 } else {
-                        g_assert (polkit_session_set_ck_is_local (s_active, TRUE));
-                        g_assert (polkit_session_set_ck_is_active (s_active, TRUE));
+                        kit_assert (polkit_session_set_ck_is_local (s_active, TRUE));
+                        kit_assert (polkit_session_set_ck_is_active (s_active, TRUE));
                 }
         }
 
@@ -351,8 +350,8 @@ _run_test (void)
                         polkit_session_unref (s_inactive);
                         s_inactive = NULL;
                 } else {
-                        g_assert (polkit_session_set_ck_is_local (s_inactive, TRUE));
-                        g_assert (polkit_session_set_ck_is_active (s_inactive, FALSE));
+                        kit_assert (polkit_session_set_ck_is_local (s_inactive, TRUE));
+                        kit_assert (polkit_session_set_ck_is_active (s_inactive, FALSE));
                 }
         }
 
@@ -362,8 +361,8 @@ _run_test (void)
                         polkit_session_unref (s_active_remote);
                         s_active_remote = NULL;
                 } else {
-                        g_assert (polkit_session_set_ck_is_local (s_active_remote, FALSE));
-                        g_assert (polkit_session_set_ck_is_active (s_active_remote, TRUE));
+                        kit_assert (polkit_session_set_ck_is_local (s_active_remote, FALSE));
+                        kit_assert (polkit_session_set_ck_is_active (s_active_remote, TRUE));
                 }
         }
 
@@ -373,47 +372,47 @@ _run_test (void)
                         polkit_session_unref (s_inactive_remote);
                         s_inactive_remote = NULL;
                 } else {
-                        g_assert (polkit_session_set_ck_is_local (s_inactive_remote, FALSE));
-                        g_assert (polkit_session_set_ck_is_active (s_inactive_remote, FALSE));
+                        kit_assert (polkit_session_set_ck_is_local (s_inactive_remote, FALSE));
+                        kit_assert (polkit_session_set_ck_is_active (s_inactive_remote, FALSE));
                 }
         }
 
-        g_assert (_ts (s_active, 
+        kit_assert (_ts (s_active, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_YES);
-        g_assert (_ts (s_inactive, 
+        kit_assert (_ts (s_inactive, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_NO);
-        g_assert (_ts (s_active_remote, 
+        kit_assert (_ts (s_active_remote, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_NO);
-        g_assert (_ts (s_inactive_remote, 
+        kit_assert (_ts (s_inactive_remote, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_NO, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_NO);
 
-        g_assert (_ts (s_active, 
+        kit_assert (_ts (s_active, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_YES);
-        g_assert (_ts (s_inactive, 
+        kit_assert (_ts (s_inactive, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_YES);
-        g_assert (_ts (s_active_remote, 
+        kit_assert (_ts (s_active_remote, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_NO);
-        g_assert (_ts (s_inactive_remote, 
+        kit_assert (_ts (s_inactive_remote, 
                        POLKIT_RESULT_NO, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_NO);
 
-        g_assert (_ts (s_active, 
+        kit_assert (_ts (s_active, 
                        POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_YES);
-        g_assert (_ts (s_inactive, 
+        kit_assert (_ts (s_inactive, 
                        POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_YES);
-        g_assert (_ts (s_active_remote, 
+        kit_assert (_ts (s_active_remote, 
                        POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_YES);
-        g_assert (_ts (s_inactive_remote, 
+        kit_assert (_ts (s_inactive_remote, 
                        POLKIT_RESULT_YES, POLKIT_RESULT_YES, POLKIT_RESULT_YES, &ret) || 
                   ret == POLKIT_RESULT_YES);
 

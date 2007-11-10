@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-list.c : Doubly-linked lists
+ * kit-list.c : Doubly-linked lists
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -30,42 +30,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glib.h>
-#include <polkit/polkit-list.h>
-#include <polkit/polkit-memory.h>
-#include <polkit/polkit-test.h>
+#include <kit/kit.h>
+#include "kit-test.h"
 
 /**
- * SECTION:polkit-list
+ * SECTION:kit-list
  * @title: Doubly-linked lists
  * @short_description: Doubly-linked lists
  *
  * This class provides support for doubly-linked lists.
- *
- * Since: 0.7
  **/
 
 /**
- * polkit_list_append:
+ * kit_list_append:
  * @list: existing list or #NULL to create a new list
  * @data: data to append to the list
  *
  * Append an entry to a list.
  *
  * Returns: the head of the new list or #NULL on OOM
- *
- * Since: 0.7
  */
-PolKitList *
-polkit_list_append (PolKitList *list, void *data)
+KitList *
+kit_list_append (KitList *list, void *data)
 {
-        PolKitList *l;
-        PolKitList *j;
+        KitList *l;
+        KitList *j;
         
         for (j = list; j != NULL && j->next != NULL; j = j->next)
                 ;
         
-        l = p_new0 (PolKitList, 1);
+        l = kit_new0 (KitList, 1);
         if (l == NULL)
                 goto oom;
 
@@ -84,22 +78,20 @@ oom:
 }
 
 /**
- * polkit_list_prepend:
+ * kit_list_prepend:
  * @list: existing list or #NULL to create a new list
  * @data: data to prepend to the list
  *
  * Prepend an entry to a list.
  *
  * Returns: the head of the new list or #NULL on OOM
- *
- * Since: 0.7
  */
-PolKitList *
-polkit_list_prepend (PolKitList *list, void *data)
+KitList *
+kit_list_prepend (KitList *list, void *data)
 {
-        PolKitList *l;
+        KitList *l;
 
-        l = p_new0 (PolKitList, 1);
+        l = kit_new0 (KitList, 1);
         if (l == NULL)
                 goto oom;
 
@@ -114,23 +106,21 @@ oom:
 }
 
 /**
- * polkit_list_delete_link:
+ * kit_list_delete_link:
  * @list: existing list, cannot be #NULL
  * @link: link to delete, cannot be #NULL
  *
  * Delete a link from a list.
  *
  * Returns: the new head of the list or #NULL if the list is empty after deletion.
- *
- * Since: 0.7
  */
-PolKitList *
-polkit_list_delete_link (PolKitList *list, PolKitList *link)
+KitList *
+kit_list_delete_link (KitList *list, KitList *link)
 {
-        PolKitList *ret;
+        KitList *ret;
 
-        g_return_val_if_fail (list != NULL, NULL);
-        g_return_val_if_fail (link != NULL, NULL);
+        kit_return_val_if_fail (list != NULL, NULL);
+        kit_return_val_if_fail (link != NULL, NULL);
 
         if (list == link)
                 ret = link->next;
@@ -145,46 +135,42 @@ polkit_list_delete_link (PolKitList *list, PolKitList *link)
                 link->next->prev = link->prev;
         }
 
-        p_free (link);
+        kit_free (link);
 
         return ret;
 }
 
 /**
- * polkit_list_free:
+ * kit_list_free:
  * @list: the list
  *
  * Frees all links in a list
- *
- * Since: 0.7
  */
 void
-polkit_list_free (PolKitList *list)
+kit_list_free (KitList *list)
 {
-        PolKitList *l;
-        PolKitList *j;
+        KitList *l;
+        KitList *j;
 
         for (l = list; l != NULL; l = j) {
                 j = l->next;
-                p_free (l);
+                kit_free (l);
         }
 }
 
 /**
- * polkit_list_length:
+ * kit_list_length:
  * @list: the list
  *
  * Compute the length of a list.
  *
  * Returns: Number of entries in list
- *
- * Since: 0.7
  */
 size_t
-polkit_list_length (PolKitList *list)
+kit_list_length (KitList *list)
 {
         ssize_t n;
-        PolKitList *l;
+        KitList *l;
 
         n = 0;
         for (l = list; l != NULL; l = l->next)
@@ -194,7 +180,7 @@ polkit_list_length (PolKitList *list)
 }
 
 /**
- * polkit_list_foreach:
+ * kit_list_foreach:
  * @list: the list
  * @func: callback function
  * @user_data: user data to pass to callback
@@ -202,16 +188,14 @@ polkit_list_length (PolKitList *list)
  * Iterate over all entries in a list.
  *
  * Returns: #TRUE only if the callback short-circuited the iteration
- *
- * Since: 0.7
  */
-polkit_bool_t 
-polkit_list_foreach (PolKitList *list, PolKitListForeachFunc func, void *user_data)
+kit_bool_t 
+kit_list_foreach (KitList *list, KitListForeachFunc func, void *user_data)
 {
-        PolKitList *l;
+        KitList *l;
 
-        g_return_val_if_fail (list != NULL, FALSE);
-        g_return_val_if_fail (func != NULL, FALSE);
+        kit_return_val_if_fail (list != NULL, FALSE);
+        kit_return_val_if_fail (func != NULL, FALSE);
 
         for (l = list; l != NULL; l = l->next) {
                 if (func (list, l->data, user_data))
@@ -222,15 +206,15 @@ polkit_list_foreach (PolKitList *list, PolKitListForeachFunc func, void *user_da
 }
 
 
-#ifdef POLKIT_BUILD_TESTS
+#ifdef KIT_BUILD_TESTS
 
 typedef struct {
         int num;
         int result;
 } _Closure;
 
-static polkit_bool_t 
-_sum (PolKitList *list, void *data, void *user_data)
+static kit_bool_t 
+_sum (KitList *list, void *data, void *user_data)
 {
         _Closure *c = (_Closure*) user_data;
 
@@ -240,8 +224,8 @@ _sum (PolKitList *list, void *data, void *user_data)
         return FALSE;
 }
 
-static polkit_bool_t 
-_sum2 (PolKitList *list, void *data, void *user_data)
+static kit_bool_t 
+_sum2 (KitList *list, void *data, void *user_data)
 {
         _Closure *c = (_Closure*) user_data;
 
@@ -254,77 +238,77 @@ _sum2 (PolKitList *list, void *data, void *user_data)
         return FALSE;
 }
 
-static polkit_bool_t
+static kit_bool_t
 _run_test (void)
 {
         _Closure c;
         int items[] = {1, 2, 3, 4, 5};
         unsigned int num_items = sizeof (items) / sizeof (int);
         unsigned int n;
-        PolKitList *l;
-        PolKitList *j;
+        KitList *l;
+        KitList *j;
 
         l = NULL;
         for (n = 0; n < num_items; n++) {
                 j = l;
-                l = polkit_list_prepend (l, (void *) items[n]);
+                l = kit_list_prepend (l, (void *) items[n]);
                 if (l == NULL)
                         goto oom;
         }
 
-        g_assert (polkit_list_length (l) == num_items);
+        kit_assert (kit_list_length (l) == num_items);
         c.num = 0;
         c.result = 0;
-        polkit_list_foreach (l, _sum, &c);
-        g_assert (c.result == 1*5 + 2*4 + 3*3 + 4*2 + 5*1);
+        kit_list_foreach (l, _sum, &c);
+        kit_assert (c.result == 1*5 + 2*4 + 3*3 + 4*2 + 5*1);
 
         c.num = 0;
         c.result = 0;
-        polkit_list_foreach (l, _sum2, &c);
-        g_assert (c.result == 1*5 + 2*4);
+        kit_list_foreach (l, _sum2, &c);
+        kit_assert (c.result == 1*5 + 2*4);
 
-        l = polkit_list_delete_link (l, l);
-        g_assert (polkit_list_length (l) == num_items - 1);
+        l = kit_list_delete_link (l, l);
+        kit_assert (kit_list_length (l) == num_items - 1);
         c.num = 0;
         c.result = 0;
-        polkit_list_foreach (l, _sum, &c);
-        g_assert (c.result == 1*4 + 2*3 + 3*2 + 4*1);
+        kit_list_foreach (l, _sum, &c);
+        kit_assert (c.result == 1*4 + 2*3 + 3*2 + 4*1);
 
-        l = polkit_list_delete_link (l, l->next);
-        g_assert (polkit_list_length (l) == num_items - 2);
+        l = kit_list_delete_link (l, l->next);
+        kit_assert (kit_list_length (l) == num_items - 2);
         c.num = 0;
         c.result = 0;
-        polkit_list_foreach (l, _sum, &c);
-        g_assert (c.result == 1*4 + 2*2 + 3*1);
+        kit_list_foreach (l, _sum, &c);
+        kit_assert (c.result == 1*4 + 2*2 + 3*1);
 
-        polkit_list_free (l);
+        kit_list_free (l);
 
         l = NULL;
         for (n = 0; n < num_items; n++) {
                 j = l;
-                l = polkit_list_append (l, (void *) items[n]);
+                l = kit_list_append (l, (void *) items[n]);
                 if (l == NULL)
                         goto oom;
         }
 
         c.num = 0;
         c.result = 0;
-        polkit_list_foreach (l, _sum, &c);
-        g_assert (c.result == 1*1 + 2*2 + 3*3 + 4*4 + 5*5);
+        kit_list_foreach (l, _sum, &c);
+        kit_assert (c.result == 1*1 + 2*2 + 3*3 + 4*4 + 5*5);
 
-        polkit_list_free (l);
+        kit_list_free (l);
 
         return TRUE;
 oom:
-        polkit_list_free (j);
+        kit_list_free (j);
         return TRUE;
 }
 
-PolKitTest _test_list = {
-        "polkit_list",
+KitTest _test_list = {
+        "kit_list",
         NULL,
         NULL,
         _run_test
 };
 
-#endif /* POLKIT_BUILD_TESTS */
+#endif /* KIT_BUILD_TESTS */

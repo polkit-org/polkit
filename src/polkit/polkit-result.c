@@ -44,10 +44,9 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <glib.h>
 #include "polkit-result.h"
 #include "polkit-test.h"
-#include "polkit-memory.h"
+#include "polkit-private.h"
 
 
 static const struct {
@@ -85,7 +84,7 @@ const char *
 polkit_result_to_string_representation (PolKitResult result)
 {
         if (result < 0 || result >= POLKIT_RESULT_N_RESULTS) {
-                g_warning ("The passed result code, %d, is not valid", result);
+                kit_warning ("The passed result code, %d, is not valid", result);
                 return NULL;
         }
 
@@ -107,7 +106,7 @@ polkit_result_from_string_representation (const char *string, PolKitResult *out_
 {
         int n;
 
-        g_return_val_if_fail (out_result != NULL, FALSE);
+        kit_return_val_if_fail (out_result != NULL, FALSE);
 
         for (n = 0; n < POLKIT_RESULT_N_RESULTS; n++) {
                 if (strcmp (mapping[n].str, string) == 0) {
@@ -130,13 +129,13 @@ _run_test (void)
         PolKitResult m;
 
         for (n = 0; n < POLKIT_RESULT_N_RESULTS; n++) {
-                g_assert (polkit_result_from_string_representation (polkit_result_to_string_representation (n), &m) && n== m);
+                kit_assert (polkit_result_from_string_representation (polkit_result_to_string_representation (n), &m) && n== m);
         }
 
-        g_assert (polkit_result_to_string_representation ((PolKitResult) -1) == NULL);
-        g_assert (polkit_result_to_string_representation (POLKIT_RESULT_N_RESULTS) == NULL);
+        kit_assert (polkit_result_to_string_representation ((PolKitResult) -1) == NULL);
+        kit_assert (polkit_result_to_string_representation (POLKIT_RESULT_N_RESULTS) == NULL);
 
-        g_assert (! polkit_result_from_string_representation ("non-exiting-result-id", &m));
+        kit_assert (! polkit_result_from_string_representation ("non-exiting-result-id", &m));
 
 
         return TRUE;

@@ -32,11 +32,11 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <time.h>
-#include <glib.h>
 #include <string.h>
 
 #include "polkit-utils.h"
 #include "polkit-debug.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-utils
@@ -61,7 +61,7 @@ _pk_validate_identifier (const char *identifier)
         unsigned int n;
         polkit_bool_t ret;
 
-        g_return_val_if_fail (identifier != NULL, FALSE);
+        kit_return_val_if_fail (identifier != NULL, FALSE);
 
         ret = FALSE;
         for (n = 0; identifier[n] != '\0'; n++) {
@@ -130,12 +130,12 @@ _pk_validate_unique_bus_name (const char *unique_bus_name)
                 ++s;
                 while (s != end) {
                         if (*s == '.') {
-                                if (G_UNLIKELY ((s + 1) == end))
+                                if ((s + 1) == end)
                                         goto error;
-                                if (G_UNLIKELY (!VALID_BUS_NAME_CHARACTER (*(s + 1))))
+                                if (!VALID_BUS_NAME_CHARACTER (*(s + 1)))
                                         goto error;
                                 ++s; /* we just validated the next char, so skip two */
-                        } else if (G_UNLIKELY (!VALID_BUS_NAME_CHARACTER (*s))) {
+                        } else if (!VALID_BUS_NAME_CHARACTER (*s)) {
                                 goto error;
                         }
                         ++s;

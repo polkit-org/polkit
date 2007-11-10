@@ -45,12 +45,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <glib.h>
 #include "polkit-debug.h"
 #include "polkit-caller.h"
 #include "polkit-utils.h"
 #include "polkit-test.h"
-#include "polkit-memory.h"
+#include "polkit-private.h"
 
 /**
  * PolKitCaller:
@@ -79,7 +78,7 @@ PolKitCaller *
 polkit_caller_new (void)
 {
         PolKitCaller *caller;
-        caller = p_new0 (PolKitCaller, 1);
+        caller = kit_new0 (PolKitCaller, 1);
         if (caller == NULL)
                 goto out;
         caller->refcount = 1;
@@ -98,7 +97,7 @@ out:
 PolKitCaller *
 polkit_caller_ref (PolKitCaller *caller)
 {
-        g_return_val_if_fail (caller != NULL, caller);
+        kit_return_val_if_fail (caller != NULL, caller);
         caller->refcount++;
         return caller;
 }
@@ -115,15 +114,15 @@ polkit_caller_ref (PolKitCaller *caller)
 void
 polkit_caller_unref (PolKitCaller *caller)
 {
-        g_return_if_fail (caller != NULL);
+        kit_return_if_fail (caller != NULL);
         caller->refcount--;
         if (caller->refcount > 0) 
                 return;
-        p_free (caller->dbus_name);
-        p_free (caller->selinux_context);
+        kit_free (caller->dbus_name);
+        kit_free (caller->selinux_context);
         if (caller->session != NULL)
                 polkit_session_unref (caller->session);
-        p_free (caller);
+        kit_free (caller);
 }
 
 /**
@@ -138,15 +137,15 @@ polkit_caller_unref (PolKitCaller *caller)
 polkit_bool_t
 polkit_caller_set_dbus_name (PolKitCaller *caller, const char *dbus_name)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (dbus_name == NULL || _pk_validate_unique_bus_name (dbus_name), FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (dbus_name == NULL || _pk_validate_unique_bus_name (dbus_name), FALSE);
         if (caller->dbus_name != NULL)
-                p_free (caller->dbus_name);
+                kit_free (caller->dbus_name);
         if (dbus_name == NULL) {
                 caller->dbus_name = NULL;
                 return TRUE;
         } else {
-                caller->dbus_name = p_strdup (dbus_name);
+                caller->dbus_name = kit_strdup (dbus_name);
                 if (caller->dbus_name == NULL)
                         return FALSE;
                 else
@@ -166,7 +165,7 @@ polkit_caller_set_dbus_name (PolKitCaller *caller, const char *dbus_name)
 polkit_bool_t
 polkit_caller_set_uid (PolKitCaller *caller, uid_t uid)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
         caller->uid = uid;
         return TRUE;
 }
@@ -183,7 +182,7 @@ polkit_caller_set_uid (PolKitCaller *caller, uid_t uid)
 polkit_bool_t
 polkit_caller_set_pid (PolKitCaller *caller, pid_t pid)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
         caller->pid = pid;
         return TRUE;
 }
@@ -200,17 +199,17 @@ polkit_caller_set_pid (PolKitCaller *caller, pid_t pid)
 polkit_bool_t
 polkit_caller_set_selinux_context (PolKitCaller *caller, const char *selinux_context)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
         /* TODO: probably should have a separate validation function for SELinux contexts */
-        g_return_val_if_fail (selinux_context == NULL || _pk_validate_identifier (selinux_context), FALSE);
+        kit_return_val_if_fail (selinux_context == NULL || _pk_validate_identifier (selinux_context), FALSE);
 
         if (caller->selinux_context != NULL)
-                p_free (caller->selinux_context);
+                kit_free (caller->selinux_context);
         if (selinux_context == NULL) {
                 caller->selinux_context = NULL;
                 return TRUE;
         } else {
-                caller->selinux_context = p_strdup (selinux_context);
+                caller->selinux_context = kit_strdup (selinux_context);
                 if (caller->selinux_context == NULL)
                         return FALSE;
                 else
@@ -232,8 +231,8 @@ polkit_caller_set_selinux_context (PolKitCaller *caller, const char *selinux_con
 polkit_bool_t
 polkit_caller_set_ck_session (PolKitCaller *caller, PolKitSession *session)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (session == NULL || polkit_session_validate (session), FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (session == NULL || polkit_session_validate (session), FALSE);
         if (caller->session != NULL)
                 polkit_session_unref (caller->session);
         caller->session = session != NULL ? polkit_session_ref (session) : NULL;
@@ -252,8 +251,8 @@ polkit_caller_set_ck_session (PolKitCaller *caller, PolKitSession *session)
 polkit_bool_t
 polkit_caller_get_dbus_name (PolKitCaller *caller, char **out_dbus_name)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (out_dbus_name != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (out_dbus_name != NULL, FALSE);
         *out_dbus_name = caller->dbus_name;
         return TRUE;
 }
@@ -270,8 +269,8 @@ polkit_caller_get_dbus_name (PolKitCaller *caller, char **out_dbus_name)
 polkit_bool_t
 polkit_caller_get_uid (PolKitCaller *caller, uid_t *out_uid)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (out_uid != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (out_uid != NULL, FALSE);
         *out_uid = caller->uid;
         return TRUE;
 }
@@ -288,8 +287,8 @@ polkit_caller_get_uid (PolKitCaller *caller, uid_t *out_uid)
 polkit_bool_t
 polkit_caller_get_pid (PolKitCaller *caller, pid_t *out_pid)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (out_pid != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (out_pid != NULL, FALSE);
         *out_pid = caller->pid;
         return TRUE;
 }
@@ -307,8 +306,8 @@ polkit_caller_get_pid (PolKitCaller *caller, pid_t *out_pid)
 polkit_bool_t
 polkit_caller_get_selinux_context (PolKitCaller *caller, char **out_selinux_context)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (out_selinux_context != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (out_selinux_context != NULL, FALSE);
         *out_selinux_context = caller->selinux_context;
         return TRUE;
 }
@@ -326,8 +325,8 @@ polkit_caller_get_selinux_context (PolKitCaller *caller, char **out_selinux_cont
 polkit_bool_t
 polkit_caller_get_ck_session (PolKitCaller *caller, PolKitSession **out_session)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (out_session != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (out_session != NULL, FALSE);
         *out_session = caller->session;
         return TRUE;
 }
@@ -341,7 +340,7 @@ polkit_caller_get_ck_session (PolKitCaller *caller, PolKitSession **out_session)
 void
 polkit_caller_debug (PolKitCaller *caller)
 {
-        g_return_if_fail (caller != NULL);
+        kit_return_if_fail (caller != NULL);
         _pk_debug ("PolKitCaller: refcount=%d dbus_name=%s uid=%d pid=%d selinux_context=%s", 
                    caller->refcount, caller->dbus_name, caller->uid, caller->pid, caller->selinux_context);
         if (caller->session != NULL)
@@ -360,8 +359,8 @@ polkit_caller_debug (PolKitCaller *caller)
 polkit_bool_t
 polkit_caller_validate (PolKitCaller *caller)
 {
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (caller->pid > 0, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (caller->pid > 0, FALSE);
         return TRUE;
 }
 
@@ -380,52 +379,52 @@ _run_test (void)
 
         if ((c = polkit_caller_new ()) != NULL) {
                 
-                g_assert (! polkit_caller_set_dbus_name (c, "org.invalid.name"));
-                g_assert (polkit_caller_set_dbus_name (c, NULL));
+                kit_assert (! polkit_caller_set_dbus_name (c, "org.invalid.name"));
+                kit_assert (polkit_caller_set_dbus_name (c, NULL));
                 if (polkit_caller_set_dbus_name (c, ":1.43")) {
-                        g_assert (polkit_caller_get_dbus_name (c, &s) && strcmp (s, ":1.43") == 0);
+                        kit_assert (polkit_caller_get_dbus_name (c, &s) && strcmp (s, ":1.43") == 0);
 
                         if (polkit_caller_set_dbus_name (c, ":1.44")) {
-                                g_assert (polkit_caller_get_dbus_name (c, &s) && strcmp (s, ":1.44") == 0);
+                                kit_assert (polkit_caller_get_dbus_name (c, &s) && strcmp (s, ":1.44") == 0);
                         }
                 }
 
-                g_assert (polkit_caller_set_selinux_context (c, NULL));
+                kit_assert (polkit_caller_set_selinux_context (c, NULL));
                 if (polkit_caller_set_selinux_context (c, "system_u:object_r:bin_t")) {
-                        g_assert (polkit_caller_get_selinux_context (c, &s) && strcmp (s, "system_u:object_r:bin_t") == 0);
+                        kit_assert (polkit_caller_get_selinux_context (c, &s) && strcmp (s, "system_u:object_r:bin_t") == 0);
 
                         if (polkit_caller_set_selinux_context (c, "system_u:object_r:httpd_exec_t")) {
-                                g_assert (polkit_caller_get_selinux_context (c, &s) && strcmp (s, "system_u:object_r:httpd_exec_t") == 0);
+                                kit_assert (polkit_caller_get_selinux_context (c, &s) && strcmp (s, "system_u:object_r:httpd_exec_t") == 0);
                         }
                 }
 
-                g_assert (polkit_caller_set_uid (c, 0));
-                g_assert (polkit_caller_get_uid (c, &uid) && uid == 0);
-                g_assert (polkit_caller_set_pid (c, 1));
-                g_assert (polkit_caller_get_pid (c, &pid) && pid == 1);
+                kit_assert (polkit_caller_set_uid (c, 0));
+                kit_assert (polkit_caller_get_uid (c, &uid) && uid == 0);
+                kit_assert (polkit_caller_set_pid (c, 1));
+                kit_assert (polkit_caller_get_pid (c, &pid) && pid == 1);
 
                 /* validate where caller is not in a session */
-                g_assert (polkit_caller_validate (c));
+                kit_assert (polkit_caller_validate (c));
                 polkit_caller_ref (c);
-                g_assert (polkit_caller_validate (c));
+                kit_assert (polkit_caller_validate (c));
                 polkit_caller_unref (c);
-                g_assert (polkit_caller_validate (c));
+                kit_assert (polkit_caller_validate (c));
 
                 if ((session = polkit_session_new ()) != NULL) {
                         if (polkit_session_set_ck_objref (session, "/somesession")) {
                                 if ((seat = polkit_seat_new ()) != NULL) {
                                         if (polkit_seat_set_ck_objref (seat, "/someseat")) {
-                                                g_assert (polkit_session_set_seat (session, seat));
-                                                g_assert (polkit_session_set_ck_is_local (session, TRUE));
+                                                kit_assert (polkit_session_set_seat (session, seat));
+                                                kit_assert (polkit_session_set_ck_is_local (session, TRUE));
 
-                                                g_assert (polkit_caller_set_ck_session (c, NULL));
-                                                g_assert (polkit_caller_get_ck_session (c, &session2) && session2 == NULL);
+                                                kit_assert (polkit_caller_set_ck_session (c, NULL));
+                                                kit_assert (polkit_caller_get_ck_session (c, &session2) && session2 == NULL);
 
-                                                g_assert (polkit_caller_set_ck_session (c, session));
-                                                g_assert (polkit_caller_set_ck_session (c, session));
-                                                g_assert (polkit_caller_get_ck_session (c, &session2) && session2 == session);
+                                                kit_assert (polkit_caller_set_ck_session (c, session));
+                                                kit_assert (polkit_caller_set_ck_session (c, session));
+                                                kit_assert (polkit_caller_get_ck_session (c, &session2) && session2 == session);
                                                 /* validate where caller is in a session */
-                                                g_assert (polkit_caller_validate (c));
+                                                kit_assert (polkit_caller_validate (c));
 
                                                 polkit_caller_debug (c);
 

@@ -44,13 +44,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <glib.h>
-
 #include "polkit-types.h"
 #include "polkit-error.h"
 #include "polkit-debug.h"
 #include "polkit-test.h"
-#include "polkit-memory.h"
+#include "polkit-private.h"
 
 /**
  * PolKitError:
@@ -105,8 +103,8 @@ static const char *error_names[POLKIT_ERROR_NUM_ERROR_CODES] = {
 const char *
 polkit_error_get_error_name (PolKitError *error)
 {
-        g_return_val_if_fail (error != NULL, NULL);
-        g_return_val_if_fail (error->error_code >= 0 && error->error_code < POLKIT_ERROR_NUM_ERROR_CODES, NULL);
+        kit_return_val_if_fail (error != NULL, NULL);
+        kit_return_val_if_fail (error->error_code >= 0 && error->error_code < POLKIT_ERROR_NUM_ERROR_CODES, NULL);
 
         return error_names[error->error_code];
 }
@@ -122,7 +120,7 @@ polkit_error_get_error_name (PolKitError *error)
 PolKitErrorCode 
 polkit_error_get_error_code (PolKitError *error)
 {
-        g_return_val_if_fail (error != NULL, -1);
+        kit_return_val_if_fail (error != NULL, -1);
         return error->error_code;
 }
 
@@ -137,7 +135,7 @@ polkit_error_get_error_code (PolKitError *error)
 const char *
 polkit_error_get_error_message (PolKitError *error)
 {
-        g_return_val_if_fail (error != NULL, NULL);
+        kit_return_val_if_fail (error != NULL, NULL);
         return error->error_message;
 }
 
@@ -150,10 +148,10 @@ polkit_error_get_error_message (PolKitError *error)
 void
 polkit_error_free (PolKitError *error)
 {
-        g_return_if_fail (error != NULL);
+        kit_return_if_fail (error != NULL);
         if (!error->is_static) {
-                p_free (error->error_message);
-                p_free (error);
+                kit_free (error->error_message);
+                kit_free (error);
         }
 }
 
@@ -177,23 +175,23 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
         va_list args;
         PolKitError *e;
 
-        g_return_val_if_fail (format != NULL, FALSE);
-        g_return_val_if_fail (error_code >= 0 && error_code < POLKIT_ERROR_NUM_ERROR_CODES, FALSE);
+        kit_return_val_if_fail (format != NULL, FALSE);
+        kit_return_val_if_fail (error_code >= 0 && error_code < POLKIT_ERROR_NUM_ERROR_CODES, FALSE);
 
         if (error == NULL)
                 goto out;
 
-        e = p_new0 (PolKitError, 1);
+        e = kit_new0 (PolKitError, 1);
         if (e == NULL) {
                 *error = &_oom_error;
         } else {
                 e->is_static = FALSE;
                 e->error_code = error_code;
                 va_start (args, format);
-                e->error_message = p_strdup_vprintf (format, args);
+                e->error_message = kit_strdup_vprintf (format, args);
                 va_end (args);
                 if (e->error_message == NULL) {
-                        p_free (e);
+                        kit_free (e);
                         *error = &_oom_error;
                 } else {                
                         *error = e;
@@ -214,25 +212,25 @@ _run_test (void)
         char s[256];
 
         e = NULL;
-        g_assert (! polkit_error_is_set (e));
-        g_assert (! polkit_error_set_error (&e, -1, "Testing"));
-        g_assert (! polkit_error_set_error (&e, POLKIT_ERROR_NUM_ERROR_CODES, "Testing"));
+        kit_assert (! polkit_error_is_set (e));
+        kit_assert (! polkit_error_set_error (&e, -1, "Testing"));
+        kit_assert (! polkit_error_set_error (&e, POLKIT_ERROR_NUM_ERROR_CODES, "Testing"));
 
         for (n = 0; n < POLKIT_ERROR_NUM_ERROR_CODES; n++) {
                 polkit_error_set_error (&e, n, "Testing error code %d", n);
-                g_assert (polkit_error_is_set (e));
-                g_assert (polkit_error_get_error_code (e) == n || polkit_error_get_error_code (e) == POLKIT_ERROR_OUT_OF_MEMORY);
-                g_assert (strcmp (polkit_error_get_error_name (e), error_names[polkit_error_get_error_code (e)]) == 0);
+                kit_assert (polkit_error_is_set (e));
+                kit_assert (polkit_error_get_error_code (e) == n || polkit_error_get_error_code (e) == POLKIT_ERROR_OUT_OF_MEMORY);
+                kit_assert (strcmp (polkit_error_get_error_name (e), error_names[polkit_error_get_error_code (e)]) == 0);
 
                 if (polkit_error_get_error_code (e) != POLKIT_ERROR_OUT_OF_MEMORY) {
                         snprintf (s, sizeof (s), "Testing error code %d", n);
-                        g_assert (strcmp (polkit_error_get_error_message (e), s) == 0);
+                        kit_assert (strcmp (polkit_error_get_error_message (e), s) == 0);
                 }
 
                 polkit_error_free (e);
         }
 
-        g_assert (polkit_error_set_error (NULL, POLKIT_ERROR_OUT_OF_MEMORY, "This error will never get set"));
+        kit_assert (polkit_error_set_error (NULL, POLKIT_ERROR_OUT_OF_MEMORY, "This error will never get set"));
 
         return TRUE;
 }

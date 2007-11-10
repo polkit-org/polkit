@@ -58,12 +58,11 @@ extern PolKitTest _test_session;
 extern PolKitTest _test_caller;
 extern PolKitTest _test_policy_default;
 extern PolKitTest _test_policy_file_entry;
-extern PolKitTest _test_hash;
 extern PolKitTest _test_policy_file;
-extern PolKitTest _test_list;
 extern PolKitTest _test_policy_cache;
 extern PolKitTest _test_authorization_constraint;
 extern PolKitTest _test_authorization;
+extern PolKitTest _test_authorization_db;
 
 POLKIT_END_DECLS
 

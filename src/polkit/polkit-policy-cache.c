@@ -41,13 +41,10 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-#include <glib.h>
 #include "polkit-debug.h"
 #include "polkit-policy-file.h"
 #include "polkit-policy-cache.h"
 #include "polkit-private.h"
-#include "polkit-memory.h"
-#include "polkit-list.h"
 #include "polkit-test.h"
 
 /**
@@ -69,7 +66,7 @@ struct _PolKitPolicyCache
 {
         int refcount;
 
-        PolKitList *priv_entries;
+        KitList *priv_entries;
 };
 
 
@@ -78,11 +75,11 @@ _prepend_entry (PolKitPolicyFile       *policy_file,
                PolKitPolicyFileEntry  *policy_file_entry,
                void                   *user_data)
 {
-        PolKitList *l;
+        KitList *l;
         PolKitPolicyCache *policy_cache = user_data;
 
         polkit_policy_file_entry_ref (policy_file_entry);
-        l = polkit_list_prepend (policy_cache->priv_entries, policy_file_entry);
+        l = kit_list_prepend (policy_cache->priv_entries, policy_file_entry);
         if (l == NULL) {
                 polkit_policy_file_entry_unref (policy_file_entry);
                 goto oom;
@@ -103,7 +100,7 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
 
         dir = NULL;
 
-        pc = p_new0 (PolKitPolicyCache, 1);
+        pc = kit_new0 (PolKitPolicyCache, 1);
         if (pc == NULL) {
                 polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory");
                 goto out;
@@ -136,12 +133,16 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
                 if (name_len < sizeof (suffix) || strcmp ((filename + name_len - sizeof (suffix) + 1), suffix) != 0)
                         continue;
 
-                path = g_strdup_printf ("%s/%s", dirname, filename);
+                path = kit_strdup_printf ("%s/%s", dirname, filename);
+                if (path == NULL) {
+                        polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory");
+                        goto out;
+                }
 
                 _pk_debug ("Loading %s", path);
                 pk_error = NULL;
                 pf = polkit_policy_file_new (path, load_descriptions, &pk_error);
-                g_free (path);
+                kit_free (path);
 
                 if (pf == NULL) {
                         if (polkit_error_get_error_code (pk_error) == POLKIT_ERROR_OUT_OF_MEMORY) {
@@ -189,7 +190,7 @@ out:
 PolKitPolicyCache *
 polkit_policy_cache_ref (PolKitPolicyCache *policy_cache)
 {
-        g_return_val_if_fail (policy_cache != NULL, policy_cache);
+        kit_return_val_if_fail (policy_cache != NULL, policy_cache);
         policy_cache->refcount++;
         return policy_cache;
 }
@@ -205,9 +206,9 @@ polkit_policy_cache_ref (PolKitPolicyCache *policy_cache)
 void
 polkit_policy_cache_unref (PolKitPolicyCache *policy_cache)
 {
-        PolKitList *i;
+        KitList *i;
 
-        g_return_if_fail (policy_cache != NULL);
+        kit_return_if_fail (policy_cache != NULL);
         policy_cache->refcount--;
         if (policy_cache->refcount > 0) 
                 return;
@@ -217,9 +218,9 @@ polkit_policy_cache_unref (PolKitPolicyCache *policy_cache)
                 polkit_policy_file_entry_unref (pfe);
         }
         if (policy_cache->priv_entries != NULL)
-                polkit_list_free (policy_cache->priv_entries);
+                kit_list_free (policy_cache->priv_entries);
 
-        p_free (policy_cache);
+        kit_free (policy_cache);
 }
 
 /**
@@ -231,12 +232,12 @@ polkit_policy_cache_unref (PolKitPolicyCache *policy_cache)
 void
 polkit_policy_cache_debug (PolKitPolicyCache *policy_cache)
 {
-        PolKitList *i;
-        g_return_if_fail (policy_cache != NULL);
+        KitList *i;
+        kit_return_if_fail (policy_cache != NULL);
 
         _pk_debug ("PolKitPolicyCache: refcount=%d num_entries=%d ...", 
                    policy_cache->refcount,
-                   policy_cache->priv_entries == NULL ? 0 : polkit_list_length (policy_cache->priv_entries));
+                   policy_cache->priv_entries == NULL ? 0 : kit_list_length (policy_cache->priv_entries));
 
         for (i = policy_cache->priv_entries; i != NULL; i = i->next) {
                 PolKitPolicyFileEntry *pfe = i->data;
@@ -260,11 +261,11 @@ polkit_policy_cache_debug (PolKitPolicyCache *policy_cache)
 PolKitPolicyFileEntry* 
 polkit_policy_cache_get_entry_by_id (PolKitPolicyCache *policy_cache, const char *action_id)
 {
-        PolKitList *i;
+        KitList *i;
         PolKitPolicyFileEntry *pfe;
 
-        g_return_val_if_fail (policy_cache != NULL, NULL);
-        g_return_val_if_fail (action_id != NULL, NULL);
+        kit_return_val_if_fail (policy_cache != NULL, NULL);
+        kit_return_val_if_fail (action_id != NULL, NULL);
 
         pfe = NULL;
 
@@ -307,8 +308,8 @@ polkit_policy_cache_get_entry (PolKitPolicyCache *policy_cache,
 
         /* I'm sure it would be easy to make this O(1)... */
 
-        g_return_val_if_fail (policy_cache != NULL, NULL);
-        g_return_val_if_fail (action != NULL, NULL);
+        kit_return_val_if_fail (policy_cache != NULL, NULL);
+        kit_return_val_if_fail (action != NULL, NULL);
 
         pfe = NULL;
 
@@ -336,11 +337,11 @@ polkit_policy_cache_foreach (PolKitPolicyCache *policy_cache,
                              PolKitPolicyCacheForeachFunc callback,
                              void *user_data)
 {
-        PolKitList *i;
+        KitList *i;
         PolKitPolicyFileEntry *pfe;
 
-        g_return_val_if_fail (policy_cache != NULL, FALSE);
-        g_return_val_if_fail (callback != NULL, FALSE);
+        kit_return_val_if_fail (policy_cache != NULL, FALSE);
+        kit_return_val_if_fail (callback != NULL, FALSE);
 
         for (i = policy_cache->priv_entries; i != NULL; i = i->next) {
                 pfe = i->data;
@@ -376,11 +377,11 @@ polkit_policy_cache_get_entry_by_annotation (PolKitPolicyCache *policy_cache,
                                              const char *annotation_key,
                                              const char *annotation_value)
 {
-        PolKitList *i;
+        KitList *i;
 
-        g_return_val_if_fail (policy_cache != NULL, NULL);
-        g_return_val_if_fail (annotation_key != NULL, NULL);
-        g_return_val_if_fail (annotation_value != NULL, NULL);
+        kit_return_val_if_fail (policy_cache != NULL, NULL);
+        kit_return_val_if_fail (annotation_key != NULL, NULL);
+        kit_return_val_if_fail (annotation_value != NULL, NULL);
 
         for (i = policy_cache->priv_entries; i != NULL; i = i->next) {
                 const char *value;
@@ -437,15 +438,15 @@ _run_test (void)
         int counter;
 
         error = NULL;
-        g_assert (_polkit_policy_cache_new (TEST_DATA_DIR "/non-existant", TRUE, &error) == NULL);
-        g_assert (polkit_error_is_set (error) && 
+        kit_assert (_polkit_policy_cache_new (TEST_DATA_DIR "/non-existant", TRUE, &error) == NULL);
+        kit_assert (polkit_error_is_set (error) && 
                   (polkit_error_get_error_code (error) == POLKIT_ERROR_POLICY_FILE_INVALID ||
                    polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY));
         polkit_error_free (error);
 
         error = NULL;
         if ((pc = _polkit_policy_cache_new (TEST_DATA_DIR "/invalid", TRUE, &error)) == NULL) {
-                g_assert (polkit_error_is_set (error) && 
+                kit_assert (polkit_error_is_set (error) && 
                           polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
                 polkit_error_free (error);
         } else {
@@ -454,36 +455,36 @@ _run_test (void)
 
         error = NULL;
         if ((pc = _polkit_policy_cache_new (TEST_DATA_DIR "/valid", TRUE, &error)) == NULL) {
-                g_assert (polkit_error_is_set (error) && 
+                kit_assert (polkit_error_is_set (error) && 
                           polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
                 polkit_error_free (error);
                 goto out;
         }
 
-        g_assert (polkit_policy_cache_get_entry_by_id (pc, "org.example.valid1") != NULL);
-        g_assert (polkit_policy_cache_get_entry_by_id (pc, "org.example.non-existant") == NULL);
+        kit_assert (polkit_policy_cache_get_entry_by_id (pc, "org.example.valid1") != NULL);
+        kit_assert (polkit_policy_cache_get_entry_by_id (pc, "org.example.non-existant") == NULL);
 
         pfe = polkit_policy_cache_get_entry_by_annotation (pc, "the.key1", "Some Value 1");
-        g_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid2") == 0);
+        kit_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid2") == 0);
         pfe = polkit_policy_cache_get_entry_by_annotation (pc, "the.key2", "Some Value 2");
-        g_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid2") == 0);
+        kit_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid2") == 0);
         pfe = polkit_policy_cache_get_entry_by_annotation (pc, "the.key1", "Some Value 1b");
-        g_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid2b") == 0);
+        kit_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid2b") == 0);
         pfe = polkit_policy_cache_get_entry_by_annotation (pc, "the.key1", "NON-EXISTANT VALUE");
-        g_assert (pfe == NULL);
+        kit_assert (pfe == NULL);
         pfe = polkit_policy_cache_get_entry_by_annotation (pc, "NON_EXISTANT KEY", "NON-EXISTANT VALUE");
-        g_assert (pfe == NULL);
+        kit_assert (pfe == NULL);
 
         if ((a = polkit_action_new ()) != NULL) {
                 pfe = polkit_policy_cache_get_entry (pc, a);
-                g_assert (pfe == NULL);
+                kit_assert (pfe == NULL);
                 if (polkit_action_set_action_id (a, "org.example.valid1")) {
                         pfe = polkit_policy_cache_get_entry (pc, a);
-                        g_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid1") == 0);
+                        kit_assert (pfe != NULL && strcmp (polkit_policy_file_entry_get_id (pfe), "org.example.valid1") == 0);
                 }
                 if (polkit_action_set_action_id (a, "org.example.non-existant")) {
                         pfe = polkit_policy_cache_get_entry (pc, a);
-                        g_assert (pfe == NULL);
+                        kit_assert (pfe == NULL);
                 }
 
                 polkit_action_unref (a);
@@ -491,11 +492,11 @@ _run_test (void)
 
         counter = 0;
         polkit_policy_cache_foreach (pc, _test_count, &counter);
-        g_assert (counter == 6);
+        kit_assert (counter == 6);
 
         counter = 0;
         polkit_policy_cache_foreach (pc, _test_short_circuit, &counter);
-        g_assert (counter == 1);
+        kit_assert (counter == 1);
 
         polkit_policy_cache_debug (pc);
         polkit_policy_cache_ref (pc);

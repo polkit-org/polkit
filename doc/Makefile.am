@@ -19,8 +19,8 @@ SCAN_OPTIONS=--ignore-headers=config.h
 DOC_SOURCE_DIR=../src
 
 # Used for dependencies
-HFILE_GLOB=$(top_srcdir)/src/polkit*/*.h
-CFILE_GLOB=$(top_srcdir)/src/polkit*/*.c
+HFILE_GLOB=$(top_srcdir)/src/*/*.h
+CFILE_GLOB=$(top_srcdir)/src/*/*.c
 
 # Headers to ignore
 IGNORE_HFILES= \

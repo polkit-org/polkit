@@ -38,12 +38,13 @@
 #include <errno.h>
 
 #include <glib.h>
+
 #include "polkit-debug.h"
 #include "polkit-authorization.h"
 #include "polkit-utils.h"
 #include "polkit-private.h"
 #include "polkit-test.h"
-#include "polkit-memory.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-authorization
@@ -90,7 +91,7 @@ struct _PolKitAuthorization
 const char *
 _polkit_authorization_get_authfile_entry (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, NULL);
+        kit_return_val_if_fail (auth != NULL, NULL);
         return auth->entry_in_auth_file;
 }
 
@@ -105,16 +106,16 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
         PolKitAuthorization *auth;
         int n;
 
-        g_return_val_if_fail (entry_in_auth_file != NULL, NULL);
+        kit_return_val_if_fail (entry_in_auth_file != NULL, NULL);
 
         t = NULL;
 
-        auth = p_new0 (PolKitAuthorization, 1);
+        auth = kit_new0 (PolKitAuthorization, 1);
         if (auth == NULL)
                 goto oom;
 
         auth->refcount = 1;
-        auth->entry_in_auth_file = p_strdup (entry_in_auth_file);
+        auth->entry_in_auth_file = kit_strdup (entry_in_auth_file);
         if (auth->entry_in_auth_file == NULL)
                 goto oom;
 
@@ -155,7 +156,7 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = p_strdup (t[n++]);
+                auth->action_id = kit_strdup (t[n++]);
                 if (auth->action_id == NULL)
                         goto oom;
 
@@ -185,13 +186,13 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 auth->scope = POLKIT_AUTHORIZATION_SCOPE_SESSION;
 
-                auth->session_id = p_strdup (t[n++]);
+                auth->session_id = kit_strdup (t[n++]);
                 if (auth->session_id == NULL)
                         goto oom;
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = p_strdup (t[n++]);
+                auth->action_id = kit_strdup (t[n++]);
                 if (auth->action_id == NULL)
                         goto oom;
 
@@ -225,7 +226,7 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = p_strdup (t[n++]);
+                auth->action_id = kit_strdup (t[n++]);
                 if (auth->action_id == NULL)
                         goto oom;
 
@@ -260,7 +261,7 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
                 if (!polkit_action_validate_id (t[n]))
                         goto error;
-                auth->action_id = p_strdup (t[n++]);
+                auth->action_id = kit_strdup (t[n++]);
                 if (auth->action_id == NULL)
                         goto oom;
 
@@ -308,7 +309,7 @@ oom:
 PolKitAuthorization *
 polkit_authorization_ref (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, auth);
+        kit_return_val_if_fail (auth != NULL, auth);
         auth->refcount++;
         return auth;
 }
@@ -326,17 +327,17 @@ polkit_authorization_ref (PolKitAuthorization *auth)
 void
 polkit_authorization_unref (PolKitAuthorization *auth)
 {
-        g_return_if_fail (auth != NULL);
+        kit_return_if_fail (auth != NULL);
         auth->refcount--;
         if (auth->refcount > 0) 
                 return;
 
-        p_free (auth->entry_in_auth_file);
-        p_free (auth->action_id);
-        p_free (auth->session_id);
+        kit_free (auth->entry_in_auth_file);
+        kit_free (auth->action_id);
+        kit_free (auth->session_id);
         if (auth->constraint != NULL)
                 polkit_authorization_constraint_unref (auth->constraint);
-        p_free (auth);
+        kit_free (auth);
 }
 
 /**
@@ -350,7 +351,7 @@ polkit_authorization_unref (PolKitAuthorization *auth)
 void
 polkit_authorization_debug (PolKitAuthorization *auth)
 {
-        g_return_if_fail (auth != NULL);
+        kit_return_if_fail (auth != NULL);
         _pk_debug ("PolKitAuthorization: refcount=%d", auth->refcount);
         _pk_debug (" scope          = %d",  auth->scope);
         _pk_debug (" pid            = %d",  auth->pid);
@@ -373,7 +374,7 @@ polkit_authorization_debug (PolKitAuthorization *auth)
 polkit_bool_t
 polkit_authorization_validate (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (auth != NULL, FALSE);
 
         return TRUE;
 }
@@ -391,7 +392,7 @@ polkit_authorization_validate (PolKitAuthorization *auth)
 const char *
 polkit_authorization_get_action_id (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, NULL);
+        kit_return_val_if_fail (auth != NULL, NULL);
 
         return auth->action_id;
 }
@@ -412,7 +413,7 @@ polkit_authorization_get_action_id (PolKitAuthorization *auth)
 PolKitAuthorizationScope
 polkit_authorization_get_scope (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, 0);
+        kit_return_val_if_fail (auth != NULL, 0);
 
         return auth->scope;
 }
@@ -440,10 +441,10 @@ polkit_authorization_scope_process_get_pid (PolKitAuthorization *auth,
                                             pid_t *out_pid, 
                                             polkit_uint64_t *out_pid_start_time)
 {
-        g_return_val_if_fail (auth != NULL, FALSE);
-        g_return_val_if_fail (out_pid != NULL, FALSE);
-        g_return_val_if_fail (out_pid_start_time != NULL, FALSE);
-        g_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_PROCESS || 
+        kit_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (out_pid != NULL, FALSE);
+        kit_return_val_if_fail (out_pid_start_time != NULL, FALSE);
+        kit_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_PROCESS || 
                               auth->scope == POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT, FALSE);
 
         *out_pid = auth->pid;
@@ -466,8 +467,8 @@ polkit_authorization_scope_process_get_pid (PolKitAuthorization *auth,
 const char *
 polkit_authorization_scope_session_get_ck_objref (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, FALSE);
-        g_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_SESSION, FALSE);
+        kit_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (auth->scope == POLKIT_AUTHORIZATION_SCOPE_SESSION, FALSE);
 
         return auth->session_id;
 }
@@ -486,7 +487,7 @@ polkit_authorization_scope_session_get_ck_objref (PolKitAuthorization *auth)
 uid_t
 polkit_authorization_get_uid (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, 0);
+        kit_return_val_if_fail (auth != NULL, 0);
         return auth->uid;
 }
 
@@ -505,7 +506,7 @@ polkit_authorization_get_uid (PolKitAuthorization *auth)
 time_t
 polkit_authorization_get_time_of_grant (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, 0);
+        kit_return_val_if_fail (auth != NULL, 0);
         return auth->when;
 }
 
@@ -531,8 +532,8 @@ polkit_bool_t
 polkit_authorization_was_granted_via_defaults (PolKitAuthorization *auth,
                                                uid_t *out_user_authenticated_as)
 {
-        g_return_val_if_fail (auth != NULL, FALSE);
-        g_return_val_if_fail (out_user_authenticated_as != NULL, FALSE);
+        kit_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (out_user_authenticated_as != NULL, FALSE);
 
         if (auth->explicitly_granted)
                 return FALSE;
@@ -561,8 +562,8 @@ polkit_bool_t
 polkit_authorization_was_granted_explicitly (PolKitAuthorization *auth,
                                              uid_t *out_by_whom)
 {
-        g_return_val_if_fail (auth != NULL, FALSE);
-        g_return_val_if_fail (out_by_whom != NULL, FALSE);
+        kit_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (out_by_whom != NULL, FALSE);
 
         if (!auth->explicitly_granted)
                 return FALSE;
@@ -585,7 +586,7 @@ polkit_authorization_was_granted_explicitly (PolKitAuthorization *auth,
 PolKitAuthorizationConstraint *
 polkit_authorization_get_constraint (PolKitAuthorization *auth)
 {
-        g_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (auth != NULL, FALSE);
         return auth->constraint;
 }
 
@@ -722,39 +723,39 @@ _run_test (void)
                         polkit_authorization_debug (a);
                         polkit_authorization_validate (a);
 
-                        g_assert (t->scope == polkit_authorization_get_scope (a));
-                        g_assert (t->time_of_grant == polkit_authorization_get_time_of_grant (a));
-                        g_assert (500 == polkit_authorization_get_uid (a));
+                        kit_assert (t->scope == polkit_authorization_get_scope (a));
+                        kit_assert (t->time_of_grant == polkit_authorization_get_time_of_grant (a));
+                        kit_assert (500 == polkit_authorization_get_uid (a));
 
                         switch (t->scope) {
                         case POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT: /* explicit fallthrough */
                         case POLKIT_AUTHORIZATION_SCOPE_PROCESS:
-                                g_assert (polkit_authorization_scope_process_get_pid (a, &pid, &pid_start_time) && 
+                                kit_assert (polkit_authorization_scope_process_get_pid (a, &pid, &pid_start_time) && 
                                           t->pid == pid && t->pid_start_time == pid_start_time);
                                 break;
                         case POLKIT_AUTHORIZATION_SCOPE_SESSION:
-                                g_assert ((s = polkit_authorization_scope_session_get_ck_objref (a)) != NULL &&
+                                kit_assert ((s = polkit_authorization_scope_session_get_ck_objref (a)) != NULL &&
                                           strcmp (s, t->session) == 0);
                                 break;
                         case POLKIT_AUTHORIZATION_SCOPE_ALWAYS:
                                 break;
                         }
 
-                        g_assert ((s = _polkit_authorization_get_authfile_entry (a)) != NULL && strcmp (t->entry, s) == 0);
+                        kit_assert ((s = _polkit_authorization_get_authfile_entry (a)) != NULL && strcmp (t->entry, s) == 0);
 
-                        g_assert ((s = polkit_authorization_get_action_id (a)) != NULL && strcmp (t->action_id, s) == 0);
+                        kit_assert ((s = polkit_authorization_get_action_id (a)) != NULL && strcmp (t->action_id, s) == 0);
 
-                        g_assert (t->time_of_grant == polkit_authorization_get_time_of_grant (a));
+                        kit_assert (t->time_of_grant == polkit_authorization_get_time_of_grant (a));
 
-                        g_assert ((ac = polkit_authorization_get_constraint (a)) != NULL &&
+                        kit_assert ((ac = polkit_authorization_get_constraint (a)) != NULL &&
                                   polkit_authorization_constraint_equal (ac, t->constraint));
 
                         if (t->explicit) {
-                                g_assert (!polkit_authorization_was_granted_via_defaults (a, &uid));
-                                g_assert (polkit_authorization_was_granted_explicitly (a, &uid) && uid == t->from);
+                                kit_assert (!polkit_authorization_was_granted_via_defaults (a, &uid));
+                                kit_assert (polkit_authorization_was_granted_explicitly (a, &uid) && uid == t->from);
                         } else {
-                                g_assert (polkit_authorization_was_granted_via_defaults (a, &uid) && uid == t->from);
-                                g_assert (!polkit_authorization_was_granted_explicitly (a, &uid));
+                                kit_assert (polkit_authorization_was_granted_via_defaults (a, &uid) && uid == t->from);
+                                kit_assert (!polkit_authorization_was_granted_explicitly (a, &uid));
                         }
 
                         polkit_authorization_ref (a);
@@ -764,7 +765,7 @@ _run_test (void)
         }
 
         for (n = 0; n < num_invalid_auths; n++) {
-                g_assert (_polkit_authorization_new_for_uid (invalid_auths[n], 500) == NULL);
+                kit_assert (_polkit_authorization_new_for_uid (invalid_auths[n], 500) == NULL);
         }
 
         return TRUE;

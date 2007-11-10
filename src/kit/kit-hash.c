@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-hash.c : Hash tables
+ * kit-hash.c : Hash tables
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -30,54 +30,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glib.h>
-#include <polkit/polkit-hash.h>
-#include <polkit/polkit-memory.h>
-#include <polkit/polkit-test.h>
+#include <kit/kit-memory.h>
+#include <kit/kit-hash.h>
+#include <kit/kit-test.h>
 
 /**
- * SECTION:polkit-hash
- * @title: Hash Tables
- * @short_description: Hash Tables
+ * SECTION:kit-hash
+ * @title: Hash tables
+ * @short_description: Hash tables
  *
  * This class provides support for hash tables.
- *
- * Since: 0.7
  **/
 
-struct _PolKitHashNode;
+struct _KitHashNode;
 
-typedef struct _PolKitHashNode {
+typedef struct _KitHashNode {
         void *key;
         void *value;
-        struct _PolKitHashNode *next;
-} PolKitHashNode;
+        struct _KitHashNode *next;
+} KitHashNode;
 
 
 /**
- * PolKitHash:
+ * KitHash:
  *
- * The #PolKitHash structure not be accessed directly.
- *
- * Since: 0.7
+ * The #KitHash structure not be accessed directly.
  */
-struct _PolKitHash
+struct _KitHash
 {
         int refcount;
 
         int num_top_nodes;
-        PolKitHashNode **top_nodes;
+        KitHashNode **top_nodes;
 
-        PolKitHashFunc  hash_func;
-        PolKitEqualFunc key_equal_func;
-        PolKitCopyFunc  key_copy_func;
-        PolKitCopyFunc  value_copy_func;
-        PolKitFreeFunc  key_destroy_func;
-        PolKitFreeFunc  value_destroy_func;
+        KitHashFunc  hash_func;
+        KitEqualFunc key_equal_func;
+        KitCopyFunc  key_copy_func;
+        KitCopyFunc  value_copy_func;
+        KitFreeFunc  key_destroy_func;
+        KitFreeFunc  value_destroy_func;
 };
 
 /**
- * polkit_hash_new:
+ * kit_hash_new:
  * @hash_func: The hash function to use
  * @key_equal_func: The function used to determine key equality
  * @key_copy_func: Function for copying keys or #NULL
@@ -88,23 +83,21 @@ struct _PolKitHash
  * Creates a new Hash Table.
  *
  * Returns: The new hash table. Returns #NULL on OOM.
- *
- * Since: 0.7
  */
-PolKitHash *
-polkit_hash_new (PolKitHashFunc  hash_func,
-                 PolKitEqualFunc key_equal_func,
-                 PolKitCopyFunc  key_copy_func,
-                 PolKitCopyFunc  value_copy_func,
-                 PolKitFreeFunc  key_destroy_func,
-                 PolKitFreeFunc  value_destroy_func)
+KitHash *
+kit_hash_new (KitHashFunc  hash_func,
+              KitEqualFunc key_equal_func,
+              KitCopyFunc  key_copy_func,
+              KitCopyFunc  value_copy_func,
+              KitFreeFunc  key_destroy_func,
+              KitFreeFunc  value_destroy_func)
 {
-        PolKitHash *h;
+        KitHash *h;
 
-        g_return_val_if_fail (hash_func != NULL, NULL);
-        g_return_val_if_fail (key_equal_func != NULL, NULL);
+        kit_return_val_if_fail (hash_func != NULL, NULL);
+        kit_return_val_if_fail (key_equal_func != NULL, NULL);
 
-        h = p_new0 (PolKitHash, 1);
+        h = kit_new0 (KitHash, 1);
         if (h == NULL)
                 goto error;
 
@@ -117,48 +110,44 @@ polkit_hash_new (PolKitHashFunc  hash_func,
         h->value_destroy_func = value_destroy_func;
 
         h->num_top_nodes = 11; /* TODO: configurable? */
-        h->top_nodes = p_new0 (PolKitHashNode*, h->num_top_nodes);
+        h->top_nodes = kit_new0 (KitHashNode*, h->num_top_nodes);
         if (h->top_nodes == NULL)
                 goto error;
 
         return h;
 error:
         if (h != NULL)
-                polkit_hash_unref (h);
+                kit_hash_unref (h);
         return NULL;
 }
 
 /**
- * polkit_hash_ref:
+ * kit_hash_ref:
  * @hash: the hash table
  *
  * Increase reference count.
  *
  * Returns: the hash table
- *
- * Since: 0.7
  */
-PolKitHash *
-polkit_hash_ref (PolKitHash *hash)
+KitHash *
+kit_hash_ref (KitHash *hash)
 {
-        g_return_val_if_fail (hash != NULL, hash);
+        kit_return_val_if_fail (hash != NULL, hash);
         hash->refcount++;
         return hash;
 }
 
 /**
- * polkit_hash_unref:
+ * kit_hash_unref:
  * @hash: the hash table
  *
  * Decrease reference count. If reference count drop to zero the hash
  * table is freed.
- *
- * Since: 0.7
  */
 void
-polkit_hash_unref (PolKitHash *hash)
+kit_hash_unref (KitHash *hash)
 {
-        g_return_if_fail (hash != NULL);
+        kit_return_if_fail (hash != NULL);
 
         hash->refcount--;
         if (hash->refcount > 0) 
@@ -168,8 +157,8 @@ polkit_hash_unref (PolKitHash *hash)
                 int n;
 
                 for (n = 0; n < hash->num_top_nodes; n++) {
-                        PolKitHashNode *node;
-                        PolKitHashNode *next;
+                        KitHashNode *node;
+                        KitHashNode *next;
                         
                         for (node = hash->top_nodes[n]; node != NULL; node = next) {
                                 if (hash->key_destroy_func != NULL)
@@ -177,17 +166,17 @@ polkit_hash_unref (PolKitHash *hash)
                                 if (hash->value_destroy_func != NULL)
                                         hash->value_destroy_func (node->value);
                                 next = node->next;
-                                p_free (node);
+                                kit_free (node);
                         }
                 }
         }
 
-        p_free (hash->top_nodes);
-        p_free (hash);
+        kit_free (hash->top_nodes);
+        kit_free (hash);
 }
 
 /**
- * polkit_hash_insert:
+ * kit_hash_insert:
  * @hash: the hash table
  * @key: key to insert
  * @value: value to insert
@@ -197,22 +186,20 @@ polkit_hash_unref (PolKitHash *hash)
  * new value.
  *
  * Returns: #TRUE unless OOM
- *
- * Since: 0.7
  */
-polkit_bool_t 
-polkit_hash_insert (PolKitHash *hash,
+kit_bool_t 
+kit_hash_insert (KitHash *hash,
                     void *key,
                     void *value)
 {
         int bucket;
-        PolKitHashNode **nodep;
-        PolKitHashNode *node;
+        KitHashNode **nodep;
+        KitHashNode *node;
         void *key_copy;
         void *value_copy;
 
-        g_return_val_if_fail (hash != NULL, FALSE);
-        g_return_val_if_fail (key != NULL, FALSE);
+        kit_return_val_if_fail (hash != NULL, FALSE);
+        kit_return_val_if_fail (key != NULL, FALSE);
 
         key_copy = NULL;
         value_copy = NULL;
@@ -257,7 +244,7 @@ polkit_hash_insert (PolKitHash *hash,
                 }
         }
 
-        node = p_new0 (PolKitHashNode, 1);
+        node = kit_new0 (KitHashNode, 1);
         if (node == NULL)
                 goto oom;
 
@@ -279,7 +266,7 @@ oom:
 }
 
 /**
- * polkit_hash_lookup:
+ * kit_hash_lookup:
  * @hash: the hash table
  * @key: key to look up
  * @found: if not #NULL, will return #TRUE only if the key was found in the hash table
@@ -287,22 +274,20 @@ oom:
  * Look up a value in the hash table.
  *
  * Returns: the value; caller shall not free/unref this value
- *
- * Since: 0.7
  */
 void *
-polkit_hash_lookup (PolKitHash *hash, void *key, polkit_bool_t *found)
+kit_hash_lookup (KitHash *hash, void *key, kit_bool_t *found)
 {
         int bucket;
         void *value;
-        PolKitHashNode *node;
+        KitHashNode *node;
 
         value = NULL;
         if (found != NULL)
                 *found = FALSE;
 
-        g_return_val_if_fail (hash != NULL, NULL);
-        g_return_val_if_fail (key != NULL, NULL);
+        kit_return_val_if_fail (hash != NULL, NULL);
+        kit_return_val_if_fail (key != NULL, NULL);
 
         bucket = hash->hash_func (key) % hash->num_top_nodes;
 
@@ -326,7 +311,7 @@ out:
 
 
 /**
- * polkit_hash_foreach:
+ * kit_hash_foreach:
  * @hash: the hash table
  * @cb: callback function
  * @user_data: user data
@@ -334,19 +319,17 @@ out:
  * Iterate over all elements in a hash table
  *
  * Returns: #TRUE only if the callback short-circuited the iteration
- *
- * Since: 0.7
  */
-polkit_bool_t
-polkit_hash_foreach (PolKitHash *hash, PolKitHashForeachFunc cb, void *user_data)
+kit_bool_t
+kit_hash_foreach (KitHash *hash, KitHashForeachFunc cb, void *user_data)
 {
         int n;
 
-        g_return_val_if_fail (hash != NULL, FALSE);
-        g_return_val_if_fail (cb != NULL, FALSE);
+        kit_return_val_if_fail (hash != NULL, FALSE);
+        kit_return_val_if_fail (cb != NULL, FALSE);
 
         for (n = 0; n < hash->num_top_nodes; n++) {
-                PolKitHashNode *node;
+                KitHashNode *node;
 
                 for (node = hash->top_nodes[n]; node != NULL; node = node->next) {
                         if (cb (hash, node->key, node->value, user_data))
@@ -359,55 +342,47 @@ polkit_hash_foreach (PolKitHash *hash, PolKitHashForeachFunc cb, void *user_data
 
 
 /**
- * polkit_hash_direct_hash_func:
+ * kit_hash_direct_hash_func:
  * @key: the key
  *
  * Converts a pointer to a hash value.
  *
  * Returns: a hash value corresponding to the key
- *
- * Since: 0.7
  */
-polkit_uint32_t 
-polkit_hash_direct_hash_func (const void *key)
+uint32_t 
+kit_hash_direct_hash_func (const void *key)
 {
-        /* TODO: reimplement */
-        return g_direct_hash (key);
+        return (uint32_t) key;
 }
 
 /**
- * polkit_hash_direct_equal_func:
+ * kit_hash_direct_equal_func:
  * @v1: first value
  * @v2: second value
  *
  * Compares two pointers and return #TRUE if they are equal (same address).
  *
  * Returns: #TRUE only if the values are equal
- *
- * Since: 0.7
  */
-polkit_bool_t
-polkit_hash_direct_equal_func (const void *v1, const void *v2)
+kit_bool_t
+kit_hash_direct_equal_func (const void *v1, const void *v2)
 {
-        /* TODO: reimplement */
-        return g_direct_equal (v1, v2);
+        return v1 == v2;
 }
 
 /**
- * polkit_hash_str_hash_func:
+ * kit_hash_str_hash_func:
  * @key: the key
  *
  * Converts a string to a hash value.
  *
  * Returns: a hash value corresponding to the key
- *
- * Since: 0.7
  */
-polkit_uint32_t
-polkit_hash_str_hash_func (const void *key)
+uint32_t
+kit_hash_str_hash_func (const void *key)
 {
         const char *p;
-        polkit_uint32_t hash;
+        uint32_t hash;
 
         hash = 0;
         for (p = key; *p != '\0'; p++)
@@ -417,65 +392,63 @@ polkit_hash_str_hash_func (const void *key)
 }
 
 /**
- * polkit_hash_str_equal_func:
+ * kit_hash_str_equal_func:
  * @v1: first value
  * @v2: second value
  *
  * Compares two strings and return #TRUE if they are equal.
  *
  * Returns: #TRUE only if the values are equal
- *
- * Since: 0.7
  */
-polkit_bool_t
-polkit_hash_str_equal_func (const void *v1, const void *v2)
+kit_bool_t
+kit_hash_str_equal_func (const void *v1, const void *v2)
 {
         return strcmp (v1, v2) == 0;
 }
 
 /**
- * polkit_hash_str_copy:
+ * kit_hash_str_copy:
  * @p: void pointer to string
  *
- * Similar to p_strdup() except for types.
+ * Similar to kit_strdup() except for types.
  *
  * Returns: a void pointer to a copy or #NULL on OOM
  */
 void *
-polkit_hash_str_copy (const void *p)
+kit_hash_str_copy (const void *p)
 {
-        return (void *) p_strdup ((const char *) p);
+        return (void *) kit_strdup ((const char *) p);
 }
 
-#ifdef POLKIT_BUILD_TESTS
+#ifdef KIT_BUILD_TESTS
 
-static polkit_bool_t
-_it1 (PolKitHash *hash, void *key, void *value, void *user_data)
+static kit_bool_t
+_it1 (KitHash *hash, void *key, void *value, void *user_data)
 {
         int *count = (int *) user_data;
         *count += 1;
         return FALSE;
 }
 
-static polkit_bool_t
-_it2 (PolKitHash *hash, void *key, void *value, void *user_data)
+static kit_bool_t
+_it2 (KitHash *hash, void *key, void *value, void *user_data)
 {
         int *count = (int *) user_data;
         *count += 1;
         return TRUE;
 }
 
-static polkit_bool_t
+static kit_bool_t
 _run_test (void)
 {
         int count;
-        PolKitHash *h;
-        polkit_bool_t found;
+        KitHash *h;
+        kit_bool_t found;
 
         /* string hash tables */
-        if ((h = polkit_hash_new (polkit_hash_str_hash_func, polkit_hash_str_equal_func, 
-                                  polkit_hash_str_copy, polkit_hash_str_copy,
-                                  p_free, p_free)) != NULL) {
+        if ((h = kit_hash_new (kit_hash_str_hash_func, kit_hash_str_equal_func, 
+                                  kit_hash_str_copy, kit_hash_str_copy,
+                                  kit_free, kit_free)) != NULL) {
                 int n;
                 char *key;
                 char *value;
@@ -495,7 +468,7 @@ _run_test (void)
 
                 /* first insert the values */
                 for (n = 0; test_data [n*2] != NULL; n++) {
-                        if (!polkit_hash_insert (h, test_data [n*2], test_data [n*2 + 1])) {
+                        if (!kit_hash_insert (h, test_data [n*2], test_data [n*2 + 1])) {
                                 goto oom;
                         }
                 }
@@ -503,58 +476,58 @@ _run_test (void)
                 /* then check that we can look them up */
                 for (n = 0; test_data [n*2] != NULL; n++) {
                         key = test_data [n*2];
-                        value = polkit_hash_lookup (h, test_data[n*2], &found);
+                        value = kit_hash_lookup (h, test_data[n*2], &found);
 
-                        g_assert (found && strcmp (value, test_data[n*2 + 1]) == 0);
+                        kit_assert (found && strcmp (value, test_data[n*2 + 1]) == 0);
                 }
 
                 /* lookup unknown key */
-                g_assert (polkit_hash_lookup (h, "unknown", &found) == NULL && !found);
+                kit_assert (kit_hash_lookup (h, "unknown", &found) == NULL && !found);
 
                 /* replace key */
                 if (key != NULL) {
-                        if (polkit_hash_insert (h, "key1", "val1-replaced")) {
+                        if (kit_hash_insert (h, "key1", "val1-replaced")) {
                                 /* check for replaced value */
-                                value = polkit_hash_lookup (h, "key1", &found);
-                                g_assert (found && value != NULL && strcmp (value, "val1-replaced") == 0);
+                                value = kit_hash_lookup (h, "key1", &found);
+                                kit_assert (found && value != NULL && strcmp (value, "val1-replaced") == 0);
                         }
                 }
 
                 count = 0;
-                g_assert (polkit_hash_foreach (h, _it1, &count) == FALSE);
-                g_assert (count == ((sizeof (test_data) / sizeof (char *) - 1) / 2));
+                kit_assert (kit_hash_foreach (h, _it1, &count) == FALSE);
+                kit_assert (count == ((sizeof (test_data) / sizeof (char *) - 1) / 2));
                 count = 0;
-                g_assert (polkit_hash_foreach (h, _it2, &count) == TRUE);
-                g_assert (count == 1);
+                kit_assert (kit_hash_foreach (h, _it2, &count) == TRUE);
+                kit_assert (count == 1);
                 
-                polkit_hash_ref (h);
-                polkit_hash_unref (h);
+                kit_hash_ref (h);
+                kit_hash_unref (h);
         oom:
 
-                polkit_hash_unref (h);
+                kit_hash_unref (h);
         }
 
         /* direct hash tables */
-        if ((h = polkit_hash_new (polkit_hash_direct_hash_func, polkit_hash_direct_equal_func, 
+        if ((h = kit_hash_new (kit_hash_direct_hash_func, kit_hash_direct_equal_func, 
                                   NULL, NULL, 
                                   NULL, NULL)) != NULL) {
-                if (polkit_hash_insert (h, h, h)) {
-                        g_assert ((polkit_hash_lookup (h, h, &found) == h) && found);
-                        if (polkit_hash_insert (h, h, NULL)) {
-                                g_assert (polkit_hash_lookup (h, h, &found) == NULL && found);
+                if (kit_hash_insert (h, h, h)) {
+                        kit_assert ((kit_hash_lookup (h, h, &found) == h) && found);
+                        if (kit_hash_insert (h, h, NULL)) {
+                                kit_assert (kit_hash_lookup (h, h, &found) == NULL && found);
                         }
                 }
-                polkit_hash_unref (h);
+                kit_hash_unref (h);
         }
 
         return TRUE;
 }
 
-PolKitTest _test_hash = {
-        "polkit_hash",
+KitTest _test_hash = {
+        "kit_hash",
         NULL,
         NULL,
         _run_test
 };
 
-#endif /* POLKIT_BUILD_TESTS */
+#endif /* KIT_BUILD_TESTS */

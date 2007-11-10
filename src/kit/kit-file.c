@@ -1,0 +1,314 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
+/***************************************************************************
+ *
+ * kit-file.c : File utilities
+ *
+ * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
+ *
+ * Licensed under the Academic Free License version 2.1
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ **************************************************************************/
+
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+
+#include <kit/kit.h>
+#include "kit-test.h"
+
+
+/**
+ * SECTION:kit-file
+ * @title: File utilities
+ * @short_description: File utilities
+ *
+ * Various file utilities.
+ **/
+
+#define BUF_SIZE 4096
+
+/**
+ * kit_file_get_contents:
+ * @path: path to file
+ * @out_contents: Return location for allocated memory. Free with kit_free().
+ * @out_contents_size: Return location for size of the file.
+ * 
+ * Reads an entire file into allocated memory.
+ *
+ * Returns: #TRUE if the file was read into memory; #FALSE if an error
+ * occured and errno will be set.
+ */
+kit_bool_t
+kit_file_get_contents (const char *path, char **out_contents, size_t *out_contents_size)
+{
+        int fd;
+        kit_bool_t ret;
+        ssize_t num_read;
+        char *p;
+        char *q;
+        size_t total_allocated;
+        size_t total_size;
+        char buf[BUF_SIZE];
+
+        kit_return_val_if_fail (path != NULL, FALSE);
+        kit_return_val_if_fail (out_contents != NULL, FALSE);
+        kit_return_val_if_fail (out_contents_size != NULL, FALSE);
+
+        fd = -1;
+        ret = FALSE;
+        *out_contents = NULL;
+
+        fd = open (path, O_RDONLY);
+        if (fd == 0)
+                goto out;
+
+        p = kit_malloc (BUF_SIZE);
+        if (p == NULL) {
+                errno = ENOMEM;
+                goto out;
+        }
+        total_allocated = BUF_SIZE;
+        total_size = 0;
+
+        do {
+        again:
+                num_read = read (fd, buf, BUF_SIZE);
+                if (num_read == -1) {
+                        if (errno == EINTR)
+                                goto again;
+                        else
+                                goto out;
+                }
+
+
+                if (total_size + num_read > total_allocated) {
+                        total_allocated += BUF_SIZE;
+                        q = kit_realloc (p, total_allocated);
+                        if (q == NULL) {
+                                errno = ENOMEM;
+                                goto out;
+                        }
+                        p = q;
+                }
+
+                memcpy (p + total_size, buf, num_read);
+                total_size += num_read;
+                
+        } while (num_read > 0);
+
+        /* add terminating zero */
+        if (total_size + 1 > total_allocated) {
+                total_allocated += BUF_SIZE;
+                q = kit_realloc (p, total_allocated);
+                if (q == NULL) {
+                        errno = ENOMEM;
+                        goto out;
+                }
+                p = q;
+        }
+        p[total_size] = '\0';
+
+        *out_contents = p;
+        *out_contents_size = total_size;
+        ret = TRUE;
+
+out:
+        if (fd >= 0) {
+        again2:
+                if (close (fd) != 0) {
+                        if (errno == EINTR)
+                                goto again2;
+                        else
+                                ret = FALSE;
+                }
+        }
+
+        if (!ret) {
+                kit_free (p);
+                *out_contents = NULL;
+        }
+
+        return ret;
+}
+
+static kit_bool_t
+_write_to_fd (int fd, const char *str, ssize_t str_len)
+{
+        kit_bool_t ret;
+        ssize_t written;
+
+        ret = FALSE;
+
+        written = 0;
+        while (written < str_len) {
+                ssize_t ret;
+                ret = write (fd, str + written, str_len - written);
+                if (ret < 0) {
+                        if (errno == EAGAIN || errno == EINTR) {
+                                continue;
+                        } else {
+                                goto out;
+                        }
+                }
+                written += ret;
+        }
+
+        ret = TRUE;
+
+out:
+        return ret;
+}
+
+/**
+ * kit_file_set_contents:
+ * @path: path to file
+ * @mode: mode for file
+ * @contents: contents to set
+ * @contents_size: size of contents
+ *
+ * Writes all of contents to a file named @path, with good error
+ * checking. If a file called @path already exists it will be
+ * overwritten. This write is atomic in the sense that it is first
+ * written to a temporary file which is then renamed to the final
+ * name.
+ *
+ * If the file already exists hard links to @path will break. Also
+ * since the file is recreated, existing permissions, access control
+ * lists, metadata etc. may be lost. If @path is a symbolic link, the
+ * link itself will be replaced, not the linked file.
+ *
+ * Returns: #TRUE if contents were set; #FALSE if an error occured and
+ * errno will be set
+ */
+kit_bool_t
+kit_file_set_contents (const char *path, mode_t mode, const char *contents, size_t contents_size)
+{
+        int fd;
+        char *path_tmp;
+        kit_bool_t ret;
+
+        path_tmp = NULL;
+        ret = FALSE;
+
+        kit_return_val_if_fail ((contents == NULL && contents_size == 0) || (contents != NULL), FALSE);
+        kit_return_val_if_fail (path != NULL, FALSE);
+
+        path_tmp = kit_strdup_printf ("%s.XXXXXX", path);
+        if (path_tmp == NULL) {
+                errno = ENOMEM;
+                goto out;
+        }
+
+        fd = mkstemp (path_tmp);
+        if (fd < 0) {
+                kit_warning ("Cannot create file '%s': %m", path_tmp);
+                goto out;
+        }
+        if (fchmod (fd, mode) != 0) {
+                kit_warning ("Cannot change mode for '%s' to 0%o: %m", path_tmp, mode);
+                close (fd);
+                unlink (path_tmp);
+                goto out;
+        }
+
+        if (contents_size > 0) {
+                if (!_write_to_fd (fd, contents, contents_size)) {
+                        kit_warning ("Cannot write to file %s: %m", path_tmp);
+                        close (fd);
+                        if (unlink (path_tmp) != 0) {
+                                kit_warning ("Cannot unlink %s: %m", path_tmp);
+                        }
+                        goto out;
+                }
+        }
+        close (fd);
+
+        if (rename (path_tmp, path) != 0) {
+                kit_warning ("Cannot rename %s to %s: %m", path_tmp, path);
+                if (unlink (path_tmp) != 0) {
+                        kit_warning ("Cannot unlink %s: %m", path_tmp);
+                }
+                goto out;
+        }
+
+        ret = TRUE;
+
+out:
+        if (path_tmp != NULL)
+                kit_free (path_tmp);
+
+        return ret;
+}
+
+
+#ifdef KIT_BUILD_TESTS
+
+static kit_bool_t
+_run_test (void)
+{
+        char path[] = "/tmp/kit-test";
+        char *buf;
+        size_t buf_size;
+        char *p;
+        size_t s;
+        unsigned int n;
+
+        buf_size = 3 * BUF_SIZE;
+        if ((buf = kit_malloc (buf_size)) == NULL)
+                goto out;
+
+        for (n = 0; n < buf_size; n++)
+                buf[n] = n;
+
+        if (!kit_file_set_contents (path, 0400, buf, buf_size)) {
+                kit_assert (errno == ENOMEM);
+        } else {
+                if (!kit_file_get_contents (path, &p, &s)) {
+                        kit_assert (errno == ENOMEM);
+                } else {
+                        kit_assert (s == buf_size && memcmp (p, buf, buf_size) == 0);
+                        kit_free (p);
+                }
+
+                kit_assert (unlink (path) == 0);
+
+                kit_assert (!kit_file_get_contents (path, &p, &s));
+        }
+
+        kit_free (buf);
+
+out:
+        return TRUE;
+}
+
+KitTest _test_file = {
+        "kit_file",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* KIT_BUILD_TESTS */

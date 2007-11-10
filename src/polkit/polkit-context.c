@@ -140,7 +140,7 @@ polkit_context_new (void)
 polkit_bool_t
 polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 {
-        g_return_val_if_fail (pk_context != NULL, FALSE);
+        kit_return_val_if_fail (pk_context != NULL, FALSE);
 
         pk_context->policy_dir = g_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
         _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
@@ -216,7 +216,7 @@ error:
 PolKitContext *
 polkit_context_ref (PolKitContext *pk_context)
 {
-        g_return_val_if_fail (pk_context != NULL, pk_context);
+        kit_return_val_if_fail (pk_context != NULL, pk_context);
         pk_context->refcount++;
         return pk_context;
 }
@@ -233,7 +233,7 @@ void
 polkit_context_unref (PolKitContext *pk_context)
 {
 
-        g_return_if_fail (pk_context != NULL);
+        kit_return_if_fail (pk_context != NULL);
         pk_context->refcount--;
         if (pk_context->refcount > 0) 
                 return;
@@ -267,7 +267,7 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
                                    PolKitContextConfigChangedCB  cb, 
                                    void                         *user_data)
 {
-        g_return_if_fail (pk_context != NULL);
+        kit_return_if_fail (pk_context != NULL);
         pk_context->config_changed_cb = cb;
         pk_context->config_changed_user_data = user_data;
 }
@@ -286,7 +286,7 @@ polkit_context_io_func (PolKitContext *pk_context, int fd)
 {
         gboolean config_changed;
 
-        g_return_if_fail (pk_context != NULL);
+        kit_return_if_fail (pk_context != NULL);
 
         _pk_debug ("polkit_context_io_func: data on fd %d", fd);
 
@@ -364,7 +364,7 @@ polkit_context_set_io_watch_functions (PolKitContext                        *pk_
                                        PolKitContextAddIOWatch               io_add_watch_func,
                                        PolKitContextRemoveIOWatch            io_remove_watch_func)
 {
-        g_return_if_fail (pk_context != NULL);
+        kit_return_if_fail (pk_context != NULL);
         pk_context->io_add_watch_func = io_add_watch_func;
         pk_context->io_remove_watch_func = io_remove_watch_func;
 }
@@ -382,7 +382,7 @@ polkit_context_set_io_watch_functions (PolKitContext                        *pk_
 void
 polkit_context_set_load_descriptions  (PolKitContext *pk_context)
 {
-        g_return_if_fail (pk_context != NULL);
+        kit_return_if_fail (pk_context != NULL);
         pk_context->load_descriptions = TRUE;
 }
 
@@ -397,7 +397,7 @@ polkit_context_set_load_descriptions  (PolKitContext *pk_context)
 PolKitPolicyCache *
 polkit_context_get_policy_cache (PolKitContext *pk_context)
 {
-        g_return_val_if_fail (pk_context != NULL, NULL);
+        kit_return_val_if_fail (pk_context != NULL, NULL);
 
         if (pk_context->priv_cache == NULL) {
                 PolKitError *error;
@@ -452,7 +452,7 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
         PolKitConfig *config;
 
         result = POLKIT_RESULT_NO;
-        g_return_val_if_fail (pk_context != NULL, result);
+        kit_return_val_if_fail (pk_context != NULL, result);
 
         config = polkit_context_get_config (pk_context, NULL);
         /* if the configuration file is malformed, always say no */
@@ -602,7 +602,7 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
         polkit_bool_t from_authdb;
 
         result = POLKIT_RESULT_NO;
-        g_return_val_if_fail (pk_context != NULL, result);
+        kit_return_val_if_fail (pk_context != NULL, result);
 
         /* if the configuration file is malformed, always say no */
         config = polkit_context_get_config (pk_context, NULL);

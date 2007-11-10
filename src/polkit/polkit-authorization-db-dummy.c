@@ -83,7 +83,7 @@ _polkit_authorization_db_pfe_get_by_id (PolKitPolicyCache *policy_cache,
 PolKitAuthorizationDB *
 polkit_authorization_db_ref (PolKitAuthorizationDB *authdb)
 {
-        g_return_val_if_fail (authdb != NULL, authdb);
+        kit_return_val_if_fail (authdb != NULL, authdb);
         authdb->refcount++;
         return authdb;
 }
@@ -91,7 +91,7 @@ polkit_authorization_db_ref (PolKitAuthorizationDB *authdb)
 void 
 polkit_authorization_db_unref (PolKitAuthorizationDB *authdb)
 {
-        g_return_if_fail (authdb != NULL);
+        kit_return_if_fail (authdb != NULL);
         authdb->refcount--;
         if (authdb->refcount > 0) 
                 return;
@@ -101,14 +101,14 @@ polkit_authorization_db_unref (PolKitAuthorizationDB *authdb)
 void 
 polkit_authorization_db_debug (PolKitAuthorizationDB *authdb)
 {
-        g_return_if_fail (authdb != NULL);
+        kit_return_if_fail (authdb != NULL);
         _pk_debug ("PolKitAuthorizationDB: refcount=%d", authdb->refcount);
 }
 
 polkit_bool_t
 polkit_authorization_db_validate (PolKitAuthorizationDB *authdb)
 {
-        g_return_val_if_fail (authdb != NULL, FALSE);
+        kit_return_val_if_fail (authdb != NULL, FALSE);
 
         return TRUE;
 }

@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-test.c : PolicyKit test
+ * kit-test.c : PolicyKit test
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -25,33 +25,25 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <polkit/polkit-test.h>
-#include <polkit/polkit-private.h>
-#include <polkit/polkit-private.h>
+#include <kit/kit-test.h>
+#include <kit/kit-memory.h>
 
 #define MAX_TESTS 64
 
 /**
- * SECTION:polkit-test
- * @short_description: Testing code for libpolkit
+ * SECTION:kit-test
+ * @short_description: Testing code for libkit
  *
- * Testing code for libpolkit.
+ * Testing code for libkit.
  */
 
-static PolKitTest *tests[] = {
-        &_test_action,
-        &_test_error,
-        &_test_result,
-        &_test_seat,
-        &_test_session,
-        &_test_caller,
-        &_test_policy_default,
-        &_test_policy_file_entry,
-        &_test_policy_file,
-        &_test_policy_cache,
-        &_test_authorization_constraint,
-        &_test_authorization,
-        &_test_authorization_db,
+static KitTest *tests[] = {
+        &_test_memory,
+        &_test_string,
+        &_test_list,
+        &_test_hash,
+        &_test_file,
+        &_test_message,
 };
 
 int 
@@ -63,14 +55,14 @@ main (int argc, char *argv[])
 
         ret = 0;
 
-        num_tests = sizeof (tests) / sizeof (PolKitTest*);
+        num_tests = sizeof (tests) / sizeof (KitTest*);
 
         printf ("Running %d unit tests\n", num_tests);
         for (n = 0; n < num_tests; n++) {
                 int m;
                 int total_allocs;
                 int delta;
-                PolKitTest *test = tests[n];
+                KitTest *test = tests[n];
 
                 _kit_memory_reset ();
 

@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit.h : library for querying system-wide policy
+ * kit-file.h : File utilities
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,28 +23,22 @@
  *
  **************************************************************************/
 
-#ifndef POLKIT_H
-#define POLKIT_H
+#if !defined (KIT_COMPILATION) && !defined(_KIT_INSIDE_KIT_H)
+#error "Only <kit/kit.h> can be included directly, this file may disappear or change contents."
+#endif
 
-#define _POLKIT_INSIDE_POLKIT_H 1
-#include <polkit/polkit-types.h>
-#include <polkit/polkit-sysdeps.h>
-#include <polkit/polkit-error.h>
-#include <polkit/polkit-result.h>
-#include <polkit/polkit-context.h>
-#include <polkit/polkit-action.h>
-#include <polkit/polkit-seat.h>
-#include <polkit/polkit-session.h>
-#include <polkit/polkit-caller.h>
-#include <polkit/polkit-policy-file-entry.h>
-#include <polkit/polkit-policy-file.h>
-#include <polkit/polkit-policy-cache.h>
-#include <polkit/polkit-policy-default.h>
-#include <polkit/polkit-config.h>
-#include <polkit/polkit-authorization.h>
-#include <polkit/polkit-authorization-db.h>
-#undef _POLKIT_INSIDE_POLKIT_H
+#ifndef KIT_FILE_H
+#define KIT_FILE_H
 
-#endif /* POLKIT_H */
+#include <kit/kit.h>
+
+KIT_BEGIN_DECLS
+
+kit_bool_t kit_file_get_contents (const char *path, char **out_contents, size_t *out_contents_size);
+kit_bool_t kit_file_set_contents (const char *path, mode_t mode, const char *contents, size_t contents_size);
+
+KIT_END_DECLS
+
+#endif /* KIT_FILE_H */
 
 

@@ -30,10 +30,9 @@
 #ifndef POLKIT_PRIVATE_H
 #define POLKIT_PRIVATE_H
 
-#include <glib.h>
+#include <kit/kit.h>
 #include <polkit/polkit.h>
-#include <polkit/polkit-memory.h>
-#include <polkit/polkit-hash.h>
+#include <polkit/polkit-debug.h>
 
 /**
  * SECTION:polkit-private
@@ -89,7 +88,7 @@ PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id,
                                                         PolKitResult defaults_allow_any,
                                                         PolKitResult defaults_allow_inactive,
                                                         PolKitResult defaults_allow_active,
-                                                        PolKitHash *annotations);
+                                                        KitHash *annotations);
 
 
 #ifdef POLKIT_AUTHDB_DUMMY
@@ -103,7 +102,7 @@ struct _PolKitAuthorizationDB
 {
         /*< private >*/
         int refcount;
-        GHashTable *uid_to_authlist;
+        KitHash *uid_to_authlist;
 };
 
 #endif

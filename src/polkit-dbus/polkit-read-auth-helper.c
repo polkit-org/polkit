@@ -379,10 +379,10 @@ main (int argc, char *argv[])
 
         ret = 1;
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
-        //if (clearenv () != 0)
-        //        goto out;
+        if (clearenv () != 0)
+                goto out;
         /* set a minimal environment */
-        //setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
+        setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 
         openlog ("polkit-read-auth-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 

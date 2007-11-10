@@ -45,6 +45,8 @@
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
+#include "polkit-private.h"
 
 /**
  * SECTION:polkit-authorization-db
@@ -148,7 +150,7 @@ _polkit_authorization_db_pfe_get_by_id (PolKitPolicyCache *policy_cache,
 PolKitAuthorizationDB *
 polkit_authorization_db_ref (PolKitAuthorizationDB *authdb)
 {
-        g_return_val_if_fail (authdb != NULL, authdb);
+        kit_return_val_if_fail (authdb != NULL, authdb);
         authdb->refcount++;
         return authdb;
 }
@@ -166,11 +168,11 @@ polkit_authorization_db_ref (PolKitAuthorizationDB *authdb)
 void
 polkit_authorization_db_unref (PolKitAuthorizationDB *authdb)
 {
-        g_return_if_fail (authdb != NULL);
+        kit_return_if_fail (authdb != NULL);
         authdb->refcount--;
         if (authdb->refcount > 0) 
                 return;
-        g_hash_table_destroy (authdb->uid_to_authlist);
+        kit_hash_unref (authdb->uid_to_authlist);
         g_free (authdb);
 }
 
@@ -185,7 +187,7 @@ polkit_authorization_db_unref (PolKitAuthorizationDB *authdb)
 void
 polkit_authorization_db_debug (PolKitAuthorizationDB *authdb)
 {
-        g_return_if_fail (authdb != NULL);
+        kit_return_if_fail (authdb != NULL);
         _pk_debug ("PolKitAuthorizationDB: refcount=%d", authdb->refcount);
 }
 
@@ -202,7 +204,7 @@ polkit_authorization_db_debug (PolKitAuthorizationDB *authdb)
 polkit_bool_t
 polkit_authorization_db_validate (PolKitAuthorizationDB *authdb)
 {
-        g_return_val_if_fail (authdb != NULL, FALSE);
+        kit_return_val_if_fail (authdb != NULL, FALSE);
 
         return TRUE;
 }
@@ -222,12 +224,14 @@ _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb)
 {
         /* out with the old, in the with new */
         if (authdb->uid_to_authlist != NULL) {
-                g_hash_table_destroy (authdb->uid_to_authlist);
+                kit_hash_unref (authdb->uid_to_authlist);
         }
-        authdb->uid_to_authlist = g_hash_table_new_full (g_direct_hash,
-                                                         g_direct_equal,
-                                                         NULL,
-                                                         (GDestroyNotify) _free_authlist);
+        authdb->uid_to_authlist = kit_hash_new (kit_hash_direct_hash_func,
+                                                kit_hash_direct_equal_func,
+                                                NULL,
+                                                NULL,
+                                                NULL,
+                                                (KitFreeFunc) _free_authlist);
 }
 
 /**
@@ -263,7 +267,7 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
         standard_output = NULL;
 
         /* first, see if this is in the cache */
-        ret = g_hash_table_lookup (authdb->uid_to_authlist, (gpointer) uid);
+        ret = kit_hash_lookup (authdb->uid_to_authlist, (void *) uid, NULL);
         if (ret != NULL)
                 goto out;
 
@@ -345,7 +349,7 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                 n = m + 1;
         }
 
-        g_hash_table_insert (authdb->uid_to_authlist, (gpointer) uid, ret);
+        kit_hash_insert (authdb->uid_to_authlist, (void *) uid, ret);
 
 out:
         g_free (helper_argv[1]);
@@ -367,8 +371,8 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
         polkit_bool_t ret;
         char *action_id;
 
-        g_return_val_if_fail (authdb != NULL, FALSE);
-        g_return_val_if_fail (cb != NULL, FALSE);
+        kit_return_val_if_fail (authdb != NULL, FALSE);
+        kit_return_val_if_fail (cb != NULL, FALSE);
 
         ret = FALSE;
 
@@ -488,7 +492,7 @@ polkit_authorization_db_foreach_for_action (PolKitAuthorizationDB       *authdb,
                                             void                        *user_data,
                                             PolKitError                **error)
 {
-        g_return_val_if_fail (action != NULL, FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
         return _internal_foreach (authdb, action, -1, cb, user_data, error);
 }
 
@@ -522,7 +526,7 @@ polkit_authorization_db_foreach_for_action_for_uid (PolKitAuthorizationDB       
                                                     void                        *user_data,
                                                     PolKitError                **error)
 {
-        g_return_val_if_fail (action != NULL, FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
         return _internal_foreach (authdb, action, uid, cb, user_data, error);
 }
 
@@ -598,10 +602,10 @@ polkit_authorization_db_is_session_authorized (PolKitAuthorizationDB *authdb,
 
         ret = FALSE;
 
-        g_return_val_if_fail (authdb != NULL, FALSE);
-        g_return_val_if_fail (action != NULL, FALSE);
-        g_return_val_if_fail (session != NULL, FALSE);
-        g_return_val_if_fail (out_is_authorized != NULL, FALSE);
+        kit_return_val_if_fail (authdb != NULL, FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
+        kit_return_val_if_fail (session != NULL, FALSE);
+        kit_return_val_if_fail (out_is_authorized != NULL, FALSE);
 
         if (!polkit_action_get_action_id (action, &cd.action_id))
                 return FALSE;
@@ -731,10 +735,10 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
 
         ret = FALSE;
 
-        g_return_val_if_fail (authdb != NULL, FALSE);
-        g_return_val_if_fail (action != NULL, FALSE);
-        g_return_val_if_fail (caller != NULL, FALSE);
-        g_return_val_if_fail (out_is_authorized != NULL, FALSE);
+        kit_return_val_if_fail (authdb != NULL, FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
+        kit_return_val_if_fail (caller != NULL, FALSE);
+        kit_return_val_if_fail (out_is_authorized != NULL, FALSE);
 
         if (!polkit_action_get_action_id (action, &cd.action_id))
                 return FALSE;
@@ -799,8 +803,8 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
 
         ret = FALSE;
 
-        g_return_val_if_fail (authdb != NULL, FALSE);
-        g_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (authdb != NULL, FALSE);
+        kit_return_val_if_fail (auth != NULL, FALSE);
 
         auth_file_entry = _polkit_authorization_get_authfile_entry (auth);
         //g_debug ("should delete line '%s'", auth_file_entry);
@@ -847,3 +851,82 @@ out:
         g_free (helper_argv[3]);
         return ret;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        PolKitAuthorizationDB *adb;
+        const char test_passwd[] = 
+                "pu1:x:50400:50400:PolKit Test user 1:/home/polkittest1:/bin/bash\n"
+                "pu2:x:50401:50401:PolKit Test user 2:/home/polkittest2:/bin/bash\n";
+        const char test_pu1_run[] =
+                "";
+        const char test_pu1_lib[] =
+                "grant:org.freedesktop.policykit.read:1194634242:0:none\n";
+        const char test_pu2_run[] =
+                "";
+        const char test_pu2_lib[] =
+                "";
+        
+        if (setenv ("POLKIT_TEST_LOCALSTATE_DIR", TEST_DATA_DIR "authdb-test", 1) != 0)
+                goto fail;
+
+        if (setenv ("POLKIT_TEST_PASSWD_FILE", TEST_DATA_DIR "authdb-test/passwd", 1) != 0)
+                goto fail;
+
+        /* create test users */
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/passwd", 0644, 
+                                    test_passwd, sizeof (test_passwd) - 1))
+                goto out;
+
+        /* seed the authdb with known defaults */
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/PolicyKit/user-pu1.auths", 0644, 
+                                    test_pu1_run, sizeof (test_pu1_run) - 1))
+                goto out;
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu1.auths", 0644, 
+                                    test_pu1_lib, sizeof (test_pu1_lib) - 1))
+                goto out;
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/PolicyKit/user-pu2.auths", 0644, 
+                                    test_pu2_run, sizeof (test_pu2_run) - 1))
+                goto out;
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu2.auths", 0644, 
+                                    test_pu2_lib, sizeof (test_pu2_lib) - 1))
+                goto out;
+
+        if ((adb = _polkit_authorization_db_new ()) == NULL)
+                goto out;
+
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50400", 1) != 0)
+                goto fail;
+
+        /* TODO: FIXME: this code is not finished */
+
+
+        polkit_authorization_db_unref (adb);
+
+out:
+        if (unsetenv ("POLKIT_TEST_PRETEND_TO_BE_UID") != 0)
+                goto fail;
+
+        if (unsetenv ("POLKIT_TEST_LOCALSTATE_DIR") != 0)
+                goto fail;
+
+        if (unsetenv ("POLKIT_TEST_PASSWD_FILE") != 0)
+                goto fail;
+
+        return TRUE;
+fail:
+        return FALSE;
+}
+
+
+PolKitTest _test_authorization_db = {
+        "polkit_authorization_db",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

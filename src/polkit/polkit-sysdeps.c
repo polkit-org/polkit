@@ -39,7 +39,9 @@
 #include <syslog.h>
 
 #include <glib.h>
+
 #include "polkit-sysdeps.h"
+#include "polkit-private.h"
 
 
 /**
@@ -68,9 +70,8 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
 {
         char *filename;
         char *contents;
-        gsize length;
+        size_t length;
         polkit_uint64_t start_time;
-        GError *error = NULL;
         char **tokens;
         char *p;
         char *endp;
@@ -78,15 +79,14 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
         start_time = 0;
         contents = NULL;
 
-        filename = g_strdup_printf ("/proc/%d/stat", pid);
+        filename = kit_strdup_printf ("/proc/%d/stat", pid);
         if (filename == NULL) {
-                fprintf (stderr, "Out of memory\n");
+                kit_warning ("Out of memory");
                 goto out;
         }
 
-        if (!g_file_get_contents (filename, &contents, &length, &error)) {
+        if (!kit_file_get_contents (filename, &contents, &length)) {
                 //fprintf (stderr, "Cannot get contents of '%s': %s\n", filename, error->message);
-                g_error_free (error);
                 goto out;
         }
 
@@ -114,8 +114,8 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
         g_strfreev (tokens);
 
 out:
-        g_free (filename);
-        g_free (contents);
+        kit_free (filename);
+        kit_free (contents);
         return start_time;
 }
 
@@ -151,7 +151,7 @@ polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size)
         if (ret == -1) {
                 goto out;
         }
-        g_assert (ret >= 0 && ret < (int) buf_size - 1);
+        kit_assert (ret >= 0 && ret < (int) buf_size - 1);
         out_buf[ret] = '\0';
 
 out:
