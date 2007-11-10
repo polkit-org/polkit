@@ -22,8 +22,10 @@ $(srcdir)/ChangeLog:
 if POLKIT_GCOV_ENABLED
 .PHONY: ChangeLog $(srcdir)/ChangeLog coverage-report.txt
 coverage-report.txt :
+	make -C src/kit check-coverage
 	make -C src/polkit check-coverage
-	cat src/polkit/coverage-report.txt > coverage-report.txt
+	cat src/kit/coverage-report.txt > coverage-report.txt
+	cat src/polkit/coverage-report.txt >> coverage-report.txt
 
 check-coverage: coverage-report.txt
 	cat coverage-report.txt
