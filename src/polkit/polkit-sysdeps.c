@@ -38,8 +38,6 @@
 #include <sys/inotify.h>
 #include <syslog.h>
 
-#include <glib.h>
-
 #include "polkit-sysdeps.h"
 #include "polkit-private.h"
 
@@ -73,6 +71,7 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
         size_t length;
         polkit_uint64_t start_time;
         char **tokens;
+        size_t num_tokens;
         char *p;
         char *endp;
 
@@ -101,8 +100,11 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
                 goto out;
         }
 
-        tokens = g_strsplit (p, " ", 0);
-        if (g_strv_length (tokens) < 20) {
+        tokens = kit_strsplit (p, ' ', &num_tokens);
+        if (tokens == NULL)
+                goto out;
+
+        if (num_tokens < 20) {
                 goto out;
         }
 
@@ -111,7 +113,7 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
                 goto out;
         }
 
-        g_strfreev (tokens);
+        kit_strfreev (tokens);
 
 out:
         kit_free (filename);

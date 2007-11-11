@@ -273,7 +273,6 @@ kit_strsplit (const char *s, char delim, size_t *num_tokens)
                         m++;
 
                 result[n] = kit_strndup (s + begin, m - begin);
-                kit_debug ("'%s'", result[n]);
                 if (result[n] == NULL)
                         goto oom;
 
