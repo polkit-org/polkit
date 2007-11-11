@@ -41,11 +41,16 @@ if KIT_GCOV_ENABLED
 clean-gcov:
 	rm -f *.gcov .libs/*.gcda
 
-.PHONY: coverage-report.txt
-coverage-report.txt :
-	$(top_srcdir)/test/create-coverage-report.sh kit $(filter %.c,$(libkit_la_SOURCES)) > coverage-report.txt
+.PHONY: coverage-report.txt covered-files.txt
 
-check-coverage : clean-gcov all check coverage-report.txt
+covered-files.txt :
+	echo $(addprefix src/kit/,$(filter %.c,$(libkit_la_SOURCES))) > covered-files.txt
+
+coverage-report.txt : covered-files.txt clean-gcov all check 
+	gcov $(filter %.c,$(libkit_la_SOURCES)) -o .libs/ > /dev/null
+	$(top_srcdir)/test/create-coverage-report.sh "module kit" `cat covered-files.txt` > coverage-report.txt
+
+check-coverage : coverage-report.txt
 	cat coverage-report.txt
 else
 coverage-report.txt:

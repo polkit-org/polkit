@@ -4,19 +4,20 @@ TOTAL_ACTUAL=0
 TOTAL_COVERED=0
 TOTAL_SOURCE=0
 
+P=$(dirname $0)/..
+
 MODULE=$1
 shift
 
+
 echo "=============================================================================="
-echo "Test coverage for module $MODULE:"
+echo "Test coverage for $MODULE:"
 echo "=============================================================================="
 
 while [ $# -gt 0 ] ; do
-    gcov $1 -o .libs/ > /dev/null
-
-    SOURCE=`cat $1 |wc -l`
-    ACTUAL=`grep -v "        -:" $1.gcov  |wc -l`
-    NOT_COVERED=`grep "    #####:" $1.gcov  |wc -l`
+    SOURCE=`cat $P/$1 |wc -l`
+    ACTUAL=`grep -v "        -:" $P/$1.gcov  |wc -l`
+    NOT_COVERED=`grep "    #####:" $P/$1.gcov  |wc -l`
     COVERED=$(($ACTUAL - $NOT_COVERED))
     PERCENT=$((100 * $COVERED / $ACTUAL))
 

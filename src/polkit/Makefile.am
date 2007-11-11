@@ -85,11 +85,16 @@ if POLKIT_GCOV_ENABLED
 clean-gcov:
 	rm -f *.gcov .libs/*.gcda
 
-.PHONY: coverage-report.txt
-coverage-report.txt :
-	$(top_srcdir)/test/create-coverage-report.sh polkit $(filter %.c,$(libpolkit_la_SOURCES)) > coverage-report.txt
+.PHONY: coverage-report.txt covered-files.txt
 
-check-coverage : clean-gcov all check coverage-report.txt
+covered-files.txt :
+	echo $(addprefix src/polkit/,$(filter %.c,$(libpolkit_la_SOURCES))) > covered-files.txt
+
+coverage-report.txt : covered-files.txt clean-gcov all check
+	gcov $(filter %.c,$(libpolkit_la_SOURCES)) -o .libs/ > /dev/null
+	$(top_srcdir)/test/create-coverage-report.sh "module polkit" `cat covered-files.txt` > coverage-report.txt
+
+check-coverage : coverage-report.txt
 	cat coverage-report.txt
 else
 coverage-report.txt:
