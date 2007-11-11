@@ -269,8 +269,9 @@ kit_strsplit (const char *s, char delim, size_t *num_tokens)
 
                 begin = m;
 
-                while (s[m] != delim)
+                while (s[m] != delim && s[m] != '\0') {
                         m++;
+                }
 
                 result[n] = kit_strndup (s + begin, m - begin);
                 if (result[n] == NULL)
