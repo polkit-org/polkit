@@ -11,8 +11,7 @@ INCLUDES = \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	-DPOLKIT_COMPILATION \
-	-DTEST_DATA_DIR=\"$(top_srcdir)/test/\" \
-	@GLIB_CFLAGS@
+	-DTEST_DATA_DIR=\"$(top_srcdir)/test/\"
 
 lib_LTLIBRARIES=libpolkit.la
 
@@ -71,7 +70,7 @@ libpolkit_la_SOURCES +=                                					\
 						polkit-authorization-db.c
 endif
 
-libpolkit_la_LIBADD = @GLIB_LIBS@ @EXPAT_LIBS@ $(top_builddir)/src/kit/libkit.la
+libpolkit_la_LIBADD = @EXPAT_LIBS@ $(top_builddir)/src/kit/libkit.la
 
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

@@ -23,7 +23,7 @@ libpolkit_dbusinclude_HEADERS =              			\
 libpolkit_dbus_la_SOURCES =                                	\
 	polkit-dbus.h		polkit-dbus.c
 
-libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS)
+libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS) $(GLIB_LIBS)
 
 libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
 

@@ -39,8 +39,6 @@
 #include <fcntl.h>
 #include <pwd.h>
 
-#include <glib.h>
-
 #include "polkit-debug.h"
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
@@ -59,7 +57,7 @@ _polkit_authorization_db_new (void)
 {
         PolKitAuthorizationDB *authdb;
 
-        authdb = g_new0 (PolKitAuthorizationDB, 1);
+        authdb = kit_new0 (PolKitAuthorizationDB, 1);
         authdb->refcount = 1;
 
         return authdb;
@@ -95,7 +93,7 @@ polkit_authorization_db_unref (PolKitAuthorizationDB *authdb)
         authdb->refcount--;
         if (authdb->refcount > 0) 
                 return;
-        g_free (authdb);
+        kit_free (authdb);
 }
 
 void 

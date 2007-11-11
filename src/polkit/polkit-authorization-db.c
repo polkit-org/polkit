@@ -39,8 +39,6 @@
 #include <fcntl.h>
 #include <pwd.h>
 
-#include <glib.h>
-
 #include "polkit-debug.h"
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
@@ -253,15 +251,14 @@ _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb)
  *
  * Since: 0.7
  */
-static GSList *
+static KitList *
 _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                            uid_t                  uid,
                            PolKitError          **error)
 {
-        GSList *ret;
+        KitList *ret;
         char *helper_argv[] = {PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper", NULL, NULL};
-        gint exit_status;
-        GError *g_error;
+        int exit_status;
         char *standard_output;
         size_t len;
         off_t n;
@@ -280,27 +277,21 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
          * because the auth file is readable only for uid 0 and gid
          * polkituser.
          */
-        g_error = NULL;
-        if (!g_spawn_sync (NULL,             /* const gchar *working_directory */
-                           helper_argv,      /* gchar **argv */
-                           NULL,             /* gchar **envp */
-                           0,                /* GSpawnFlags flags */
-                           NULL,             /* GSpawnChildSetupFunc child_setup */
-                           NULL,             /* gpointer user_data */
-                           &standard_output, /* gchar **standard_output */
-                           NULL,             /* gchar **standard_error */
-                           &exit_status,     /* gint *exit_status */
-                           &g_error)) {      /* GError **error */
+        if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
+                             helper_argv,      /* char       **argv */
+                             NULL,             /* char       **envp */
+                             NULL,             /* char        *stdin */
+                             &standard_output, /* char       **stdout */
+                             NULL,             /* char       **stderr */
+                             &exit_status)) {  /* int         *exit_status */
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_GENERAL_ERROR, 
-                                        "Error spawning read auth helper: %s",
-                                        g_error->message);
-                g_error_free (g_error);
+                                        "Error spawning read auth helper: %m");
                 goto out;
         }
 
         if (!WIFEXITED (exit_status)) {
-                g_warning ("Read auth helper crashed!");
+                kit_warning ("Read auth helper crashed!");
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_GENERAL_ERROR, 
                                         "Read auth helper crashed!");
@@ -345,7 +336,7 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                         auth = _polkit_authorization_new_for_uid (line, uid);
                         
                         if (auth != NULL) {
-                                ret = g_slist_prepend (ret, auth);
+                                ret = kit_list_prepend (ret, auth);
                         }
                 }
 
@@ -369,8 +360,8 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
                    void                        *user_data,
                    PolKitError                **error)
 {
-        GSList *l;
-        GSList *auths;
+        KitList *l;
+        KitList *auths;
         polkit_bool_t ret;
         char *action_id;
 
@@ -544,7 +535,7 @@ typedef struct {
 static polkit_bool_t 
 _check_auth_for_session (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
 {
-        gboolean ret;
+        polkit_bool_t ret;
         CheckDataSession *cd = (CheckDataSession *) user_data;
         PolKitAuthorizationConstraint *constraint;
 
@@ -649,7 +640,7 @@ static polkit_bool_t
 _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
 {
 
-        gboolean ret;
+        polkit_bool_t ret;
         pid_t caller_pid;
         polkit_uint64_t caller_pid_start_time;
         CheckData *cd = (CheckData *) user_data;
@@ -680,7 +671,7 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
                         if (cd->revoke_if_one_shot) {
                                 error = NULL;
                                 if (!polkit_authorization_db_revoke_entry (authdb, auth, &error)) {
-                                        g_warning ("Cannot revoke one-shot auth: %s: %s", 
+                                        kit_warning ("Cannot revoke one-shot auth: %s: %s", 
                                                    polkit_error_get_error_name (error),
                                                    polkit_error_get_error_message (error));
                                         polkit_error_free (error);
@@ -798,11 +789,10 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
                                       PolKitAuthorization   *auth,
                                       PolKitError           **error)
 {
-        GError *g_error;
         char *helper_argv[] = {PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper", "", NULL, NULL, NULL};
         const char *auth_file_entry;
-        gboolean ret;
-        gint exit_status;
+        polkit_bool_t ret;
+        int exit_status;
 
         ret = FALSE;
 
@@ -816,27 +806,21 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
         helper_argv[2] = "uid";
         helper_argv[3] = kit_strdup_printf ("%d", polkit_authorization_get_uid (auth));
 
-        g_error = NULL;
-        if (!g_spawn_sync (NULL,         /* const gchar *working_directory */
-                           helper_argv,  /* gchar **argv */
-                           NULL,         /* gchar **envp */
-                           0,            /* GSpawnFlags flags */
-                           NULL,         /* GSpawnChildSetupFunc child_setup */
-                           NULL,         /* gpointer user_data */
-                           NULL,         /* gchar **standard_output */
-                           NULL,         /* gchar **standard_error */
-                           &exit_status, /* gint *exit_status */
-                           &g_error)) {  /* GError **error */
+        if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
+                             helper_argv,      /* char       **argv */
+                             NULL,             /* char       **envp */
+                             NULL,             /* char        *stdin */
+                             NULL,             /* char       **stdout */
+                             NULL,             /* char       **stderr */
+                             &exit_status)) {  /* int         *exit_status */
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_GENERAL_ERROR, 
-                                        "Error spawning revoke helper: %s",
-                                        g_error->message);
-                g_error_free (g_error);
+                                        "Error spawning revoke helper: %m");
                 goto out;
         }
 
         if (!WIFEXITED (exit_status)) {
-                g_warning ("Revoke helper crashed!");
+                kit_warning ("Revoke helper crashed!");
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_GENERAL_ERROR, 
                                         "Revoke helper crashed!");
