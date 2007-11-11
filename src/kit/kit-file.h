@@ -37,6 +37,8 @@ KIT_BEGIN_DECLS
 kit_bool_t kit_file_get_contents (const char *path, char **out_contents, size_t *out_contents_size);
 kit_bool_t kit_file_set_contents (const char *path, mode_t mode, const char *contents, size_t contents_size);
 
+size_t _kit_get_num_fd (void);
+
 KIT_END_DECLS
 
 #endif /* KIT_FILE_H */

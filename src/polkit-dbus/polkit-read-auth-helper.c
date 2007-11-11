@@ -340,7 +340,7 @@ dump_auths_all (const char *root)
 
 out:
         if (dir != NULL)
-                closedir(dir);
+                closedir (dir);
         return ret;
 }
 

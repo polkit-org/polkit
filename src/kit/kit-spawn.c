@@ -140,7 +140,7 @@ again:
                         goto out;
         }
 
-        kit_debug ("Wrote %d bytes from '%s'", num_written, str);
+        //kit_debug ("Wrote %d bytes from '%s'", num_written, str);
 
 out:
         return num_written;

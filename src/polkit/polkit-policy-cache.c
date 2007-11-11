@@ -94,7 +94,6 @@ PolKitPolicyCache *
 _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error)
 {
         DIR *dir;
-        int dfd;
         struct dirent64 *d;
         PolKitPolicyCache *pc;
 
@@ -109,15 +108,14 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
         pc->refcount = 1;
 
         dir = opendir (dirname);
-        if (dir == NULL || (dfd = dirfd (dir)) == -1) {
+        if (dir == NULL) {
                 polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
                                         "Cannot load policy files from directory %s: %m",
                                         dirname);
                 goto out;
         }
 
-
-        while ((d = readdir64(dir)) != NULL) {
+        while ((d = readdir64 (dir)) != NULL) {
                 char *path;
                 PolKitPolicyFile *pf;
                 PolKitError *pk_error;
@@ -167,7 +165,7 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
                 }
                 polkit_policy_file_unref (pf);
         }
-        closedir(dir);
+        closedir (dir);
 
         return pc;
 out:
@@ -502,7 +500,6 @@ _run_test (void)
         polkit_policy_cache_ref (pc);
         polkit_policy_cache_unref (pc);
         polkit_policy_cache_unref (pc);
-
 out:
         return TRUE;
 }

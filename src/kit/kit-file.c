@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <kit/kit.h>
 #include "kit-test.h"
@@ -261,6 +262,44 @@ out:
                 kit_free (path_tmp);
 
         return ret;
+}
+
+/**
+ * _kit_get_num_fd:
+ *
+ * Determines the number of open file descriptors
+ *
+ * Returns: Number of open file descriptors
+ */
+size_t 
+_kit_get_num_fd (void)
+{
+        DIR *dir;
+        char buf[128];
+        ssize_t num;
+        struct dirent64 *d;
+
+        num = -1;
+
+        snprintf (buf, sizeof (buf), "/proc/%d/fd", getpid ());
+
+        dir = opendir (buf);
+        if (dir == NULL) {
+                kit_warning ("error calling opendir on %s: %m\n", buf);
+                goto out;
+        }
+
+        num = -2;
+        while ((d = readdir64 (dir)) != NULL) {
+                if (d->d_name == NULL)
+                        continue;
+                num++;
+        }
+
+out:
+        if (dir != NULL)
+                closedir (dir);
+        return num;
 }
 
 
