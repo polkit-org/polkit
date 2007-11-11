@@ -44,6 +44,7 @@
 #include "polkit-context.h"
 #include "polkit-policy-cache.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
 
 /**
  * SECTION:polkit
@@ -801,3 +802,20 @@ polkit_context_get_authorization_db (PolKitContext *pk_context)
 {
         return pk_context->authdb;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+PolKitTest _test_context = {
+        "polkit_context",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

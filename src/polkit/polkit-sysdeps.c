@@ -40,7 +40,7 @@
 
 #include "polkit-sysdeps.h"
 #include "polkit-private.h"
-
+#include "polkit-test.h"
 
 /**
  * SECTION:polkit-sysdeps
@@ -159,3 +159,20 @@ polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size)
 out:
         return ret;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+PolKitTest _test_sysdeps = {
+        "polkit_sysdeps",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

@@ -47,6 +47,7 @@
 #include "polkit-debug.h"
 #include "polkit-error.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
 
 /**
  * SECTION:polkit-config
@@ -771,3 +772,19 @@ polkit_config_determine_admin_auth_type (PolKitConfig                *pk_config,
         }
 }
 
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+PolKitTest _test_config = {
+        "polkit_config",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */
