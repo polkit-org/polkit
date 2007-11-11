@@ -42,6 +42,11 @@ char *kit_strdup_vprintf (const char *format, va_list args);
 kit_bool_t kit_str_has_prefix (const char *s, const char *prefix);
 kit_bool_t kit_str_has_suffix (const char *s, const char *suffix);
 
+char **kit_strsplit (const char *s, char delim, size_t *num_tokens);
+
+void kit_strfreev (char **str_array);
+size_t kit_strv_length (char **str_array);
+
 KIT_END_DECLS
 
 #endif /* KIT_STRING_H */

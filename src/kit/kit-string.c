@@ -229,6 +229,108 @@ kit_str_has_suffix (const char *s, const char *suffix)
         return strncmp (s + s_len - suffix_len, suffix, suffix_len) == 0;
 }
 
+/**
+ * kit_strsplit:
+ * @s: string to split
+ * @delim: delimiter used for splitting
+ * @num_tokens: return location for number of elements or #NULL
+ *
+ * Split a given string into components given a delimiter.
+ *
+ * Returns: A #NULL terminated array of strings. Free with kit_strfreev(). Returns #NULL on OOM.
+ */
+char **
+kit_strsplit (const char *s, char delim, size_t *num_tokens)
+{
+        int n;
+        int m;
+        int num;
+        char **result;
+
+        kit_return_val_if_fail (s != NULL, NULL);
+
+        result = NULL;
+
+        num = 0;
+        for (n = 0; s[n] != '\0'; n++) {
+                if (s[n] == delim) {
+                        num++;
+                }
+        }
+        num++;
+
+        result = kit_new0 (char*, num + 1);
+        if (result == NULL)
+                goto oom;
+
+        m = 0;
+        for (n = 0; n < num; n++) {
+                int begin;
+
+                begin = m;
+
+                while (s[m] != delim)
+                        m++;
+
+                result[n] = kit_strndup (s + begin, m - begin);
+                kit_debug ("'%s'", result[n]);
+                if (result[n] == NULL)
+                        goto oom;
+
+                m++;
+        }
+        result[n] = NULL;
+
+        if (num_tokens != NULL)
+                *num_tokens = num;
+
+        return result;
+oom:
+        kit_strfreev (result);
+        return NULL;
+}
+
+/**
+ * kit_strfreev:
+ * @str_array: string array
+ *
+ * Free a #NULL terminated string array.
+ */
+void
+kit_strfreev (char **str_array)
+{
+        int n;
+
+        if (str_array == NULL)
+                return;
+
+        for (n = 0; str_array[n] != NULL; n++)
+                kit_free (str_array[n]);
+
+        kit_free (str_array);
+}
+
+/**
+ * kit_strv_length:
+ * @str_array: string array
+ *
+ * Compute number of elements in a #NULL terminated string array.
+ *
+ * Returns: Number of elements not including the terminating #NULL
+ */
+size_t
+kit_strv_length (char **str_array)
+{
+        int n;
+
+        kit_return_val_if_fail (str_array != NULL, 0);
+
+        for (n = 0; str_array[n] != NULL; n++)
+                ;
+
+        return n;
+}
+
 
 #ifdef KIT_BUILD_TESTS
 
@@ -237,6 +339,8 @@ _run_test (void)
 {
         char str[] = "Hello world";
         char *p;
+        char **tokens;
+        size_t num_tokens;
 
         if ((p = kit_strdup (str)) != NULL) {
                 kit_assert (strcmp (p, "Hello world") == 0);
@@ -265,6 +369,29 @@ _run_test (void)
         kit_assert ( kit_str_has_prefix ("12345", "12"));
         kit_assert ( kit_str_has_prefix ("12345", "12345"));
         kit_assert (!kit_str_has_prefix ("12345", "123456"));
+
+        if ((tokens = kit_strsplit ("abc:012:xyz", ':', &num_tokens)) != NULL)  {
+                kit_assert (num_tokens == 3);
+                kit_assert (kit_strv_length (tokens) == 3);
+                kit_assert (strcmp (tokens[0], "abc") == 0);
+                kit_assert (strcmp (tokens[1], "012") == 0);
+                kit_assert (strcmp (tokens[2], "xyz") == 0);
+                kit_strfreev (tokens);
+        }
+
+        if ((tokens = kit_strsplit ("abc012xyz", ':', &num_tokens)) != NULL)  {
+                kit_assert (num_tokens == 1);
+                kit_assert (kit_strv_length (tokens) == 1);
+                kit_assert (strcmp (tokens[0], "abc012xyz") == 0);
+                kit_strfreev (tokens);
+        }
+
+        if ((tokens = kit_strsplit ("", ':', &num_tokens)) != NULL)  {
+                kit_assert (num_tokens == 1);
+                kit_assert (kit_strv_length (tokens) == 1);
+                kit_assert (strcmp (tokens[0], "") == 0);
+                kit_strfreev (tokens);
+        }
 
         return TRUE;
 }
