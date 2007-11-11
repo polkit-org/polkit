@@ -38,12 +38,13 @@
  */
 
 static KitTest *tests[] = {
+        &_test_message,
         &_test_memory,
         &_test_string,
         &_test_list,
         &_test_hash,
         &_test_file,
-        &_test_message,
+        &_test_spawn,
 };
 
 int 

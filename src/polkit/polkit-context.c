@@ -38,7 +38,6 @@
 #include <sys/inotify.h>
 #include <syslog.h>
 
-#include <glib.h>
 #include "polkit-config.h"
 #include "polkit-debug.h"
 #include "polkit-context.h"
@@ -121,7 +120,7 @@ PolKitContext *
 polkit_context_new (void)
 {
         PolKitContext *pk_context;
-        pk_context = g_new0 (PolKitContext, 1);
+        pk_context = kit_new0 (PolKitContext, 1);
         pk_context->refcount = 1;
         /* TODO: May want to rethink instantiating this on demand.. */
         pk_context->authdb = _polkit_authorization_db_new ();
@@ -143,7 +142,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 {
         kit_return_val_if_fail (pk_context != NULL, FALSE);
 
-        pk_context->policy_dir = g_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
+        pk_context->policy_dir = kit_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
         _pk_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
         /* NOTE: we don't populate the cache until it's needed.. */
@@ -239,7 +238,7 @@ polkit_context_unref (PolKitContext *pk_context)
         if (pk_context->refcount > 0) 
                 return;
 
-        g_free (pk_context);
+        kit_free (pk_context);
 }
 
 /**
@@ -285,7 +284,7 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
 void 
 polkit_context_io_func (PolKitContext *pk_context, int fd)
 {
-        gboolean config_changed;
+        polkit_bool_t config_changed;
 
         kit_return_if_fail (pk_context != NULL);
 
@@ -410,7 +409,7 @@ polkit_context_get_policy_cache (PolKitContext *pk_context)
                                                                    pk_context->load_descriptions, 
                                                                    &error);
                 if (pk_context->priv_cache == NULL) {
-                        g_warning ("Error loading policy files from %s: %s", 
+                        kit_warning ("Error loading policy files from %s: %s", 
                                    pk_context->policy_dir, polkit_error_get_error_message (error));
                         polkit_error_free (error);
                 } else {
@@ -481,9 +480,9 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
         if (pfe == NULL) {
                 char *action_name;
                 if (!polkit_action_get_action_id (action, &action_name)) {
-                        g_warning ("given action has no name");
+                        kit_warning ("given action has no name");
                 } else {
-                        g_warning ("no action with name '%s'", action_name);
+                        kit_warning ("no action with name '%s'", action_name);
                 }
                 result = POLKIT_RESULT_UNKNOWN;
                 goto out;
@@ -533,7 +532,7 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
         /* Otherwise, fall back to defaults as specified in the .policy file */
         policy_default = polkit_policy_file_entry_get_default (pfe);
         if (policy_default == NULL) {
-                g_warning ("no default policy for action!");
+                kit_warning ("no default policy for action!");
                 goto out;
         }
         result = polkit_policy_default_can_session_do_action (policy_default, action, session);
@@ -631,9 +630,9 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
         if (pfe == NULL) {
                 char *action_name;
                 if (!polkit_action_get_action_id (action, &action_name)) {
-                        g_warning ("given action has no name");
+                        kit_warning ("given action has no name");
                 } else {
-                        g_warning ("no action with name '%s'", action_name);
+                        kit_warning ("no action with name '%s'", action_name);
                 }
                 result = POLKIT_RESULT_UNKNOWN;
                 goto out;
@@ -684,7 +683,7 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
         /* Otherwise, fall back to defaults as specified in the .policy file */
         policy_default = polkit_policy_file_entry_get_default (pfe);
         if (policy_default == NULL) {
-                g_warning ("no default policy for action!");
+                kit_warning ("no default policy for action!");
                 goto out;
         }
         result = polkit_policy_default_can_caller_do_action (policy_default, action, caller);

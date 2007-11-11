@@ -75,11 +75,11 @@ struct _PolKitAuthorizationDB;
 /* PolKitAuthorizationDB structure is defined in polkit/polkit-private.h */
 
 static void
-_free_authlist (GSList *authlist)
+_free_authlist (KitList *authlist)
 {
         if (authlist != NULL) {
-                g_slist_foreach (authlist, (GFunc) polkit_authorization_unref, NULL);
-                g_slist_free (authlist);
+                kit_list_foreach (authlist, (KitListForeachFunc) polkit_authorization_unref, NULL);
+                kit_list_free (authlist);
         }
 }
 
@@ -113,11 +113,14 @@ _polkit_authorization_db_new (void)
 {
         PolKitAuthorizationDB *authdb;
 
-        authdb = g_new0 (PolKitAuthorizationDB, 1);
+        authdb = kit_new0 (PolKitAuthorizationDB, 1);
+        if (authdb == NULL)
+                goto oom;
         authdb->refcount = 1;
 
         /* set up the hashtable */
         _polkit_authorization_db_invalidate_cache (authdb);
+oom:
         return authdb;
 }
 
@@ -173,7 +176,7 @@ polkit_authorization_db_unref (PolKitAuthorizationDB *authdb)
         if (authdb->refcount > 0) 
                 return;
         kit_hash_unref (authdb->uid_to_authlist);
-        g_free (authdb);
+        kit_free (authdb);
 }
 
 /**
@@ -271,7 +274,7 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
         if (ret != NULL)
                 goto out;
 
-        helper_argv[1] = g_strdup_printf ("%d", uid);
+        helper_argv[1] = kit_strdup_printf ("%d", uid);
 
         /* we need to do this through a setgid polkituser helper
          * because the auth file is readable only for uid 0 and gid
@@ -352,8 +355,8 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
         kit_hash_insert (authdb->uid_to_authlist, (void *) uid, ret);
 
 out:
-        g_free (helper_argv[1]);
-        g_free (standard_output);
+        kit_free (helper_argv[1]);
+        kit_free (standard_output);
         return ret;
 }
 
@@ -811,7 +814,7 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
 
         helper_argv[1] = (char *) auth_file_entry;
         helper_argv[2] = "uid";
-        helper_argv[3] = g_strdup_printf ("%d", polkit_authorization_get_uid (auth));
+        helper_argv[3] = kit_strdup_printf ("%d", polkit_authorization_get_uid (auth));
 
         g_error = NULL;
         if (!g_spawn_sync (NULL,         /* const gchar *working_directory */
@@ -848,7 +851,7 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
         }
         
 out:
-        g_free (helper_argv[3]);
+        kit_free (helper_argv[3]);
         return ret;
 }
 

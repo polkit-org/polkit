@@ -330,6 +330,42 @@ kit_strv_length (char **str_array)
         return n;
 }
 
+/**
+ * kit_str_append:
+ * @s: either %NULL or a string previously allocated on the heap
+ * @s2: string to append
+ *
+ * Append a string to an existing string.
+ *
+ * Returns: %NULL on OOM or the new string; possibly at the same
+ * location as @s.
+ */
+char *
+kit_str_append (char *s, const char *s2)
+{
+        char *p;
+        size_t s_len;
+        size_t s2_len;
+
+        kit_return_val_if_fail (s2 != NULL, NULL);
+
+        if (s != NULL)
+                s_len = strlen (s);
+        else
+                s_len = 0;
+        s2_len = strlen (s2);
+        p = (char *) kit_realloc ((void *) s, s_len + s2_len + 1);
+        if (p == NULL)
+                goto oom;
+        s = p;
+        memcpy ((void *) (s + s_len), s2, s2_len);
+        s[s_len + s2_len] = '\0';
+
+        return s;
+oom:
+        return NULL;
+}
+
 
 #ifdef KIT_BUILD_TESTS
 
@@ -338,6 +374,7 @@ _run_test (void)
 {
         char str[] = "Hello world";
         char *p;
+        char *p2;
         char **tokens;
         size_t num_tokens;
 
@@ -391,6 +428,22 @@ _run_test (void)
                 kit_assert (strcmp (tokens[0], "") == 0);
                 kit_strfreev (tokens);
         }
+
+        if ((p = kit_strdup ("foobar")) != NULL) {
+                if ((p2 = kit_str_append (p, "_cool")) != NULL) {
+                        p = p2;
+
+                        kit_assert (strcmp (p, "foobar_cool") == 0);
+                }
+
+                kit_free (p);
+        }
+
+        if ((p = kit_str_append (NULL, "baz")) != NULL) {
+                kit_assert (strcmp (p, "baz") == 0);
+                kit_free (p);
+        }
+
 
         return TRUE;
 }

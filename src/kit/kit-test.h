@@ -52,6 +52,7 @@ extern KitTest _test_string;
 extern KitTest _test_hash;
 extern KitTest _test_list;
 extern KitTest _test_file;
+extern KitTest _test_spawn;
 extern KitTest _test_message;
 
 KIT_END_DECLS

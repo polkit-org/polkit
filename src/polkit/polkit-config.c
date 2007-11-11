@@ -42,7 +42,6 @@
 
 #include <expat.h>
 
-#include <glib.h>
 #include "polkit-config.h"
 #include "polkit-debug.h"
 #include "polkit-error.h"
@@ -148,7 +147,7 @@ struct ConfigNode
 
         } data;
 
-        GSList *children;
+        KitList *children;
 };
 
 
@@ -156,14 +155,14 @@ static ConfigNode *
 config_node_new (void)
 {
         ConfigNode *node;
-        node = g_new0 (ConfigNode, 1);
+        node = kit_new0 (ConfigNode, 1);
         return node;
 }
 
 static void
 config_node_dump_real (ConfigNode *node, unsigned int indent)
 {
-        GSList *i;
+        KitList *i;
         unsigned int n;
         char buf[128];
 
@@ -201,7 +200,7 @@ config_node_dump_real (ConfigNode *node, unsigned int indent)
                 break;
         }
 
-        for (i = node->children; i != NULL; i = g_slist_next (i)) {
+        for (i = node->children; i != NULL; i = i->next) {
                 ConfigNode *child = i->data;
                 config_node_dump_real (child, indent + 2);
         }
@@ -217,7 +216,7 @@ config_node_dump (ConfigNode *node)
 static void
 config_node_unref (ConfigNode *node)
 {
-        GSList *i;
+        KitList *i;
 
         switch (node->node_type) {
         case NODE_TYPE_NOP:
@@ -225,22 +224,22 @@ config_node_unref (ConfigNode *node)
         case NODE_TYPE_TOP:
                 break;
         case NODE_TYPE_MATCH:
-                g_free (node->data.node_match.data);
+                kit_free (node->data.node_match.data);
                 regfree (&(node->data.node_match.preq));
                 break;
         case NODE_TYPE_RETURN:
                 break;
         case NODE_TYPE_DEFINE_ADMIN_AUTH:
-                g_free (node->data.node_define_admin_auth.data);
+                kit_free (node->data.node_define_admin_auth.data);
                 break;
         }
 
-        for (i = node->children; i != NULL; i = g_slist_next (i)) {
+        for (i = node->children; i != NULL; i = i->next) {
                 ConfigNode *child = i->data;
                 config_node_unref (child);
         }
-        g_slist_free (node->children);
-        g_free (node);
+        kit_list_free (node->children);
+        kit_free (node);
 }
 
 static void
@@ -289,7 +288,7 @@ _start (void *data, const char *el, const char **attr)
                                 goto error;
                         }
 
-                        node->data.node_match.data = g_strdup (attr[1]);
+                        node->data.node_match.data = kit_strdup (attr[1]);
                         if (regcomp (&(node->data.node_match.preq), node->data.node_match.data, REG_NOSUB|REG_EXTENDED) != 0) {
                                 _pk_debug ("Invalid expression '%s'", node->data.node_match.data);
                                 goto error;
@@ -333,7 +332,7 @@ _start (void *data, const char *el, const char **attr)
                                 goto error;
                         }
 
-                        node->data.node_define_admin_auth.data = g_strdup (attr[1]);
+                        node->data.node_define_admin_auth.data = kit_strdup (attr[1]);
 
                         state = STATE_IN_DEFINE_ADMIN_AUTH;
                         _pk_debug ("parsed define_admin_auth node ('%s' (%d) -> '%s')", 
@@ -347,8 +346,8 @@ _start (void *data, const char *el, const char **attr)
         }
 
         if (state == STATE_NONE || node == NULL) {
-                g_warning ("skipping unknown tag <%s> at line %d of %s", 
-                           el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
+                kit_warning ("skipping unknown tag <%s> at line %d of %s", 
+                             el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
                 syslog (LOG_ALERT, "libpolkit: skipping unknown tag <%s> at line %d of %s", 
                         el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
                 state = STATE_UNKNOWN_TAG;
@@ -364,7 +363,7 @@ _start (void *data, const char *el, const char **attr)
 
         if (pd->stack_depth > 0) {
                 pd->node_stack[pd->stack_depth - 1]->children = 
-                        g_slist_append (pd->node_stack[pd->stack_depth - 1]->children, node);
+                        kit_list_append (pd->node_stack[pd->stack_depth - 1]->children, node);
         }
 
         pd->stack_depth++;
@@ -421,19 +420,15 @@ polkit_config_new (const char *path, PolKitError **error)
         int xml_res;
         PolKitConfig *pk_config;
 	char *buf;
-	gsize buflen;
-        GError *g_error;
+	size_t buflen;
 
         /* load and parse the configuration file */
         pk_config = NULL;
 
-        g_error = NULL;
-	if (!g_file_get_contents (path, &buf, &buflen, &g_error)) {
+	if (!kit_file_get_contents (path, &buf, &buflen)) {
                 polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
-                                        "Cannot load PolicyKit policy file at '%s': %s",
-                                        path,
-                                        g_error->message);
-                g_error_free (g_error);
+                                        "Cannot load PolicyKit policy file at '%s': %m",
+                                        path);
 		goto error;
         }
 
@@ -449,7 +444,7 @@ polkit_config_new (const char *path, PolKitError **error)
 	XML_SetElementHandler (pd.parser, _start, _end);
 	XML_SetCharacterDataHandler (pd.parser, _cdata);
 
-        pk_config = g_new0 (PolKitConfig, 1);
+        pk_config = kit_new0 (PolKitConfig, 1);
         pk_config->refcount = 1;
 
         pd.state = STATE_NONE;
@@ -468,11 +463,11 @@ polkit_config_new (const char *path, PolKitError **error)
                                         XML_ErrorString (XML_GetErrorCode (pd.parser)));
 
 		XML_ParserFree (pd.parser);
-		g_free (buf);
+		kit_free (buf);
 		goto error;
 	}
 	XML_ParserFree (pd.parser);
-	g_free (buf);
+	kit_free (buf);
 
         _pk_debug ("Loaded configuration file %s", path);
 
@@ -522,10 +517,10 @@ polkit_config_unref (PolKitConfig *pk_config)
         if (pk_config->top_config_node != NULL)
                 config_node_unref (pk_config->top_config_node);
 
-        g_free (pk_config);
+        kit_free (pk_config);
 }
 
-static gboolean
+static polkit_bool_t
 config_node_match (ConfigNode *node, 
                   PolKitAction *action, 
                   PolKitCaller *caller, 
@@ -535,7 +530,7 @@ config_node_match (ConfigNode *node,
         char *str1;
         char *str2;
         uid_t uid;
-        gboolean match;
+        polkit_bool_t match;
 
         match = FALSE;
         str1 = NULL;
@@ -545,7 +540,7 @@ config_node_match (ConfigNode *node,
         case MATCH_TYPE_ACTION:
                 if (!polkit_action_get_action_id (action, &str))
                         goto out;
-                str1 = g_strdup (str);
+                str1 = kit_strdup (str);
                 break;
 
         case MATCH_TYPE_USER:
@@ -558,7 +553,7 @@ config_node_match (ConfigNode *node,
                 } else
                         goto out;
                 
-                str1 = g_strdup_printf ("%d", uid);
+                str1 = kit_strdup_printf ("%d", uid);
                 {
                         struct passwd pd;
                         struct passwd* pwdptr=&pd;
@@ -568,7 +563,7 @@ config_node_match (ConfigNode *node,
                         
                         if ((getpwuid_r (uid, pwdptr, pwdbuffer, pwdlinelen, &tempPwdPtr)) !=0 )
                                 goto out;
-                        str2 = g_strdup (pd.pw_name);
+                        str2 = kit_strdup (pd.pw_name);
                 }
                 break;
         }
@@ -583,8 +578,8 @@ config_node_match (ConfigNode *node,
         }
 
 out:
-        g_free (str1);
-        g_free (str2);
+        kit_free (str1);
+        kit_free (str2);
         return match;
 }
 
@@ -596,7 +591,7 @@ config_node_test (ConfigNode *node,
                   PolKitCaller *caller, 
                   PolKitSession *session)
 {
-        gboolean recurse;
+        polkit_bool_t recurse;
         PolKitResult result;
 
         recurse = FALSE;
@@ -621,8 +616,8 @@ config_node_test (ConfigNode *node,
         }
 
         if (recurse) {
-                GSList *i;
-                for (i = node->children; i != NULL; i = g_slist_next (i)) {
+                KitList *i;
+                for (i = node->children; i != NULL; i = i->next) {
                         ConfigNode *child_node = i->data;
                         result = config_node_test (child_node, action, caller, session);
                         if (result != POLKIT_RESULT_UNKNOWN) {
@@ -693,8 +688,8 @@ config_node_determine_admin_auth (ConfigNode *node,
                                   PolKitConfigAdminAuthType   *out_admin_auth_type,
                                   const char                 **out_data)
 {
-        gboolean recurse;
-        gboolean result_set;
+        polkit_bool_t recurse;
+        polkit_bool_t result_set;
 
         recurse = FALSE;
         result_set = FALSE;
@@ -722,8 +717,8 @@ config_node_determine_admin_auth (ConfigNode *node,
         }
 
         if (recurse) {
-                GSList *i;
-                for (i = node->children; i != NULL; i = g_slist_next (i)) {
+                KitList *i;
+                for (i = node->children; i != NULL; i = i->next) {
                         ConfigNode *child_node = i->data;
 
                         result_set = config_node_determine_admin_auth (child_node, 

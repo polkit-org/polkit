@@ -38,6 +38,7 @@ char *kit_strdup         (const char *s);
 char *kit_strndup        (const char *s, size_t n);
 char *kit_strdup_printf  (const char *format, ...) __attribute__((__format__ (__printf__, 1, 2)));
 char *kit_strdup_vprintf (const char *format, va_list args);
+char *kit_str_append     (char *s, const char *s2);
 
 kit_bool_t kit_str_has_prefix (const char *s, const char *prefix);
 kit_bool_t kit_str_has_suffix (const char *s, const char *suffix);

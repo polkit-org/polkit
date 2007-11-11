@@ -37,8 +37,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include <glib.h>
-
 #include "polkit-debug.h"
 #include "polkit-authorization.h"
 #include "polkit-utils.h"
@@ -101,7 +99,7 @@ PolKitAuthorization *
 _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 {
         char **t;
-        guint num_t;
+        size_t num_t;
         char *ep;
         PolKitAuthorization *auth;
         int n;
@@ -121,8 +119,9 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
 
         auth->uid = uid;
 
-        t = g_strsplit (entry_in_auth_file, ":", 0);
-        num_t = g_strv_length (t);
+        t = kit_strsplit (entry_in_auth_file, ':', &num_t);
+        if (t == NULL)
+                goto oom;
 
 /*
  * pid:
@@ -281,7 +280,7 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
                 goto error;
         }
 
-        g_strfreev (t);
+        kit_strfreev (t);
         return auth;
 
 error:
@@ -290,7 +289,7 @@ oom:
         if (auth != NULL)
                 polkit_authorization_unref (auth);
         if (t != NULL)
-                g_strfreev (t);
+                kit_strfreev (t);
         return NULL;
 }
 
