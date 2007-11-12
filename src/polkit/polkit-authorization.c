@@ -591,6 +591,8 @@ polkit_authorization_get_constraint (PolKitAuthorization *auth)
 
 #ifdef POLKIT_BUILD_TESTS
 
+#ifdef POLKIT_AUTHDB_DEFAULT
+
 typedef struct {
         const char *entry;
         PolKitAuthorizationScope scope;
@@ -770,6 +772,15 @@ _run_test (void)
         return TRUE;
 }
 
+#else /* POLKIT_AUTHDB_DEFAULT */
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+#endif /* POLKIT_AUTHDB_DEFAULT */
 
 PolKitTest _test_authorization = {
         "polkit_authorization",

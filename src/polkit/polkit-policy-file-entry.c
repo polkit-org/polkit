@@ -426,9 +426,12 @@ _run_test (void)
         }
         
         kit_assert ((d = polkit_policy_file_entry_get_default (pfe)) != NULL);
+
+#ifdef POLKIT_AUTHDB_DEFAULT
         kit_assert (polkit_policy_default_get_allow_any (d) == POLKIT_RESULT_NO);
         kit_assert (polkit_policy_default_get_allow_inactive (d) == POLKIT_RESULT_ONLY_VIA_SELF_AUTH);
         kit_assert (polkit_policy_default_get_allow_active (d) == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH);
+#endif
         
         polkit_policy_file_entry_ref (pfe);
         polkit_policy_file_entry_unref (pfe);

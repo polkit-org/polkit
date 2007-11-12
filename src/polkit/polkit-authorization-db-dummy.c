@@ -43,6 +43,7 @@
 #include "polkit-authorization-db.h"
 #include "polkit-utils.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
 
 /* PolKitAuthorizationDB structure is defined in polkit/polkit-private.h */
 
@@ -188,3 +189,19 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
 }
 
 
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+PolKitTest _test_authorization_db = {
+        "polkit_authorization_db",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */
