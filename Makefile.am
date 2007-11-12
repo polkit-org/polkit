@@ -40,6 +40,12 @@ check-coverage:
 	@echo "Need to reconfigure with --enable-gcov"
 endif
 
+if POLKIT_BUILD_TESTS
+install:
+	@echo "Cowardly refusing to install with --enable-tests."
+	@exit 1
+endif
+
 EXTRA_DIST = 			\
 	HACKING 		\
 	mkinstalldirs 		\

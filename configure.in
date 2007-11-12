@@ -42,6 +42,9 @@ if test x$enable_tests = xyes; then
 fi
 
 if test x$enable_gcov = xyes; then
+     if test x$enable_tests = xno; then
+          AC_ERROR([It only makes sense to use gcov if tests are enabled.])
+     fi
      ## so that config.h changes when you toggle gcov support
      AC_DEFINE_UNQUOTED(KIT_GCOV_ENABLED, 1, [Defined if gcov is enabled to force a rebuild due to config.h changing])
      AC_DEFINE_UNQUOTED(POLKIT_GCOV_ENABLED, 1, [Defined if gcov is enabled to force a rebuild due to config.h changing])
@@ -511,7 +514,7 @@ echo "
 
 if test x$enable_tests = xyes; then
   echo "NOTE: Building with unit tests increases the size of the installed "
-  echo "      library and may render it insecure."
+  echo "      library and renders it insecure."
   echo
 fi
 
