@@ -32,7 +32,7 @@ libexec_PROGRAMS = polkit-read-auth-helper
 
 polkit_read_auth_helper_SOURCES = polkit-read-auth-helper.c
 polkit_read_auth_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_read_auth_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
+polkit_read_auth_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la libpolkit-dbus.la
 
 # polkit-read-auth-helper needs to be setgid $POLKIT_GROUP to be able
 # to read authorization files in /var/lib/PolicyKit and
@@ -49,6 +49,14 @@ endif
 if KIT_BUILD_TESTS
 TESTS_ENVIRONMENT=
 TESTS=polkit-dbus-test
+
+check_PROGRAMS=$(TESTS)
+
+polkit_dbus_test_SOURCES=				\
+	polkit-dbus-test.h	polkit-dbus-test.c
+
+polkit_dbus_test_LDADD=$(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
+polkit_dbus_test_LDFLAGS=
 
 if KIT_GCOV_ENABLED
 clean-gcov:
@@ -82,16 +90,6 @@ endif
 else
 TESTS=
 endif
-
-## we use noinst_PROGRAMS not check_PROGRAMS so that we build 
-## even when not doing "make check"
-noinst_PROGRAMS=$(TESTS)
-
-polkit_dbus_test_SOURCES=				\
-	polkit-dbus-test.h	polkit-dbus-test.c
-
-polkit_dbus_test_LDADD=$(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
-polkit_dbus_test_LDFLAGS=
 
 clean-local :
 	rm -f *~ *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 

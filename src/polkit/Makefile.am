@@ -81,6 +81,14 @@ if POLKIT_BUILD_TESTS
 TESTS_ENVIRONMENT=
 TESTS=polkit-test
 
+check_PROGRAMS=$(TESTS)
+
+polkit_test_SOURCES=				\
+	polkit-test.h		polkit-test.c
+
+polkit_test_LDADD=$(top_builddir)/src/polkit/libpolkit.la
+polkit_test_LDFLAGS=
+
 if POLKIT_GCOV_ENABLED
 clean-gcov:
 	rm -f *.gcov .libs/*.gcda
@@ -107,16 +115,6 @@ endif
 else
 TESTS=
 endif
-
-## we use noinst_PROGRAMS not check_PROGRAMS so that we build 
-## even when not doing "make check"
-noinst_PROGRAMS=$(TESTS)
-
-polkit_test_SOURCES=				\
-	polkit-test.h		polkit-test.c
-
-polkit_test_LDADD=$(top_builddir)/src/polkit/libpolkit.la
-polkit_test_LDFLAGS=
 
 clean-local :
 	rm -f *~ $(BUILT_SOURCES) *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 

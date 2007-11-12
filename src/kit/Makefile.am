@@ -38,6 +38,14 @@ if KIT_BUILD_TESTS
 TESTS_ENVIRONMENT=
 TESTS=kit-test
 
+check_PROGRAMS=$(TESTS)
+
+kit_test_SOURCES=				\
+	kit-test-main.c
+
+kit_test_LDADD=$(top_builddir)/src/kit/libkit.la
+kit_test_LDFLAGS=
+
 if KIT_GCOV_ENABLED
 clean-gcov:
 	rm -f *.gcov .libs/*.gcda
@@ -64,16 +72,6 @@ endif
 else
 TESTS=
 endif
-
-## we use noinst_PROGRAMS not check_PROGRAMS so that we build 
-## even when not doing "make check"
-noinst_PROGRAMS=$(TESTS)
-
-kit_test_SOURCES=				\
-	kit-test-main.c
-
-kit_test_LDADD=$(top_builddir)/src/kit/libkit.la
-kit_test_LDFLAGS=
 
 clean-local :
 	rm -f *~ *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 

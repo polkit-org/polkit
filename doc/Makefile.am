@@ -36,9 +36,12 @@ INCLUDES = \
 	$(NULL)
 
 GTKDOC_LIBS = \
-	$(DBUS_GLIB_LIBS)			\
-	$(GLIB_LIBS)				\
-	$(top_builddir)/src/polkit/libpolkit.la	\
+	$(DBUS_GLIB_LIBS)					\
+	$(GLIB_LIBS)						\
+	$(top_builddir)/src/kit/libkit.la			\
+	$(top_builddir)/src/polkit/libpolkit.la			\
+	$(top_builddir)/src/polkit-dbus/libpolkit-dbus.la	\
+	$(top_builddir)/src/polkit-grant/libpolkit-grant.la	\
 	$(NULL)
 
 # Extra options to supply to gtkdoc-mkdb

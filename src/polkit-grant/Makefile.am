@@ -44,14 +44,14 @@ if POLKIT_AUTHDB_DEFAULT
 libexec_PROGRAMS = polkit-grant-helper polkit-grant-helper-pam polkit-explicit-grant-helper polkit-revoke-helper 
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
-polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la
+polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la libpolkit-grant.la
 
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
 polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
 
 polkit_explicit_grant_helper_SOURCES = polkit-explicit-grant-helper.c
 polkit_explicit_grant_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_explicit_grant_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la
+polkit_explicit_grant_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la libpolkit-grant.la
 
 polkit_revoke_helper_SOURCES = polkit-revoke-helper.c
 polkit_revoke_helper_CFLAGS = @DBUS_CFLAGS@
@@ -92,6 +92,14 @@ if KIT_BUILD_TESTS
 TESTS_ENVIRONMENT=
 TESTS=polkit-grant-test
 
+check_PROGRAMS=$(TESTS)
+
+polkit_grant_test_SOURCES=				\
+	polkit-grant-test.h	polkit-grant-test.c
+
+polkit_grant_test_LDADD=$(top_builddir)/src/polkit-grant/libpolkit-grant.la
+polkit_grant_test_LDFLAGS=
+
 if KIT_GCOV_ENABLED
 clean-gcov:
 	rm -f *.gcov .libs/*.gcda
@@ -130,16 +138,6 @@ endif
 else
 TESTS=
 endif
-
-## we use noinst_PROGRAMS not check_PROGRAMS so that we build 
-## even when not doing "make check"
-noinst_PROGRAMS=$(TESTS)
-
-polkit_grant_test_SOURCES=				\
-	polkit-grant-test.h	polkit-grant-test.c
-
-polkit_grant_test_LDADD=$(top_builddir)/src/polkit-grant/libpolkit-grant.la
-polkit_grant_test_LDFLAGS=
 
 clean-local :
 	rm -f *~ *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 
