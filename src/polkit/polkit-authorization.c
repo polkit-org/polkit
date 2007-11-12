@@ -782,7 +782,7 @@ _run_test (void)
 
 #endif /* POLKIT_AUTHDB_DEFAULT */
 
-PolKitTest _test_authorization = {
+KitTest _test_authorization = {
         "polkit_authorization",
         NULL,
         NULL,

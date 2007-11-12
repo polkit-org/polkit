@@ -490,7 +490,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_session = {
+KitTest _test_session = {
         "polkit_session",
         NULL,
         NULL,

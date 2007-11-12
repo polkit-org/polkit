@@ -37,6 +37,7 @@
 
 #include <glib.h>
 #include "polkit-grant.h"
+#include "polkit-grant-test.h"
 
 /**
  * SECTION:polkit-grant
@@ -536,3 +537,20 @@ polkit_grant_initiate_auth (PolKitGrant  *polkit_grant,
 error:
         return FALSE;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+KitTest _test_polkit_grant = {
+        "polkit_grant",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

@@ -807,7 +807,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_policy_file = {
+KitTest _test_policy_file = {
         "polkit_policy_file",
         NULL,
         NULL,

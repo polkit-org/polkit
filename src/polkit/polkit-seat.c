@@ -220,7 +220,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_seat = {
+KitTest _test_seat = {
         "polkit_seat",
         NULL,
         NULL,

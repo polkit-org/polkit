@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * kit-test.h : PolicyKit test
+ * polkit-grant-test.c : polkit-grant tests
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,45 +23,37 @@
  *
  **************************************************************************/
 
-#if !defined (KIT_COMPILATION) && !defined(_KIT_INSIDE_KIT_H)
-#error "Only <kit/kit.h> can be included directly, this file may disappear or change contents."
-#endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
+#include <polkit/polkit-private.h>
+#include <polkit-grant/polkit-grant-test.h>
 
-#ifndef KIT_TEST_H
-#define KIT_TEST_H
-
-#include <kit/kit.h>
-
-KIT_BEGIN_DECLS
+#define MAX_TESTS 64
 
 /**
- * KitTest:
- * @name: name of the unit test
- * @setup: setup function
- * @teardown: teardown function
- * @run: actual test function.
+ * SECTION:polkit-grant-test
+ * @short_description: Testing code for libpolkit-grant
  *
- * Test suite abstraction. See kit_test_run() for details.
+ * Testing code for libpolkit-grant
  */
-typedef struct {
-        const char *name;
-        void (*setup) (void);
-        void (*teardown) (void);
-        kit_bool_t (*run) (void);
-} KitTest;
 
-kit_bool_t kit_test_run (KitTest **tests, size_t num_tests);
+static KitTest *tests[] = {
+        &_test_polkit_grant,
+};
 
-extern KitTest _test_memory;
-extern KitTest _test_string;
-extern KitTest _test_hash;
-extern KitTest _test_list;
-extern KitTest _test_file;
-extern KitTest _test_spawn;
-extern KitTest _test_message;
+int 
+main (int argc, char *argv[])
+{
+        /* Some of the code will log to syslog because .policy files
+         * etc. may be malformed. Since this will open a socket to the
+         * system logger preempt this so the fd-leak checking don't
+         * freak out.
+         */
+        syslog (LOG_INFO, "libpolkit-grant: initiating test; bogus alerts may be written to syslog");
 
-KIT_END_DECLS
-
-#endif /* KIT_TEST_H */
-
-
+        if (kit_test_run (tests, sizeof (tests) / sizeof (KitTest*)))
+                return 0;
+        else
+                return 1;
+}

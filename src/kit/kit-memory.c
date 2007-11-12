@@ -44,7 +44,6 @@
  * Functions used for memory management.
  **/
 
-
 #ifdef KIT_BUILD_TESTS
 
 static int _cur_allocs = 0;

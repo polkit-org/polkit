@@ -28,39 +28,35 @@
 #include <kit/kit-test.h>
 #include <kit/kit-memory.h>
 
-#define MAX_TESTS 64
-
 /**
  * SECTION:kit-test
- * @short_description: Testing code for libkit
+ * @title: Unit testing
+ * @short_description: Unit testing
  *
- * Testing code for libkit.
+ * Functions used for unit testing.
  */
 
-static KitTest *tests[] = {
-        &_test_message,
-        &_test_memory,
-        &_test_string,
-        &_test_list,
-        &_test_hash,
-        &_test_file,
-        &_test_spawn,
-};
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-int 
-main (int argc, char *argv[])
+/**
+ * kit_test_run:
+ * @tests: array of #KitTest objects
+ * @num_tests: size of @tests array
+ *
+ * Runs a number of tests simulating Out Of Memory. Checks for both
+ * memory and file descriptor leaks. 
+ *
+ * This function is only available if libkit have been built with
+ * KIT_BUILD_TESTS.
+ *
+ * Returns: %TRUE only if all tests succeed without memory or file descriptor leaks
+ */
+kit_bool_t
+kit_test_run (KitTest **tests, size_t num_tests)
 {
-        int ret;
-        int n;
-        int num_tests;
+        kit_bool_t ret;
+        unsigned int n;
 
-        ret = 0;
-
-        num_tests = sizeof (tests) / sizeof (KitTest*);
+        /* be optimistic! */
+        ret = TRUE;
 
         printf ("Running %d unit tests\n", num_tests);
         for (n = 0; n < num_tests; n++) {
@@ -80,7 +76,7 @@ main (int argc, char *argv[])
                 printf ("Running: %s\n", test->name);
                 if (!test->run ()) {
                         printf ("Failed\n");
-                        ret = 1;
+                        ret = FALSE;
                         goto test_done;
                 }
                 num_fd_after = _kit_get_num_fd ();
@@ -91,11 +87,11 @@ main (int argc, char *argv[])
                 delta = _kit_memory_get_current_allocations ();
                 if (delta != 0) {
                         printf ("  Unit test leaked %d allocations\n", delta);
-                        ret = 1;
+                        ret = FALSE;
                 }
                 if (num_fd != num_fd_after) {
                         printf ("  Unit test leaked %d file descriptors\n", num_fd_after - num_fd);
-                        ret = 1;
+                        ret = FALSE;
                 }
                 
                 for (m = 0; m < total_allocs; m++) {
@@ -107,7 +103,7 @@ main (int argc, char *argv[])
                         num_fd = _kit_get_num_fd ();
                         if (!test->run ()) {
                                 printf ("  Failed\n");
-                                ret = 1;
+                                ret = FALSE;
                                 continue;
                         }
                         num_fd_after = _kit_get_num_fd ();
@@ -115,11 +111,11 @@ main (int argc, char *argv[])
                         delta = _kit_memory_get_current_allocations ();
                         if (delta != 0) {
                                 printf ("  Unit test leaked %d allocations\n", delta);
-                                ret = 1;
+                                ret = FALSE;
                         }
                         if (num_fd != num_fd_after) {
                                 printf ("  Unit test leaked %d file descriptors\n", num_fd_after - num_fd);
-                                ret = 1;
+                                ret = FALSE;
                         }
 
                 }

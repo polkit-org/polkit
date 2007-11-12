@@ -775,7 +775,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_config = {
+KitTest _test_config = {
         "polkit_config",
         NULL,
         NULL,

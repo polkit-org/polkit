@@ -504,7 +504,7 @@ out:
         return TRUE;
 }
 
-PolKitTest _test_policy_cache = {
+KitTest _test_policy_cache = {
         "polkit_policy_cache",
         NULL,
         NULL,

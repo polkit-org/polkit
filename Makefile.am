@@ -24,7 +24,9 @@ if POLKIT_GCOV_ENABLED
 coverage-report.txt :
 	make -C src/kit coverage-report.txt
 	make -C src/polkit coverage-report.txt
-	$(top_srcdir)/test/create-coverage-report.sh "PolicyKit" `cat src/kit/covered-files.txt src/polkit/covered-files.txt` > coverage-report.txt
+	make -C src/polkit-dbus coverage-report.txt
+	make -C src/polkit-grant coverage-report.txt
+	$(top_srcdir)/test/create-coverage-report.sh "PolicyKit" `cat src/kit/covered-files.txt src/polkit/covered-files.txt src/polkit-dbus/covered-files.txt src/polkit-grant/covered-files.txt` > coverage-report.txt
 
 check-coverage: coverage-report.txt
 	cat coverage-report.txt

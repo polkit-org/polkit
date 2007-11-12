@@ -30,42 +30,27 @@
 #ifndef POLKIT_TEST_H
 #define POLKIT_TEST_H
 
+#include <kit/kit.h>
 #include <polkit/polkit-types.h>
 
 POLKIT_BEGIN_DECLS
 
-polkit_bool_t _test_polkit_action (void);
-polkit_bool_t _test_polkit_error (void);
-
-/**
- * PolKitTest:
- *
- * Test suite abstraction.
- */
-typedef struct {
-        /*< private >*/
-        const char *name;
-        void (*setup) (void);
-        void (*teardown) (void);
-        polkit_bool_t (*run) (void);
-} PolKitTest;
-
-extern PolKitTest _test_action;
-extern PolKitTest _test_error;
-extern PolKitTest _test_result;
-extern PolKitTest _test_seat;
-extern PolKitTest _test_session;
-extern PolKitTest _test_caller;
-extern PolKitTest _test_policy_default;
-extern PolKitTest _test_policy_file_entry;
-extern PolKitTest _test_policy_file;
-extern PolKitTest _test_policy_cache;
-extern PolKitTest _test_authorization_constraint;
-extern PolKitTest _test_authorization;
-extern PolKitTest _test_authorization_db;
-extern PolKitTest _test_config;
-extern PolKitTest _test_sysdeps;
-extern PolKitTest _test_context;
+extern KitTest _test_action;
+extern KitTest _test_error;
+extern KitTest _test_result;
+extern KitTest _test_seat;
+extern KitTest _test_session;
+extern KitTest _test_caller;
+extern KitTest _test_policy_default;
+extern KitTest _test_policy_file_entry;
+extern KitTest _test_policy_file;
+extern KitTest _test_policy_cache;
+extern KitTest _test_authorization_constraint;
+extern KitTest _test_authorization;
+extern KitTest _test_authorization_db;
+extern KitTest _test_config;
+extern KitTest _test_sysdeps;
+extern KitTest _test_context;
 
 POLKIT_END_DECLS
 

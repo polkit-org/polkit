@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * kit-test.h : PolicyKit test
+ * polkit-dbus-test.h : polkit-dbus tests
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -23,45 +23,21 @@
  *
  **************************************************************************/
 
-#if !defined (KIT_COMPILATION) && !defined(_KIT_INSIDE_KIT_H)
-#error "Only <kit/kit.h> can be included directly, this file may disappear or change contents."
+#if !defined (POLKIT_COMPILATION)
+#error "polkit-dbus-test.h is a private file"
 #endif
 
-#ifndef KIT_TEST_H
-#define KIT_TEST_H
+#ifndef POLKIT_DBUS_TEST_H
+#define POLKIT_DBUS_TEST_H
 
 #include <kit/kit.h>
 
-KIT_BEGIN_DECLS
+POLKIT_BEGIN_DECLS
 
-/**
- * KitTest:
- * @name: name of the unit test
- * @setup: setup function
- * @teardown: teardown function
- * @run: actual test function.
- *
- * Test suite abstraction. See kit_test_run() for details.
- */
-typedef struct {
-        const char *name;
-        void (*setup) (void);
-        void (*teardown) (void);
-        kit_bool_t (*run) (void);
-} KitTest;
+extern KitTest _test_polkit_dbus;
 
-kit_bool_t kit_test_run (KitTest **tests, size_t num_tests);
+POLKIT_END_DECLS
 
-extern KitTest _test_memory;
-extern KitTest _test_string;
-extern KitTest _test_hash;
-extern KitTest _test_list;
-extern KitTest _test_file;
-extern KitTest _test_spawn;
-extern KitTest _test_message;
-
-KIT_END_DECLS
-
-#endif /* KIT_TEST_H */
+#endif /* POLKIT_DBUS_TEST_H */
 
 

@@ -65,6 +65,8 @@
 
 #include "polkit-dbus.h"
 #include <polkit/polkit-debug.h>
+#include <polkit/polkit-test.h>
+#include <polkit/polkit-private.h>
 
 /**
  * polkit_session_new_from_objpath:
@@ -1490,3 +1492,20 @@ polkit_tracker_is_authorization_relevant (PolKitTracker *pk_tracker, PolKitAutho
          */
         return _polkit_is_authorization_relevant_internal (pk_tracker->con, auth, NULL, error);
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+KitTest _test_polkit_dbus = {
+        "polkit_dbus",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */

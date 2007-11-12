@@ -444,7 +444,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_caller = {
+KitTest _test_caller = {
         "polkit_caller",
         NULL,
         NULL,

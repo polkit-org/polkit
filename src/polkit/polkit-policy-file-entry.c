@@ -468,7 +468,7 @@ oom:
         return TRUE;
 }
 
-PolKitTest _test_policy_file_entry = {
+KitTest _test_policy_file_entry = {
         "polkit_policy_file_entry",
         NULL,
         NULL,

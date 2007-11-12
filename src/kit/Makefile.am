@@ -20,6 +20,7 @@ noinst_LTLIBRARIES=libkit.la
 
 libkit_la_SOURCES =					\
 	kit.h						\
+	kit-test.h		kit-test.c		\
 	kit-memory.h		kit-memory.c		\
 	kit-string.h		kit-string.c		\
 	kit-list.h		kit-list.c		\
@@ -69,12 +70,10 @@ endif
 noinst_PROGRAMS=$(TESTS)
 
 kit_test_SOURCES=				\
-	kit-test.h		kit-test.c
+	kit-test-main.c
 
 kit_test_LDADD=$(top_builddir)/src/kit/libkit.la
 kit_test_LDFLAGS=
-#@R_DYNAMIC_LDFLAG@
-
 
 clean-local :
 	rm -f *~ *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 

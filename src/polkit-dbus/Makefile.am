@@ -43,5 +43,55 @@ install-exec-hook:
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-read-auth-helper
 endif
 
+## note that TESTS has special meaning (stuff to use in make check)
+## so if adding tests not to be run in make check, don't add them to 
+## TESTS
+if KIT_BUILD_TESTS
+TESTS_ENVIRONMENT=
+TESTS=polkit-dbus-test
+
+if KIT_GCOV_ENABLED
+clean-gcov:
+	rm -f *.gcov .libs/*.gcda
+
+.PHONY: coverage-report.txt covered-files.txt
+
+covered-files.txt :
+	echo $(addprefix src/polkit-dbus/,$(filter %.c,$(libpolkit_dbus_la_SOURCES))) > covered-files.txt
+if POLKIT_AUTHDB_DEFAULT
+	echo src/polkit-dbus/polkit-read-auth-helper.c >> covered-files.txt
+endif
+
+coverage-report.txt : covered-files.txt clean-gcov all check 
+	gcov $(filter %.c,$(libpolkit_dbus_la_SOURCES)) -o .libs/ > /dev/null
+if POLKIT_AUTHDB_DEFAULT
+	gcov polkit-read-auth-helper.c -o .libs/ > /dev/null
+endif
+	$(top_srcdir)/test/create-coverage-report.sh "module polkit-dbus" `cat covered-files.txt` > coverage-report.txt
+
+check-coverage : coverage-report.txt
+	cat coverage-report.txt
+else
+coverage-report.txt:
+	@echo "Need to reconfigure with --enable-gcov"
+
+check-coverage:
+	@echo "Need to reconfigure with --enable-gcov"
+endif
+
+else
+TESTS=
+endif
+
+## we use noinst_PROGRAMS not check_PROGRAMS so that we build 
+## even when not doing "make check"
+noinst_PROGRAMS=$(TESTS)
+
+polkit_dbus_test_SOURCES=				\
+	polkit-dbus-test.h	polkit-dbus-test.c
+
+polkit_dbus_test_LDADD=$(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
+polkit_dbus_test_LDFLAGS=
+
 clean-local :
-	rm -f *~ $(BUILT_SOURCES)
+	rm -f *~ *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 

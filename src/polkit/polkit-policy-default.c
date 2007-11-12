@@ -431,7 +431,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_policy_default = {
+KitTest _test_policy_default = {
         "polkit_policy_default",
         NULL,
         NULL,

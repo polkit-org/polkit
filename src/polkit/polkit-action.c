@@ -294,7 +294,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_action = {
+KitTest _test_action = {
         "polkit_action",
         NULL,
         NULL,

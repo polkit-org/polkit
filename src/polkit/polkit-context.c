@@ -810,7 +810,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_context = {
+KitTest _test_context = {
         "polkit_context",
         NULL,
         NULL,

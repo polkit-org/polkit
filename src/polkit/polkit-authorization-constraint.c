@@ -731,7 +731,7 @@ _run_test (void)
 }
 
 
-PolKitTest _test_authorization_constraint = {
+KitTest _test_authorization_constraint = {
         "polkit_authorization_constraint",
         NULL,
         NULL,

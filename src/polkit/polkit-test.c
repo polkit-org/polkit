@@ -39,7 +39,7 @@
  * Testing code for libpolkit.
  */
 
-static PolKitTest *tests[] = {
+static KitTest *tests[] = {
         &_test_action,
         &_test_error,
         &_test_result,
@@ -61,14 +61,6 @@ static PolKitTest *tests[] = {
 int 
 main (int argc, char *argv[])
 {
-        int ret;
-        int n;
-        int num_tests;
-
-        ret = 0;
-
-        num_tests = sizeof (tests) / sizeof (PolKitTest*);
-
         /* Some of the code will log to syslog because .policy files
          * etc. may be malformed. Since this will open a socket to the
          * system logger preempt this so the fd-leak checking don't
@@ -76,71 +68,8 @@ main (int argc, char *argv[])
          */
         syslog (LOG_INFO, "libpolkit: initiating test; bogus alerts may be written to syslog");
 
-        printf ("Running %d unit tests\n", num_tests);
-        for (n = 0; n < num_tests; n++) {
-                int m;
-                int total_allocs;
-                int delta;
-                int num_fd;
-                int num_fd_after;
-                PolKitTest *test = tests[n];
-
-                _kit_memory_reset ();
-
-                if (test->setup != NULL)
-                        test->setup ();
-
-                num_fd = _kit_get_num_fd ();
-                printf ("Running: %s\n", test->name);
-                if (!test->run ()) {
-                        printf ("Failed\n");
-                        ret = 1;
-                        goto test_done;
-                }
-                num_fd_after = _kit_get_num_fd ();
-
-                total_allocs = _kit_memory_get_total_allocations ();
-                printf ("  Unit test made %d allocations in total\n", total_allocs);
-                
-                delta = _kit_memory_get_current_allocations ();
-                if (delta != 0) {
-                        printf ("  Unit test leaked %d allocations\n", delta);
-                        ret = 1;
-                }
-                if (num_fd != num_fd_after) {
-                        printf ("  Unit test leaked %d file descriptors\n", num_fd_after - num_fd);
-                        ret = 1;
-                }
-                
-                for (m = 0; m < total_allocs; m++) {
-                        printf ("  Failing allocation %d of %d\n", m + 1, total_allocs);
-                        
-                        _kit_memory_reset ();
-                        _kit_memory_fail_nth_alloc (m);
-                        
-                        num_fd = _kit_get_num_fd ();
-                        if (!test->run ()) {
-                                printf ("  Failed\n");
-                                ret = 1;
-                                continue;
-                        }
-                        num_fd_after = _kit_get_num_fd ();
-                        
-                        delta = _kit_memory_get_current_allocations ();
-                        if (delta != 0) {
-                                printf ("  Unit test leaked %d allocations\n", delta);
-                                ret = 1;
-                        }
-                        if (num_fd != num_fd_after) {
-                                printf ("  Unit test leaked %d file descriptors\n", num_fd_after - num_fd);
-                                ret = 1;
-                        }
-                }
-
-        test_done:
-                if (test->teardown != NULL)
-                        test->teardown ();
-        }
-
-        return ret;
+        if (kit_test_run (tests, sizeof (tests) / sizeof (KitTest*)))
+                return 0;
+        else
+                return 1;
 }

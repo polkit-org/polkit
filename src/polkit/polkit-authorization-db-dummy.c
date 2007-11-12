@@ -197,7 +197,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_authorization_db = {
+KitTest _test_authorization_db = {
         "polkit_authorization_db",
         NULL,
         NULL,

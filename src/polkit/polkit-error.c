@@ -236,7 +236,7 @@ _run_test (void)
 }
 
 
-PolKitTest _test_error = {
+KitTest _test_error = {
         "polkit_error",
         NULL,
         NULL,

@@ -168,7 +168,7 @@ _run_test (void)
         return TRUE;
 }
 
-PolKitTest _test_sysdeps = {
+KitTest _test_sysdeps = {
         "polkit_sysdeps",
         NULL,
         NULL,

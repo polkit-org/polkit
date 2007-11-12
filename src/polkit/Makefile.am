@@ -117,8 +117,6 @@ polkit_test_SOURCES=				\
 
 polkit_test_LDADD=$(top_builddir)/src/polkit/libpolkit.la
 polkit_test_LDFLAGS=
-#@R_DYNAMIC_LDFLAG@
-
 
 clean-local :
 	rm -f *~ $(BUILT_SOURCES) *.bb *.bbg *.da *.gcov .libs/*.da .libs/*.bbg 
