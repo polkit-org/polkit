@@ -133,6 +133,7 @@ if POLKIT_AUTHDB_DEFAULT
 # location)
 #
 install-data-local:
+	-mkdir -p $(DESTDIR)$(localstatedir)/lib/misc
 	-touch $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
 	-chmod 775 $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
