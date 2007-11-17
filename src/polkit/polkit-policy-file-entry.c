@@ -118,6 +118,7 @@ _polkit_policy_file_entry_new   (const char *action_id,
         if (pfe->defaults == NULL)
                 goto error;
 
+#ifdef POLKIT_AUTHDB_DEFAULT
         /* read override file */
         path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.override", action_id);
         if (path == NULL)
@@ -156,7 +157,7 @@ _polkit_policy_file_entry_new   (const char *action_id,
                 polkit_policy_default_set_allow_inactive (pfe->defaults, inactive);
                 polkit_policy_default_set_allow_active   (pfe->defaults, active);
         }
-
+#endif
 
         pfe->annotations = annotations;
 
@@ -380,6 +381,16 @@ polkit_policy_file_entry_set_default (PolKitPolicyFileEntry  *policy_file_entry,
                                       PolKitPolicyDefault    *defaults,
                                       PolKitError           **error)
 {
+        polkit_bool_t ret;
+
+        ret = FALSE;
+
+        kit_return_val_if_fail (policy_file_entry != NULL, FALSE);
+        kit_return_val_if_fail (defaults != NULL, FALSE);
+
+#ifndef POLKIT_AUTHDB_DEFAULT
+        polkit_error_set_error (error, POLKIT_ERROR_NOT_SUPPORTED, "Not supported");
+#else
         char *helper_argv[7] = {PACKAGE_LIBEXEC_DIR "/polkit-set-default-helper", 
                                 NULL, /* arg1: action_id */
                                 NULL, /* arg2: "clear" or "set" */
@@ -387,16 +398,10 @@ polkit_policy_file_entry_set_default (PolKitPolicyFileEntry  *policy_file_entry,
                                 NULL, /* arg4: result_inactive */
                                 NULL, /* arg5: result_active */
                                 NULL};
-        polkit_bool_t ret;
         int exit_status;
         PolKitResult any;
         PolKitResult inactive;
         PolKitResult active;
-
-        ret = FALSE;
-
-        kit_return_val_if_fail (policy_file_entry != NULL, FALSE);
-        kit_return_val_if_fail (defaults != NULL, FALSE);
 
         if (polkit_policy_default_equals (policy_file_entry->defaults, defaults)) {
                 /* no point in doing extra work.. */
@@ -448,10 +453,9 @@ polkit_policy_file_entry_set_default (PolKitPolicyFileEntry  *policy_file_entry,
         } else {
                 ret = TRUE;
         }
-        
 out:
+#endif /* POLKIT_AUTHDB_DEFAULT */
         return ret;
-
 }
 
 
