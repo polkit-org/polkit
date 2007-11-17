@@ -253,7 +253,7 @@ _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb)
  */
 static KitList *
 _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
-                           uid_t                  uid,
+                           const uid_t            uid,
                            PolKitError          **error)
 {
         KitList *ret;
@@ -306,41 +306,46 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                 goto out;
         }
 
-        len = strlen (standard_output);
+        if (standard_output != NULL) {
+                uid_t uid2;
+                len = strlen (standard_output);
 
-        /* parse one line at a time (modifies standard_output in place) */
-        n = 0;
-        while (n < len) {
-                off_t m;
-                char *line;
-                PolKitAuthorization *auth;
-
-                m = n;
-                while (m < len && standard_output[m] != '\0') {
-                        if (standard_output[m] == '\n')
-                                break;
-                        m++;
-                }
-                /* check EOF */
-                if (standard_output[m] == '\0')
-                        break;
-                standard_output[m] = '\0';
-
-                line = standard_output + n;
-
-                if (strlen (line) >= 2 && strncmp (line, "#uid=", 5) == 0) {
-                        uid = (uid_t) atoi (line + 5);
-                }
-
-                if (strlen (line) >= 2 && line[0] != '#') {
-                        auth = _polkit_authorization_new_for_uid (line, uid);
+                uid2 = uid;
+                
+                /* parse one line at a time (modifies standard_output in place) */
+                n = 0;
+                while (n < len) {
+                        off_t m;
+                        char *line;
+                        PolKitAuthorization *auth;
                         
-                        if (auth != NULL) {
-                                ret = kit_list_prepend (ret, auth);
+                        m = n;
+                        while (m < len && standard_output[m] != '\0') {
+                                if (standard_output[m] == '\n')
+                                        break;
+                                m++;
                         }
+                        /* check EOF */
+                        if (standard_output[m] == '\0')
+                                break;
+                        standard_output[m] = '\0';
+                        
+                        line = standard_output + n;
+                        
+                        if (strlen (line) >= 2 && strncmp (line, "#uid=", 5) == 0) {
+                                uid2 = (uid_t) atoi (line + 5);
+                        }
+                        
+                        if (strlen (line) >= 2 && line[0] != '#') {
+                                auth = _polkit_authorization_new_for_uid (line, uid2);
+                                
+                                if (auth != NULL) {
+                                        ret = kit_list_prepend (ret, auth);
+                                }
+                        }
+                        
+                        n = m + 1;
                 }
-
-                n = m + 1;
         }
 
         kit_hash_insert (authdb->uid_to_authlist, (void *) uid, ret);
@@ -383,6 +388,11 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
 
         for (l = auths; l != NULL; l = l->next) {
                 PolKitAuthorization *auth = l->data;
+
+                //kit_warning ("%d: action_id=%s uid=%d", 
+                //             uid,
+                //             polkit_authorization_get_action_id (auth),
+                //             polkit_authorization_get_uid (auth));
 
                 if (action_id != NULL) {
                         if (strcmp (polkit_authorization_get_action_id (auth), action_id) != 0) {
