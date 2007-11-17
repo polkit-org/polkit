@@ -33,6 +33,7 @@
 #include <polkit/polkit-types.h>
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-policy-default.h>
+#include <polkit/polkit-error.h>
 
 POLKIT_BEGIN_DECLS
 
@@ -70,6 +71,11 @@ polkit_bool_t          polkit_policy_file_entry_annotations_foreach (PolKitPolic
                                                                      void *user_data);
 const char            *polkit_policy_file_entry_get_annotation (PolKitPolicyFileEntry *policy_file_entry,
                                                                 const char *key);
+
+PolKitPolicyDefault   *polkit_policy_file_entry_get_default_factory (PolKitPolicyFileEntry  *policy_file_entry);
+polkit_bool_t          polkit_policy_file_entry_set_default         (PolKitPolicyFileEntry  *policy_file_entry,
+                                                                     PolKitPolicyDefault    *defaults,
+                                                                     PolKitError           **error);
 
 POLKIT_END_DECLS
 

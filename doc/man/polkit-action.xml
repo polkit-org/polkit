@@ -13,13 +13,18 @@
   
   <refnamediv>
     <refname>polkit-action</refname>
-    <refpurpose>List registered PolicyKit actions</refpurpose>
+    <refpurpose>List and modify registered PolicyKit actions</refpurpose>
   </refnamediv>
   
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>polkit-action</command>
       <arg><option>--action <replaceable>action</replaceable></option></arg>
+      <arg><option>--reset-defaults <replaceable>action</replaceable></option></arg>
+      <arg><option>--show-overrides</option></arg>
+      <arg><option>--set-defaults-any <replaceable>action</replaceable> <replaceable>value</replaceable></option></arg>
+      <arg><option>--set-defaults-inactive <replaceable>action</replaceable> <replaceable>value</replaceable></option></arg>
+      <arg><option>--set-defaults-active <replaceable>action</replaceable> <replaceable>value</replaceable></option></arg>
       <arg><option>--version</option></arg>
       <arg><option>--help</option></arg>
     </cmdsynopsis>
@@ -28,8 +33,8 @@
   <refsect1>
     <title>DESCRIPTION</title> 
     <para>
-      polkit-action is used to list the PolicyKit actions that are
-      registered on the system.
+      polkit-action is used to list and modify the PolicyKit actions
+      that are registered on the system.
     </para>
   </refsect1>
   
@@ -44,6 +49,93 @@
           </para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term><option>--reset-defaults <replaceable>action</replaceable></option></term>
+        <listitem>
+          <para>
+            Reset the defaults for the specified action to the factory
+            defaults. The authorization needed to do this is
+            <emphasis>org.freedesktop.policykit.modify-defaults</emphasis>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--show-overrides</option></term>
+        <listitem>
+          <para>
+            Prints all actions for where the defaults are overridden.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--set-defaults-any <replaceable>action</replaceable> <replaceable>value</replaceable></option></term>
+        <listitem>
+          <para>
+            Override the <emphasis>any</emphasis> stanza for the given
+            action with the supplied value. The authorization needed
+            to do this is <emphasis>org.freedesktop.policykit.modify-defaults</emphasis>.
+            Valid values for <emphasis>value</emphasis> are
+            <emphasis>no</emphasis>,
+            <emphasis>auth_admin_one_shot</emphasis>,
+            <emphasis>auth_admin</emphasis>,
+            <emphasis>auth_admin_keep_session</emphasis>,
+            <emphasis>auth_admin_keep_always</emphasis>,
+            <emphasis>auth_self_one_shot</emphasis>,
+            <emphasis>auth_self</emphasis>,
+            <emphasis>auth_self_keep_session</emphasis>,
+            <emphasis>auth_self_keep_always</emphasis>,
+            and <emphasis>yes</emphasis>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--set-defaults-inactive <replaceable>action</replaceable> <replaceable>value</replaceable></option></term>
+        <listitem>
+          <para>
+            Override the <emphasis>inactive</emphasis> stanza for the given
+            action with the supplied value. The authorization needed
+            to do this is <emphasis>org.freedesktop.policykit.modify-defaults</emphasis>.
+            Valid values for <emphasis>value</emphasis> are
+            <emphasis>no</emphasis>,
+            <emphasis>auth_admin_one_shot</emphasis>,
+            <emphasis>auth_admin</emphasis>,
+            <emphasis>auth_admin_keep_session</emphasis>,
+            <emphasis>auth_admin_keep_always</emphasis>,
+            <emphasis>auth_self_one_shot</emphasis>,
+            <emphasis>auth_self</emphasis>,
+            <emphasis>auth_self_keep_session</emphasis>,
+            <emphasis>auth_self_keep_always</emphasis>,
+            and <emphasis>yes</emphasis>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--set-defaults-active <replaceable>action</replaceable> <replaceable>value</replaceable></option></term>
+        <listitem>
+          <para>
+            Override the <emphasis>active</emphasis> stanza for the given
+            action with the supplied value. The authorization needed
+            to do this is <emphasis>org.freedesktop.policykit.modify-defaults</emphasis>.
+            Valid values for <emphasis>value</emphasis> are
+            <emphasis>no</emphasis>,
+            <emphasis>auth_admin_one_shot</emphasis>,
+            <emphasis>auth_admin</emphasis>,
+            <emphasis>auth_admin_keep_session</emphasis>,
+            <emphasis>auth_admin_keep_always</emphasis>,
+            <emphasis>auth_self_one_shot</emphasis>,
+            <emphasis>auth_self</emphasis>,
+            <emphasis>auth_self_keep_session</emphasis>,
+            <emphasis>auth_self_keep_always</emphasis>,
+            and <emphasis>yes</emphasis>.
+          </para>
+        </listitem>
+      </varlistentry>
+
       
       <varlistentry>
         <term><option>--version</option></term>
@@ -69,12 +161,12 @@
     <title>COMPLETION</title> 
     <para>
       PolicyKit ships with a collection of shell functions such that
-      completion on actions works when using the
+      completion on options, <emphasis>action</emphasis>
+      and <emphasis>value</emphasis> works when using the
       <citerefentry>
         <refentrytitle>bash</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
-      shell. For polkit-action, completion is enabled for
-      the <option>--action</option> argument.
+      shell.
     </para>
   </refsect1>
   

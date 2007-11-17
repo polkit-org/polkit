@@ -42,9 +42,13 @@ POLKIT_BEGIN_DECLS
 struct _PolKitPolicyDefault;
 typedef struct _PolKitPolicyDefault PolKitPolicyDefault;
 
+PolKitPolicyDefault    *polkit_policy_default_new   (void);
 PolKitPolicyDefault    *polkit_policy_default_ref   (PolKitPolicyDefault *policy_default);
 void                    polkit_policy_default_unref (PolKitPolicyDefault *policy_default);
 void                    polkit_policy_default_debug (PolKitPolicyDefault *policy_default);
+PolKitPolicyDefault    *polkit_policy_default_clone (PolKitPolicyDefault *policy_default);
+
+polkit_bool_t           polkit_policy_default_equals (PolKitPolicyDefault *a, PolKitPolicyDefault *b);
 
 PolKitResult polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default,
                                                           PolKitAction        *action,
@@ -54,9 +58,14 @@ PolKitResult polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *po
                                                          PolKitAction        *action,
                                                          PolKitCaller        *caller);
 
-PolKitResult polkit_policy_default_get_allow_any (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_policy_default_get_allow_any      (PolKitPolicyDefault *policy_default);
 PolKitResult polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *policy_default);
-PolKitResult polkit_policy_default_get_allow_active (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_policy_default_get_allow_active   (PolKitPolicyDefault *policy_default);
+
+void         polkit_policy_default_set_allow_any      (PolKitPolicyDefault *policy_default, PolKitResult value);
+void         polkit_policy_default_set_allow_inactive (PolKitPolicyDefault *policy_default, PolKitResult value);
+void         polkit_policy_default_set_allow_active   (PolKitPolicyDefault *policy_default, PolKitResult value);
+
 
 /* TODO: export knobs for "default policy" */
 

@@ -198,23 +198,27 @@ kit_spawn_sync (const char  *working_directory,
                 envp_to_use = environ;
 
         if (stdin != NULL) {
-                if (pipe (stdin_pipe) != 0)
+                if (pipe (stdin_pipe) != 0) {
                         goto out;
+                }
         }
 
         if (stdout != NULL) {
-                if (pipe (stdout_pipe) != 0)
+                if (pipe (stdout_pipe) != 0) {
                         goto out;
+                }
         }
 
         if (stderr != NULL) {
-                if (pipe (stderr_pipe) != 0)
+                if (pipe (stderr_pipe) != 0) {
                         goto out;
+                }
         }
 
         pid = fork ();
-        if (pid == -1)
+        if (pid == -1) {
                 goto out;
+        }
 
         if (pid == 0) {
                 /* child */
@@ -326,6 +330,7 @@ kit_spawn_sync (const char  *working_directory,
                                       NULL);
                         
                         if (ret < 0 && errno != EINTR) {
+                                kit_warning ("4");
                                 goto out;
                         }
                         
@@ -333,6 +338,7 @@ kit_spawn_sync (const char  *working_directory,
                                 num_written = _write_to (stdin_pipe[1], wp);
                                 
                                 if (num_written == -1)  {
+                                        kit_warning ("3");
                                         goto out;
                                 }
                                 
@@ -349,6 +355,7 @@ kit_spawn_sync (const char  *working_directory,
                                         close (stdout_pipe[0]);
                                         stdout_pipe[0] = -1;
                                 } else if (num_read == -1)  {
+                                        kit_warning ("2");
                                         goto out;
                                 }
                         }
@@ -359,12 +366,14 @@ kit_spawn_sync (const char  *working_directory,
                                         close (stderr_pipe[0]);
                                         stderr_pipe[0] = -1;
                                 } else if (num_read == -1)  {
+                                        kit_warning ("1");
                                         goto out;
                                 }
                         }
                 }
 
                 if (waitpid (pid, out_exit_status, 0) == -1) {
+                        kit_warning ("0");
                         goto out;
                 }
                 pid = -1;
@@ -377,6 +386,7 @@ kit_spawn_sync (const char  *working_directory,
         } else {
                 ret = FALSE;
                 errno = WEXITSTATUS (*out_exit_status) - 128;
+                kit_warning ("kiddo died with errno %d: %m!", errno);
         }
 
 out:

@@ -65,6 +65,88 @@ struct _PolKitPolicyDefault
         PolKitResult default_active;
 };
 
+/**
+ * polkit_policy_default_new:
+ *
+ * Construct a new object with all defaults set as restrictive as possible.
+ *
+ * Returns: a new object or #NULL on OOM.
+ *
+ * Since: 0.7
+ */
+PolKitPolicyDefault *
+polkit_policy_default_new (void)
+{
+        PolKitPolicyDefault *pd;
+
+        pd = kit_new0 (PolKitPolicyDefault, 1);
+        if (pd == NULL)
+                goto out;
+        pd->refcount = 1;
+        pd->default_any = POLKIT_RESULT_NO;
+        pd->default_inactive = POLKIT_RESULT_NO;
+        pd->default_active = POLKIT_RESULT_NO;
+out:
+        return pd;
+}
+
+/**
+ * polkit_policy_default_clone:
+ * @policy_default: object to clone
+ *
+ * Create a new object with the same value as the given object
+ *
+ * Returns: a new object or #NULL on OOM.
+ *
+ * Since: 0.7
+ */
+PolKitPolicyDefault *
+polkit_policy_default_clone (PolKitPolicyDefault *policy_default)
+{
+        PolKitPolicyDefault *pd;
+
+        kit_return_val_if_fail (policy_default != NULL, NULL);
+
+        pd = polkit_policy_default_new ();
+        if (pd == NULL)
+                goto out;
+        pd->refcount = 1;
+        pd->default_any      = policy_default->default_any;
+        pd->default_inactive = policy_default->default_inactive;
+        pd->default_active   = policy_default->default_active;
+out:
+        return pd;
+}
+
+
+/**
+ * polkit_policy_default_equals:
+ * @a: a #PolKitPolicyDefault object
+ * @b: a #PolKitPolicyDefault object
+ *
+ * Compare if two objects are equal.
+ *
+ * Returns: %TRUE only if the objects are equal
+ */
+polkit_bool_t
+polkit_policy_default_equals (PolKitPolicyDefault *a, PolKitPolicyDefault *b)
+{
+        polkit_bool_t ret;
+
+        kit_return_val_if_fail (a != NULL, FALSE);
+        kit_return_val_if_fail (b != NULL, FALSE);
+
+        if (a->default_any      == b->default_any &&
+            a->default_inactive == b->default_inactive &&
+            a->default_active   == b->default_active) {
+                ret = TRUE;
+        } else {
+                ret = FALSE;
+        }
+
+        return ret;
+}
+
 PolKitPolicyDefault *
 _polkit_policy_default_new (PolKitResult defaults_allow_any,
                             PolKitResult defaults_allow_inactive,
@@ -230,6 +312,51 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
 
 out:
         return ret;
+}
+
+/**
+ * polkit_policy_default_set_allow_any:
+ * @policy_default: the object
+ * @value: the value to set
+ * 
+ * Set default policy.
+ *
+ **/
+void
+polkit_policy_default_set_allow_any (PolKitPolicyDefault *policy_default, PolKitResult value)
+{
+        kit_return_if_fail (policy_default != NULL);
+        policy_default->default_any = value;
+}
+
+/**
+ * polkit_policy_default_set_allow_inactive:
+ * @policy_default: the object
+ * @value: the value to set
+ * 
+ * Set default policy.
+ *
+ **/
+void
+polkit_policy_default_set_allow_inactive (PolKitPolicyDefault *policy_default, PolKitResult value)
+{
+        kit_return_if_fail (policy_default != NULL);
+        policy_default->default_inactive = value;
+}
+
+/**
+ * polkit_policy_default_set_allow_active:
+ * @policy_default: the object
+ * @value: the value to set
+ * 
+ * Set default policy.
+ *
+ **/
+void
+polkit_policy_default_set_allow_active (PolKitPolicyDefault *policy_default, PolKitResult value)
+{
+        kit_return_if_fail (policy_default != NULL);
+        policy_default->default_active = value;
 }
 
 /**

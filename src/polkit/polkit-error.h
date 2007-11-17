@@ -54,6 +54,9 @@ POLKIT_BEGIN_DECLS
  * similar authorization already (modulo time of grant and who granted).
  * @POLKIT_ERROR_NOT_SUPPORTED: The operation is not supported by the
  * authorization database backend
+ * @POLKIT_ERROR_NOT_AUTHORIZED_TO_MODIFY_DEFAULTS: An attempt was
+ * made to modify the defaults for implicit authorizations and the
+ * calling process is not authorized.
  * @POLKIT_ERROR_NUM_ERROR_CODES: Number of error codes. This may change
  * from version to version; do not rely on it.
  *
@@ -69,6 +72,7 @@ typedef enum
         POLKIT_ERROR_NOT_AUTHORIZED_TO_GRANT_AUTHORIZATION,
         POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS,
         POLKIT_ERROR_NOT_SUPPORTED,
+        POLKIT_ERROR_NOT_AUTHORIZED_TO_MODIFY_DEFAULTS,
 
         POLKIT_ERROR_NUM_ERROR_CODES
 } PolKitErrorCode;

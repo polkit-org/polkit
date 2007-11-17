@@ -86,7 +86,8 @@ static const char *error_names[POLKIT_ERROR_NUM_ERROR_CODES] = {
         "NotAuthorizedToRevokeAuthorizationsFromOtherUsers",
         "NotAuthorizedToGrantAuthorization",
         "AuthorizationAlreadyExists",
-        "NotSupported"
+        "NotSupported",
+        "NotAuthorizedToModifyDefaults",
 };
 
 /**

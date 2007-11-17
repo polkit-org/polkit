@@ -85,15 +85,27 @@ __polkit_action() {
     local IFS=$'\n'
     local cur="${COMP_WORDS[COMP_CWORD]}"
 
-    if [ $COMP_CWORD = 1 ]; then
-        COMPREPLY=($(IFS=: compgen -S' ' -W "--action:--version:--help" -- $cur))
-    else
-	case "${COMP_WORDS[1]}" in
-            --action) 
-                COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
-                ;;
-        esac
-    fi
+    case $COMP_CWORD in
+        1)
+            COMPREPLY=($(IFS=: compgen -S' ' -W "--action:--reset-defaults:--set-defaults-any:--set-defaults-inactive:--set-defaults-active:--show-overrides:--version:--help" -- $cur))
+            ;;
+        2)
+	    case "${COMP_WORDS[1]}" in
+                --action|--set-defaults-any|--set-defaults-inactive|--set-defaults-active) 
+                    COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
+                    ;;
+                --reset-defaults) 
+                    COMPREPLY=($(compgen -W "$(polkit-action --show-overrides)" -- $cur))
+                    ;;
+            esac
+            ;;
+        3)
+	    case "${COMP_WORDS[1]}" in
+                --set-defaults-any|--set-defaults-inactive|--set-defaults-active)
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "yes:no:auth_admin_one_shot:auth_admin:auth_admin_keep_session:auth_admin_keep_always:auth_self_one_shot:auth_self:auth_self_keep_session:auth_self_keep_always" -- $cur))
+                    ;;
+            esac
+    esac
 }
 
 ####################################################################################################

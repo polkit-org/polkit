@@ -60,7 +60,8 @@
  * Reads an entire file into allocated memory.
  *
  * Returns: #TRUE if the file was read into memory; #FALSE if an error
- * occured and errno will be set.
+ * occured and errno will be set. On OOM, errno will be set to
+ * ENOMEM. If the file doesn't exist, errno will be set to ENOENT.
  */
 kit_bool_t
 kit_file_get_contents (const char *path, char **out_contents, size_t *out_contents_size)
@@ -81,9 +82,10 @@ kit_file_get_contents (const char *path, char **out_contents, size_t *out_conten
         fd = -1;
         ret = FALSE;
         *out_contents = NULL;
+        p = NULL;
 
         fd = open (path, O_RDONLY);
-        if (fd == 0)
+        if (fd == -1)
                 goto out;
 
         p = kit_malloc (BUF_SIZE);

@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
@@ -63,6 +64,7 @@ struct _PolKitPolicyFileEntry
 {
         int refcount;
         char *action;
+        PolKitPolicyDefault *defaults_factory;
         PolKitPolicyDefault *defaults;
 
         char *policy_description;
@@ -79,9 +81,15 @@ _polkit_policy_file_entry_new   (const char *action_id,
                                  PolKitResult defaults_allow_active,
                                  KitHash *annotations)
 {
+        char *path;
+        char *contents;
+        size_t contents_size;
         PolKitPolicyFileEntry *pfe;
 
-        kit_return_val_if_fail (action_id != NULL, NULL);
+        path = NULL;
+        contents = NULL;
+
+        kit_return_val_if_fail (action_id != NULL && polkit_action_validate_id (action_id), NULL);
 
         pfe = kit_new0 (PolKitPolicyFileEntry, 1);
         if (pfe == NULL)
@@ -100,16 +108,65 @@ _polkit_policy_file_entry_new   (const char *action_id,
                 defaults_allow_active = POLKIT_RESULT_NO;
         }
 
-        pfe->defaults = _polkit_policy_default_new (defaults_allow_any,
-                                                    defaults_allow_inactive,
-                                                    defaults_allow_active);
+        pfe->defaults_factory = _polkit_policy_default_new (defaults_allow_any,
+                                                            defaults_allow_inactive,
+                                                            defaults_allow_active);
+        if (pfe->defaults_factory == NULL)
+                goto error;
+
+        pfe->defaults = polkit_policy_default_clone (pfe->defaults_factory);
         if (pfe->defaults == NULL)
                 goto error;
 
+        /* read override file */
+        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.override", action_id);
+        if (path == NULL)
+                goto error;
+        if (!kit_file_get_contents (path, &contents, &contents_size)) {
+                /* it's not a failure if the file doesn't exist */
+                if (errno != ENOENT)
+                        goto error;
+
+                errno = 0;
+                contents = NULL;
+        }
+
+        if (contents != NULL) {
+                char **tokens;
+                size_t num_tokens;
+                PolKitResult any;
+                PolKitResult inactive;
+                PolKitResult active;
+
+                tokens = kit_strsplit (contents, ':', &num_tokens);
+                if (num_tokens != 3)
+                        goto error;
+
+                if (!polkit_result_from_string_representation (tokens[0], &any)) {
+                        goto error;
+                }
+                if (!polkit_result_from_string_representation (tokens[1], &inactive)) {
+                        goto error;
+                }
+                if (!polkit_result_from_string_representation (tokens[2], &active)) {
+                        goto error;
+                }
+
+                polkit_policy_default_set_allow_any      (pfe->defaults, any);
+                polkit_policy_default_set_allow_inactive (pfe->defaults, inactive);
+                polkit_policy_default_set_allow_active   (pfe->defaults, active);
+        }
+
+
         pfe->annotations = annotations;
+
+        kit_free (path);
+        kit_free (contents);
 
         return pfe;
 error:
+        kit_free (path);
+        kit_free (contents);
         if (pfe != NULL)
                 polkit_policy_file_entry_unref (pfe);
         return NULL;
@@ -218,6 +275,9 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
 
         kit_free (policy_file_entry->action);
 
+        if (policy_file_entry->defaults_factory != NULL)
+                polkit_policy_default_unref (policy_file_entry->defaults_factory);
+
         if (policy_file_entry->defaults != NULL)
                 polkit_policy_default_unref (policy_file_entry->defaults);
 
@@ -267,7 +327,7 @@ polkit_policy_file_entry_get_id (PolKitPolicyFileEntry *policy_file_entry)
  * 
  * Get the the default policy for this policy.
  * 
- * Returns: A #PolKitPolicyDefault object - caller shall not unref this object.
+ * Returns: A #PolKitPolicyDefault object - caller shall not unref or modify this object.
  **/
 PolKitPolicyDefault *
 polkit_policy_file_entry_get_default (PolKitPolicyFileEntry *policy_file_entry)
@@ -275,6 +335,125 @@ polkit_policy_file_entry_get_default (PolKitPolicyFileEntry *policy_file_entry)
         kit_return_val_if_fail (policy_file_entry != NULL, NULL);
         return policy_file_entry->defaults;
 }
+
+/**
+ * polkit_policy_file_entry_get_default_factory:
+ * @policy_file_entry: the file entry
+ * 
+ * Get the factory defaults for the entry. This may be different that
+ * what polkit_policy_file_entry_get_default() returns if the function
+ * polkit_policy_file_entry_set_default() have been used to change the
+ * defaults.
+ *
+ * Returns: A #PolKitPolicyDefault object - caller shall not unref or modify this object.
+ *
+ * Since: 0.7
+ */
+PolKitPolicyDefault *
+polkit_policy_file_entry_get_default_factory (PolKitPolicyFileEntry *policy_file_entry)
+{
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
+        return policy_file_entry->defaults_factory;
+}
+
+/**
+ * polkit_policy_file_entry_set_default:
+ * @policy_file_entry: the file entry
+ * @defaults: the new defaults to set
+ * @error: return location for error or #NULL
+ *
+ * Set new defaults for a given policy file entry; subsequent calls to
+ * polkit_policy_file_get_default() will return these values. Note
+ * that the old defaults are not modified; they are still available via
+ * polkit_policy_file_entry_get_default_factory().
+ *
+ * This operation requires the
+ * org.freedesktop.policykit.modify-defaults authorization and will
+ * fail if the caller lacks it.
+ *
+ * Returns: %TRUE if the given defaults was set; %FALSE if @error is set.
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_policy_file_entry_set_default (PolKitPolicyFileEntry  *policy_file_entry,
+                                      PolKitPolicyDefault    *defaults,
+                                      PolKitError           **error)
+{
+        char *helper_argv[7] = {PACKAGE_LIBEXEC_DIR "/polkit-set-default-helper", 
+                                NULL, /* arg1: action_id */
+                                NULL, /* arg2: "clear" or "set" */
+                                NULL, /* arg3: result_any */
+                                NULL, /* arg4: result_inactive */
+                                NULL, /* arg5: result_active */
+                                NULL};
+        polkit_bool_t ret;
+        int exit_status;
+        PolKitResult any;
+        PolKitResult inactive;
+        PolKitResult active;
+
+        ret = FALSE;
+
+        kit_return_val_if_fail (policy_file_entry != NULL, FALSE);
+        kit_return_val_if_fail (defaults != NULL, FALSE);
+
+        if (polkit_policy_default_equals (policy_file_entry->defaults, defaults)) {
+                /* no point in doing extra work.. */
+                ret = TRUE;
+                goto out;
+        }
+
+        any = polkit_policy_default_get_allow_any (defaults);
+        inactive = polkit_policy_default_get_allow_inactive (defaults);
+        active = polkit_policy_default_get_allow_active (defaults);
+
+        helper_argv[1] = policy_file_entry->action;
+
+        if (polkit_policy_default_equals (policy_file_entry->defaults_factory, defaults)) {
+                helper_argv[2] = "clear";
+                helper_argv[3] = NULL;
+        } else {
+                helper_argv[2] = "set";
+                helper_argv[3] = (char *) polkit_result_to_string_representation (any);
+                helper_argv[4] = (char *) polkit_result_to_string_representation (inactive);
+                helper_argv[5] = (char *) polkit_result_to_string_representation (active);
+                helper_argv[6] = NULL;
+        }
+
+        if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
+                             helper_argv,      /* char       **argv */
+                             NULL,             /* char       **envp */
+                             NULL,             /* char        *stdin */
+                             NULL,             /* char       **stdout */
+                             NULL,             /* char       **stderr */
+                             &exit_status)) {  /* int         *exit_status */
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_GENERAL_ERROR, 
+                                        "Error spawning set-default helper: %m");
+                goto out;
+        }
+
+        if (!WIFEXITED (exit_status)) {
+                kit_warning ("Revoke helper crashed!");
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_GENERAL_ERROR, 
+                                        "set-default helper crashed!");
+                goto out;
+        } else if (WEXITSTATUS(exit_status) != 0) {
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_NOT_AUTHORIZED_TO_MODIFY_DEFAULTS, 
+                                        "uid %d is not authorized to modify defaults for implicit authorization for action %s (requires org.freedesktop.policykit.modify-defaults)",
+                                        getuid (), policy_file_entry->action);
+        } else {
+                ret = TRUE;
+        }
+        
+out:
+        return ret;
+
+}
+
 
 typedef struct  {
         PolKitPolicyFileEntry *pfe;
