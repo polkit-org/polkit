@@ -72,9 +72,15 @@ enum {
         STATE_NONE,
         STATE_UNKNOWN_TAG,
         STATE_IN_POLICY_CONFIG,
+        STATE_IN_POLICY_VENDOR,
+        STATE_IN_POLICY_VENDOR_URL,
+        STATE_IN_POLICY_ICON_NAME,
         STATE_IN_ACTION,
         STATE_IN_ACTION_DESCRIPTION,
         STATE_IN_ACTION_MESSAGE,
+        STATE_IN_ACTION_VENDOR,
+        STATE_IN_ACTION_VENDOR_URL,
+        STATE_IN_ACTION_ICON_NAME,
         STATE_IN_DEFAULTS,
         STATE_IN_DEFAULTS_ALLOW_ANY,
         STATE_IN_DEFAULTS_ALLOW_INACTIVE,
@@ -92,7 +98,14 @@ typedef struct {
 
         const char *path;
 
+        char *global_vendor;
+        char *global_vendor_url;
+        char *global_icon_name;
+
         char *action_id;
+        char *vendor;
+        char *vendor_url;
+        char *icon_name;
 
         PolKitResult defaults_allow_any;
         PolKitResult defaults_allow_inactive;
@@ -125,6 +138,14 @@ pd_unref_action_data (ParserData *pd)
 {
         kit_free (pd->action_id);
         pd->action_id = NULL;
+
+        kit_free (pd->vendor);
+        pd->vendor = NULL;
+        kit_free (pd->vendor_url);
+        pd->vendor_url = NULL;
+        kit_free (pd->icon_name);
+        pd->icon_name = NULL;
+
         kit_free (pd->policy_description_nolang);
         pd->policy_description_nolang = NULL;
         kit_free (pd->policy_message_nolang);
@@ -153,6 +174,13 @@ pd_unref_data (ParserData *pd)
         pd_unref_action_data (pd);
         kit_free (pd->lang);
         pd->lang = NULL;
+
+        kit_free (pd->global_vendor);
+        pd->global_vendor = NULL;
+        kit_free (pd->global_vendor_url);
+        pd->global_vendor_url = NULL;
+        kit_free (pd->global_icon_name);
+        pd->global_icon_name = NULL;
 }
 
 static void
@@ -199,6 +227,12 @@ _start (void *data, const char *el, const char **attr)
                         pd->defaults_allow_any = POLKIT_RESULT_NO;
                         pd->defaults_allow_inactive = POLKIT_RESULT_NO;
                         pd->defaults_allow_active = POLKIT_RESULT_NO;
+                } else if (strcmp (el, "vendor") == 0 && num_attr == 0) {
+                        state = STATE_IN_POLICY_VENDOR;
+                } else if (strcmp (el, "vendor_url") == 0 && num_attr == 0) {
+                        state = STATE_IN_POLICY_VENDOR_URL;
+                } else if (strcmp (el, "icon_name") == 0 && num_attr == 0) {
+                        state = STATE_IN_POLICY_ICON_NAME;
                 }
                 break;
         case STATE_IN_ACTION:
@@ -218,6 +252,12 @@ _start (void *data, const char *el, const char **attr)
                                         goto oom;
                         }
                         state = STATE_IN_ACTION_MESSAGE;
+                } else if (strcmp (el, "vendor") == 0 && num_attr == 0) {
+                        state = STATE_IN_ACTION_VENDOR;
+                } else if (strcmp (el, "vendor_url") == 0 && num_attr == 0) {
+                        state = STATE_IN_ACTION_VENDOR_URL;
+                } else if (strcmp (el, "icon_name") == 0 && num_attr == 0) {
+                        state = STATE_IN_ACTION_ICON_NAME;
                 } else if (strcmp (el, "annotate") == 0) {
                         if (num_attr != 2 || strcmp (attr[0], "key") != 0)
                                 goto error;
@@ -259,6 +299,36 @@ error:
         XML_StopParser (pd->parser, FALSE);
 }
 
+static polkit_bool_t
+_validate_icon_name (const char *icon_name)
+{
+        unsigned int n;
+        polkit_bool_t ret;
+        size_t len;
+
+        ret = FALSE;
+
+        len = strlen (icon_name);
+
+        /* check for common suffixes */
+        if (kit_str_has_suffix (icon_name, ".png"))
+                goto out;
+        if (kit_str_has_suffix (icon_name, ".jpg"))
+                goto out;
+
+        /* icon name cannot be a path */
+        for (n = 0; n < len; n++) {
+                if (icon_name [n] == '/') {
+                        goto out;
+                }
+        }
+
+        ret = TRUE;
+
+out:
+        return ret;
+}
+
 static void
 _cdata (void *data, const char *s, int len)
 {
@@ -294,6 +364,64 @@ _cdata (void *data, const char *s, int len)
                                 if (!kit_hash_insert (pd->policy_messages, pd->elem_lang, str))
                                         goto oom;
                         }
+                }
+                break;
+
+        case STATE_IN_POLICY_VENDOR:
+                if (pd->load_descriptions) {
+                        kit_free (pd->global_vendor);
+                        pd->global_vendor = str;
+                        str = NULL;
+                }
+                break;
+
+        case STATE_IN_POLICY_VENDOR_URL:
+                if (pd->load_descriptions) {
+                        kit_free (pd->global_vendor_url);
+                        pd->global_vendor_url = str;
+                        str = NULL;
+                }
+                break;
+
+        case STATE_IN_POLICY_ICON_NAME:
+                if (! _validate_icon_name (str)) {
+                        kit_warning ("Icon name '%s' is invalid", str);
+                        goto error;
+                }
+
+                if (pd->load_descriptions) {
+                        kit_free (pd->global_icon_name);
+                        pd->global_icon_name = str;
+                        str = NULL;
+                }
+                break;
+
+        case STATE_IN_ACTION_VENDOR:
+                if (pd->load_descriptions) {
+                        kit_free (pd->vendor);
+                        pd->vendor = str;
+                        str = NULL;
+                }
+                break;
+
+        case STATE_IN_ACTION_VENDOR_URL:
+                if (pd->load_descriptions) {
+                        kit_free (pd->vendor_url);
+                        pd->vendor_url = str;
+                        str = NULL;
+                }
+                break;
+
+        case STATE_IN_ACTION_ICON_NAME:
+                if (! _validate_icon_name (str)) {
+                        kit_warning ("Icon name '%s' is invalid", str);
+                        goto error;
+                }
+
+                if (pd->load_descriptions) {
+                        kit_free (pd->icon_name);
+                        pd->icon_name = str;
+                        str = NULL;
                 }
                 break;
 
@@ -396,9 +524,27 @@ _end (void *data, const char *el)
                 const char *policy_description;
                 const char *policy_message;
                 PolKitPolicyFileEntry *pfe;
+                char *vendor;
+                char *vendor_url;
+                char *icon_name;
+
+                vendor = pd->vendor;
+                if (vendor == NULL)
+                        vendor = pd->global_vendor;
+
+                vendor_url = pd->vendor_url;
+                if (vendor_url == NULL)
+                        vendor_url = pd->global_vendor_url;
+
+                icon_name = pd->icon_name;
+                if (icon_name == NULL)
+                        icon_name = pd->global_icon_name;
 
                 /* NOTE: caller takes ownership of the annotations object */
                 pfe = _polkit_policy_file_entry_new (pd->action_id, 
+                                                     vendor,
+                                                     vendor_url,
+                                                     icon_name,
                                                      pd->defaults_allow_any,
                                                      pd->defaults_allow_inactive,
                                                      pd->defaults_allow_active,

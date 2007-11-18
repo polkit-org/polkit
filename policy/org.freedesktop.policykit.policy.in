@@ -15,6 +15,8 @@ file are instantly applied.
 -->
 
 <policyconfig>
+  <vendor>The PolicyKit Project</vendor>
+  <vendor_url>http://hal.freedesktop.org/docs/PolicyKit/</vendor_url>
 
   <action id="org.freedesktop.policykit.read">
     <_description>Read authorizations of other users</_description>

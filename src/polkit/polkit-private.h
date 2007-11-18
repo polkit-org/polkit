@@ -85,6 +85,9 @@ PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any
 
 
 PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
+                                                        const char *vendor,
+                                                        const char *vendor_url,
+                                                        const char *icon_name,
                                                         PolKitResult defaults_allow_any,
                                                         PolKitResult defaults_allow_inactive,
                                                         PolKitResult defaults_allow_active,

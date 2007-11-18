@@ -69,6 +69,9 @@ struct _PolKitPolicyFileEntry
 
         char *policy_description;
         char *policy_message;
+        char *vendor;
+        char *vendor_url;
+        char *icon_name;
         KitHash *annotations;
 };
 
@@ -76,6 +79,9 @@ struct _PolKitPolicyFileEntry
 /* NOTE: we take ownership of the annotations object */
 PolKitPolicyFileEntry *
 _polkit_policy_file_entry_new   (const char *action_id, 
+                                 const char *vendor,
+                                 const char *vendor_url,
+                                 const char *icon_name,
                                  PolKitResult defaults_allow_any,
                                  PolKitResult defaults_allow_inactive,
                                  PolKitResult defaults_allow_active,
@@ -97,6 +103,16 @@ _polkit_policy_file_entry_new   (const char *action_id,
         pfe->refcount = 1;
         pfe->action = kit_strdup (action_id);
         if (pfe->action == NULL)
+                goto error;
+
+        pfe->vendor = NULL;
+        pfe->vendor_url = NULL;
+        pfe->icon_name = NULL;
+        if (vendor != NULL && (pfe->vendor = kit_strdup (vendor)) == NULL)
+                goto error;
+        if (vendor_url != NULL && (pfe->vendor_url = kit_strdup (vendor_url)) == NULL)
+                goto error;
+        if (icon_name != NULL && (pfe->icon_name = kit_strdup (icon_name)) == NULL)
                 goto error;
 
         if (! (polkit_authorization_db_get_capabilities () & POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN)) {
@@ -243,6 +259,74 @@ polkit_policy_file_entry_get_action_message (PolKitPolicyFileEntry *policy_file_
 }
 
 /**
+ * polkit_policy_file_entry_get_action_vendor:
+ * @policy_file_entry: the object
+ * 
+ * Get the name of the vendor of this action.
+ *
+ * Note, if polkit_context_set_load_descriptions() on the
+ * #PolKitContext object used to get this object wasn't called, this
+ * method will return #NULL.
+ * 
+ * Returns: string or #NULL if descriptions are not loaded or vendor
+ * tag isn't set - caller shall not free this string
+ *
+ * Since: 0.7
+ */
+const char *
+polkit_policy_file_entry_get_action_vendor     (PolKitPolicyFileEntry *policy_file_entry)
+{
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
+        return policy_file_entry->vendor;
+}
+
+/**
+ * polkit_policy_file_entry_get_action_vendor_url:
+ * @policy_file_entry: the object
+ * 
+ * Get the URL of the vendor of this action.
+ *
+ * Note, if polkit_context_set_load_descriptions() on the
+ * #PolKitContext object used to get this object wasn't called, this
+ * method will return #NULL.
+ * 
+ * Returns: string or #NULL if descriptions are not loaded or vendor
+ * url isn't set - caller shall not free this string
+ *
+ * Since: 0.7
+ */
+const char *
+polkit_policy_file_entry_get_action_vendor_url (PolKitPolicyFileEntry *policy_file_entry)
+{
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
+        return policy_file_entry->vendor_url;
+}
+
+/**
+ * polkit_policy_file_entry_get_action_icon_name:
+ * @policy_file_entry: the object
+ * 
+ * Get the name of the icon that represents the action. This name
+ * conforms to the freedesktop.org icon naming specification.
+ *
+ * Note, if polkit_context_set_load_descriptions() on the
+ * #PolKitContext object used to get this object wasn't called, this
+ * method will return #NULL.
+ * 
+ * Returns: string or #NULL if descriptions are not loaded or icon
+ * tag isn't set - caller shall not free this string
+ *
+ * Since: 0.7
+ */
+const char *
+polkit_policy_file_entry_get_action_icon_name (PolKitPolicyFileEntry *policy_file_entry)
+{
+        kit_return_val_if_fail (policy_file_entry != NULL, NULL);
+        return policy_file_entry->icon_name;
+}
+
+
+/**
  * polkit_policy_file_entry_ref:
  * @policy_file_entry: the policy file object
  * 
@@ -287,6 +371,9 @@ polkit_policy_file_entry_unref (PolKitPolicyFileEntry *policy_file_entry)
 
         kit_free (policy_file_entry->policy_description);
         kit_free (policy_file_entry->policy_message);
+        kit_free (policy_file_entry->vendor);
+        kit_free (policy_file_entry->vendor_url);
+        kit_free (policy_file_entry->icon_name);
 
         kit_free (policy_file_entry);
 }
@@ -584,6 +671,9 @@ _run_test (void)
                 goto oom;
 
         if ((pfe = _polkit_policy_file_entry_new ("org.example-action",
+                                                  NULL,
+                                                  NULL,
+                                                  NULL,
                                                   POLKIT_RESULT_NO,
                                                   POLKIT_RESULT_ONLY_VIA_SELF_AUTH,
                                                   POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH,
@@ -630,6 +720,9 @@ _run_test (void)
 
         polkit_policy_file_entry_unref (pfe);
         if ((pfe = _polkit_policy_file_entry_new ("org.example-action-2",
+                                                  NULL,
+                                                  NULL,
+                                                  NULL,
                                                   POLKIT_RESULT_NO,
                                                   POLKIT_RESULT_ONLY_VIA_SELF_AUTH,
                                                   POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH,

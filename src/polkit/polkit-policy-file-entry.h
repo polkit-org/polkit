@@ -66,6 +66,10 @@ PolKitPolicyDefault   *polkit_policy_file_entry_get_default  (PolKitPolicyFileEn
 const char            *polkit_policy_file_entry_get_action_description (PolKitPolicyFileEntry *policy_file_entry);
 const char            *polkit_policy_file_entry_get_action_message (PolKitPolicyFileEntry *policy_file_entry);
 
+const char            *polkit_policy_file_entry_get_action_vendor     (PolKitPolicyFileEntry *policy_file_entry);
+const char            *polkit_policy_file_entry_get_action_vendor_url (PolKitPolicyFileEntry *policy_file_entry);
+const char            *polkit_policy_file_entry_get_action_icon_name  (PolKitPolicyFileEntry *policy_file_entry);
+
 polkit_bool_t          polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file_entry,
                                                                      PolKitPolicyFileEntryAnnotationsForeachFunc cb,
                                                                      void *user_data);

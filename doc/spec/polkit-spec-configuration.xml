@@ -19,6 +19,9 @@
  "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 <policyconfig>
+  <vendor>The PolicyKit Project</vendor>
+  <vendor_url>http://hal.freedesktop.org/docs/PolicyKit/</vendor_url>
+  <icon_name>polkit-icon</icon_name>
 
   <action id="org.gnome.policykit.examples.frobnicate">
     <description>Frobnicate</description>
@@ -27,6 +30,10 @@
     <message>System policy prevents the PolicyKit-gnome example helper from Frobnicating</message>
     <message xml:lang="da">System indstillinger forhindrer PolicyKit-gnome eksempel hjælper i at Frobnikere!</message>
     <message xml:lang="en_CA">System policy prevents the PolicyKit-gnome example helper from Frobnicating, Aye!</message>
+
+    <icon_name>polkit-icon-frobnicate</icon_name>
+    <vendor_url>http://hal.freedesktop.org/docs/PolicyKit/about-frobnicating</vendor_url>
+
     <defaults>
       <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
@@ -41,6 +48,9 @@
     <message>System policy prevents the PolicyKit-gnome example helper from Tweaking</message>
     <message xml:lang="da">System indstillinger forhindrer PolicyKit-gnome eksempel hjælper i at Tvække!</message>
     <message xml:lang="en_CA">System policy prevents the PolicyKit-gnome example helper from Tweaking, Aye!</message>
+
+    <!-- just inherit icon_name and vendor_url -->
+
     <defaults>
       <allow_any>no</allow_any>
       <allow_inactive>no</allow_inactive>
@@ -91,11 +101,35 @@
         <listitem>
           <para>
             <emphasis>Textual descriptions:</emphasis> Simply included
-            for convenience and organizational
-            purposes. Standard <literal>xml:lang</literal> mechnanisms
-            are used to convey localized strings (note that intltool
-            0.36 or greater includes native support for
+            for convenience and organizational purposes. Useful for
+            graphical editors for
+            authorizations. Standard <literal>xml:lang</literal>
+            mechnanisms are used to convey localized strings (note
+            that intltool 0.36 or greater includes native support for
             handling <literal>.policy</literal> files).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>Vendor:</emphasis> The <literal>vendor</literal>
+            and <literal>vendor_url</literal> describes who is
+            supplying the action. Both can be set at the top-level of
+            the <literal>.policy</literal> file and each Action can
+            further override it. These tags are optional.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>Icon:</emphasis>
+            The <literal>icon_name</literal> tag can be used to
+            specify an icon name for the action or group of
+            actions. The name must adhere to the freedesktop.org Icon
+            Naming spec (for theming purposes) and cannot include
+            directory separators and must not include filename
+            extensions like <literal>.png</literal>. Like with vendor
+            tags, this tag can be set at the top level and also be
+            specialized for each individual action. This tag is
+            optional.
           </para>
         </listitem>
       </itemizedlist>
@@ -104,6 +138,11 @@
         <listitem>
           <para>
             <emphasis>no</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_self_one_shot</emphasis>
           </para>
         </listitem>
         <listitem>
@@ -119,6 +158,11 @@
         <listitem>
           <para>
             <emphasis>auth_self_keep_always</emphasis>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            <emphasis>auth_admin_one_shot</emphasis>
           </para>
         </listitem>
         <listitem>
