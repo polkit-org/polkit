@@ -104,6 +104,7 @@
     </partintro>
     <xi:include href="xml/polkit-types.xml"/>
     <xi:include href="xml/polkit-sysdeps.xml"/>
+    <xi:include href="xml/polkit-simple.xml"/>
     <xi:include href="xml/polkit-error.xml"/>
     <xi:include href="xml/polkit-result.xml"/>
     <xi:include href="xml/polkit-action.xml"/>

@@ -30,6 +30,10 @@
 #include <polkit/polkit.h>
 #include <dbus/dbus.h>
 
+#define _POLKIT_INSIDE_POLKIT_DBUS_H 1
+#include <polkit-dbus/polkit-simple.h>
+#undef _POLKIT_INSIDE_POLKIT_DBUS_H
+
 POLKIT_BEGIN_DECLS
 
 PolKitSession *polkit_session_new_from_objpath   (DBusConnection *con, const char *objpath, uid_t uid, DBusError *error);
@@ -62,5 +66,3 @@ polkit_bool_t  polkit_tracker_is_authorization_relevant  (PolKitTracker *pk_trac
 POLKIT_END_DECLS
 
 #endif /* POLKIT_DBUS_H */
-
-

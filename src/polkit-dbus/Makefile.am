@@ -18,10 +18,12 @@ lib_LTLIBRARIES=libpolkit-dbus.la
 libpolkit_dbusincludedir=$(includedir)/PolicyKit/polkit-dbus
 
 libpolkit_dbusinclude_HEADERS =              			\
-	polkit-dbus.h
+	polkit-dbus.h						\
+	polkit-simple.h
 
 libpolkit_dbus_la_SOURCES =                                	\
-	polkit-dbus.h		polkit-dbus.c
+	polkit-dbus.h		polkit-dbus.c			\
+	polkit-simple.h		polkit-simple.c
 
 libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS) $(GLIB_LIBS)
 

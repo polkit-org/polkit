@@ -45,81 +45,6 @@
 
 #include <polkit-dbus/polkit-dbus.h>
 
-static polkit_bool_t
-check_for_authorization (const char *action_id, pid_t caller_pid)
-{
-        polkit_bool_t ret;
-        DBusError error;
-        DBusConnection *bus;
-        PolKitCaller *caller;
-        PolKitAction *action;
-        PolKitContext *context;
-        PolKitError *pk_error;
-        PolKitResult pk_result;
-
-        ret = FALSE;
-
-        dbus_error_init (&error);
-        bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-        if (bus == NULL) {
-                fprintf (stderr, "polkit-revoke-helper: cannot connect to system bus: %s: %s\n", 
-                         error.name, error.message);
-                dbus_error_free (&error);
-                goto out;
-        }
-
-        caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
-        if (caller == NULL) {
-                fprintf (stderr, "polkit-revoke-helper: cannot get caller from pid: %s: %s\n",
-                         error.name, error.message);
-                goto out;
-        }
-
-        action = polkit_action_new ();
-        if (action == NULL) {
-                fprintf (stderr, "polkit-revoke-helper: cannot allocate PolKitAction\n");
-                goto out;
-        }
-        if (!polkit_action_set_action_id (action, action_id)) {
-                fprintf (stderr, "polkit-revoke-helper: cannot set action_id\n");
-                goto out;
-        }
-
-        context = polkit_context_new ();
-        if (context == NULL) {
-                fprintf (stderr, "polkit-revoke-helper: cannot allocate PolKitContext\n");
-                goto out;
-        }
-
-        pk_error = NULL;
-        if (!polkit_context_init (context, &pk_error)) {
-                fprintf (stderr, "polkit-revoke-helper: cannot initialize polkit context: %s: %s\n",
-                         polkit_error_get_error_name (pk_error),
-                         polkit_error_get_error_message (pk_error));
-                polkit_error_free (pk_error);
-                goto out;
-        }
-
-        pk_result = polkit_context_is_caller_authorized (context, action, caller, FALSE, &pk_error);
-        if (polkit_error_is_set (pk_error)) {
-                fprintf (stderr, "polkit-revoke-helper: cannot determine if caller is authorized: %s: %s\n",
-                         polkit_error_get_error_name (pk_error),
-                         polkit_error_get_error_message (pk_error));
-                polkit_error_free (pk_error);
-                goto out;
-        }
-        
-        if (pk_result != POLKIT_RESULT_YES) {
-                goto out;
-        }
-
-        ret = TRUE;
-out:
-
-        return ret;
-}
-
-
 static int
 _write_to_fd (int fd, const char *str, ssize_t str_len)
 {
@@ -273,26 +198,14 @@ found:
         if (invoking_uid != 0) {
                 /* Check that the caller is privileged to do this... */
                 if (invoking_uid != uid_to_revoke) {
-         
-                        /* see if calling user has the
-                         *
-                         *  org.freedesktop.policykit.revoke
-                         *
-                         * authorization
-                         */
-                        if (!check_for_authorization ("org.freedesktop.policykit.revoke", getppid ())) {
+                        pid_t ppid;
+                        
+                        ppid = getppid ();
+                        if (ppid == 1)
+                                goto out;
 
-                                /* if it's about revoking a one-shot authorization, it's sufficient to have
-                                 * org.freedesktop.policykit.read - see polkit_context_is_caller_authorized()
-                                 * for why...
-                                 */
-                                if (is_one_shot) {
-                                        if (!check_for_authorization ("org.freedesktop.policykit.read", getppid ())) {
-                                                goto out;
-                                        }
-                                } else {
-                                        goto out;
-                                }
+                        if (polkit_check_auth (ppid, "org.freedesktop.policykit.revoke", NULL) == 0) {
+                                goto out;
                         }
                 }
         }

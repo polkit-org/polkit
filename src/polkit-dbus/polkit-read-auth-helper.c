@@ -46,109 +46,6 @@
 
 #include <polkit-dbus/polkit-dbus.h>
 
-/* This is a bit incestuous; we are, effectively, calling into
- * ourselves.. it's safe though; this function will never get hit..
- */
-static polkit_bool_t
-check_for_auth (uid_t caller_uid, pid_t caller_pid)
-{
-        polkit_bool_t ret;
-        DBusError error;
-        DBusConnection *bus;
-        PolKitCaller *caller;
-        PolKitAction *action;
-        PolKitContext *context;
-        PolKitError *pk_error;
-        PolKitResult pk_result;
-
-        ret = FALSE;
-
-        dbus_error_init (&error);
-        bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
-        if (bus == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot connect to system bus: %s: %s\n", 
-                         error.name, error.message);
-                dbus_error_free (&error);
-                goto out;
-        }
-
-        caller = polkit_caller_new_from_pid (bus, caller_pid, &error);
-        if (caller == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot get caller from pid: %s: %s\n",
-                         error.name, error.message);
-                goto out;
-        }
-
-        action = polkit_action_new ();
-        if (action == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot allocate PolKitAction\n");
-                goto out;
-        }
-        if (!polkit_action_set_action_id (action, "org.freedesktop.policykit.read")) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot set action_id\n");
-                goto out;
-        }
-
-        context = polkit_context_new ();
-        if (context == NULL) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot allocate PolKitContext\n");
-                goto out;
-        }
-
-        pk_error = NULL;
-        if (!polkit_context_init (context, &pk_error)) {
-                fprintf (stderr, "polkit-read-auth-helper: cannot initialize polkit context: %s: %s\n",
-                         polkit_error_get_error_name (pk_error),
-                         polkit_error_get_error_message (pk_error));
-                polkit_error_free (pk_error);
-                goto out;
-        }
-
-        pk_result = polkit_context_is_caller_authorized (context, action, caller, FALSE, &pk_error);
-        if (polkit_error_is_set (pk_error)) {
-
-                if (polkit_error_get_error_code (pk_error) == 
-                    POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS) {
-                        polkit_error_free (pk_error);
-                        pk_error = NULL;
-                } else {
-                        fprintf (stderr, "polkit-read-auth-helper: cannot determine if caller is authorized: %s: %s\n",
-                                 polkit_error_get_error_name (pk_error),
-                                 polkit_error_get_error_message (pk_error));
-                        polkit_error_free (pk_error);
-                        goto out;
-                }
-        }
-        
-        if (pk_result != POLKIT_RESULT_YES) {
-                /* having 'grant' (which is a lot more powerful) is also sufficient.. this is because 'read'
-                 * is required to 'grant' (to check if there's a similar authorization already)
-                 */
-                if (!polkit_action_set_action_id (action, "org.freedesktop.policykit.grant")) {
-                        fprintf (stderr, "polkit-read-auth-helper: cannot set action_id\n");
-                        goto out;
-                }
-
-                pk_result = polkit_context_is_caller_authorized (context, action, caller, FALSE, &pk_error);
-                if (polkit_error_is_set (pk_error)) {
-                        fprintf (stderr, "polkit-read-auth-helper: cannot determine if caller is authorized: %s: %s\n",
-                                 polkit_error_get_error_name (pk_error),
-                                 polkit_error_get_error_message (pk_error));
-                        polkit_error_free (pk_error);
-                        goto out;
-                }
-
-                if (pk_result != POLKIT_RESULT_YES) {
-                        goto out;
-                }
-        }
-
-        ret = TRUE;
-out:
-
-        return ret;
-}
-
 static polkit_bool_t
 dump_auths_from_file (const char *path, uid_t uid)
 {
@@ -432,18 +329,15 @@ main (int argc, char *argv[])
         /* uid 0 and user polkituser is allowed to read anything */
         if (caller_uid != 0 && caller_uid != uid_for_polkit_user) {
                 if (caller_uid != requesting_info_for_uid) {
+                        pid_t ppid;
+                        
+                        ppid = getppid ();
+                        if (ppid == 1)
+                                goto out;
 
-                        /* see if calling user has the
-                         *
-                         *  org.freedesktop.policykit.read
-                         *
-                         * authorization
-                         */
-                        if (!check_for_auth (caller_uid, getppid ())) {
-                                //fprintf (stderr, 
-                                //         "polkit-read-auth-helper: uid %d cannot read authorizations for uid %d.\n", 
-                                //        caller_uid,
-                                //        requesting_info_for_uid);
+                        if (polkit_check_auth (ppid, 
+                                               "org.freedesktop.policykit.read", 
+                                               "org.freedesktop.policykit.grant", NULL) == 0) {
                                 goto out;
                         }
                 }
