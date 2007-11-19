@@ -44,6 +44,7 @@
 #include <fcntl.h>
 
 #include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit-private.h>
 
 static int
 _write_to_fd (int fd, const char *str, ssize_t str_len)
@@ -81,9 +82,6 @@ main (int argc, char *argv[])
         struct group *group;
         uid_t invoking_uid;
         char *entry_to_remove;
-        int n;
-        int len;
-        char *p;
         char *scope;
         uid_t uid_to_revoke;
         char *endp;
@@ -97,6 +95,9 @@ main (int argc, char *argv[])
         char *target_value;
         struct passwd *pw;
         polkit_bool_t is_one_shot;
+        polkit_bool_t not_granted_by_self;
+        char **tokens;
+        size_t num_tokens;
 
         ret = 1;
 
@@ -150,20 +151,14 @@ main (int argc, char *argv[])
          * as we only need to parse the first two entries... we do it
          * right here
          */
-        p = entry_to_remove;
-        len = strlen (entry_to_remove);
-        for (n = 0; n < len; n++) {
-                if (p[n] == ':')
-                        goto found;
-        }
-        fprintf (stderr, "polkit-revoke-helper: entry_to_remove malformed\n");
-        goto out;
-found:
-        scope = strndup (entry_to_remove, n);
-        if (scope == NULL) {
-                fprintf (stderr, "polkit-revoke-helper: OOM\n");
+
+        tokens = kit_strsplit (entry_to_remove, ':', &num_tokens);
+        if (tokens == NULL || num_tokens < 2) {
+                fprintf (stderr, "polkit-revoke-helper: entry_to_remove malformed\n");
                 goto out;
         }
+
+        scope = tokens[0];
 
         if (strcmp (target_type, "uid") == 0) {
                 uid_to_revoke = strtol (target_value, &endp, 10);
@@ -178,6 +173,8 @@ found:
 
         /* OK, we're done parsing ... */
 
+        not_granted_by_self = FALSE;
+
         is_one_shot = FALSE;
         if (strcmp (scope, "process") == 0) {
                 root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
@@ -189,7 +186,22 @@ found:
         } else if (strcmp (scope, "always") == 0) {
                 root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
         } else if (strcmp (scope, "grant") == 0) {
+                uid_t granted_by;
+
                 root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+
+                if (num_tokens < 5)
+                        goto out;
+
+                granted_by = strtol (tokens[3], &endp, 10);
+                if  (*endp != '\0') {
+                        fprintf (stderr, "polkit-revoke-helper: cannot parse granted-by uid\n");
+                        goto out;
+                }
+
+                if (granted_by != invoking_uid)
+                        not_granted_by_self = TRUE;
+                
         } else {
                 fprintf (stderr, "polkit-revoke-helper: unknown scope '%s'\n", scope);
                 goto out;
@@ -197,7 +209,7 @@ found:
 
         if (invoking_uid != 0) {
                 /* Check that the caller is privileged to do this... */
-                if (invoking_uid != uid_to_revoke) {
+                if (not_granted_by_self || (invoking_uid != uid_to_revoke)) {
                         pid_t ppid;
                         
                         ppid = getppid ();
