@@ -157,6 +157,8 @@ polkit_check_authv (pid_t pid, const char **action_ids)
 
         ret = 0;
         errno = ENOENT;
+        context = NULL;
+        caller = NULL;
 
         dbus_error_init (&error);
         bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);

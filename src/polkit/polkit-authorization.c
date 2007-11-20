@@ -83,6 +83,8 @@ struct _PolKitAuthorization
         polkit_bool_t explicitly_granted;
         uid_t explicitly_granted_by;
 
+        polkit_bool_t is_negative;
+
         char *session_id;
 };
 
@@ -250,10 +252,15 @@ _polkit_authorization_new_for_uid (const char *entry_in_auth_file, uid_t uid)
  *                     authc_str) >= (int) sizeof (grant_line)) {
  *
  */
-        else if (strcmp (t[0], "grant") == 0) {
+        else if (strcmp (t[0], "grant") == 0 ||
+                 strcmp (t[0], "grant-negative") == 0) {
 
                 if (num_t != 5)
                         goto error;
+
+                if (strcmp (t[0], "grant-negative") == 0) {
+                        auth->is_negative = TRUE;
+                }
 
                 auth->scope = POLKIT_AUTHORIZATION_SCOPE_ALWAYS;
                 auth->explicitly_granted = TRUE;
@@ -545,6 +552,7 @@ polkit_authorization_was_granted_via_defaults (PolKitAuthorization *auth,
  * polkit_authorization_was_granted_explicitly:
  * @auth: the object
  * @out_by_whom: return location
+ * @out_is_negative: return location
  *
  * Determine if the authorization was explicitly granted by a
  * sufficiently privileged user.
@@ -553,21 +561,26 @@ polkit_authorization_was_granted_via_defaults (PolKitAuthorization *auth,
  * one of these functions can return #TRUE.
  *
  * Returns: #TRUE if the authorization was explicitly granted by a
- * sufficiently privileger user.
+ * sufficiently privileger user. If %TRUE, the user who granted the
+ * authorization is returned in %out_by_whom. If the authorization is
+ * negative, %TRUE is returned in %out_is_negative.
  *
  * Since: 0.7
  */ 
 polkit_bool_t 
 polkit_authorization_was_granted_explicitly (PolKitAuthorization *auth,
-                                             uid_t *out_by_whom)
+                                             uid_t               *out_by_whom,
+                                             polkit_bool_t       *out_is_negative)
 {
         kit_return_val_if_fail (auth != NULL, FALSE);
         kit_return_val_if_fail (out_by_whom != NULL, FALSE);
+        kit_return_val_if_fail (out_is_negative != NULL, FALSE);
 
         if (!auth->explicitly_granted)
                 return FALSE;
 
         *out_by_whom = auth->explicitly_granted_by;
+        *out_is_negative = auth->is_negative;
 
         return TRUE;
 }

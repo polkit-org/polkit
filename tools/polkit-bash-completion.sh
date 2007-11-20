@@ -7,7 +7,7 @@ __polkit_auth() {
 
     case $COMP_CWORD in
         1)
-            COMPREPLY=($(IFS=: compgen -S' ' -W "--obtain:--show-obtainable:--explicit:--explicit-detail:--grant:--revoke:--user:--version:--help" -- $cur))
+            COMPREPLY=($(IFS=: compgen -S' ' -W "--obtain:--show-obtainable:--explicit:--explicit-detail:--grant:--block:--revoke:--user:--version:--help" -- $cur))
             ;;
         2)
 	    case "${COMP_WORDS[1]}" in
@@ -17,7 +17,7 @@ __polkit_auth() {
                 --revoke) 
                     COMPREPLY=($(compgen -W "$(polkit-auth --explicit)" -- $cur))
                     ;;
-                --grant) 
+                --grant|--block)
                     COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
                     ;;
                 --user)   
@@ -28,9 +28,9 @@ __polkit_auth() {
         3)
 	    case "${COMP_WORDS[1]}" in
                 --user)
-                    COMPREPLY=($(IFS=: compgen -S' ' -W "--explicit:--explicit-detail:--grant:--revoke" -- $cur))
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "--explicit:--explicit-detail:--grant:--block:--revoke" -- $cur))
                     ;;
-                --grant)
+                --grant|--block)
                     COMPREPLY=($(IFS=: compgen -S' ' -W "--constraint" -- $cur))
                     ;;
             esac
@@ -54,7 +54,7 @@ __polkit_auth() {
                             ;;
                     esac
                     ;;
-                --grant)
+                --grant|--block)
                     COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
                     ;;
                 --constraint)
@@ -64,7 +64,7 @@ __polkit_auth() {
             ;;
         5)
 	    case "${COMP_WORDS[3]}" in
-                --grant)
+                --grant|--block)
                     COMPREPLY=($(IFS=: compgen -S' ' -W "--constraint" -- $cur))
                     ;;
             esac

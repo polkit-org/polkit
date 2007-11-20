@@ -340,7 +340,10 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                                 auth = _polkit_authorization_new_for_uid (line, uid2);
                                 
                                 if (auth != NULL) {
-                                        ret = kit_list_prepend (ret, auth);
+                                        /* we need the authorizations in the chronological order... 
+                                         * (TODO: optimized: prepend, then reverse after all items have been inserted)
+                                         */
+                                        ret = kit_list_append (ret, auth);
                                 }
                         }
                         
@@ -540,12 +543,17 @@ typedef struct {
         uid_t session_uid; 
         char *session_objpath;
         PolKitSession *session;
+
+        polkit_bool_t *out_is_authorized;
+        polkit_bool_t *out_is_negative_authorized;
 } CheckDataSession;
 
 static polkit_bool_t 
 _check_auth_for_session (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
 {
         polkit_bool_t ret;
+        uid_t pimp_uid;
+        polkit_bool_t is_negative;
         CheckDataSession *cd = (CheckDataSession *) user_data;
         PolKitAuthorizationConstraint *constraint;
 
@@ -573,7 +581,29 @@ _check_auth_for_session (PolKitAuthorizationDB *authdb, PolKitAuthorization *aut
                 break;
         }
 
-        ret = TRUE;
+        if (!polkit_authorization_was_granted_explicitly (auth, &pimp_uid, &is_negative))
+                is_negative = FALSE;
+
+        if (is_negative) {
+                *(cd->out_is_authorized) = FALSE;
+                *(cd->out_is_negative_authorized) = TRUE;
+        } else {
+                *(cd->out_is_authorized) = TRUE;
+                *(cd->out_is_negative_authorized) = FALSE;
+        }
+
+        /* keep iterating; we may find negative auths... */
+
+        if (is_negative) {
+                *(cd->out_is_authorized) = FALSE;
+                *(cd->out_is_negative_authorized) = TRUE;
+                /* it only takes a single negative auth to block things so stop iterating */
+                ret = TRUE;
+        } else {
+                *(cd->out_is_authorized) = TRUE;
+                *(cd->out_is_negative_authorized) = FALSE;
+                /* keep iterating; we may find negative auths... */
+        }
 
 no_match:
         return ret;
@@ -585,9 +615,14 @@ no_match:
  * @action: the action to check for
  * @session: the session to check for
  * @out_is_authorized: return location
+ * @out_is_negative_authorized: return location
  *
  * Looks in the authorization database and determine if processes from
- * the given session are authorized to do the given specific action.
+ * the given session are authorized to do the given specific
+ * action. If there is an authorization record that matches the
+ * session, @out_is_authorized will be set to %TRUE. If there is a
+ * negative authorization record matching the session
+ * @out_is_negative_authorized will be set to %TRUE.
  *
  * Returns: #TRUE if the look up was performed; #FALSE if the caller
  * of this function lacks privileges to ask this question (e.g. asking
@@ -599,7 +634,8 @@ polkit_bool_t
 polkit_authorization_db_is_session_authorized (PolKitAuthorizationDB *authdb,
                                                PolKitAction          *action,
                                                PolKitSession         *session,
-                                               polkit_bool_t         *out_is_authorized)
+                                               polkit_bool_t         *out_is_authorized,
+                                               polkit_bool_t         *out_is_negative_authorized)
 {
         polkit_bool_t ret;
         CheckDataSession cd;
@@ -624,13 +660,17 @@ polkit_authorization_db_is_session_authorized (PolKitAuthorizationDB *authdb,
 
         ret = TRUE;
 
+        cd.out_is_authorized = out_is_authorized;
+        cd.out_is_negative_authorized = out_is_negative_authorized;
         *out_is_authorized = FALSE;
+        *out_is_negative_authorized = FALSE;
+
         if (polkit_authorization_db_foreach_for_uid (authdb,
                                                      cd.session_uid, 
                                                      _check_auth_for_session,
                                                      &cd,
                                                      NULL)) {
-                *out_is_authorized = TRUE;
+                ;
         }
 
         return ret;
@@ -644,13 +684,17 @@ typedef struct {
         char *session_objpath;
         PolKitCaller *caller;
         polkit_bool_t revoke_if_one_shot;
+
+        polkit_bool_t *out_is_authorized;
+        polkit_bool_t *out_is_negative_authorized;
 } CheckData;
 
 static polkit_bool_t 
 _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
 {
-
         polkit_bool_t ret;
+        uid_t pimp_uid;
+        polkit_bool_t is_negative;
         pid_t caller_pid;
         polkit_uint64_t caller_pid_start_time;
         CheckData *cd = (CheckData *) user_data;
@@ -701,7 +745,19 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
                 break;
         }
 
-        ret = TRUE;
+        if (!polkit_authorization_was_granted_explicitly (auth, &pimp_uid, &is_negative))
+                is_negative = FALSE;
+
+        if (is_negative) {
+                *(cd->out_is_authorized) = FALSE;
+                *(cd->out_is_negative_authorized) = TRUE;
+                /* it only takes a single negative auth to block things so stop iterating */
+                ret = TRUE;
+        } else {
+                *(cd->out_is_authorized) = TRUE;
+                *(cd->out_is_negative_authorized) = FALSE;
+                /* keep iterating; we may find negative auths... */
+        }
 
 
 no_match:
@@ -716,9 +772,13 @@ no_match:
  * @revoke_if_one_shot: Whether to revoke one-shot authorizations. See
  * discussion in polkit_context_is_caller_authorized() for details.
  * @out_is_authorized: return location
+ * @out_is_negative_authorized: return location
  *
  * Looks in the authorization database if the given caller is
- * authorized to do the given action.
+ * authorized to do the given action. If there is an authorization
+ * record that matches the caller, @out_is_authorized will be set to
+ * %TRUE. If there is a negative authorization record matching the
+ * caller @out_is_negative_authorized will be set to %TRUE.
  *
  * Returns: #TRUE if the look up was performed; #FALSE if the caller
  * of this function lacks privileges to ask this question (e.g. asking
@@ -731,7 +791,8 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                                               PolKitAction          *action,
                                               PolKitCaller          *caller,
                                               polkit_bool_t          revoke_if_one_shot,
-                                              polkit_bool_t         *out_is_authorized)
+                                              polkit_bool_t         *out_is_authorized,
+                                              polkit_bool_t         *out_is_negative_authorized)
 {
         PolKitSession *session;
         polkit_bool_t ret;
@@ -769,13 +830,17 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
 
         ret = TRUE;
 
+        cd.out_is_authorized = out_is_authorized;
+        cd.out_is_negative_authorized = out_is_negative_authorized;
         *out_is_authorized = FALSE;
+        *out_is_negative_authorized = FALSE;
+
         if (polkit_authorization_db_foreach_for_uid (authdb,
                                                      cd.caller_uid, 
                                                      _check_auth_for_caller,
                                                      &cd,
                                                      NULL)) {
-                *out_is_authorized = TRUE;
+                ;
         }
 
         return ret;
@@ -848,6 +913,77 @@ out:
         kit_free (helper_argv[3]);
         return ret;
 }
+
+static polkit_bool_t
+_check_self_block_foreach (PolKitAuthorizationDB *authdb,
+                           PolKitAuthorization   *auth, 
+                           void                  *user_data)
+{
+        polkit_bool_t *is_self_blocked = (polkit_bool_t *) user_data;
+        polkit_bool_t is_negative;
+        uid_t pimp_uid;
+        polkit_bool_t ret;
+
+        if (!polkit_authorization_was_granted_explicitly (auth, &pimp_uid, &is_negative))
+                is_negative = FALSE;
+
+        if (is_negative) {
+                if (pimp_uid == getuid ()) {
+                        *is_self_blocked = TRUE;
+                        /* can't stop iterating.. there may be another one who blocked us too! */
+                } else {
+                        *is_self_blocked = FALSE;
+                        ret = TRUE;
+                        /* nope; someone else blocked us.. that's enough to ruin it */
+                }                        
+        }
+        
+        return ret;
+}
+
+/**
+ * polkit_authorization_db_is_uid_blocked_by_self:
+ * @authdb: the authorization database
+ * @action: the action to check for
+ * @uid: the user to check for
+ * @error: return location for error
+ *
+ * Determine whether there exists negative authorizations for the
+ * particular uid on the given action and whether those negative
+ * authorization are "granted" by the uid itself.
+ *
+ * If uid is different from getuid(), e.g. if the calling process asks
+ * for auths of another user this function will set an error if the
+ * calling user is not authorized for org.freedesktop.policykit.read.
+ *
+ * Returns: Result of computation described above; if error is set
+ * will return %FALSE.
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_authorization_db_is_uid_blocked_by_self (PolKitAuthorizationDB *authdb,
+                                                PolKitAction          *action,
+                                                uid_t                  uid,
+                                                PolKitError          **error)
+{
+        polkit_bool_t is_self_blocked;
+
+        kit_return_val_if_fail (authdb != NULL, FALSE);
+        kit_return_val_if_fail (action != NULL, FALSE);
+                                
+        is_self_blocked = FALSE;
+        polkit_authorization_db_foreach_for_action_for_uid (authdb,
+                                                            action,
+                                                            uid,
+                                                            _check_self_block_foreach,
+                                                            &is_self_blocked,
+                                                            error);
+
+        return is_self_blocked;
+}
+
+
 
 #ifdef POLKIT_BUILD_TESTS
 

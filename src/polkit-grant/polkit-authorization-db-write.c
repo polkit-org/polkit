@@ -533,6 +533,9 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
 typedef struct {
         char *action_id;
         PolKitAuthorizationConstraint  *constraint;
+
+        polkit_bool_t is_authorized;
+        polkit_bool_t is_negative_authorized;
 } CheckDataGrant;
 
 static polkit_bool_t 
@@ -540,6 +543,7 @@ _check_auth_for_grant (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth,
 {
         uid_t pimp;
         polkit_bool_t ret;
+        polkit_bool_t is_negative;
         CheckDataGrant *cd = (CheckDataGrant *) user_data;
 
         ret = FALSE;
@@ -547,42 +551,34 @@ _check_auth_for_grant (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth,
         if (strcmp (polkit_authorization_get_action_id (auth), cd->action_id) != 0)
                 goto no_match;
 
-        if (!polkit_authorization_was_granted_explicitly (auth, &pimp))
+        if (!polkit_authorization_was_granted_explicitly (auth, &pimp, &is_negative))
                 goto no_match;
 
         if (!polkit_authorization_constraint_equal (polkit_authorization_get_constraint (auth), cd->constraint))
                 goto no_match;
 
-        ret = TRUE;
+        if (is_negative) {
+                cd->is_authorized = FALSE;
+                cd->is_negative_authorized = TRUE;
+                /* it only takes a single negative auth to block things so stop iterating */
+                ret = TRUE;
+        } else {
+                cd->is_authorized = TRUE;
+                cd->is_negative_authorized = FALSE;
+                /* keep iterating; we may find negative auths... */
+        }
 
 no_match:
         return ret;
 }
 
-/**
- * polkit_authorization_db_grant_to_uid:
- * @authdb: authorization database
- * @action: action
- * @uid: uid to grant to
- * @constraint: what constraint to put on the authorization
- * @error: return location for error
- *
- * Grants an authorization to a user for a specific action. This
- * requires the org.freedesktop.policykit.grant authorization.
- *
- * This function is in <literal>libpolkit-grant</literal>.
- *
- * Returns: #TRUE if the authorization was granted, #FALSE otherwise
- * and error will be set
- *
- * Since: 0.7
- */
-polkit_bool_t 
-polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
-                                      PolKitAction                   *action,
-                                      uid_t                           uid,
-                                      PolKitAuthorizationConstraint  *constraint,
-                                      PolKitError                   **error)
+static polkit_bool_t 
+_grant_internal (PolKitAuthorizationDB          *authdb,
+                 PolKitAction                   *action,
+                 uid_t                           uid,
+                 PolKitAuthorizationConstraint  *constraint,
+                 PolKitError                   **error,
+                 polkit_bool_t                   is_negative)
 {
         GError *g_error;
         char *helper_argv[6] = {PACKAGE_LIBEXEC_DIR "/polkit-explicit-grant-helper", NULL, NULL, NULL, NULL, NULL};
@@ -590,6 +586,7 @@ polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
         gint exit_status;
         char cbuf[256];
         CheckDataGrant cd;
+        polkit_bool_t did_exist;
 
         ret = FALSE;
 
@@ -614,16 +611,29 @@ polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
 
         /* check if we have the auth already */
         cd.constraint = constraint;
-        if (!polkit_authorization_db_foreach_for_uid (authdb,
-                                                      uid, 
-                                                      _check_auth_for_grant,
-                                                      &cd,
-                                                      error)) {
-                /* happens if caller can't read auths of target user */
-                if (error != NULL && polkit_error_is_set (*error)) {
-                        goto out;
-                }
+        cd.is_authorized = FALSE;
+        cd.is_negative_authorized = FALSE;
+        polkit_authorization_db_foreach_for_uid (authdb,
+                                                 uid, 
+                                                 _check_auth_for_grant,
+                                                 &cd,
+                                                 error);
+
+        /* happens if caller can't read auths of target user */
+        if (error != NULL && polkit_error_is_set (*error)) {
+                goto out;
+        }
+
+        did_exist = FALSE;
+        if (is_negative) {
+                if (cd.is_negative_authorized)
+                        did_exist = TRUE;
         } else {
+                if (cd.is_authorized)
+                        did_exist = TRUE;
+        }
+        
+        if (did_exist) {
                 /* so it did exist.. */
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_AUTHORIZATION_ALREADY_EXISTS, 
@@ -635,7 +645,10 @@ polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
 
         helper_argv[1] = cd.action_id;
         helper_argv[2] = cbuf;
-        helper_argv[3] = "uid";
+        if (is_negative)
+                helper_argv[3] = "uid-negative";
+        else
+                helper_argv[3] = "uid";
         helper_argv[4] = g_strdup_printf ("%d", uid);
         helper_argv[5] = NULL;
 
@@ -676,5 +689,65 @@ polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
 out:
         g_free (helper_argv[4]);
         return ret;
+}
 
+/**
+ * polkit_authorization_db_grant_to_uid:
+ * @authdb: authorization database
+ * @action: action
+ * @uid: uid to grant to
+ * @constraint: what constraint to put on the authorization
+ * @error: return location for error
+ *
+ * Grants an authorization to a user for a specific action. This
+ * requires the org.freedesktop.policykit.grant authorization.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
+ *
+ * Returns: #TRUE if the authorization was granted, #FALSE otherwise
+ * and error will be set
+ *
+ * Since: 0.7
+ */
+polkit_bool_t 
+polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
+                                      PolKitAction                   *action,
+                                      uid_t                           uid,
+                                      PolKitAuthorizationConstraint  *constraint,
+                                      PolKitError                   **error)
+{
+        return _grant_internal (authdb, action, uid, constraint, error, FALSE);
+}
+
+/**
+ * polkit_authorization_db_grant_negative_to_uid:
+ * @authdb: authorization database
+ * @action: action
+ * @uid: uid to grant to
+ * @constraint: what constraint to put on the authorization
+ * @error: return location for error
+ *
+ * Grants a negative authorization to a user for a specific action. If
+ * @uid differs from the calling user, the
+ * org.freedesktop.policykit.grant authorization is required. In other
+ * words, users may "grant" negative authorizations to themselves.
+ *
+ * A negative authorization is normally used to block users that would
+ * normally be authorized from an implicit authorization.
+ *
+ * This function is in <literal>libpolkit-grant</literal>.
+ *
+ * Returns: #TRUE if the authorization was granted, #FALSE otherwise
+ * and error will be set
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_authorization_db_grant_negative_to_uid           (PolKitAuthorizationDB          *authdb,
+                                                         PolKitAction                   *action,
+                                                         uid_t                           uid,
+                                                         PolKitAuthorizationConstraint  *constraint,
+                                                         PolKitError                   **error)
+{
+        return _grant_internal (authdb, action, uid, constraint, error, TRUE);
 }

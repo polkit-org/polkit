@@ -24,6 +24,7 @@
       <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --explicit</option></arg>
       <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --explicit-detail</option></arg>
       <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --grant <replaceable>action</replaceable></option><arg><option>--constraint <replaceable>constraint</replaceable></option></arg></arg>
+      <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --block <replaceable>action</replaceable></option><arg><option>--constraint <replaceable>constraint</replaceable></option></arg></arg>
       <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --revoke <replaceable>action</replaceable></option></arg>
       <arg><option>--version</option></arg>
       <arg><option>--help</option></arg>
@@ -105,6 +106,24 @@
             <literal>active</literal>, <literal>local+active</literal>.
             The authorization needed to grant authorizations is
             <literal>org.freedesktop.policykit.grant</literal>.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option><arg><option>--user <replaceable>user</replaceable></option></arg> --block <replaceable>action</replaceable></option><arg><option>--constraint <replaceable>constraint</replaceable></option></arg></term>
+        <listitem>
+          <para>
+            Grant an negative authorization for an action. Negative
+            authorizations are normally used to block users that would
+            normally be authorized due to implicit
+            authorizations. Optionally, a constraint on the granted
+            negative authorization can be specified; allowed values
+            are: <literal>local</literal>,
+            <literal>active</literal>, <literal>local+active</literal>.
+            The authorization needed to grant negative authorizations is
+            <literal>org.freedesktop.policykit.grant</literal> if the
+            "beneficiary" is another user.
           </para>
         </listitem>
       </varlistentry>

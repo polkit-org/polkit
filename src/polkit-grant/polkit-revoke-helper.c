@@ -185,7 +185,8 @@ main (int argc, char *argv[])
                 root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
         } else if (strcmp (scope, "always") == 0) {
                 root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
-        } else if (strcmp (scope, "grant") == 0) {
+        } else if (strcmp (scope, "grant") == 0 ||
+                   strcmp (scope, "grant-negative") == 0) {
                 uid_t granted_by;
 
                 root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
@@ -208,8 +209,10 @@ main (int argc, char *argv[])
         }
 
         if (invoking_uid != 0) {
-                /* Check that the caller is privileged to do this... */
-                if (not_granted_by_self || (invoking_uid != uid_to_revoke)) {
+                /* Check that the caller is privileged to do this... basically, callers can only
+                 * revoke auths granted by themselves...
+                 */
+                if (not_granted_by_self) {
                         pid_t ppid;
                         
                         ppid = getppid ();

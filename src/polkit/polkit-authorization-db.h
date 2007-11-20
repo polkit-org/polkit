@@ -68,13 +68,15 @@ polkit_bool_t          polkit_authorization_db_validate       (PolKitAuthorizati
 polkit_bool_t polkit_authorization_db_is_session_authorized (PolKitAuthorizationDB *authdb,
                                                              PolKitAction          *action,
                                                              PolKitSession         *session,
-                                                             polkit_bool_t         *out_is_authorized);
+                                                             polkit_bool_t         *out_is_authorized,
+                                                             polkit_bool_t         *out_is_negative_authorized);
 
 polkit_bool_t polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                                                             PolKitAction          *action,
                                                             PolKitCaller          *caller,
                                                             polkit_bool_t          revoke_if_one_shot,
-                                                            polkit_bool_t         *out_is_authorized);
+                                                            polkit_bool_t         *out_is_authorized,
+                                                            polkit_bool_t         *out_is_negative_authorized);
 
 /**
  * PolKitAuthorizationDBForeach:
@@ -144,10 +146,21 @@ polkit_bool_t polkit_authorization_db_grant_to_uid           (PolKitAuthorizatio
                                                               PolKitAuthorizationConstraint  *constraint,
                                                               PolKitError                   **error);
 
+polkit_bool_t polkit_authorization_db_grant_negative_to_uid           (PolKitAuthorizationDB          *authdb,
+                                                                       PolKitAction                   *action,
+                                                                       uid_t                           uid,
+                                                                       PolKitAuthorizationConstraint  *constraint,
+                                                                       PolKitError                   **error);
+
 polkit_bool_t polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
                                                     PolKitAuthorization *auth,
                                                     PolKitError **error);
 
+
+polkit_bool_t polkit_authorization_db_is_uid_blocked_by_self (PolKitAuthorizationDB *authdb,
+                                                              PolKitAction          *action,
+                                                              uid_t                  uid,
+                                                              PolKitError          **error);
 
 POLKIT_END_DECLS
 

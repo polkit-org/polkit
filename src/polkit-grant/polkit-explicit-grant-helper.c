@@ -124,9 +124,16 @@ main (int argc, char *argv[])
 #define TARGET_UID 0
         int target;
         uid_t target_uid = -1;
+        polkit_bool_t is_negative;
 
-        /* (third, fourth) is one of: ("uid", uid) */
-        if (strcmp (argv[3], "uid") == 0) {
+        is_negative = FALSE;
+
+        /* (third, fourth) is one of: ("uid", uid), ("uid-negative", uid) */
+        if (strcmp (argv[3], "uid") == 0 || strcmp (argv[3], "uid-negative") == 0) {
+
+                if (strcmp (argv[3], "uid") != 0) {
+                        is_negative = TRUE;
+                }
 
                 target = TARGET_UID;
                 target_uid = strtol (argv[4], &endp, 10);
@@ -147,14 +154,19 @@ main (int argc, char *argv[])
         /* OK, we're done parsing ... check if the user is authorized */
 
         if (invoking_uid != 0) {
-                pid_t ppid;
-                        
-                ppid = getppid ();
-                if (ppid == 1)
-                        goto out;
 
-                if (polkit_check_auth (ppid, "org.freedesktop.policykit.grant", NULL) == 0) {
-                        goto out;
+                if (is_negative && (invoking_uid == target_uid)) {
+                        /* it's fine to grant negative-auths to one self... */
+                } else {
+                        pid_t ppid;
+                        
+                        ppid = getppid ();
+                        if (ppid == 1)
+                                goto out;
+                        
+                        if (polkit_check_auth (ppid, "org.freedesktop.policykit.grant", NULL) == 0) {
+                                goto out;
+                        }
                 }
         }
 
@@ -169,7 +181,8 @@ main (int argc, char *argv[])
 
         if (snprintf (grant_line, 
                       sizeof (grant_line), 
-                      "grant:%s:%Lu:%d:%s\n",
+                      is_negative ? "grant-negative:%s:%Lu:%d:%s\n" : 
+                                    "grant:%s:%Lu:%d:%s\n" ,
                       action_id,
                       (polkit_uint64_t) now.tv_sec,
                       invoking_uid,

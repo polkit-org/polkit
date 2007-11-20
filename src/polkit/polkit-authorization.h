@@ -91,7 +91,8 @@ polkit_bool_t polkit_authorization_was_granted_via_defaults  (PolKitAuthorizatio
                                                               uid_t *out_user_authenticated_as);
 
 polkit_bool_t polkit_authorization_was_granted_explicitly  (PolKitAuthorization *auth,
-                                                            uid_t *out_by_whom);
+                                                            uid_t *out_by_whom,
+                                                            polkit_bool_t *out_is_negative);
 
 POLKIT_END_DECLS
 

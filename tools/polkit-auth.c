@@ -56,6 +56,7 @@ static polkit_bool_t opt_show_obtainable;
 static char *opt_revoke_action_id;
 static char *opt_user;
 static char *opt_grant_action_id;
+static char *opt_block_action_id;
 static char *opt_constraint;
 
 typedef struct {
@@ -414,8 +415,6 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 g_hash_table_insert (already_shown, g_strdup (action_id), (gpointer) 1);
         }
 
-        printf ("%s\n", action_id);
-
         if (opt_show_explicit_detail) {
                 char *s;
                 time_t time_granted;
@@ -423,6 +422,7 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 char time_string[128];
                 uid_t auth_uid;
                 uid_t pimp_uid;
+                polkit_bool_t is_negative;
                 pid_t pid;
                 polkit_uint64_t pid_start_time;
                 const char *cstr;
@@ -430,6 +430,8 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 PolKitAction *pk_action;
                 PolKitResult pk_result;
                 char exe[PATH_MAX];
+
+                printf ("%s\n", action_id);
 
                 pk_action = polkit_action_new ();
                 polkit_action_set_action_id (pk_action, action_id);
@@ -461,11 +463,12 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 time_granted = polkit_authorization_get_time_of_grant (auth);
                 time_tm = localtime (&time_granted);
 
+                is_negative = FALSE;
                 if (polkit_authorization_was_granted_via_defaults (auth, &auth_uid)) { 
                         s = g_strdup_printf ("%%c by auth as %s (uid %d)", get_name_from_uid (auth_uid), auth_uid);
                         strftime (time_string, sizeof (time_string), s, time_tm);
                         g_free (s);
-                } else if (polkit_authorization_was_granted_explicitly (auth, &pimp_uid)) { 
+                } else if (polkit_authorization_was_granted_explicitly (auth, &pimp_uid, &is_negative)) { 
                         s = g_strdup_printf ("%%c from %s (uid %d)", get_name_from_uid (pimp_uid), pimp_uid);
                         strftime (time_string, sizeof (time_string), s, time_tm);
                         g_free (s);
@@ -489,7 +492,20 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 }
                 printf ("  Constraints: %s\n", cstr);
 
+                if (is_negative) {
+                        printf ("  Negative:    Yes\n");
+                }
+
                 printf ("\n");
+        } else {
+                uid_t pimp_uid;
+                polkit_bool_t is_negative;
+
+                if (!polkit_authorization_was_granted_explicitly (auth, &pimp_uid, &is_negative))
+                        is_negative = FALSE;
+
+                if (!is_negative)
+                        printf ("%s\n", action_id);
         }
 
 
@@ -681,6 +697,7 @@ main (int argc, char *argv[])
         opt_is_version = FALSE;
         opt_obtain_action_id = NULL;
         opt_grant_action_id = NULL;
+        opt_block_action_id = NULL;
         opt_constraint = NULL;
         opt_revoke_action_id = NULL;
         opt_show_obtainable = FALSE;
@@ -695,6 +712,7 @@ main (int argc, char *argv[])
                         {"explicit-detail", 0, NULL, 0},
 			{"obtain", 1, NULL, 0},
 			{"grant", 1, NULL, 0},
+			{"block", 1, NULL, 0},
                         {"constraint", 1, NULL, 0},
 			{"revoke", 1, NULL, 0},
 			{"show-obtainable", 0, NULL, 0},
@@ -721,6 +739,8 @@ main (int argc, char *argv[])
 				opt_obtain_action_id = strdup (optarg);
 			} else if (strcmp (opt, "grant") == 0) {
 				opt_grant_action_id = strdup (optarg);
+			} else if (strcmp (opt, "block") == 0) {
+				opt_block_action_id = strdup (optarg);
 			} else if (strcmp (opt, "constraint") == 0) {
 				opt_constraint = strdup (optarg);
 			} else if (strcmp (opt, "revoke") == 0) {
@@ -765,10 +785,12 @@ main (int argc, char *argv[])
                 if (!obtain_authorization (opt_obtain_action_id))
                         goto out;                
                 ret = 0;
-        } else if (opt_grant_action_id != NULL) {
+        } else if (opt_grant_action_id != NULL ||
+                   opt_block_action_id != NULL) {
                 PolKitAction *pk_action;
                 PolKitError *pk_error;
                 PolKitAuthorizationConstraint *constraint;
+                polkit_bool_t res;
 
                 if (opt_user == NULL && uid == 0) {
                         fprintf (stderr, "polkit-auth: Cowardly refusing to grant authorization to uid 0 (did you forget to specify what user to grant to?). To force, run with --user root.\n");
@@ -776,7 +798,10 @@ main (int argc, char *argv[])
                 }
 
                 pk_action = polkit_action_new ();
-                polkit_action_set_action_id (pk_action, opt_grant_action_id);
+                if (opt_block_action_id != NULL)
+                        polkit_action_set_action_id (pk_action, opt_block_action_id);
+                else
+                        polkit_action_set_action_id (pk_action, opt_grant_action_id);
 
                 if (opt_constraint != NULL) {
                         constraint = polkit_authorization_constraint_from_string (opt_constraint);
@@ -789,18 +814,28 @@ main (int argc, char *argv[])
                 }
 
                 pk_error = NULL;
-                if (!polkit_authorization_db_grant_to_uid (pk_authdb,
-                                                           pk_action,
-                                                           uid,
-                                                           constraint,
-                                                           &pk_error)) {
+                if (opt_block_action_id != NULL) {
+                        res = polkit_authorization_db_grant_negative_to_uid (pk_authdb,
+                                                                             pk_action,
+                                                                             uid,
+                                                                             constraint,
+                                                                             &pk_error);
+                } else {
+                        res = polkit_authorization_db_grant_to_uid (pk_authdb,
+                                                                    pk_action,
+                                                                    uid,
+                                                                    constraint,
+                                                                    &pk_error);
+                }
+
+                if (!res) {
                         fprintf (stderr, "polkit-auth: %s: %s\n", 
                                  polkit_error_get_error_name (pk_error),
                                  polkit_error_get_error_message (pk_error));
                         polkit_error_free (pk_error);
                         goto out;
                 }
-
+                
                 ret = 0;
 
         } else if (opt_revoke_action_id != NULL) {
