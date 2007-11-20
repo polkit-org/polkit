@@ -95,6 +95,23 @@ _polkit_authorization_get_authfile_entry (PolKitAuthorization *auth)
         return auth->entry_in_auth_file;
 }
 
+
+/**
+ * polkit_authorization_get_type:
+ * @auth: the authorization object
+ *
+ * Determine the type of authorization.
+ *
+ * Returns: the authorization type 
+ *
+ * Since: 0.7
+ */
+PolKitAuthorizationType 
+polkit_authorization_get_type (PolKitAuthorization *auth)
+{
+        return POLKIT_AUTHORIZATION_TYPE_UID;
+}
+
 #ifdef POLKIT_AUTHDB_DEFAULT
 
 PolKitAuthorization *

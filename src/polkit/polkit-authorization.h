@@ -61,6 +61,8 @@ polkit_bool_t        polkit_authorization_validate       (PolKitAuthorization *a
  *
  * The scope of an authorization; e.g. whether it's limited to a
  * process, a session or unlimited.
+ *
+ * Since: 0.7
  */
 typedef enum {
         POLKIT_AUTHORIZATION_SCOPE_PROCESS_ONE_SHOT,
@@ -68,6 +70,22 @@ typedef enum {
         POLKIT_AUTHORIZATION_SCOPE_SESSION,
         POLKIT_AUTHORIZATION_SCOPE_ALWAYS,
 } PolKitAuthorizationScope;
+
+/**
+ * PolKitAuthorizationType:
+ * @POLKIT_AUTHORIZATION_TYPE_UID: The authorization is for a UNIX user
+ *
+ * The type of authorization; e.g. whether it applies to a user,
+ * group, security context and so on (right now only users are
+ * supported).
+ *
+ * Since: 0.7
+ */
+typedef enum {
+        POLKIT_AUTHORIZATION_TYPE_UID,
+} PolKitAuthorizationType;
+
+PolKitAuthorizationType polkit_authorization_get_type (PolKitAuthorization *auth);
 
 const char *polkit_authorization_get_action_id (PolKitAuthorization *auth);
 
