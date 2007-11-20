@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
@@ -47,6 +48,7 @@
 
 #include <polkit/polkit-private.h>
 #include "polkit-simple.h"
+#include "polkit-dbus.h"
 
 
 /**
@@ -230,6 +232,151 @@ out:
 
         return ret;
 }
+
+extern char **environ;
+
+static polkit_bool_t
+_auth_show_dialog_text (const char *action_id, pid_t pid, DBusError *error)
+{
+        unsigned int n;
+        polkit_bool_t ret;
+        int exit_status;
+        char *helper_argv[] = {PACKAGE_BIN_DIR "/polkit-auth", "--obtain", NULL, NULL};
+        char **envp;
+        size_t envsize;
+        char buf[256];
+
+        ret = FALSE;
+
+        if (isatty (STDOUT_FILENO) != 1 || isatty (STDIN_FILENO) != 1) {
+                dbus_set_error (error, 
+                                "org.freedesktop.PolicyKit.LocalError",
+                                "stdout and/or stdin is not a tty");
+                goto out;
+        }
+
+        envsize = kit_strv_length (environ);
+        envp = kit_new0 (char *, envsize + 3);
+        if (envp == NULL)
+                goto out;
+        for (n = 0; n < envsize; n++)
+                envp[n] = environ[n];
+        envp[envsize] = "POLKIT_AUTH_FORCE_TEXT=1";
+        snprintf (buf, sizeof (buf), "POLKIT_AUTH_GRANT_TO_PID=%d", pid);
+        envp[envsize+1] = buf;
+
+        helper_argv[2] = (char *) action_id;
+
+        if (!kit_spawn_sync (NULL,                           /* const char  *working_directory */
+                             KIT_SPAWN_CHILD_INHERITS_STDIN, /* flags */
+                             helper_argv,                    /* char       **argv */
+                             envp,                           /* char       **envp */
+                             NULL,                           /* char        *stdin */
+                             NULL,                           /* char       **stdout */
+                             NULL,                           /* char       **stderr */
+                             &exit_status)) {                /* int         *exit_status */
+                dbus_set_error (error, 
+                                "org.freedesktop.PolicyKit.LocalError",
+                                "Error spawning polkit-auth: %m");
+                goto out;
+        }
+
+        if (!WIFEXITED (exit_status)) {
+                dbus_set_error (error, 
+                                "org.freedesktop.PolicyKit.LocalError",
+                                "polkit-auth crashed!");
+                goto out;
+        } else if (WEXITSTATUS(exit_status) != 0) {
+                goto out;
+        }
+
+        ret = TRUE;
+
+out:
+        return ret;
+}
+
+/**
+ * polkit_auth_obtain: 
+ * @action_id: The action_id for the #PolKitAction to make the user
+ * authenticate for
+ * @xid: X11 window ID for the window that the dialog will be
+ * transient for. If there is no window, pass 0.
+ * @pid: Process ID of process to grant authorization to. Normally one wants to pass result of getpid().
+ * @error: return location for error; cannot be %NULL
+ *
+ * Convenience function to prompt the user to authenticate to gain an
+ * authorization for the given action. First, an attempt to reach an
+ * Authentication Agent on the session message bus is made. If that
+ * doesn't work and stdout/stdin are both tty's, polkit-auth(1) is
+ * invoked.
+ *
+ * This is a blocking call. If you're using GTK+ see
+ * polkit_gnome_auth_obtain() for a non-blocking version.
+ *
+ * Returns: %TRUE if, and only if, the user successfully
+ * authenticated. %FALSE if the user failed to authenticate or if
+ * error is set
+ *
+ * Since: 0.7
+ */
+polkit_bool_t
+polkit_auth_obtain (const char *action_id, polkit_uint32_t xid, pid_t pid, DBusError *error)
+{
+        polkit_bool_t ret;
+        DBusConnection *bus;
+        DBusMessage *message;
+        DBusMessage *reply;
+
+        kit_return_val_if_fail (action_id != NULL, FALSE);
+        kit_return_val_if_fail (error != NULL, FALSE);
+        kit_return_val_if_fail (!dbus_error_is_set (error), FALSE);
+
+        bus = NULL;
+        message = NULL;
+        reply = NULL;
+        ret = FALSE;
+
+        bus = dbus_bus_get (DBUS_BUS_SESSION, error);
+        if (bus == NULL) {
+                dbus_error_init (error);
+                ret = _auth_show_dialog_text (action_id, pid, error);
+                goto out;
+        }
+
+	message = dbus_message_new_method_call ("org.freedesktop.PolicyKit.AuthenticationAgent", /* service */
+						"/",                                             /* object path */
+						"org.freedesktop.PolicyKit.AuthenticationAgent", /* interface */
+						"ObtainAuthorization");
+	dbus_message_append_args (message, 
+                                  DBUS_TYPE_STRING, &action_id, 
+                                  DBUS_TYPE_UINT32, &xid, 
+                                  DBUS_TYPE_UINT32, &pid,
+                                  DBUS_TYPE_INVALID);
+	reply = dbus_connection_send_with_reply_and_block (bus, message, -1, error);
+	if (reply == NULL || dbus_error_is_set (error)) {
+                ret = _auth_show_dialog_text (action_id, pid, error);
+		goto out;
+	}
+	if (!dbus_message_get_args (reply, NULL,
+				    DBUS_TYPE_BOOLEAN, &ret,
+                                    DBUS_TYPE_INVALID)) {
+                dbus_error_init (error);
+                ret = _auth_show_dialog_text (action_id, pid, error);
+		goto out;
+	}
+
+out:
+        if (bus != NULL)
+                dbus_connection_unref (bus);
+        if (message != NULL)
+                dbus_message_unref (message);
+        if (reply != NULL)
+                dbus_message_unref (reply);
+
+        return ret;
+}
+
 
 #ifdef POLKIT_BUILD_TESTS
 

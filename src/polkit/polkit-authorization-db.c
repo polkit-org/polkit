@@ -278,6 +278,7 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
          * polkituser.
          */
         if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
+                             0,                /* flags */
                              helper_argv,      /* char       **argv */
                              NULL,             /* char       **envp */
                              NULL,             /* char        *stdin */
@@ -882,6 +883,7 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
         helper_argv[3] = kit_strdup_printf ("%d", polkit_authorization_get_uid (auth));
 
         if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
+                             0,                /* flags */
                              helper_argv,      /* char       **argv */
                              NULL,             /* char       **envp */
                              NULL,             /* char        *stdin */

@@ -166,13 +166,14 @@ out:
  * occured and errno will be set.
  */
 kit_bool_t
-kit_spawn_sync (const char  *working_directory,
-                char       **argv,
-                char       **envp,
-                char        *stdin,
-                char       **stdout,
-                char       **stderr,
-                int         *out_exit_status)
+kit_spawn_sync (const char     *working_directory,
+                KitSpawnFlags   flags,
+                char          **argv,
+                char          **envp,
+                char           *stdin,
+                char          **stdout,
+                char          **stderr,
+                int            *out_exit_status)
 {
         kit_bool_t ret;
         pid_t pid;
@@ -186,6 +187,9 @@ kit_spawn_sync (const char  *working_directory,
 
         kit_return_val_if_fail (argv != NULL, FALSE);
         kit_return_val_if_fail (out_exit_status != NULL, FALSE);
+        kit_return_val_if_fail (! ((flags & KIT_SPAWN_CHILD_INHERITS_STDIN) && stdin != NULL), FALSE);
+        kit_return_val_if_fail (! ((flags & KIT_SPAWN_STDOUT_TO_DEV_NULL) && stdout != NULL), FALSE);
+        kit_return_val_if_fail (! ((flags & KIT_SPAWN_STDERR_TO_DEV_NULL) && stderr != NULL), FALSE);
 
         if (stdout != NULL)
                 *stdout = NULL;
@@ -221,7 +225,18 @@ kit_spawn_sync (const char  *working_directory,
         }
 
         if (pid == 0) {
+                int fd_null = -1;
+
                 /* child */
+
+                if ( (!(flags & KIT_SPAWN_CHILD_INHERITS_STDIN)) ||
+                     (flags & KIT_SPAWN_STDOUT_TO_DEV_NULL) ||
+                     (flags & KIT_SPAWN_STDERR_TO_DEV_NULL)) {
+                        fd_null = open ("/dev/null", O_RDONLY);
+                        if (fd_null < 0) {
+                                exit (128 + errno);
+                        }
+                }
 
                 signal (SIGPIPE, SIG_DFL);
 
@@ -248,22 +263,22 @@ kit_spawn_sync (const char  *working_directory,
 
                 /* set stdin, stdout and stderr */
 
-                if (stdin == NULL) {
-                        int fd_null;
-                        fd_null = open ("/dev/null", O_RDONLY);
-                        if (fd_null < 0) {
-                                exit (128 + errno);
-                        }
-                        if (_sane_dup2 (fd_null, 0) < 0) {
-                                exit (128 + errno);
-                        }
-                } else {
+                if (stdin != NULL) {
                         if (_sane_dup2 (stdin_pipe[0], 0) < 0) {
                                 exit (128 + errno);
                         }
+                } else if (! (flags & KIT_SPAWN_CHILD_INHERITS_STDIN)) {
+                        if (_sane_dup2 (fd_null, 0) < 0) {
+                                exit (128 + errno);
+                        }
                 }
+
                 if (stdout != NULL) {
                         if (_sane_dup2 (stdout_pipe[1], 1) < 0) {
+                                exit (128 + errno);
+                        }
+                } else if (flags & KIT_SPAWN_STDOUT_TO_DEV_NULL) {
+                        if (_sane_dup2 (fd_null, 1) < 0) {
                                 exit (128 + errno);
                         }
                 }
@@ -272,7 +287,14 @@ kit_spawn_sync (const char  *working_directory,
                         if (_sane_dup2 (stderr_pipe[1], 2) < 0) {
                                 exit (128 + errno);
                         }
+                } else if (flags & KIT_SPAWN_STDERR_TO_DEV_NULL) {
+                        if (_sane_dup2 (fd_null, 2) < 0) {
+                                exit (128 + errno);
+                        }
                 }
+
+                if (fd_null != -1)
+                        close (fd_null);
 
                 /* finally, execute the child */
                 if (execve (argv[0], argv, envp_to_use) == -1) {
@@ -330,7 +352,6 @@ kit_spawn_sync (const char  *working_directory,
                                       NULL);
                         
                         if (ret < 0 && errno != EINTR) {
-                                kit_warning ("4");
                                 goto out;
                         }
                         
@@ -338,7 +359,6 @@ kit_spawn_sync (const char  *working_directory,
                                 num_written = _write_to (stdin_pipe[1], wp);
                                 
                                 if (num_written == -1)  {
-                                        kit_warning ("3");
                                         goto out;
                                 }
                                 
@@ -355,7 +375,6 @@ kit_spawn_sync (const char  *working_directory,
                                         close (stdout_pipe[0]);
                                         stdout_pipe[0] = -1;
                                 } else if (num_read == -1)  {
-                                        kit_warning ("2");
                                         goto out;
                                 }
                         }
@@ -366,14 +385,12 @@ kit_spawn_sync (const char  *working_directory,
                                         close (stderr_pipe[0]);
                                         stderr_pipe[0] = -1;
                                 } else if (num_read == -1)  {
-                                        kit_warning ("1");
                                         goto out;
                                 }
                         }
                 }
 
                 if (waitpid (pid, out_exit_status, 0) == -1) {
-                        kit_warning ("0");
                         goto out;
                 }
                 pid = -1;
@@ -386,7 +403,6 @@ kit_spawn_sync (const char  *working_directory,
         } else {
                 ret = FALSE;
                 errno = WEXITSTATUS (*out_exit_status) - 128;
-                kit_warning ("kiddo died with errno %d: %m!", errno);
         }
 
 out:
@@ -463,6 +479,7 @@ _run_test (void)
         /* script echoing to stdout and stderr */
         if (kit_file_set_contents (path, 0700, script1, strlen (script1))) {
                 if (kit_spawn_sync ("/",
+                                    0,
                                     argv,
                                     NULL,
                                     NULL,
@@ -477,6 +494,7 @@ _run_test (void)
                 }
 
                 if (kit_spawn_sync ("/",
+                                    0,
                                     argv,
                                     NULL,
                                     NULL,
@@ -492,6 +510,7 @@ _run_test (void)
         /* silent script */
         if (kit_file_set_contents (path, 0700, script2, strlen (script2))) {
                 if (kit_spawn_sync ("/",
+                                    0,
                                     argv,
                                     NULL,
                                     NULL,
@@ -511,6 +530,7 @@ _run_test (void)
                 char *envp[] = {"KIT_TEST_VAR=some_value", NULL};
 
                 if (kit_spawn_sync ("/",
+                                    0,
                                     argv,
                                     envp,
                                     NULL,
@@ -532,6 +552,7 @@ _run_test (void)
                 kit_assert (setenv ("KIT_TEST_VAR", "foobar", 1) == 0);
 
                 if (kit_spawn_sync ("/",
+                                    0,
                                     argv,
                                     envp,
                                     NULL,
@@ -549,6 +570,7 @@ _run_test (void)
         if (kit_file_set_contents (path, 0700, script5, strlen (script5))) {
                 kit_assert (stat ("/tmp", &statbuf) == 0 && S_ISDIR (statbuf.st_mode));
                 if (kit_spawn_sync ("/tmp",
+                                    0,
                                     argv,
                                     NULL,
                                     NULL,
@@ -562,6 +584,7 @@ _run_test (void)
 
                 kit_assert (stat ("/usr", &statbuf) == 0 && S_ISDIR (statbuf.st_mode));
                 if (kit_spawn_sync ("/usr",
+                                    0,
                                     argv,
                                     NULL,
                                     NULL,
@@ -579,6 +602,7 @@ _run_test (void)
         /* check bogus working directory */
         kit_assert (stat ("/org/freedesktop/PolicyKit/bogus-fs-path", &statbuf) != 0);
         kit_assert (kit_spawn_sync ("/org/freedesktop/PolicyKit/bogus-fs-path",
+                                    0,
                                     argv,
                                     NULL,
                                     NULL,
@@ -590,6 +614,7 @@ _run_test (void)
         /* check for writing to stdin */
         if (kit_file_set_contents (path, 0700, script6, strlen (script6))) {
                 if (kit_spawn_sync (NULL,
+                                    0,
                                     argv,
                                     NULL,
                                     "foobar0\nfoobar1",

@@ -129,7 +129,8 @@ out:
  *
  * Get the name of the binary a given process was started from. Note
  * that this is not reliable information; it should not be part of any
- * security decision.
+ * security decision. If the information could not be obtained 0 is
+ * returned and out_buf will be set to "(unknown)".
  *
  * Returns: Number of characters written (not including trailing
  * '\0'). If the output was truncated due to the buffer being too
@@ -151,6 +152,7 @@ polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size)
         snprintf (proc_name, sizeof (proc_name), "/proc/%d/exe", pid);
         ret = readlink (proc_name, out_buf, buf_size - 1);
         if (ret == -1) {
+                strncpy (out_buf, "(unknown)", buf_size);
                 goto out;
         }
         kit_assert (ret >= 0 && ret < (int) buf_size - 1);

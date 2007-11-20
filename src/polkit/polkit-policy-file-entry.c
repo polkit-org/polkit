@@ -514,6 +514,7 @@ polkit_policy_file_entry_set_default (PolKitPolicyFileEntry  *policy_file_entry,
         }
 
         if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
+                             0,                /* flags */
                              helper_argv,      /* char       **argv */
                              NULL,             /* char       **envp */
                              NULL,             /* char        *stdin */

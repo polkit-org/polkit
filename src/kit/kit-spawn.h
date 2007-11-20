@@ -34,13 +34,29 @@
 
 KIT_BEGIN_DECLS
 
-kit_bool_t kit_spawn_sync (const char  *working_directory,
-                           char       **argv,
-                           char       **envp,
-                           char        *stdin,
-                           char       **stdout,
-                           char       **stderr,
-                           int         *out_exit_status);
+/**
+ * KitSpawnFlags:
+ * @KIT_SPAWN_CHILD_INHERITS_STDIN: If not set, child's stdin will be attached to <literal>/dev/null</literal>
+ * @KIT_SPAWN_STDOUT_TO_DEV_NULL: If set childs output will be sent to <literal>/dev/null</literal>
+ * @KIT_SPAWN_STDERR_TO_DEV_NULL: If set childs error output will be sent to <literal>/dev/null</literal>
+ *
+ * Flags passed to kit_spawn_sync().
+ */
+typedef enum {
+        KIT_SPAWN_CHILD_INHERITS_STDIN = 1 << 0,
+        KIT_SPAWN_STDOUT_TO_DEV_NULL   = 1 << 1,
+        KIT_SPAWN_STDERR_TO_DEV_NULL   = 1 << 2,
+} KitSpawnFlags;
+
+
+kit_bool_t kit_spawn_sync (const char     *working_directory,
+                           KitSpawnFlags   flags,
+                           char          **argv,
+                           char          **envp,
+                           char           *stdin,
+                           char          **stdout,
+                           char          **stderr,
+                           int            *out_exit_status);
 
 KIT_END_DECLS
 

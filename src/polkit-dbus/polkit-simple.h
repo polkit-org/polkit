@@ -37,6 +37,8 @@ POLKIT_BEGIN_DECLS
 polkit_uint64_t polkit_check_auth (pid_t pid, ...);
 polkit_uint64_t polkit_check_authv (pid_t pid, const char **action_ids);
 
+polkit_bool_t   polkit_auth_obtain (const char *action_id, polkit_uint32_t xid, pid_t pid, DBusError *error);
+
 POLKIT_END_DECLS
 
 #endif /* POLKIT_SIMPLE_H */

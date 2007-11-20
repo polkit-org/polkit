@@ -350,8 +350,12 @@
             trivial) and security reasons (it is typically a good idea
             to have password handling in as few processes as possible)
             it is preferable to have this done in a separate
-            process. For details on the Authentication Agent for the
-            GNOME desktop, please see the <ulink type="http"
+            process. PolicyKit defines an abstract interface to
+            interact with the an Authentication Agent, see the
+            <link linkend="model-authentication-agent">Authentication
+            Agent section</link> for details. For details on the
+            Authentication Agent for the GNOME desktop, please see
+            the <ulink type="http"
             url="http://hal.freedesktop.org/docs/PolicyKit-gnome/ref-auth-daemon.html">PolicyKit-gnome</ulink>
             documentation.
           </para>
@@ -532,7 +536,34 @@
       active sessions and always require authentication for the Action
       <literal>dialup-connect-untrusted</literal>.
     </para>
+  </sect1>
 
+  <sect1 id="model-authentication-agent">
+    <title>Authentication Agent</title>
+    <para>
+      To gain authorizations through authentication, an Authentication
+      Agent is used. The section defines an abstract interface that
+      applications can use to interact with such an agent. This allows
+      different desktop environments to implement different agents
+      with native look and feel.
+    </para>
+    <para>
+      The interface is quite simple. Basically, a PolicyKit
+      Authentication Agent must provide the D-Bus session service with
+      the unique
+      name <literal>org.freedesktop.PolicyKit.AuthenticationAgent</literal>
+      that exposes a single object with the path <literal>/</literal> that exports the 
+      <literal>org.freedesktop.PolicyKit.AuthenticationAgent</literal>
+      D-Bus interface. The interface is defined by the following D-Bus
+      introspection data:
+
+<programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../data/org.freedesktop.PolicyKit.AuthenticationAgent.xml" parse="text"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
+
+      This file is available
+      as <literal>/usr/share/dbus-1/interfaces/org.freedesktop.PolicyKit.AuthenticationAgent.xml</literal>
+      on a system with PolicyKit development packages installed. It
+      can be used to generating client glue code.
+    </para>
   </sect1>
   
 </chapter>

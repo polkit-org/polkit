@@ -47,12 +47,20 @@
         <term><option>--obtain <replaceable>action</replaceable></option></term>
         <listitem>
           <para>
-            Attempt to obtain the authorization to do an action.  This
-            is only useful for implicit authorizations requiring
-            authentication; e.g. when an appropriate stanza in the
-            defaults section of the .policy file for the action
-            specifies
-            <literal>auth_*</literal>.
+            Attempt to obtain an authorization through authentication
+            for the given action. This is only useful for implicit
+            authorizations requiring authentication; e.g. when an
+            appropriate stanza in the defaults section of the .policy
+            file for the action specifies
+            <literal>auth_*</literal>. 
+          </para><para> 
+            If an Authentication Agent (such as the one from
+            PolicyKit-gnome) is available in the session, it will used
+            for authentication unless the environment variable
+            POLKIT_AUTH_FORCE_TEXT is set. If the environment variable
+            POLKIT_AUTH_GRANT_TO_PID is set, the authorization will be
+            granted to that process id instead of the invoking process
+            (e.g. the shell from which polkit-auth is launched).
           </para>
         </listitem>
       </varlistentry>

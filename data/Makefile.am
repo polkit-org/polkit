@@ -16,9 +16,12 @@ conf_DATA = PolicyKit.conf
 dtddir = $(datadir)/PolicyKit
 dtd_DATA = config.dtd
 
+dbusifdir = $(datadir)/dbus-1/interfaces
+dbusif_DATA = org.freedesktop.PolicyKit.AuthenticationAgent.xml
+
 DISTCLEANFILES = polkit.pc polkit-dbus.pc polkit-grant.pc PolicyKit.conf
 
-EXTRA_DIST = polkit.in polkit.pc.in polkit-dbus.pc.in polkit-grant.pc.in PolicyKit.conf.in config.dtd
+EXTRA_DIST = polkit.in polkit.pc.in polkit-dbus.pc.in polkit-grant.pc.in PolicyKit.conf.in config.dtd org.freedesktop.PolicyKit.AuthenticationAgent.xml
 
 clean-local :
 	rm -f *~

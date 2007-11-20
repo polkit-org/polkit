@@ -1,0 +1,24 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" 
+         "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<!-- This file is provided by the PolicyKit project -->
+
+<node>
+  <interface name="org.freedesktop.PolicyKit.AuthenticationAgent">
+
+    <method name="ObtainAuthorization">
+      <!-- IN: PolicyKit action identifier; see PolKitAction -->
+      <arg name="action_id" direction="in" type="s"/>
+
+      <!-- IN: X11 window ID for the top-level X11 window the dialog will be transient for (pass zero if no window) -->
+      <arg name="xid" direction="in" type="u"/>
+
+      <!-- IN: Process ID to grant authorization to -->
+      <arg name="pid" direction="in" type="u"/>
+
+      <!-- OUT: whether the user gained the authorization -->
+      <arg name="gained_authorization" direction="out" type="b"/>
+    </method>
+
+  </interface>
+</node>

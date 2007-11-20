@@ -652,6 +652,8 @@ main (int argc, char *argv[])
 	DBusError dbus_error;
         struct passwd *pw;
         uid_t uid;
+        pid_t pid;
+        char *s;
 
         ret = 1;
 
@@ -672,6 +674,12 @@ main (int argc, char *argv[])
          * we need to be able to run even when D-Bus and/or ConsoleKit aren't available...
          */
 
+        if ((s = getenv ("POLKIT_AUTH_GRANT_TO_PID")) != NULL) {
+                pid = atoi (s);
+        } else {
+                pid = getppid ();
+        }
+
         dbus_error_init (&dbus_error);
         system_bus = dbus_bus_get (DBUS_BUS_SYSTEM, &dbus_error);
         if (system_bus != NULL) {
@@ -679,7 +687,7 @@ main (int argc, char *argv[])
                 polkit_tracker_set_system_bus_connection (pk_tracker, system_bus);
                 polkit_tracker_init (pk_tracker);
                 
-                pk_caller = polkit_caller_new_from_pid (system_bus, getppid (), &dbus_error);
+                pk_caller = polkit_caller_new_from_pid (system_bus, pid, &dbus_error);
                 if (pk_caller == NULL) {
                         if (dbus_error_is_set (&dbus_error)) {
                                 fprintf (stderr, "polkit-auth: polkit_caller_new_from_dbus_name(): %s: %s\n", 
@@ -782,8 +790,29 @@ main (int argc, char *argv[])
                 if (!ensure_dbus_and_ck ())
                         goto out;
 
-                if (!obtain_authorization (opt_obtain_action_id))
-                        goto out;                
+                if (getenv ("POLKIT_AUTH_FORCE_TEXT") != NULL) {
+                        if (!obtain_authorization (opt_obtain_action_id))
+                                goto out;                
+                } else {
+                        DBusError dbus_error;
+
+                        dbus_error_init (&dbus_error);
+                        if (!polkit_auth_obtain (opt_obtain_action_id, 0, pid, &dbus_error)) {
+                                if (dbus_error_is_set (&dbus_error)) {
+                                        
+                                        /* fall back to text mode */
+                                        if (!obtain_authorization (opt_obtain_action_id))
+                                                goto out;
+                                        
+                                        //fprintf (stderr, 
+                                        //         "polkit-auth: failed to use session service: %s: %s\n", 
+                                        //         dbus_error.name, dbus_error.message);
+                                } else {
+                                        goto out;
+                                }
+                        }
+                }
+
                 ret = 0;
         } else if (opt_grant_action_id != NULL ||
                    opt_block_action_id != NULL) {

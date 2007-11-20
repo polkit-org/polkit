@@ -52,7 +52,6 @@
  */
 #undef PGH_DEBUG
 /* #define PGH_DEBUG */
-#define PGH_DEBUG
 
 /* synopsis: polkit-grant-helper <pid> <action-name>
  *
