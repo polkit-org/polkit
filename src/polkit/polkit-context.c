@@ -325,29 +325,49 @@ again:
         }
 
         if (config_changed) {
-                /* purge existing policy files */
-                _pk_debug ("purging policy files");
-                if (pk_context->priv_cache != NULL) {
-                        polkit_policy_cache_unref (pk_context->priv_cache);
-                        pk_context->priv_cache = NULL;
-                }
-                
-                /* Purge existing old config file */
-                _pk_debug ("purging configuration file");
-                if (pk_context->config != NULL) {
-                        polkit_config_unref (pk_context->config);
-                        pk_context->config = NULL;
-                }
+                polkit_context_force_reload (pk_context);
 
-                /* Purge authorization entries from the cache */
-                _polkit_authorization_db_invalidate_cache (pk_context->authdb);
-                
                 if (pk_context->config_changed_cb != NULL) {
                         pk_context->config_changed_cb (pk_context, 
                                                        pk_context->config_changed_user_data);
                 }
         }
 }
+
+/**
+ * polkit_context_force_reload:
+ * @pk_context: context
+ *
+ * Force a reload. 
+ *
+ * Note that there is no reason to call this method in response to a
+ * config changed callback.
+ *
+ * Since: 0.7 
+ */
+void
+polkit_context_force_reload (PolKitContext *pk_context)
+{
+        kit_return_if_fail (pk_context != NULL);
+
+        /* purge existing policy files */
+        _pk_debug ("purging policy files");
+        if (pk_context->priv_cache != NULL) {
+                polkit_policy_cache_unref (pk_context->priv_cache);
+                pk_context->priv_cache = NULL;
+        }
+        
+        /* Purge existing old config file */
+        _pk_debug ("purging configuration file");
+        if (pk_context->config != NULL) {
+                polkit_config_unref (pk_context->config);
+                pk_context->config = NULL;
+        }
+        
+        /* Purge authorization entries from the cache */
+        _polkit_authorization_db_invalidate_cache (pk_context->authdb);
+}
+
 
 /**
  * polkit_context_set_io_watch_functions:

@@ -154,6 +154,8 @@ polkit_bool_t  polkit_context_init                   (PolKitContext             
 PolKitContext *polkit_context_ref                    (PolKitContext                        *pk_context);
 void           polkit_context_unref                  (PolKitContext                        *pk_context);
 
+void           polkit_context_force_reload           (PolKitContext                        *pk_context);
+
 void           polkit_context_io_func                (PolKitContext *pk_context, int fd);
 
 PolKitPolicyCache *polkit_context_get_policy_cache   (PolKitContext *pk_context);
