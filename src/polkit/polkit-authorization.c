@@ -744,6 +744,7 @@ _run_test (void)
         const char *s;
         PolKitAuthorizationConstraint *ac;
         uid_t uid;
+        polkit_bool_t is_neg;
 
         for (n = 0; n < num_valid_auths; n++) {
                 PolKitAuthorization *a;
@@ -783,10 +784,11 @@ _run_test (void)
 
                         if (t->explicit) {
                                 kit_assert (!polkit_authorization_was_granted_via_defaults (a, &uid));
-                                kit_assert (polkit_authorization_was_granted_explicitly (a, &uid) && uid == t->from);
+                                kit_assert (polkit_authorization_was_granted_explicitly (a, &uid, &is_neg) && 
+                                            uid == t->from && !is_neg);
                         } else {
                                 kit_assert (polkit_authorization_was_granted_via_defaults (a, &uid) && uid == t->from);
-                                kit_assert (!polkit_authorization_was_granted_explicitly (a, &uid));
+                                kit_assert (!polkit_authorization_was_granted_explicitly (a, &uid, &is_neg));
                         }
 
                         polkit_authorization_ref (a);
