@@ -31,6 +31,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+
 #include <kit/kit.h>
 #include "kit-test.h"
 
@@ -367,17 +369,476 @@ oom:
         return NULL;
 }
 
+static kit_bool_t
+_is_reserved (char c)
+{
+        unsigned int n;
+        char reserved[] = " !*'();:@&=+$,/?%#[]";
+
+        for (n = 0; n < sizeof (reserved); n++) {
+                if (reserved[n] == c)
+                        return TRUE;
+        }
+
+        return FALSE;
+}
+
+static char
+_to_hex (unsigned int nibble)
+{
+        if (nibble < 10)
+                return nibble + '0';
+        else
+                return nibble - 10 + 'A';
+}
+
+/**
+ * kit_string_percent_encode:
+ * @buf: return location for output
+ * @buf_size: size of buffer
+ * @s: string to encode
+ *
+ * Percent encodes a string; each occurence of an ASCII characters in
+ * the set <literal>" !*'();:@&=+$,/?%#[]"</literal> will be replaced
+ * by a three character sequence started by the percent sign "%" and
+ * then the hexidecimal representation of the ASCII character in
+ * question.
+ *
+ * Returns: This function do not write more than @buf_size bytes
+ * (including the trailing zero). If the output was truncated due to
+ * this limit then the return value is the number of characters (not
+ * including the trailing zero) which would have been written to the
+ * final string if enough space had been available. Thus, a return
+ * value of size or more means that the output was truncated.
+ */
+size_t
+kit_string_percent_encode (char *buf, size_t buf_size, const char *s)
+{
+        size_t len;
+        unsigned int n;
+        unsigned int m;
+
+        kit_return_val_if_fail (buf != NULL, 0);
+        kit_return_val_if_fail (s != NULL, 0);
+
+        len = strlen (s);
+
+        for (n = 0, m = 0; n < len; n++) {
+                int c = s[n];
+
+                if (_is_reserved (c)) {
+                        if (m < buf_size)
+                                buf[m] = '%';
+                        m++;
+                        if (m < buf_size)
+                                buf[m] = _to_hex (c >> 4);
+                        m++;
+                        if (m < buf_size)
+                                buf[m] = _to_hex (c & 0x0f);
+                        m++;
+                } else {
+                        if (m < buf_size)
+                                buf[m] = c;
+                        m++;
+                }
+        }
+        if (m < buf_size)
+                buf[m] = '\0';
+
+        return m;
+}
+
+/**
+ * kit_string_percent_decode:
+ * @s: string to modify in place
+ *
+ * Percent-decodes a string in place. See kit_string_percent_encode()
+ * for details on the encoding format.
+ *
+ * Returns: %FALSE if string is not properly encoded (and errno will be set to EINVAL)
+ */
+kit_bool_t
+kit_string_percent_decode (char *s)
+{
+        kit_bool_t ret;
+        unsigned int n;
+        unsigned int m;
+        size_t len;
+
+        kit_return_val_if_fail (s != NULL, FALSE);
+
+        ret = FALSE;
+
+        len = strlen (s);
+
+        for (n = 0, m = 0; n < len; n++) {
+                int c = s[n];
+
+                if (c != '%') {
+                        if (_is_reserved (c)) {
+                                errno = EINVAL;
+                                goto out;
+                        }
+                        s[m++] = s[n];
+                } else {
+                        int nibble1;
+                        int nibble2;
+
+                        if (n + 2 >= len) {
+                                errno = EINVAL;
+                                goto out;
+                        }
+
+                        nibble1 = s[n + 1];
+                        nibble2 = s[n + 2];
+                        n += 2;
+
+                        if (nibble1 >= '0' && nibble1 <= '9') {
+                                nibble1 -= '0';
+                        } else if (nibble1 >= 'A' && nibble1 <= 'F') {
+                                nibble1 -= 'A' - 10;
+                        } else {
+                                errno = EINVAL;
+                                goto out;
+                        }
+
+                        if (nibble2 >= '0' && nibble2 <= '9') {
+                                nibble2 -= '0';
+                        } else if (nibble2 >= 'A' && nibble2 <= 'F') {
+                                nibble2 -= 'A' - 10;
+                        } else {
+                                errno = EINVAL;
+                                goto out;
+                        }
+
+                        s[m++] = (nibble1 << 4) | nibble2;
+                }
+        }
+        s[m] = '\0';
+
+        ret = TRUE;
+out:
+        return ret;
+}
+
+
+/**
+ * kit_string_entry_parse:
+ * @entry: line to parse
+ * @func: callback function
+ * @user_data: user data to pass to @func
+ *
+ * Parse a line of the form
+ * <literal>key1=val1:key2=val2:key3=val3</literal>. 
+ *
+ * The given @entry is said not to be wellformed if a) it doesn't
+ * follow this structure (for example
+ * <literal>key1=val1:key2:key3=val3</literal> is not well-formed
+ * because it's missing the '=' character) or the extracted key and
+ * value strings are not properly percent encoded.
+ *
+ * Both the key and value values are run through the
+ * kit_string_percent_decode() function prior to being passed to
+ * @func. Normally this function is used to decode strings produced
+ * with kit_string_entry_create().
+ *
+ * Returns: %TRUE if the line is wellformed and the callback didn't
+ * short-circuit the iteration. Returns %FALSE on OOM (and errno will
+ * be set to ENOMEM) or if @entry is not wellformed (and errno will
+ * be set to EINVAL).
+ */
+kit_bool_t
+kit_string_entry_parse (const char *entry, KitStringEntryParseFunc func, void *user_data)
+{
+        unsigned int n;
+        kit_bool_t ret;
+        char **tokens;
+        size_t num_tokens;
+
+        kit_return_val_if_fail (entry != NULL, FALSE);
+        kit_return_val_if_fail (func != NULL, FALSE);
+
+        ret = FALSE;
+        tokens = NULL;
+
+        tokens = kit_strsplit (entry, ':', &num_tokens);
+        if (tokens == NULL) {
+                errno = ENOMEM;
+                goto out;
+        }
+
+        for (n = 0; n < num_tokens; n++) {
+                char *token;
+                char *p;
+
+                token = tokens[n];
+
+                p = strchr (token, '=');
+                if (p == NULL) {
+                        errno = EINVAL;
+                        goto out;
+                }
+
+                token [p - token] = '\0';
+
+                p++;
+
+                if (!kit_string_percent_decode (token))
+                        goto out;
+
+                if (!kit_string_percent_decode (p))
+                        goto out;
+
+                if (!func (token, p, user_data)) {
+                        goto out;
+                }
+        }
+
+        ret = TRUE;
+
+out:
+        if (tokens != NULL)
+                kit_strfreev (tokens);
+        return ret;
+}
+
+/**
+ * kit_string_entry_createv:
+ * @buf: return location for output
+ * @buf_size: size of buffer
+ * @kv_pairs: %NULL terminated array of key/value pairs.
+ *
+ * Takes an array of key/value pairs and generates a string
+ * <literal>"k1=v1:k2=v2:...:k_n=v_n"</literal> where
+ * <literal>k_i</literal> and <literal>v_i</literal> are percent
+ * encoded representations of the given key/value pairs.
+ *
+ * The string can later be parsed with kit_string_entry_parse() to get
+ * the exact same list of key/value pairs back.
+ *
+ * Returns: This function do not write more than @buf_size bytes
+ * (including the trailing zero). If the output was truncated due to
+ * this limit then the return value is the number of characters (not
+ * including the trailing zero) which would have been written to the
+ * final string if enough space had been available. Thus, a return
+ * value of size or more means that the output was truncated.
+ *
+ * If an uneven number of strings are given, this function will return
+ * zero and errno will be set to EINVAL.
+ */
+size_t
+kit_string_entry_createv (char *buf, size_t buf_size, const char *kv_pairs[])
+{
+        int n;
+        unsigned int m;
+
+        for (n = 0, m = 0; kv_pairs[n] != NULL; n+= 2) {
+                const char *key;
+                const char *value;
+
+                if (kv_pairs[n + 1] == NULL) {
+                        m = 0;
+                        errno = EINVAL;
+                        goto out;
+                }
+
+                key = kv_pairs[n];
+                value = kv_pairs[n + 1];
+
+                if (n > 0) {
+                        if (m < buf_size)
+                                buf[m] = ':';
+                        m++;
+                }
+
+                m += kit_string_percent_encode (buf + m, buf_size - m > 0 ? buf_size - m : 0, key);
+
+                if (m < buf_size)
+                        buf[m] = '=';
+                m++;
+
+                m += kit_string_percent_encode (buf + m, buf_size - m > 0 ? buf_size - m : 0, value);
+        }
+
+out:
+        if (m < buf_size)
+                buf[m] = '\0';
+
+        return m;
+}
+
+/**
+ * kit_string_entry_create:
+ * @buf: return location for output
+ * @buf_size: size of buffer
+ * @...: %NULL terminated array of key/value pairs.
+ *
+ * See kit_string_entry_create().
+ *
+ * Returns: See kit_string_entry_create(). Up to 64 pairs can be
+ * passed; if there are more pairs, this function will return zero and
+ * errno will be set to EOVERFLOW.
+ */
+size_t
+kit_string_entry_create (char *buf, size_t buf_size, ...)
+{
+        int n;
+        va_list args;
+        const char *val;
+        const char *kv_pairs[64 * 2 + 1];
+        size_t ret;
+
+        /* TODO: get rid of the 64 limit... */
+
+        ret = 0;
+
+        n = 0;
+        va_start (args, buf_size);
+        while ((val = va_arg (args, const char *)) != NULL) {
+                if (n == 64 * 2) {
+                        errno = EOVERFLOW;
+                        goto out;
+                }
+                kv_pairs[n++] = val;
+        }
+        va_end (args);
+        kv_pairs[n] = NULL;
+
+        ret = kit_string_entry_createv (buf, buf_size, kv_pairs);
+out:
+        return ret;
+}
 
 #ifdef KIT_BUILD_TESTS
 
 static kit_bool_t
+_ep1 (const char *key, const char *value, void *user_data)
+{
+        int *n = (int *) user_data;
+
+        if (strcmp (key, "a") == 0 && strcmp (value, "aval") == 0)
+                *n += 1;
+        if (strcmp (key, "a") == 0 && strcmp (value, "aval2") == 0)
+                *n += 1;
+        if (strcmp (key, "b") == 0 && strcmp (value, "bval") == 0)
+                *n += 1;
+        if (strcmp (key, "c") == 0 && strcmp (value, "cval") == 0)
+                *n += 1;
+        if (strcmp (key, "some_other_key") == 0 && strcmp (value, "some_value") == 0)
+                *n += 1;
+        if (strcmp (key, "escaped;here:right=") == 0 && strcmp (value, "yes! it's ==:crazy!") == 0)
+                *n += 1;
+
+        return TRUE;
+}
+
+static kit_bool_t
+_ep2 (const char *key, const char *value, void *user_data)
+{
+        int *n = (int *) user_data;
+
+        if (strcmp (key, "b") == 0)
+                return FALSE;
+
+        *n += 1;
+
+        return TRUE;
+}
+
+static kit_bool_t
 _run_test (void)
 {
+        int num;
         char str[] = "Hello world";
         char *p;
         char *p2;
         char **tokens;
         size_t num_tokens;
+        unsigned int n;
+        char *bad_strings[] = {"bad:",
+                               "bad=",
+                               "bad%",
+                               "bad%1",
+                               "bad%xy",
+                               "bad%1x",
+                               "bad%Ax",
+                               "bad%2a"};
+        char buf[256];
+
+        kit_assert (kit_string_percent_encode (buf, sizeof (buf), "Hello World; Nice day!") < sizeof (buf));
+        kit_assert (strcmp (buf, "Hello%20World%3B%20Nice%20day%21") == 0);
+        kit_assert (kit_string_percent_decode (buf));
+        kit_assert (strcmp (buf, "Hello World; Nice day!") == 0);
+
+        for (n = 0; n < sizeof (bad_strings) / sizeof (char *); n++) {
+                if ((p = kit_strdup (bad_strings[n])) != NULL) {
+                        kit_assert (!kit_string_percent_decode (p) && errno == EINVAL);
+                        kit_free (p);
+                }
+        }
+
+        kit_assert (kit_string_entry_create (buf, sizeof (buf), 
+                                             "key1", "val1",
+                                             "key2", "val2",
+                                             "key3", "val3",
+                                             NULL) < sizeof (buf) &&
+                    strcmp (buf, "key1=val1:key2=val2:key3=val3") == 0);
+
+        kit_assert (kit_string_entry_create (buf, sizeof (buf), 
+                                             "key1;", "val1=val1x",
+                                             "key2%", "val2!",
+                                             NULL) < sizeof (buf) &&
+                    strcmp (buf, "key1%3B=val1%3Dval1x:key2%25=val2%21") == 0);
+
+        kit_assert (kit_string_entry_create (buf, sizeof (buf), 
+                                             "key1", "val1",
+                                             "key2", NULL) == 0 && errno == EINVAL);
+
+        kit_assert (kit_string_entry_create (buf, 3, 
+                                             "key1", "val1",
+                                             "key2", "val2", NULL) > 3);
+
+        kit_assert (kit_string_entry_create (buf, sizeof (buf), 
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "a","a","a","a","a","a","a","a","a","a","a","a","a","a","a","a",
+                                             "b", "c", NULL) == 0 && errno == EOVERFLOW);
+
+        kit_assert (!kit_string_entry_parse ("key=val:invalidkeyval:key2=val2", _ep1, &num) && 
+                    (errno == EINVAL || errno == ENOMEM));
+        kit_assert (!kit_string_entry_parse ("key;=val:key2=val2", _ep1, &num) && 
+                    (errno == EINVAL || errno == ENOMEM));
+        kit_assert (!kit_string_entry_parse ("key=val:key2=val2;", _ep1, &num) && 
+                    (errno == EINVAL || errno == ENOMEM));
+
+        kit_assert (kit_string_entry_create (buf, sizeof (buf), 
+                                             "a", "aval",
+                                             "a", "aval2",
+                                             "b", "bval",
+                                             "c", "cval",
+                                             "some_other_key", "some_value",
+                                             "escaped;here:right=", "yes! it's ==:crazy!",
+                                             NULL) < sizeof (buf));
+        num = 0;
+        if (kit_string_entry_parse (buf, _ep1, &num)) {
+                kit_assert (num == 6);
+        } else {
+                kit_assert (errno == ENOMEM);
+        }
+
+        num = 0; 
+        errno = 0;
+        kit_assert (!kit_string_entry_parse ("a=0:b=1:c=2", _ep2, &num));
+        if (num > 0)
+                kit_assert (errno == 0);
+        else
+                kit_assert (errno == ENOMEM);
+
 
         if ((p = kit_strdup (str)) != NULL) {
                 kit_assert (strcmp (p, "Hello world") == 0);
@@ -444,7 +905,6 @@ _run_test (void)
                 kit_assert (strcmp (p, "baz") == 0);
                 kit_free (p);
         }
-
 
         return TRUE;
 }

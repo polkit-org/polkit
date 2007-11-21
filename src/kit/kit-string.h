@@ -48,6 +48,28 @@ char **kit_strsplit (const char *s, char delim, size_t *num_tokens);
 void kit_strfreev (char **str_array);
 size_t kit_strv_length (char **str_array);
 
+/**
+ * KitStringEntryParseFunc:
+ * @key: key of one of the entries
+ * @value: value of one of the entries
+ * @user_data: user data passed to kit_string_entry_parse()
+ *
+ * Type of callback function to use in kit_string_entry_parse()
+ *
+ * Returns: If %FALSE is returned the parsing will be aborted and
+ * kit_string_entry_parse() will return FALSE.
+ */
+typedef kit_bool_t (*KitStringEntryParseFunc) (const char *key, const char *value, void *user_data);
+
+kit_bool_t kit_string_entry_parse (const char *entry, KitStringEntryParseFunc func, void *user_data);
+
+kit_bool_t  kit_string_percent_decode (char *s);
+size_t      kit_string_percent_encode (char *buf, size_t buf_size, const char *s);
+
+size_t      kit_string_entry_create (char *buf, size_t buf_size, ...);
+size_t      kit_string_entry_createv (char *buf, size_t buf_size, const char *kv_pairs[]);
+
+
 KIT_END_DECLS
 
 #endif /* KIT_STRING_H */

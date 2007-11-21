@@ -149,6 +149,7 @@ out:
 /**
  * kit_spawn_sync:
  * @working_directory: Working directory for child or #NULL to inherit parents
+ * @flags: A combination of flags from #KitSpawnFlags
  * @argv: #NULL terminated argument vector
  * @envp: #NULL terminated environment or #NULL to inherit parents;
  * @stdin: String to write to stdin of child or #NULL
