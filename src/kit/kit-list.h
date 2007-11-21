@@ -44,8 +44,6 @@ typedef struct _KitList KitList;
  * @prev: the previous element in the list or #NULL if this is the last element
  *
  * Public members of the #KitList data structure
- *
- * Since: 0.7
  */
 struct _KitList {
         void *data;
@@ -62,8 +60,6 @@ struct _KitList {
  * Type signature for callback function used in kit_list_foreach().
  *
  * Returns: Return #TRUE to short-circuit, e.g. stop the iteration.
- *
- * Since: 0.7
  */
 typedef kit_bool_t (*KitListForeachFunc) (KitList *list,
                                           void *data,

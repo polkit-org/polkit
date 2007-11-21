@@ -48,8 +48,6 @@ typedef struct _KitHash KitHash;
  * used when the key is a pointer and an char* respectively.
  *
  * Returns: the hash value corresponding to the key
- *
- * Since: 0.7
  */
 typedef uint32_t (*KitHashFunc) (const void *key);
 
@@ -64,8 +62,6 @@ typedef uint32_t (*KitHashFunc) (const void *key);
  * pointer and an char* respectively.
  *
  * Returns: #TRUE iff the keys are equal
- *
- * Since: 0.7
  */
 typedef kit_bool_t (*KitEqualFunc) (const void *key1, const void *key2);
 
@@ -77,8 +73,6 @@ typedef kit_bool_t (*KitEqualFunc) (const void *key1, const void *key2);
  * is destroyed. It is passed the pointer to the data element and
  * should free any memory and resources allocated for it. The function
  * p_free() or any of the object unref functions can be passed here.
- *
- * Since: 0.7
  */
 typedef void (*KitFreeFunc) (void *p);
 
@@ -93,8 +87,6 @@ typedef void (*KitFreeFunc) (void *p);
  * ref functions can be passed here.
  *
  * Returns: A copy or ref of the object in question
- *
- * Since: 0.7
  */
 typedef void *(*KitCopyFunc) (const void *p);
 
@@ -108,8 +100,6 @@ typedef void *(*KitCopyFunc) (const void *p);
  * Type signature for callback function used in kit_hash_foreach().
  *
  * Returns: Return #TRUE to short-circuit, e.g. stop the iteration.
- *
- * Since: 0.7
  */
 typedef kit_bool_t (*KitHashForeachFunc) (KitHash *hash,
                                           void *key,
