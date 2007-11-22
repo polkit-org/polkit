@@ -373,7 +373,7 @@ static kit_bool_t
 _is_reserved (char c)
 {
         unsigned int n;
-        char reserved[] = " !*'();:@&=+$,/?%#[]";
+        char reserved[] = " !*'();:@&=+$,/?%#[]\n\r\t";
 
         for (n = 0; n < sizeof (reserved); n++) {
                 if (reserved[n] == c)
@@ -399,10 +399,10 @@ _to_hex (unsigned int nibble)
  * @s: string to encode
  *
  * Percent encodes a string; each occurence of an ASCII characters in
- * the set <literal>" !*'();:@&=+$,/?%#[]"</literal> will be replaced
- * by a three character sequence started by the percent sign "%" and
- * then the hexidecimal representation of the ASCII character in
- * question.
+ * the set <literal>" !*'();:@&=+$,/?%#[]\n\r\t"</literal> will be
+ * replaced by a three character sequence started by the percent sign
+ * "%" and then the hexidecimal representation of the ASCII character
+ * in question.
  *
  * Returns: This function do not write more than @buf_size bytes
  * (including the trailing zero). If the output was truncated due to
