@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include <kit/kit-memory.h>
 #include <kit/kit-test.h>
@@ -90,6 +91,7 @@ kit_malloc (size_t bytes)
         void *p;
 
         if (_fail_nth != -1 && _total_allocs == _fail_nth) {
+                errno = ENOMEM;
                 return NULL;
         }
 
@@ -117,6 +119,7 @@ kit_malloc0 (size_t bytes)
         void *p;
 
         if (_fail_nth != -1 && _total_allocs == _fail_nth) {
+                errno = ENOMEM;
                 return NULL;
         }
 
@@ -153,6 +156,7 @@ kit_realloc (void *memory, size_t bytes)
         }
 
         if (_fail_nth != -1 && _total_allocs == _fail_nth) {
+                errno = ENOMEM;
                 return NULL;
         }
 
