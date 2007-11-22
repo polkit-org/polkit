@@ -235,7 +235,6 @@ polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authd
         char *action_id;
         uid_t caller_uid;
         pid_t caller_pid;
-        char *grant_line;
         polkit_bool_t ret;
         polkit_uint64_t pid_start_time;
         struct timeval now;
@@ -270,19 +269,33 @@ polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authd
                 return FALSE;
         }
 
-        grant_line = g_strdup_printf ("process-one-shot:%d:%Lu:%s:%Lu:%d:%s\n", 
-                                      caller_pid, 
-                                      pid_start_time, 
-                                      action_id,
-                                      (polkit_uint64_t) now.tv_sec,
-                                      user_authenticated_as,
-                                      cbuf);
+        char pid_buf[32];
+        char pid_st_buf[32];
+        char now_buf[32];
+        char uid_buf[32];
+        char auth_buf[1024];
+        snprintf (pid_buf, sizeof (pid_buf), "%d", caller_pid);
+        snprintf (pid_st_buf, sizeof (pid_st_buf), "%Lu", pid_start_time);
+        snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
+        snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
+
+        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                     "scope",          "process-one-shot",
+                                     "pid",            pid_buf,
+                                     "pid-start-time", pid_st_buf,
+                                     "action-id",      action_id,
+                                     "when",           now_buf,
+                                     "auth-as",        uid_buf,
+                                     "constraint",     cbuf,
+                                     NULL) >= sizeof (auth_buf)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
 
         ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
                                                       TRUE, 
                                                       caller_uid, 
-                                                      grant_line);
-        g_free (grant_line);
+                                                      auth_buf);
         return ret;
 }
 
@@ -320,7 +333,6 @@ polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authd
         char *action_id;
         uid_t caller_uid;
         pid_t caller_pid;
-        char *grant_line;
         polkit_bool_t ret;
         polkit_uint64_t pid_start_time;
         struct timeval now;
@@ -355,19 +367,33 @@ polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authd
                 return FALSE;
         }
 
-        grant_line = g_strdup_printf ("process:%d:%Lu:%s:%Lu:%d:%s\n", 
-                                      caller_pid, 
-                                      pid_start_time, 
-                                      action_id,
-                                      (polkit_uint64_t) now.tv_sec,
-                                      user_authenticated_as,
-                                      cbuf);
+        char pid_buf[32];
+        char pid_st_buf[32];
+        char now_buf[32];
+        char uid_buf[32];
+        char auth_buf[1024];
+        snprintf (pid_buf, sizeof (pid_buf), "%d", caller_pid);
+        snprintf (pid_st_buf, sizeof (pid_st_buf), "%Lu", pid_start_time);
+        snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
+        snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
+
+        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                     "scope",          "process",
+                                     "pid",            pid_buf,
+                                     "pid-start-time", pid_st_buf,
+                                     "action-id",      action_id,
+                                     "when",           now_buf,
+                                     "auth-as",        uid_buf,
+                                     "constraint",     cbuf,
+                                     NULL) >= sizeof (auth_buf)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
 
         ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
                                                       TRUE, 
                                                       caller_uid, 
-                                                      grant_line);
-        g_free (grant_line);
+                                                      auth_buf);
         return ret;
 }
 
@@ -405,7 +431,6 @@ polkit_authorization_db_add_entry_session          (PolKitAuthorizationDB *authd
 {
         uid_t session_uid;
         char *action_id;
-        char *grant_line;
         PolKitSession *session;
         char *session_objpath;
         polkit_bool_t ret;
@@ -440,18 +465,28 @@ polkit_authorization_db_add_entry_session          (PolKitAuthorizationDB *authd
                 return FALSE;
         }
 
-        grant_line = g_strdup_printf ("session:%s:%s:%Lu:%d:%s\n", 
-                                      session_objpath,
-                                      action_id,
-                                      (polkit_uint64_t) now.tv_sec,
-                                      user_authenticated_as,
-                                      cbuf);
+        char now_buf[32];
+        char uid_buf[32];
+        char auth_buf[1024];
+        snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
+        snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
+
+        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                     "scope",          "session",
+                                     "session-id",     session_objpath,
+                                     "action-id",      action_id,
+                                     "when",           now_buf,
+                                     "auth-as",        uid_buf,
+                                     "constraint",     cbuf,
+                                     NULL) >= sizeof (auth_buf)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
 
         ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
                                                       TRUE, 
                                                       session_uid, 
-                                                      grant_line);
-        g_free (grant_line);
+                                                      auth_buf);
         return ret;
 }
 
@@ -488,7 +523,6 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
 {
         uid_t uid;
         char *action_id;
-        char *grant_line;
         polkit_bool_t ret;
         struct timeval now;
         PolKitAuthorizationConstraint *constraint;
@@ -515,17 +549,27 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
                 return FALSE;
         }
 
-        grant_line = g_strdup_printf ("always:%s:%Lu:%d:%s\n", 
-                                      action_id,
-                                      (polkit_uint64_t) now.tv_sec,
-                                      user_authenticated_as,
-                                      cbuf);
+        char now_buf[32];
+        char uid_buf[32];
+        char auth_buf[1024];
+        snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
+        snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
+
+        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                     "scope",          "always",
+                                     "action-id",      action_id,
+                                     "when",           now_buf,
+                                     "auth-as",        uid_buf,
+                                     "constraint",     cbuf,
+                                     NULL) >= sizeof (auth_buf)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
 
         ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 
                                                       FALSE, 
                                                       uid, 
-                                                      grant_line);
-        g_free (grant_line);
+                                                      auth_buf);
         return ret;
 }
 

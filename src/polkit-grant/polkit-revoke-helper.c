@@ -176,33 +176,42 @@ main (int argc, char *argv[])
         not_granted_by_self = FALSE;
 
         is_one_shot = FALSE;
-        if (strcmp (scope, "process") == 0) {
+        if (strcmp (scope, "scope=process") == 0) {
                 root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
-        } else if (strcmp (scope, "process-one-shot") == 0) {
+        } else if (strcmp (scope, "scope=process-one-shot") == 0) {
                 root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
                 is_one_shot = TRUE;
-        } else if (strcmp (scope, "session") == 0) {
+        } else if (strcmp (scope, "scope=session") == 0) {
                 root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
-        } else if (strcmp (scope, "always") == 0) {
+        } else if (strcmp (scope, "scope=always") == 0) {
                 root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
-        } else if (strcmp (scope, "grant") == 0 ||
-                   strcmp (scope, "grant-negative") == 0) {
-                uid_t granted_by;
+        } else if (strcmp (scope, "scope=grant") == 0 ||
+                   strcmp (scope, "scope=grant-negative") == 0) {
+                unsigned int n;
 
                 root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
 
-                if (num_tokens < 5)
-                        goto out;
+                for (n = 1; n < num_tokens; n++) {
+                        if (strncmp (tokens[n], "granted-by=", sizeof ("granted-by=") - 1) == 0) {
+                                uid_t granted_by;
+                                granted_by = strtol (tokens[n] + sizeof ("granted-by=") - 1, &endp, 10);
+                                if  (*endp != '\0') {
+                                        fprintf (stderr, "polkit-revoke-helper: cannot parse granted-by uid\n");
+                                        goto out;
+                                }
+                                
+                                if (granted_by != invoking_uid)
+                                        not_granted_by_self = TRUE;
 
-                granted_by = strtol (tokens[3], &endp, 10);
-                if  (*endp != '\0') {
-                        fprintf (stderr, "polkit-revoke-helper: cannot parse granted-by uid\n");
-                        goto out;
+                                goto parsed_granted_by;
+                        }
                 }
 
-                if (granted_by != invoking_uid)
-                        not_granted_by_self = TRUE;
-                
+                fprintf (stderr, "polkit-revoke-helper: cannot find key granted-by\n");
+
+                goto out;
+        parsed_granted_by:
+                ;
         } else {
                 fprintf (stderr, "polkit-revoke-helper: unknown scope '%s'\n", scope);
                 goto out;

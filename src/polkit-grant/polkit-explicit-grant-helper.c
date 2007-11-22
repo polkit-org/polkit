@@ -56,7 +56,6 @@ main (int argc, char *argv[])
         uid_t invoking_uid;
         char *action_id;
         char *endp;
-        char grant_line[512];
         struct timeval now;
 
         ret = 1;
@@ -179,22 +178,27 @@ main (int argc, char *argv[])
                 return FALSE;
         }
 
-        if (snprintf (grant_line, 
-                      sizeof (grant_line), 
-                      is_negative ? "grant-negative:%s:%Lu:%d:%s\n" : 
-                                    "grant:%s:%Lu:%d:%s\n" ,
-                      action_id,
-                      (polkit_uint64_t) now.tv_sec,
-                      invoking_uid,
-                      authc_str) >= (int) sizeof (grant_line)) {
-                fprintf (stderr, "polkit-explicit-grant-helper: str to add is too long!\n");
+        char now_buf[32];
+        char uid_buf[32];
+        char auth_buf[1024];
+        snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
+        snprintf (uid_buf, sizeof (uid_buf), "%d", invoking_uid);
+
+        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                     "scope",          is_negative ? "grant-negative" : "grant",
+                                     "action-id",      action_id,
+                                     "when",           now_buf,
+                                     "granted-by",     uid_buf,
+                                     "constraint",     authc_str,
+                                     NULL) >= sizeof (auth_buf)) {
+                kit_warning ("polkit-explicit-grant-helper: authbuf is too small");
                 goto out;
         }
 
         if (_polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 
                                                     FALSE, 
                                                     target_uid, 
-                                                    grant_line)) {
+                                                    auth_buf)) {
                 ret = 0;
         }
 
