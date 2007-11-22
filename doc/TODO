@@ -1,7 +1,4 @@
 
- - Add support for overriding defaults. Will require 
-   org.freedesktop.policykit.grant
-
  - On every polkit_context_is_[caller|session]_authorized we load
    all .policy XML files. This is bad. Dave Jones will kill us. 
    We should
@@ -33,37 +30,18 @@
    external API). This is mainly to be able to handle OOM for
    mechanisms that will need this (such as dbus-daemon)
 
- - add support for additional <match> attributes
-   in /etc/PolicyKit/PolicyKit.conf
+ - Kill the config file
 
-   - <match timeofday="0900-1700">
-     Matches 9am through 5pm local time
+ - Add support for granting authorizations to a) UNIX Groups; and 
+   b) SELinux security contexts
 
-   - <match weekday="Mon-Fri">
-     Matches only on Monday->Friday both inclusive
+ - Add API and support in polkit-auth/polkit-action for maintaining
+   a list of entities for whom implicit authorizations do not apply.
+   (Typical example is that in a desktop OS one wants a UNIX group
+    for "Restricted Users". Another example is a guest account.)
 
-   - <match selinux_context="regexp">
-     Match on caller's SELinux context
-
-   - <match caller_exe="regexp">
-     Matches the path of the executable the caller stems from
-
-   - <match group="regexp">
-     Match on group
-
-   - <match session_active="true|false">
-     Only if the caller is in an active session (or not)
-
-   - <match seat_local="true|false">
-     Only if the caller is on a local seat (or not)
-
-   ... And of course the we need the ULTIMATE copout
-
-   - <match run_program="">
-     Run a program to make the decision; details are exported in the
-     environment. Program cannot assume to run as root or in a specific
-     security context; it will need to use a helper a'la
-     pam_unix_password.so
+ - Add API and support in polkit-auth/polkit-action to define what
+   administrator auth means.
 
  - Reconsider adding k/v dictionaries to Actions; e.g. the Mechanism for
    dial-up networking can attach the key/value pair
