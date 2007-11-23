@@ -611,8 +611,7 @@ out:
  * Takes an array of key/value pairs and generates a string
  * <literal>"k1=v1:k2=v2:...:k_n=v_n"</literal> where
  * <literal>k_i</literal> and <literal>v_i</literal> are percent
- * encoded representations of the given key/value pairs. The string
- * will have a newline (ASCII character 10) at end.
+ * encoded representations of the given key/value pairs.
  *
  * The string can later be parsed with kit_string_entry_parse() to get
  * the exact same list of key/value pairs back.
@@ -660,10 +659,6 @@ kit_string_entry_createv (char *buf, size_t buf_size, const char *kv_pairs[])
 
                 m += kit_string_percent_encode (buf + m, buf_size - m > 0 ? buf_size - m : 0, value);
         }
-
-        if (m < buf_size)
-                buf[m] = '\n';
-        m++;
 
 out:
         if (m < buf_size)
