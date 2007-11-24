@@ -50,6 +50,7 @@ extern KitTest _test_authorization;
 extern KitTest _test_authorization_db;
 extern KitTest _test_config;
 extern KitTest _test_sysdeps;
+extern KitTest _test_utils;
 extern KitTest _test_context;
 
 POLKIT_END_DECLS

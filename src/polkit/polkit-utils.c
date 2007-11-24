@@ -37,6 +37,7 @@
 #include "polkit-utils.h"
 #include "polkit-debug.h"
 #include "polkit-private.h"
+#include "polkit-test.h"
 
 /**
  * SECTION:polkit-utils
@@ -151,3 +152,20 @@ error:
                 _pk_debug ("name '%s' did not validate", unique_bus_name);
         return ret;
 }
+
+#ifdef POLKIT_BUILD_TESTS
+
+static polkit_bool_t
+_run_test (void)
+{
+        return TRUE;
+}
+
+KitTest _test_utils = {
+        "polkit_utils",
+        NULL,
+        NULL,
+        _run_test
+};
+
+#endif /* POLKIT_BUILD_TESTS */
