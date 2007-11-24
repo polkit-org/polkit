@@ -178,7 +178,6 @@ kit_spawn_sync (const char     *working_directory,
 {
         kit_bool_t ret;
         pid_t pid;
-        char **envp_to_use;
         int stdin_pipe[2] = {-1, -1};
         int stdout_pipe[2] = {-1, -1};
         int stderr_pipe[2] = {-1, -1};
@@ -196,11 +195,6 @@ kit_spawn_sync (const char     *working_directory,
                 *stdout = NULL;
         if (stderr != NULL)
                 *stderr = NULL;
-
-        if (envp != NULL)
-                envp_to_use = envp;
-        else
-                envp_to_use = environ;
 
         if (stdin != NULL) {
                 if (pipe (stdin_pipe) != 0) {
@@ -298,8 +292,14 @@ kit_spawn_sync (const char     *working_directory,
                         close (fd_null);
 
                 /* finally, execute the child */
-                if (execve (argv[0], argv, envp_to_use) == -1) {
-                        exit (128 + errno);
+                if (envp != NULL) {
+                        if (execve (argv[0], argv, envp) == -1) {
+                                exit (128 + errno);
+                        }
+                } else {
+                        if (execv (argv[0], argv) == -1) {
+                                exit (128 + errno);
+                        }
                 }
 
         } else {
@@ -459,6 +459,13 @@ _run_test (void)
                 "  exit 0"                                 "\n"
                 "fi"                                       "\n"
                 "exit 1"                                   "\n";
+        char *script4b = 
+                "#!/bin/sh"                                "\n"
+                "/bin/env > /tmp/food2"                     "\n"
+                "if [ \"x$KIT_TEST_VAR\" = \"xfoobar2\" ] ; then" "\n"
+                "  exit 0"                                 "\n"
+                "fi"                                       "\n"
+                "exit 1"                                   "\n";
         char *script5 = 
                 "#!/bin/sh"                                "\n"
                 "pwd"                                      "\n"
@@ -556,6 +563,26 @@ _run_test (void)
                                     0,
                                     argv,
                                     envp,
+                                    NULL,
+                                    NULL,
+                                    NULL,
+                                    &exit_status)) {
+                        kit_assert (WEXITSTATUS (exit_status) == 0);
+                }
+
+                kit_assert (unlink (path) == 0);
+                kit_assert (unsetenv ("KIT_TEST_VAR") == 0);
+        }
+
+        /* check environment is inherited */
+        if (kit_file_set_contents (path, 0700, script4b, strlen (script4b))) {
+
+                kit_assert (setenv ("KIT_TEST_VAR", "foobar2", 1) == 0);
+
+                if (kit_spawn_sync ("/",
+                                    0,
+                                    argv,
+                                    NULL,
                                     NULL,
                                     NULL,
                                     NULL,
