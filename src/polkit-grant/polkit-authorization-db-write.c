@@ -91,6 +91,7 @@ _polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transien
         polkit_bool_t ret;
         struct stat statbuf;
         struct passwd *pw;
+        char *newline = "\n";
 
         ret = FALSE;
         path = NULL;
@@ -163,6 +164,14 @@ _polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transien
                 goto out;
         }
         if (!_write_to_fd (fd, str_to_add, strlen (str_to_add))) {
+                g_warning ("Cannot write to temporary authorizations file %s: %m", path_tmp);
+                close (fd);
+                if (unlink (path_tmp) != 0) {
+                        g_warning ("Cannot unlink %s: %m", path_tmp);
+                }
+                goto out;
+        }
+        if (!_write_to_fd (fd, newline, 1)) {
                 g_warning ("Cannot write to temporary authorizations file %s: %m", path_tmp);
                 close (fd);
                 if (unlink (path_tmp) != 0) {
