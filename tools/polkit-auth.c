@@ -605,7 +605,7 @@ revoke_authorizations (const char *action_id, uid_t uid)
         pk_action = polkit_action_new ();
         polkit_action_set_action_id (pk_action, action_id);
 
-        pk_error = 0;
+        pk_error = NULL;
         if (!polkit_authorization_db_foreach_for_action_for_uid (pk_authdb,
                                                                  pk_action,
                                                                  uid,
@@ -884,6 +884,7 @@ main (int argc, char *argv[])
 
 
                 /* first the explicit authorizations */
+                pk_error = NULL;
                 if (!polkit_authorization_db_foreach_for_uid (pk_authdb,
                                                               uid,
                                                               auth_iterator_cb,

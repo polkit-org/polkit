@@ -177,7 +177,9 @@ polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const c
         PolKitError *e;
 
         kit_return_val_if_fail (format != NULL, FALSE);
-        kit_return_val_if_fail (error_code >= 0 && error_code < POLKIT_ERROR_NUM_ERROR_CODES, FALSE);
+
+        if (error_code < 0 || error_code >= POLKIT_ERROR_NUM_ERROR_CODES)
+                return FALSE;
 
         if (error == NULL)
                 goto out;

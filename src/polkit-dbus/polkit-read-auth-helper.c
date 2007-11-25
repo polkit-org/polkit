@@ -45,6 +45,7 @@
 #include <dirent.h>
 
 #include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit-private.h>
 
 static polkit_bool_t
 dump_auths_from_file (const char *path, uid_t uid)
@@ -144,6 +145,76 @@ out:
         return ret;
 }
 
+#ifdef POLKIT_BUILD_TESTS
+static struct passwd *
+kit_getpwnam (const char *username)
+{
+        struct passwd *pw;
+        FILE *f;
+        const char *passwd_file;
+
+        f = NULL;
+        pw = NULL;
+
+        if ((passwd_file = getenv ("POLKIT_TEST_PASSWD_FILE")) == NULL)
+                return getpwnam (username);
+
+        f = fopen (passwd_file, "r");
+        if (f == NULL)
+                goto out;
+
+        while ((pw = fgetpwent (f)) != NULL) {
+                if (strcmp (pw->pw_name, username) == 0)
+                        goto out;
+        }
+
+out:
+        if (f != NULL)
+                fclose (f);
+        return pw;
+}
+
+static struct passwd *
+kit_getpwuid (uid_t uid)
+{
+        struct passwd *pw;
+        FILE *f;
+        const char *passwd_file;
+
+        f = NULL;
+        pw = NULL;
+
+        if ((passwd_file = getenv ("POLKIT_TEST_PASSWD_FILE")) == NULL)
+                return getpwuid (uid);
+
+        f = fopen (passwd_file, "r");
+        if (f == NULL)
+                goto out;
+
+        while ((pw = fgetpwent (f)) != NULL) {
+                if (pw->pw_uid == uid)
+                        goto out;
+        }
+
+out:
+        if (f != NULL)
+                fclose (f);
+        return pw;
+}
+#else
+static struct passwd *
+kit_getpwnam (const char *username)
+{
+        return getpwnam (username);
+}
+
+static struct passwd *
+kit_getpwuid (uid_t uid)
+{
+        return getpwuid (uid);
+}
+#endif
+
 static polkit_bool_t
 dump_auths_all (const char *root)
 {
@@ -217,7 +288,7 @@ dump_auths_all (const char *root)
                 strncpy (username, filename + m, n - m);
                 username[n - m] = '\0';
 
-                pw = getpwnam (username);
+                pw = kit_getpwnam (username);
                 if (pw == NULL) {
                         fprintf (stderr, "polkit-read-auth-helper: cannot look up uid for username %s\n", username);
                         continue;
@@ -247,7 +318,7 @@ dump_auths_for_uid (const char *root, uid_t uid)
         char path[256];
         struct passwd *pw;
 
-        pw = getpwuid (uid);
+        pw = kit_getpwuid (uid);
         if (pw == NULL) {
                 fprintf (stderr, "polkit-read-auth-helper: cannot lookup user name for uid %d\n", uid);
                 return FALSE;
@@ -266,20 +337,20 @@ int
 main (int argc, char *argv[])
 {
         int ret;
-        gid_t egid;
-        struct group *group;
         uid_t caller_uid;
         uid_t requesting_info_for_uid;
         char *endp;
-        struct passwd *pw;
         uid_t uid_for_polkit_user;
 
         ret = 1;
+
+#ifndef POLKIT_BUILD_TESTS
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
         if (clearenv () != 0)
                 goto out;
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
+#endif
 
         openlog ("polkit-read-auth-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
@@ -298,7 +369,18 @@ main (int argc, char *argv[])
                 fprintf (stderr, "polkit-read-auth-helper: inappropriate use of helper, stdin is a tty. This incident has been logged.\n");
                 goto out;
         }
-        
+
+#ifdef POLKIT_BUILD_TESTS
+        char *pretend;
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_UID")) != NULL) {
+                caller_uid = atoi (pretend);
+                goto skip_check;
+        }
+#endif
+        gid_t egid;
+        struct group *group;
+        struct passwd *pw;
+
         /* check that we are setgid polkituser */
         egid = getegid ();
         group = getgrgid (egid);
@@ -311,7 +393,11 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        pw = getpwnam (POLKIT_USER);
+#ifdef POLKIT_BUILD_TESTS
+skip_check:
+#endif
+
+        pw = kit_getpwnam (POLKIT_USER);
         if (pw == NULL) {
                 fprintf (stderr, "polkit-read-auth-helper: cannot lookup uid for " POLKIT_USER "\n");
                 goto out;
@@ -343,17 +429,33 @@ main (int argc, char *argv[])
                 }
         }
 
+#ifdef POLKIT_BUILD_TESTS
+        char *test_dir;
+        char dir_run[256];
+        char dir_lib[256];
+
+        if ((test_dir = getenv ("POLKIT_TEST_LOCALSTATE_DIR")) == NULL) {
+                test_dir = PACKAGE_LOCALSTATE_DIR;
+        }
+        kit_assert ((size_t) snprintf (dir_run, sizeof (dir_run), "%s/run/PolicyKit", test_dir) < sizeof (dir_run));
+        kit_assert ((size_t) snprintf (dir_lib, sizeof (dir_lib), "%s/lib/PolicyKit", test_dir) < sizeof (dir_lib));
+
+#else
+        char *dir_run = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+        char *dir_lib = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+#endif
+
         if (requesting_info_for_uid == (uid_t) -1) {
-                if (!dump_auths_all (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit"))
+                if (!dump_auths_all (dir_run))
                         goto out;
                 
-                if (!dump_auths_all (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit"))
+                if (!dump_auths_all (dir_lib))
                         goto out;                
         } else {
-                if (!dump_auths_for_uid (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", requesting_info_for_uid))
+                if (!dump_auths_for_uid (dir_run, requesting_info_for_uid))
                         goto out;
                 
-                if (!dump_auths_for_uid (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", requesting_info_for_uid))
+                if (!dump_auths_for_uid (dir_lib, requesting_info_for_uid))
                         goto out;
         }
 

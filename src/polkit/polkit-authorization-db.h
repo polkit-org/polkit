@@ -69,14 +69,16 @@ polkit_bool_t polkit_authorization_db_is_session_authorized (PolKitAuthorization
                                                              PolKitAction          *action,
                                                              PolKitSession         *session,
                                                              polkit_bool_t         *out_is_authorized,
-                                                             polkit_bool_t         *out_is_negative_authorized);
+                                                             polkit_bool_t         *out_is_negative_authorized,
+                                                             PolKitError          **error);
 
 polkit_bool_t polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                                                             PolKitAction          *action,
                                                             PolKitCaller          *caller,
                                                             polkit_bool_t          revoke_if_one_shot,
                                                             polkit_bool_t         *out_is_authorized,
-                                                            polkit_bool_t         *out_is_negative_authorized);
+                                                            polkit_bool_t         *out_is_negative_authorized,
+                                                            PolKitError          **error);
 
 /**
  * PolKitAuthorizationDBForeach:

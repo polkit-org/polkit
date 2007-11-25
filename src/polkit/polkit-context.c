@@ -519,7 +519,8 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                                            action, 
                                                            session,
                                                            &from_authdb,
-                                                           &from_authdb_negative)) {
+                                                           &from_authdb_negative,
+                                                           NULL /* TODO */)) {
                 if (from_authdb)
                         result_from_grantdb = POLKIT_RESULT_YES;
         }
@@ -675,7 +676,8 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                                           caller,
                                                           revoke_if_one_shot,
                                                           &from_authdb,
-                                                          &from_authdb_negative)) {
+                                                          &from_authdb_negative, 
+                                                          NULL /* TODO */)) {
                 if (from_authdb)
                         result_from_grantdb = POLKIT_RESULT_YES;
         }

@@ -59,7 +59,7 @@
  *
  * Get when a process started.
  *
- * Returns: start time for the process or 0 if an error occured
+ * Returns: start time for the process or 0 if an error occured and errno will be set
  *
  * Since: 0.7
  */
@@ -80,7 +80,7 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
 
         filename = kit_strdup_printf ("/proc/%d/stat", pid);
         if (filename == NULL) {
-                kit_warning ("Out of memory");
+                errno = ENOMEM;
                 goto out;
         }
 

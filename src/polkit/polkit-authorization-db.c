@@ -72,11 +72,19 @@ struct _PolKitAuthorizationDB;
 
 /* PolKitAuthorizationDB structure is defined in polkit/polkit-private.h */
 
+static kit_bool_t
+clear_auth (KitList *list, void *data, void *user_data)
+{
+        PolKitAuthorization *auth = (PolKitAuthorization *) data;
+        polkit_authorization_unref (auth);
+        return FALSE;
+}
+
 static void
 _free_authlist (KitList *authlist)
 {
         if (authlist != NULL) {
-                kit_list_foreach (authlist, (KitListForeachFunc) polkit_authorization_unref, NULL);
+                kit_list_foreach (authlist, clear_auth, NULL);
                 kit_list_free (authlist);
         }
 }
@@ -173,7 +181,8 @@ polkit_authorization_db_unref (PolKitAuthorizationDB *authdb)
         authdb->refcount--;
         if (authdb->refcount > 0) 
                 return;
-        kit_hash_unref (authdb->uid_to_authlist);
+        if (authdb->uid_to_authlist != NULL)
+                kit_hash_unref (authdb->uid_to_authlist);
         kit_free (authdb);
 }
 
@@ -257,7 +266,7 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                            PolKitError          **error)
 {
         KitList *ret;
-        char *helper_argv[] = {PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper", NULL, NULL};
+        char *helper_argv[] = {NULL, NULL, NULL};
         int exit_status;
         char *standard_output;
         size_t len;
@@ -266,12 +275,31 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
         ret = NULL;
         standard_output = NULL;
 
+#ifdef POLKIT_BUILD_TESTS
+        char helper_buf[256];
+        char *helper_bin_dir;
+        if ((helper_bin_dir = getenv ("POLKIT_TEST_BUILD_DIR")) != NULL) {
+                kit_assert ((size_t) snprintf (helper_buf, sizeof (helper_buf), "%s/src/polkit-dbus/polkit-read-auth-helper", helper_bin_dir) < sizeof (helper_buf));
+                helper_argv[0] = helper_buf;
+        } else {
+                helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper";
+        }
+#else
+        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper";
+#endif
+
         /* first, see if this is in the cache */
         ret = kit_hash_lookup (authdb->uid_to_authlist, (void *) uid, NULL);
         if (ret != NULL)
                 goto out;
 
         helper_argv[1] = kit_strdup_printf ("%d", uid);
+        if (helper_argv[1] == NULL) {
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_OUT_OF_MEMORY, 
+                                        "No memory");
+                goto out;
+        }
 
         /* we need to do this through a setgid polkituser helper
          * because the auth file is readable only for uid 0 and gid
@@ -339,12 +367,37 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                         
                         if (strlen (line) >= 2 && line[0] != '#') {
                                 auth = _polkit_authorization_new_for_uid (line, uid2);
-                                
+                                if (auth == NULL) {
+                                        if (errno == ENOMEM) {
+                                                polkit_error_set_error (error, 
+                                                                        POLKIT_ERROR_OUT_OF_MEMORY, 
+                                                                        "No memory");
+                                                _free_authlist (ret);
+                                                ret = NULL;
+                                                goto out;
+                                        } else {
+                                                kit_warning ("Skipping invalid authline '%s'", line);
+                                        }
+                                }
+
+                                //kit_warning (" #got %s", line);
+
                                 if (auth != NULL) {
+                                        KitList *ret2;
                                         /* we need the authorizations in the chronological order... 
                                          * (TODO: optimized: prepend, then reverse after all items have been inserted)
                                          */
-                                        ret = kit_list_append (ret, auth);
+                                        ret2 = kit_list_append (ret, auth);
+                                        if (ret2 == NULL) {
+                                                polkit_error_set_error (error, 
+                                                                        POLKIT_ERROR_OUT_OF_MEMORY, 
+                                                                        "No memory");
+                                                polkit_authorization_unref (auth);
+                                                _free_authlist (ret);
+                                                ret = NULL;
+                                                goto out;
+                                        }
+                                        ret = ret2;
                                 }
                         }
                         
@@ -352,7 +405,14 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                 }
         }
 
-        kit_hash_insert (authdb->uid_to_authlist, (void *) uid, ret);
+        if (!kit_hash_insert (authdb->uid_to_authlist, (void *) uid, ret)) {
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_OUT_OF_MEMORY, 
+                                        "No memory");
+                _free_authlist (ret);
+                ret = NULL;
+                goto out;
+        }
 
 out:
         kit_free (helper_argv[1]);
@@ -617,6 +677,7 @@ no_match:
  * @session: the session to check for
  * @out_is_authorized: return location
  * @out_is_negative_authorized: return location
+ * @error: return location for error
  *
  * Looks in the authorization database and determine if processes from
  * the given session are authorized to do the given specific
@@ -627,7 +688,7 @@ no_match:
  *
  * Returns: #TRUE if the look up was performed; #FALSE if the caller
  * of this function lacks privileges to ask this question (e.g. asking
- * about a user that is not himself).
+ * about a user that is not himself) or OOM (and @error will be set)
  *
  * Since: 0.7
  */
@@ -636,7 +697,8 @@ polkit_authorization_db_is_session_authorized (PolKitAuthorizationDB *authdb,
                                                PolKitAction          *action,
                                                PolKitSession         *session,
                                                polkit_bool_t         *out_is_authorized,
-                                               polkit_bool_t         *out_is_negative_authorized)
+                                               polkit_bool_t         *out_is_negative_authorized,
+                                               PolKitError          **error)
 {
         polkit_bool_t ret;
         CheckDataSession cd;
@@ -774,6 +836,7 @@ no_match:
  * discussion in polkit_context_is_caller_authorized() for details.
  * @out_is_authorized: return location
  * @out_is_negative_authorized: return location
+ * @error: return location for error
  *
  * Looks in the authorization database if the given caller is
  * authorized to do the given action. If there is an authorization
@@ -783,7 +846,7 @@ no_match:
  *
  * Returns: #TRUE if the look up was performed; #FALSE if the caller
  * of this function lacks privileges to ask this question (e.g. asking
- * about a user that is not himself).
+ * about a user that is not himself) or if OOM (and @error will be set)
  *
  * Since: 0.7
  */
@@ -793,11 +856,13 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                                               PolKitCaller          *caller,
                                               polkit_bool_t          revoke_if_one_shot,
                                               polkit_bool_t         *out_is_authorized,
-                                              polkit_bool_t         *out_is_negative_authorized)
+                                              polkit_bool_t         *out_is_negative_authorized,
+                                              PolKitError          **error)
 {
         PolKitSession *session;
         polkit_bool_t ret;
         CheckData cd;
+        PolKitError *error2;
 
         ret = FALSE;
 
@@ -807,20 +872,30 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
         kit_return_val_if_fail (out_is_authorized != NULL, FALSE);
 
         if (!polkit_action_get_action_id (action, &cd.action_id))
-                return FALSE;
+                goto out;
 
         if (!polkit_caller_get_pid (caller, &cd.caller_pid))
-                return FALSE;
+                goto out;
 
         if (!polkit_caller_get_uid (caller, &cd.caller_uid))
-                return FALSE;
+                goto out;
 
         cd.caller = caller;
         cd.revoke_if_one_shot = revoke_if_one_shot;
 
         cd.caller_pid_start_time = polkit_sysdeps_get_start_time_for_pid (cd.caller_pid);
-        if (cd.caller_pid_start_time == 0)
-                return FALSE;
+        if (cd.caller_pid_start_time == 0) {
+                if (errno == ENOMEM) {
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_OUT_OF_MEMORY, 
+                                                "No memory");
+                } else {
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_GENERAL_ERROR, 
+                                                "Errno %d: %m", errno);
+                }
+                goto out;
+        }
 
         /* Caller does not _have_ to be member of a session */
         cd.session_objpath = NULL;
@@ -829,21 +904,32 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                         cd.session_objpath = NULL;
         }
 
-        ret = TRUE;
-
         cd.out_is_authorized = out_is_authorized;
         cd.out_is_negative_authorized = out_is_negative_authorized;
         *out_is_authorized = FALSE;
         *out_is_negative_authorized = FALSE;
 
+        error2 = NULL;
         if (polkit_authorization_db_foreach_for_uid (authdb,
                                                      cd.caller_uid, 
                                                      _check_auth_for_caller,
                                                      &cd,
-                                                     NULL)) {
+                                                     &error2)) {
                 ;
         }
 
+        if (polkit_error_is_set (error2)) {
+                if (error != NULL) {
+                        *error = error2;
+                } else {
+                        polkit_error_free (error2);
+                }
+                goto out;
+        }
+
+        ret = TRUE;
+
+out:
         return ret;
 }
 
@@ -994,18 +1080,37 @@ _run_test (void)
 {
         PolKitAuthorizationDB *adb;
         const char test_passwd[] = 
-                "pu1:x:50400:50400:PolKit Test user 1:/home/polkittest1:/bin/bash\n"
-                "pu2:x:50401:50401:PolKit Test user 2:/home/polkittest2:/bin/bash\n";
+                "root:x:0:0:PolKit root user:/root:/bin/bash\n"
+                POLKIT_USER ":x:50400:50400:PolKit user:/:/sbin/nologin\n"
+                "pu1:x:50401:50401:PolKit Test user 0:/home/polkittest1:/bin/bash\n"
+                "pu2:x:50402:50402:PolKit Test user 1:/home/polkittest2:/bin/bash\n"
+                "pu3:x:50403:50403:PolKit Test user 2:/home/polkittest3:/bin/bash\n";
         const char test_pu1_run[] =
                 "";
         const char test_pu1_lib[] =
-                "grant:org.freedesktop.policykit.read:1194634242:0:none\n";
+                "scope=grant:action-id=org.freedesktop.policykit.read:when=1194634242:granted-by=0:constraint=none\n";
         const char test_pu2_run[] =
                 "";
         const char test_pu2_lib[] =
                 "";
+        const char test_pu3_run[] =
+                "";
+        const char test_pu3_lib[] =
+                "";
+        PolKitCaller *caller;
+        PolKitAction *action;
+        polkit_bool_t is_auth;
+        polkit_bool_t is_neg;
+        PolKitError *error;
+
+        adb = NULL;
+        caller = NULL;
+        action = NULL;
         
         if (setenv ("POLKIT_TEST_LOCALSTATE_DIR", TEST_DATA_DIR "authdb-test", 1) != 0)
+                goto fail;
+
+        if (setenv ("POLKIT_TEST_BUILD_DIR", TEST_BUILD_DIR, 1) != 0)
                 goto fail;
 
         if (setenv ("POLKIT_TEST_PASSWD_FILE", TEST_DATA_DIR "authdb-test/passwd", 1) != 0)
@@ -1029,23 +1134,116 @@ _run_test (void)
         if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu2.auths", 0644, 
                                     test_pu2_lib, sizeof (test_pu2_lib) - 1))
                 goto out;
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/PolicyKit/user-pu3.auths", 0644, 
+                                    test_pu3_run, sizeof (test_pu3_run) - 1))
+                goto out;
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu3.auths", 0644, 
+                                    test_pu3_lib, sizeof (test_pu3_lib) - 1))
+                goto out;
 
         if ((adb = _polkit_authorization_db_new ()) == NULL)
                 goto out;
 
-        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50400", 1) != 0)
+
+        if ((action = polkit_action_new ()) == NULL)
+                goto out;
+        if ((caller = polkit_caller_new ()) == NULL)
+                goto out;
+        kit_assert (polkit_caller_set_pid (caller, getpid ()));
+
+
+        /*
+         * test: "org.freedesktop.policykit.read" 
+         */
+        if (!polkit_action_set_action_id (action, "org.freedesktop.policykit.read"))
+                goto out;
+
+        /* test: pu1 has the auth org.freedesktop.policykit.read */
+        kit_assert (polkit_caller_set_uid (caller, 50401));
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50401", 1) != 0)
                 goto fail;
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
+                kit_assert (! polkit_error_is_set (error) && is_auth && !is_neg);
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                polkit_error_free (error);
+        }
 
-        /* TODO: FIXME: this code is not finished */
+        _polkit_authorization_db_invalidate_cache (adb);
 
+        /* test: pu2 does not have the auth org.freedesktop.policykit.read */
+        kit_assert (polkit_caller_set_uid (caller, 50402));
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50402", 1) != 0)
+                goto fail;
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
+                kit_assert (! polkit_error_is_set (error));
+                kit_assert (!is_auth && !is_neg);
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                polkit_error_free (error);
+        }
 
-        polkit_authorization_db_unref (adb);
+        _polkit_authorization_db_invalidate_cache (adb);
+
+        /* test: pu1 can check that pu2 does not have the auth org.freedesktop.policykit.read */
+        kit_assert (polkit_caller_set_uid (caller, 50402));
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50401", 1) != 0)
+                goto fail;
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
+                kit_assert (! polkit_error_is_set (error) && !is_auth && !is_neg);
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                polkit_error_free (error);
+        }
+
+        _polkit_authorization_db_invalidate_cache (adb);
+
+        /* test: pu2 cannot check if pu1 have the auth org.freedesktop.policykit.read */
+        kit_assert (polkit_caller_set_uid (caller, 50401));
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50402", 1) != 0)
+                goto fail;
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
+                kit_warning ("pu2 shouldn't be able to read auths for pu1: %d %d", is_auth, is_neg);
+                goto fail;
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY ||
+                             polkit_error_get_error_code (error) == POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS));
+                polkit_error_free (error);
+        }
+
+        _polkit_authorization_db_invalidate_cache (adb);
 
 out:
+
+        if (action != NULL)
+                polkit_action_unref (action);
+
+        if (caller != NULL)
+                polkit_caller_unref (caller);
+
+        if (adb != NULL) {
+                polkit_authorization_db_debug (adb);
+                polkit_authorization_db_validate (adb);
+                polkit_authorization_db_ref (adb);
+                polkit_authorization_db_unref (adb);
+                polkit_authorization_db_unref (adb);
+        }
+
         if (unsetenv ("POLKIT_TEST_PRETEND_TO_BE_UID") != 0)
                 goto fail;
 
         if (unsetenv ("POLKIT_TEST_LOCALSTATE_DIR") != 0)
+                goto fail;
+
+        if (unsetenv ("POLKIT_TEST_BUILD_DIR") != 0)
                 goto fail;
 
         if (unsetenv ("POLKIT_TEST_PASSWD_FILE") != 0)

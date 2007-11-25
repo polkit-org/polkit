@@ -138,7 +138,10 @@ polkit_bool_t
 polkit_caller_set_dbus_name (PolKitCaller *caller, const char *dbus_name)
 {
         kit_return_val_if_fail (caller != NULL, FALSE);
-        kit_return_val_if_fail (dbus_name == NULL || _pk_validate_unique_bus_name (dbus_name), FALSE);
+
+        if (dbus_name != NULL && ! _pk_validate_unique_bus_name (dbus_name))
+                return FALSE;
+
         if (caller->dbus_name != NULL)
                 kit_free (caller->dbus_name);
         if (dbus_name == NULL) {

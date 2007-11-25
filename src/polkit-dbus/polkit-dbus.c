@@ -732,6 +732,13 @@ not_in_session:
                 goto out;
         }
 
+#ifdef POLKIT_BUILD_TESTS
+        char *pretend;
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_UID")) != NULL) {
+                polkit_caller_set_uid (caller, atoi (pretend));
+        }
+#endif
+
 out:
         g_free (selinux_context);
         g_free (ck_session_objpath);
