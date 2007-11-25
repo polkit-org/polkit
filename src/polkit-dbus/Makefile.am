@@ -27,7 +27,7 @@ libpolkit_dbus_la_SOURCES =                                	\
 
 libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS) $(GLIB_LIBS)
 
-libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
 
 if POLKIT_AUTHDB_DEFAULT
 libexec_PROGRAMS = polkit-read-auth-helper polkit-set-default-helper
@@ -71,7 +71,7 @@ polkit_dbus_test_LDFLAGS=
 
 if KIT_GCOV_ENABLED
 clean-gcov:
-	rm -f *.gcov .libs/*.gcda
+	rm -f *.gcov .libs/*.gcda *.gcda
 
 .PHONY: coverage-report.txt covered-files.txt
 

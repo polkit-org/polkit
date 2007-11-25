@@ -44,11 +44,11 @@ kit_test_SOURCES=				\
 	kit-test-main.c
 
 kit_test_LDADD=$(top_builddir)/src/kit/libkit.la
-kit_test_LDFLAGS=
+kit_test_LDFLAGS=@R_DYNAMIC_LDFLAG@
 
 if KIT_GCOV_ENABLED
 clean-gcov:
-	rm -f *.gcov .libs/*.gcda
+	rm -f *.gcov .libs/*.gcda *.gcda
 
 .PHONY: coverage-report.txt covered-files.txt
 

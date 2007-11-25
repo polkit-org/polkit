@@ -34,7 +34,7 @@ endif
 
 libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la
 
-libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
 
 # Only if the authdb backend has the capability POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN
 # then the backend must supply the /usr/libexec/polkit-grant-helper program.. also remember to

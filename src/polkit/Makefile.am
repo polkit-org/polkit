@@ -11,7 +11,8 @@ INCLUDES = \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	-DPOLKIT_COMPILATION \
-	-DTEST_DATA_DIR=\"$(top_srcdir)/test/\"
+	-DTEST_DATA_DIR=\"$(top_srcdir)/test/\" \
+	-DTEST_BUILD_DIR=\"$(top_builddir)\"
 
 lib_LTLIBRARIES=libpolkit.la
 
@@ -72,7 +73,7 @@ endif
 
 libpolkit_la_LIBADD = @EXPAT_LIBS@ $(top_builddir)/src/kit/libkit.la
 
-libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE)
+libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
 
 ## note that TESTS has special meaning (stuff to use in make check)
 ## so if adding tests not to be run in make check, don't add them to 
@@ -91,7 +92,7 @@ polkit_test_LDFLAGS=
 
 if POLKIT_GCOV_ENABLED
 clean-gcov:
-	rm -f *.gcov .libs/*.gcda
+	rm -f *.gcov .libs/*.gcda *.gcda
 
 .PHONY: coverage-report.txt covered-files.txt
 

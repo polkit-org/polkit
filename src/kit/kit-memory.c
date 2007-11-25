@@ -34,6 +34,10 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef BUILT_R_DYNAMIC
+#include <execinfo.h>
+#endif
+
 #include <kit/kit-memory.h>
 #include <kit/kit-test.h>
 
@@ -231,6 +235,42 @@ _kit_memory_fail_nth_alloc (int number)
 }
 
 #endif /* KIT_BUILD_TESTS */
+
+/* There's probably a better place for this function ... */
+
+/**
+ * kit_print_backtrace:
+ *
+ * Print a back trace if built with -rdynamic or similar.
+ */
+void 
+kit_print_backtrace (void)
+{
+#ifdef BUILT_R_DYNAMIC
+        void *bt[500];
+        int bt_size;
+        int i;
+        char **syms;
+        
+        bt_size = backtrace (bt, 500);
+        
+        syms = backtrace_symbols (bt, bt_size);
+        
+        i = 0;
+        while (i < bt_size)
+        {
+                fprintf (stderr, "  %s\n", syms[i]);
+                ++i;
+        }
+        fprintf (stderr, "\n");
+        fflush (stderr);
+
+        free (syms);
+#else
+        fprintf (stderr, " Not built with -rdynamic so unable to print a backtrace\n");
+#endif
+}
+
 
 
 

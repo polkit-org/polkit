@@ -66,6 +66,8 @@ typedef int kit_bool_t;
 #  define FALSE 0
 #endif
 
+void kit_print_backtrace (void);
+
 /**
  * kit_assert:
  * @expr: expression
@@ -80,6 +82,7 @@ do {                                                                            
                 ;                                                                               \
         } else {                                                                                \
                 kit_warning ("%s:%d:%s(): %s", __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
+                kit_print_backtrace ();                                                         \
                 exit (1);                                                                       \
         }                                                                                       \
 } while (0)
@@ -99,6 +102,7 @@ do {                                                                            
                 ;                                                                               \
         } else {                                                                                \
                 kit_warning ("%s:%d:%s(): %s", __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
+                kit_print_backtrace ();                                                         \
                 return;                                                                         \
         }                                                                                       \
 } while (0)
@@ -119,6 +123,7 @@ do {                                                                            
                 ;                                                                               \
         } else {                                                                                \
                 kit_warning ("%s:%d:%s(): %s", __FILE__, __LINE__, __PRETTY_FUNCTION__, #expr); \
+                kit_print_backtrace ();                                                         \
                 return val;                                                                     \
         }                                                                                       \
 } while (0)

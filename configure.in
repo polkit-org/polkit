@@ -52,6 +52,14 @@ fi
 AM_CONDITIONAL(KIT_GCOV_ENABLED, test x$enable_gcov = xyes)
 AM_CONDITIONAL(POLKIT_GCOV_ENABLED, test x$enable_gcov = xyes)
 
+if test "${enable_verbose_mode}" != no; then
+    # To get -rdynamic you pass -export-dynamic to libtool.
+    AC_DEFINE(BUILT_R_DYNAMIC,1,[whether -export-dynamic was passed to libtool])
+    R_DYNAMIC_LDFLAG=-export-dynamic
+else
+    R_DYNAMIC_LDFLAG=
+fi
+AC_SUBST(R_DYNAMIC_LDFLAG)
 
 if test "${enable_man_page}" != no; then
 dnl
