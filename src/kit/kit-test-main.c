@@ -39,6 +39,7 @@ static KitTest *tests[] = {
         &_test_hash,
         &_test_file,
         &_test_spawn,
+        &_test_entity,
 };
 
 int 

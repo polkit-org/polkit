@@ -28,6 +28,7 @@ libkit_la_SOURCES =					\
 	kit-file.h		kit-file.c		\
 	kit-spawn.h		kit-spawn.c		\
 	kit-message.h		kit-message.c		\
+	kit-entity.h		kit-entity.c		\
 	$(NULL)
 
 

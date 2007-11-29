@@ -144,6 +144,7 @@ do {                                                                            
 #include <kit/kit-spawn.h>
 #include <kit/kit-message.h>
 #include <kit/kit-test.h>
+#include <kit/kit-entity.h>
 
 #undef _KIT_INSIDE_KIT_H
 

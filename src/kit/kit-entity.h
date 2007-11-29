@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * kit-test.h : PolicyKit test
+ * kit-entity.h : Entity management
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -31,42 +31,22 @@
 #error "Only <kit/kit.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef KIT_TEST_H
-#define KIT_TEST_H
+#ifndef KIT_ENTITY_H
+#define KIT_ENTITY_H
 
+#include <stdarg.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <pwd.h>
 #include <kit/kit.h>
 
 KIT_BEGIN_DECLS
 
-/**
- * KitTest:
- * @name: name of the unit test
- * @setup: setup function
- * @teardown: teardown function
- * @run: actual test function.
- *
- * Test suite abstraction. See kit_test_run() for details.
- */
-typedef struct {
-        const char *name;
-        void (*setup) (void);
-        void (*teardown) (void);
-        kit_bool_t (*run) (void);
-} KitTest;
-
-kit_bool_t kit_test_run (KitTest **tests, size_t num_tests);
-
-extern KitTest _test_memory;
-extern KitTest _test_string;
-extern KitTest _test_hash;
-extern KitTest _test_list;
-extern KitTest _test_file;
-extern KitTest _test_spawn;
-extern KitTest _test_message;
-extern KitTest _test_entity;
+struct passwd *kit_getpwnam (const char *username);
+struct passwd *kit_getpwuid (uid_t uid);
 
 KIT_END_DECLS
 
-#endif /* KIT_TEST_H */
+#endif /* KIT_ENTITY_H */
 
 
