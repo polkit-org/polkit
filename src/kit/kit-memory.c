@@ -100,6 +100,11 @@ kit_malloc (size_t bytes)
 
         if (_fail_nth != -1 && _total_allocs == _fail_nth) {
                 errno = ENOMEM;
+                _total_allocs++;
+
+                //fprintf (stderr, "  Failing alloc @\n");
+                //kit_print_backtrace ();
+
                 return NULL;
         }
 
