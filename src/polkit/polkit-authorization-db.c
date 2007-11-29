@@ -317,9 +317,15 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                              &standard_output, /* char       **stdout */
                              NULL,             /* char       **stderr */
                              &exit_status)) {  /* int         *exit_status */
-                polkit_error_set_error (error, 
-                                        POLKIT_ERROR_GENERAL_ERROR, 
-                                        "Error spawning read auth helper: %m");
+                if (errno == ENOMEM) {
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_OUT_OF_MEMORY, 
+                                                "Error spawning read auth helper: OOM");
+                } else {
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_GENERAL_ERROR, 
+                                                "Error spawning read auth helper: %m");
+                }
                 goto out;
         }
 
@@ -754,6 +760,8 @@ typedef struct {
 
         polkit_bool_t *out_is_authorized;
         polkit_bool_t *out_is_negative_authorized;
+
+        PolKitError *error;
 } CheckData;
 
 static polkit_bool_t 
@@ -766,7 +774,6 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
         polkit_uint64_t caller_pid_start_time;
         CheckData *cd = (CheckData *) user_data;
         PolKitAuthorizationConstraint *constraint;
-        PolKitError *error;
 
         ret = FALSE;
 
@@ -790,12 +797,14 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
 
                         /* it's a match already; revoke if asked to do so */
                         if (cd->revoke_if_one_shot) {
-                                error = NULL;
-                                if (!polkit_authorization_db_revoke_entry (authdb, auth, &error)) {
-                                        kit_warning ("Cannot revoke one-shot auth: %s: %s", 
-                                                   polkit_error_get_error_name (error),
-                                                   polkit_error_get_error_message (error));
-                                        polkit_error_free (error);
+                                cd->error = NULL;
+                                if (!polkit_authorization_db_revoke_entry (authdb, auth, &(cd->error))) {
+                                        //kit_warning ("Cannot revoke one-shot auth: %s: %s", 
+                                        //           polkit_error_get_error_name (cd->error),
+                                        //           polkit_error_get_error_message (cd->error));
+                                        /* stop iterating */
+                                        ret = TRUE;
+                                        goto no_match;
                                 }
                         }
                 }
@@ -886,6 +895,7 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
 
         cd.caller = caller;
         cd.revoke_if_one_shot = revoke_if_one_shot;
+        cd.error = NULL;
 
         cd.caller_pid_start_time = polkit_sysdeps_get_start_time_for_pid (cd.caller_pid);
         if (cd.caller_pid_start_time == 0) {
@@ -931,6 +941,15 @@ polkit_authorization_db_is_caller_authorized (PolKitAuthorizationDB *authdb,
                 goto out;
         }
 
+        if (polkit_error_is_set (cd.error)) {
+                if (error != NULL) {
+                        *error = cd.error;
+                } else {
+                        polkit_error_free (cd.error);
+                }
+                goto out;
+        }
+
         ret = TRUE;
 
 out:
@@ -955,7 +974,7 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
                                       PolKitAuthorization   *auth,
                                       PolKitError           **error)
 {
-        char *helper_argv[] = {PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper", "", NULL, NULL, NULL};
+        char *helper_argv[] = {NULL, "", NULL, NULL, NULL};
         const char *auth_file_entry;
         polkit_bool_t ret;
         int exit_status;
@@ -968,9 +987,28 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
         auth_file_entry = _polkit_authorization_get_authfile_entry (auth);
         //g_debug ("should delete line '%s'", auth_file_entry);
 
+#ifdef POLKIT_BUILD_TESTS
+        char helper_buf[256];
+        char *helper_bin_dir;
+        if ((helper_bin_dir = getenv ("POLKIT_TEST_BUILD_DIR")) != NULL) {
+                kit_assert ((size_t) snprintf (helper_buf, sizeof (helper_buf), "%s/src/polkit-grant/polkit-revoke-helper", helper_bin_dir) < sizeof (helper_buf));
+                helper_argv[0] = helper_buf;
+        } else {
+                helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper";
+        }
+#else
+        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper";
+#endif
+
         helper_argv[1] = (char *) auth_file_entry;
         helper_argv[2] = "uid";
         helper_argv[3] = kit_strdup_printf ("%d", polkit_authorization_get_uid (auth));
+        if (helper_argv[3] == NULL) {
+                polkit_error_set_error (error, 
+                                        POLKIT_ERROR_OUT_OF_MEMORY, 
+                                        "Out of memory");
+                goto out;
+        }
 
         if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
                              0,                /* flags */
@@ -980,9 +1018,15 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
                              NULL,             /* char       **stdout */
                              NULL,             /* char       **stderr */
                              &exit_status)) {  /* int         *exit_status */
-                polkit_error_set_error (error, 
-                                        POLKIT_ERROR_GENERAL_ERROR, 
-                                        "Error spawning revoke helper: %m");
+                if (errno == ENOMEM) {
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_OUT_OF_MEMORY, 
+                                                "Error spawning revoke helper: OOM");
+                } else {
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_GENERAL_ERROR, 
+                                                "Error spawning revoke helper: %m");
+                }
                 goto out;
         }
 
@@ -1097,8 +1141,7 @@ _run_test (void)
                 "";
         const char test_pu2_lib[] =
                 "";
-        const char test_pu3_run[] =
-                "";
+        char test_pu3_run[512];
         const char test_pu3_lib[] =
                 "";
         PolKitCaller *caller;
@@ -1106,10 +1149,23 @@ _run_test (void)
         polkit_bool_t is_auth;
         polkit_bool_t is_neg;
         PolKitError *error;
+        polkit_uint64_t start_time;
+
 
         adb = NULL;
         caller = NULL;
         action = NULL;
+
+        start_time = polkit_sysdeps_get_start_time_for_pid (getpid ());
+        if (start_time == 0)
+                goto out;
+        
+        if (snprintf (test_pu3_run, sizeof (test_pu3_run), 
+                      "scope=process:pid=%d:pid-start-time=%lld:action-id=org.example.per-process:when=1196307507:auth-as=500:constraint=none\n"
+                      "scope=process-one-shot:pid=%d:pid-start-time=%lld:action-id=org.example.per-process-one-shot:when=1196307507:auth-as=500:constraint=none\n",
+                      getpid (), start_time,
+                      getpid (), start_time) >= (int) sizeof (test_pu3_run))
+                goto fail;
         
         if (setenv ("POLKIT_TEST_LOCALSTATE_DIR", TEST_DATA_DIR "authdb-test", 1) != 0)
                 goto fail;
@@ -1117,7 +1173,7 @@ _run_test (void)
         if (setenv ("POLKIT_TEST_BUILD_DIR", TEST_BUILD_DIR, 1) != 0)
                 goto fail;
 
-        if (setenv ("POLKIT_TEST_PASSWD_FILE", TEST_DATA_DIR "authdb-test/passwd", 1) != 0)
+        if (setenv ("KIT_TEST_PASSWD_FILE", TEST_DATA_DIR "authdb-test/passwd", 1) != 0)
                 goto fail;
 
         /* create test users */
@@ -1170,6 +1226,11 @@ _run_test (void)
         if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
                 kit_assert (! polkit_error_is_set (error) && is_auth && !is_neg);
         } else {
+                //kit_warning ("%p: %d: %s: %s", 
+                //             error, 
+                //             polkit_error_get_error_code (error), 
+                //            polkit_error_get_error_name (error),
+                //             polkit_error_get_error_message (error));
                 kit_assert (polkit_error_is_set (error) && 
                             polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
                 polkit_error_free (error);
@@ -1225,6 +1286,55 @@ _run_test (void)
 
         _polkit_authorization_db_invalidate_cache (adb);
 
+        /* test: pu3 is authorized for org.example.per-process */
+        if (!polkit_action_set_action_id (action, "org.example.per-process"))
+                goto out;
+
+        kit_assert (polkit_caller_set_uid (caller, 50403));
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50403", 1) != 0)
+                goto fail;
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
+                kit_assert (! polkit_error_is_set (error) && is_auth && !is_neg);
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                polkit_error_free (error);
+        }
+
+        /* test: pu3 is authorized for org.example.per-process-one-shot just once */
+        if (!polkit_action_set_action_id (action, "org.example.per-process-one-shot"))
+                goto out;
+
+        kit_assert (polkit_caller_set_uid (caller, 50403));
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50403", 1) != 0)
+                goto fail;
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, TRUE, &is_auth, &is_neg, &error)) {
+                kit_assert (! polkit_error_is_set (error) && is_auth && !is_neg);
+
+                _polkit_authorization_db_invalidate_cache (adb);
+
+                if (polkit_authorization_db_is_caller_authorized (adb, action, caller, TRUE, &is_auth, &is_neg, &error)) {
+                        if (is_auth || is_neg) {
+                                kit_warning ("pu3 shouldn't be authorized for something twice: %d %d", is_auth, is_neg);
+                                goto fail;
+                        }
+                } else {
+                        if (polkit_error_is_set (error)) {
+                                kit_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                                polkit_error_free (error);
+                        }
+                }
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                polkit_error_free (error);
+        }
+
+
+        _polkit_authorization_db_invalidate_cache (adb);
+
 out:
 
         if (action != NULL)
@@ -1250,7 +1360,7 @@ out:
         if (unsetenv ("POLKIT_TEST_BUILD_DIR") != 0)
                 goto fail;
 
-        if (unsetenv ("POLKIT_TEST_PASSWD_FILE") != 0)
+        if (unsetenv ("KIT_TEST_PASSWD_FILE") != 0)
                 goto fail;
 
         return TRUE;

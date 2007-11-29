@@ -107,11 +107,13 @@ main (int argc, char *argv[])
 
         ret = 1;
 
+#ifndef POLKIT_BUILD_TESTS
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
         if (clearenv () != 0)
                 goto out;
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
+#endif
 
         openlog ("polkit-revoke-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
@@ -132,6 +134,14 @@ main (int argc, char *argv[])
         invoking_uid = getuid ();
 
         /* check that we are setgid polkituser */
+#ifdef POLKIT_BUILD_TESTS
+        char *pretend;
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_UID")) != NULL) {
+                invoking_uid = atoi (pretend);
+                goto skip_check;
+        }
+        kit_warning ("foo %s", pretend);
+#endif
         egid = getegid ();
         group = getgrgid (egid);
         if (group == NULL) {
@@ -142,6 +152,9 @@ main (int argc, char *argv[])
                 fprintf (stderr, "polkit-revoke-helper: needs to be setgid " POLKIT_GROUP "\n");
                 goto out;
         }
+#ifdef POLKIT_BUILD_TESTS
+skip_check:
+#endif
 
         entry_to_remove = argv[1];
         target_type = argv[2];
@@ -181,21 +194,38 @@ main (int argc, char *argv[])
 
         not_granted_by_self = FALSE;
 
+#ifdef POLKIT_BUILD_TESTS
+        char *test_dir;
+        char dir_run[256];
+        char dir_lib[256];
+
+        if ((test_dir = getenv ("POLKIT_TEST_LOCALSTATE_DIR")) == NULL) {
+                test_dir = PACKAGE_LOCALSTATE_DIR;
+        }
+        kit_assert ((size_t) snprintf (dir_run, sizeof (dir_run), "%s/run/PolicyKit", test_dir) < sizeof (dir_run));
+        kit_assert ((size_t) snprintf (dir_lib, sizeof (dir_lib), "%s/lib/PolicyKit", test_dir) < sizeof (dir_lib));
+
+#else
+        char *dir_run = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+        char *dir_lib = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+#endif
+
+
         is_one_shot = FALSE;
         if (strcmp (scope, "scope=process") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+                root = dir_run;
         } else if (strcmp (scope, "scope=process-one-shot") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+                root = dir_run;
                 is_one_shot = TRUE;
         } else if (strcmp (scope, "scope=session") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+                root = dir_run;
         } else if (strcmp (scope, "scope=always") == 0) {
-                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+                root = dir_lib;
         } else if (strcmp (scope, "scope=grant") == 0 ||
                    strcmp (scope, "scope=grant-negative") == 0) {
                 unsigned int n;
 
-                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+                root = dir_lib;
 
                 for (n = 1; n < num_tokens; n++) {
                         if (strncmp (tokens[n], "granted-by=", sizeof ("granted-by=") - 1) == 0) {
@@ -223,6 +253,7 @@ main (int argc, char *argv[])
                 goto out;
         }
 
+
         if (invoking_uid != 0) {
                 /* Check that the caller is privileged to do this... basically, callers can only
                  * revoke auths granted by themselves...
@@ -240,7 +271,7 @@ main (int argc, char *argv[])
                 }
         }
 
-        pw = getpwuid (uid_to_revoke);
+        pw = kit_getpwuid (uid_to_revoke);
         if (pw == NULL) {
                 fprintf (stderr, "polkit-revoke-helper: cannot lookup user name for uid %d\n", uid_to_revoke);
                 goto out;
@@ -309,11 +340,18 @@ main (int argc, char *argv[])
          */
         ret = 0;
 
+#ifdef POLKIT_BUILD_TESTS
+        if (test_dir != NULL)
+                goto no_reload;
+#endif
         /* trigger a reload */
         if (utimes (PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", NULL) != 0) {
                 fprintf (stderr, "Error updating access+modification time on file '%s': %m\n", 
                          PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload");
         }
+#ifdef POLKIT_BUILD_TESTS
+no_reload:
+#endif
 
 out:
 

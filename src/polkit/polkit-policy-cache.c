@@ -148,7 +148,10 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
 
                 if (pf == NULL) {
                         if (polkit_error_get_error_code (pk_error) == POLKIT_ERROR_OUT_OF_MEMORY) {
-                                polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory");
+                                if (error != NULL)
+                                        *error = pk_error;
+                                else
+                                        polkit_error_free (pk_error);
                                 goto out;
                         }
 
