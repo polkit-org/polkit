@@ -352,8 +352,6 @@ _start (void *data, const char *el, const char **attr)
         if (state == STATE_NONE || node == NULL) {
                 kit_warning ("skipping unknown tag <%s> at line %d of %s", 
                              el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
-                syslog (LOG_ALERT, "libpolkit: skipping unknown tag <%s> at line %d of %s", 
-                        el, (int) XML_GetCurrentLineNumber (pd->parser), pd->path);
                 state = STATE_UNKNOWN_TAG;
         }
 

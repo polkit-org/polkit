@@ -809,10 +809,8 @@ polkit_context_get_config (PolKitContext *pk_context, PolKitError **error)
                 pk_context->config = polkit_config_new (PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf", pk_error);
                 /* if configuration file was bad, log it */
                 if (pk_context->config == NULL) {
-                        _pk_debug ("failed to load configuration file: %s", 
-                                   polkit_error_get_error_message (*pk_error));
-                        syslog (LOG_ALERT, "libpolkit: failed to load configuration file: %s", 
-                                polkit_error_get_error_message (*pk_error));
+                        kit_warning ("failed to load configuration file: %s", 
+                                     polkit_error_get_error_message (*pk_error));
                         if (pk_error == &pk_error2)
                                 polkit_error_free (*pk_error);
                 }
