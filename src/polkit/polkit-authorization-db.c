@@ -1153,6 +1153,7 @@ _run_test (void)
                 "";
         PolKitCaller *caller;
         PolKitAction *action;
+        PolKitSession *session;
         polkit_bool_t is_auth;
         polkit_bool_t is_neg;
         PolKitError *error;
@@ -1162,6 +1163,7 @@ _run_test (void)
         adb = NULL;
         caller = NULL;
         action = NULL;
+        session = NULL;
 
         start_time = polkit_sysdeps_get_start_time_for_pid (getpid ());
         if (start_time == 0)
@@ -1169,7 +1171,8 @@ _run_test (void)
         
         if (snprintf (test_pu3_run, sizeof (test_pu3_run), 
                       "scope=process:pid=%d:pid-start-time=%lld:action-id=org.example.per-process:when=1196307507:auth-as=500:constraint=none\n"
-                      "scope=process-one-shot:pid=%d:pid-start-time=%lld:action-id=org.example.per-process-one-shot:when=1196307507:auth-as=500:constraint=none\n",
+                      "scope=process-one-shot:pid=%d:pid-start-time=%lld:action-id=org.example.per-process-one-shot:when=1196307507:auth-as=500:constraint=none\n"
+                      "scope=session:session-id=%%2FSession1:action-id=org.example.per-session:when=1196307507:auth-as=500:constraint=none\n",
                       getpid (), start_time,
                       getpid (), start_time) >= (int) sizeof (test_pu3_run))
                 goto fail;
@@ -1293,7 +1296,7 @@ _run_test (void)
                 polkit_error_free (error);
         }
 
-        /* test: pu3 is authorized for org.example.per-process */
+        /* test: pu3 is authorized for org.example.per-process for just this process id */
         if (!polkit_action_set_action_id (action, "org.example.per-process"))
                 goto out;
 
@@ -1341,6 +1344,43 @@ _run_test (void)
                 polkit_error_free (error);
         }
 
+        if ((session = polkit_session_new ()) == NULL)
+                goto out;
+
+        /* test: pu3 only in the right session is authorized for org.example.per-session */
+        if (!polkit_action_set_action_id (action, "org.example.per-session"))
+                goto out;
+
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH", "/Session1", 1) != 0)
+                goto fail;
+        kit_assert (polkit_session_set_ck_is_local (session, TRUE));
+        if (!polkit_session_set_ck_objref (session, "/Session1"))
+                goto out;
+        kit_assert (polkit_caller_set_ck_session (caller, session));
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
+                kit_assert (! polkit_error_is_set (error) && is_auth && !is_neg);
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                polkit_error_free (error);
+        }
+        
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH", "/Session2", 1) != 0)
+                goto fail;
+        if (!polkit_session_set_ck_objref (session, "/Session2"))
+                goto out;
+        kit_assert (polkit_session_set_ck_is_local (session, TRUE));
+        kit_assert (polkit_caller_set_ck_session (caller, session));
+        error = NULL;
+        if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
+                kit_assert (! polkit_error_is_set (error) && !is_auth && !is_neg);
+        } else {
+                kit_assert (polkit_error_is_set (error) && 
+                            polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                polkit_error_free (error);
+        }
+        
 out:
 
         if (action != NULL)
@@ -1348,6 +1388,9 @@ out:
 
         if (caller != NULL)
                 polkit_caller_unref (caller);
+
+        if (session != NULL)
+                polkit_session_unref (session);
 
         if (adb != NULL) {
                 polkit_authorization_db_debug (adb);
