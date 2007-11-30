@@ -239,13 +239,8 @@ _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb)
         /* out with the old, in the with new */
         if (authdb->uid_to_authlist != NULL) {
                 kit_hash_unref (authdb->uid_to_authlist);
+                authdb->uid_to_authlist = NULL;
         }
-        authdb->uid_to_authlist = kit_hash_new (kit_hash_direct_hash_func,
-                                                kit_hash_direct_equal_func,
-                                                NULL,
-                                                NULL,
-                                                NULL,
-                                                (KitFreeFunc) _free_authlist);
 }
 
 /**
@@ -293,9 +288,11 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
 #endif
 
         /* first, see if this is in the cache */
-        ret = kit_hash_lookup (authdb->uid_to_authlist, (void *) uid, NULL);
-        if (ret != NULL)
-                goto out;
+        if (authdb->uid_to_authlist != NULL) {
+                ret = kit_hash_lookup (authdb->uid_to_authlist, (void *) uid, NULL);
+                if (ret != NULL)
+                        goto out;
+        }
 
         helper_argv[1] = kit_strdup_printf ("%d", uid);
         if (helper_argv[1] == NULL) {
@@ -415,7 +412,17 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                 }
         }
 
-        if (!kit_hash_insert (authdb->uid_to_authlist, (void *) uid, ret)) {
+        if (authdb->uid_to_authlist == NULL) {
+                authdb->uid_to_authlist = kit_hash_new (kit_hash_direct_hash_func,
+                                                        kit_hash_direct_equal_func,
+                                                        NULL,
+                                                        NULL,
+                                                        NULL,
+                                                        (KitFreeFunc) _free_authlist);
+        }
+
+        if (authdb->uid_to_authlist == NULL || 
+            !kit_hash_insert (authdb->uid_to_authlist, (void *) uid, ret)) {
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_OUT_OF_MEMORY, 
                                         "No memory");
@@ -1239,8 +1246,6 @@ _run_test (void)
                 polkit_error_free (error);
         }
 
-        _polkit_authorization_db_invalidate_cache (adb);
-
         /* test: pu2 does not have the auth org.freedesktop.policykit.read */
         kit_assert (polkit_caller_set_uid (caller, 50402));
         if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50402", 1) != 0)
@@ -1255,6 +1260,9 @@ _run_test (void)
                 polkit_error_free (error);
         }
 
+        /************************/
+        /* INVALIDATE THE CACHE */
+        /************************/
         _polkit_authorization_db_invalidate_cache (adb);
 
         /* test: pu1 can check that pu2 does not have the auth org.freedesktop.policykit.read */
@@ -1270,8 +1278,6 @@ _run_test (void)
                 polkit_error_free (error);
         }
 
-        _polkit_authorization_db_invalidate_cache (adb);
-
         /* test: pu2 cannot check if pu1 have the auth org.freedesktop.policykit.read */
         kit_assert (polkit_caller_set_uid (caller, 50401));
         if (setenv ("POLKIT_TEST_PRETEND_TO_BE_UID", "50402", 1) != 0)
@@ -1286,8 +1292,6 @@ _run_test (void)
                              polkit_error_get_error_code (error) == POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS));
                 polkit_error_free (error);
         }
-
-        _polkit_authorization_db_invalidate_cache (adb);
 
         /* test: pu3 is authorized for org.example.per-process */
         if (!polkit_action_set_action_id (action, "org.example.per-process"))
@@ -1316,6 +1320,9 @@ _run_test (void)
         if (polkit_authorization_db_is_caller_authorized (adb, action, caller, TRUE, &is_auth, &is_neg, &error)) {
                 kit_assert (! polkit_error_is_set (error) && is_auth && !is_neg);
 
+                /************************/
+                /* INVALIDATE THE CACHE */
+                /************************/
                 _polkit_authorization_db_invalidate_cache (adb);
 
                 if (polkit_authorization_db_is_caller_authorized (adb, action, caller, TRUE, &is_auth, &is_neg, &error)) {
@@ -1324,19 +1331,15 @@ _run_test (void)
                                 goto fail;
                         }
                 } else {
-                        if (polkit_error_is_set (error)) {
-                                kit_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
-                                polkit_error_free (error);
-                        }
+                        kit_assert (polkit_error_is_set (error));
+                        kit_assert (polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
+                        polkit_error_free (error);
                 }
         } else {
                 kit_assert (polkit_error_is_set (error) && 
                             polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
                 polkit_error_free (error);
         }
-
-
-        _polkit_authorization_db_invalidate_cache (adb);
 
 out:
 
