@@ -610,60 +610,90 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
         security_context_t secon;
 #endif
 
+#ifndef POLKIT_BUILD_TESTS
+        /* for testing it's fine to pass con==NULL if POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH is set */
         g_return_val_if_fail (con != NULL, NULL);
+#endif
         g_return_val_if_fail (error != NULL, NULL);
         g_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
         selinux_context = NULL;
         ck_session_objpath = NULL;
+        uid = (uid_t) -1;
         caller = NULL;
         session = NULL;
         proc_path = NULL;
 
-        proc_path = g_strdup_printf ("/proc/%d", pid);
-        if (stat (proc_path, &statbuf) != 0) {
-                g_warning ("Cannot lookup information for pid %d: %s", pid, strerror (errno));
-                goto out;
+#ifdef POLKIT_BUILD_TESTS
+        char *pretend;
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_UID")) != NULL) {
+                uid = atoi (pretend);
         }
-        uid = statbuf.st_uid;
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_PID")) != NULL) {
+                pid = atoi (pretend);
+        }
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_SELINUX_CONTEXT")) != NULL) {
+                selinux_context = g_strdup (pretend);
+        }
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH")) != NULL) {
+                ck_session_objpath = g_strdup (pretend);
+        } else {
+                g_return_val_if_fail (con != NULL, NULL);
+        }
+#endif
+
+        if (uid == (uid_t) -1) {
+                proc_path = g_strdup_printf ("/proc/%d", pid);
+                if (stat (proc_path, &statbuf) != 0) {
+                        g_warning ("Cannot lookup information for pid %d: %s", pid, strerror (errno));
+                        goto out;
+                }
+                uid = statbuf.st_uid;
+        }
 
 #ifdef HAVE_SELINUX
 	/* only get the context if we are enabled */
-	selinux_context = NULL;
-	if (is_selinux_enabled () != 0) {
-		if (getpidcon (pid, &secon) != 0) {
-			g_warning ("Cannot lookup SELinux context for pid %d: %s", pid, strerror (errno));
-			goto out;
-		}
-		selinux_context = g_strdup (secon);
-		freecon (secon);
-	}
+        if (selinux_context == NULL) {
+                if (is_selinux_enabled () != 0) {
+                        if (getpidcon (pid, &secon) != 0) {
+                                g_warning ("Cannot lookup SELinux context for pid %d: %s", pid, strerror (errno));
+                                goto out;
+                        }
+                        selinux_context = g_strdup (secon);
+                        freecon (secon);
+                }
+        }
 #else
         selinux_context = NULL;
 #endif
 
-	message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
-						"/org/freedesktop/ConsoleKit/Manager",
-						"org.freedesktop.ConsoleKit.Manager",
-						"GetSessionForUnixProcess");
-	dbus_message_iter_init_append (message, &iter);
-	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &pid);
-	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
-	if (reply == NULL || dbus_error_is_set (error)) {
-		//g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
-		dbus_message_unref (message);
-		if (reply != NULL)
-			dbus_message_unref (reply);
-		/* OK, this is not a catastrophe; just means the caller is not a 
-                 * member of any session or that ConsoleKit is not available.. 
-                 */
-		goto not_in_session;
-	}
-	dbus_message_iter_init (reply, &iter);
-	dbus_message_iter_get_basic (&iter, &str);
-	ck_session_objpath = g_strdup (str);
-	dbus_message_unref (message);
-	dbus_message_unref (reply);
+        if (ck_session_objpath == NULL) {
+                message = dbus_message_new_method_call ("org.freedesktop.ConsoleKit", 
+                                                        "/org/freedesktop/ConsoleKit/Manager",
+                                                        "org.freedesktop.ConsoleKit.Manager",
+                                                        "GetSessionForUnixProcess");
+                dbus_message_iter_init_append (message, &iter);
+                dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &pid);
+                reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
+                if (reply == NULL || dbus_error_is_set (error)) {
+                        //g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
+                        dbus_message_unref (message);
+                        if (reply != NULL)
+                                dbus_message_unref (reply);
+                        /* OK, this is not a catastrophe; just means the caller is not a 
+                         * member of any session or that ConsoleKit is not available.. 
+                         */
+                        goto not_in_session;
+                }
+                dbus_message_iter_init (reply, &iter);
+                dbus_message_iter_get_basic (&iter, &str);
+                ck_session_objpath = g_strdup (str);
+                dbus_message_unref (message);
+                dbus_message_unref (reply);
+        } else {
+                if (strlen (ck_session_objpath) == 0)
+                        goto not_in_session;
+        }
 
         session = polkit_session_new_from_objpath (con, ck_session_objpath, uid, error);
         if (session == NULL) {
@@ -696,6 +726,7 @@ not_in_session:
                 caller = NULL;
                 goto out;
         }
+
         if (!polkit_caller_set_pid (caller, pid)) {
                 if (session != NULL) {
                         polkit_session_unref (session);
@@ -735,13 +766,6 @@ not_in_session:
                 caller = NULL;
                 goto out;
         }
-
-#ifdef POLKIT_BUILD_TESTS
-        char *pretend;
-        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_UID")) != NULL) {
-                polkit_caller_set_uid (caller, atoi (pretend));
-        }
-#endif
 
 out:
         g_free (selinux_context);

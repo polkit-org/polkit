@@ -1211,6 +1211,9 @@ _run_test (void)
                 goto out;
         kit_assert (polkit_caller_set_pid (caller, getpid ()));
 
+        /* initialize all pretend environment variables */
+        if (setenv ("POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH", "", 1) != 0)
+                goto fail;
 
         /*
          * test: "org.freedesktop.policykit.read" 
@@ -1352,6 +1355,15 @@ out:
         }
 
         if (unsetenv ("POLKIT_TEST_PRETEND_TO_BE_UID") != 0)
+                goto fail;
+
+        if (unsetenv ("POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH") != 0)
+                goto fail;
+
+        if (unsetenv ("POLKIT_TEST_PRETEND_TO_BE_SELINUX_CONTEXT") != 0)
+                goto fail;
+
+        if (unsetenv ("POLKIT_TEST_PRETEND_TO_BE_PID") != 0)
                 goto fail;
 
         if (unsetenv ("POLKIT_TEST_LOCALSTATE_DIR") != 0)

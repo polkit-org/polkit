@@ -165,14 +165,29 @@ polkit_check_authv (pid_t pid, const char **action_ids)
         errno = ENOENT;
         context = NULL;
         caller = NULL;
+        bus = NULL;
 
         dbus_error_init (&error);
+
+#ifdef POLKIT_BUILD_TESTS
+        char *pretend;
+        if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH")) != NULL) {
+                /* see polkit_caller_new_from_pid() - basically, it's 
+                 * if POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH is set
+                 * then the bus won't be used at all
+                 */
+                goto no_bus;
+        }
+#endif
         bus = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
         if (bus == NULL) {
                 kit_warning ("cannot connect to system bus: %s: %s", error.name, error.message);
                 dbus_error_free (&error);
                 goto out;
         }
+#ifdef POLKIT_BUILD_TESTS
+no_bus:
+#endif
 
         caller = polkit_caller_new_from_pid (bus, pid, &error);
         if (caller == NULL) {
