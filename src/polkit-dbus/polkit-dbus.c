@@ -773,6 +773,13 @@ out:
         return caller;
 }
 
+static kit_bool_t
+_free_elem_in_list (KitList *list, void *data, void *user_data)
+{
+        kit_free (data);
+        return FALSE;
+}
+
 static KitList *
 _get_list_of_sessions (DBusConnection *con, uid_t uid, DBusError *error)
 {
@@ -806,7 +813,7 @@ _get_list_of_sessions (DBusConnection *con, uid_t uid, DBusError *error)
 
                 if (dbus_message_iter_get_arg_type (&iter_array) != DBUS_TYPE_OBJECT_PATH) {
                         kit_warning ("Wrong reply from ConsoleKit (element is not a string)");
-                        kit_list_foreach (ret, (KitListForeachFunc) kit_free, NULL);
+                        kit_list_foreach (ret, _free_elem_in_list, NULL);
                         kit_list_free (ret);
                         goto out;
                 }
@@ -870,17 +877,19 @@ _polkit_is_authorization_relevant_internal (DBusConnection *con,
                         del_sessions = TRUE;
                 }
 
-                for (i = sessions; i != NULL; i = i->next) {
-                        char *session_id = i->data;
-                        if (strcmp (session_id, polkit_authorization_scope_session_get_ck_objref (auth)) == 0) {
-                                ret = TRUE;
-                                break;
+                if (sessions != NULL) {
+                        for (i = sessions; i != NULL; i = i->next) {
+                                char *session_id = i->data;
+                                if (strcmp (session_id, polkit_authorization_scope_session_get_ck_objref (auth)) == 0) {
+                                        ret = TRUE;
+                                        break;
+                                }
                         }
-                }
-
-                if (del_sessions) {
-                        kit_list_foreach (sessions, (KitListForeachFunc) kit_free, NULL);
-                        kit_list_free (sessions);
+                        
+                        if (del_sessions) {
+                                kit_list_foreach (sessions, _free_elem_in_list, NULL);
+                                kit_list_free (sessions);
+                        }
                 }
                 break;
 

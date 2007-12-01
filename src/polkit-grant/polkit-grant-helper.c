@@ -58,6 +58,7 @@
  */
 #undef PGH_DEBUG
 /* #define PGH_DEBUG */
+#define PGH_DEBUG
 
 /* synopsis: polkit-grant-helper <pid> <action-name>
  *
@@ -157,7 +158,7 @@
  *
  */
 static polkit_bool_t
-do_auth (const char *user_to_auth)
+do_auth (const char *user_to_auth, gboolean *empty_conversation)
 {
         int helper_pid;
         int helper_stdin;
@@ -172,6 +173,7 @@ do_auth (const char *user_to_auth)
         child_stdin = NULL;
         child_stdout = NULL;
         ret = FALSE;
+        *empty_conversation = TRUE;
 
         g_error = NULL;
         if (!g_spawn_async_with_pipes (NULL,
@@ -223,6 +225,9 @@ do_auth (const char *user_to_auth)
                 if (strcmp (buf, "FAILURE\n") == 0) {
                         goto out;
                 }
+
+                *empty_conversation = FALSE;
+
                 /* send to parent */
                 fprintf (stdout, buf);
                 fflush (stdout);
@@ -536,6 +541,7 @@ main (int argc, char *argv[])
         PolKitCaller *caller;
         uid_t caller_uid;
         PolKitSession *session;
+        gboolean empty_conversation;
 
         ret = 3;
 
@@ -749,9 +755,13 @@ main (int argc, char *argv[])
         ret = 1;
 
         /* Start authentication */
-        if (!do_auth (user_to_auth)) {
+        if (!do_auth (user_to_auth, &empty_conversation)) {
                 goto out;
         }
+
+#ifdef PGH_DEBUG
+        fprintf (stderr, "polkit-grant-helper: empty_conversation=%d\n", empty_conversation);
+#endif /* PGH_DEBUG */
 
         /* Ask caller if he want to slim down grant type...  e.g. he
          * might want to go from auth_self_keep_always to
