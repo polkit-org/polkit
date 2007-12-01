@@ -344,6 +344,57 @@ kit_hash_foreach (KitHash *hash, KitHashForeachFunc cb, void *user_data)
         return FALSE;
 }
 
+/**
+ * kit_hash_foreach_remove:
+ * @hash: the hash table
+ * @cb: callback function
+ * @user_data: user data
+ *
+ * Iterate over all elements in a hash table. If @cb returns %TRUE,
+ * the element will be removed.
+ *
+ * Returns: Number of key/value pairs removed
+ */
+size_t
+kit_hash_foreach_remove (KitHash *hash, KitHashForeachFunc cb, void *user_data)
+{
+        int n;
+        size_t num_rem;
+
+        kit_return_val_if_fail (hash != NULL, FALSE);
+        kit_return_val_if_fail (cb != NULL, FALSE);
+
+        num_rem = 0;
+
+        for (n = 0; n < hash->num_top_nodes; n++) {
+                KitHashNode *node;
+                KitHashNode *node_next;
+                KitHashNode **prev_node_next;
+
+                prev_node_next = &(hash->top_nodes[n]);
+
+                for (node = hash->top_nodes[n]; node != NULL; node = node_next) {
+                        node_next = node->next;
+
+                        if (cb (hash, node->key, node->value, user_data)) {
+
+                                if (hash->key_destroy_func != NULL)
+                                        hash->key_destroy_func (node->key);
+                                if (hash->value_destroy_func != NULL)
+                                        hash->value_destroy_func (node->value);
+                                kit_free (node);
+
+                                *prev_node_next = node_next;                                
+                                num_rem++;
+                        } else {
+                                prev_node_next = &(node->next);
+                        }
+                }
+        }
+
+        return num_rem;
+}
+
 
 /**
  * kit_hash_direct_hash_func:
@@ -443,6 +494,23 @@ _it2 (KitHash *hash, void *key, void *value, void *user_data)
 }
 
 static kit_bool_t
+_it_sum (KitHash *hash, void *key, void *value, void *user_data)
+{
+        int *count = (int *) user_data;
+        *count += (int) value;
+        return FALSE;
+}
+
+static kit_bool_t
+_it_rem (KitHash *hash, void *key, void *value, void *user_data)
+{
+        if (strlen ((char *) key) > 4)
+                return TRUE;
+        else
+                return FALSE;
+}
+
+static kit_bool_t
 _run_test (void)
 {
         int count;
@@ -523,6 +591,45 @@ _run_test (void)
                 }
                 kit_hash_unref (h);
         }
+
+        /* remove */
+        if ((h = kit_hash_new (kit_hash_str_hash_func, 
+                               kit_hash_str_equal_func, 
+                               kit_hash_str_copy, 
+                               NULL,
+                               kit_free, 
+                               NULL)) != NULL) {        
+                char *test_data[] = {"key1",
+                                     "key2b",
+                                     "key3",
+                                     "key4",
+                                     "key5b",
+                                     "key6b",
+                                     "key7",
+                                     "key8",
+                                     NULL};
+                int n;
+                int count;
+
+                /* first insert the values */
+                for (n = 0; test_data [n] != NULL; n++) {
+                        if (!kit_hash_insert (h, test_data [n], (void *) (n + 1))) {
+                                goto oom;
+                        }
+                }
+
+                count = 0;
+                kit_assert (kit_hash_foreach (h, _it_sum, &count) == FALSE);
+                kit_assert (count == 1+2+3+4+5+6+7+8);
+
+                kit_assert (kit_hash_foreach_remove (h, _it_rem, &count) == 3);
+                count = 0;
+                kit_assert (kit_hash_foreach (h, _it_sum, &count) == FALSE);
+                kit_assert (count == 1+3+4+7+8);
+
+                kit_hash_unref (h);
+        }
+
 
         return TRUE;
 }

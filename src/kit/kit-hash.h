@@ -127,6 +127,8 @@ void       *kit_hash_lookup (KitHash *hash, void *key, kit_bool_t *found);
 
 kit_bool_t  kit_hash_foreach (KitHash *hash, KitHashForeachFunc cb, void *user_data);
 
+size_t      kit_hash_foreach_remove (KitHash *hash, KitHashForeachFunc cb, void *user_data);
+
 
 uint32_t     kit_hash_direct_hash_func  (const void *key);
 kit_bool_t   kit_hash_direct_equal_func (const void *v1, const void *v2);
