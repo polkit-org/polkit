@@ -58,7 +58,6 @@
  */
 #undef PGH_DEBUG
 /* #define PGH_DEBUG */
-#define PGH_DEBUG
 
 /* synopsis: polkit-grant-helper <pid> <action-name>
  *
@@ -528,6 +527,7 @@ main (int argc, char *argv[])
         const char *invoking_user_name;
         const char *action_name;
         PolKitResult result;
+        PolKitResult orig_result;
         const char *user_to_auth;
         uid_t uid_of_user_to_auth;
         char *session_objpath;
@@ -773,12 +773,35 @@ main (int argc, char *argv[])
         fprintf (stdout, "POLKIT_GRANT_HELPER_ASK_OVERRIDE_GRANT_TYPE %s\n", 
                  polkit_result_to_string_representation (result));
         fflush (stdout);
-        
+
+        orig_result = result;
         if (!get_and_validate_override_details (&result)) {
                 /* if this fails it means bogus input from user */
                 ret = 2;
                 goto out;
         }
+
+        if (empty_conversation && orig_result == result) {
+                /* If the conversation was empty it means the user probably never 
+                 * saw the an auth dialog.. specifically it means he never was able
+                 * to change the scope of the from e.g. 'always' to 'session' or 
+                 * 'process'. In fact, it means he was never aware any authorization
+                 * was granted. 
+                 *
+                 * So to avoid surprises for people who do reckless things like play
+                 * around with disabling passwords on their system, make an executive
+                 * decision to downgrade the scope... 
+                 *
+                 * See RH #401811 for details of one user that was caught by this.
+                 */
+
+                if (result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
+                        result = POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION;
+                } else if (result == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) {
+                        result = POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION;
+                }
+        }
+
 
 #ifdef PGH_DEBUG
         fprintf (stderr, "polkit-grant-helper: adding grant: action_id=%s session_id=%s pid=%d result='%s'\n", 
