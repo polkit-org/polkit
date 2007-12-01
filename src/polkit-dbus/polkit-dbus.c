@@ -60,7 +60,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
-#include <glib.h>
 #include <string.h>
 
 #ifdef HAVE_SELINUX
@@ -103,10 +102,10 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
         char *remote_host;
         char *seat_path;
 
-        g_return_val_if_fail (con != NULL, NULL);
-        g_return_val_if_fail (objpath != NULL, NULL);
-        g_return_val_if_fail (error != NULL, NULL);
-        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+        kit_return_val_if_fail (con != NULL, NULL);
+        kit_return_val_if_fail (objpath != NULL, NULL);
+        kit_return_val_if_fail (error != NULL, NULL);
+        kit_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
         session = NULL;
         remote_host = NULL;
@@ -118,7 +117,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
 						"IsActive");
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		g_warning ("Error doing Session.IsActive on ConsoleKit: %s: %s", error->name, error->message);
+		kit_warning ("Error doing Session.IsActive on ConsoleKit: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -127,7 +126,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
 	if (!dbus_message_get_args (reply, NULL,
 				    DBUS_TYPE_BOOLEAN, &is_active,
                                     DBUS_TYPE_INVALID)) {
-                g_warning ("Invalid IsActive reply from CK");
+                kit_warning ("Invalid IsActive reply from CK");
 		goto out;
 	}
 	dbus_message_unref (message);
@@ -139,7 +138,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
 						"IsLocal");
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		g_warning ("Error doing Session.IsLocal on ConsoleKit: %s: %s", error->name, error->message);
+		kit_warning ("Error doing Session.IsLocal on ConsoleKit: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -148,7 +147,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
 	if (!dbus_message_get_args (reply, NULL,
 				    DBUS_TYPE_BOOLEAN, &is_local,
 				    DBUS_TYPE_INVALID)) {
-		g_warning ("Invalid IsLocal reply from CK");
+		kit_warning ("Invalid IsLocal reply from CK");
 		goto out;
 	}
 	dbus_message_unref (message);
@@ -161,7 +160,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
                                                         "GetRemoteHostName");
                 reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
                 if (reply == NULL || dbus_error_is_set (error)) {
-                        g_warning ("Error doing Session.GetRemoteHostName on ConsoleKit: %s: %s", 
+                        kit_warning ("Error doing Session.GetRemoteHostName on ConsoleKit: %s: %s", 
                                    error->name, error->message);
                         dbus_message_unref (message);
                         if (reply != NULL)
@@ -171,10 +170,10 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
                 if (!dbus_message_get_args (reply, NULL,
                                             DBUS_TYPE_STRING, &str,
                                             DBUS_TYPE_INVALID)) {
-                        g_warning ("Invalid GetRemoteHostName reply from CK");
+                        kit_warning ("Invalid GetRemoteHostName reply from CK");
                         goto out;
                 }
-                remote_host = g_strdup (str);
+                remote_host = kit_strdup (str);
                 dbus_message_unref (message);
                 dbus_message_unref (reply);
         }
@@ -185,7 +184,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
                                                 "GetSeatId");
         reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
         if (reply == NULL || dbus_error_is_set (error)) {
-                g_warning ("Error doing Session.GetSeatId on ConsoleKit: %s: %s", 
+                kit_warning ("Error doing Session.GetSeatId on ConsoleKit: %s: %s", 
                            error->name, error->message);
                 dbus_message_unref (message);
                 if (reply != NULL)
@@ -195,10 +194,10 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
         if (!dbus_message_get_args (reply, NULL,
                                     DBUS_TYPE_OBJECT_PATH, &str,
                                     DBUS_TYPE_INVALID)) {
-                g_warning ("Invalid GetSeatId reply from CK");
+                kit_warning ("Invalid GetSeatId reply from CK");
                 goto out;
         }
-        seat_path = g_strdup (str);
+        seat_path = kit_strdup (str);
         dbus_message_unref (message);
         dbus_message_unref (reply);
 
@@ -209,7 +208,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
                                                         "GetUnixUser");
                 reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
                 if (reply == NULL || dbus_error_is_set (error)) {
-                        g_warning ("Error doing Session.GetUnixUser on ConsoleKit: %s: %s",error->name, error->message);
+                        kit_warning ("Error doing Session.GetUnixUser on ConsoleKit: %s: %s",error->name, error->message);
                         dbus_message_unref (message);
                         if (reply != NULL)
                                 dbus_message_unref (reply);
@@ -218,7 +217,7 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
                 if (!dbus_message_get_args (reply, NULL,
                                             DBUS_TYPE_INT32, &uid,
                                             DBUS_TYPE_INVALID)) {
-                        g_warning ("Invalid GetUnixUser reply from CK");
+                        kit_warning ("Invalid GetUnixUser reply from CK");
                         goto out;
                 }
                 dbus_message_unref (message);
@@ -296,8 +295,8 @@ polkit_session_new_from_objpath (DBusConnection *con, const char *objpath, uid_t
         }
 
 out:
-        g_free (remote_host);
-        g_free (seat_path);
+        kit_free (remote_host);
+        kit_free (seat_path);
         return session;
 }
 
@@ -326,10 +325,10 @@ polkit_session_new_from_cookie (DBusConnection *con, const char *cookie, DBusErr
         char *str;
         char *objpath;
 
-        g_return_val_if_fail (con != NULL, NULL);
-        g_return_val_if_fail (cookie != NULL, NULL);
-        g_return_val_if_fail (error != NULL, NULL);
-        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+        kit_return_val_if_fail (con != NULL, NULL);
+        kit_return_val_if_fail (cookie != NULL, NULL);
+        kit_return_val_if_fail (error != NULL, NULL);
+        kit_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
         objpath = NULL;
         session = NULL;
@@ -341,7 +340,7 @@ polkit_session_new_from_cookie (DBusConnection *con, const char *cookie, DBusErr
 	dbus_message_append_args (message, DBUS_TYPE_STRING, &cookie, DBUS_TYPE_INVALID);
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		//g_warning ("Error doing Manager.GetSessionForCookie on ConsoleKit: %s: %s", error->name, error->message);
+		//kit_warning ("Error doing Manager.GetSessionForCookie on ConsoleKit: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -350,17 +349,17 @@ polkit_session_new_from_cookie (DBusConnection *con, const char *cookie, DBusErr
 	if (!dbus_message_get_args (reply, NULL,
 				    DBUS_TYPE_OBJECT_PATH, &str,
                                     DBUS_TYPE_INVALID)) {
-                g_warning ("Invalid GetSessionForCookie reply from CK");
+                kit_warning ("Invalid GetSessionForCookie reply from CK");
 		goto out;
 	}
-        objpath = g_strdup (str);
+        objpath = kit_strdup (str);
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
 
         session = polkit_session_new_from_objpath (con, objpath, -1, error);
 
 out:
-        g_free (objpath);
+        kit_free (objpath);
         return session;
 }
 
@@ -398,10 +397,10 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
         char *str;
         int num_elems;
 
-        g_return_val_if_fail (con != NULL, NULL);
-        g_return_val_if_fail (dbus_name != NULL, NULL);
-        g_return_val_if_fail (error != NULL, NULL);
-        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+        kit_return_val_if_fail (con != NULL, NULL);
+        kit_return_val_if_fail (dbus_name != NULL, NULL);
+        kit_return_val_if_fail (error != NULL, NULL);
+        kit_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
         selinux_context = NULL;
         ck_session_objpath = NULL;
@@ -411,7 +410,7 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
 
 	uid = dbus_bus_get_unix_user (con, dbus_name, error);
 	if (dbus_error_is_set (error)) {
-		g_warning ("Could not get uid for connection: %s %s", error->name, error->message);
+		kit_warning ("Could not get uid for connection: %s %s", error->name, error->message);
 		goto out;
 	}
 
@@ -423,7 +422,7 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_STRING, &dbus_name);
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		g_warning ("Error doing GetConnectionUnixProcessID on Bus: %s: %s", error->name, error->message);
+		kit_warning ("Error doing GetConnectionUnixProcessID on Bus: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -449,7 +448,7 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
 			dbus_message_unref (reply);
                 dbus_error_init (error);
         } else if (reply == NULL || dbus_error_is_set (error)) {
-                g_warning ("Error doing GetConnectionSELinuxSecurityContext on Bus: %s: %s", error->name, error->message);
+                kit_warning ("Error doing GetConnectionSELinuxSecurityContext on Bus: %s: %s", error->name, error->message);
                 dbus_message_unref (message);
                 if (reply != NULL)
                         dbus_message_unref (reply);
@@ -460,7 +459,7 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
                 dbus_message_iter_recurse (&iter, &sub_iter);
                 dbus_message_iter_get_fixed_array (&sub_iter, (void *) &str, &num_elems);
                 if (str != NULL && num_elems > 0)
-                        selinux_context = g_strndup (str, num_elems);
+                        selinux_context = kit_strndup (str, num_elems);
                 dbus_message_unref (message);
                 dbus_message_unref (reply);
         }
@@ -473,7 +472,7 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
 	dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &pid);
 	reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
-		//g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
+		//kit_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
@@ -484,13 +483,13 @@ polkit_caller_new_from_dbus_name (DBusConnection *con, const char *dbus_name, DB
 	}
 	dbus_message_iter_init (reply, &iter);
 	dbus_message_iter_get_basic (&iter, &str);
-	ck_session_objpath = g_strdup (str);
+	ck_session_objpath = kit_strdup (str);
 	dbus_message_unref (message);
 	dbus_message_unref (reply);
 
         session = polkit_session_new_from_objpath (con, ck_session_objpath, uid, error);
         if (session == NULL) {
-                g_warning ("Got a session objpath but couldn't construct session object!");
+                kit_warning ("Got a session objpath but couldn't construct session object!");
                 goto out;
         }
         if (!polkit_session_validate (session)) {
@@ -569,8 +568,8 @@ not_in_session:
         }
 
 out:
-        g_free (selinux_context);
-        g_free (ck_session_objpath);
+        kit_free (selinux_context);
+        kit_free (ck_session_objpath);
         return caller;
 }
 
@@ -612,10 +611,10 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
 
 #ifndef POLKIT_BUILD_TESTS
         /* for testing it's fine to pass con==NULL if POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH is set */
-        g_return_val_if_fail (con != NULL, NULL);
+        kit_return_val_if_fail (con != NULL, NULL);
 #endif
-        g_return_val_if_fail (error != NULL, NULL);
-        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+        kit_return_val_if_fail (error != NULL, NULL);
+        kit_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
         selinux_context = NULL;
         ck_session_objpath = NULL;
@@ -633,19 +632,19 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
                 pid = atoi (pretend);
         }
         if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_SELINUX_CONTEXT")) != NULL) {
-                selinux_context = g_strdup (pretend);
+                selinux_context = kit_strdup (pretend);
         }
         if ((pretend = getenv ("POLKIT_TEST_PRETEND_TO_BE_CK_SESSION_OBJPATH")) != NULL) {
-                ck_session_objpath = g_strdup (pretend);
+                ck_session_objpath = kit_strdup (pretend);
         } else {
-                g_return_val_if_fail (con != NULL, NULL);
+                kit_return_val_if_fail (con != NULL, NULL);
         }
 #endif
 
         if (uid == (uid_t) -1) {
-                proc_path = g_strdup_printf ("/proc/%d", pid);
+                proc_path = kit_strdup_printf ("/proc/%d", pid);
                 if (stat (proc_path, &statbuf) != 0) {
-                        g_warning ("Cannot lookup information for pid %d: %s", pid, strerror (errno));
+                        kit_warning ("Cannot lookup information for pid %d: %s", pid, strerror (errno));
                         goto out;
                 }
                 uid = statbuf.st_uid;
@@ -656,10 +655,10 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
         if (selinux_context == NULL) {
                 if (is_selinux_enabled () != 0) {
                         if (getpidcon (pid, &secon) != 0) {
-                                g_warning ("Cannot lookup SELinux context for pid %d: %s", pid, strerror (errno));
+                                kit_warning ("Cannot lookup SELinux context for pid %d: %s", pid, strerror (errno));
                                 goto out;
                         }
-                        selinux_context = g_strdup (secon);
+                        selinux_context = kit_strdup (secon);
                         freecon (secon);
                 }
         }
@@ -676,7 +675,7 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
                 dbus_message_iter_append_basic (&iter, DBUS_TYPE_UINT32, &pid);
                 reply = dbus_connection_send_with_reply_and_block (con, message, -1, error);
                 if (reply == NULL || dbus_error_is_set (error)) {
-                        //g_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
+                        //kit_warning ("Error doing GetSessionForUnixProcess on ConsoleKit: %s: %s", error->name, error->message);
                         dbus_message_unref (message);
                         if (reply != NULL)
                                 dbus_message_unref (reply);
@@ -687,7 +686,7 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
                 }
                 dbus_message_iter_init (reply, &iter);
                 dbus_message_iter_get_basic (&iter, &str);
-                ck_session_objpath = g_strdup (str);
+                ck_session_objpath = kit_strdup (str);
                 dbus_message_unref (message);
                 dbus_message_unref (reply);
         } else {
@@ -697,7 +696,7 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
 
         session = polkit_session_new_from_objpath (con, ck_session_objpath, uid, error);
         if (session == NULL) {
-                g_warning ("Got a session objpath but couldn't construct session object!");
+                kit_warning ("Got a session objpath but couldn't construct session object!");
                 goto out;
         }
         if (!polkit_session_validate (session)) {
@@ -768,16 +767,16 @@ not_in_session:
         }
 
 out:
-        g_free (selinux_context);
-        g_free (ck_session_objpath);
-        g_free (proc_path);
+        kit_free (selinux_context);
+        kit_free (ck_session_objpath);
+        kit_free (proc_path);
         return caller;
 }
 
-static GSList *
+static KitList *
 _get_list_of_sessions (DBusConnection *con, uid_t uid, DBusError *error)
 {
-        GSList *ret;
+        KitList *ret;
         DBusMessage *message;
         DBusMessage *reply;
         DBusMessageIter iter;
@@ -798,7 +797,7 @@ _get_list_of_sessions (DBusConnection *con, uid_t uid, DBusError *error)
 
 	dbus_message_iter_init (reply, &iter);
 	if (dbus_message_iter_get_arg_type (&iter) != DBUS_TYPE_ARRAY) {
-                g_warning ("Wrong reply from ConsoleKit (not an array)");
+                kit_warning ("Wrong reply from ConsoleKit (not an array)");
                 goto out;
 	}
 
@@ -806,14 +805,14 @@ _get_list_of_sessions (DBusConnection *con, uid_t uid, DBusError *error)
         while (dbus_message_iter_get_arg_type (&iter_array) != DBUS_TYPE_INVALID) {
 
                 if (dbus_message_iter_get_arg_type (&iter_array) != DBUS_TYPE_OBJECT_PATH) {
-                        g_warning ("Wrong reply from ConsoleKit (element is not a string)");
-                        g_slist_foreach (ret, (GFunc) g_free, NULL);
-                        g_slist_free (ret);
+                        kit_warning ("Wrong reply from ConsoleKit (element is not a string)");
+                        kit_list_foreach (ret, (KitListForeachFunc) kit_free, NULL);
+                        kit_list_free (ret);
                         goto out;
                 }
 
 		dbus_message_iter_get_basic (&iter_array, &value);
-                ret = g_slist_append (ret, g_strdup (value));
+                ret = kit_list_append (ret, kit_strdup (value));
 
 		dbus_message_iter_next (&iter_array);
         }
@@ -829,20 +828,20 @@ out:
 static polkit_bool_t
 _polkit_is_authorization_relevant_internal (DBusConnection *con, 
                                             PolKitAuthorization *auth, 
-                                            GSList *sessions,
+                                            KitList *sessions,
                                             DBusError *error)
 {
         pid_t pid;
         polkit_uint64_t pid_start_time;
         polkit_bool_t ret;
         polkit_bool_t del_sessions;
-        GSList *i;
+        KitList *i;
         uid_t uid;
 
-        g_return_val_if_fail (con != NULL, FALSE);
-        g_return_val_if_fail (auth != NULL, FALSE);
-        g_return_val_if_fail (error != NULL, FALSE);
-        g_return_val_if_fail (! dbus_error_is_set (error), FALSE);
+        kit_return_val_if_fail (con != NULL, FALSE);
+        kit_return_val_if_fail (auth != NULL, FALSE);
+        kit_return_val_if_fail (error != NULL, FALSE);
+        kit_return_val_if_fail (! dbus_error_is_set (error), FALSE);
 
         ret = FALSE;
 
@@ -855,7 +854,7 @@ _polkit_is_authorization_relevant_internal (DBusConnection *con,
                                                                  &pid,
                                                                  &pid_start_time)) {
                         /* this should never fail */
-                        g_warning ("Cannot determine (pid,start_time) for authorization");
+                        kit_warning ("Cannot determine (pid,start_time) for authorization");
                         goto out;
                 }
                 if (polkit_sysdeps_get_start_time_for_pid (pid) == pid_start_time) {
@@ -880,8 +879,8 @@ _polkit_is_authorization_relevant_internal (DBusConnection *con,
                 }
 
                 if (del_sessions) {
-                        g_slist_foreach (sessions, (GFunc) g_free, NULL);
-                        g_slist_free (sessions);
+                        kit_list_foreach (sessions, (KitListForeachFunc) kit_free, NULL);
+                        kit_list_free (sessions);
                 }
                 break;
 
@@ -996,9 +995,9 @@ struct _PolKitTracker {
         int refcount;
         DBusConnection *con;
 
-        GHashTable *dbus_name_to_caller;
+        KitHash *dbus_name_to_caller;
 
-        GHashTable *pid_start_time_to_caller;
+        KitHash *pid_start_time_to_caller;
 };
 
 typedef struct {
@@ -1010,25 +1009,25 @@ static _PidStartTimePair *
 _pid_start_time_new (pid_t pid, polkit_uint64_t start_time)
 {
         _PidStartTimePair *obj;
-        obj = g_new (_PidStartTimePair, 1);
+        obj = kit_new (_PidStartTimePair, 1);
         obj->pid = pid;
         obj->start_time = start_time;
         return obj;
 }
 
-static guint
-_pid_start_time_hash (gconstpointer a)
+static uint32_t
+_pid_start_time_hash (const void *a)
 {
-        int val;
+        uint32_t val;
         _PidStartTimePair *pst = (_PidStartTimePair *) a;
 
         val = pst->pid + ((int) pst->start_time);
 
-        return g_int_hash (&val);
+        return val;
 }
 
-static gboolean
-_pid_start_time_equal (gconstpointer a, gconstpointer b)
+static kit_bool_t
+_pid_start_time_equal (const void *a, const void *b)
 {
         _PidStartTimePair *_a = (_PidStartTimePair *) a;
         _PidStartTimePair *_b = (_PidStartTimePair *) b;
@@ -1051,16 +1050,20 @@ PolKitTracker *
 polkit_tracker_new (void)
 {
         PolKitTracker *pk_tracker;
-        pk_tracker = g_new0 (PolKitTracker, 1);
+        pk_tracker = kit_new0 (PolKitTracker, 1);
         pk_tracker->refcount = 1;
-        pk_tracker->dbus_name_to_caller = g_hash_table_new_full (g_str_hash, 
-                                                                 g_str_equal,
-                                                                 g_free,
-                                                                 (GDestroyNotify) polkit_caller_unref);
-        pk_tracker->pid_start_time_to_caller = g_hash_table_new_full (_pid_start_time_hash,
-                                                                      _pid_start_time_equal,
-                                                                      g_free,
-                                                                      (GDestroyNotify) polkit_caller_unref);
+        pk_tracker->dbus_name_to_caller = kit_hash_new (kit_hash_str_hash_func, 
+                                                        kit_hash_str_equal_func,
+                                                        NULL,
+                                                        NULL,
+                                                        (KitFreeFunc) kit_free,
+                                                        (KitFreeFunc) polkit_caller_unref);
+        pk_tracker->pid_start_time_to_caller = kit_hash_new (_pid_start_time_hash,
+                                                             _pid_start_time_equal,
+                                                             NULL,
+                                                             NULL,
+                                                             (KitFreeFunc) kit_free,
+                                                             (KitFreeFunc) polkit_caller_unref);
         return pk_tracker;
 }
 
@@ -1079,7 +1082,7 @@ polkit_tracker_new (void)
 PolKitTracker *
 polkit_tracker_ref (PolKitTracker *pk_tracker)
 {
-        g_return_val_if_fail (pk_tracker != NULL, pk_tracker);
+        kit_return_val_if_fail (pk_tracker != NULL, pk_tracker);
         pk_tracker->refcount++;
         return pk_tracker;
 }
@@ -1099,14 +1102,14 @@ polkit_tracker_ref (PolKitTracker *pk_tracker)
 void
 polkit_tracker_unref (PolKitTracker *pk_tracker)
 {
-        g_return_if_fail (pk_tracker != NULL);
+        kit_return_if_fail (pk_tracker != NULL);
         pk_tracker->refcount--;
         if (pk_tracker->refcount > 0) 
                 return;
-        g_hash_table_destroy (pk_tracker->dbus_name_to_caller);
-        g_hash_table_destroy (pk_tracker->pid_start_time_to_caller);
+        kit_hash_unref (pk_tracker->dbus_name_to_caller);
+        kit_hash_unref (pk_tracker->pid_start_time_to_caller);
         dbus_connection_unref (pk_tracker->con);
-        g_free (pk_tracker);
+        kit_free (pk_tracker);
 }
 
 /**
@@ -1125,7 +1128,7 @@ polkit_tracker_unref (PolKitTracker *pk_tracker)
 void
 polkit_tracker_set_system_bus_connection (PolKitTracker *pk_tracker, DBusConnection *con)
 {
-        g_return_if_fail (pk_tracker != NULL);
+        kit_return_if_fail (pk_tracker != NULL);
         pk_tracker->con = dbus_connection_ref (con);
 }
 
@@ -1142,14 +1145,14 @@ polkit_tracker_set_system_bus_connection (PolKitTracker *pk_tracker, DBusConnect
 void
 polkit_tracker_init (PolKitTracker *pk_tracker)
 {
-        g_return_if_fail (pk_tracker != NULL);
+        kit_return_if_fail (pk_tracker != NULL);
         /* This is currently a no-op */
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static void
-_set_session_inactive_iter (gpointer key, PolKitCaller *caller, const char *session_objpath)
+_set_session_inactive_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *session_objpath)
 {
         char *objpath;
         PolKitSession *session;
@@ -1163,7 +1166,7 @@ _set_session_inactive_iter (gpointer key, PolKitCaller *caller, const char *sess
 }
 
 static void
-_set_session_active_iter (gpointer key, PolKitCaller *caller, const char *session_objpath)
+_set_session_active_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *session_objpath)
 {
         char *objpath;
         PolKitSession *session;
@@ -1177,17 +1180,17 @@ _set_session_active_iter (gpointer key, PolKitCaller *caller, const char *sessio
 }
 
 static void
-_update_session_is_active (PolKitTracker *pk_tracker, const char *session_objpath, gboolean is_active)
+_update_session_is_active (PolKitTracker *pk_tracker, const char *session_objpath, kit_bool_t is_active)
 {
-        g_hash_table_foreach (pk_tracker->dbus_name_to_caller, 
-                              (GHFunc) (is_active ? _set_session_active_iter : _set_session_inactive_iter),
-                              (gpointer) session_objpath);
+        kit_hash_foreach (pk_tracker->dbus_name_to_caller, 
+                          (KitHashForeachFunc) (is_active ? _set_session_active_iter : _set_session_inactive_iter),
+                          (void *) session_objpath);
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
-static gboolean
-_remove_caller_by_session_iter (gpointer key, PolKitCaller *caller, const char *session_objpath)
+static kit_bool_t
+_remove_caller_by_session_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *session_objpath)
 {
         char *objpath;
         PolKitSession *session;
@@ -1203,15 +1206,15 @@ _remove_caller_by_session_iter (gpointer key, PolKitCaller *caller, const char *
 static void
 _remove_caller_by_session (PolKitTracker *pk_tracker, const char *session_objpath)
 {
-        g_hash_table_foreach_remove (pk_tracker->dbus_name_to_caller, 
-                                     (GHRFunc) _remove_caller_by_session_iter,
-                                     (gpointer) session_objpath);
+        kit_hash_foreach_remove (pk_tracker->dbus_name_to_caller, 
+                                 (KitHashForeachFunc) _remove_caller_by_session_iter,
+                                 (void *) session_objpath);
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
-static gboolean
-_remove_caller_by_dbus_name_iter (gpointer key, PolKitCaller *caller, const char *dbus_name)
+static kit_bool_t
+_remove_caller_by_dbus_name_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *dbus_name)
 {
         char *name;
         if (!polkit_caller_get_dbus_name (caller, &name))
@@ -1224,9 +1227,9 @@ _remove_caller_by_dbus_name_iter (gpointer key, PolKitCaller *caller, const char
 static void
 _remove_caller_by_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name)
 {
-        g_hash_table_foreach_remove (pk_tracker->dbus_name_to_caller, 
-                                     (GHRFunc) _remove_caller_by_dbus_name_iter,
-                                     (gpointer) dbus_name);
+        kit_hash_foreach_remove (pk_tracker->dbus_name_to_caller, 
+                                     (KitHashForeachFunc) _remove_caller_by_dbus_name_iter,
+                                     (void *) dbus_name);
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -1249,7 +1252,7 @@ _remove_caller_by_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name)
 polkit_bool_t
 polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
 {
-        gboolean ret;
+        kit_bool_t ret;
 
         ret = FALSE;
 
@@ -1288,7 +1291,7 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
                                             DBUS_TYPE_INVALID)) {
 
                         /* TODO: should be _pk_critical */
-                        g_warning ("The ActiveChanged signal on the org.freedesktop.ConsoleKit.Session "
+                        kit_warning ("The ActiveChanged signal on the org.freedesktop.ConsoleKit.Session "
                                    "interface for object %s has the wrong signature! "
                                    "Your system is misconfigured.", session_objpath);
 
@@ -1319,7 +1322,7 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
                                             DBUS_TYPE_INVALID)) {
 
                         /* TODO: should be _pk_critical */
-                        g_warning ("The SessionAdded signal on the org.freedesktop.ConsoleKit.Seat "
+                        kit_warning ("The SessionAdded signal on the org.freedesktop.ConsoleKit.Seat "
                                    "interface for object %s has the wrong signature! "
                                    "Your system is misconfigured.", seat_objpath);
 
@@ -1346,7 +1349,7 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
                                             DBUS_TYPE_INVALID)) {
 
                         /* TODO: should be _pk_critical */
-                        g_warning ("The SessionRemoved signal on the org.freedesktop.ConsoleKit.Seat "
+                        kit_warning ("The SessionRemoved signal on the org.freedesktop.ConsoleKit.Seat "
                                    "interface for object %s has the wrong signature! "
                                    "Your system is misconfigured.", seat_objpath);
 
@@ -1390,23 +1393,23 @@ polkit_tracker_get_caller_from_dbus_name (PolKitTracker *pk_tracker, const char 
 {
         PolKitCaller *caller;
 
-        g_return_val_if_fail (pk_tracker != NULL, NULL);
-        g_return_val_if_fail (pk_tracker->con != NULL, NULL);
-        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+        kit_return_val_if_fail (pk_tracker != NULL, NULL);
+        kit_return_val_if_fail (pk_tracker->con != NULL, NULL);
+        kit_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
-        /* g_debug ("Looking up cache for PolKitCaller for dbus_name %s...", dbus_name); */
+        /* kit_debug ("Looking up cache for PolKitCaller for dbus_name %s...", dbus_name); */
 
-        caller = g_hash_table_lookup (pk_tracker->dbus_name_to_caller, dbus_name);
+        caller = kit_hash_lookup (pk_tracker->dbus_name_to_caller, (void *) dbus_name, NULL);
         if (caller != NULL)
                 return polkit_caller_ref (caller);
 
-        /* g_debug ("Have to compute PolKitCaller for dbus_name %s...", dbus_name); */
+        /* kit_debug ("Have to compute PolKitCaller for dbus_name %s...", dbus_name); */
 
         caller = polkit_caller_new_from_dbus_name (pk_tracker->con, dbus_name, error);
         if (caller == NULL)
                 return NULL;
 
-        g_hash_table_insert (pk_tracker->dbus_name_to_caller, g_strdup (dbus_name), caller);
+        kit_hash_insert (pk_tracker->dbus_name_to_caller, kit_strdup (dbus_name), caller);
         return polkit_caller_ref (caller);
 }
 
@@ -1442,9 +1445,9 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
         polkit_uint64_t start_time;
         _PidStartTimePair *pst;
 
-        g_return_val_if_fail (pk_tracker != NULL, NULL);
-        g_return_val_if_fail (pk_tracker->con != NULL, NULL);
-        g_return_val_if_fail (! dbus_error_is_set (error), NULL);
+        kit_return_val_if_fail (pk_tracker != NULL, NULL);
+        kit_return_val_if_fail (pk_tracker->con != NULL, NULL);
+        kit_return_val_if_fail (! dbus_error_is_set (error), NULL);
 
         start_time = polkit_sysdeps_get_start_time_for_pid (pid);
         if (start_time == 0) {
@@ -1458,19 +1461,19 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
 
         pst = _pid_start_time_new (pid, start_time);
 
-        /* g_debug ("Looking up cache for pid %d (start_time %lld)...", pid, start_time); */
+        /* kit_debug ("Looking up cache for pid %d (start_time %lld)...", pid, start_time); */
 
-        caller = g_hash_table_lookup (pk_tracker->pid_start_time_to_caller, pst);
+        caller = kit_hash_lookup (pk_tracker->pid_start_time_to_caller, (void *) pst, NULL);
         if (caller != NULL) {
-                g_free (pst);
+                kit_free (pst);
                 return polkit_caller_ref (caller);
         }
 
-        /* g_debug ("Have to compute PolKitCaller from pid %d (start_time %lld)...", pid, start_time); */
+        /* kit_debug ("Have to compute PolKitCaller from pid %d (start_time %lld)...", pid, start_time); */
 
         caller = polkit_caller_new_from_pid (pk_tracker->con, pid, error);
         if (caller == NULL) {
-                g_free (pst);
+                kit_free (pst);
                 return NULL;
         }
 
@@ -1482,7 +1485,7 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
          * call into this function).
          */
 
-        g_hash_table_insert (pk_tracker->pid_start_time_to_caller, pst, caller);
+        kit_hash_insert (pk_tracker->pid_start_time_to_caller, pst, caller);
         return polkit_caller_ref (caller);
 }
 
@@ -1515,9 +1518,9 @@ polkit_bool_t
 polkit_tracker_is_authorization_relevant (PolKitTracker *pk_tracker, PolKitAuthorization *auth, DBusError *error)
 {
 
-        g_return_val_if_fail (pk_tracker != NULL, FALSE);
-        g_return_val_if_fail (pk_tracker->con != NULL, FALSE);
-        g_return_val_if_fail (! dbus_error_is_set (error), FALSE);
+        kit_return_val_if_fail (pk_tracker != NULL, FALSE);
+        kit_return_val_if_fail (pk_tracker->con != NULL, FALSE);
+        kit_return_val_if_fail (! dbus_error_is_set (error), FALSE);
 
         /* TODO: optimize... in order to do this sanely we need CK's Manager object to export 
          * a method GetAllSessions() - otherwise we'd need to key off every uid. 

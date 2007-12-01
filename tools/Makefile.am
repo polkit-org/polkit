@@ -23,7 +23,7 @@ polkit_auth_SOURCES = polkit-auth.c
 polkit_auth_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
 
 polkit_action_SOURCES = polkit-action.c
-polkit_action_LDADD = $(GLIB) $(top_builddir)/src/polkit/libpolkit.la
+polkit_action_LDADD = $(top_builddir)/src/polkit/libpolkit.la
 
 profiledir = $(sysconfdir)/profile.d
 profile_SCRIPTS = polkit-bash-completion.sh

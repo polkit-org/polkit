@@ -11,7 +11,7 @@ INCLUDES = \
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\" \
 	-D_POSIX_PTHREAD_SEMANTICS -D_REENTRANT	\
 	-DPOLKIT_COMPILATION \
-	@GLIB_CFLAGS@ @DBUS_CFLAGS@
+	@DBUS_CFLAGS@
 
 lib_LTLIBRARIES=libpolkit-dbus.la
 
@@ -25,7 +25,7 @@ libpolkit_dbus_la_SOURCES =                                	\
 	polkit-dbus.h		polkit-dbus.c			\
 	polkit-simple.h		polkit-simple.c
 
-libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS) $(GLIB_LIBS)
+libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS)
 
 libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
 
