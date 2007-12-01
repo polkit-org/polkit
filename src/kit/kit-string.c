@@ -713,6 +713,189 @@ out:
         return ret;
 }
 
+/**
+ * KitString:
+ *
+ * String buffer that grows automatically as text is added.
+ */
+struct _KitString {
+        char *buf;
+        size_t cur_len;
+        size_t buf_len;
+};
+
+/**
+ * kit_string_free:
+ * @s: the #KitString object
+ * @free_segment: whether to free the string data itself
+ * @out_segment_size: return location for size of string or %NULL
+ *
+ * Free resources used by a #KitString object
+ *
+ * Returns: If @free_segment is %TRUE, returns the segment (will
+ * always be zero terminated), must be freed with kit_free(),
+ * otherwise %NULL
+ */
+char *
+kit_string_free (KitString *s, kit_bool_t free_segment, size_t *out_segment_size)
+{
+        char *ret;
+
+        kit_return_val_if_fail (s != NULL, NULL);
+
+        if (out_segment_size != NULL) {
+                *out_segment_size = s->cur_len;
+        }
+
+        if (free_segment) {
+                kit_free (s->buf);
+                ret = NULL;
+        } else {
+                ret = s->buf;
+        }
+        kit_free (s);
+
+        return ret;
+}
+
+#define KIT_STRING_BLOCK_SIZE 256
+
+/**
+ * kit_string_new:
+ * @init: String to initialize with or %NULL
+ * @len: Initial size of buffer; pass zero to use the default size
+ *
+ * Initialize a new #KitString object.
+ *
+ * Returns: The new object or %NULL on OOM
+ */
+KitString *
+kit_string_new (const char *init, size_t len)
+{
+        KitString *s;
+
+        s = kit_new0 (KitString, 1);
+        if (s == NULL)
+                goto oom;
+
+        if (len == 0)
+                len = KIT_STRING_BLOCK_SIZE;
+        s->buf_len = len;
+
+        if (init == NULL) {
+                s->buf = kit_new0 (char, s->buf_len);
+                if (s->buf == NULL)
+                        goto oom;
+                s->cur_len = 0;
+        } else {
+                size_t init_len;
+
+                init_len = strlen (init);
+                if (init_len + 1 > s->buf_len)
+                        s->buf_len = init_len + 1;
+                s->buf = kit_new0 (char, s->buf_len);
+                if (s->buf == NULL)
+                        goto oom;
+                strncpy (s->buf, init, init_len);
+                s->cur_len = init_len;
+        }
+
+        return s;
+oom:
+        if (s != NULL)
+                kit_string_free (s, TRUE, NULL);
+        return NULL;
+}
+
+/**
+ * kit_string_ensure_size:
+ * @s: String object
+ * @new_size: The size to check for.
+ *
+ * Ensure that the given #KitString object can hold at least @new_size
+ * characters.
+ *
+ * Returns: %TRUE if the given #KitString object can hold at least
+ * @new_size characters. %FALSE if OOM.
+ */
+kit_bool_t
+kit_string_ensure_size (KitString *s, size_t new_size)
+{
+        kit_return_val_if_fail (s != NULL, FALSE);
+
+        if (new_size > s->buf_len - 1) {
+                char *p;
+                size_t grow_to;
+
+                grow_to = ((new_size / KIT_STRING_BLOCK_SIZE) + 1) * KIT_STRING_BLOCK_SIZE;
+
+                p = kit_realloc (s->buf, grow_to);
+                if (p == NULL)
+                        goto oom;
+                /* zero the new block we got */
+                memset (s->buf + s->buf_len, 0, grow_to - s->buf_len);
+                s->buf = p;
+                s->buf_len += KIT_STRING_BLOCK_SIZE;
+        }
+
+        return TRUE;
+oom:
+        return FALSE;
+}
+
+/**
+ * kit_string_append_c:
+ * @s: the #KitString object
+ * @c: character to append
+ *
+ * Append a character to a #KitString object.
+ *
+ * Returns: %TRUE unless OOM
+ */
+kit_bool_t
+kit_string_append_c (KitString *s, char c)
+{
+        kit_return_val_if_fail (s != NULL, FALSE);
+
+        if (!kit_string_ensure_size (s, s->cur_len + 1))
+                goto oom;
+
+        s->buf[s->cur_len] = c;
+        s->cur_len += 1;
+        return TRUE;
+oom:
+        return FALSE;
+}
+
+/**
+ * kit_string_append:
+ * @s: the #KitString object
+ * @str: string to append
+ *
+ * Append a string to a #KitString object.
+ *
+ * Returns: %TRUE unless OOM
+ */
+kit_bool_t
+kit_string_append (KitString *s, const char *str)
+{
+        size_t str_len;
+
+        kit_return_val_if_fail (s != NULL, FALSE);
+
+        str_len = strlen (str);
+
+        if (!kit_string_ensure_size (s, s->cur_len + str_len))
+                goto oom;
+
+        strncpy (s->buf + s->cur_len, str, str_len);
+        s->cur_len += str_len;
+        return TRUE;
+oom:
+        return FALSE;
+}
+
+
 #ifdef KIT_BUILD_TESTS
 
 static kit_bool_t
@@ -768,6 +951,62 @@ _run_test (void)
                                "bad%Ax",
                                "bad%2a"};
         char buf[256];
+        KitString *s;
+
+        if ((s = kit_string_new (NULL, 3)) != NULL) {
+                for (n = 0; n < 8; n++) {
+                        if (!kit_string_append_c (s, 'd'))
+                                break;
+                }
+                p = kit_string_free (s, FALSE, NULL);
+                if (n == 8) {
+                        kit_assert (strcmp ("dddddddd", p) == 0);
+                }
+                kit_free (p);
+        }
+
+        /* KitString always makes place for the terminating zero, hence allocate one more byte */
+        if ((s = kit_string_new (NULL, 101)) != NULL) {
+                size_t segment_size;
+                for (n = 0; n < 100; n++) {
+                        kit_assert (kit_string_append_c (s, n));
+                }
+                p = kit_string_free (s, FALSE, &segment_size);
+                kit_assert (segment_size == 100);
+                for (n = 0; n < 100; n++) {
+                        kit_assert (p[n] == (char) n);
+                }
+                kit_assert (p[100] == 0);
+                kit_free (p);
+        }
+
+        if ((s = kit_string_new (NULL, 0)) != NULL) {
+                for (n = 0; n < 100; n++) {
+                        if (!kit_string_append (s, "foobar"))
+                                break;
+                }
+                p = kit_string_free (s, FALSE, NULL);
+                if (n == 100) {
+                        kit_assert (strlen (p) == 600);
+                        for (n = 0; n < 100; n++) {
+                                kit_assert (strncmp ("foobar", p + n * 6, 6) == 0);
+                        }
+                }
+                kit_free (p);
+        }
+
+        if ((s = kit_string_new ("fooobar", 3)) != NULL) {
+                p = kit_string_free (s, FALSE, NULL);
+                kit_assert (strcmp ("fooobar", p) == 0);
+                kit_free (p);
+        }
+
+        if ((s = kit_string_new ("fooobar2", 100)) != NULL) {
+                p = kit_string_free (s, FALSE, NULL);
+                kit_assert (strcmp ("fooobar2", p) == 0);
+                kit_free (p);
+        }
+
 
         kit_assert (kit_string_percent_encode (buf, sizeof (buf), "Hello World; Nice day!") < sizeof (buf));
         kit_assert (strcmp (buf, "Hello%20World%3B%20Nice%20day%21") == 0);

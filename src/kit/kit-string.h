@@ -74,6 +74,15 @@ size_t      kit_string_entry_create (char *buf, size_t buf_size, ...);
 size_t      kit_string_entry_createv (char *buf, size_t buf_size, const char *kv_pairs[]);
 
 
+struct _KitString;
+typedef struct _KitString KitString;
+
+KitString   *kit_string_new         (const char *init, size_t len);
+char        *kit_string_free        (KitString *s, kit_bool_t free_segment, size_t *out_segment_size);
+kit_bool_t   kit_string_ensure_size (KitString *s, size_t new_size);
+kit_bool_t   kit_string_append_c    (KitString *s, char c);
+kit_bool_t   kit_string_append      (KitString *s, const char *str);
+
 KIT_END_DECLS
 
 #endif /* KIT_STRING_H */

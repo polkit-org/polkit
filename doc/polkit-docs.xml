@@ -85,6 +85,7 @@
     <xi:include href="xml/kit-hash.xml"/>
     <xi:include href="xml/kit-file.xml"/>
     <xi:include href="xml/kit-spawn.xml"/>
+    <xi:include href="xml/kit-entity.xml"/>
     <xi:include href="xml/kit-test.xml"/>
   </reference>
 

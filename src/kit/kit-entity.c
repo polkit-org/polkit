@@ -94,7 +94,7 @@ out:
 
 /**
  * kit_getpwuid:
- * @username: user name to look up
+ * @uid: uid to look up
  *
  * Like getpwuid(3) from the standard C library but tweaked for unit
  * testing. TODO: explain how.
