@@ -467,8 +467,6 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                       PolKitError          **error)
 {
         PolKitPolicyCache *cache;
-        PolKitPolicyFileEntry *pfe;
-        PolKitPolicyDefault *policy_default;
         PolKitResult result_from_config;
         PolKitResult result_from_grantdb;
         polkit_bool_t from_authdb;
@@ -496,24 +494,6 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
         cache = polkit_context_get_policy_cache (pk_context);
         if (cache == NULL)
                 goto out;
-
-        _pk_debug ("entering polkit_can_session_do_action()");
-        polkit_action_debug (action);
-        polkit_session_debug (session);
-
-        pfe = polkit_policy_cache_get_entry (cache, action);
-        if (pfe == NULL) {
-                char *action_name;
-                if (!polkit_action_get_action_id (action, &action_name)) {
-                        kit_warning ("given action has no name");
-                } else {
-                        kit_warning ("no action with name '%s'", action_name);
-                }
-                result = POLKIT_RESULT_UNKNOWN;
-                goto out;
-        }
-
-        polkit_policy_file_entry_debug (pfe);
 
         result_from_config = polkit_config_can_session_do_action (config, action, session);
 
@@ -559,12 +539,17 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
 
         /* Otherwise, unless we found a negative auth, fall back to defaults as specified in the .policy file */
         if (!from_authdb_negative) {
-                policy_default = polkit_policy_file_entry_get_default (pfe);
-                if (policy_default == NULL) {
-                        kit_warning ("no default policy for action!");
-                        goto out;
+                PolKitPolicyFileEntry *pfe;
+
+                pfe = polkit_policy_cache_get_entry (cache, action);
+                if (pfe != NULL) {
+                        PolKitPolicyDefault *policy_default;
+
+                        policy_default = polkit_policy_file_entry_get_default (pfe);
+                        if (policy_default != NULL) {
+                                result = polkit_policy_default_can_session_do_action (policy_default, action, session);
+                        }
                 }
-                result = polkit_policy_default_can_session_do_action (policy_default, action, session);
         }
 
 found:
@@ -620,14 +605,10 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                      polkit_bool_t          revoke_if_one_shot,
                                      PolKitError          **error)
 {
-
-
         PolKitPolicyCache *cache;
-        PolKitPolicyFileEntry *pfe;
         PolKitResult result;
         PolKitResult result_from_config;
         PolKitResult result_from_grantdb;
-        PolKitPolicyDefault *policy_default;
         PolKitConfig *config;
         polkit_bool_t from_authdb;
         polkit_bool_t from_authdb_negative;
@@ -652,24 +633,6 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                 goto out;
         if (!polkit_caller_validate (caller))
                 goto out;
-
-        _pk_debug ("entering polkit_can_caller_do_action()");
-        polkit_action_debug (action);
-        polkit_caller_debug (caller);
-
-        pfe = polkit_policy_cache_get_entry (cache, action);
-        if (pfe == NULL) {
-                char *action_name;
-                if (!polkit_action_get_action_id (action, &action_name)) {
-                        kit_warning ("given action has no name");
-                } else {
-                        kit_warning ("no action with name '%s'", action_name);
-                }
-                result = POLKIT_RESULT_UNKNOWN;
-                goto out;
-        }
-
-        polkit_policy_file_entry_debug (pfe);
 
         result_from_config = polkit_config_can_caller_do_action (config, action, caller);
 
@@ -716,12 +679,17 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
 
         /* Otherwise, unless we found a negative auth, fall back to defaults as specified in the .policy file */
         if (!from_authdb_negative) {
-                policy_default = polkit_policy_file_entry_get_default (pfe);
-                if (policy_default == NULL) {
-                        kit_warning ("no default policy for action!");
-                        goto out;
+                PolKitPolicyFileEntry *pfe;
+
+                pfe = polkit_policy_cache_get_entry (cache, action);
+                if (pfe != NULL) {
+                        PolKitPolicyDefault *policy_default;
+
+                        policy_default = polkit_policy_file_entry_get_default (pfe);
+                        if (policy_default != NULL) {
+                                result = polkit_policy_default_can_caller_do_action (policy_default, action, caller);
+                        }
                 }
-                result = polkit_policy_default_can_caller_do_action (policy_default, action, caller);
         }
 
 found:
