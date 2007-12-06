@@ -21,14 +21,12 @@
       But normally only polkit-auth(1) and polkit-action(1)
       and other management tools will ever do this.
 
- - Write an extensive test suite
+ - Increase test suite coverage
 
  - Finish up documentation; in particular how results from
    config files, defaults and authorizations play together
 
- - Potentially drop the glib dependency (it's not visible in the
-   external API). This is mainly to be able to handle OOM for
-   mechanisms that will need this (such as dbus-daemon)
+ - Potentially drop the glib dependency from polkit-grant
 
  - Kill the config file
 
@@ -43,13 +41,14 @@
  - Add API and support in polkit-auth/polkit-action to define what
    administrator auth means.
 
- - Reconsider adding k/v dictionaries to Actions; e.g. the Mechanism for
-   dial-up networking can attach the key/value pair
+ - Add k/v dictionaries to Actions; e.g. the Mechanism for dial-up
+   networking can attach the key/value pair
 
      "phone_number" -> "555-123-4567"
 
    The is a bit like Objects mentioned in the spec (and what we used
-   to have as PolKitResource) but a bit more blurry. It may just work.
+   to have as PolKitResource) but a bit more blurry. They need to be
+   typed too for presentation in the UI
 
  - Go to 1.0 soon
 
