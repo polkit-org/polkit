@@ -52,3 +52,5 @@
 
  - Go to 1.0 soon
 
+ - Include the patch from Piter PUNK to optionally avoid the PAM
+   dependency (manually checks against /etc/shadow instead)
