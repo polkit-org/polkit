@@ -58,7 +58,7 @@ __polkit_auth() {
                     COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
                     ;;
                 --constraint)
-                    COMPREPLY=($(IFS=: compgen -S' ' -W "none:local:active:local+active" -- $cur))
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "local:active" -- $cur))
                     ;;
             esac
             ;;
@@ -68,11 +68,19 @@ __polkit_auth() {
                     COMPREPLY=($(IFS=: compgen -S' ' -W "--constraint" -- $cur))
                     ;;
             esac
+	    case "${COMP_WORDS[1]}" in
+                --grant|--block)
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "--constraint" -- $cur))
+                    ;;
+            esac
             ;;
-        6)
-	    case "${COMP_WORDS[5]}" in
+        *)
+	    case "${COMP_WORDS[$(($COMP_CWORD - 1))]}" in
                 --constraint)
-                    COMPREPLY=($(IFS=: compgen -S' ' -W "none:local:active:local+active" -- $cur))
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "local:active" -- $cur))
+                    ;;
+                *)
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "--constraint" -- $cur))
                     ;;
             esac
             ;;
