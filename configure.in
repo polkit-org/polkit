@@ -541,6 +541,9 @@ if test "${POLKIT_AUTHDB}" = default ; then
   echo "NOTE: The directory ${localstatedir}/run/PolicyKit-public will be"
   echo "      owned by group ${POLKIT_GROUP} and will be mode 775."
   echo
+  echo "NOTE: ${libexecdir}/polkit-set-default-helper will be owned by"
+  echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
+  echo
   echo "NOTE: ${libexecdir}/polkit-read-auth-helper will be owned by"
   echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
   echo
@@ -553,7 +556,8 @@ if test "${POLKIT_AUTHDB}" = default ; then
   echo "NOTE: ${libexecdir}/polkit-explicit-grant-helper will be owned by"
   echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
   echo
-  echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be setuid root."
+  echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be owned by group"
+  echo "      ${POLKIT_GROUP} and installed with mode 4750 (setuid root binary)."
   echo
   echo "NOTE: For packaging, remember to retain the modes and ownership."
   echo
