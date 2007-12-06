@@ -413,7 +413,7 @@ _to_hex (unsigned int nibble)
  * this limit then the return value is the number of characters (not
  * including the trailing zero) which would have been written to the
  * final string if enough space had been available. Thus, a return
- * value of size or more means that the output was truncated.
+ * value of @buf_size or more means that the output was truncated.
  */
 size_t
 kit_string_percent_encode (char *buf, size_t buf_size, const char *s)
@@ -625,7 +625,7 @@ out:
  * this limit then the return value is the number of characters (not
  * including the trailing zero) which would have been written to the
  * final string if enough space had been available. Thus, a return
- * value of size or more means that the output was truncated.
+ * value of @buf_size or more means that the output was truncated.
  *
  * If an uneven number of strings are given, this function will return
  * zero and errno will be set to EINVAL.

@@ -640,19 +640,20 @@ main (int argc, char *argv[])
                 fprintf (stderr, "polkit-grant-helper: no uid for caller\n");
                 goto out;
         }
-        if (!polkit_caller_get_ck_session (caller, &session)) {
-                fprintf (stderr, "polkit-grant-helper: caller is not in a session\n");
-                goto out;
-        }
-        if (!polkit_session_get_ck_objref (session, &session_objpath)) {
-                fprintf (stderr, "polkit-grant-helper: caller is not in a session\n");
-                goto out;
+
+        /* This user does not have to be in a session.. for example, one might 
+         * use <allow_any>auth_admin</allow_any>...
+         */
+        session = NULL;
+        session_objpath = NULL;
+        if (polkit_caller_get_ck_session (caller, &session) && session != NULL) {
+                if (!polkit_session_get_ck_objref (session, &session_objpath)) {
+                        session = NULL;
+                        session_objpath = NULL;
+                }
         }
 
-        /* Use libpolkit to
-         *
-         * - figure out if the caller can really auth to do the action
-         * - learn what ConsoleKit session the caller belongs to
+        /* Use libpolkit to figure out if the caller can really auth to do the action
          */
         if (!verify_with_polkit (context, caller, action, &result, &admin_users))
                 goto out;
@@ -838,6 +839,11 @@ main (int argc, char *argv[])
 
         case POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
+                if (session == NULL || session_objpath == NULL) {
+                        fprintf (stderr, "polkit-grant-helper: cannot grant to session when not in a session\n");
+                        ret = 2;
+                        goto out;
+                }
                 dbres = polkit_authorization_db_add_entry_session (polkit_context_get_authorization_db (context), 
                                                                    action, 
                                                                    caller,

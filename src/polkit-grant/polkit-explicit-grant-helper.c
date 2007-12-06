@@ -115,16 +115,11 @@ main (int argc, char *argv[])
         }
 
         char *authc_str;
-        PolKitAuthorizationConstraint *authc;
+        size_t authc_str_len;
 
-        /* second is the auth constraint */
+        /* second is the textual form of the auth constraint */
         authc_str = argv[2];
-        authc = polkit_authorization_constraint_from_string (authc_str);
-        if (authc == NULL) {
-                syslog (LOG_NOTICE, "auth constraint is malformed [uid=%d]", getuid ());
-                fprintf (stderr, "polkit-explicit-grant-helper: auth constraint is malformed. This incident has been logged.\n");
-                goto out;
-        }
+        authc_str_len = strlen (authc_str);
 
 #define TARGET_UID 0
         int target;
@@ -190,19 +185,25 @@ main (int argc, char *argv[])
         snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
         snprintf (uid_buf, sizeof (uid_buf), "%d", invoking_uid);
 
-        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
-                                     "scope",          is_negative ? "grant-negative" : "grant",
-                                     "action-id",      action_id,
-                                     "when",           now_buf,
-                                     "granted-by",     uid_buf,
-                                     "constraint",     authc_str,
-                                     NULL) >= sizeof (auth_buf)) {
+        size_t len;
+        if ((len = kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                            "scope",          is_negative ? "grant-negative" : "grant",
+                                            "action-id",      action_id,
+                                            "when",           now_buf,
+                                            "granted-by",     uid_buf,
+                                            NULL)) >= sizeof (auth_buf)) {
                 kit_warning ("polkit-explicit-grant-helper: authbuf is too small");
                 goto out;
         }
+        if (authc_str_len > 0) {
+                if (sizeof (auth_buf) - len < authc_str_len + 1) {
+                        kit_warning ("polkit-explicit-grant-helper: authbuf is too small");
+                        goto out;
+                }
+                strncpy (auth_buf + len, authc_str, authc_str_len + 1);
+        }
 
-        if (_polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 
-                                                    FALSE, 
+        if (_polkit_authorization_db_auth_file_add (FALSE, 
                                                     target_uid, 
                                                     auth_buf)) {
                 ret = 0;

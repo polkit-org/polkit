@@ -149,13 +149,13 @@ polkit_bool_t polkit_authorization_db_add_entry_always           (PolKitAuthoriz
 polkit_bool_t polkit_authorization_db_grant_to_uid           (PolKitAuthorizationDB          *authdb,
                                                               PolKitAction                   *action,
                                                               uid_t                           uid,
-                                                              PolKitAuthorizationConstraint  *constraint,
+                                                              PolKitAuthorizationConstraint **constraints,
                                                               PolKitError                   **error);
 
 polkit_bool_t polkit_authorization_db_grant_negative_to_uid           (PolKitAuthorizationDB          *authdb,
                                                                        PolKitAction                   *action,
                                                                        uid_t                           uid,
-                                                                       PolKitAuthorizationConstraint  *constraint,
+                                                                       PolKitAuthorizationConstraint **constraints,
                                                                        PolKitError                   **error);
 
 polkit_bool_t polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,

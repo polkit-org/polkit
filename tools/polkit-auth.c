@@ -63,7 +63,6 @@ static char *opt_revoke_action_id;
 static char *opt_user;
 static char *opt_grant_action_id;
 static char *opt_block_action_id;
-static char *opt_constraint;
 
 typedef struct {
         gboolean obtained_privilege;
@@ -388,6 +387,19 @@ get_name_from_uid (uid_t uid)
         return name;
 }
 
+static polkit_bool_t 
+_print_constraint (PolKitAuthorization *auth, PolKitAuthorizationConstraint *authc, void *user_data)
+{
+        switch (polkit_authorization_constraint_type (authc)) {
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL:
+                printf ("  Constraint:  Session must be on a local console\n");
+                break;
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE:
+                printf ("  Constraint:  Session must be active\n");
+                break;
+        }
+        return FALSE;
+}
 
 static polkit_bool_t
 auth_iterator_cb (PolKitAuthorizationDB *authdb,
@@ -431,8 +443,6 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 polkit_bool_t is_negative;
                 pid_t pid;
                 polkit_uint64_t pid_start_time;
-                const char *cstr;
-                PolKitAuthorizationConstraint *constraint;
                 PolKitAction *pk_action;
                 PolKitResult pk_result;
                 char exe[PATH_MAX];
@@ -483,20 +493,7 @@ auth_iterator_cb (PolKitAuthorizationDB *authdb,
                 }
                 printf ("  Obtained:    %s\n", time_string);
 
-                constraint = polkit_authorization_get_constraint (auth);
-                cstr = "None";
-                switch (polkit_authorization_constraint_get_flags (constraint)) {
-                case POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL:
-                        cstr = "Session must be on a local console";
-                        break;
-                case POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE:
-                        cstr = "Session must be active";
-                        break;
-                case POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL_ACTIVE:
-                        cstr = "Session must be active and on a local console";
-                        break;
-                }
-                printf ("  Constraints: %s\n", cstr);
+                polkit_authorization_constraints_foreach (auth, _print_constraint, NULL);
 
                 if (is_negative) {
                         printf ("  Negative:    Yes\n");
@@ -650,6 +647,8 @@ ensure_dbus_and_ck (void)
         return FALSE;
 }
 
+#define MAX_CONSTRAINTS 64
+
 int
 main (int argc, char *argv[])
 {
@@ -660,6 +659,8 @@ main (int argc, char *argv[])
         uid_t uid;
         pid_t pid;
         char *s;
+        PolKitAuthorizationConstraint *constraints[MAX_CONSTRAINTS];
+        unsigned int num_constraints = 0;
 
         ret = 1;
 
@@ -712,7 +713,6 @@ main (int argc, char *argv[])
         opt_obtain_action_id = NULL;
         opt_grant_action_id = NULL;
         opt_block_action_id = NULL;
-        opt_constraint = NULL;
         opt_revoke_action_id = NULL;
         opt_show_obtainable = FALSE;
         opt_user = NULL;
@@ -756,7 +756,20 @@ main (int argc, char *argv[])
 			} else if (strcmp (opt, "block") == 0) {
 				opt_block_action_id = strdup (optarg);
 			} else if (strcmp (opt, "constraint") == 0) {
-				opt_constraint = strdup (optarg);
+                                PolKitAuthorizationConstraint *c;
+
+                                c = polkit_authorization_constraint_from_string (optarg);
+                                if (c == NULL) {
+                                        fprintf (stderr, "polkit-auth: constraint '%s' not recognized\n", optarg);
+                                        goto out;
+                                }
+
+                                if (num_constraints >= MAX_CONSTRAINTS - 1) {
+                                        fprintf (stderr, "polkit-auth: Too many constraints specified\n");
+                                        goto out;
+                                }
+                                constraints[num_constraints++] = c;
+
 			} else if (strcmp (opt, "revoke") == 0) {
 				opt_revoke_action_id = strdup (optarg);
 			} else if (strcmp (opt, "show-obtainable") == 0) {
@@ -824,7 +837,6 @@ main (int argc, char *argv[])
                    opt_block_action_id != NULL) {
                 PolKitAction *pk_action;
                 PolKitError *pk_error;
-                PolKitAuthorizationConstraint *constraint;
                 polkit_bool_t res;
 
                 if (opt_user == NULL && uid == 0) {
@@ -838,28 +850,20 @@ main (int argc, char *argv[])
                 else
                         polkit_action_set_action_id (pk_action, opt_grant_action_id);
 
-                if (opt_constraint != NULL) {
-                        constraint = polkit_authorization_constraint_from_string (opt_constraint);
-                        if (constraint == NULL) {
-                                fprintf (stderr, "polkit-auth: constraint '%s' not recognized\n", opt_constraint);
-                                goto out;
-                        }
-                } else {
-                        constraint = polkit_authorization_constraint_get_null ();
-                }
+                constraints[num_constraints] = NULL;
 
                 pk_error = NULL;
                 if (opt_block_action_id != NULL) {
                         res = polkit_authorization_db_grant_negative_to_uid (pk_authdb,
                                                                              pk_action,
                                                                              uid,
-                                                                             constraint,
+                                                                             constraints,
                                                                              &pk_error);
                 } else {
                         res = polkit_authorization_db_grant_to_uid (pk_authdb,
                                                                     pk_action,
                                                                     uid,
-                                                                    constraint,
+                                                                    constraints,
                                                                     &pk_error);
                 }
 

@@ -627,21 +627,32 @@ typedef struct {
 } CheckDataSession;
 
 static polkit_bool_t 
+_check_constraint_session (PolKitAuthorization *auth, PolKitAuthorizationConstraint *authc, void *user_data)
+{
+        PolKitSession *session = (PolKitSession *) user_data;
+
+        if (!polkit_authorization_constraint_check_session (authc, session))
+                goto no_match;
+
+        return FALSE;
+no_match:
+        return TRUE;
+}
+
+static polkit_bool_t 
 _check_auth_for_session (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
 {
         polkit_bool_t ret;
         uid_t pimp_uid;
         polkit_bool_t is_negative;
         CheckDataSession *cd = (CheckDataSession *) user_data;
-        PolKitAuthorizationConstraint *constraint;
 
         ret = FALSE;
 
         if (strcmp (polkit_authorization_get_action_id (auth), cd->action_id) != 0)
                 goto no_match;
 
-        constraint = polkit_authorization_get_constraint (auth);
-        if (!polkit_authorization_constraint_check_session (constraint, cd->session))
+        if (polkit_authorization_constraints_foreach (auth, _check_constraint_session, cd->session))
                 goto no_match;
 
         switch (polkit_authorization_get_scope (auth))
@@ -772,6 +783,19 @@ typedef struct {
 } CheckData;
 
 static polkit_bool_t 
+_check_constraint_caller (PolKitAuthorization *auth, PolKitAuthorizationConstraint *authc, void *user_data)
+{
+        PolKitCaller *caller = (PolKitCaller *) user_data;
+
+        if (!polkit_authorization_constraint_check_caller (authc, caller))
+                goto no_match;
+
+        return FALSE;
+no_match:
+        return TRUE;
+}
+
+static polkit_bool_t 
 _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
 {
         polkit_bool_t ret;
@@ -780,15 +804,13 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
         pid_t caller_pid;
         polkit_uint64_t caller_pid_start_time;
         CheckData *cd = (CheckData *) user_data;
-        PolKitAuthorizationConstraint *constraint;
 
         ret = FALSE;
 
         if (strcmp (polkit_authorization_get_action_id (auth), cd->action_id) != 0)
                 goto no_match;
 
-        constraint = polkit_authorization_get_constraint (auth);
-        if (!polkit_authorization_constraint_check_caller (constraint, cd->caller))
+        if (polkit_authorization_constraints_foreach (auth, _check_constraint_caller, cd->caller))
                 goto no_match;
 
         switch (polkit_authorization_get_scope (auth))
@@ -1143,7 +1165,7 @@ _run_test (void)
         const char test_pu1_run[] =
                 "";
         const char test_pu1_lib[] =
-                "scope=grant:action-id=org.freedesktop.policykit.read:when=1194634242:granted-by=0:constraint=none\n";
+                "scope=grant:action-id=org.freedesktop.policykit.read:when=1194634242:granted-by=0\n";
         const char test_pu2_run[] =
                 "";
         const char test_pu2_lib[] =
@@ -1170,9 +1192,9 @@ _run_test (void)
                 goto out;
         
         if (snprintf (test_pu3_run, sizeof (test_pu3_run), 
-                      "scope=process:pid=%d:pid-start-time=%lld:action-id=org.example.per-process:when=1196307507:auth-as=500:constraint=none\n"
-                      "scope=process-one-shot:pid=%d:pid-start-time=%lld:action-id=org.example.per-process-one-shot:when=1196307507:auth-as=500:constraint=none\n"
-                      "scope=session:session-id=%%2FSession1:action-id=org.example.per-session:when=1196307507:auth-as=500:constraint=none\n",
+                      "scope=process:pid=%d:pid-start-time=%lld:action-id=org.example.per-process:when=1196307507:auth-as=500\n"
+                      "scope=process-one-shot:pid=%d:pid-start-time=%lld:action-id=org.example.per-process-one-shot:when=1196307507:auth-as=500\n"
+                      "scope=session:session-id=%%2FSession1:action-id=org.example.per-session:when=1196307507:auth-as=500\n",
                       getpid (), start_time,
                       getpid (), start_time) >= (int) sizeof (test_pu3_run))
                 goto fail;

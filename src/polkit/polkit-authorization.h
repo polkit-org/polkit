@@ -89,15 +89,13 @@ typedef enum {
         POLKIT_AUTHORIZATION_TYPE_UID,
 } PolKitAuthorizationType;
 
-PolKitAuthorizationType polkit_authorization_get_type (PolKitAuthorization *auth);
+PolKitAuthorizationType polkit_authorization_type (PolKitAuthorization *auth);
 
 const char *polkit_authorization_get_action_id (PolKitAuthorization *auth);
 
 uid_t polkit_authorization_get_uid (PolKitAuthorization *auth);
 
 time_t polkit_authorization_get_time_of_grant            (PolKitAuthorization *auth);
-
-PolKitAuthorizationConstraint *polkit_authorization_get_constraint (PolKitAuthorization *auth);
 
 PolKitAuthorizationScope polkit_authorization_get_scope (PolKitAuthorization *auth);
 
@@ -115,6 +113,25 @@ polkit_bool_t polkit_authorization_was_granted_via_defaults  (PolKitAuthorizatio
 polkit_bool_t polkit_authorization_was_granted_explicitly  (PolKitAuthorization *auth,
                                                             uid_t *out_by_whom,
                                                             polkit_bool_t *out_is_negative);
+
+/**
+ * PolKitAuthorizationConstraintsForeachFunc:
+ * @auth: authorization
+ * @authc: authorization constraint
+ * @user_data: user data 
+ *
+ * Callback function for polkit_authorization_constraints_foreach().
+ *
+ * Returns: Pass #TRUE to short-circuit, e.g. stop the iteration
+ */
+typedef polkit_bool_t (*PolKitAuthorizationConstraintsForeachFunc) (PolKitAuthorization *auth,
+                                                                    PolKitAuthorizationConstraint *authc,
+                                                                    void *user_data);
+
+polkit_bool_t
+polkit_authorization_constraints_foreach (PolKitAuthorization *auth, 
+                                          PolKitAuthorizationConstraintsForeachFunc cb, 
+                                          void *user_data);
 
 POLKIT_END_DECLS
 

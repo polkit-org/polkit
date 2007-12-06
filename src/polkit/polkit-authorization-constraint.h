@@ -44,38 +44,32 @@
 POLKIT_BEGIN_DECLS
 
 /**
- * PolKitAuthorizationConstraintFlags:
- * @POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL: the session or
+ * PolKitAuthorizationConstraintType:
+ * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL: the session or
  * caller must be local
- * @POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE: the session or
+ * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE: the session or
  * caller must be in an active session
- * @POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL_ACTIVE: short
- * hand for the flags POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL
- * and POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE.
  *
- * This enumeration describes different conditions, not mutually
- * exclusive, to help describe an authorization constraint.
+ * This enumeration describes the type of the authorization
+ * constraint.
  */
 typedef enum {
-        POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL         = 1 << 0,
-        POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_ACTIVE        = 1 << 1,
-        POLKIT_AUTHORIZATION_CONSTRAINT_REQUIRE_LOCAL_ACTIVE  = (1 << 0) | (1 << 1)
-} PolKitAuthorizationConstraintFlags;
+        POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL,
+        POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE
+} PolKitAuthorizationConstraintType;
 
 struct _PolKitAuthorizationConstraint;
 typedef struct _PolKitAuthorizationConstraint PolKitAuthorizationConstraint;
 
-PolKitAuthorizationConstraint *polkit_authorization_constraint_get_null (void);
 PolKitAuthorizationConstraint *polkit_authorization_constraint_get_require_local (void);
 PolKitAuthorizationConstraint *polkit_authorization_constraint_get_require_active (void);
-PolKitAuthorizationConstraint *polkit_authorization_constraint_get_require_local_active (void);
 
 PolKitAuthorizationConstraint *polkit_authorization_constraint_ref      (PolKitAuthorizationConstraint *authc);
 void                           polkit_authorization_constraint_unref    (PolKitAuthorizationConstraint *authc);
 void                           polkit_authorization_constraint_debug    (PolKitAuthorizationConstraint *authc);
 polkit_bool_t                  polkit_authorization_constraint_validate (PolKitAuthorizationConstraint *authc);
 
-PolKitAuthorizationConstraintFlags polkit_authorization_constraint_get_flags (PolKitAuthorizationConstraint *authc);
+PolKitAuthorizationConstraintType polkit_authorization_constraint_type (PolKitAuthorizationConstraint *authc);
 
 polkit_bool_t polkit_authorization_constraint_check_session (PolKitAuthorizationConstraint *authc,
                                                              PolKitSession                 *session);
@@ -86,7 +80,7 @@ polkit_bool_t polkit_authorization_constraint_check_caller (PolKitAuthorizationC
 size_t                         polkit_authorization_constraint_to_string (PolKitAuthorizationConstraint *authc, char *out_buf, size_t buf_size);
 PolKitAuthorizationConstraint *polkit_authorization_constraint_from_string (const char *str);
 
-PolKitAuthorizationConstraint *polkit_authorization_constraint_get_from_caller (PolKitCaller *caller);
+size_t polkit_authorization_constraint_get_from_caller (PolKitCaller *caller, PolKitAuthorizationConstraint **out_array, size_t array_size);
 
 polkit_bool_t                  polkit_authorization_constraint_equal (PolKitAuthorizationConstraint *a,
                                                                       PolKitAuthorizationConstraint *b);

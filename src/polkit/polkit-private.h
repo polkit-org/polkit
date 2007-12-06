@@ -57,7 +57,7 @@ const char *_polkit_authorization_get_authfile_entry (PolKitAuthorization *auth)
 
 PolKitAuthorizationConstraint *_polkit_authorization_constraint_new (const char *entry_in_auth_file);
 
-polkit_bool_t _polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transient, uid_t uid, char *str_to_add);
+polkit_bool_t _polkit_authorization_db_auth_file_add (polkit_bool_t transient, uid_t uid, char *str_to_add);
 
 PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
 void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);

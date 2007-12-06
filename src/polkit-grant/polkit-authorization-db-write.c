@@ -84,7 +84,7 @@ out:
 }
 
 polkit_bool_t 
-_polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transient, uid_t uid, char *str_to_add)
+_polkit_authorization_db_auth_file_add (polkit_bool_t transient, uid_t uid, char *str_to_add)
 {
         int fd;
         char *contents;
@@ -95,7 +95,13 @@ _polkit_authorization_db_auth_file_add (const char *root, polkit_bool_t transien
         polkit_bool_t ret;
         struct stat statbuf;
         struct passwd *pw;
+        const char *root;
         char *newline = "\n";
+
+        if (transient)
+                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+        else
+                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
 
         ret = FALSE;
         path = NULL;
@@ -213,6 +219,83 @@ out:
         return ret;
 }
 
+/* returns -1 on error */
+static int
+_write_constraints (char *buf, size_t buf_size, PolKitAuthorizationConstraint **constraints)
+{
+        unsigned int n;
+        unsigned int m;
+
+        kit_return_val_if_fail (constraints != NULL, 0);
+
+        for (n = 0, m = 0; constraints[n] != NULL; n++) {
+                PolKitAuthorizationConstraint *c;
+                const char *key;
+                char value[1024];
+
+                c = constraints[n];
+
+                key = "constraint";
+
+                if (polkit_authorization_constraint_to_string (c, value, sizeof (value)) >= sizeof (value)) {
+                        kit_warning ("Constraint %d is too large!", n);
+                        m = -1;
+                        goto out;
+                }
+
+                if (m < buf_size)
+                        buf[m] = ':';
+                m++;
+
+                m += kit_string_percent_encode (buf + m, buf_size - m > 0 ? buf_size - m : 0, key);
+
+                if (m < buf_size)
+                        buf[m] = '=';
+                m++;
+
+                m += kit_string_percent_encode (buf + m, buf_size - m > 0 ? buf_size - m : 0, value);
+        }
+
+        if (m < buf_size)
+                buf[m] = '\0';
+
+out:
+        return m;
+}
+
+static polkit_bool_t
+_add_caller_constraints (char *buf, size_t buf_size, PolKitCaller *caller)
+{
+        PolKitAuthorizationConstraint *constraints[64];
+        size_t num_constraints;
+        polkit_bool_t ret;
+        int num_written;
+        unsigned int n;
+
+        ret = FALSE;
+
+        num_constraints = polkit_authorization_constraint_get_from_caller (caller, constraints, 64);
+        if (num_constraints >= 64) {
+                goto out;
+        }
+
+        num_written = _write_constraints (buf, buf_size, constraints);
+        if (num_written == -1) {
+                goto out;
+        }
+        
+        if ((size_t) num_written >= buf_size) {
+                goto out;
+        }
+        
+        ret = TRUE;
+
+out:
+        for (n = 0; n < num_constraints && n < 64 && constraints[n] != NULL; n++) {
+                polkit_authorization_constraint_unref (constraints[n]);
+        }
+        return ret;
+}
 
 /**
  * polkit_authorization_db_add_entry_process_one_shot:
@@ -251,8 +334,6 @@ polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authd
         polkit_bool_t ret;
         polkit_uint64_t pid_start_time;
         struct timeval now;
-        PolKitAuthorizationConstraint *constraint;
-        char cbuf[256];
 
         g_return_val_if_fail (authdb != NULL, FALSE);
         g_return_val_if_fail (action != NULL, FALSE);
@@ -276,12 +357,6 @@ polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authd
                 return FALSE;
         }
 
-        constraint = polkit_authorization_constraint_get_from_caller (caller);
-        if (polkit_authorization_constraint_to_string (constraint, cbuf, sizeof (cbuf)) >= sizeof (cbuf)) {
-                g_warning ("buffer for auth constraint is too small");
-                return FALSE;
-        }
-
         char pid_buf[32];
         char pid_st_buf[32];
         char now_buf[32];
@@ -292,21 +367,25 @@ polkit_authorization_db_add_entry_process_one_shot (PolKitAuthorizationDB *authd
         snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
         snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
 
-        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
-                                     "scope",          "process-one-shot",
-                                     "pid",            pid_buf,
-                                     "pid-start-time", pid_st_buf,
-                                     "action-id",      action_id,
-                                     "when",           now_buf,
-                                     "auth-as",        uid_buf,
-                                     "constraint",     cbuf,
-                                     NULL) >= sizeof (auth_buf)) {
+        size_t len;
+        if ((len = kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                            "scope",          "process-one-shot",
+                                            "pid",            pid_buf,
+                                            "pid-start-time", pid_st_buf,
+                                            "action-id",      action_id,
+                                            "when",           now_buf,
+                                            "auth-as",        uid_buf,
+                                            NULL)) >= sizeof (auth_buf)) {
                 g_warning ("authbuf for is too small");
                 return FALSE;
         }
 
-        ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
-                                                      TRUE, 
+        if (!_add_caller_constraints (auth_buf + len, sizeof (auth_buf) - len, caller)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
+
+        ret = _polkit_authorization_db_auth_file_add (TRUE, 
                                                       caller_uid, 
                                                       auth_buf);
         return ret;
@@ -349,8 +428,6 @@ polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authd
         polkit_bool_t ret;
         polkit_uint64_t pid_start_time;
         struct timeval now;
-        PolKitAuthorizationConstraint *constraint;
-        char cbuf[256];
 
         g_return_val_if_fail (authdb != NULL, FALSE);
         g_return_val_if_fail (action != NULL, FALSE);
@@ -374,12 +451,6 @@ polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authd
                 return FALSE;
         }
 
-        constraint = polkit_authorization_constraint_get_from_caller (caller);
-        if (polkit_authorization_constraint_to_string (constraint, cbuf, sizeof (cbuf)) >= sizeof (cbuf)) {
-                g_warning ("buffer for auth constraint is too small");
-                return FALSE;
-        }
-
         char pid_buf[32];
         char pid_st_buf[32];
         char now_buf[32];
@@ -390,21 +461,25 @@ polkit_authorization_db_add_entry_process          (PolKitAuthorizationDB *authd
         snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
         snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
 
-        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
-                                     "scope",          "process",
-                                     "pid",            pid_buf,
-                                     "pid-start-time", pid_st_buf,
-                                     "action-id",      action_id,
-                                     "when",           now_buf,
-                                     "auth-as",        uid_buf,
-                                     "constraint",     cbuf,
-                                     NULL) >= sizeof (auth_buf)) {
+        size_t len;
+        if ((len = kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                            "scope",          "process",
+                                            "pid",            pid_buf,
+                                            "pid-start-time", pid_st_buf,
+                                            "action-id",      action_id,
+                                            "when",           now_buf,
+                                            "auth-as",        uid_buf,
+                                            NULL)) >= sizeof (auth_buf)) {
                 g_warning ("authbuf for is too small");
                 return FALSE;
         }
 
-        ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
-                                                      TRUE, 
+        if (!_add_caller_constraints (auth_buf + len, sizeof (auth_buf) - len, caller)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
+
+        ret = _polkit_authorization_db_auth_file_add (TRUE, 
                                                       caller_uid, 
                                                       auth_buf);
         return ret;
@@ -448,8 +523,6 @@ polkit_authorization_db_add_entry_session          (PolKitAuthorizationDB *authd
         char *session_objpath;
         polkit_bool_t ret;
         struct timeval now;
-        PolKitAuthorizationConstraint *constraint;
-        char cbuf[256];
 
         g_return_val_if_fail (authdb != NULL, FALSE);
         g_return_val_if_fail (action != NULL, FALSE);
@@ -467,12 +540,6 @@ polkit_authorization_db_add_entry_session          (PolKitAuthorizationDB *authd
         if (!polkit_session_get_uid (session, &session_uid))
                 return FALSE;
 
-        constraint = polkit_authorization_constraint_get_from_caller (caller);
-        if (polkit_authorization_constraint_to_string (constraint, cbuf, sizeof (cbuf)) >= sizeof (cbuf)) {
-                g_warning ("buffer for auth constraint is too small");
-                return FALSE;
-        }
-
         if (gettimeofday (&now, NULL) != 0) {
                 g_warning ("Error calling gettimeofday: %m");
                 return FALSE;
@@ -484,20 +551,24 @@ polkit_authorization_db_add_entry_session          (PolKitAuthorizationDB *authd
         snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
         snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
 
-        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
-                                     "scope",          "session",
-                                     "session-id",     session_objpath,
-                                     "action-id",      action_id,
-                                     "when",           now_buf,
-                                     "auth-as",        uid_buf,
-                                     "constraint",     cbuf,
-                                     NULL) >= sizeof (auth_buf)) {
+        size_t len;
+        if ((len = kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                            "scope",          "session",
+                                            "session-id",     session_objpath,
+                                            "action-id",      action_id,
+                                            "when",           now_buf,
+                                            "auth-as",        uid_buf,
+                                            NULL)) >= sizeof (auth_buf)) {
                 g_warning ("authbuf for is too small");
                 return FALSE;
         }
 
-        ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/run/PolicyKit", 
-                                                      TRUE, 
+        if (!_add_caller_constraints (auth_buf + len, sizeof (auth_buf) - len, caller)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
+
+        ret = _polkit_authorization_db_auth_file_add (TRUE, 
                                                       session_uid, 
                                                       auth_buf);
         return ret;
@@ -538,8 +609,6 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
         char *action_id;
         polkit_bool_t ret;
         struct timeval now;
-        PolKitAuthorizationConstraint *constraint;
-        char cbuf[256];
 
         g_return_val_if_fail (authdb != NULL, FALSE);
         g_return_val_if_fail (action != NULL, FALSE);
@@ -556,31 +625,28 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
                 return FALSE;
         }
 
-        constraint = polkit_authorization_constraint_get_from_caller (caller);
-        if (polkit_authorization_constraint_to_string (constraint, cbuf, sizeof (cbuf)) >= sizeof (cbuf)) {
-                g_warning ("buffer for auth constraint is too small");
-                return FALSE;
-        }
-
         char now_buf[32];
         char uid_buf[32];
         char auth_buf[1024];
         snprintf (now_buf, sizeof (now_buf), "%Lu", (polkit_uint64_t) now.tv_sec);
         snprintf (uid_buf, sizeof (uid_buf), "%d", user_authenticated_as);
 
-        if (kit_string_entry_create (auth_buf, sizeof (auth_buf),
-                                     "scope",          "always",
-                                     "action-id",      action_id,
-                                     "when",           now_buf,
-                                     "auth-as",        uid_buf,
-                                     "constraint",     cbuf,
-                                     NULL) >= sizeof (auth_buf)) {
+        size_t len;
+        if ((len = kit_string_entry_create (auth_buf, sizeof (auth_buf),
+                                            "scope",          "always",
+                                            "action-id",      action_id,
+                                            "when",           now_buf,
+                                            "auth-as",        uid_buf,
+                                            NULL)) >= sizeof (auth_buf)) {
+                g_warning ("authbuf for is too small");
+                return FALSE;
+        }
+        if (!_add_caller_constraints (auth_buf + len, sizeof (auth_buf) - len, caller)) {
                 g_warning ("authbuf for is too small");
                 return FALSE;
         }
 
-        ret = _polkit_authorization_db_auth_file_add (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit", 
-                                                      FALSE, 
+        ret = _polkit_authorization_db_auth_file_add (FALSE, 
                                                       uid, 
                                                       auth_buf);
         return ret;
@@ -589,11 +655,33 @@ polkit_authorization_db_add_entry_always           (PolKitAuthorizationDB *authd
 
 typedef struct {
         char *action_id;
-        PolKitAuthorizationConstraint  *constraint;
+        unsigned int _check_constraint_num;
+        PolKitAuthorizationConstraint  **constraints;
 
         polkit_bool_t is_authorized;
         polkit_bool_t is_negative_authorized;
 } CheckDataGrant;
+
+static polkit_bool_t
+_check_constraints_for_grant (PolKitAuthorization *auth, PolKitAuthorizationConstraint *authc, void *user_data)
+{
+        CheckDataGrant *cd = (CheckDataGrant *) user_data;
+        polkit_bool_t ret;
+
+        ret = FALSE;
+
+        if (cd->constraints [cd->_check_constraint_num] == NULL)
+                goto no_match;
+
+        if (!polkit_authorization_constraint_equal (authc, cd->constraints[cd->_check_constraint_num]))
+                goto no_match;
+
+        cd->_check_constraint_num += 1;
+        return FALSE;
+
+no_match:
+        return TRUE;
+}
 
 static polkit_bool_t 
 _check_auth_for_grant (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth, void *user_data)
@@ -611,7 +699,16 @@ _check_auth_for_grant (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth,
         if (!polkit_authorization_was_granted_explicitly (auth, &pimp, &is_negative))
                 goto no_match;
 
-        if (!polkit_authorization_constraint_equal (polkit_authorization_get_constraint (auth), cd->constraint))
+        /* This checks that the number of authorizations are the
+         * same.. as well as that the authorizations are similar one
+         * by one..
+         *
+         * TODO: FIXME: this relies on the ordering, e.g. we don't
+         * catch local+active if there is an active+local one already.
+         */
+        cd->_check_constraint_num = 0;
+        if (polkit_authorization_constraints_foreach (auth, _check_constraints_for_grant, cd) ||
+            cd->constraints [cd->_check_constraint_num] != NULL)
                 goto no_match;
 
         if (is_negative) {
@@ -633,7 +730,7 @@ static polkit_bool_t
 _grant_internal (PolKitAuthorizationDB          *authdb,
                  PolKitAction                   *action,
                  uid_t                           uid,
-                 PolKitAuthorizationConstraint  *constraint,
+                 PolKitAuthorizationConstraint **constraints,
                  PolKitError                   **error,
                  polkit_bool_t                   is_negative)
 {
@@ -641,7 +738,7 @@ _grant_internal (PolKitAuthorizationDB          *authdb,
         char *helper_argv[6] = {PACKAGE_LIBEXEC_DIR "/polkit-explicit-grant-helper", NULL, NULL, NULL, NULL, NULL};
         gboolean ret;
         gint exit_status;
-        char cbuf[256];
+        char cbuf[1024];
         CheckDataGrant cd;
         polkit_bool_t did_exist;
 
@@ -649,7 +746,6 @@ _grant_internal (PolKitAuthorizationDB          *authdb,
 
         g_return_val_if_fail (authdb != NULL, FALSE);
         g_return_val_if_fail (action != NULL, FALSE);
-        g_return_val_if_fail (constraint != NULL, FALSE);
 
         if (!polkit_action_get_action_id (action, &(cd.action_id))) {
                 polkit_error_set_error (error, 
@@ -658,16 +754,29 @@ _grant_internal (PolKitAuthorizationDB          *authdb,
                 goto out;
         }
 
-        if (polkit_authorization_constraint_to_string (constraint, cbuf, sizeof (cbuf)) >= sizeof (cbuf)) {
-                g_warning ("buffer for auth constraint is too small");
-                polkit_error_set_error (error, 
-                                        POLKIT_ERROR_GENERAL_ERROR, 
-                                        "buffer for auth constraint is too small");
-                goto out;
+        if (constraints == NULL) {
+                cbuf[0] = '\0';
+        } else {
+                int num_written;
+                num_written = _write_constraints (cbuf, sizeof (cbuf), constraints);
+                if (num_written == -1) {
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_GENERAL_ERROR, 
+                                                "one of the given constraints did not fit");
+                        goto out;
+                }
+
+                if ((size_t) num_written >= sizeof (cbuf)) {
+                        g_warning ("buffer for auth constraint is too small");
+                        polkit_error_set_error (error, 
+                                                POLKIT_ERROR_GENERAL_ERROR, 
+                                                "buffer for auth constraint is too small");
+                        goto out;
+                }
         }
 
         /* check if we have the auth already */
-        cd.constraint = constraint;
+        cd.constraints = constraints;
         cd.is_authorized = FALSE;
         cd.is_negative_authorized = FALSE;
         polkit_authorization_db_foreach_for_uid (authdb,
@@ -753,7 +862,7 @@ out:
  * @authdb: authorization database
  * @action: action
  * @uid: uid to grant to
- * @constraint: what constraint to put on the authorization
+ * @constraints: Either %NULL or a %NULL terminated list of constraint to put on the authorization
  * @error: return location for error
  *
  * Grants an authorization to a user for a specific action. This
@@ -770,10 +879,10 @@ polkit_bool_t
 polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
                                       PolKitAction                   *action,
                                       uid_t                           uid,
-                                      PolKitAuthorizationConstraint  *constraint,
+                                      PolKitAuthorizationConstraint **constraints,
                                       PolKitError                   **error)
 {
-        return _grant_internal (authdb, action, uid, constraint, error, FALSE);
+        return _grant_internal (authdb, action, uid, constraints, error, FALSE);
 }
 
 /**
@@ -781,7 +890,7 @@ polkit_authorization_db_grant_to_uid (PolKitAuthorizationDB          *authdb,
  * @authdb: authorization database
  * @action: action
  * @uid: uid to grant to
- * @constraint: what constraint to put on the authorization
+ * @constraints: Either %NULL or a %NULL terminated list of constraint to put on the authorization
  * @error: return location for error
  *
  * Grants a negative authorization to a user for a specific action. If
@@ -803,8 +912,8 @@ polkit_bool_t
 polkit_authorization_db_grant_negative_to_uid           (PolKitAuthorizationDB          *authdb,
                                                          PolKitAction                   *action,
                                                          uid_t                           uid,
-                                                         PolKitAuthorizationConstraint  *constraint,
+                                                         PolKitAuthorizationConstraint **constraints,
                                                          PolKitError                   **error)
 {
-        return _grant_internal (authdb, action, uid, constraint, error, TRUE);
+        return _grant_internal (authdb, action, uid, constraints, error, TRUE);
 }
