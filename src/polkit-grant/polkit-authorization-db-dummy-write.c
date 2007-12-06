@@ -92,7 +92,7 @@ polkit_bool_t
 polkit_authorization_db_grant_to_uid           (PolKitAuthorizationDB          *authdb,
                                                 PolKitAction                   *action,
                                                 uid_t                           uid,
-                                                PolKitAuthorizationConstraint  *constraint,
+                                                PolKitAuthorizationConstraint **constraints,
                                                 PolKitError                   **error)
 {
         polkit_error_set_error (error, POLKIT_ERROR_NOT_SUPPORTED, "Not supported");
@@ -103,7 +103,7 @@ polkit_bool_t
 polkit_authorization_db_grant_negative_to_uid           (PolKitAuthorizationDB          *authdb,
                                                          PolKitAction                   *action,
                                                          uid_t                           uid,
-                                                         PolKitAuthorizationConstraint  *constraint,
+                                                         PolKitAuthorizationConstraint **constraints,
                                                          PolKitError                   **error)
 {
         polkit_error_set_error (error, POLKIT_ERROR_NOT_SUPPORTED, "Not supported");
