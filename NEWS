@@ -1,4 +1,178 @@
 ==========
+PolicyKit 0.7 "Common sense ain't common"
+==========
+
+Released on December 5th 2007.
+
+This is the fifth release of PolicyKit. This release is mostly ABI and
+API compatible with 0.6 (100% compatible for existing mechanisms). The
+authorization backend has changed; authorizations gained from earlier
+PolicyKit releases are no longer valid and will be ignored.
+
+Highlights of this release:
+
+ o  All code is now licensed under the MIT/X11 license
+
+ o  libpolkit and libpolkit-dbus no longer depends on libglib.
+
+ o  Unit test framework and coverage reporting. As of this release, 64%
+    of the codebase is currently tested during 'make check'.
+
+ o  New system D-Bus service (activated on demand) providing the major
+    functionality of libpolkit.so from a mechanism point of view. This
+    is useful for chroot(2)'ed services like Avahi.
+
+ o  A class for tracking D-Bus connections to minimize the amount
+    of IPC necessary. Useful for long running daemons.
+
+ o  Pluggable authorization database backend.
+
+ o  New API for interacting with the authorization database
+
+ o  A very simple convenience API useful for (legacy) commandline tools.
+
+ o  A way to specify that an implicit authorization can be one-shot
+    only.
+
+ o  Vendor name, site and icon support in .policy files.
+
+ o  Improved documentation.
+
+ o  Negative authorizations.
+
+ o  Bash completions for all command line tools.
+
+Changes from PolicyKit 0.6 "There is no stopping in a red zone"
+
+David Zeuthen (126):
+      add the convenience class PolKitTracker
+      add id's so the generated HTML has stable and predictable file names
+      post-release version bump
+      add support to PolKitTracker for also asking on pid
+      add C++ include guards and a new method to get pfe's by annotation
+      avoid including regex.h from a public header file
+      don't spew debug output in libpolkit-dbus
+      work on the docs
+      use the Since: tag so gtk-doc can print what symbols are new in 0.7
+      add docs for POLKIT_[BEGIN|END]_DECLS and also add POLKIT_GNUC_DEPRECATED
+      create an API for interfacing with the Authorization Database
+      move POLKIT_GNUC_DEPRECATED to a separate line so gtk-doc is happy
+      remember to set uid on PolKitSession
+      rewrite authorization database and polkit-grant (now known as polkit-auth)
+      make the authdb pluggable and add a dummy backend as an example
+      move all private functions into a private header file
+      move Linux specific code into a single file
+      minor build system and doc fixes
+      let authdb backends synthesize policy file entries
+      fix build with dummy backend
+      fix docs
+      fix uid retrival when getting auths from all users
+      use _destroy, not _unref for hash tables
+      rearrange the docs so all API is in one section
+      move authdb write functions to libpolkit-grant
+      provide a polkit D-Bus service that is activated on demand
+      remember to reset killtimer and fix an error message
+      avoid defining the same functions in both libpolkit and libpolkit-grant
+      rename revoke_if_oneshot to is_mechanism and also expose this on D-Bus
+      make polkit_context_is_[caller|session]_authorized() take a PolKitError
+      introduce one-shot authorizations
+      updated TODO list
+      add unit test framework with gcov coverage support (make check-coverage)
+      extend test coverage for PolKitAction
+      remove dead code
+      add tests for PolKitError
+      implement OOM testing
+      add unit tests for PolKitResult
+      add unit tests for PolKitSeat
+      add unit tests for PolKitSession
+      add unit tests for PolKitCaller
+      add unit tests for PolKitPolicyDefault
+      add unit tests for PolKitPolicyFileEntry
+      implement our own hash table with 100% test coverage
+      export memory mangement and hash table functions
+      implement polkit_hash_foreach
+      improve coverage of PolKitPolicyFileEntry by switching to PolKitHashTable
+      add unit tests for PolKitPolicyFile and add some features to PolKitHash
+      fix some unaligned access bugs
+      increase test coverage for PolKitPolicyFile
+      also dist test .policy files
+      hook up expat to use our memory handling API
+      add doubly-linked lists
+      reimplement string hashing and comparison
+      move all library source to a src/ directory
+      fix build with all library soruce in src/
+      add some gtk-doc to private bits to get doc coverage to 100%
+      add test case for PolKitError to get to 100%
+      use unique action names
+      add unit tests of PolKitPolicyCache
+      forgot to add src/Makefile.am
+      add unit tests for PolKitAuthorizationConstraint
+      add unit tests for PolKitAuthorization
+      split utility bits into a private statically linked library
+      also include libkit in top-level coverage report
+      add strsplit function
+      use kit_strsplit in polkit-sysdeps
+      add (empty, for now) tests for remaining files
+      add spawn function to libkit
+      actually include the files with the spawn functions
+      don't overflow when splitting a string
+      remove glib dependency from libpolkit.so
+      tweak how we do coverage reporting
+      also check for file descriptor leaks
+      fix build for dummy backend
+      add unit test framework to the rest of the library sources
+      build system fixes and refuse to install if built with --enable-tests
+      create /var/lib/misc on 'make install'
+      fix parallel build
+      fix a grave bug where the wrong authorizations were returned
+      add API for overriding defaults and make polkit-action(1) use this API.
+      restrict new API to the default backend only
+      add support for vendor, vendor_url and icon_name tags in .policy files
+      provide convenience functions for auth checking and port helpers to use them
+      require org.fd.pk.revoke to revoke auths for self if granted by someone else
+      export the policydir in the .pc file
+      add support for negative authorizations
+      provide a way to force a reload of all caches etc.
+      make PolKitAuthorization a bit more future proof by adding get_type()
+      define abstract Authentication Agent interface and make polkit-auth(1) use it
+      remove Since gtk-doc tags from the internal libkit library
+      fix 'make check-coverage'
+      make dummy backend work
+      add support for percent encoding/decoding and colon separated kv-lists
+      set errno to ENOMEM when forcibly failing an allocation
+      rework the .auths file format to use key/value pairs and make it future-proof
+      also encode \n\r\t characters
+      update TODO
+      avoid adding newline at the end of generated entry
+      write newline since kit_string_entry_create doesn't do that any more
+      add test harness for polkit-utils
+      fix a bug where the childs environment wasn't inherited
+      build with -rdynamic for maint mode and use this to print a stack trace
+      add (partial) test cases for polkit-authorization-db.c
+      relicense everything to the MIT/X11 license
+      avoid logging to syslog even for invalid files
+      only fail the Nth alloc, not all allocs greater than N
+      add test-friendly abstractions for getpwnam and getpwuid
+      fix unit tests for polkit-authorization-db.c
+      add .gitignore files to get test tree structure in the repo
+      update .gitignore files
+      add some more test env variables so we can bypass ConsoleKit in the tests
+      fix OOM handling in p-a-db.c and only invalidate the cache when necessary
+      add some more test cases for p-a-db.c
+      add a new KitString class
+      implement kit_hash_foreach_remove()
+      remove glib dep from libpolkit-dbus
+      fix a bug where KitList elements were not properly freed
+      downgrade to session scope when granting authorizations for blank passwords
+      don't require .policy files for auth lookups
+      refactor constraints API so there is one entry per constraint in the auth file
+      fix dummy backend so it builds
+      update TODO
+      update TODO to mention Piter PUNK's patch
+      update completion + man page since polkit-auth(1) takes >1 --constraint args
+      update NEWS file
+
+==========
 PolicyKit 0.6 "There is no stopping in a red zone"
 ==========
 
