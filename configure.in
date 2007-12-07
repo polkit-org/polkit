@@ -559,6 +559,10 @@ if test "${POLKIT_AUTHDB}" = default ; then
   echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be owned by group"
   echo "      ${POLKIT_GROUP} and installed with mode 4750 (setuid root binary)."
   echo
-  echo "NOTE: For packaging, remember to retain the modes and ownership."
-  echo
 fi
+
+echo "NOTE: ${libexecdir}/polkit-resolve-exe-helper will be installed with"
+echo "      mode 4755 (setuid root binary)."
+echo
+echo "NOTE: For packaging, remember to retain the modes and ownership."
+echo
