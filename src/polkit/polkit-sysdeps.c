@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
@@ -131,10 +132,51 @@ out:
  * @out_buf: buffer to store the string representation in
  * @buf_size: size of buffer
  *
- * Get the name of the binary a given process was started from. Note
- * that this is not reliable information; it should not be part of any
- * security decision. If the information could not be obtained 0 is
- * returned and out_buf will be set to "(unknown)".
+ * Get the name of the binary a given process was started from.
+ *
+ * Note that this is not necessary reliable information and as such
+ * shouldn't be relied on 100% to make a security decision. In fact,
+ * this information is only trustworthy in situations where the given
+ * binary is securely locked down meaning that 1) it can't be
+ * <literal>ptrace(2)</literal>'d; 2) libc secure mode kicks in (e.g
+ * <literal>LD_PRELOAD</literal> won't work); 3) there are no other
+ * attack vectors (e.g. GTK_MODULES, X11, CORBA, D-Bus) to patch
+ * running code into the process.
+ *
+ * In other words: the risk of relying on constraining an
+ * authorization to the output of this function is high. Suppose that
+ * the program <literal>/usr/bin/gullible</literal> obtains an
+ * authorization via authentication for the action
+ * <literal>org.example.foo</literal>. We add a constraint to say that
+ * the gained authorization only applies to processes for whom
+ * <literal>/proc/pid/exe</literal> points to
+ * <literal>/usr/bin/gullible</literal>. Now enter
+ * <literal>/usr/bin/evil</literal>. It knows that the program
+ * <literal>/usr/bin/gullible</literal> is not "securely locked down"
+ * (per the definition in the above paragraph). So
+ * <literal>/usr/bin/evil</literal> simply sets
+ * <literal>LD_PRELOAD</literal> and execs
+ * <literal>/usr/bin/gullible</literal> and it can now run code in a
+ * process where <literal>/proc/pid/exe</literal> points to
+ * <literal>/usr/bin/gullible</literal>. Thus, the recently gained
+ * authorization for <literal>org.example.foo</literal> applies. Also,
+ * <literal>/usr/bin/evil</literal> could use a host of other attack
+ * vectors to run it's own code under the disguise of pretending to be
+ * <literal>/usr/bin/gullible</literal>.
+ *
+ * Specifically for interpreted languages like Python and Mono it is
+ * the case that <literal>/proc/pid/exe</literal> always points to
+ * <literal>/usr/bin/python</literal>
+ * resp. <literal>/usr/bin/mono</literal>. Thus, it's not very useful
+ * to rely on that the result for this function if you want to
+ * constrain an authorization to
+ * e.g. <literal>/usr/bin/tomboy</literal> or
+ * <literal>/usr/bin/banshee</literal>.
+ *
+ * If the information could not be obtained, such as if the given
+ * process is owned by another user than the caller, -1 is returned
+ * and out_buf will be set to "(unknown)". See also the function
+ * polkit_sysdeps_get_exe_for_pid_with_helper().
  *
  * Returns: Number of characters written (not including trailing
  * '\0'). If the output was truncated due to the buffer being too
@@ -151,6 +193,11 @@ polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size)
         int ret;
         char proc_name[32];
 
+        /* TODO: to avoid work we should maintain a cache. The key
+         * into the cache should be (pid, pid_start_time) and the
+         * values should be the exe-paths  
+         */
+
         ret = 0;
 
         snprintf (proc_name, sizeof (proc_name), "/proc/%d/exe", pid);
@@ -165,6 +212,86 @@ polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size)
 out:
         return ret;
 }
+
+/**
+ * polkit_sysdeps_get_exe_for_pid_with_helper:
+ * @pid: process id
+ * @out_buf: buffer to store the string representation in
+ * @buf_size: size of buffer
+ *
+ * Like polkit_sysdeps_get_exe_for_pid() but if the given process is
+ * owned by another user, a setuid root helper is used to obtain the
+ * information. This helper only works if 1) the caller is authorized
+ * for the org.freedesktop.policykit.read authorization; or 2) the
+ * calling user is polkituser; or 3) the calling user is setegid
+ * polkituser.
+ *
+ * So -1 might still be returned (the process might also have exited).
+ *
+ * Returns: See polkit_sysdeps_get_exe_for_pid().
+ *
+ * Since: 0.8
+ */
+int 
+polkit_sysdeps_get_exe_for_pid_with_helper (pid_t pid, char *out_buf, size_t buf_size)
+{
+        int ret;
+
+        /* TODO: to avoid work we should maintain a cache. The key
+         * into the cache should be (pid, pid_start_time) and the
+         * values should be the exe-paths  
+         */
+
+        ret = polkit_sysdeps_get_exe_for_pid (pid, out_buf, buf_size);
+        if (ret == -1) {
+                char buf[32];
+                char *helper_argv[3] = {PACKAGE_LIBEXEC_DIR "/polkit-resolve-exe-helper", buf, NULL};
+                char *standard_output;
+                int exit_status;
+
+                /* Uh uh.. This means that we don't have permission to read /proc/$pid/exe for
+                 * the given process id... this can happen if the mechanism in question runs
+                 * as an unprivileged user instead of uid 0 (e.g. user 'haldaemon'). 
+                 *
+                 * This blows.
+                 *
+                 * To work around this we use a setuid root helper that
+                 *
+                 * 1. checks whether the caller (us) has the 1) org.freedesktop.policykit.read
+                 *    authorization; or 2) is $POLKIT_USER; or 3) is group $POLKIT_USER
+                 *
+                 * 2. If so, resolves /prod/$pid/exe and writes it to stdout
+                 */
+
+                snprintf (buf, sizeof (buf), "%d", pid);
+
+                if (!kit_spawn_sync (NULL,             /* const char  *working_directory */
+                                     0,                /* flags */
+                                     helper_argv,      /* char       **argv */
+                                     NULL,             /* char       **envp */
+                                     NULL,             /* char        *stdin */
+                                     &standard_output, /* char       **stdout */
+                                     NULL,             /* char       **stderr */
+                                     &exit_status)) {  /* int         *exit_status */
+                        goto out;
+                }
+                
+                if (!WIFEXITED (exit_status)) {
+                        kit_warning ("resolve exe helper crashed!");
+                        goto out;
+                } else if (WEXITSTATUS(exit_status) != 0) {
+                        goto out;
+                }
+
+                strncpy (out_buf, standard_output, buf_size);
+                out_buf[buf_size - 1] = '\0';
+                ret = strlen (standard_output);
+        }
+
+out:
+        return ret;
+}
+
 
 #ifdef POLKIT_BUILD_TESTS
 

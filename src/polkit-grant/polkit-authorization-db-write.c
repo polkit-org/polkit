@@ -267,14 +267,17 @@ static polkit_bool_t
 _add_caller_constraints (char *buf, size_t buf_size, PolKitCaller *caller)
 {
         PolKitAuthorizationConstraint *constraints[64];
-        size_t num_constraints;
+        int num_constraints;
         polkit_bool_t ret;
         int num_written;
-        unsigned int n;
+        int n;
 
         ret = FALSE;
 
         num_constraints = polkit_authorization_constraint_get_from_caller (caller, constraints, 64);
+        if (num_constraints == -1)
+                goto out;
+
         if (num_constraints >= 64) {
                 goto out;
         }

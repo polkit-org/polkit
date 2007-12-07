@@ -43,6 +43,8 @@ polkit_uint64_t polkit_sysdeps_get_start_time_for_pid (pid_t pid);
 
 int polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size);
 
+int polkit_sysdeps_get_exe_for_pid_with_helper (pid_t pid, char *out_buf, size_t buf_size);
+
 
 POLKIT_END_DECLS
 

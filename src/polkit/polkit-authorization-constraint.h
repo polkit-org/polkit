@@ -49,13 +49,23 @@ POLKIT_BEGIN_DECLS
  * caller must be local
  * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE: the session or
  * caller must be in an active session
+ * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE: the caller must
+ * be a specific program; use
+ * polkit_authorization_constraint_get_exe() to get the path of the
+ * program.
+ * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT: the
+ * caller must be in a specific security context
+ * polkit_authorization_constraint_get_selinux_context() to get the
+ * security context.
  *
  * This enumeration describes the type of the authorization
  * constraint.
  */
 typedef enum {
         POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL,
-        POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE
+        POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE,
+        POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE,
+        POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT,
 } PolKitAuthorizationConstraintType;
 
 struct _PolKitAuthorizationConstraint;
@@ -63,6 +73,8 @@ typedef struct _PolKitAuthorizationConstraint PolKitAuthorizationConstraint;
 
 PolKitAuthorizationConstraint *polkit_authorization_constraint_get_require_local (void);
 PolKitAuthorizationConstraint *polkit_authorization_constraint_get_require_active (void);
+PolKitAuthorizationConstraint *polkit_authorization_constraint_get_require_exe (const char *path);
+PolKitAuthorizationConstraint *polkit_authorization_constraint_get_require_selinux_context (const char *context);
 
 PolKitAuthorizationConstraint *polkit_authorization_constraint_ref      (PolKitAuthorizationConstraint *authc);
 void                           polkit_authorization_constraint_unref    (PolKitAuthorizationConstraint *authc);
@@ -70,6 +82,10 @@ void                           polkit_authorization_constraint_debug    (PolKitA
 polkit_bool_t                  polkit_authorization_constraint_validate (PolKitAuthorizationConstraint *authc);
 
 PolKitAuthorizationConstraintType polkit_authorization_constraint_type (PolKitAuthorizationConstraint *authc);
+
+const char *polkit_authorization_constraint_get_exe (PolKitAuthorizationConstraint *authc);
+
+const char *polkit_authorization_constraint_get_selinux_context (PolKitAuthorizationConstraint *authc);
 
 polkit_bool_t polkit_authorization_constraint_check_session (PolKitAuthorizationConstraint *authc,
                                                              PolKitSession                 *session);
@@ -80,7 +96,7 @@ polkit_bool_t polkit_authorization_constraint_check_caller (PolKitAuthorizationC
 size_t                         polkit_authorization_constraint_to_string (PolKitAuthorizationConstraint *authc, char *out_buf, size_t buf_size);
 PolKitAuthorizationConstraint *polkit_authorization_constraint_from_string (const char *str);
 
-size_t polkit_authorization_constraint_get_from_caller (PolKitCaller *caller, PolKitAuthorizationConstraint **out_array, size_t array_size);
+int polkit_authorization_constraint_get_from_caller (PolKitCaller *caller, PolKitAuthorizationConstraint **out_array, size_t array_size);
 
 polkit_bool_t                  polkit_authorization_constraint_equal (PolKitAuthorizationConstraint *a,
                                                                       PolKitAuthorizationConstraint *b);

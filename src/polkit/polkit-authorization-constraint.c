@@ -40,6 +40,7 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "polkit-debug.h"
 #include "polkit-authorization-constraint.h"
@@ -72,6 +73,15 @@ struct _PolKitAuthorizationConstraint
 {
         int refcount;
         PolKitAuthorizationConstraintType type;
+
+        union {
+                struct {
+                        char *path;
+                } exe;
+                struct {
+                        char *context;
+                } selinux_context;
+        };
 };
 
 static PolKitAuthorizationConstraint _local_constraint = {-1, 
@@ -80,8 +90,8 @@ static PolKitAuthorizationConstraint _local_constraint = {-1,
 static PolKitAuthorizationConstraint _active_constraint = {-1, 
                                                           POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE};
 
-PolKitAuthorizationConstraint *
-_polkit_authorization_constraint_new (const char *entry_in_auth_file)
+static PolKitAuthorizationConstraint *
+_polkit_authorization_constraint_new (void)
 {
         PolKitAuthorizationConstraint *authc;
         authc = kit_new0 (PolKitAuthorizationConstraint, 1);
@@ -131,6 +141,20 @@ polkit_authorization_constraint_unref (PolKitAuthorizationConstraint *authc)
         authc->refcount--;
         if (authc->refcount > 0) 
                 return;
+
+        switch (authc->type) {
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL:
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE:
+                break;
+
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE:
+                kit_free (authc->exe.path);
+                break;
+
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT:
+                kit_free (authc->selinux_context.context);
+                break;
+        }
 
         kit_free (authc);
 }
@@ -229,6 +253,10 @@ polkit_bool_t
 polkit_authorization_constraint_check_caller (PolKitAuthorizationConstraint *authc,
                                               PolKitCaller                  *caller)
 {
+        int n;
+        pid_t pid;
+        char *selinux_context;
+        char buf[PATH_MAX];
         polkit_bool_t ret;
         PolKitSession *session;
 
@@ -238,13 +266,48 @@ polkit_authorization_constraint_check_caller (PolKitAuthorizationConstraint *aut
         ret = FALSE;
 
         /* caller may not be in a session */
-        if (polkit_caller_get_ck_session (caller, &session) && session != NULL) {
-                ret = polkit_authorization_constraint_check_session (authc, session);
-        } else {
-                if (authc->type != POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL &&
-                    authc->type != POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE) {
+
+        switch (authc->type) {
+        /* explicit fallthrough */
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL:
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE:
+                if (polkit_caller_get_ck_session (caller, &session) && session != NULL) {
+                        ret = polkit_authorization_constraint_check_session (authc, session);
+                }
+                break;
+
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE:
+                if (polkit_caller_get_pid (caller, &pid)) {
+
+                        /* we may be running unprivileged.. so optionally use the helper. Requires the calling
+                         * process (this one) to have the org.freedesktop.policykit.read authorization.
+                         *
+                         * An example of this is HAL (running as user 'haldaemon').
+                         */
+                        n = polkit_sysdeps_get_exe_for_pid_with_helper (pid, buf, sizeof (buf));
+
+                        if (n != -1 && n < (int) sizeof (buf)) {
+                                if (strcmp (authc->exe.path, buf) == 0) {
+                                        ret = TRUE;
+                                }
+                        }
+                }
+
+                break;
+
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT:
+                if (polkit_caller_get_selinux_context (caller, &selinux_context) && selinux_context != NULL) {
+                        if (strcmp (authc->selinux_context.context, selinux_context) == 0) {
+                                ret = TRUE;
+                        }
+                } else {
+                        /* if SELinux context is not set then SELinux is not enabled (or the
+                         * caller made a mistake and didn't set it); thus, the authorization can
+                         * never apply 
+                         */
                         ret = TRUE;
                 }
+                break;
         }
 
         return ret;
@@ -258,7 +321,7 @@ polkit_authorization_constraint_check_caller (PolKitAuthorizationConstraint *aut
  * authorization to present information to the user (e.g. as
  * polkit-auth(1) does).
  *
- * Returns: type from #PolKitAuthorizationConstraintFlags
+ * Returns: type from #PolKitAuthorizationConstraintType
  *
  * Since: 0.7
  */
@@ -270,12 +333,54 @@ polkit_authorization_constraint_type (PolKitAuthorizationConstraint *authc)
 }
 
 /**
+ * polkit_authorization_constraint_get_exe:
+ * @authc: the object
+ *
+ * Get the exe path for the constraint.
+ *
+ * Returns: The exe path or #NULL if type isn't
+ * #POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE. Caller shall not
+ * free this string.
+ * 
+ * Since: 0.8
+ */
+const char *
+polkit_authorization_constraint_get_exe (PolKitAuthorizationConstraint *authc)
+{
+        kit_return_val_if_fail (authc != NULL, NULL);
+        kit_return_val_if_fail (authc->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE, NULL);
+
+        return authc->exe.path;
+}
+
+/**
+ * polkit_authorization_constraint_get_selinux_context:
+ * @authc: the object
+ *
+ * Get the SELinux context for the constraint.
+ *
+ * Returns: The selinux context or #NULL if type isn't
+ * #POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT. Caller
+ * shall not free this string.
+ * 
+ * Since: 0.8
+ */
+const char *
+polkit_authorization_constraint_get_selinux_context (PolKitAuthorizationConstraint *authc)
+{
+        kit_return_val_if_fail (authc != NULL, NULL);
+        kit_return_val_if_fail (authc->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT, NULL);
+
+        return authc->selinux_context.context;
+}
+
+/**
  * polkit_authorization_constraint_get_require_local:
  *
  * Get a #PolKitAuthorizationConstraint object that represents the
  * constraint that the session or caller must be local.
  *
- * Returns: the constraint; the caller shall not unref this object
+ * Returns: the constraint
  *
  * Since: 0.7
  */
@@ -291,7 +396,7 @@ polkit_authorization_constraint_get_require_local (void)
  * Get a #PolKitAuthorizationConstraint object that represents the
  * constraint that the session or caller must be active.
  *
- * Returns: the constraint; the caller shall not unref this object
+ * Returns: the constraint
  *
  * Since: 0.7
  */
@@ -299,6 +404,70 @@ PolKitAuthorizationConstraint *
 polkit_authorization_constraint_get_require_active (void)
 {
         return &_active_constraint;
+}
+
+/**
+ * polkit_authorization_constraint_get_require_exe:
+ * @path: path to program
+ *
+ * Get a #PolKitAuthorizationConstraint object that represents the
+ * constraint that the caller must be a specific program
+ *
+ * Returns: the constraint or #NULL on OOM
+ *
+ * Since: 0.8
+ */
+PolKitAuthorizationConstraint *
+polkit_authorization_constraint_get_require_exe (const char *path)
+{
+        PolKitAuthorizationConstraint *authc;
+
+        kit_return_val_if_fail (path != NULL, NULL);
+
+        authc = _polkit_authorization_constraint_new ();
+        if (authc == NULL)
+                goto out;
+        authc->type = POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE;
+        authc->exe.path = kit_strdup (path);
+        if (authc->exe.path == NULL) {
+                polkit_authorization_constraint_unref (authc);
+                authc = NULL;
+        }
+
+out:
+        return authc;
+}
+
+/**
+ * polkit_authorization_constraint_get_require_selinux_context:
+ * @context: SELinux context
+ *
+ * Get a #PolKitAuthorizationConstraint object that represents the
+ * constraint that the caller must be in a specific SELinux context.
+ *
+ * Returns: the constraint or #NULL on OOM
+ *
+ * Since: 0.8
+ */
+PolKitAuthorizationConstraint *
+polkit_authorization_constraint_get_require_selinux_context (const char *context)
+{
+        PolKitAuthorizationConstraint *authc;
+
+        kit_return_val_if_fail (context != NULL, NULL);
+
+        authc = _polkit_authorization_constraint_new ();
+        if (authc == NULL)
+                goto out;
+        authc->type = POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT;
+        authc->selinux_context.context = kit_strdup (context);
+        if (authc->selinux_context.context == NULL) {
+                polkit_authorization_constraint_unref (authc);
+                authc = NULL;
+        }
+
+out:
+        return authc;
 }
 
 /**
@@ -324,15 +493,20 @@ polkit_authorization_constraint_to_string (PolKitAuthorizationConstraint *authc,
         kit_return_val_if_fail (authc != NULL, buf_size);
 
         switch (authc->type) {
-        default:
-                return snprintf (out_buf, buf_size, "none");
-
         case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL:
                 return snprintf (out_buf, buf_size, "local");
 
         case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE:
                 return snprintf (out_buf, buf_size, "active");
+
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE:
+                return snprintf (out_buf, buf_size, "exe:%s", authc->exe.path);
+                
+        case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT:
+                return snprintf (out_buf, buf_size, "selinux_context:%s", authc->selinux_context.context);
         }
+
+        return 0;
 }
 
 /**
@@ -359,6 +533,12 @@ polkit_authorization_constraint_from_string (const char *str)
         } else if (strcmp (str, "active") == 0) {
                 ret = polkit_authorization_constraint_get_require_active ();
                 goto out;
+        } else if (strncmp (str, "exe:", 4) == 0) {
+                ret = polkit_authorization_constraint_get_require_exe (str + 4);
+                goto out;
+        } else if (strncmp (str, "selinux_context:", 16) == 0) {
+                ret = polkit_authorization_constraint_get_require_selinux_context (str + 16);
+                goto out;
         }
 
 out:
@@ -383,22 +563,29 @@ out:
  * The caller must unref all the created objects using
  * polkit_authorization_constraint_unref().
  *
- * Returns: This function do not create more than @array_size constraints
- * (including the trailing %NULL). If the output was truncated due to
- * this limit then the return value is the number of objects (not
- * including the trailing %NULL) which would have been written to the
- * final array if enough space had been available. Thus, a return
- * value of @array_size or more means that the output was truncated. 
+ * Returns: If OOM -1 is returned. This function do not create more
+ * than @array_size constraints (including the trailing %NULL). If the
+ * output was truncated due to this limit then the return value is the
+ * number of objects (not including the trailing %NULL) which would
+ * have been written to the final array if enough space had been
+ * available. Thus, a return value of @array_size or more means that
+ * the output was truncated.
+ *
+ * Since: 0.7
  */
-size_t 
+int
 polkit_authorization_constraint_get_from_caller (PolKitCaller *caller, 
                                                  PolKitAuthorizationConstraint **out_array, 
                                                  size_t array_size)
 {
-        unsigned int ret;
+        pid_t pid;
+        char *selinux_context;
+        int ret;
         polkit_bool_t is_local;
         polkit_bool_t is_active;
         PolKitSession *session;
+        char path[PATH_MAX];
+        int n;
 
         kit_return_val_if_fail (caller != NULL, 0);
         kit_return_val_if_fail (out_array != NULL, 0);
@@ -413,22 +600,67 @@ polkit_authorization_constraint_get_from_caller (PolKitCaller *caller,
         polkit_session_get_ck_is_active (session, &is_active);
 
         if (is_local) {
-                if (ret < array_size)
+                if (ret < (int) array_size)
                         out_array[ret] = polkit_authorization_constraint_get_require_local ();
                 ret++;
         } 
 
         if (is_active) {
-                if (ret < array_size)
+                if (ret < (int) array_size)
                         out_array[ret] = polkit_authorization_constraint_get_require_active ();
                 ret++;
         }
 
+        /* constrain to callers program */
+        if (polkit_caller_get_pid (caller, &pid)) {
+                /* So the program to receive a constraint may besetuid root... so we may need some
+                 * help to get the exepath.. Therefore use _with_helper().
+                 *
+                 * This works because this function is normally only called from polkit-grant-helper which
+                 * is setgid polkituser.. this means that _with_helper will succeed.
+                 *
+                 * An example of this is pulseaudio...
+                 */
+                n = polkit_sysdeps_get_exe_for_pid_with_helper (pid, path, sizeof (path));
+                if (n != -1 && n < (int) sizeof (path)) {
+                        PolKitAuthorizationConstraint *c;
+
+                        c = polkit_authorization_constraint_get_require_exe (path);
+                        if (c == NULL)
+                                goto oom;
+
+                        if (ret < (int) array_size)
+                                out_array[ret] = c;
+
+                        ret++;
+                }
+        }
+
+        /* constrain to callers SELinux context */
+        if (polkit_caller_get_selinux_context (caller, &selinux_context) && selinux_context != NULL) {
+                PolKitAuthorizationConstraint *c;
+
+                c = polkit_authorization_constraint_get_require_selinux_context (selinux_context);
+                if (c == NULL)
+                        goto oom;
+
+                if (ret < (int) array_size)
+                        out_array[ret] = c;
+                
+                ret++;
+        }
+
 out:
-        if (ret < array_size)
+        if (ret < (int) array_size)
                 out_array[ret] = NULL;
 
         return ret;
+
+oom:
+        for (n = 0; n < ret; n++) {
+                polkit_authorization_constraint_unref (out_array[n]);
+        }
+        return -1;
 }
 
 /**
@@ -445,11 +677,28 @@ out:
 polkit_bool_t
 polkit_authorization_constraint_equal (PolKitAuthorizationConstraint *a, PolKitAuthorizationConstraint *b)
 {
+        polkit_bool_t ret;
+
         kit_return_val_if_fail (a != NULL, FALSE);
         kit_return_val_if_fail (b != NULL, FALSE);
 
-        /* When we add more types this needs expansion */
-        return a->type == b->type;
+        ret = FALSE;
+
+        if (a->type != b->type)
+                goto out;
+
+        if (a->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE) {
+                if (strcmp (a->exe.path, b->exe.path) != 0)
+                        goto out;
+        } else if (a->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT) {
+                if (strcmp (a->selinux_context.context, b->selinux_context.context) != 0)
+                        goto out;
+        }
+
+        ret = TRUE;
+
+out:
+        return ret;
 }
 
 #ifdef POLKIT_BUILD_TESTS
@@ -538,12 +787,14 @@ static polkit_bool_t
 _run_test (void)
 {
         PolKitAuthorizationConstraint *ac;
+        PolKitAuthorizationConstraint *ac2;
         PolKitAuthorizationConstraintType type;
         PolKitSession *s_active;
         PolKitSession *s_inactive;
         PolKitSession *s_active_remote;
         PolKitSession *s_inactive_remote;
         polkit_bool_t ret;
+        char buf[256];
 
         if ((s_active = polkit_session_new ()) != NULL) {
                 if (!polkit_session_set_ck_objref (s_active, "/session1")) {
@@ -609,6 +860,9 @@ _run_test (void)
 
 
 #if 0
+        /* TODO: redo these tests; they are supposed to to verify that 
+         *       polkit_authorization_constraint_get_from_caller() works()
+         */
         for (n = 0; n < 4; n++) {
                 PolKitSession *s;
                 polkit_bool_t expected[4];
@@ -651,11 +905,73 @@ _run_test (void)
         }
 #endif
 
-        if ((ac = _polkit_authorization_constraint_new ("local")) != NULL) {
+        if ((ac = _polkit_authorization_constraint_new ()) != NULL) {
                 polkit_authorization_constraint_validate (ac);
                 polkit_authorization_constraint_debug (ac);
                 polkit_authorization_constraint_ref (ac);
                 polkit_authorization_constraint_unref (ac);
+                polkit_authorization_constraint_unref (ac);
+        }
+
+        char our_exe[256];
+        int n;
+        n = polkit_sysdeps_get_exe_for_pid (getpid (), our_exe, sizeof (our_exe));
+        kit_assert (n != -1);
+        kit_assert (n < (int) sizeof (our_exe));
+
+        if ((ac = polkit_authorization_constraint_get_require_exe (our_exe)) != NULL) {
+                const char *s;
+                PolKitCaller *c;
+
+                kit_assert ((s = polkit_authorization_constraint_get_exe (ac)) != NULL && strcmp (s, our_exe) == 0);
+                kit_assert (polkit_authorization_constraint_to_string (ac, buf, sizeof (buf)) < sizeof (buf));
+                if ((ac2 = polkit_authorization_constraint_from_string (buf)) != NULL) {
+                        kit_assert (polkit_authorization_constraint_equal (ac, ac2));
+                        polkit_authorization_constraint_unref (ac2);
+                }
+
+                if ((c = polkit_caller_new ()) != NULL) {
+                        kit_assert (polkit_caller_set_pid (c, getpid ()));
+                        kit_assert (polkit_authorization_constraint_check_caller (ac, c));
+                        kit_assert (polkit_caller_set_pid (c, getppid ()));
+                        kit_assert (! polkit_authorization_constraint_check_caller (ac, c));
+                        polkit_caller_unref (c);
+                }
+                
+
+                polkit_authorization_constraint_unref (ac);
+        }
+
+        if ((ac = polkit_authorization_constraint_get_require_selinux_context ("httpd_exec_t")) != NULL) {
+                const char *s;
+                PolKitCaller *c;
+
+                kit_assert ((s = polkit_authorization_constraint_get_selinux_context (ac)) != NULL && 
+                            strcmp (s, "httpd_exec_t") == 0);
+                kit_assert (polkit_authorization_constraint_to_string (ac, buf, sizeof (buf)) < sizeof (buf));
+                if ((ac2 = polkit_authorization_constraint_from_string (buf)) != NULL) {
+                        kit_assert (polkit_authorization_constraint_equal (ac, ac2));
+                        polkit_authorization_constraint_unref (ac2);
+                }
+
+                if ((c = polkit_caller_new ()) != NULL) {
+                        kit_assert (polkit_caller_set_pid (c, getpid ()));
+
+                        if (polkit_caller_set_selinux_context (c, "httpd_exec_t")) {
+                                kit_assert (polkit_authorization_constraint_check_caller (ac, c));
+                        } else {
+                                kit_assert (errno == ENOMEM);
+                        }
+
+                        if (polkit_caller_set_selinux_context (c, "hald_exec_t")) {
+                                kit_assert (! polkit_authorization_constraint_check_caller (ac, c));
+                        } else {
+                                kit_assert (errno == ENOMEM);
+                        }
+
+                        polkit_caller_unref (c);
+                }
+
                 polkit_authorization_constraint_unref (ac);
         }
         

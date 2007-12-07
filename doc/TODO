@@ -54,3 +54,7 @@
 
  - Include the patch from Piter PUNK to optionally avoid the PAM
    dependency (manually checks against /etc/shadow instead)
+
+ - To avoid work we should maintain a cache in the get_exe_for_pid()
+   functions. The key into the cache should be (pid, pid_start_time)
+   and the values should be the exe-paths
