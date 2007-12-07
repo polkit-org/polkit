@@ -53,7 +53,20 @@
             appropriate stanza in the defaults section of the .policy
             file for the action specifies
             <literal>auth_*</literal>. 
-          </para><para> 
+          </para>
+          <para> 
+
+            The gained authorization will be constrained as much as
+            possible using the constraints specified in
+            <xref linkend="polkit-auth-constraints"/>. For example, on
+            a system running SELinux, if the caller runs uses this
+            tool to obtain an authorization from a shell in a desktop
+            in an active session, then constraints
+            for <emphasis>local</emphasis>, <emphasis>active</emphasis>, <emphasis>exe</emphasis>
+            and <emphasis>selinux_context</emphasis> will all be
+            added.
+          </para>
+          <para> 
             If an Authentication Agent (such as the one from
             PolicyKit-gnome) is available in the session, it will used
             for authentication unless the environment variable
@@ -109,10 +122,9 @@
             than <literal>--obtain</literal> insofar that
             the <literal>defaults</literal> stanza of the .policy file
             is not consulted. Optionally, one or more constraints on
-            the granted authorization can be specified; allowed values
-            are: <literal>local</literal>,
-            <literal>active</literal>. The authorization needed to
-            grant authorizations is
+            the granted authorization can be specified, see
+            <xref linkend="polkit-auth-constraints"/> for details. The
+            authorization needed to grant authorizations is
             <literal>org.freedesktop.policykit.grant</literal>.
           </para>
         </listitem>
@@ -126,10 +138,9 @@
             authorizations are normally used to block users that would
             normally be authorized due to implicit
             authorizations. Optionally, one or more constraints on the
-            granted negative authorization can be specified; allowed
-            values are: <literal>local</literal>,
-            <literal>active</literal>.  The authorization needed to
-            grant negative authorizations is
+            granted authorization can be specified, see
+            <xref linkend="polkit-auth-constraints"/> for details. The
+            authorization needed to grant negative authorizations is
             <literal>org.freedesktop.policykit.grant</literal> if the
             "beneficiary" is another user.
           </para>
@@ -168,11 +179,132 @@
     </variablelist>
   </refsect1>
   
+  <refsect1 id="polkit-auth-constraints">
+    <title>CONSTRAINTS</title> 
+    <para>
+      One can put one or more <emphasis>constraints</emphasis> on an
+      authorization. They are used to limit where the authrorization
+      applies. Presently the following constraints are supported
+
+      <variablelist>
+        <varlistentry>
+          <term><option>--constraint local</option></term>
+          <listitem>
+            <para>
+              The caller must be in a session on a local console
+              attached to the system. For example processes that
+              belong to remote XDMCP or ssh connections will fail to
+              meet this constraint and as such the authorization with
+              such a constraint won't apply.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--constraint active</option></term>
+          <listitem>
+            <para>
+              The caller must be in an active session. This is
+              typically used with a <emphasis>local</emphasis>
+              constraint to ensure that the caller is only authorized
+              if his session is in the foreground. This is typically
+              used for fast user switching (multiple sessions on the
+              same console) to prevent inactive sessions from doing
+              privileged operations like spying (using a webcam or a
+              sound card) on the current active session.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--constraint exe:<replaceable>/path/to/program</replaceable></option></term>
+          <listitem>
+            <para>
+              The authorization is constrained to processes for where
+              executable path (<literal>/proc/pid/exe</literal> on
+              Linux) matches the given path. See
+              <xref linkend="polkit-auth-notes"/> for limitations on
+              why this may not be secure.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><option>--constraint selinux_context:<replaceable>system_u:object_r:some_context_t</replaceable></option></term>
+          <listitem>
+            <para>
+              The authorization is constrained to processes for where
+              their SELinux security context matches the given
+              context.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkit-auth-notes">
+    <title>NOTES</title> 
+    <para>
+      Note that the executable path for a process is not necessary
+      reliable information and as such shouldn't be relied on 100% to
+      make a security decision. In fact, this information is only
+      trustworthy in situations where the given binary is securely
+      locked down meaning that 1) it can't
+      be <literal>ptrace(2)</literal>'d; 2) libc secure mode kicks in
+      (e.g <literal>LD_PRELOAD</literal> won't work); 3) there are no
+      other attack vectors (e.g. GTK_MODULES, X11, CORBA, D-Bus) to
+      patch running code into the process.
+    </para>
+    <para>
+      In other words: the risk of relying on constraining an
+      authorization to a path of an executable is high. Suppose that
+      the program <literal>/usr/bin/gullible</literal> obtains an
+      authorization via authentication for the action
+      <literal>org.example.foo</literal>. We add a constraint to say
+      that the gained authorization only applies to processes for whom
+      <literal>/proc/pid/exe</literal> points to
+      <literal>/usr/bin/gullible</literal>.
+    </para>
+    <para>
+      Now enter <literal>/usr/bin/evil</literal>. It knows that the
+      program <literal>/usr/bin/gullible</literal> is not "securely
+      locked down" (per the definition in the above paragraph). So
+      <literal>/usr/bin/evil</literal> simply sets
+      <literal>LD_PRELOAD</literal> and execs
+      <literal>/usr/bin/gullible</literal> and it can now run code in a
+      process where <literal>/proc/pid/exe</literal> points to
+      <literal>/usr/bin/gullible</literal>. Thus, the recently gained
+      authorization for <literal>org.example.foo</literal> applies. Also,
+      <literal>/usr/bin/evil</literal> could use a host of other attack
+      vectors to run it's own code under the disguise of pretending to be
+      <literal>/usr/bin/gullible</literal>.
+    </para>
+    <para>
+      Specifically for interpreted languages like Python and Mono it
+      is the case that <literal>/proc/pid/exe</literal> always points
+      to
+      <literal>/usr/bin/python</literal>
+      resp. <literal>/usr/bin/mono</literal>. Thus, it's not very useful
+      to rely on that the result for this function if you want to
+      constrain an authorization to
+      e.g. <literal>/usr/bin/tomboy</literal> or
+      <literal>/usr/bin/banshee</literal>.
+    </para>
+    <para>
+      It is however possible to write programs that are "securely
+      locked down" (per the definition in the above paragraph); for
+      example all properly written <literal>setuid</literal>
+      and <literal>setgid</literal> programs are written in this way.
+    </para>
+  </refsect1>
+
   <refsect1>
     <title>COMPLETION</title> 
     <para>
       PolicyKit ships with a collection of shell functions such that
-      completion on users and actions works when using the
+      completion on users, actions and constraints work when using the
       <citerefentry>
         <refentrytitle>bash</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>

@@ -533,10 +533,10 @@ polkit_authorization_constraint_from_string (const char *str)
         } else if (strcmp (str, "active") == 0) {
                 ret = polkit_authorization_constraint_get_require_active ();
                 goto out;
-        } else if (strncmp (str, "exe:", 4) == 0) {
+        } else if (strncmp (str, "exe:", 4) == 0 && strlen (str) > 4) {
                 ret = polkit_authorization_constraint_get_require_exe (str + 4);
                 goto out;
-        } else if (strncmp (str, "selinux_context:", 16) == 0) {
+        } else if (strncmp (str, "selinux_context:", 16) == 0 && strlen (str) > 16) {
                 ret = polkit_authorization_constraint_get_require_selinux_context (str + 16);
                 goto out;
         }

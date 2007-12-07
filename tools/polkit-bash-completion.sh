@@ -58,7 +58,7 @@ __polkit_auth() {
                     COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
                     ;;
                 --constraint)
-                    COMPREPLY=($(IFS=: compgen -S' ' -W "local:active" -- $cur))
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "local:active:exe\::selinux_context\:" -- $cur))
                     ;;
             esac
             ;;
@@ -77,7 +77,7 @@ __polkit_auth() {
         *)
 	    case "${COMP_WORDS[$(($COMP_CWORD - 1))]}" in
                 --constraint)
-                    COMPREPLY=($(IFS=: compgen -S' ' -W "local:active" -- $cur))
+                    COMPREPLY=($(IFS=: compgen -S' ' -W "local:active:exe\::selinux_context\:" -- $cur))
                     ;;
                 *)
                     COMPREPLY=($(IFS=: compgen -S' ' -W "--constraint" -- $cur))
