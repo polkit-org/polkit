@@ -343,7 +343,7 @@ skip_check:
         /*----------------------------------------------------------------------------------------------------*/
 
         requesting_info_for_uid = strtoul (argv[1], &endp, 10);
-        if  (*endp != '\0') {
+        if (strlen (argv[1]) == 0 || *endp != '\0') {
                 fprintf (stderr, "polkit-read-auth-helper: requesting_info_for_uid malformed (3)\n");
                 goto out;
         }

@@ -118,7 +118,7 @@ main (int argc, char *argv[])
         /*----------------------------------------------------------------------------------------------------*/
 
         requesting_info_for_pid = strtoul (argv[1], &endp, 10);
-        if  (*endp != '\0') {
+        if (strlen (argv[1]) == 0 || *endp != '\0') {
                 fprintf (stderr, "polkit-resolve-exe-helper: requesting_info_for_pid malformed\n");
                 goto out;
         }

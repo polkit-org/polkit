@@ -183,7 +183,7 @@ _parse_entry (const char *key, const char *value, void *user_data)
                 epd->cur_attr |= ATTR_PID;
 
                 auth->pid = strtoul (value, &ep, 10);
-                if (*ep != '\0')
+                if (strlen (value) == 0 || *ep != '\0')
                         goto error;
 
         } else if (strcmp (key, "pid-start-time") == 0) {
@@ -193,7 +193,7 @@ _parse_entry (const char *key, const char *value, void *user_data)
                 epd->cur_attr |= ATTR_PID_START_TIME;
 
                 auth->pid_start_time = strtoull (value, &ep, 10);
-                if (*ep != '\0')
+                if (strlen (value) == 0 || *ep != '\0')
                         goto error;
 
         } else if (strcmp (key, "session-id") == 0) {
@@ -225,7 +225,7 @@ _parse_entry (const char *key, const char *value, void *user_data)
                 epd->cur_attr |= ATTR_WHEN;
 
                 auth->when = strtoull (value, &ep, 10);
-                if (*ep != '\0')
+                if (strlen (value) == 0 || *ep != '\0')
                         goto error;
 
         } else if (strcmp (key, "auth-as") == 0) {
@@ -235,7 +235,7 @@ _parse_entry (const char *key, const char *value, void *user_data)
                 epd->cur_attr |= ATTR_AUTH_AS;
 
                 auth->authenticated_as_uid = strtoul (value, &ep, 10);
-                if (*ep != '\0')
+                if (strlen (value) == 0 || *ep != '\0')
                         goto error;
 
         } else if (strcmp (key, "granted-by") == 0) {
@@ -245,7 +245,7 @@ _parse_entry (const char *key, const char *value, void *user_data)
                 epd->cur_attr |= ATTR_GRANTED_BY;
 
                 auth->explicitly_granted_by = strtoul (value, &ep, 10);
-                if (*ep != '\0')
+                if (strlen (value) == 0 || *ep != '\0')
                         goto error;
 
         } else if (strcmp (key, "constraint") == 0) {
