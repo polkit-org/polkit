@@ -1227,7 +1227,7 @@ _run_test (void)
                                     test_pu2_lib, sizeof (test_pu2_lib) - 1))
                 goto out;
         if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/PolicyKit/user-pu3.auths", 0644, 
-                                    test_pu3_run, sizeof (test_pu3_run) - 1))
+                                    test_pu3_run, strlen (test_pu3_run)))
                 goto out;
         if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu3.auths", 0644, 
                                     test_pu3_lib, sizeof (test_pu3_lib) - 1))
