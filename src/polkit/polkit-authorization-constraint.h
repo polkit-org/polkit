@@ -54,7 +54,7 @@ POLKIT_BEGIN_DECLS
  * polkit_authorization_constraint_get_exe() to get the path of the
  * program.
  * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT: the
- * caller must be in a specific security context
+ * caller must be in a specific security context; use
  * polkit_authorization_constraint_get_selinux_context() to get the
  * security context.
  *
