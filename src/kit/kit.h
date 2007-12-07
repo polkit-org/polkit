@@ -99,6 +99,8 @@ do {                                                                            
  * the expression evaluates to #FALSE, an error message is logged and
  * the function returns. This can only be used in functions which do
  * not return a value.
+ *
+ * Returns: nothing
  */
 #define kit_return_if_fail(expr)                                                                \
 do {                                                                                            \
@@ -120,6 +122,8 @@ do {                                                                            
  * Returns from the current function, returning the value @val, if the
  * expression is not true. If the expression evaluates to #FALSE, an
  * error message is logged and val is returned.
+ *
+ * Returns: nothing
  */
 #define kit_return_val_if_fail(expr,val)                                                        \
 do {                                                                                            \
