@@ -70,9 +70,9 @@ polkit_revoke_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_build
 #
 # polkit-grant-helper-* need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root
-# and/or other users. As only polkit-grant-helper will invoke it
-# we make it owned by the polkitiuser group and non-readable / 
-# non-executable to the world
+# and/or other users. As only polkit-grant-helper will invoke it we
+# make it owned by the polkitiuser group and non-executable to the
+# world
 #
 # polkit-explicit-grant-helper needs to be setgid $POLKIT_GROUP to be
 # able to edit authorization files in /var/lib/PolicyKit and
@@ -87,7 +87,7 @@ install-exec-hook:
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-grant-helper
 if POLKIT_AUTHFW_PAM
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
-	-chmod 4750 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
+	-chmod 4754 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
 endif
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-explicit-grant-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-explicit-grant-helper
