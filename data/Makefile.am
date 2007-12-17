@@ -2,7 +2,7 @@
 
 # See polkit-grant/Makefile.am for discussion
 #
-if POLKIT_AUTHDB_DEFAULT
+if POLKIT_AUTHFW_PAM
 pamdir = $(sysconfdir)/pam.d
 pam_DATA = polkit
 endif

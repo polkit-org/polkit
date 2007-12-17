@@ -41,13 +41,21 @@ libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE
 # adjust the PAM stuff in data/Makefile.am
 #
 if POLKIT_AUTHDB_DEFAULT
-libexec_PROGRAMS = polkit-grant-helper polkit-grant-helper-pam polkit-explicit-grant-helper polkit-revoke-helper 
+libexec_PROGRAMS = polkit-grant-helper
+
+if POLKIT_AUTHFW_PAM
+libexec_PROGRAMS += polkit-grant-helper-pam
+endif
+
+libexec_PROGRAMS += polkit-explicit-grant-helper polkit-revoke-helper 
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
 polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la libpolkit-grant.la
 
+if POLKIT_AUTHFW_PAM
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
 polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
+endif
 
 polkit_explicit_grant_helper_SOURCES = polkit-explicit-grant-helper.c
 polkit_explicit_grant_helper_CFLAGS = @DBUS_CFLAGS@
@@ -60,7 +68,7 @@ polkit_revoke_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_build
 # polkit-grant-helper needs to be setgid polkituser to be able to
 # write cookies to /var/lib/PolicyKit and /var/run/PolicyKit
 #
-# polkit-grant-helper-pam need to be setuid root because it's used to
+# polkit-grant-helper-* need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root
 # and/or other users. As only polkit-grant-helper will invoke it
 # we make it owned by the polkitiuser group and non-readable / 
@@ -77,8 +85,10 @@ polkit_revoke_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_build
 install-exec-hook:
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-grant-helper
+if POLKIT_AUTHFW_PAM
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
 	-chmod 4750 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
+endif
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-explicit-grant-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-explicit-grant-helper
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-revoke-helper
@@ -111,7 +121,9 @@ covered-files.txt :
 if POLKIT_AUTHDB_DEFAULT
 	echo src/polkit-grant/polkit-explicit-grant-helper.c >> covered-files.txt
 	echo src/polkit-grant/polkit-grant-helper.c >> covered-files.txt
+if POLKIT_AUTHFW_PAM
 	echo src/polkit-grant/polkit-grant-helper-pam.c >> covered-files.txt
+endif
 	echo src/polkit-grant/polkit-revoke-helper.c >> covered-files.txt
 endif
 
@@ -120,7 +132,9 @@ coverage-report.txt : covered-files.txt clean-gcov all check
 if POLKIT_AUTHDB_DEFAULT
 	gcov polkit-explicit-grant-helper.c -o .libs/ > /dev/null
 	gcov polkit-grant-helper.c -o .libs/ > /dev/null
+if POLKIT_AUTHFW_PAM
 	gcov polkit-grant-helper-pam.c -o .libs/ > /dev/null
+endif
 	gcov polkit-revoke-helper.c -o .libs/ > /dev/null
 endif
 	$(top_srcdir)/test/create-coverage-report.sh "module polkit-grant" `cat covered-files.txt` > coverage-report.txt

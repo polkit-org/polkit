@@ -269,12 +269,10 @@ AC_DEFINE_UNQUOTED(POLKIT_AUTHDB,"$POLKIT_AUTHDB", [Authorization Database to us
 
 case $POLKIT_AUTHDB in
   dummy)
-    need_pam=no
     AC_DEFINE(POLKIT_AUTHDB_DUMMY, 1, [If using the dummy authorization database])
     ;;
 
   default)
-    need_pam=yes
     AC_DEFINE(POLKIT_AUTHDB_DEFAULT, 1, [If using the default authorization database])
     ;;
 
@@ -285,6 +283,54 @@ esac
 
 AM_CONDITIONAL(POLKIT_AUTHDB_DUMMY, [test x$POLKIT_AUTHDB = xdummy], [Using dummy authdb])
 AM_CONDITIONAL(POLKIT_AUTHDB_DEFAULT, [test x$POLKIT_AUTHDB = xdefault], [Using default authdb])
+
+dnl ---------------------------------------------------------------------------
+dnl - Select which authentication framework to use
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([authfw],
+	    AS_HELP_STRING([--with-authfw=<name>], 
+                           [Authentication framework (none/pam)]))
+if ! test -z "$with_authfw" ; then
+  if test x$with_authdb = xdummy ; then
+    if ! test x$with_authfw = xnone ; then
+      AC_MSG_ERROR([Only 'none' is a valid authentication framework for the dummy authorization database])
+    fi
+  else
+      if test x$with_authfw = xnone ; then
+        AC_MSG_ERROR(['none' is only a valid authentication framework for the dummy authorization database])
+      fi
+  fi
+  POLKIT_AUTHFW=$with_authfw
+else
+  if test x$with_authdb = xdummy ; then
+    POLKIT_AUTHFW=none
+  else
+    POLKIT_AUTHFW=pam
+  fi
+fi
+
+AC_SUBST(POLKIT_AUTHFW)
+AC_DEFINE_UNQUOTED(POLKIT_AUTHFW,"$POLKIT_AUTHFW", [Authentication Framework to use])
+
+case $POLKIT_AUTHFW in
+  none)
+    need_pam=no
+    AC_DEFINE(POLKIT_AUTHFW_NONE, 1, [If using no authentication framework])
+    ;;
+
+  pam)
+    need_pam=yes
+    AC_DEFINE(POLKIT_AUTHFW_PAM, 1, [If using the PAM authentication framework])
+    ;;
+
+  *)
+    AC_MSG_ERROR([Unknown Authentication Framework: $POLKIT_AUTHFW])
+    ;;
+esac
+
+AM_CONDITIONAL(POLKIT_AUTHFW_NONE, [test x$POLKIT_AUTHFW = xnone], [Using no authfw])
+AM_CONDITIONAL(POLKIT_AUTHFW_PAM, [test x$POLKIT_AUTHFW = xpam], [Using PAM authfw])
 
 
 dnl ---------------------------------------------------------------------------
@@ -498,6 +544,7 @@ echo "
         group for PolicyKit:        ${POLKIT_GROUP}
 
         authorization database:     ${POLKIT_AUTHDB}
+        authentication framework:   ${POLKIT_AUTHFW}
 
         Distribution/OS:            ${with_os_type}
         SELinux support:            ${have_selinux}

@@ -39,7 +39,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef POLKIT_AUTHFW_PAM
 #include <security/pam_appl.h>
+#endif
+
 #include <grp.h>
 #include <pwd.h>
 #include <syslog.h>
@@ -163,7 +167,9 @@ do_auth (const char *user_to_auth, gboolean *empty_conversation)
         int helper_stdin;
         int helper_stdout;
         GError *g_error;
+#ifdef POLKIT_AUTHFW_PAM
         char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-pam", NULL};
+#endif
         char buf[256];
         FILE *child_stdin;
         FILE *child_stdout;
