@@ -290,7 +290,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH([authfw],
 	    AS_HELP_STRING([--with-authfw=<name>], 
-                           [Authentication framework (none/pam)]))
+                           [Authentication framework (none/pam/shadow)]))
 if ! test -z "$with_authfw" ; then
   if test x$with_authdb = xdummy ; then
     if ! test x$with_authfw = xnone ; then
@@ -324,6 +324,12 @@ case $POLKIT_AUTHFW in
     AC_DEFINE(POLKIT_AUTHFW_PAM, 1, [If using the PAM authentication framework])
     ;;
 
+  shadow)
+    need_pam=no
+    AUTH_LIBS="${AUTH_LIBS} -lcrypt"
+    AC_DEFINE(POLKIT_AUTHFW_SHADOW, 1, [If using the Shadow authentication framework])
+    ;;
+
   *)
     AC_MSG_ERROR([Unknown Authentication Framework: $POLKIT_AUTHFW])
     ;;
@@ -331,6 +337,7 @@ esac
 
 AM_CONDITIONAL(POLKIT_AUTHFW_NONE, [test x$POLKIT_AUTHFW = xnone], [Using no authfw])
 AM_CONDITIONAL(POLKIT_AUTHFW_PAM, [test x$POLKIT_AUTHFW = xpam], [Using PAM authfw])
+AM_CONDITIONAL(POLKIT_AUTHFW_SHADOW, [test x$POLKIT_AUTHFW = xshadow], [Using Shadow authfw])
 
 
 dnl ---------------------------------------------------------------------------

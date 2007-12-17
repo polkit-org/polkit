@@ -44,6 +44,10 @@
 #include <security/pam_appl.h>
 #endif
 
+#ifdef POLKIT_AUTHFW_SHADOW
+#include <shadow.h>
+#endif
+
 #include <grp.h>
 #include <pwd.h>
 #include <syslog.h>
@@ -169,6 +173,9 @@ do_auth (const char *user_to_auth, gboolean *empty_conversation)
         GError *g_error;
 #ifdef POLKIT_AUTHFW_PAM
         char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-pam", NULL};
+#endif
+#ifdef POLKIT_AUTHFW_SHADOW
+        char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-shadow", NULL};
 #endif
         char buf[256];
         FILE *child_stdin;

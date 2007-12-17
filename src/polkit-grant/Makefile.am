@@ -47,6 +47,10 @@ if POLKIT_AUTHFW_PAM
 libexec_PROGRAMS += polkit-grant-helper-pam
 endif
 
+if POLKIT_AUTHFW_SHADOW
+libexec_PROGRAMS += polkit-grant-helper-shadow
+endif
+
 libexec_PROGRAMS += polkit-explicit-grant-helper polkit-revoke-helper 
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
@@ -55,6 +59,11 @@ polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/l
 if POLKIT_AUTHFW_PAM
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
 polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
+endif
+
+if POLKIT_AUTHFW_SHADOW
+polkit_grant_helper_shadow_SOURCES = polkit-grant-helper-shadow.c
+polkit_grant_helper_shadow_LDADD = @AUTH_LIBS@
 endif
 
 polkit_explicit_grant_helper_SOURCES = polkit-explicit-grant-helper.c
@@ -88,6 +97,10 @@ install-exec-hook:
 if POLKIT_AUTHFW_PAM
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
 	-chmod 4754 $(DESTDIR)$(libexecdir)/polkit-grant-helper-pam
+endif
+if POLKIT_AUTHFW_SHADOW
+	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-grant-helper-shadow
+	-chmod 4750 $(DESTDIR)$(libexecdir)/polkit-grant-helper-shadow
 endif
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-explicit-grant-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-explicit-grant-helper
@@ -124,6 +137,9 @@ if POLKIT_AUTHDB_DEFAULT
 if POLKIT_AUTHFW_PAM
 	echo src/polkit-grant/polkit-grant-helper-pam.c >> covered-files.txt
 endif
+if POLKIT_AUTHFW_SHADOW
+	echo src/polkit-grant/polkit-grant-helper-shadow.c >> covered-files.txt
+endif
 	echo src/polkit-grant/polkit-revoke-helper.c >> covered-files.txt
 endif
 
@@ -134,6 +150,9 @@ if POLKIT_AUTHDB_DEFAULT
 	gcov polkit-grant-helper.c -o .libs/ > /dev/null
 if POLKIT_AUTHFW_PAM
 	gcov polkit-grant-helper-pam.c -o .libs/ > /dev/null
+endif
+if POLKIT_AUTHFW_SHADOW
+	gcov polkit-grant-helper-shadow.c -o .libs/ > /dev/null
 endif
 	gcov polkit-revoke-helper.c -o .libs/ > /dev/null
 endif
