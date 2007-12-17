@@ -40,7 +40,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <security/pam_appl.h>
 #include <grp.h>
 #include <pwd.h>
 #include <syslog.h>
