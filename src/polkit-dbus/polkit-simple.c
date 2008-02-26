@@ -49,6 +49,7 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
 
 #include <polkit/polkit-private.h>
 #include "polkit-simple.h"
@@ -372,7 +373,7 @@ polkit_auth_obtain (const char *action_id, polkit_uint32_t xid, pid_t pid, DBusE
                                   DBUS_TYPE_UINT32, &xid, 
                                   DBUS_TYPE_UINT32, &pid,
                                   DBUS_TYPE_INVALID);
-	reply = dbus_connection_send_with_reply_and_block (bus, message, -1, error);
+	reply = dbus_connection_send_with_reply_and_block (bus, message, INT_MAX, error);
 	if (reply == NULL || dbus_error_is_set (error)) {
                 ret = _auth_show_dialog_text (action_id, pid, error);
 		goto out;
