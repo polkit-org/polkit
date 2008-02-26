@@ -42,7 +42,10 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <kit/kit.h>
 #include <polkit/polkit.h>
+
+static polkit_bool_t warned = FALSE;
 
 static void
 usage (int argc, char *argv[])
@@ -52,47 +55,106 @@ usage (int argc, char *argv[])
         exit (1);
 }
 
-static bool
+static polkit_bool_t
+entry_foreach_cb (PolKitPolicyFile      *policy_file, 
+                  PolKitPolicyFileEntry *policy_file_entry,
+                  void                  *user_data)
+{
+        const char *id;
+        const char *prefix = user_data;
+
+        id = polkit_policy_file_entry_get_id (policy_file_entry);
+        if (!kit_str_has_prefix (id, prefix) || 
+            strchr (id + strlen (prefix), '.') != NULL) {
+                printf ("WARNING: The action %s does not\n"
+                        "         belong in a policy file named %spolicy.\n"
+                        "         A future version of PolicyKit will ignore this action.\n"
+                        "\n", 
+                        id, prefix);
+                warned = TRUE;
+        }
+
+        return FALSE;
+}
+
+static polkit_bool_t
 validate_file (const char *file)
 {
-        PolKitPolicyFile *priv_file;
+        PolKitPolicyFile *policy_file;
         PolKitError *error;
+        char *prefix;
+        polkit_bool_t ret;
+        const char *basename;
+
+        ret = FALSE;
+        prefix = NULL;
+        policy_file = NULL;
+
+        if (!kit_str_has_suffix (file, ".policy")) {
+                printf ("%s doesn't have a .policy suffix\n", file);
+                goto out;
+        }
+        basename = strrchr (file, '/');
+        if (basename != NULL)
+                basename++;
+        else
+                basename = file;
+        prefix = kit_strdup (basename);
+        /* strip out "policy" - retain the dot */
+        prefix [strlen (prefix) - 6] = '\0';
 
         error = NULL;
-        priv_file = polkit_policy_file_new (file, TRUE, &error);
-        if (priv_file == NULL) {
+        policy_file = polkit_policy_file_new (file, TRUE, &error);
+        if (policy_file == NULL) {
                 printf ("%s did not validate: %s\n", file, polkit_error_get_error_message (error));
                 polkit_error_free (error);
-                return FALSE;
+                goto out;
         }
-        polkit_policy_file_unref (priv_file);
-        return TRUE;
+        warned = FALSE;
+        polkit_policy_file_entry_foreach (policy_file, entry_foreach_cb, prefix);
+        if (warned) {
+                goto out;
+        }
+
+        ret = TRUE;
+out:
+        kit_free (prefix);
+        if (policy_file != NULL)
+                polkit_policy_file_unref (policy_file);
+        return ret;
 }
 
 int
 main (int argc, char *argv[])
 {
         int n;
+        int ret;
 
 	if (argc <= 1) {
 		usage (argc, argv);
-                return 1;
+                ret = 1;
+                goto out;
 	}
 
+        ret = 0;
         for (n = 1; n < argc; n++) {
                 if (strcmp (argv[n], "--help") == 0) {
                         usage (argc, argv);
-                        return 0;
+                        goto out;
                 }
                 if (strcmp (argv[n], "--version") == 0) {
                         printf ("polkit-policy-file-validate " PACKAGE_VERSION "\n");
-                        return 0;
+                        goto out;
                 }
 
                 if (!validate_file (argv[n])) {
-                        return 1;
+                        printf ("ERROR: %s did not validate\n"
+                                "\n", 
+                                argv[n]);
+                        ret = 1;
                 }
 	}
 
-        return 0;
+out:
+        return ret;
 }

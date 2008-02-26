@@ -10,7 +10,20 @@
     <para>
       A Mechanism needs to declare what Actions it supports. This is
       achieved by dropping one or more XML files with the suffix <literal>.policy</literal>
-      into the <literal>/usr/share/PolicyKit/policy</literal> directory. An example:
+      into the <literal>/usr/share/PolicyKit/policy</literal> directory.
+    </para>
+    <para>
+      The name of the XML file is significant. Each XML file can only
+      declare actions from the namespace of it's own name; for example
+      actions <literal>org.foobar.action-a</literal>, <literal>org.foobar.action-b</literal>
+      and <literal>org.foobar.action-c</literal> would all go into the
+      file <literal>org.foobar.policy</literal> while
+      actions <literal>com.my-company.product-awesome.action-a</literal>, <literal>com.mycompany.product-awesome.action-b</literal>
+      would go into the
+      file <literal>com.mycompany.product-awesome.policy</literal>.
+    </para>
+    <para>
+      An example of a <literal>.policy</literal> file would be the following:
     </para>
     <programlisting>
       <![CDATA[
