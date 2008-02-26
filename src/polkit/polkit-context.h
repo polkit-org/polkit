@@ -82,7 +82,7 @@ typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
  *
  * Type for function supplied by the application to integrate a watch
  * on a file descriptor into the applications main loop. The
- * application must call polkit_grant_io_func() when there is data
+ * application must call polkit_context_io_func() when there is data
  * to read from the file descriptor.
  *
  * For glib mainloop, the function will typically look like this:
