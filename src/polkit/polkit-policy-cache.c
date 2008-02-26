@@ -100,6 +100,7 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
         DIR *dir;
         struct dirent64 *d;
         PolKitPolicyCache *pc;
+        struct stat statbuf;
 
         dir = NULL;
 
@@ -127,18 +128,28 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
                 char *filename;
                 static const char suffix[] = ".policy";
 
-                if (d->d_type != DT_REG)
-                        continue;
-
-                filename = d->d_name;
-                name_len = strlen (filename);
-                if (name_len < sizeof (suffix) || strcmp ((filename + name_len - sizeof (suffix) + 1), suffix) != 0)
-                        continue;
-
-                path = kit_strdup_printf ("%s/%s", dirname, filename);
+                path = kit_strdup_printf ("%s/%s", dirname, d->d_name);
                 if (path == NULL) {
                         polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory");
                         goto out;
+                }
+
+                if (stat (path, &statbuf) != 0)  {
+                        polkit_error_set_error (error, POLKIT_ERROR_GENERAL_ERROR, "stat()");
+                        kit_free (path);
+                        goto out;
+                }
+                
+                if (!S_ISREG (statbuf.st_mode)) {
+                        kit_free (path);
+                        continue;
+                }
+
+                filename = d->d_name;
+                name_len = strlen (filename);
+                if (name_len < sizeof (suffix) || strcmp ((filename + name_len - sizeof (suffix) + 1), suffix) != 0) {
+                        kit_free (path);
+                        continue;
                 }
 
                 _pk_debug ("Loading %s", path);

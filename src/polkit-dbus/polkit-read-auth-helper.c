@@ -181,11 +181,22 @@ dump_auths_all (const char *root)
                 char path[PATH_MAX];
                 static const char suffix[] = ".auths";
                 struct passwd *pw;
-
-                if (d->d_type != DT_REG)
-                        continue;
+                struct stat statbuf;
 
                 if (d->d_name == NULL)
+                        continue;
+
+                if (snprintf (path, sizeof (path), "%s/%s", root, d->d_name) >= (int) sizeof (path)) {
+                        fprintf (stderr, "polkit-read-auth-helper: string was truncated (1)\n");
+                        goto out;
+                }
+
+                if (stat (path, &statbuf) != 0) {
+                        fprintf (stderr, "polkit-read-auth-helper: cannot stat %s: %m\n", path);
+                        goto out;
+                }
+
+                if (!S_ISREG(statbuf.st_mode))
                         continue;
 
                 filename = d->d_name;
@@ -230,11 +241,6 @@ dump_auths_all (const char *root)
                 }
                 uid = pw->pw_uid;
                 
-                if (snprintf (path, sizeof (path), "%s/%s", root, filename) >= (int) sizeof (path)) {
-                        fprintf (stderr, "polkit-read-auth-helper: string was truncated (1)\n");
-                        goto out;
-                }
-
                 if (!dump_auths_from_file (path, uid))
                         goto out;
         }
