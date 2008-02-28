@@ -43,6 +43,9 @@ polkit_uint64_t polkit_check_authv (pid_t pid, const char **action_ids);
 
 polkit_bool_t   polkit_auth_obtain (const char *action_id, polkit_uint32_t xid, pid_t pid, DBusError *error);
 
+polkit_bool_t  polkit_dbus_error_generate              (PolKitAction *action, PolKitResult result, DBusError *error);
+polkit_bool_t  polkit_dbus_error_parse                 (DBusError *error, PolKitAction **action, PolKitResult *result);
+
 POLKIT_END_DECLS
 
 #endif /* POLKIT_SIMPLE_H */

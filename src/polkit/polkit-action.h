@@ -52,6 +52,11 @@ polkit_bool_t polkit_action_validate      (PolKitAction *action);
 
 polkit_bool_t polkit_action_validate_id   (const char   *action_id);
 
+polkit_bool_t polkit_action_equal         (PolKitAction *a, PolKitAction *b);
+
+const char   *polkit_action_to_string_representation       (PolKitAction *action);
+PolKitAction *polkit_action_new_from_string_representation (const char *str);
+
 POLKIT_END_DECLS
 
 #endif /* POLKIT_ACTION_H */

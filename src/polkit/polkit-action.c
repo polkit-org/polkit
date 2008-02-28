@@ -87,6 +87,80 @@ out:
 }
 
 /**
+ * polkit_action_to_string_representation:
+ * @action: the action object
+ *
+ * Serializes @action into a textual form that can be transferred from
+ * process to process or saved on disk. Use
+ * polkit_action_new_from_string_representation() to deserialize it.
+ *
+ * Returns: A string representation of @action or #NULL if the action
+ * is not valid. String is valid until @action is freed.
+ *
+ * Since: 0.8
+ */
+const char *
+polkit_action_to_string_representation (PolKitAction *action)
+{
+        kit_return_val_if_fail (action != NULL, NULL);
+        kit_return_val_if_fail (polkit_action_validate_id (action->id), NULL);
+        return action->id;
+}
+
+/**
+ * polkit_action_new_from_string_representation:
+ * @str: textual representation of an action; typically obtained from
+ * polkit_action_to_string_representation()
+ *
+ * Creates a new #PolKitAction object from a textual representation.
+ *
+ * Returns: A new #PolKitAction object or #NULL if OOM or if the
+ * representation isn't valid. Caller must free this object with
+ * polkit_action_unref().
+ *
+ * Since: 0.8
+ */
+PolKitAction *
+polkit_action_new_from_string_representation (const char *str)
+{
+        PolKitAction *action;
+
+        kit_return_val_if_fail (str != NULL, NULL);
+
+        action = polkit_action_new ();
+        if (action == NULL)
+                goto out;
+
+        if (!polkit_action_set_action_id (action, str)) {
+                polkit_action_unref (action);
+                action = NULL;
+        }
+out:
+        return action;
+}
+
+/**
+ * polkit_action_equal:
+ * @a: first action
+ * @b: second action
+ *
+ * Test if @a and @b refer to the same action.
+ *
+ * Returns: #TRUE iff @a and @b refer to the same action.
+ *
+ * Since: 0.8
+ */
+polkit_bool_t
+polkit_action_equal (PolKitAction *a, PolKitAction *b)
+{
+        kit_return_val_if_fail (a != NULL && polkit_action_validate (a), FALSE);
+        kit_return_val_if_fail (b != NULL && polkit_action_validate (b), FALSE);
+
+        return strcmp (a->id, b->id) == 0;
+}
+
+
+/**
  * polkit_action_ref:
  * @action: the action object
  * 
@@ -241,6 +315,8 @@ polkit_action_validate (PolKitAction *action)
 static polkit_bool_t
 _run_test (void)
 {
+        PolKitAction *a;
+        char *s;
         int n;
         char *valid_action_ids[]   = {"org.example.action",
                                       "org.example.action-foo", 
@@ -263,8 +339,6 @@ _run_test (void)
                 kit_assert (! polkit_action_validate_id (invalid_action_ids[n]));
         }
 
-        PolKitAction *a;
-        char *s;
         a = polkit_action_new ();
         if (a == NULL) {
                 /* OOM */
@@ -294,6 +368,22 @@ _run_test (void)
                 polkit_action_unref (a);
         }
         
+        a = polkit_action_new ();
+        if (a != NULL) {
+                if (polkit_action_set_action_id (a, "org.example.foo")) {
+                        const char *action_str;
+                        PolKitAction *a2;
+
+                        action_str = polkit_action_to_string_representation (a);
+                        kit_assert (action_str != NULL);
+                        a2 = polkit_action_new_from_string_representation (action_str);
+                        if (a2 != NULL) {
+                                kit_assert (polkit_action_equal (a, a2));
+                                polkit_action_unref (a2);
+                        }
+                }
+                polkit_action_unref (a);
+        }
 
         return TRUE;
 }
