@@ -527,6 +527,38 @@ out:
         return ret;
 }
 
+/**
+ * polkit_dbus_error_parse_from_strings:
+ * @error_name: name of D-Bus error
+ * @error_message: name of D-Bus error
+ * @action: return location for #PolKitAction object
+ * @result: return location for #PolKitResult variable
+ *
+ * Like polkit_dbus_error_parse(), only it takes the name and message
+ * instead of a #DBusError. This is useful when usings D-Bus bindings
+ * (such as dbus-glib) that don't expose the #DBusError object
+ * directly.
+ *
+ * This function is in <literal>libpolkit-dbus</literal>.
+ *
+ * Returns: See polkit_dbus_error_parse().
+ *
+ * Since: 0.8
+ */
+polkit_bool_t
+polkit_dbus_error_parse_from_strings (const char *error_name, 
+                                      const char *error_message, 
+                                      PolKitAction **action, 
+                                      PolKitResult *result)
+{
+        DBusError error;
+
+        dbus_error_init (&error);
+        dbus_set_error_const (&error, error_name, error_message);
+
+        return polkit_dbus_error_parse (&error, action, result);
+}
+
 #ifdef POLKIT_BUILD_TESTS
 
 static polkit_bool_t
@@ -546,7 +578,7 @@ _run_test (void)
                                 PolKitAction *a2;
                                 PolKitResult r2;
 
-                                if (polkit_dbus_error_parse (&error, &a2, &r2)) {
+                                if (polkit_dbus_error_parse_from_strings (error.name, error.message, &a2, &r2)) {
                                         kit_assert (polkit_action_equal (a, a2));
                                         kit_assert (r == r2);
                                         polkit_action_unref (a2);

@@ -45,6 +45,7 @@ polkit_bool_t   polkit_auth_obtain (const char *action_id, polkit_uint32_t xid, 
 
 polkit_bool_t  polkit_dbus_error_generate              (PolKitAction *action, PolKitResult result, DBusError *error);
 polkit_bool_t  polkit_dbus_error_parse                 (DBusError *error, PolKitAction **action, PolKitResult *result);
+polkit_bool_t  polkit_dbus_error_parse_from_strings    (const char *error_name, const char *error_message, PolKitAction **action, PolKitResult *result);
 
 POLKIT_END_DECLS
 
