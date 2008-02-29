@@ -530,7 +530,7 @@ out:
 /**
  * polkit_dbus_error_parse_from_strings:
  * @error_name: name of D-Bus error
- * @error_message: name of D-Bus error
+ * @error_message: message of D-Bus error
  * @action: return location for #PolKitAction object
  * @result: return location for #PolKitResult variable
  *
