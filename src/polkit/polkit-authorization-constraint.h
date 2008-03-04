@@ -48,7 +48,7 @@ POLKIT_BEGIN_DECLS
  * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_LOCAL: the session or
  * caller must be local
  * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_ACTIVE: the session or
- * caller must be in an active session
+ * caller must be in an active local session
  * @POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE: the caller must
  * be a specific program; use
  * polkit_authorization_constraint_get_exe() to get the path of the
