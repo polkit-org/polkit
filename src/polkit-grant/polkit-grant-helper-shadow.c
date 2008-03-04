@@ -126,7 +126,6 @@ error:
 int do_auth (const char *user_to_auth)
 {
         struct spwd *shadow;
-        char *password;
         char buf[256];
 
         if ((shadow = getspnam (user_to_auth)) == NULL)
@@ -139,9 +138,7 @@ int do_auth (const char *user_to_auth)
                 buf[strlen (buf) - 1] == '\n')
                         buf[strlen (buf) - 1] = '\0';
 
-        password = strdup (buf);
-
-        if (strcmp (shadow->sp_pwdp, crypt (password, shadow->sp_pwdp)) != 0)
+        if (strcmp (shadow->sp_pwdp, crypt (buf, shadow->sp_pwdp)) != 0)
                 goto error;
 
         return 1;
