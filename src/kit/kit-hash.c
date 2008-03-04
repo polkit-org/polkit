@@ -193,17 +193,14 @@ kit_hash_unref (KitHash *hash)
  */
 kit_bool_t 
 kit_hash_insert (KitHash *hash,
-                    void *key,
-                    void *value)
+                 void *key,
+                 void *value)
 {
         int bucket;
         KitHashNode **nodep;
         KitHashNode *node;
         void *key_copy;
         void *value_copy;
-
-        kit_return_val_if_fail (hash != NULL, FALSE);
-        kit_return_val_if_fail (key != NULL, FALSE);
 
         key_copy = NULL;
         value_copy = NULL;
@@ -289,9 +286,6 @@ kit_hash_lookup (KitHash *hash, void *key, kit_bool_t *found)
         value = NULL;
         if (found != NULL)
                 *found = FALSE;
-
-        kit_return_val_if_fail (hash != NULL, NULL);
-        kit_return_val_if_fail (key != NULL, NULL);
 
         bucket = hash->hash_func (key) % hash->num_top_nodes;
 
