@@ -555,6 +555,7 @@ main (int argc, char *argv[])
         uid_t caller_uid;
         PolKitSession *session;
         gboolean empty_conversation;
+        char buf[256];
 
         ret = 3;
 
@@ -708,7 +709,6 @@ main (int argc, char *argv[])
         /* wait for libpolkit-grant to tell us what user to use */
         if (admin_users != NULL) {
                 int n;
-                char buf[256];
 
 #ifdef PGH_DEBUG
                 fprintf (stderr, "waiting for admin user name...\n");
@@ -726,7 +726,7 @@ main (int argc, char *argv[])
                         goto out;
                 }
 
-                user_to_auth = strdup (buf) + sizeof "POLKIT_GRANT_CALLER_SELECT_ADMIN_USER " - 1;
+                user_to_auth = buf + sizeof "POLKIT_GRANT_CALLER_SELECT_ADMIN_USER " - 1;
 #ifdef PGH_DEBUG
                 fprintf (stderr, "libpolkit-grant wants to auth as '%s'\n", user_to_auth);
 #endif /* PGH_DEBUG */
