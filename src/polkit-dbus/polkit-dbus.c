@@ -643,7 +643,7 @@ polkit_caller_new_from_pid (DBusConnection *con, pid_t pid, DBusError *error)
 
         if (uid == (uid_t) -1) {
                 proc_path = kit_strdup_printf ("/proc/%d", pid);
-                if (stat (proc_path, &statbuf) != 0) {
+                if (proc_path && stat (proc_path, &statbuf) != 0) {
                         kit_warning ("Cannot lookup information for pid %d: %s", pid, strerror (errno));
                         goto out;
                 }
