@@ -99,7 +99,8 @@ validate_file (const char *file)
                 basename++;
         else
                 basename = file;
-        prefix = kit_strdup (basename);
+        if ((prefix = kit_strdup (basename)) == NULL)
+                goto out;
         /* strip out "policy" - retain the dot */
         prefix [strlen (prefix) - 6] = '\0';
 
