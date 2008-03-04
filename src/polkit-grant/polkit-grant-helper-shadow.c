@@ -126,19 +126,19 @@ error:
 int do_auth (const char *user_to_auth)
 {
         struct spwd *shadow;
-        char buf[256];
+        char password[256];
 
         if ((shadow = getspnam (user_to_auth)) == NULL)
                 goto error;
 
-        if (fgets (buf, sizeof (buf), stdin) == NULL)
+        if (fgets (password, sizeof (password), stdin) == NULL)
                 goto error;
 
-        if (strlen (buf) > 0 &&
-                buf[strlen (buf) - 1] == '\n')
-                        buf[strlen (buf) - 1] = '\0';
+        if (strlen (password) > 0 &&
+                password[strlen (password) - 1] == '\n')
+                        password[strlen (password) - 1] = '\0';
 
-        if (strcmp (shadow->sp_pwdp, crypt (buf, shadow->sp_pwdp)) != 0)
+        if (strcmp (shadow->sp_pwdp, crypt (password, shadow->sp_pwdp)) != 0)
                 goto error;
 
         return 1;
