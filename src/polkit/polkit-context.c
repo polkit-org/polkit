@@ -744,7 +744,7 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                                      PolKitAction    *action,
                                      PolKitCaller    *caller)
 {
-        return polkit_context_is_caller_authorized (pk_context, action, caller, TRUE, NULL);
+        return polkit_context_is_caller_authorized (pk_context, action, caller, FALSE, NULL);
 }
 
 /**

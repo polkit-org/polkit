@@ -448,6 +448,7 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
 {
         KitList *l;
         KitList *auths;
+        KitList *auths_copy;
         polkit_bool_t ret;
         char *action_id;
 
@@ -467,7 +468,18 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
         if (auths == NULL)
                 goto out;
 
-        for (l = auths; l != NULL; l = l->next) {
+        /* have to copy the list and ref the auths because the authdb
+         * may disappear from under us due to revoke_if_one_shot...
+         */
+        auths_copy = kit_list_copy (auths);
+        if (auths_copy == NULL)
+                goto out;
+        for (l = auths_copy; l != NULL; l = l->next)
+                polkit_authorization_ref ((PolKitAuthorization *) l->data);
+
+        kit_warning ("once...");
+
+        for (l = auths_copy; l != NULL; l = l->next) {
                 PolKitAuthorization *auth = l->data;
 
                 //kit_warning ("%d: action_id=%s uid=%d", 
@@ -483,9 +495,13 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
 
                 if (cb (authdb, auth, user_data)) {
                         ret = TRUE;
-                        goto out;
+                        break;
                 }
         }
+
+        for (l = auths_copy; l != NULL; l = l->next)
+                polkit_authorization_unref ((PolKitAuthorization *) l->data);
+        kit_list_free (auths_copy);
 
 out:
         return ret;
@@ -805,6 +821,7 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
         polkit_uint64_t caller_pid_start_time;
         CheckData *cd = (CheckData *) user_data;
 
+        kit_warning ("check auth for caller");
         ret = FALSE;
 
         if (strcmp (polkit_authorization_get_action_id (auth), cd->action_id) != 0)
@@ -828,13 +845,15 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
                         if (cd->revoke_if_one_shot) {
                                 cd->error = NULL;
                                 if (!polkit_authorization_db_revoke_entry (authdb, auth, &(cd->error))) {
-                                        //kit_warning ("Cannot revoke one-shot auth: %s: %s", 
+                                        //kit_warning ("Cannot revoke one-shot auth: %s: %s",
                                         //           polkit_error_get_error_name (cd->error),
                                         //           polkit_error_get_error_message (cd->error));
                                         /* stop iterating */
                                         ret = TRUE;
                                         goto no_match;
                                 }
+                                /* revoked; now purge internal cache */
+                                _polkit_authorization_db_invalidate_cache (authdb);
                         }
                 }
                 break;

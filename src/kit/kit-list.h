@@ -76,6 +76,7 @@ KitList    *kit_list_delete_link (KitList *list, KitList *link);
 
 size_t      kit_list_length      (KitList *list);
 kit_bool_t  kit_list_foreach     (KitList *list, KitListForeachFunc func, void *user_data);
+KitList    *kit_list_copy        (KitList *list);
 
 
 KIT_END_DECLS

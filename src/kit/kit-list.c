@@ -82,6 +82,34 @@ oom:
 }
 
 /**
+ * kit_list_copy:
+ * @list: existing list
+ *
+ * Makes a copy of a list. It is not a deep copy.
+ *
+ * Returns: A copy of the new list or #NULL on OOM. Free with kit_list_free().
+ **/
+KitList *
+kit_list_copy (KitList *list)
+{
+        KitList *l;
+        KitList *j;
+
+        l = NULL;
+        for (j = list; j != NULL; j = j->next) {
+                /* TODO: prepend, then reverse */
+                l = kit_list_append (l, j->data);
+                if (l == NULL)
+                        goto oom;
+        }
+
+        return l;
+oom:
+        kit_list_free (l);
+        return NULL;
+}
+
+/**
  * kit_list_prepend:
  * @list: existing list or #NULL to create a new list
  * @data: data to prepend to the list
