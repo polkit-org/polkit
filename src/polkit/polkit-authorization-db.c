@@ -477,8 +477,6 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
         for (l = auths_copy; l != NULL; l = l->next)
                 polkit_authorization_ref ((PolKitAuthorization *) l->data);
 
-        kit_warning ("once...");
-
         for (l = auths_copy; l != NULL; l = l->next) {
                 PolKitAuthorization *auth = l->data;
 

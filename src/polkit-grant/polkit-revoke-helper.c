@@ -139,7 +139,6 @@ main (int argc, char *argv[])
                 invoking_uid = atoi (pretend);
                 goto skip_check;
         }
-        kit_warning ("foo %s", pretend);
 #endif
         egid = getegid ();
         group = getgrgid (egid);
