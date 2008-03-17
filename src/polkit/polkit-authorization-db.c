@@ -819,7 +819,6 @@ _check_auth_for_caller (PolKitAuthorizationDB *authdb, PolKitAuthorization *auth
         polkit_uint64_t caller_pid_start_time;
         CheckData *cd = (CheckData *) user_data;
 
-        kit_warning ("check auth for caller");
         ret = FALSE;
 
         if (strcmp (polkit_authorization_get_action_id (auth), cd->action_id) != 0)
