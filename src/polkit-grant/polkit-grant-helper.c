@@ -241,7 +241,7 @@ do_auth (const char *user_to_auth, gboolean *empty_conversation)
                 *empty_conversation = FALSE;
 
                 /* send to parent */
-                fprintf (stdout, buf);
+                fprintf (stdout, "%s", buf);
                 fflush (stdout);
                 
                 /* read from parent */
@@ -252,7 +252,7 @@ do_auth (const char *user_to_auth, gboolean *empty_conversation)
                 fprintf (stderr, "received: '%s' from parent; sending to child\n", buf);
 #endif /* PGH_DEBUG */
                 /* send to child */
-                fprintf (child_stdin, buf);
+                fprintf (child_stdin, "%s", buf);
                 fflush (child_stdin);
         }
 
