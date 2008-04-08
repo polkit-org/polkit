@@ -59,12 +59,29 @@ static int _cur_allocs = 0;
 static int _total_allocs = 0;
 static int _fail_nth = -1;
 
+
+#if defined(KIT_BUILD_TESTS) && defined(BUILT_R_DYNAMIC)
+typedef struct _KitAllocationEntry {
+        const void *memory;
+        void *backtrace[100];
+        int backtrace_size;
+        struct _KitAllocationEntry *next;
+} KitAllocationEntry;
+
+static KitAllocationEntry *alloc_list_head = NULL;
+#endif
+
 void 
 _kit_memory_reset (void)
 {
         _cur_allocs = 0;
         _total_allocs = 0;
         _fail_nth = -1;
+
+#if defined(KIT_BUILD_TESTS) && defined(BUILT_R_DYNAMIC)
+        /* TODO: free existing allocs */
+        alloc_list_head = NULL;
+#endif
 }
 
 int 
@@ -84,6 +101,67 @@ _kit_memory_fail_nth_alloc (int number)
 {
         _fail_nth = number;
 }
+
+static inline void
+_alloc_add (const void *memory)
+{
+#if defined(KIT_BUILD_TESTS) && defined(BUILT_R_DYNAMIC)
+        KitAllocationEntry *entry;
+
+        entry = malloc (sizeof (KitAllocationEntry));
+        entry->memory = memory;
+        entry->backtrace_size = backtrace (entry->backtrace, 100);
+        entry->next = alloc_list_head;
+
+        alloc_list_head = entry;
+#endif
+}
+
+static inline void
+_alloc_remove (const void *memory)
+{
+#if defined(KIT_BUILD_TESTS) && defined(BUILT_R_DYNAMIC)
+        KitAllocationEntry *l;
+        KitAllocationEntry **prev;
+
+        prev = &alloc_list_head;
+        for (l = alloc_list_head; l != NULL; l = l->next) {
+                if (l->memory == memory) {
+                        *prev = l->next;
+                        free (l);
+                        break;
+                }
+
+                prev = &(l->next);
+        }
+#endif
+}
+
+void
+_kit_memory_print_outstanding_allocations (void)
+{
+#if defined(KIT_BUILD_TESTS) && defined(BUILT_R_DYNAMIC)
+        KitAllocationEntry *l;
+        for (l = alloc_list_head; l != NULL; l = l->next) {
+                int i;
+                char **syms;
+
+                syms = backtrace_symbols (l->backtrace, l->backtrace_size);
+
+                i = 0;
+                while (i < l->backtrace_size)
+                {
+                        fprintf (stderr, "  %s\n", syms[i]);
+                        ++i;
+                }
+                fprintf (stderr, "\n");
+                fflush (stderr);
+
+                free (syms);
+        }
+#endif
+}
+
 
 /**
  * kit_malloc:
@@ -113,6 +191,7 @@ kit_malloc (size_t bytes)
         if (p != NULL)  {
                 _cur_allocs++;
                 _total_allocs++;
+                _alloc_add (p);
         }
 
         return p;
@@ -141,6 +220,7 @@ kit_malloc0 (size_t bytes)
         if (p != NULL)  {
                 _cur_allocs++;
                 _total_allocs++;
+                _alloc_add (p);
         }
 
         return p;
@@ -173,7 +253,10 @@ kit_realloc (void *memory, size_t bytes)
                 return NULL;
         }
 
+        _alloc_remove (p);
         p = realloc (memory, bytes);
+        if (p != NULL)
+                _alloc_add (p);
 
         return p;
 }
@@ -189,6 +272,7 @@ kit_free (void *memory)
 {
         free (memory);
         if (memory != NULL) {
+                _alloc_remove (memory);
                 _cur_allocs--;
         }
 }

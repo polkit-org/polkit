@@ -71,6 +71,7 @@ void  _kit_memory_reset (void);
 int   _kit_memory_get_current_allocations (void);
 int   _kit_memory_get_total_allocations (void);
 void  _kit_memory_fail_nth_alloc (int number);
+void  _kit_memory_print_outstanding_allocations (void);
 
 KIT_END_DECLS
 
