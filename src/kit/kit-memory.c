@@ -327,6 +327,11 @@ _kit_memory_fail_nth_alloc (int number)
 {
 }
 
+void
+_kit_memory_print_outstanding_allocations (void)
+{
+}
+
 #endif /* KIT_BUILD_TESTS */
 
 /* There's probably a better place for this function ... */
