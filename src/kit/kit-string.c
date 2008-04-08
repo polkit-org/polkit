@@ -853,9 +853,9 @@ kit_string_ensure_size (KitString *s, size_t new_size)
                 if (p == NULL)
                         goto oom;
                 /* zero the new block we got */
-                memset (s->buf + s->buf_len, 0, grow_to - s->buf_len);
                 s->buf = p;
-                s->buf_len += KIT_STRING_BLOCK_SIZE;
+                memset (s->buf + s->buf_len, 0, grow_to - s->buf_len);
+                s->buf_len = grow_to;
         }
 
         return TRUE;
