@@ -617,10 +617,13 @@ if test "${POLKIT_AUTHDB}" = default ; then
   echo "      owned by group ${POLKIT_GROUP} and will be mode 770."
   echo
   echo "NOTE: The directory ${localstatedir}/run/PolicyKit-public will be"
-  echo "      owned by group ${POLKIT_GROUP} and will be mode 775."
+  echo "      owned by user ${POLKIT_USER} and will be mode 755."
+  echo
+  echo "NOTE: The file ${localstatedir}/lib/misc/PolicyKit.reload will be"
+  echo "      owned by user ${POLKIT_USER} and group ${POLKIT_GROUP} and will be mode 775."
   echo
   echo "NOTE: ${libexecdir}/polkit-set-default-helper will be owned by"
-  echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
+  echo "      user ${POLKIT_USER} and installed with mode 4755 (setuid binary)."
   echo
   echo "NOTE: ${libexecdir}/polkit-read-auth-helper will be owned by"
   echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."

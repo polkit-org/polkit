@@ -69,7 +69,7 @@ set_default (const char *action_id, const char *any, const char *inactive, const
         contents = NULL;
         ret = FALSE;
 
-        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.override", action_id);
+        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.defaults-override", action_id);
         if (path == NULL)
                 goto out;
 
@@ -78,7 +78,7 @@ set_default (const char *action_id, const char *any, const char *inactive, const
         if (contents == NULL)
                 goto out;
 
-        if (!kit_file_set_contents (path, 0464, contents, strlen (contents))) {
+        if (!kit_file_set_contents (path, 0644, contents, strlen (contents))) {
                 kit_warning ("Error writing override file '%s': %m\n", path);
                 goto out;
         }
@@ -101,7 +101,7 @@ clear_default (const char *action_id)
 
         ret = FALSE;
 
-        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.override", action_id);
+        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.defaults-override", action_id);
         if (path == NULL)
                 goto out;
 
@@ -122,11 +122,9 @@ int
 main (int argc, char *argv[])
 {
         int ret;
-        gid_t egid;
-        struct group *group;
         uid_t caller_uid;
+        uid_t euid;
         struct passwd *pw;
-        uid_t uid_for_polkit_user;
 
         ret = 1;
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
@@ -160,24 +158,17 @@ main (int argc, char *argv[])
                 goto out;
         }
 
-        /* check that we are setgid polkituser */
-        egid = getegid ();
-        group = getgrgid (egid);
-        if (group == NULL) {
-                fprintf (stderr, "polkit-set-default-helper: cannot lookup group info for gid %d\n", egid);
-                goto out;
-        }
-        if (strcmp (group->gr_name, POLKIT_GROUP) != 0) {
-                fprintf (stderr, "polkit-set-default-helper: needs to be setgid " POLKIT_GROUP "\n");
-                goto out;
-        }
-
-        pw = getpwnam (POLKIT_USER);
+        /* check that we are setuid polkituser */
+        euid = geteuid ();
+        pw = getpwuid (euid);
         if (pw == NULL) {
-                fprintf (stderr, "polkit-set-default-helper: cannot lookup uid for " POLKIT_USER "\n");
+                fprintf (stderr, "polkit-set-default-helper: cannot lookup passwd info for uid %d\n", euid);
                 goto out;
         }
-        uid_for_polkit_user = pw->pw_uid;
+        if (strcmp (pw->pw_name, POLKIT_USER) != 0) {
+                fprintf (stderr, "polkit-set-default-helper: needs to be setuid " POLKIT_USER "\n");
+                goto out;
+        }
 
         /*----------------------------------------------------------------------------------------------------*/
 

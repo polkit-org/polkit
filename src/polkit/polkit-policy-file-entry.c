@@ -140,7 +140,7 @@ _polkit_policy_file_entry_new   (const char *action_id,
 
 #ifdef POLKIT_AUTHDB_DEFAULT
         /* read override file */
-        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.override", action_id);
+        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.defaults-override", action_id);
         if (path == NULL)
                 goto error;
         if (!kit_file_get_contents (path, &contents, &contents_size)) {
@@ -532,7 +532,7 @@ polkit_policy_file_entry_set_default (PolKitPolicyFileEntry  *policy_file_entry,
         }
 
         if (!WIFEXITED (exit_status)) {
-                kit_warning ("Revoke helper crashed!");
+                kit_warning ("Set-default helper crashed!");
                 polkit_error_set_error (error, 
                                         POLKIT_ERROR_GENERAL_ERROR, 
                                         "set-default helper crashed!");

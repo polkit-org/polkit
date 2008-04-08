@@ -126,26 +126,26 @@ if POLKIT_AUTHDB_DEFAULT
 # polkit-auth-read-helper is used to read it) and the $POLKIT_GROUP
 # group needs to be able to write files there.
 #
-# The /var/lib/PolicyKit-public is used for storing world-readable
-# information. Only $POLKIT_GROUP may write to it.
+# The directory /var/lib/PolicyKit-public is used for storing world-readable
+# information. Only $POLKIT_USER may write to it.
 #
 # The /var/lib/misc/PolicyKit.reload file is used for triggering that
 # authorizations have changed; it needs to be world readable and
-# writeable for the $POLKIT_GROUP group (FHS 2.3 suggests that
-# location)
+# writeable for user $POLKIT_USER and group $POLKIT_GROUP (FHS 2.3 suggests
+# that location)
 #
 install-data-local:
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/misc
 	touch $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
-	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
+	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
 	-chmod 775 $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/PolicyKit-public
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	mkdir -p $(DESTDIR)$(localstatedir)/run/PolicyKit
-	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/PolicyKit-public
+	-chown $(POLKIT_USER) $(DESTDIR)$(localstatedir)/lib/PolicyKit-public
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/run/PolicyKit
-	-chmod 775 $(DESTDIR)$(localstatedir)/lib/PolicyKit-public
+	-chmod 755 $(DESTDIR)$(localstatedir)/lib/PolicyKit-public
 	-chmod 770 $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	-chmod 770 $(DESTDIR)$(localstatedir)/run/PolicyKit
 endif

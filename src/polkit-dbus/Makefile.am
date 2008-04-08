@@ -50,8 +50,8 @@ polkit_set_default_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la libpol
 # to read authorization files in /var/lib/PolicyKit and
 # /var/run/PolicyKit
 #
-# polkit-set-default-helper needs to be setgid $POLKIT_GROUP to be able
-# to write .override files in /var/lib/PolicyKit-public
+# polkit-set-default-helper needs to be setuid $POLKIT_USER to be able
+# to write .defaults-override files in /var/lib/PolicyKit-public
 #
 # polkit-resolve-exe-helper needs to be setuid root to be able to resolve
 # /proc/$pid/exe symlinks.
@@ -59,8 +59,8 @@ polkit_set_default_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la libpol
 install-exec-hook:
 	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-read-auth-helper
 	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-read-auth-helper
-	-chgrp $(POLKIT_GROUP) $(DESTDIR)$(libexecdir)/polkit-set-default-helper
-	-chmod 2755 $(DESTDIR)$(libexecdir)/polkit-set-default-helper
+	-chown $(POLKIT_USER) $(DESTDIR)$(libexecdir)/polkit-set-default-helper
+	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-set-default-helper
 	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-resolve-exe-helper
 else
 install-exec-hook:

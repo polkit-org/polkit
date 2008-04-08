@@ -1,4 +1,12 @@
 ==========
+PolicyKit 0.8 ""
+==========
+
+NOTE NOTE NOTE: The permissions and modes of certain files has changed
+                since PolicyKit 0.7. Make sure to update your spec files
+                to reflect this. See the output of configure for details.
+
+==========
 PolicyKit 0.7 "Common sense ain't common"
 ==========
 
