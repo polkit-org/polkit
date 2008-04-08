@@ -127,6 +127,26 @@ kit_strndup (const char *s, size_t n)
 
 #endif /* KIT_BUILD_TESTS */
 
+#ifdef HAVE_SOLARIS
+int vasprintf(char **strp, const char *fmt, va_list ap)
+{
+        int size;
+        va_list ap2;
+        char s;
+
+        *strp = NULL;
+        va_copy(ap2, ap);
+        size = vsnprintf(&s, 1, fmt, ap2);
+        va_end(ap2);
+        *strp = malloc(size + 1);
+        if (!*strp)
+                return -1;
+        vsnprintf(*strp, size + 1, fmt, ap);
+
+        return size;
+}
+#endif
+
 /**
  * kit_strdup_printf:
  * @format: sprintf(3) format string

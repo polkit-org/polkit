@@ -89,7 +89,11 @@ const char      *polkit_error_get_error_name (PolKitError *error);
 PolKitErrorCode  polkit_error_get_error_code (PolKitError *error);
 const char      *polkit_error_get_error_message (PolKitError *error);
 void             polkit_error_free (PolKitError *error);
+#ifdef __sun
+polkit_bool_t    polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...);
+#else
 polkit_bool_t    polkit_error_set_error (PolKitError **error, PolKitErrorCode error_code, const char *format, ...) __attribute__((__format__ (__printf__, 3, 4)));
+#endif
 
 POLKIT_END_DECLS
 

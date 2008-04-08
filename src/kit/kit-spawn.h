@@ -57,9 +57,9 @@ kit_bool_t kit_spawn_sync (const char     *working_directory,
                            KitSpawnFlags   flags,
                            char          **argv,
                            char          **envp,
-                           char           *stdin,
-                           char          **stdout,
-                           char          **stderr,
+                           char           *stdinp,
+                           char          **stdoutp,
+                           char          **stderrp,
                            int            *out_exit_status);
 
 KIT_END_DECLS

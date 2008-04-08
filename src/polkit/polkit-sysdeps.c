@@ -40,7 +40,20 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+
+#ifdef HAVE_SOLARIS
+#include <fcntl.h>
+#include <sys/time.h>
+#if _FILE_OFFSET_BITS==64
+#undef _FILE_OFFSET_BITS
+#include <procfs.h>
+#define _FILE_OFFSET_BITS 64
+#else
+#include <procfs.h>
+#endif
+#else
 #include <sys/inotify.h>
+#endif
 #include <syslog.h>
 
 #include "polkit-sysdeps.h"
@@ -75,14 +88,24 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
         char *contents;
         size_t length;
         polkit_uint64_t start_time;
+#ifdef HAVE_SOLARIS
+        struct psinfo info;
+#else
         char **tokens;
         size_t num_tokens;
         char *p;
         char *endp;
+#endif
 
         start_time = 0;
         contents = NULL;
 
+#ifdef HAVE_SOLARIS
+        if (polkit_sysdeps_pid_psinfo ( pid, &info)) {
+                goto out;
+        }
+        start_time = (unsigned long long) (info.pr_start.tv_sec);
+#else
         filename = kit_strdup_printf ("/proc/%d/stat", pid);
         if (filename == NULL) {
                 errno = ENOMEM;
@@ -119,10 +142,13 @@ polkit_sysdeps_get_start_time_for_pid (pid_t pid)
         }
 
         kit_strfreev (tokens);
+#endif
 
 out:
+#ifndef HAVE_SOLARIS
         kit_free (filename);
         kit_free (contents);
+#endif
         return start_time;
 }
 
@@ -200,12 +226,22 @@ polkit_sysdeps_get_exe_for_pid (pid_t pid, char *out_buf, size_t buf_size)
 
         ret = 0;
 
+#ifdef HAVE_SOLARIS
+        struct psinfo info;
+
+        if (polkit_sysdeps_pid_psinfo (pid, &info)) {
+                goto out;
+        }
+        ret = strlen (info.pr_psargs);
+        strncpy (out_buf, info.pr_psargs, ret);
+#else
         snprintf (proc_name, sizeof (proc_name), "/proc/%d/exe", pid);
         ret = readlink (proc_name, out_buf, buf_size - 1);
         if (ret == -1) {
                 strncpy (out_buf, "(unknown)", buf_size);
                 goto out;
         }
+#endif
         kit_assert (ret >= 0 && ret < (int) buf_size - 1);
         out_buf[ret] = '\0';
 
@@ -292,6 +328,26 @@ out:
         return ret;
 }
 
+
+#ifdef HAVE_SOLARIS
+int
+polkit_sysdeps_pid_psinfo (pid_t pid, struct psinfo *ps)
+{
+        char pname[32];
+        int  procfd;
+
+        (void) snprintf(pname, sizeof(pname), "/proc/%d/psinfo", pid);
+        if ((procfd = open(pname, O_RDONLY)) == -1) {
+                return -1;
+        }
+        if (read(procfd, ps, sizeof(struct psinfo)) < 0) {
+                (void) close(procfd);
+                return -1;
+        }
+        (void) close(procfd);
+        return 0;
+}
+#endif
 
 #ifdef POLKIT_BUILD_TESTS
 

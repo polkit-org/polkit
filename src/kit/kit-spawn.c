@@ -156,9 +156,9 @@ out:
  * @flags: A combination of flags from #KitSpawnFlags
  * @argv: #NULL terminated argument vector
  * @envp: #NULL terminated environment or #NULL to inherit parents;
- * @stdin: String to write to stdin of child or #NULL
- * @stdout: Return location for stdout from child or #NULL. Free with kit_free().
- * @stderr: Return location for stderr from child or #NULL. Free with kit_free().
+ * @stdinp: String to write to stdin of child or #NULL
+ * @stdoutp: Return location for stdout from child or #NULL. Free with kit_free().
+ * @stderrp: Return location for stderr from child or #NULL. Free with kit_free().
  * @out_exit_status: Return location for exit status
  *
  * Executes a child process and waits for the child process to exit
@@ -175,9 +175,9 @@ kit_spawn_sync (const char     *working_directory,
                 KitSpawnFlags   flags,
                 char          **argv,
                 char          **envp,
-                char           *stdin,
-                char          **stdout,
-                char          **stderr,
+                char           *stdinp,
+                char          **stdoutp,
+                char          **stderrp,
                 int            *out_exit_status)
 {
         kit_bool_t ret;
@@ -191,28 +191,28 @@ kit_spawn_sync (const char     *working_directory,
 
         kit_return_val_if_fail (argv != NULL, FALSE);
         kit_return_val_if_fail (out_exit_status != NULL, FALSE);
-        kit_return_val_if_fail (! ((flags & KIT_SPAWN_CHILD_INHERITS_STDIN) && stdin != NULL), FALSE);
-        kit_return_val_if_fail (! ((flags & KIT_SPAWN_STDOUT_TO_DEV_NULL) && stdout != NULL), FALSE);
-        kit_return_val_if_fail (! ((flags & KIT_SPAWN_STDERR_TO_DEV_NULL) && stderr != NULL), FALSE);
+        kit_return_val_if_fail (! ((flags & KIT_SPAWN_CHILD_INHERITS_STDIN) && stdinp != NULL), FALSE);
+        kit_return_val_if_fail (! ((flags & KIT_SPAWN_STDOUT_TO_DEV_NULL) && stdoutp != NULL), FALSE);
+        kit_return_val_if_fail (! ((flags & KIT_SPAWN_STDERR_TO_DEV_NULL) && stderrp != NULL), FALSE);
 
-        if (stdout != NULL)
-                *stdout = NULL;
-        if (stderr != NULL)
-                *stderr = NULL;
+        if (stdoutp != NULL)
+                *stdoutp = NULL;
+        if (stderrp != NULL)
+                *stderrp = NULL;
 
-        if (stdin != NULL) {
+        if (stdinp != NULL) {
                 if (pipe (stdin_pipe) != 0) {
                         goto out;
                 }
         }
 
-        if (stdout != NULL) {
+        if (stdoutp != NULL) {
                 if (pipe (stdout_pipe) != 0) {
                         goto out;
                 }
         }
 
-        if (stderr != NULL) {
+        if (stderrp != NULL) {
                 if (pipe (stderr_pipe) != 0) {
                         goto out;
                 }
@@ -260,9 +260,9 @@ kit_spawn_sync (const char     *working_directory,
                         }
                 }
 
-                /* set stdin, stdout and stderr */
+                /* set stdinp, stdoutp and stderrp */
 
-                if (stdin != NULL) {
+                if (stdinp != NULL) {
                         if (_sane_dup2 (stdin_pipe[0], 0) < 0) {
                                 exit (128 + errno);
                         }
@@ -272,7 +272,7 @@ kit_spawn_sync (const char     *working_directory,
                         }
                 }
 
-                if (stdout != NULL) {
+                if (stdoutp != NULL) {
                         if (_sane_dup2 (stdout_pipe[1], 1) < 0) {
                                 exit (128 + errno);
                         }
@@ -282,7 +282,7 @@ kit_spawn_sync (const char     *working_directory,
                         }
                 }
 
-                if (stderr != NULL) {
+                if (stderrp != NULL) {
                         if (_sane_dup2 (stderr_pipe[1], 2) < 0) {
                                 exit (128 + errno);
                         }
@@ -322,7 +322,7 @@ kit_spawn_sync (const char     *working_directory,
                         close (stderr_pipe[1]);
                 }
 
-                wp = stdin;
+                wp = stdinp;
 
                 while (stdin_pipe[1] != -1 || stdout_pipe[0] != -1 || stderr_pipe[0] != -1) {
                         int ret;
@@ -375,7 +375,7 @@ kit_spawn_sync (const char     *working_directory,
                         }
                         
                         if (stdout_pipe[0] != -1) {
-                                num_read = _read_from (stdout_pipe[0], stdout);
+                                num_read = _read_from (stdout_pipe[0], stdoutp);
                                 if (num_read == 0) {
                                         close (stdout_pipe[0]);
                                         stdout_pipe[0] = -1;
@@ -385,7 +385,7 @@ kit_spawn_sync (const char     *working_directory,
                         }
                         
                         if (stderr_pipe[0] != -1) {
-                                num_read = _read_from (stderr_pipe[0], stderr);
+                                num_read = _read_from (stderr_pipe[0], stderrp);
                                 if (num_read == 0) {
                                         close (stderr_pipe[0]);
                                         stderr_pipe[0] = -1;
@@ -424,13 +424,13 @@ out:
                 close (stderr_pipe[0]);
 
         if (!ret) {
-                if (stdout != NULL) {
-                        kit_free (*stdout);
-                        *stdout = NULL;
+                if (stdoutp != NULL) {
+                        kit_free (*stdoutp);
+                        *stdoutp = NULL;
                 }
-                if (stderr != NULL) {
-                        kit_free (*stderr);
-                        *stderr = NULL;
+                if (stderrp != NULL) {
+                        kit_free (*stderrp);
+                        *stderrp = NULL;
                 }
         }
 
@@ -483,8 +483,8 @@ _run_test (void)
                 "echo -n \"$value\""                       "\n"
                 "exit 0"                                   "\n";
         char *argv[] = {"/tmp/kit-spawn-test", NULL};
-        char *stdout;
-        char *stderr;
+        char *stdoutp;
+        char *stderrp;
         int exit_status;
         struct stat statbuf;
 
@@ -495,14 +495,14 @@ _run_test (void)
                                     argv,
                                     NULL,
                                     NULL,
-                                    &stdout,
-                                    &stderr,
+                                    &stdoutp,
+                                    &stderrp,
                                     &exit_status)) {
                         kit_assert (WEXITSTATUS (exit_status) == 42);
-                        kit_assert (stdout != NULL && strcmp (stdout, "Hello World\n") == 0);
-                        kit_assert (stderr != NULL && strcmp (stderr, "Goodbye World\n") == 0);
-                        kit_free (stdout);
-                        kit_free (stderr);
+                        kit_assert (stdoutp != NULL && strcmp (stdoutp, "Hello World\n") == 0);
+                        kit_assert (stderrp != NULL && strcmp (stderrp, "Goodbye World\n") == 0);
+                        kit_free (stdoutp);
+                        kit_free (stderrp);
                 }
 
                 if (kit_spawn_sync ("/",
@@ -526,12 +526,12 @@ _run_test (void)
                                     argv,
                                     NULL,
                                     NULL,
-                                    &stdout,
-                                    &stderr,
+                                    &stdoutp,
+                                    &stderrp,
                                     &exit_status)) {
                         kit_assert (WEXITSTATUS (exit_status) == 43);
-                        kit_assert (stdout == NULL);
-                        kit_assert (stderr == NULL);
+                        kit_assert (stdoutp == NULL);
+                        kit_assert (stderrp == NULL);
                 }
 
                 kit_assert (unlink (path) == 0);
@@ -546,12 +546,12 @@ _run_test (void)
                                     argv,
                                     envp,
                                     NULL,
-                                    &stdout,
+                                    &stdoutp,
                                     NULL,
                                     &exit_status)) {
                         kit_assert (WEXITSTATUS (exit_status) == 0);
-                        kit_assert (stdout != NULL && strcmp (stdout, "some_value") == 0);
-                        kit_free (stdout);
+                        kit_assert (stdoutp != NULL && strcmp (stdoutp, "some_value") == 0);
+                        kit_free (stdoutp);
                 }
 
                 kit_assert (unlink (path) == 0);
@@ -606,12 +606,12 @@ _run_test (void)
                                     argv,
                                     NULL,
                                     NULL,
-                                    &stdout,
+                                    &stdoutp,
                                     NULL,
                                     &exit_status)) {
                         kit_assert (WEXITSTATUS (exit_status) == 0);
-                        kit_assert (stdout != NULL && strcmp (stdout, "/tmp\n") == 0);
-                        kit_free (stdout);
+                        kit_assert (stdoutp != NULL && strcmp (stdoutp, "/tmp\n") == 0);
+                        kit_free (stdoutp);
                 }
 
                 kit_assert (stat ("/usr", &statbuf) == 0 && S_ISDIR (statbuf.st_mode));
@@ -620,12 +620,12 @@ _run_test (void)
                                     argv,
                                     NULL,
                                     NULL,
-                                    &stdout,
+                                    &stdoutp,
                                     NULL,
                                     &exit_status)) {
                         kit_assert (WEXITSTATUS (exit_status) == 0);
-                        kit_assert (stdout != NULL && strcmp (stdout, "/usr\n") == 0);
-                        kit_free (stdout);
+                        kit_assert (stdoutp != NULL && strcmp (stdoutp, "/usr\n") == 0);
+                        kit_free (stdoutp);
                 }
 
                 kit_assert (unlink (path) == 0);
@@ -650,12 +650,12 @@ _run_test (void)
                                     argv,
                                     NULL,
                                     "foobar0\nfoobar1",
-                                    &stdout,
+                                    &stdoutp,
                                     NULL,
                                     &exit_status)) {
                         kit_assert (WEXITSTATUS (exit_status) == 0);
-                        kit_assert (stdout != NULL && strcmp (stdout, "foobar0 foobar1") == 0);
-                        kit_free (stdout);
+                        kit_assert (stdoutp != NULL && strcmp (stdoutp, "foobar0 foobar1") == 0);
+                        kit_free (stdoutp);
                 }
 
                 kit_assert (unlink (path) == 0);

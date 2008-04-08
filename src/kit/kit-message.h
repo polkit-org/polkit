@@ -38,8 +38,13 @@
 
 KIT_BEGIN_DECLS
 
+#ifdef __sun
+void kit_debug   (const char *format, ...);
+void kit_warning (const char *format, ...);
+#else
 void kit_debug   (const char *format, ...) __attribute__((__format__ (__printf__, 1, 2)));
 void kit_warning (const char *format, ...) __attribute__((__format__ (__printf__, 1, 2)));
+#endif
 
 KIT_END_DECLS
 

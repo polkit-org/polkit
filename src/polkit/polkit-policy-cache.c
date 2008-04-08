@@ -37,6 +37,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#if HAVE_SOLARIS
+#include <sys/stat.h>
+#endif
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>

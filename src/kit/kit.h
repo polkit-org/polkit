@@ -72,6 +72,9 @@ typedef int kit_bool_t;
 
 void kit_print_backtrace (void);
 
+#ifdef HAVE_SOLARIS
+#define __PRETTY_FUNCTION__ __func__
+#endif
 /**
  * kit_assert:
  * @expr: expression
@@ -140,6 +143,9 @@ do {                                                                            
 
 #define _KIT_INSIDE_KIT_H 1
 
+#ifdef HAVE_SOLARIS
+#include <sys/types.h>
+#endif
 #include <kit/kit-memory.h>
 #include <kit/kit-string.h>
 #include <kit/kit-list.h>

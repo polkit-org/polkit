@@ -40,7 +40,11 @@ KIT_BEGIN_DECLS
 
 char *kit_strdup         (const char *s);
 char *kit_strndup        (const char *s, size_t n);
+#ifdef __sun
+char *kit_strdup_printf  (const char *format, ...);
+#else
 char *kit_strdup_printf  (const char *format, ...) __attribute__((__format__ (__printf__, 1, 2)));
+#endif
 char *kit_strdup_vprintf (const char *format, va_list args);
 char *kit_str_append     (char *s, const char *s2);
 

@@ -28,6 +28,9 @@
  **************************************************************************/
 
 /* TODO: FIXME: XXX: this code needs security review before it can be released! */
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +40,10 @@
 #include <sys/stat.h>
 #include <syslog.h>
 #include <security/pam_appl.h>
+
+#ifdef HAVE_SOLARIS
+#define LOG_AUTHPRIV    (10<<3)
+#endif
 
 /* Development aid: define PGH_DEBUG to get debugging output. Do _NOT_
  * enable this in production builds; it may leak passwords and other
@@ -60,8 +67,15 @@ main (int argc, char *argv[])
         pam_h = NULL;
 
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
+#ifdef HAVE_SOLARIS
+        extern char **environ;
+
+        if (environ != NULL)
+                environ[0] = NULL;
+#else
         if (clearenv () != 0)
                 goto error;
+#endif
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 

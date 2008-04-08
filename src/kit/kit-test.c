@@ -27,8 +27,15 @@
  *
  **************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_SOLARIS
+#include <sys/types.h>
+#endif
 #include <kit/kit-test.h>
 #include <kit/kit-memory.h>
 

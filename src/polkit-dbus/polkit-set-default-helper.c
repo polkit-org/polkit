@@ -54,6 +54,10 @@
 #include <polkit/polkit-private.h>
 #include <polkit-dbus/polkit-dbus.h>
 
+#ifdef HAVE_SOLARIS
+#define LOG_AUTHPRIV    (10<<3)
+#endif
+
 static polkit_bool_t
 set_default (const char *action_id, const char *any, const char *inactive, const char *active)
 {
@@ -126,8 +130,15 @@ main (int argc, char *argv[])
 
         ret = 1;
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
+#ifdef HAVE_SOLARIS
+        extern char **environ;
+
+        if (environ != NULL)
+                environ[0] = NULL;
+#else
         if (clearenv () != 0)
                 goto out;
+#endif
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 

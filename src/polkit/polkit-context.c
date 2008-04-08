@@ -39,7 +39,12 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
+#ifdef HAVE_SOLARIS
+#include <port.h>
+#include <sys/stat.h>
+#else
 #include <sys/inotify.h>
+#endif
 #include <syslog.h>
 
 #include "polkit-config.h"
@@ -153,6 +158,59 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 
         /* NOTE: we don't load the configuration file until it's needed */
 
+#ifdef HAVE_SOLARIS
+        if (pk_context->io_add_watch_func != NULL) {
+                pk_context->inotify_fd = port_create ();
+                if (pk_context->inotify_fd < 0) {
+                        _pk_debug ("failed to port_create: %s", strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
+
+                /* Watch the /etc/PolicyKit/PolicyKit.conf file */
+                pk_context->inotify_config_wd = port_add_watch (pk_context->inotify_fd,
+                                                                   PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf",
+                                                                   FILE_MODIFIED | FILE_ATTRIB);
+                if (pk_context->inotify_config_wd < 0) {
+                        _pk_debug ("failed to add watch on file '" PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf': %s",
+                                   strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
+
+                /* Watch the /usr/share/PolicyKit/policy directory */
+                pk_context->inotify_policy_wd = port_add_watch (pk_context->inotify_fd,
+                                                                   PACKAGE_DATA_DIR "/PolicyKit/policy",
+                                                                   FILE_MODIFIED | FILE_ATTRIB);
+                if (pk_context->inotify_policy_wd < 0) {
+                        _pk_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/PolicyKit/policy': %s",
+                                   strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
+
+#ifdef POLKIT_AUTHDB_DEFAULT
+                /* Watch the /var/lib/misc/PolicyKit.reload file */
+                pk_context->inotify_grant_perm_wd = port_add_watch (pk_context->inotify_fd,
+                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload",
+                                                                       FILE_MODIFIED | FILE_ATTRIB);
+                if (pk_context->inotify_grant_perm_wd < 0) {
+                        _pk_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload': %s",
+                                   strerror (errno));
+                        /* TODO: set error */
+                        goto error;
+                }
+#endif
+
+                pk_context->inotify_fd_watch_id = pk_context->io_add_watch_func (pk_context, pk_context->inotify_fd);
+                if (pk_context->inotify_fd_watch_id == 0) {
+                        _pk_debug ("failed to add io watch");
+                        /* TODO: set error */
+                        goto error;
+                }
+        }
+
+#else
         if (pk_context->io_add_watch_func != NULL) {
                 pk_context->inotify_fd = inotify_init ();
                 if (pk_context->inotify_fd < 0) {
@@ -203,11 +261,77 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         goto error;
                 }
         }
+#endif
 
         return TRUE;
 error:
         return FALSE;
 }
+
+#ifdef HAVE_SOLARIS
+
+struct fileportinfo {
+        struct file_obj fobj;
+        int events;
+        int port;
+};
+
+/**
+ * port_add_watch:
+ * @port: the port object
+ * @name: filename which will be added to the port
+ * @events: the event which will be watched for
+ *
+ * add file watch .
+ *
+ * Returns: the object
+ **/
+int
+port_add_watch (int port, const char *name, uint32_t events)
+{
+        struct fileportinfo *fpi;
+
+        if ( (fpi = kit_malloc (sizeof(struct fileportinfo)) ) == NULL ) {
+                _pk_debug ("Faile to kit_malloc!");
+                /* TODO: set error */
+                return -1;
+        }
+
+        fpi->fobj.fo_name = strdup (name);
+        fpi->events = events;
+        fpi->port = port;
+
+        if ( file_associate (fpi, events) < 0 ) {
+                _pk_debug ("Failed to associate with file %s: %s", fpi->fobj.fo_name, strerror (errno));
+                /* TODO: set error */
+                return -1;
+        }
+        return 0;
+}
+
+int
+file_associate (struct fileportinfo *fpinfo, int events)
+{
+        struct stat sb;
+
+        if ( stat (fpinfo->fobj.fo_name, &sb) == -1) {
+                _pk_debug ("Failed to stat file %s: %s", fpinfo->fobj.fo_name, strerror (errno));
+                /* TODO: set error */
+                return -1;
+        }
+
+        fpinfo->fobj.fo_atime = sb.st_atim;
+        fpinfo->fobj.fo_mtime = sb.st_mtim;
+        fpinfo->fobj.fo_ctime = sb.st_ctim;
+
+        if ( port_associate (fpinfo->port, PORT_SOURCE_FILE, (uintptr_t)&(fpinfo->fobj), events, (void *)fpinfo ) == -1) {
+                _pk_debug ("Failed to register file %s: %s", fpinfo->fobj.fo_name, strerror (errno));
+                /* TODO: set error */
+                return -1;
+        }
+        return 0;
+}
+#endif
 
 /**
  * polkit_context_ref:
@@ -296,6 +420,31 @@ polkit_context_io_func (PolKitContext *pk_context, int fd)
 
         config_changed = FALSE;
 
+#ifdef HAVE_SOLARIS
+        if (fd == pk_context->inotify_fd) {
+                port_event_t pe;
+                struct file_obj *fobjp;
+                struct fileportinfo *fpip;
+
+                while ( !port_get (fd, &pe, NULL) ) {
+                        switch (pe.portev_source) {
+                        case PORT_SOURCE_FILE:
+                                fpip = (struct fileportinfo *)pe.portev_object;
+                                fobjp = &fpip->fobj;
+                                _pk_debug ("filename = %s, events = %d", fobjp->fo_name, pe.portev_events);
+                                config_changed = TRUE;
+                                _pk_debug ("Config changed");
+                                file_associate ((struct fileportinfo *)pe.portev_object, pe.portev_events);
+                                break;
+                        default:
+                                _pk_debug ("Event from unexpected source");
+                        }
+                        if ( config_changed )
+                                break;
+                }
+        }
+
+#else
         if (fd == pk_context->inotify_fd) {
 /* size of the event structure, not counting name */
 #define EVENT_SIZE  (sizeof (struct inotify_event))
@@ -327,6 +476,7 @@ again:
                         i += EVENT_SIZE + event->len;
                 }
         }
+#endif
 
         if (config_changed) {
                 polkit_context_force_reload (pk_context);

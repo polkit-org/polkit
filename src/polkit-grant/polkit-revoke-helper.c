@@ -51,6 +51,10 @@
 #include <polkit-dbus/polkit-dbus.h>
 #include <polkit/polkit-private.h>
 
+#ifdef HAVE_SOLARIS
+#define LOG_AUTHPRIV    (10<<3)
+#endif
+
 static int
 _write_to_fd (int fd, const char *str, ssize_t str_len)
 {
@@ -108,8 +112,15 @@ main (int argc, char *argv[])
 
 #ifndef POLKIT_BUILD_TESTS
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
+#ifdef HAVE_SOLARIS
+        extern char **environ;
+
+        if (environ != NULL)
+                environ[0] = NULL;
+#else
         if (clearenv () != 0)
                 goto out;
+#endif
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 #endif

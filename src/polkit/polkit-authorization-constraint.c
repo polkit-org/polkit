@@ -81,7 +81,7 @@ struct _PolKitAuthorizationConstraint
                 struct {
                         char *context;
                 } selinux_context;
-        };
+        } data;
 };
 
 static PolKitAuthorizationConstraint _local_constraint = {-1, 
@@ -148,11 +148,11 @@ polkit_authorization_constraint_unref (PolKitAuthorizationConstraint *authc)
                 break;
 
         case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE:
-                kit_free (authc->exe.path);
+                kit_free (authc->data.exe.path);
                 break;
 
         case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT:
-                kit_free (authc->selinux_context.context);
+                kit_free (authc->data.selinux_context.context);
                 break;
         }
 
@@ -287,7 +287,7 @@ polkit_authorization_constraint_check_caller (PolKitAuthorizationConstraint *aut
                         n = polkit_sysdeps_get_exe_for_pid_with_helper (pid, buf, sizeof (buf));
 
                         if (n != -1 && n < (int) sizeof (buf)) {
-                                if (strcmp (authc->exe.path, buf) == 0) {
+                                if (strcmp (authc->data.exe.path, buf) == 0) {
                                         ret = TRUE;
                                 }
                         }
@@ -297,7 +297,7 @@ polkit_authorization_constraint_check_caller (PolKitAuthorizationConstraint *aut
 
         case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT:
                 if (polkit_caller_get_selinux_context (caller, &selinux_context) && selinux_context != NULL) {
-                        if (strcmp (authc->selinux_context.context, selinux_context) == 0) {
+                        if (strcmp (authc->data.selinux_context.context, selinux_context) == 0) {
                                 ret = TRUE;
                         }
                 } else {
@@ -350,7 +350,7 @@ polkit_authorization_constraint_get_exe (PolKitAuthorizationConstraint *authc)
         kit_return_val_if_fail (authc != NULL, NULL);
         kit_return_val_if_fail (authc->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE, NULL);
 
-        return authc->exe.path;
+        return authc->data.exe.path;
 }
 
 /**
@@ -371,7 +371,7 @@ polkit_authorization_constraint_get_selinux_context (PolKitAuthorizationConstrai
         kit_return_val_if_fail (authc != NULL, NULL);
         kit_return_val_if_fail (authc->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT, NULL);
 
-        return authc->selinux_context.context;
+        return authc->data.selinux_context.context;
 }
 
 /**
@@ -428,8 +428,8 @@ polkit_authorization_constraint_get_require_exe (const char *path)
         if (authc == NULL)
                 goto out;
         authc->type = POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE;
-        authc->exe.path = kit_strdup (path);
-        if (authc->exe.path == NULL) {
+        authc->data.exe.path = kit_strdup (path);
+        if (authc->data.exe.path == NULL) {
                 polkit_authorization_constraint_unref (authc);
                 authc = NULL;
         }
@@ -460,8 +460,8 @@ polkit_authorization_constraint_get_require_selinux_context (const char *context
         if (authc == NULL)
                 goto out;
         authc->type = POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT;
-        authc->selinux_context.context = kit_strdup (context);
-        if (authc->selinux_context.context == NULL) {
+        authc->data.selinux_context.context = kit_strdup (context);
+        if (authc->data.selinux_context.context == NULL) {
                 polkit_authorization_constraint_unref (authc);
                 authc = NULL;
         }
@@ -500,10 +500,10 @@ polkit_authorization_constraint_to_string (PolKitAuthorizationConstraint *authc,
                 return snprintf (out_buf, buf_size, "active");
 
         case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE:
-                return snprintf (out_buf, buf_size, "exe:%s", authc->exe.path);
+                return snprintf (out_buf, buf_size, "exe:%s", authc->data.exe.path);
                 
         case POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT:
-                return snprintf (out_buf, buf_size, "selinux_context:%s", authc->selinux_context.context);
+                return snprintf (out_buf, buf_size, "selinux_context:%s", authc->data.selinux_context.context);
         }
 
         return 0;
@@ -688,10 +688,10 @@ polkit_authorization_constraint_equal (PolKitAuthorizationConstraint *a, PolKitA
                 goto out;
 
         if (a->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE) {
-                if (strcmp (a->exe.path, b->exe.path) != 0)
+                if (strcmp (a->data.exe.path, b->data.exe.path) != 0)
                         goto out;
         } else if (a->type == POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_SELINUX_CONTEXT) {
-                if (strcmp (a->selinux_context.context, b->selinux_context.context) != 0)
+                if (strcmp (a->data.selinux_context.context, b->data.selinux_context.context) != 0)
                         goto out;
         }
 

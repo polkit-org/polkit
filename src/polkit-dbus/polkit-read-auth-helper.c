@@ -48,6 +48,10 @@
 #include <utime.h>
 #include <fcntl.h>
 #include <dirent.h>
+#ifdef HAVE_SOLARIS
+#include <limits.h>
+#define LOG_AUTHPRIV    (10<<3)
+#endif
 
 #include <polkit-dbus/polkit-dbus.h>
 #include <polkit/polkit-private.h>
@@ -287,8 +291,15 @@ main (int argc, char *argv[])
 
 #ifndef POLKIT_BUILD_TESTS
         /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
+#ifdef HAVE_SOLARIS
+        extern char **environ;
+
+        if (environ != NULL)
+                environ[0] = NULL;
+#else
         if (clearenv () != 0)
                 goto out;
+#endif
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 #endif

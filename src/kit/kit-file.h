@@ -35,6 +35,9 @@
 #define KIT_FILE_H
 
 #include <kit/kit.h>
+#ifdef HAVE_SOLARIS
+#include <sys/types.h>
+#endif
 
 KIT_BEGIN_DECLS
 

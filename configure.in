@@ -433,7 +433,7 @@ fi
 
 AC_SUBST(PAM_MODULE_DIR)
 
-AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat/suse/gentoo/pardus)])
+AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat/suse/gentoo/pardus/solaris)])
 
 #### Check our operating system (distro-tweaks required)
 if test "z$with_os_type" = "z"; then
@@ -458,6 +458,8 @@ if test x$with_os_type = x; then
         with_os_type=gentoo
     elif test x$operating_system = xpardus ; then
         with_os_type=pardus
+    elif test x$operating_system = xsolaris ; then
+	with_os_type=solaris
     else
         with_os_type=unknown
     fi
@@ -469,6 +471,7 @@ AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red H
 AM_CONDITIONAL(OS_TYPE_SUSE, test x$with_os_type = xsuse, [Running on SUSE OS'es])
 AM_CONDITIONAL(OS_TYPE_GENTOO, test x$with_os_type = xgentoo, [Running on Gentoo OS'es])
 AM_CONDITIONAL(OS_TYPE_PARDUS, test x$with_os_type = xpardus, [Running on Pardus OS'es])
+AM_CONDITIONAL(OS_TYPE_SALARIS, test x$with_os_type = xsolaris, [Running os Solaris OS'es])
 
 AC_ARG_WITH(pam-include, [  --with-pam-include=<file>  pam file to include])
 
@@ -483,7 +486,7 @@ elif test x$with_os_type = xredhat -o x$with_os_type = xgentoo -o x$with_os_type
    PAM_FILE_INCLUDE_ACCOUNT=system-auth
    PAM_FILE_INCLUDE_PASSWORD=system-auth
    PAM_FILE_INCLUDE_SESSION=system-auth
-elif test x$with_os_type = xsuse ; then
+elif test x$with_os_type = xsuse -o x$with_os_type = xsolaris ; then
    PAM_FILE_INCLUDE_AUTH=common-auth
    PAM_FILE_INCLUDE_ACCOUNT=common-account
    PAM_FILE_INCLUDE_PASSWORD=common-password
@@ -503,6 +506,17 @@ AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_AUTH, "$PAM_FILE_INCLUDE_AUTH", [pam file au
 AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_ACCOUNT, "$PAM_FILE_INCLUDE_ACCOUNT", [pam file account])
 AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_PASSWORD, "$PAM_FILE_INCLUDE_PASSWORD", [pam file password])
 AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_SESSION, "$PAM_FILE_INCLUDE_SESSION", [pam file session])
+
+dnl ---------------------------------------------------------------------------
+dnl - check OS 
+dnl ---------------------------------------------------------------------------
+case "$host_os" in
+  *linux*)
+	;;
+  *solaris*)
+	AC_DEFINE([HAVE_SOLARIS], 1, [Is this a Solaris system?])
+	;;
+esac
 
 # ********************
 # Internationalisation
