@@ -93,14 +93,16 @@ KitList *
 kit_list_copy (KitList *list)
 {
         KitList *l;
+        KitList *l2;
         KitList *j;
 
         l = NULL;
         for (j = list; j != NULL; j = j->next) {
                 /* TODO: prepend, then reverse */
-                l = kit_list_append (l, j->data);
-                if (l == NULL)
+                l2 = kit_list_append (l, j->data);
+                if (l2 == NULL)
                         goto oom;
+                l = l2;
         }
 
         return l;

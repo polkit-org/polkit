@@ -342,6 +342,8 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
                 goto out;
         }
 
+        //kit_warning ("standard_output='%s'", standard_output);
+
         if (standard_output != NULL) {
                 uid_t uid2;
                 len = strlen (standard_output);
@@ -472,8 +474,12 @@ _internal_foreach (PolKitAuthorizationDB       *authdb,
          * may disappear from under us due to revoke_if_one_shot...
          */
         auths_copy = kit_list_copy (auths);
-        if (auths_copy == NULL)
+        if (auths_copy == NULL) {
+                polkit_error_set_error (error,
+                                        POLKIT_ERROR_OUT_OF_MEMORY,
+                                        "No memory");
                 goto out;
+        }
         for (l = auths_copy; l != NULL; l = l->next)
                 polkit_authorization_ref ((PolKitAuthorization *) l->data);
 
@@ -1280,7 +1286,7 @@ _run_test (void)
                 //kit_warning ("%p: %d: %s: %s", 
                 //             error, 
                 //             polkit_error_get_error_code (error), 
-                //            polkit_error_get_error_name (error),
+                //             polkit_error_get_error_name (error),
                 //             polkit_error_get_error_message (error));
                 kit_assert (polkit_error_is_set (error) && 
                             polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
