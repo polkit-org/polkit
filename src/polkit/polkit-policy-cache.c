@@ -169,8 +169,8 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
                                 goto out;
                         }
 
-                        //kit_warning ("libpolkit: ignoring malformed policy file: %s", 
-                        //             polkit_error_get_error_message (pk_error));
+                        kit_warning ("libpolkit: ignoring malformed policy file: %s", 
+                                     polkit_error_get_error_message (pk_error));
                         polkit_error_free (pk_error);
                         continue;
                 }
