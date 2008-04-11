@@ -57,17 +57,17 @@ struct _KitList {
 
 /**
  * KitListForeachFunc:
- * @list: the list
  * @data: data of link entry
  * @user_data: user data passed to kit_list_foreach()
+ * @list: the list
  *
  * Type signature for callback function used in kit_list_foreach().
  *
  * Returns: Return #TRUE to short-circuit, e.g. stop the iteration.
  */
-typedef kit_bool_t (*KitListForeachFunc) (KitList *list,
-                                          void *data,
-                                          void *user_data);
+typedef kit_bool_t (*KitListForeachFunc) (void *data,
+                                          void *user_data,
+                                          KitList *list);
 
 KitList    *kit_list_append      (KitList *list, void *data);
 KitList    *kit_list_prepend     (KitList *list, void *data);

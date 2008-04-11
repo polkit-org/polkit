@@ -77,7 +77,7 @@ struct _PolKitAuthorizationDB;
 /* PolKitAuthorizationDB structure is defined in polkit/polkit-private.h */
 
 static kit_bool_t
-clear_auth (KitList *list, void *data, void *user_data)
+clear_auth (void *data, void *user_data, KitList *list)
 {
         PolKitAuthorization *auth = (PolKitAuthorization *) data;
         polkit_authorization_unref (auth);

@@ -96,19 +96,19 @@ typedef void *(*KitCopyFunc) (const void *p);
 
 /**
  * KitHashForeachFunc:
- * @hash: the hash table
  * @key: key
  * @value: value
  * @user_data: user data passed to kit_hash_foreach()
+ * @hash: the hash table
  *
  * Type signature for callback function used in kit_hash_foreach().
  *
  * Returns: Return #TRUE to short-circuit, e.g. stop the iteration.
  */
-typedef kit_bool_t (*KitHashForeachFunc) (KitHash *hash,
-                                          void *key,
+typedef kit_bool_t (*KitHashForeachFunc) (void *key,
                                           void *value,
-                                          void *user_data);
+                                          void *user_data,
+                                          KitHash *hash);
 
 
 KitHash *kit_hash_new (KitHashFunc  hash_func,

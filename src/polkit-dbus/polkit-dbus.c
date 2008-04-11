@@ -774,7 +774,7 @@ out:
 }
 
 static kit_bool_t
-_free_elem_in_list (KitList *list, void *data, void *user_data)
+_free_elem_in_list (void *data, void *user_data, KitList *list)
 {
         kit_free (data);
         return FALSE;
@@ -1161,7 +1161,7 @@ polkit_tracker_init (PolKitTracker *pk_tracker)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static void
-_set_session_inactive_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *session_objpath)
+_set_session_inactive_iter (void *key, PolKitCaller *caller, const char *session_objpath, KitHash *hash)
 {
         char *objpath;
         PolKitSession *session;
@@ -1175,7 +1175,7 @@ _set_session_inactive_iter (KitHash *hash, void *key, PolKitCaller *caller, cons
 }
 
 static void
-_set_session_active_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *session_objpath)
+_set_session_active_iter (void *key, PolKitCaller *caller, const char *session_objpath, KitHash *hash)
 {
         char *objpath;
         PolKitSession *session;
@@ -1191,7 +1191,7 @@ _set_session_active_iter (KitHash *hash, void *key, PolKitCaller *caller, const 
 static void
 _update_session_is_active (PolKitTracker *pk_tracker, const char *session_objpath, kit_bool_t is_active)
 {
-        kit_hash_foreach (pk_tracker->dbus_name_to_caller, 
+        kit_hash_foreach (pk_tracker->dbus_name_to_caller,
                           (KitHashForeachFunc) (is_active ? _set_session_active_iter : _set_session_inactive_iter),
                           (void *) session_objpath);
 }
@@ -1199,7 +1199,7 @@ _update_session_is_active (PolKitTracker *pk_tracker, const char *session_objpat
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static kit_bool_t
-_remove_caller_by_session_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *session_objpath)
+_remove_caller_by_session_iter (void *key, PolKitCaller *caller, const char *session_objpath, KitHash *hash)
 {
         char *objpath;
         PolKitSession *session;
@@ -1223,7 +1223,7 @@ _remove_caller_by_session (PolKitTracker *pk_tracker, const char *session_objpat
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static kit_bool_t
-_remove_caller_by_dbus_name_iter (KitHash *hash, void *key, PolKitCaller *caller, const char *dbus_name)
+_remove_caller_by_dbus_name_iter (void *key, PolKitCaller *caller, const char *dbus_name, KitHash *hash)
 {
         char *name;
         if (!polkit_caller_get_dbus_name (caller, &name))
@@ -1236,9 +1236,9 @@ _remove_caller_by_dbus_name_iter (KitHash *hash, void *key, PolKitCaller *caller
 static void
 _remove_caller_by_dbus_name (PolKitTracker *pk_tracker, const char *dbus_name)
 {
-        kit_hash_foreach_remove (pk_tracker->dbus_name_to_caller, 
-                                     (KitHashForeachFunc) _remove_caller_by_dbus_name_iter,
-                                     (void *) dbus_name);
+        kit_hash_foreach_remove (pk_tracker->dbus_name_to_caller,
+                                 (KitHashForeachFunc) _remove_caller_by_dbus_name_iter,
+                                 (void *) dbus_name);
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/

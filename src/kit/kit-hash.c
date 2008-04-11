@@ -330,7 +330,7 @@ kit_hash_foreach (KitHash *hash, KitHashForeachFunc cb, void *user_data)
                 KitHashNode *node;
 
                 for (node = hash->top_nodes[n]; node != NULL; node = node->next) {
-                        if (cb (hash, node->key, node->value, user_data))
+                        if (cb (node->key, node->value, user_data, hash))
                                 return TRUE;
                 }
         }
@@ -370,7 +370,7 @@ kit_hash_foreach_remove (KitHash *hash, KitHashForeachFunc cb, void *user_data)
                 for (node = hash->top_nodes[n]; node != NULL; node = node_next) {
                         node_next = node->next;
 
-                        if (cb (hash, node->key, node->value, user_data)) {
+                        if (cb (node->key, node->value, user_data, hash)) {
 
                                 if (hash->key_destroy_func != NULL)
                                         hash->key_destroy_func (node->key);
@@ -472,7 +472,7 @@ kit_hash_str_copy (const void *p)
 #ifdef KIT_BUILD_TESTS
 
 static kit_bool_t
-_it1 (KitHash *hash, void *key, void *value, void *user_data)
+_it1 (void *key, void *value, void *user_data, KitHash *hash)
 {
         int *count = (int *) user_data;
         *count += 1;
@@ -480,7 +480,7 @@ _it1 (KitHash *hash, void *key, void *value, void *user_data)
 }
 
 static kit_bool_t
-_it2 (KitHash *hash, void *key, void *value, void *user_data)
+_it2 (void *key, void *value, void *user_data, KitHash *hash)
 {
         int *count = (int *) user_data;
         *count += 1;
@@ -488,7 +488,7 @@ _it2 (KitHash *hash, void *key, void *value, void *user_data)
 }
 
 static kit_bool_t
-_it_sum (KitHash *hash, void *key, void *value, void *user_data)
+_it_sum (void *key, void *value, void *user_data, KitHash *hash)
 {
         int *count = (int *) user_data;
         *count += (int) value;
@@ -496,7 +496,7 @@ _it_sum (KitHash *hash, void *key, void *value, void *user_data)
 }
 
 static kit_bool_t
-_it_rem (KitHash *hash, void *key, void *value, void *user_data)
+_it_rem (void *key, void *value, void *user_data, KitHash *hash)
 {
         if (strlen ((char *) key) > 4)
                 return TRUE;

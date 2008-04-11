@@ -558,10 +558,10 @@ typedef struct  {
 } _AnnotationsClosure;
 
 static polkit_bool_t
-_annotations_cb (KitHash *hash,
-                 void *key,
+_annotations_cb (void *key,
                  void *value,
-                 void *user_data)
+                 void *user_data,
+                 KitHash *hash)
 {
         _AnnotationsClosure *closure = user_data;
         return closure->cb (closure->pfe, (const char *) key, (const char *) value, closure->user_data);
@@ -593,8 +593,8 @@ polkit_policy_file_entry_annotations_foreach (PolKitPolicyFileEntry *policy_file
         closure.user_data = user_data;
 
         return kit_hash_foreach (policy_file_entry->annotations,
-                                    _annotations_cb,
-                                    &closure);
+                                 _annotations_cb,
+                                 &closure);
 }
 
 /**

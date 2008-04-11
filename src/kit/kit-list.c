@@ -232,7 +232,7 @@ kit_list_foreach (KitList *list, KitListForeachFunc func, void *user_data)
         kit_return_val_if_fail (func != NULL, FALSE);
 
         for (l = list; l != NULL; l = l->next) {
-                if (func (list, l->data, user_data))
+                if (func (l->data, user_data, list))
                         return TRUE;
         }
         
@@ -248,7 +248,7 @@ typedef struct {
 } _Closure;
 
 static kit_bool_t 
-_sum (KitList *list, void *data, void *user_data)
+_sum (void *data, void *user_data, KitList *list)
 {
         _Closure *c = (_Closure*) user_data;
 
@@ -259,7 +259,7 @@ _sum (KitList *list, void *data, void *user_data)
 }
 
 static kit_bool_t 
-_sum2 (KitList *list, void *data, void *user_data)
+_sum2 (void *data, void *user_data, KitList *list)
 {
         _Closure *c = (_Closure*) user_data;
 
