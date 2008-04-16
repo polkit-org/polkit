@@ -348,8 +348,8 @@ void
 polkit_caller_debug (PolKitCaller *caller)
 {
         kit_return_if_fail (caller != NULL);
-        _pk_debug ("PolKitCaller: refcount=%d dbus_name=%s uid=%d pid=%d selinux_context=%s", 
-                   caller->refcount, caller->dbus_name, caller->uid, caller->pid, caller->selinux_context);
+        polkit_debug ("PolKitCaller: refcount=%d dbus_name=%s uid=%d pid=%d selinux_context=%s", 
+                      caller->refcount, caller->dbus_name, caller->uid, caller->pid, caller->selinux_context);
         if (caller->session != NULL)
                 polkit_session_debug (caller->session);
 }

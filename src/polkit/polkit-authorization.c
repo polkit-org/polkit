@@ -378,13 +378,13 @@ void
 polkit_authorization_debug (PolKitAuthorization *auth)
 {
         kit_return_if_fail (auth != NULL);
-        _pk_debug ("PolKitAuthorization: refcount=%d", auth->refcount);
-        _pk_debug (" scope          = %d",  auth->scope);
-        _pk_debug (" pid            = %d",  auth->pid);
-        _pk_debug (" pid_start_time = %Lu", auth->pid_start_time);
-        _pk_debug (" action_id      = %s",  auth->action_id);
-        _pk_debug (" when           = %Lu", (polkit_uint64_t) auth->when);
-        _pk_debug (" auth_as_uid    = %d",  auth->authenticated_as_uid);
+        polkit_debug ("PolKitAuthorization: refcount=%d", auth->refcount);
+        polkit_debug (" scope          = %d",  auth->scope);
+        polkit_debug (" pid            = %d",  auth->pid);
+        polkit_debug (" pid_start_time = %Lu", auth->pid_start_time);
+        polkit_debug (" action_id      = %s",  auth->action_id);
+        polkit_debug (" when           = %Lu", (polkit_uint64_t) auth->when);
+        polkit_debug (" auth_as_uid    = %d",  auth->authenticated_as_uid);
 }
 
 /**

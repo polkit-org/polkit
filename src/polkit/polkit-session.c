@@ -373,9 +373,9 @@ void
 polkit_session_debug (PolKitSession *session)
 {
         kit_return_if_fail (session != NULL);
-        _pk_debug ("PolKitSession: refcount=%d uid=%d objpath=%s is_active=%d is_local=%d remote_host=%s", 
-                   session->refcount, session->uid,
-                   session->ck_objref, session->is_active, session->is_local, session->remote_host);
+        polkit_debug ("PolKitSession: refcount=%d uid=%d objpath=%s is_active=%d is_local=%d remote_host=%s", 
+                      session->refcount, session->uid,
+                      session->ck_objref, session->is_active, session->is_local, session->remote_host);
         if (session->seat != NULL)
                 polkit_seat_debug (session->seat);
 }

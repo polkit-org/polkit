@@ -202,7 +202,7 @@ void
 polkit_authorization_db_debug (PolKitAuthorizationDB *authdb)
 {
         kit_return_if_fail (authdb != NULL);
-        _pk_debug ("PolKitAuthorizationDB: refcount=%d", authdb->refcount);
+        polkit_debug ("PolKitAuthorizationDB: refcount=%d", authdb->refcount);
 }
 
 /**

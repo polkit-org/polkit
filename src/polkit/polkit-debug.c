@@ -31,7 +31,7 @@
  * SECTION:polkit-debug
  * @short_description: Internal debug functions for polkit.
  *
- * These functions are used for debug purposes
+ * These functions are used for debug purposes.
  **/
 
 #ifdef HAVE_CONFIG_H
@@ -48,13 +48,15 @@
 #include "polkit-debug.h"
 
 /**
- * pk_debug:
+ * polkit_debug:
  * @format: format
  * 
- * Print debug message
+ * Prints a debug message to stdout if the environment variable
+ * POLKIT_DEBUG is set. In production builds this function may
+ * be a no-op.
  **/
 void 
-_pk_debug (const char *format, ...)
+polkit_debug (const char *format, ...)
 {
         va_list args;
         static polkit_bool_t show_debug = FALSE;

@@ -31,9 +31,9 @@
 #define POLKIT_DEBUG_H
 
 #ifdef __sun
-void _pk_debug (const char *format, ...);
+void polkit_debug (const char *format, ...);
 #else
-void _pk_debug (const char *format, ...) __attribute__((__format__ (__printf__, 1, 2)));
+void polkit_debug (const char *format, ...) __attribute__((__format__ (__printf__, 1, 2)));
 #endif
 
 #endif /* POLKIT_DEBUG_H */

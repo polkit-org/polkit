@@ -392,9 +392,9 @@ void
 polkit_policy_file_entry_debug (PolKitPolicyFileEntry *policy_file_entry)
 {
         kit_return_if_fail (policy_file_entry != NULL);
-        _pk_debug ("PolKitPolicyFileEntry: refcount=%d action=%s",
-                   policy_file_entry->refcount,
-                   policy_file_entry->action);
+        polkit_debug ("PolKitPolicyFileEntry: refcount=%d action=%s",
+                      policy_file_entry->refcount,
+                      policy_file_entry->action);
         polkit_policy_default_debug (policy_file_entry->defaults);
 }
 

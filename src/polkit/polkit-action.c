@@ -248,7 +248,7 @@ void
 polkit_action_debug (PolKitAction *action)
 {
         kit_return_if_fail (action != NULL);
-        _pk_debug ("PolKitAction: refcount=%d id=%s", action->refcount, action->id);
+        polkit_debug ("PolKitAction: refcount=%d id=%s", action->refcount, action->id);
 }
 
 /**

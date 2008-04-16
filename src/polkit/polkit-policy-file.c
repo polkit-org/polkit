@@ -586,7 +586,7 @@ _end (void *data, const char *el)
 
         --pd->stack_depth;
         if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH) {
-                _pk_debug ("reached max depth?");
+                polkit_debug ("reached max depth?");
                 goto error;
         }
         if (pd->stack_depth > 0)

@@ -1277,8 +1277,8 @@ polkit_tracker_dbus_func (PolKitTracker *pk_tracker, DBusMessage *message)
 					    DBUS_TYPE_INVALID)) {
 
                         /* TODO: should be _pk_critical */
-                        _pk_debug ("The NameOwnerChanged signal on the " DBUS_INTERFACE_DBUS " "
-                                   "interface has the wrong signature! Your system is misconfigured.");
+                        polkit_debug ("The NameOwnerChanged signal on the " DBUS_INTERFACE_DBUS " "
+                                      "interface has the wrong signature! Your system is misconfigured.");
 			goto out;
 		}
 

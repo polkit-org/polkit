@@ -213,14 +213,14 @@ void
 polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
 {
         kit_return_if_fail (policy_default != NULL);
-        _pk_debug ("PolKitPolicyDefault: refcount=%d\n"
-                   "        default_any=%s\n"
-                   "   default_inactive=%s\n"
-                   "     default_active=%s", 
-                   policy_default->refcount,
-                   polkit_result_to_string_representation (policy_default->default_any),
-                   polkit_result_to_string_representation (policy_default->default_inactive),
-                   polkit_result_to_string_representation (policy_default->default_active));
+        polkit_debug ("PolKitPolicyDefault: refcount=%d\n"
+                      "        default_any=%s\n"
+                      "   default_inactive=%s\n"
+                      "     default_active=%s", 
+                      policy_default->refcount,
+                      polkit_result_to_string_representation (policy_default->default_any),
+                      polkit_result_to_string_representation (policy_default->default_inactive),
+                      polkit_result_to_string_representation (policy_default->default_active));
 }
 
 

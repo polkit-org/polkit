@@ -73,7 +73,7 @@ _pk_validate_identifier (const char *identifier)
                 char c = identifier[n];
 
                 if (n >= 255) {
-                        _pk_debug ("identifier too long");
+                        polkit_debug ("identifier too long");
                         goto out;
                 }
 
@@ -87,7 +87,7 @@ _pk_validate_identifier (const char *identifier)
                     c == '/')
                         continue;
 
-                _pk_debug ("invalid character in identifier");
+                polkit_debug ("invalid character in identifier");
                 goto out;
         }
 
@@ -153,7 +153,7 @@ _pk_validate_unique_bus_name (const char *unique_bus_name)
 
 error:
         if (!ret)
-                _pk_debug ("name '%s' did not validate", unique_bus_name);
+                polkit_debug ("name '%s' did not validate", unique_bus_name);
         return ret;
 }
 

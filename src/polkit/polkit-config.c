@@ -176,26 +176,26 @@ config_node_dump_real (ConfigNode *node, unsigned int indent)
         
         switch (node->node_type) {
         case NODE_TYPE_NOP:
-                _pk_debug ("%sNOP", buf);
+                polkit_debug ("%sNOP", buf);
                 break;
         case NODE_TYPE_TOP:
-                _pk_debug ("%sTOP", buf);
+                polkit_debug ("%sTOP", buf);
                 break;
         case NODE_TYPE_MATCH:
-                _pk_debug ("%sMATCH %s (%d) with '%s'", 
+                polkit_debug ("%sMATCH %s (%d) with '%s'", 
                            buf, 
                            match_names[node->data.node_match.match_type],
                            node->data.node_match.match_type,
                            node->data.node_match.data);
                 break;
         case NODE_TYPE_RETURN:
-                _pk_debug ("%sRETURN %s (%d)",
+                polkit_debug ("%sRETURN %s (%d)",
                            buf,
                            polkit_result_to_string_representation (node->data.node_return.result),
                            node->data.node_return.result);
                 break;
         case NODE_TYPE_DEFINE_ADMIN_AUTH:
-                _pk_debug ("%sDEFINE_ADMIN_AUTH %s (%d) with '%s'", 
+                polkit_debug ("%sDEFINE_ADMIN_AUTH %s (%d) with '%s'", 
                            buf, 
                            define_admin_auth_names[node->data.node_define_admin_auth.admin_type],
                            node->data.node_define_admin_auth.admin_type,
@@ -254,7 +254,7 @@ _start (void *data, const char *el, const char **attr)
         ParserData *pd = data;
         ConfigNode *node;
 
-        _pk_debug ("_start for node '%s' (at depth=%d)", el, pd->stack_depth);
+        polkit_debug ("_start for node '%s' (at depth=%d)", el, pd->stack_depth);
 
         for (num_attr = 0; attr[num_attr] != NULL; num_attr++)
                 ;
@@ -267,10 +267,10 @@ _start (void *data, const char *el, const char **attr)
         case STATE_NONE:
                 if (strcmp (el, "config") == 0) {
                         state = STATE_IN_CONFIG;
-                        _pk_debug ("parsed config node");
+                        polkit_debug ("parsed config node");
 
                         if (pd->pk_config->top_config_node != NULL) {
-                                _pk_debug ("Multiple config nodes?");
+                                polkit_debug ("Multiple config nodes?");
                                 goto error;
                         }
 
@@ -288,18 +288,18 @@ _start (void *data, const char *el, const char **attr)
                         } else if (strcmp (attr[0], "user") == 0) {
                                 node->data.node_match.match_type = MATCH_TYPE_USER;
                         } else {
-                                _pk_debug ("Unknown match rule '%s'", attr[0]);
+                                polkit_debug ("Unknown match rule '%s'", attr[0]);
                                 goto error;
                         }
 
                         node->data.node_match.data = kit_strdup (attr[1]);
                         if (regcomp (&(node->data.node_match.preq), node->data.node_match.data, REG_NOSUB|REG_EXTENDED) != 0) {
-                                _pk_debug ("Invalid expression '%s'", node->data.node_match.data);
+                                polkit_debug ("Invalid expression '%s'", node->data.node_match.data);
                                 goto error;
                         }
 
                         state = STATE_IN_MATCH;
-                        _pk_debug ("parsed match node ('%s' (%d) -> '%s')", 
+                        polkit_debug ("parsed match node ('%s' (%d) -> '%s')", 
                                    attr[0], 
                                    node->data.node_match.match_type,
                                    node->data.node_match.data);
@@ -311,17 +311,17 @@ _start (void *data, const char *el, const char **attr)
                         if (strcmp (attr[0], "result") == 0) {
                                 PolKitResult r;
                                 if (!polkit_result_from_string_representation (attr[1], &r)) {
-                                        _pk_debug ("Unknown return result '%s'", attr[1]);
+                                        polkit_debug ("Unknown return result '%s'", attr[1]);
                                         goto error;
                                 }
                                 node->data.node_return.result = r;
                         } else {
-                                _pk_debug ("Unknown return rule '%s'", attr[0]);
+                                polkit_debug ("Unknown return rule '%s'", attr[0]);
                                 goto error;
                         }
 
                         state = STATE_IN_RETURN;
-                        _pk_debug ("parsed return node ('%s' (%d))",
+                        polkit_debug ("parsed return node ('%s' (%d))",
                                    attr[1],
                                    node->data.node_return.result);
                 } else if ((strcmp (el, "define_admin_auth") == 0) && (num_attr == 2)) {
@@ -332,14 +332,14 @@ _start (void *data, const char *el, const char **attr)
                         } else if (strcmp (attr[0], "group") == 0) {
                                 node->data.node_define_admin_auth.admin_type = POLKIT_CONFIG_ADMIN_AUTH_TYPE_GROUP;
                         } else {
-                                _pk_debug ("Unknown define_admin_auth rule '%s'", attr[0]);
+                                polkit_debug ("Unknown define_admin_auth rule '%s'", attr[0]);
                                 goto error;
                         }
 
                         node->data.node_define_admin_auth.data = kit_strdup (attr[1]);
 
                         state = STATE_IN_DEFINE_ADMIN_AUTH;
-                        _pk_debug ("parsed define_admin_auth node ('%s' (%d) -> '%s')", 
+                        polkit_debug ("parsed define_admin_auth node ('%s' (%d) -> '%s')", 
                                    attr[0], 
                                    node->data.node_define_admin_auth.admin_type,
                                    node->data.node_define_admin_auth.data);
@@ -356,7 +356,7 @@ _start (void *data, const char *el, const char **attr)
         }
 
         if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH) {
-                _pk_debug ("reached max depth?");
+                polkit_debug ("reached max depth?");
                 goto error;
         }
         pd->state = state;
@@ -369,7 +369,7 @@ _start (void *data, const char *el, const char **attr)
         }
 
         pd->stack_depth++;
-        _pk_debug ("now in state=%d (after _start, depth=%d)", pd->state, pd->stack_depth);
+        polkit_debug ("now in state=%d (after _start, depth=%d)", pd->state, pd->stack_depth);
         return;
 
 error:
@@ -389,18 +389,18 @@ _end (void *data, const char *el)
 {
         ParserData *pd = data;
 
-        _pk_debug ("_end for node '%s' (at depth=%d)", el, pd->stack_depth);
+        polkit_debug ("_end for node '%s' (at depth=%d)", el, pd->stack_depth);
 
         --pd->stack_depth;
         if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH) {
-                _pk_debug ("reached max depth?");
+                polkit_debug ("reached max depth?");
                 goto error;
         }
         if (pd->stack_depth > 0)
                 pd->state = pd->state_stack[pd->stack_depth - 1];
         else
                 pd->state = STATE_NONE;
-        _pk_debug ("now in state=%d (after _end, depth=%d)", pd->state, pd->stack_depth);
+        polkit_debug ("now in state=%d (after _end, depth=%d)", pd->state, pd->stack_depth);
         return;
 error:
         XML_StopParser (pd->parser, FALSE);
@@ -471,7 +471,7 @@ polkit_config_new (const char *path, PolKitError **error)
 	XML_ParserFree (pd.parser);
 	kit_free (buf);
 
-        _pk_debug ("Loaded configuration file %s", path);
+        polkit_debug ("Loaded configuration file %s", path);
 
         if (pk_config->top_config_node != NULL)
                 config_node_dump (pk_config->top_config_node);

@@ -171,7 +171,7 @@ void
 polkit_seat_debug (PolKitSeat *seat)
 {
         kit_return_if_fail (seat != NULL);
-        _pk_debug ("PolKitSeat: refcount=%d objpath=%s", seat->refcount, seat->ck_objref);
+        polkit_debug ("PolKitSeat: refcount=%d objpath=%s", seat->refcount, seat->ck_objref);
 }
 
 /**

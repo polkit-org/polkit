@@ -32,9 +32,11 @@ if POLKIT_AUTHDB_DEFAULT
 libpolkit_grant_la_SOURCES += polkit-authorization-db-write.c
 endif
 
-libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la
+libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
 
-libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
+libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
+		             -export-dynamic -no-undefined -export-symbols-regex '(^polkit_.*|_polkit_authorization_db_auth_file_add)'
+
 
 # Only if the authdb backend has the capability POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN
 # then the backend must supply the /usr/libexec/polkit-grant-helper program.. also remember to
@@ -68,11 +70,11 @@ endif
 
 polkit_explicit_grant_helper_SOURCES = polkit-explicit-grant-helper.c
 polkit_explicit_grant_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_explicit_grant_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la libpolkit-grant.la
+polkit_explicit_grant_helper_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la libpolkit-grant.la
 
 polkit_revoke_helper_SOURCES = polkit-revoke-helper.c
 polkit_revoke_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_revoke_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
+polkit_revoke_helper_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
 
 # polkit-grant-helper needs to be setgid polkituser to be able to
 # write cookies to /var/lib/PolicyKit and /var/run/PolicyKit

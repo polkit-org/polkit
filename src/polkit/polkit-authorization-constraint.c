@@ -171,7 +171,7 @@ void
 polkit_authorization_constraint_debug (PolKitAuthorizationConstraint *authc)
 {
         kit_return_if_fail (authc != NULL);
-        _pk_debug ("PolKitAuthorizationConstraint: refcount=%d type=%d", authc->refcount, authc->type);
+        polkit_debug ("PolKitAuthorizationConstraint: refcount=%d type=%d", authc->refcount, authc->type);
 }
 
 /**

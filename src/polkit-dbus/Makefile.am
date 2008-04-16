@@ -25,9 +25,10 @@ libpolkit_dbus_la_SOURCES =                                	\
 	polkit-dbus.h		polkit-dbus.c			\
 	polkit-simple.h		polkit-simple.c
 
-libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS)
+libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS)
 
-libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
+libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
+		            -export-dynamic -no-undefined -export-symbols-regex '^polkit_.*'
 
 libexec_PROGRAMS = polkit-resolve-exe-helper
 
@@ -40,11 +41,11 @@ libexec_PROGRAMS += polkit-read-auth-helper polkit-set-default-helper
 
 polkit_read_auth_helper_SOURCES = polkit-read-auth-helper.c
 polkit_read_auth_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_read_auth_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la libpolkit-dbus.la
+polkit_read_auth_helper_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la libpolkit-dbus.la
 
 polkit_set_default_helper_SOURCES = polkit-set-default-helper.c
 polkit_set_default_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_set_default_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la libpolkit-dbus.la
+polkit_set_default_helper_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la libpolkit-dbus.la
 
 # polkit-read-auth-helper needs to be setgid $POLKIT_GROUP to be able
 # to read authorization files in /var/lib/PolicyKit and

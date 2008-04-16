@@ -155,7 +155,7 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
                         continue;
                 }
 
-                _pk_debug ("Loading %s", path);
+                polkit_debug ("Loading %s", path);
                 pk_error = NULL;
                 pf = polkit_policy_file_new (path, load_descriptions, &pk_error);
                 kit_free (path);
@@ -252,9 +252,9 @@ polkit_policy_cache_debug (PolKitPolicyCache *policy_cache)
         KitList *i;
         kit_return_if_fail (policy_cache != NULL);
 
-        _pk_debug ("PolKitPolicyCache: refcount=%d num_entries=%d ...", 
-                   policy_cache->refcount,
-                   policy_cache->priv_entries == NULL ? 0 : kit_list_length (policy_cache->priv_entries));
+        polkit_debug ("PolKitPolicyCache: refcount=%d num_entries=%d ...", 
+                      policy_cache->refcount,
+                      policy_cache->priv_entries == NULL ? 0 : kit_list_length (policy_cache->priv_entries));
 
         for (i = policy_cache->priv_entries; i != NULL; i = i->next) {
                 PolKitPolicyFileEntry *pfe = i->data;

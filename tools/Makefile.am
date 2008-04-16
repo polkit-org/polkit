@@ -14,10 +14,10 @@ INCLUDES = \
 bin_PROGRAMS = polkit-config-file-validate polkit-policy-file-validate polkit-action polkit-auth
 
 polkit_config_file_validate_SOURCES = polkit-config-file-validate.c
-polkit_config_file_validate_LDADD = $(top_builddir)/src/polkit/libpolkit.la
+polkit_config_file_validate_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
 
 polkit_policy_file_validate_SOURCES = polkit-policy-file-validate.c
-polkit_policy_file_validate_LDADD = $(top_builddir)/src/polkit/libpolkit.la
+polkit_policy_file_validate_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
 
 polkit_auth_SOURCES = polkit-auth.c
 polkit_auth_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
