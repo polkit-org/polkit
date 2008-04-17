@@ -1,10 +1,71 @@
 ==========
-PolicyKit 0.8 ""
+PolicyKit 0.8 "The Ties That Bind"
 ==========
+
+Released on April 16 2008.
+
+This release should be ABI compatible with PolicyKit 0.6 and later.
 
 NOTE NOTE NOTE: The permissions and modes of certain files has changed
                 since PolicyKit 0.7. Make sure to update your spec files
                 to reflect this. See the output of configure for details.
+
+Carlos Corbacho (4):
+      remove unncessary PAM header inclusions
+      split out authentication framework from authorisation database
+      add Shadow authentication framework
+      also add the new C file for the shadow helper
+
+David Zeuthen (33):
+      be more precise about permissions in the blurb at the end of configure
+      post release version bump to 0.8
+      use strlen to avoid writing garbage at the end of the test auth file
+      add bogus Returns: to make gtk-doc happy
+      add constraints for exe and SELinux context when granting an authorization
+      add note about new polkit-resolve-exe-helper
+      add additional checks when using strtoul
+      add docs and bash completion bits for new exe and selinux_context constraints
+      fix typo in docs
+      make the docs show an index of new symbols in 0.8
+      make polkit-grant-helper-pam world readable
+      actually check for bash in polkit-bash-completion.sh
+      avoid use normal timeout when showing auth dialog; use INT_MAX instead
+      fix doc in bugs for PolKitContextAddIOWatch
+      make polkit-policy-file-validate require that actions are properly packaged
+      add convenience API to consistently report authorization failures over D-Bus
+      also add polkit_dbus_error_parse_from_strings() function
+      fix typo in docs for polkit_dbus_error_parse_from_strings()
+      don't check key/values in KitHash; they are not neccesarily pointers
+      clarify docs for POLKIT_AUTHORIZATION_CONSTRAINT_TYPE_REQUIRE_EXE
+      invalidate memory cache after revoking one shot authorization
+      remove debug spew
+      remove more debug spew
+      print stack traces for where leaks were allocated
+      clear the right block when growing a string
+      don't leak the copied authorizations list on OOM
+      fix build when tests are disabled
+      don't include libkit api docs
+      fix issue where users allowed to change defaults can delete override files
+      print warning to stderr if a policy file is malformed and we're ignoring it
+      ensure object is first in the list/hash iterator callback functions
+      be careful about what symbols we export
+      update NEWS for release
+
+Holger Macht (1):
+      avoid reliance on DT_REG so we work on reiserfs as well
+
+Jim Li (1):
+      add support for Solaris platform
+
+Jim Meyering (5):
+      handle kit_strdup_printf failure.
+      remove unnecessary strdup.
+      (do_auth): rename local: s/buf/password/
+      avoid unnecessary/leaky use of strdup.
+      handle kit_strdup failure.
+
+Kees Cook (1):
+      fix for CVE-2008-1658: format string vulnerability in password input
 
 ==========
 PolicyKit 0.7 "Common sense ain't common"
