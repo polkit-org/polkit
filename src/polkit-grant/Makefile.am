@@ -34,8 +34,11 @@ endif
 
 libpolkit_grant_la_LIBADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
 
-libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
-		             -export-dynamic -no-undefined -export-symbols-regex '(^polkit_.*|_polkit_authorization_db_auth_file_add)'
+libpolkit_grant_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
+
+if !POLKIT_BUILD_TESTS
+libpolkit_grant_la_LDFLAGS += -export-dynamic -no-undefined -export-symbols-regex '(^polkit_.*|_polkit_authorization_db_auth_file_add)'
+endif
 
 
 # Only if the authdb backend has the capability POLKIT_AUTHORIZATION_DB_CAPABILITY_CAN_OBTAIN

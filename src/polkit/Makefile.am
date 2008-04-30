@@ -73,8 +73,11 @@ endif
 
 libpolkit_la_LIBADD = @EXPAT_LIBS@ $(top_builddir)/src/kit/libkit.la
 
-libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
-	               -export-dynamic -no-undefined -export-symbols-regex '(^polkit_.*|_pk_validate_unique_bus_name)'
+libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
+
+if !POLKIT_BUILD_TESTS
+libpolkit_la_LDFLAGS += -export-dynamic -no-undefined -export-symbols-regex '(^polkit_.*|_pk_validate_unique_bus_name)'
+endif
 
 ## note that TESTS has special meaning (stuff to use in make check)
 ## so if adding tests not to be run in make check, don't add them to 
@@ -88,7 +91,7 @@ check_PROGRAMS=$(TESTS)
 polkit_test_SOURCES=				\
 	polkit-test.h		polkit-test.c
 
-polkit_test_LDADD=$(top_builddir)/src/polkit/libpolkit.la
+polkit_test_LDADD=$(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
 polkit_test_LDFLAGS=
 
 if POLKIT_GCOV_ENABLED
