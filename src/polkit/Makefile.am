@@ -74,7 +74,7 @@ endif
 libpolkit_la_LIBADD = @EXPAT_LIBS@ $(top_builddir)/src/kit/libkit.la
 
 if POLKIT_BUILD_TESTS
-libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
+libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
 else
 libpolkit_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
                        -export-dynamic -no-undefined -export-symbols-regex '(^polkit_.*|_pk_validate_unique_bus_name)'

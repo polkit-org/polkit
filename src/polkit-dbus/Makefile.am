@@ -28,7 +28,7 @@ libpolkit_dbus_la_SOURCES =                                	\
 libpolkit_dbus_la_LIBADD = @DBUS_LIBS@ $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la $(SELINUX_LIBS)
 
 if POLKIT_BUILD_TESTS
-libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
+libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@
 else
 libpolkit_dbus_la_LDFLAGS = -version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) @R_DYNAMIC_LDFLAG@ \
                             -export-dynamic -no-undefined -export-symbols-regex '^polkit_.*'
