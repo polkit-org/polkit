@@ -56,11 +56,11 @@ endif
 libexec_PROGRAMS += polkit-explicit-grant-helper polkit-revoke-helper 
 
 polkit_grant_helper_SOURCES = polkit-grant-helper.c
-polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la libpolkit-grant.la
+polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la libpolkit-grant.la
 
 if POLKIT_AUTHFW_PAM
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
-polkit_grant_helper_pam_LDADD = @AUTH_LIBS@ $(top_builddir)/src/polkit/libpolkit.la
+polkit_grant_helper_pam_LDADD = @AUTH_LIBS@ $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
 endif
 
 if POLKIT_AUTHFW_SHADOW

@@ -34,7 +34,7 @@ libexec_PROGRAMS = polkit-resolve-exe-helper
 
 polkit_resolve_exe_helper_SOURCES = polkit-resolve-exe-helper.c
 polkit_resolve_exe_helper_CFLAGS = @DBUS_CFLAGS@
-polkit_resolve_exe_helper_LDADD = $(top_builddir)/src/polkit/libpolkit.la libpolkit-dbus.la
+polkit_resolve_exe_helper_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la libpolkit-dbus.la
 
 if POLKIT_AUTHDB_DEFAULT
 libexec_PROGRAMS += polkit-read-auth-helper polkit-set-default-helper
