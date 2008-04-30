@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
 
 #include <kit/kit.h>
 #include "kit-test.h"

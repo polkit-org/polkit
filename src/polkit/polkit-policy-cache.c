@@ -101,7 +101,11 @@ PolKitPolicyCache *
 _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error)
 {
         DIR *dir;
+#ifdef HAVE_READDIR64
         struct dirent64 *d;
+#else
+	struct dirent *d;
+#endif
         PolKitPolicyCache *pc;
         struct stat statbuf;
 
@@ -123,7 +127,11 @@ _polkit_policy_cache_new (const char *dirname, polkit_bool_t load_descriptions, 
                 goto out;
         }
 
+#ifdef HAVE_READDIR64
         while ((d = readdir64 (dir)) != NULL) {
+#else
+	while ((d = readdir (dir)) != NULL) {
+#endif
                 char *path;
                 PolKitPolicyFile *pf;
                 PolKitError *pk_error;

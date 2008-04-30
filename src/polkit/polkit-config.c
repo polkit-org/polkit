@@ -39,7 +39,6 @@
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
-#include <sys/inotify.h>
 #include <regex.h>
 #include <syslog.h>
 #include <regex.h>

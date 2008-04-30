@@ -23,6 +23,7 @@ libkit_la_SOURCES =					\
 	kit-test.h		kit-test.c		\
 	kit-memory.h		kit-memory.c		\
 	kit-string.h		kit-string.c		\
+	kit-lib.h		kit-lib.c		\
 	kit-list.h		kit-list.c		\
 	kit-hash.h		kit-hash.c		\
 	kit-file.h		kit-file.c		\

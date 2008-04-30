@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * kit-file.h : File utilities
+ * kit-string.h : General utilities
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -31,24 +31,22 @@
 #error "Only <kit/kit.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef KIT_FILE_H
-#define KIT_FILE_H
+#ifndef KIT_LIB_H
+#define KIT_LIB_H
 
-#include <sys/stat.h>
-#include <kit/kit.h>
-#ifdef HAVE_SOLARIS
 #include <sys/types.h>
-#endif
+#include <stdio.h>
+
+#include <kit/kit.h>
 
 KIT_BEGIN_DECLS
 
-kit_bool_t kit_file_get_contents (const char *path, char **out_contents, size_t *out_contents_size);
-kit_bool_t kit_file_set_contents (const char *path, mode_t mode, const char *contents, size_t contents_size);
+ssize_t kit_getline 	(char **lineptr, size_t *n, FILE *f);
 
-size_t _kit_get_num_fd (void);
+int kit_clearenv 	(void);
 
 KIT_END_DECLS
 
-#endif /* KIT_FILE_H */
+#endif /* KIT_LIB_H */
 
 

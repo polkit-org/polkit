@@ -148,6 +148,7 @@ do {                                                                            
 #endif
 #include <kit/kit-memory.h>
 #include <kit/kit-string.h>
+#include <kit/kit-lib.h>
 #include <kit/kit-list.h>
 #include <kit/kit-hash.h>
 #include <kit/kit-file.h>

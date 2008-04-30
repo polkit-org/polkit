@@ -60,7 +60,7 @@ polkit_grant_helper_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/l
 
 if POLKIT_AUTHFW_PAM
 polkit_grant_helper_pam_SOURCES = polkit-grant-helper-pam.c
-polkit_grant_helper_pam_LDADD = @AUTH_LIBS@
+polkit_grant_helper_pam_LDADD = @AUTH_LIBS@ $(top_builddir)/src/polkit/libpolkit.la
 endif
 
 if POLKIT_AUTHFW_SHADOW
