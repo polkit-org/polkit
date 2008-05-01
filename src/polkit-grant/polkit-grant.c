@@ -420,6 +420,8 @@ polkit_grant_io_func (PolKitGrant *polkit_grant, int fd)
 
         if (line != NULL)
                 free (line);
+
+        polkit_grant->func_remove_watch (polkit_grant, polkit_grant->io_watch_id);
 }
 
 /**
