@@ -412,7 +412,7 @@ is_caller_authorized (PolKitDaemon          *daemon,
         if (!polkit_caller_get_uid (pk_caller, &uid_caller))
                 goto out;
 
-        if (uid_caller_who_wants_to_know != uid_caller) {
+        if (uid_caller_who_wants_to_know != 0 && uid_caller_who_wants_to_know != uid_caller) {
                 /* if the uid's are different, the caller who wants to know need to posses
                  * the org.freedesktop.policykit.read authorization 
                  */
