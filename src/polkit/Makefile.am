@@ -143,7 +143,7 @@ install-data-local:
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/misc
 	touch $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
 	-chown $(POLKIT_USER):$(POLKIT_GROUP) $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
-	-chmod 775 $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
+	-chmod 664 $(DESTDIR)$(localstatedir)/lib/misc/PolicyKit.reload
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/PolicyKit-public
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/PolicyKit
 	mkdir -p $(DESTDIR)$(localstatedir)/run/PolicyKit

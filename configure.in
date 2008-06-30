@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59c)
-AC_INIT(PolicyKit, 0.8, david@fubar.dk)
-AM_INIT_AUTOMAKE(PolicyKit, 0.8)
+AC_INIT(PolicyKit, 0.9, http://lists.freedesktop.org/mailman/listinfo/polkit-devel)
+AM_INIT_AUTOMAKE(PolicyKit, 0.9)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
@@ -644,11 +644,11 @@ if test "${POLKIT_AUTHDB}" = default ; then
   echo "NOTE: The directories ${localstatedir}/run/PolicyKit and ${localstatedir}/lib/PolicyKit will be"
   echo "      owned by group ${POLKIT_GROUP} and will be mode 770."
   echo
-  echo "NOTE: The directory ${localstatedir}/run/PolicyKit-public will be"
+  echo "NOTE: The directory ${localstatedir}/lib/PolicyKit-public will be"
   echo "      owned by user ${POLKIT_USER} and will be mode 755."
   echo
   echo "NOTE: The file ${localstatedir}/lib/misc/PolicyKit.reload will be"
-  echo "      owned by user ${POLKIT_USER} and group ${POLKIT_GROUP} and will be mode 775."
+  echo "      owned by user ${POLKIT_USER} and group ${POLKIT_GROUP} and will be mode 664."
   echo
   echo "NOTE: ${libexecdir}/polkit-set-default-helper will be owned by"
   echo "      user ${POLKIT_USER} and installed with mode 4755 (setuid binary)."
@@ -667,11 +667,13 @@ if test "${POLKIT_AUTHDB}" = default ; then
   echo
   echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be owned by group"
   echo "      ${POLKIT_GROUP} and installed with mode 4754 (setuid root binary)."
-  echo
 fi
 
+echo
 echo "NOTE: ${libexecdir}/polkit-resolve-exe-helper will be installed with"
 echo "      mode 4755 (setuid root binary)."
 echo
 echo "NOTE: For packaging, remember to retain the modes and ownership."
+echo
+echo "See the README file for the rationale for these modes/permissions."
 echo
