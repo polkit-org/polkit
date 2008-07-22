@@ -5,8 +5,8 @@ privileged user space daemons to control access.
 See also the file HACKING for notes of interest to developers working
 on PolicyKit.
 
-See http://www.freedesktop.org/Software/hal for lots of documentation,
-mailing lists, etc.
+See http://www.freedesktop.org/wiki/Software/PolicyKit for lots of
+documentation, mailing lists, etc.
 
 -------------------------------------------------------
 Rationale for permissions/modes for the default backend
