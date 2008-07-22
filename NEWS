@@ -6,7 +6,7 @@ Released on July 22 2008.
 
 This release should be ABI compatible with PolicyKit 0.6 and later.
 
-David Zeuthen (8):
+David Zeuthen (10):
       need to link with libkit.la for some helpers
       fix some build stuff to so the test suites run
       fix autotools screwup
@@ -16,6 +16,7 @@ David Zeuthen (8):
       update README (for the right wiki page) and COPYING (for my email address)
       update NEWS for release
       fix 'make distcheck'
+      update NEWS again
 
 Joe Marcus Clarke (2):
       add support for FreeBSD
