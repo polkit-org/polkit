@@ -1,4 +1,26 @@
 ==========
+PolicyKit 0.9
+==========
+
+Released on July 22 2008.
+
+This release should be ABI compatible with PolicyKit 0.6 and later.
+
+David Zeuthen (8):
+      need to link with libkit.la for some helpers
+      fix some build stuff to so the test suites run
+      fix autotools screwup
+      fix typo
+      always allow uid 0 to ask about authorizations for anyone
+      fix up permissions / docs for certain helpers and files/directories
+      update README (for the right wiki page) and COPYING (for my email address)
+      update NEWS for release
+
+Joe Marcus Clarke (2):
+      add support for FreeBSD
+      remove watch on fd when reaching EOF
+
+==========
 PolicyKit 0.8 "The Ties That Bind"
 ==========
 
