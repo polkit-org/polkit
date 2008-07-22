@@ -15,6 +15,7 @@ David Zeuthen (8):
       fix up permissions / docs for certain helpers and files/directories
       update README (for the right wiki page) and COPYING (for my email address)
       update NEWS for release
+      fix 'make distcheck'
 
 Joe Marcus Clarke (2):
       add support for FreeBSD
