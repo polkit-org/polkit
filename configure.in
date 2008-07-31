@@ -567,6 +567,7 @@ src/Makefile
 src/kit/Makefile
 src/polkit/Makefile
 src/polkit-grant/Makefile
+polkit-backendd/Makefile
 tools/Makefile
 doc/Makefile
 doc/version.xml
