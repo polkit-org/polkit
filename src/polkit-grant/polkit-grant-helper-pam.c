@@ -80,7 +80,7 @@ main (int argc, char *argv[])
                 goto error;
         }
 
-        openlog ("polkit-grant-helper-pam", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
+        openlog ("polkit-grant-helper-pam-1", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
         /* check for correct invocation */
         if (argc != 1) {

@@ -57,7 +57,6 @@ static KitTest *tests[] = {
         &_test_authorization_constraint,
         &_test_authorization,
         &_test_authorization_db,
-        &_test_config,
         &_test_sysdeps,
         &_test_utils,
         &_test_context,

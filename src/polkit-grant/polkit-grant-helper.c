@@ -59,7 +59,7 @@
 
 #include <kit/kit.h>
 
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 // #include <polkit/polkit-grant-database.h>
 
 #ifdef HAVE_SOLARIS
@@ -151,7 +151,7 @@
  *                                       FAILURE on stdin. If FAILURE
  *                                       is received, then die with exit
  *                                       code 1. If SUCCESS, leave a cookie
- *                                       in /var/{lib,run}/PolicyKit indicating
+ *                                       in /var/{lib,run}/polkit-1 indicating
  *                                       the grant was successful and die with
  *                                       exit code 0
  *
@@ -178,10 +178,10 @@ do_auth (const char *user_to_auth, gboolean *empty_conversation)
         int helper_stdout;
         GError *g_error;
 #ifdef POLKIT_AUTHFW_PAM
-        char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-pam", NULL};
+        char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-pam-1", NULL};
 #endif
 #ifdef POLKIT_AUTHFW_SHADOW
-        char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-shadow", NULL};
+        char *helper_argv[2] = {PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-shadow-1", NULL};
 #endif
         char buf[256];
         FILE *child_stdin;
@@ -330,98 +330,9 @@ verify_with_polkit (PolKitContext *pol_ctx,
             *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
             *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
             *out_result == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS) {
-                PolKitConfig *pk_config;
-                PolKitConfigAdminAuthType admin_auth_type;
-                const char *admin_auth_data;
-
-                pk_config = polkit_context_get_config (pol_ctx, NULL);
-                /* if the configuration file is malformed, bail out */
-                if (pk_config == NULL)
-                        goto error;
-
-                if (polkit_config_determine_admin_auth_type (pk_config, 
-                                                             action, 
-                                                             caller, 
-                                                             &admin_auth_type, 
-                                                             &admin_auth_data)) {
-#ifdef PGH_DEBUG
-                        fprintf (stderr, "polkit-grant-helper: admin_auth_type=%d data='%s'\n", admin_auth_type, admin_auth_data);
-#endif /* PGH_DEBUG */
-                        switch (admin_auth_type) {
-                        case POLKIT_CONFIG_ADMIN_AUTH_TYPE_USER:
-                                if (admin_auth_data != NULL)
-                                        *out_admin_users = g_strsplit (admin_auth_data, "|", 0);
-                                break;
-                        case POLKIT_CONFIG_ADMIN_AUTH_TYPE_GROUP:
-                                if (admin_auth_data != NULL) {
-                                        int n;
-                                        char **groups;
-                                        GSList *i;
-                                        GSList *users;
-
-
-                                        users = NULL;
-                                        groups = g_strsplit (admin_auth_data, "|", 0);
-                                        for (n = 0; groups[n] != NULL; n++)  {
-                                                int m;
-                                                struct group *group;
-
-                                                /* This is fine; we're a single-threaded app */
-                                                if ((group = getgrnam (groups[n])) == NULL)
-                                                        continue;
-
-                                                for (m = 0; group->gr_mem[m] != NULL; m++) {
-                                                        const char *user;
-                                                        gboolean found;
-
-                                                        user = group->gr_mem[m];
-                                                        found = FALSE;
-
-#ifdef PGH_DEBUG
-                                                        fprintf (stderr, "polkit-grant-helper: examining member '%s' of group '%s'\n", user, groups[n]);
-#endif /* PGH_DEBUG */
-
-                                                        /* skip user 'root' since he is often member of 'wheel' etc. */
-                                                        if (strcmp (user, "root") == 0)
-                                                                continue;
-                                                        /* TODO: we should probably only consider users with an uid
-                                                         * in a given "safe" range, e.g. between 500 and 32000 or
-                                                         * something like that...
-                                                         */
-
-                                                        for (i = users; i != NULL; i = g_slist_next (i)) {
-                                                                if (strcmp (user, (const char *) i->data) == 0) {
-                                                                        found = TRUE;
-                                                                        break;
-                                                                }
-                                                        }
-                                                        if (found)
-                                                                continue;
-
-#ifdef PGH_DEBUG
-                                                        fprintf (stderr, "polkit-grant-helper: added user '%s'\n", user);
-#endif /* PGH_DEBUG */
-
-                                                        users = g_slist_prepend (users, g_strdup (user));
-                                                }
-
-                                        }
-                                        g_strfreev (groups);
-
-                                        users = g_slist_sort (users, (GCompareFunc) strcmp);
-
-                                        *out_admin_users = g_new0 (char *, g_slist_length (users) + 1);
-                                        for (i = users, n = 0; i != NULL; i = g_slist_next (i)) {
-                                                (*out_admin_users)[n++] = i->data;
-                                        }
-
-                                        g_slist_free (users);
-                                }
-                                break;
-                        }
-                }
+                /* TODO: need to revisit this and return list of users that can auth */
+                *out_admin_users = NULL;
         }
-        
 
         /* TODO: we should probably clean up */
 
@@ -571,7 +482,7 @@ main (int argc, char *argv[])
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 
-        openlog ("polkit-grant-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
+        openlog ("polkit-grant-helper-1", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
         /* check for correct invocation */
         if (argc != 3) {

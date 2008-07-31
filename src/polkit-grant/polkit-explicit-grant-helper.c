@@ -49,7 +49,7 @@
 #include <utime.h>
 #include <fcntl.h>
 
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 #include <polkit/polkit-private.h>
 
 #ifdef HAVE_SOLARIS
@@ -75,7 +75,7 @@ main (int argc, char *argv[])
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 
-        openlog ("polkit-explicit-grant-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
+        openlog ("polkit-explicit-grant-helper-1", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
         /* check for correct invocation */
         if (argc != 5) {

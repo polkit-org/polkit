@@ -91,7 +91,7 @@
     <xi:include href="xml/polkit-seat.xml"/>
     <xi:include href="xml/polkit-session.xml"/>
     <xi:include href="xml/polkit-caller.xml"/>
-    <xi:include href="xml/polkit-dbus.xml"/>
+    <xi:include href="xml/polkit-tracker.xml"/>
     <xi:include href="xml/polkit-context.xml"/>
     <xi:include href="xml/polkit-config.xml"/>
     <xi:include href="xml/polkit-policy-file.xml"/>

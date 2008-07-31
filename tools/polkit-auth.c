@@ -46,7 +46,7 @@
 #include <errno.h>
 #include <termios.h>
 
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 #include <polkit-grant/polkit-grant.h>
 
 #include <glib.h>

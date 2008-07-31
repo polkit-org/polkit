@@ -43,7 +43,6 @@
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
 #include <polkit/polkit-policy-cache.h>
-#include <polkit/polkit-config.h>
 #include <polkit/polkit-authorization-db.h>
 
 POLKIT_BEGIN_DECLS
@@ -173,8 +172,6 @@ POLKIT_GNUC_DEPRECATED
 PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_context,
                                                       PolKitAction    *action,
                                                       PolKitCaller    *caller);
-
-PolKitConfig *polkit_context_get_config (PolKitContext *pk_context, PolKitError **error);
 
 PolKitResult polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                                   PolKitAction          *action,

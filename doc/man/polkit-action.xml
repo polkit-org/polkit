@@ -1,24 +1,24 @@
-<refentry id="polkit-action.1">
+<refentry id="polkit-action-1.1">
   <refentryinfo>
-    <title>polkit-action</title>
+    <title>polkit-action-1</title>
     <date>August 2007</date>
-    <productname>PolicyKit</productname>
+    <productname>PolicyKit-1</productname>
   </refentryinfo>
   
   <refmeta>
-    <refentrytitle>polkit-action</refentrytitle>
+    <refentrytitle>polkit-action-1</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="version"></refmiscinfo>
   </refmeta>
   
   <refnamediv>
-    <refname>polkit-action</refname>
+    <refname>polkit-action-1</refname>
     <refpurpose>List and modify registered PolicyKit actions</refpurpose>
   </refnamediv>
   
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>polkit-action</command>
+      <command>polkit-action-1</command>
       <arg><option>--action <replaceable>action</replaceable></option></arg>
       <arg><option>--reset-defaults <replaceable>action</replaceable></option></arg>
       <arg><option>--show-overrides</option></arg>
@@ -33,7 +33,7 @@
   <refsect1>
     <title>DESCRIPTION</title> 
     <para>
-      polkit-action is used to list and modify the PolicyKit actions
+      polkit-action-1 is used to list and modify the PolicyKit actions
       that are registered on the system.
     </para>
   </refsect1>
@@ -174,8 +174,8 @@
     <title>BUGS</title> 
     <para>
       Please send bug reports to either the distribution or the
-      hal mailing list,
-      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+      polkit-devel mailing list,
+      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>.
       to subscribe.
     </para>
   </refsect1>
@@ -187,10 +187,7 @@
         <refentrytitle>PolicyKit</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
-      </citerefentry>, 
-      <citerefentry>
-        <refentrytitle>polkit-auth</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-auth-1</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

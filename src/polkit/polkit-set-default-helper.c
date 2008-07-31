@@ -51,8 +51,8 @@
 #include <dirent.h>
 #include <utime.h>
 
+#include <polkit/polkit.h>
 #include <polkit/polkit-private.h>
-#include <polkit-dbus/polkit-dbus.h>
 
 #ifdef HAVE_SOLARIS
 #define LOG_AUTHPRIV    (10<<3)
@@ -69,7 +69,7 @@ set_default (const char *action_id, const char *any, const char *inactive, const
         contents = NULL;
         ret = FALSE;
 
-        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.defaults-override", action_id);
+        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/polkit-public-1/%s.defaults-override", action_id);
         if (path == NULL)
                 goto out;
 
@@ -101,7 +101,7 @@ clear_default (const char *action_id)
 
         ret = FALSE;
 
-        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.defaults-override", action_id);
+        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/polkit-public-1/%s.defaults-override", action_id);
         if (path == NULL)
                 goto out;
 
@@ -133,7 +133,7 @@ main (int argc, char *argv[])
         /* set a minimal environment */
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 
-        openlog ("polkit-set-default-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
+        openlog ("polkit-set-default-helper-1", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
         /* check for correct invocation */
         if (! (argc == 3 || argc == 6)) {
@@ -214,9 +214,9 @@ main (int argc, char *argv[])
         }
 
         /* trigger a reload */
-        if (utimes (PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", NULL) != 0) {
+        if (utimes (PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload", NULL) != 0) {
                 kit_warning ("Error updating access+modification time on file '%s': %m\n", 
-                             PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload");
+                             PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload");
         }
 
         ret = 0;

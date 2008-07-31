@@ -278,13 +278,13 @@ _authdb_get_auths_for_uid (PolKitAuthorizationDB *authdb,
         char helper_buf[256];
         char *helper_bin_dir;
         if ((helper_bin_dir = getenv ("POLKIT_TEST_BUILD_DIR")) != NULL) {
-                kit_assert ((size_t) snprintf (helper_buf, sizeof (helper_buf), "%s/src/polkit-dbus/polkit-read-auth-helper", helper_bin_dir) < sizeof (helper_buf));
+                kit_assert ((size_t) snprintf (helper_buf, sizeof (helper_buf), "%s/src/polkit/polkit-read-auth-helper-1", helper_bin_dir) < sizeof (helper_buf));
                 helper_argv[0] = helper_buf;
         } else {
-                helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper";
+                helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper-1";
         }
 #else
-        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper";
+        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-read-auth-helper-1";
 #endif
 
         /* first, see if this is in the cache */
@@ -1042,13 +1042,13 @@ polkit_authorization_db_revoke_entry (PolKitAuthorizationDB *authdb,
         char helper_buf[256];
         char *helper_bin_dir;
         if ((helper_bin_dir = getenv ("POLKIT_TEST_BUILD_DIR")) != NULL) {
-                kit_assert ((size_t) snprintf (helper_buf, sizeof (helper_buf), "%s/src/polkit-grant/polkit-revoke-helper", helper_bin_dir) < sizeof (helper_buf));
+                kit_assert ((size_t) snprintf (helper_buf, sizeof (helper_buf), "%s/src/polkit-grant/polkit-revoke-helper-1", helper_bin_dir) < sizeof (helper_buf));
                 helper_argv[0] = helper_buf;
         } else {
-                helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper";
+                helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper-1";
         }
 #else
-        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper";
+        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-revoke-helper-1";
 #endif
 
         helper_argv[1] = (char *) auth_file_entry;
@@ -1236,22 +1236,22 @@ _run_test (void)
                 goto out;
 
         /* seed the authdb with known defaults */
-        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/PolicyKit/user-pu1.auths", 0644, 
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/polkit-1/user-pu1.auths", 0644, 
                                     test_pu1_run, sizeof (test_pu1_run) - 1))
                 goto out;
-        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu1.auths", 0644, 
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/polkit-1/user-pu1.auths", 0644, 
                                     test_pu1_lib, sizeof (test_pu1_lib) - 1))
                 goto out;
-        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/PolicyKit/user-pu2.auths", 0644, 
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/polkit-1/user-pu2.auths", 0644, 
                                     test_pu2_run, sizeof (test_pu2_run) - 1))
                 goto out;
-        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu2.auths", 0644, 
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/polkit-1/user-pu2.auths", 0644, 
                                     test_pu2_lib, sizeof (test_pu2_lib) - 1))
                 goto out;
-        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/PolicyKit/user-pu3.auths", 0644, 
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/run/polkit-1/user-pu3.auths", 0644, 
                                     test_pu3_run, strlen (test_pu3_run)))
                 goto out;
-        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/PolicyKit/user-pu3.auths", 0644, 
+        if (!kit_file_set_contents (TEST_DATA_DIR "authdb-test/lib/polkit-1/user-pu3.auths", 0644, 
                                     test_pu3_lib, sizeof (test_pu3_lib) - 1))
                 goto out;
 
@@ -1320,6 +1320,11 @@ _run_test (void)
         if (polkit_authorization_db_is_caller_authorized (adb, action, caller, FALSE, &is_auth, &is_neg, &error)) {
                 kit_assert (! polkit_error_is_set (error) && !is_auth && !is_neg);
         } else {
+                kit_warning ("%p: %d: %s: %s", 
+                             error, 
+                             polkit_error_get_error_code (error), 
+                             polkit_error_get_error_name (error),
+                             polkit_error_get_error_message (error));
                 kit_assert (polkit_error_is_set (error) && 
                             polkit_error_get_error_code (error) == POLKIT_ERROR_OUT_OF_MEMORY);
                 polkit_error_free (error);

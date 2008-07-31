@@ -44,9 +44,10 @@
 #include <polkit/polkit-policy-file.h>
 #include <polkit/polkit-policy-cache.h>
 #include <polkit/polkit-policy-default.h>
-#include <polkit/polkit-config.h>
 #include <polkit/polkit-authorization.h>
 #include <polkit/polkit-authorization-db.h>
+#include <polkit/polkit-tracker.h>
+#include <polkit/polkit-simple.h>
 #undef _POLKIT_INSIDE_POLKIT_H
 
 #endif /* POLKIT_H */

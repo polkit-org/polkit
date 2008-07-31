@@ -1,19 +1,19 @@
-<refentry id="PolicyKit.8">
+<refentry id="PolicyKit-1.8">
   <refentryinfo>
-    <title>PolicyKit</title>
+    <title>PolicyKit-1</title>
     <date>August 2007</date>
-    <productname>PolicyKit</productname>
+    <productname>PolicyKit-1</productname>
   </refentryinfo>
   
   <refmeta>
-    <refentrytitle>PolicyKit</refentrytitle>
+    <refentrytitle>PolicyKit-1</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class="version"></refmiscinfo>
   </refmeta>
   
   <refnamediv>
-    <refname>PolicyKit</refname>
-    <refpurpose>Centralized policy management</refpurpose>
+    <refname>PolicyKit-1</refname>
+    <refpurpose>Authorization API</refpurpose>
   </refnamediv>
   
   <refsect1><title>DESCRIPTION</title> 
@@ -42,8 +42,8 @@
     <title>BUGS</title> 
     <para>
       Please send bug reports to either the distribution or the
-      hal mailing list,
-      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+      polkit-devel mailing list,
+      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>.
       to subscribe.
     </para>
   </refsect1>
@@ -52,13 +52,10 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
+        <refentrytitle>polkit-action-1</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>polkit-action</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>, 
-      <citerefentry>
-        <refentrytitle>polkit-auth</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-auth-1</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

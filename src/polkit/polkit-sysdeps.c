@@ -320,7 +320,7 @@ polkit_sysdeps_get_exe_for_pid_with_helper (pid_t pid, char *out_buf, size_t buf
         ret = polkit_sysdeps_get_exe_for_pid (pid, out_buf, buf_size);
         if (ret == -1) {
                 char buf[32];
-                char *helper_argv[3] = {PACKAGE_LIBEXEC_DIR "/polkit-resolve-exe-helper", buf, NULL};
+                char *helper_argv[3] = {PACKAGE_LIBEXEC_DIR "/polkit-resolve-exe-helper-1", buf, NULL};
                 char *standard_output;
                 int exit_status;
 

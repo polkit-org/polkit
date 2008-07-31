@@ -27,14 +27,14 @@
  *
  **************************************************************************/
 
-#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_DBUS_H)
-#error "Only <polkit-dbus/polkit-dbus.h> can be included directly, this file may disappear or change contents."
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
 #endif
 
 #ifndef POLKIT_SIMPLE_H
 #define POLKIT_SIMPLE_H
 
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 
 POLKIT_BEGIN_DECLS
 

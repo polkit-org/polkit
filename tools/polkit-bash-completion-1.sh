@@ -4,7 +4,7 @@
 
 ####################################################################################################
 
-__polkit_auth() {
+__polkit_auth_1() {
     local IFS=$'\n'
     local cur="${COMP_WORDS[COMP_CWORD]}"
 
@@ -15,13 +15,13 @@ __polkit_auth() {
         2)
 	    case "${COMP_WORDS[1]}" in
                 --obtain)   
-                    COMPREPLY=($(compgen -W "$(polkit-auth --show-obtainable)" -- $cur))
+                    COMPREPLY=($(compgen -W "$(polkit-auth-1 --show-obtainable)" -- $cur))
                     ;;
                 --revoke) 
-                    COMPREPLY=($(compgen -W "$(polkit-auth --explicit)" -- $cur))
+                    COMPREPLY=($(compgen -W "$(polkit-auth-1 --explicit)" -- $cur))
                     ;;
                 --grant|--block)
-                    COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
+                    COMPREPLY=($(compgen -W "$(polkit-action-1)" -- $cur))
                     ;;
                 --user)   
                     COMPREPLY=($(compgen -u -- $cur))
@@ -45,20 +45,20 @@ __polkit_auth() {
                         --user)
                             local afou
                             # we may not be authorized to read the explicit auths for the given user..
-                            afou=$(polkit-auth --user ${COMP_WORDS[2]} --explicit 2> /dev/null) 
+                            afou=$(polkit-auth-1 --user ${COMP_WORDS[2]} --explicit 2> /dev/null) 
                             if [ $? != 0 ] ; then
                                 # .. so if that fails, fall back to showing all actions
-                                afou=$(polkit-action)
+                                afou=$(polkit-action-1)
                             fi
                             COMPREPLY=($(compgen -W "$afou" -- $cur))
                             ;;
                         *)
-                            COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
+                            COMPREPLY=($(compgen -W "$(polkit-action-1)" -- $cur))
                             ;;
                     esac
                     ;;
                 --grant|--block)
-                    COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
+                    COMPREPLY=($(compgen -W "$(polkit-action-1)" -- $cur))
                     ;;
                 --constraint)
                     COMPREPLY=($(IFS=: compgen -S' ' -W "local:active:exe\::selinux_context\:" -- $cur))
@@ -92,7 +92,7 @@ __polkit_auth() {
 
 ####################################################################################################
 
-__polkit_action() {
+__polkit_action_1() {
     local IFS=$'\n'
     local cur="${COMP_WORDS[COMP_CWORD]}"
 
@@ -103,10 +103,10 @@ __polkit_action() {
         2)
 	    case "${COMP_WORDS[1]}" in
                 --action|--set-defaults-any|--set-defaults-inactive|--set-defaults-active) 
-                    COMPREPLY=($(compgen -W "$(polkit-action)" -- $cur))
+                    COMPREPLY=($(compgen -W "$(polkit-action-1)" -- $cur))
                     ;;
                 --reset-defaults) 
-                    COMPREPLY=($(compgen -W "$(polkit-action --show-overrides)" -- $cur))
+                    COMPREPLY=($(compgen -W "$(polkit-action-1 --show-overrides)" -- $cur))
                     ;;
             esac
             ;;
@@ -121,5 +121,5 @@ __polkit_action() {
 
 ####################################################################################################
 
-complete -o nospace -F __polkit_auth polkit-auth
-complete -o nospace -F __polkit_action polkit-action
+complete -o nospace -F __polkit_auth_1 polkit-auth-1
+complete -o nospace -F __polkit_action_1 polkit-action-1

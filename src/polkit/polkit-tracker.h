@@ -1,8 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-dbus.h : helper library for obtaining seat, session and
- * caller information via D-Bus and ConsoleKit
+ * polkit-tracker.h : track callers
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -28,15 +27,16 @@
  *
  **************************************************************************/
 
-#ifndef POLKIT_DBUS_H
-#define POLKIT_DBUS_H
+#if !defined (POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
+#endif
 
-#include <polkit/polkit.h>
+#ifndef POLKIT_TRACKER_H
+#define POLKIT_TRACKER_H
+
 #include <dbus/dbus.h>
-
-#define _POLKIT_INSIDE_POLKIT_DBUS_H 1
-#include <polkit-dbus/polkit-simple.h>
-#undef _POLKIT_INSIDE_POLKIT_DBUS_H
+#include <polkit/polkit-caller.h>
+#include <polkit/polkit-authorization.h>
 
 POLKIT_BEGIN_DECLS
 
@@ -49,7 +49,6 @@ PolKitCaller  *polkit_caller_new_from_pid  (DBusConnection *con, pid_t pid, DBus
 
 polkit_bool_t  polkit_is_authorization_relevant (DBusConnection *con, PolKitAuthorization *auth, DBusError *error);
 
-
 struct _PolKitTracker;
 typedef struct _PolKitTracker PolKitTracker;
 
@@ -58,15 +57,14 @@ PolKitTracker *polkit_tracker_ref                        (PolKitTracker *pk_trac
 void           polkit_tracker_unref                      (PolKitTracker *pk_tracker);
 void           polkit_tracker_set_system_bus_connection  (PolKitTracker *pk_tracker, DBusConnection *con);
 void           polkit_tracker_init                       (PolKitTracker *pk_tracker);
-
 polkit_bool_t  polkit_tracker_dbus_func                  (PolKitTracker *pk_tracker, DBusMessage *message);
-
 PolKitCaller  *polkit_tracker_get_caller_from_dbus_name  (PolKitTracker *pk_tracker, const char *dbus_name, DBusError *error);
-
 PolKitCaller  *polkit_tracker_get_caller_from_pid        (PolKitTracker *pk_tracker, pid_t pid, DBusError *error);
-
-polkit_bool_t  polkit_tracker_is_authorization_relevant  (PolKitTracker *pk_tracker, PolKitAuthorization *auth, DBusError *error);
+polkit_bool_t
+polkit_tracker_is_authorization_relevant (PolKitTracker *pk_tracker, PolKitAuthorization *auth, DBusError *error);
 
 POLKIT_END_DECLS
 
-#endif /* POLKIT_DBUS_H */
+#endif /* POLKIT_ACTION_H */
+
+

@@ -1,5 +1,5 @@
 
-SUBDIRS = kit polkit polkit-dbus polkit-grant
+SUBDIRS = kit polkit polkit-grant
 
 clean-local :
 	rm -f *~

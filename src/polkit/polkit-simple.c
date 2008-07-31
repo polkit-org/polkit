@@ -53,8 +53,6 @@
 
 #include <polkit/polkit-private.h>
 #include "polkit-simple.h"
-#include "polkit-dbus.h"
-
 
 /**
  * polkit_check_auth:

@@ -12,15 +12,15 @@ documentation, mailing lists, etc.
 Rationale for permissions/modes for the default backend
 -------------------------------------------------------
 
-0770 root:polkituser /var/run/PolicyKit
-0770 root:polkituser /var/lib/PolicyKit
+0770 root:polkituser /var/run/polkit-1
+0770 root:polkituser /var/lib/polkit-1
 
 We store authorizations for each user here. Since we don't want users
 to know what authorizations other users has, no one can read these
 files. However, when checking authorizations we need to be able to
 read from here; we use this helper
 
-2755 root:polkituser /usr/libexec/polkit-read-auth-helper
+2755 root:polkituser /usr/libexec/polkit-read-auth-helper-1
 
 which can read from here since it's setgid 'polkituser'. This helper
 will refuse to return authorizations for other users than the calling
@@ -29,16 +29,16 @@ user except if the calling user is authorized for org.fd.pk.read.
 We also want to be able to grant authorizations through authentication.
 That happens with this helper
 
-2755 root:polkituser /usr/libexec/polkit-grant-helper
+2755 root:polkituser /usr/libexec/polkit-grant-helper-1
 
 This program is setgid 'polkituser' so it can write files in
-/var/{run,lib}/PolicyKit. Note that these files are created with mode
+/var/{run,lib}/polkit-1. Note that these files are created with mode
 464.
 
 To do the actual authentication check when granting authorizations
-through authentication, polkit-grant-helper uses another helper
+through authentication, polkit-grant-helper-1 uses another helper
 
-4754 root:polkituser /usr/libexec/polkit-grant-helper-pam
+4754 root:polkituser /usr/libexec/polkit-grant-helper-pam-1
 
 This one is setuid root because checking authentications might need
 require that (you may be checking the root password). The reason
@@ -48,33 +48,33 @@ can do this. Which polkit-grant-helper is.
 
 On to
 
-2755 root:polkituser /libexec/polkit-revoke-helper
+2755 root:polkituser /libexec/polkit-revoke-helper-1
 
 This one is used to revoke authorizations. It will only allow uid 0 and
 users with the org.fd.pk.revoke authorization to do so. It needs to be
 setgid polkituser to be able to modify authorization files
-in /var/{run,lib}/PolicyKit.
+in /var/{run,lib}/polkit-1.
 
-2755 root:polkituser /usr/libexec/polkit-explicit-grant-helper
+2755 root:polkituser /usr/libexec/polkit-explicit-grant-helper-1
 
 Same story as for polkit-revoke-helper only this grants authorizations.
 Only allowed for uid 0 and users with the org.fd.pk.grant authorization.
 
 On to
 
-0755 polkituser:root /var/lib/PolicyKit-public
+0755 polkituser:root /var/lib/polkit-public-1
 
 This is where we store modifications to the defaults. Anyone should be
 able to read these files. They are created with mode 644. These files
 are written / modified by this helper
 
-4755 polkituser:root /usr/libexec/polkit-set-default-helper
+4755 polkituser:root /usr/libexec/polkit-set-default-helper-1
 
 which is setuid polkituser to be able to write/modify files.
 
 On to
 
-4755 root:root /usr/libexec/polkit-resolve-exe-helper
+4755 root:root /usr/libexec/polkit-resolve-exe-helper-1
 
 This is used to find the executable name for a process. On Linux this is
 the /proc/<pid>/exe symlink and you can only do this for processes you
@@ -83,7 +83,7 @@ you but only if you have the org.fd.pk.read authorization. This is
 important to let e.g. user 'haldaemon' check authorizations for a user
 requesting service.
 
-0664 polkituser:polkituser /var/lib/misc/PolicyKit.reload
+0664 polkituser:polkituser /var/lib/misc/polkit-1.reload
 
 This file is used by libpolkit to detect when something has changed
 (authorizations granted/revoked, defaults changed etc.). It is

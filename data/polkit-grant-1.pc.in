@@ -1,0 +1,11 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: polkit-grant-1
+Description: Library for obtaining authorizations through authentication
+Version: @VERSION@
+Requires: polkit-1
+Libs: -L${libdir} -lpolkit-grant-1
+Cflags: -I${includedir}/polkit-1

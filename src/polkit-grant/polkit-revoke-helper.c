@@ -48,7 +48,7 @@
 #include <utime.h>
 #include <fcntl.h>
 
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 #include <polkit/polkit-private.h>
 
 #ifdef HAVE_SOLARIS
@@ -118,7 +118,7 @@ main (int argc, char *argv[])
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 #endif
 
-        openlog ("polkit-revoke-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
+        openlog ("polkit-revoke-helper-1", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
         /* check for correct invocation */
         if (argc != 4) {
@@ -204,12 +204,12 @@ skip_check:
         if ((test_dir = getenv ("POLKIT_TEST_LOCALSTATE_DIR")) == NULL) {
                 test_dir = PACKAGE_LOCALSTATE_DIR;
         }
-        kit_assert ((size_t) snprintf (dir_run, sizeof (dir_run), "%s/run/PolicyKit", test_dir) < sizeof (dir_run));
-        kit_assert ((size_t) snprintf (dir_lib, sizeof (dir_lib), "%s/lib/PolicyKit", test_dir) < sizeof (dir_lib));
+        kit_assert ((size_t) snprintf (dir_run, sizeof (dir_run), "%s/run/polkit-1", test_dir) < sizeof (dir_run));
+        kit_assert ((size_t) snprintf (dir_lib, sizeof (dir_lib), "%s/lib/polkit-1", test_dir) < sizeof (dir_lib));
 
 #else
-        char *dir_run = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
-        char *dir_lib = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+        char *dir_run = PACKAGE_LOCALSTATE_DIR "/run/polkit-1";
+        char *dir_lib = PACKAGE_LOCALSTATE_DIR "/lib/polkit-1";
 #endif
 
 
@@ -347,9 +347,9 @@ skip_check:
                 goto no_reload;
 #endif
         /* trigger a reload */
-        if (utimes (PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", NULL) != 0) {
+        if (utimes (PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload", NULL) != 0) {
                 fprintf (stderr, "Error updating access+modification time on file '%s': %m\n", 
-                         PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload");
+                         PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload");
         }
 #ifdef POLKIT_BUILD_TESTS
 no_reload:

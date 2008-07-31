@@ -4,7 +4,7 @@
 <!-- This file is provided by the PolicyKit project -->
 
 <node>
-  <interface name="org.freedesktop.PolicyKit.AuthenticationAgent">
+  <interface name="org.freedesktop.PolicyKit.AuthenticationAgent1">
 
     <method name="ObtainAuthorization">
       <!-- IN: PolicyKit action identifier; see PolKitAction -->

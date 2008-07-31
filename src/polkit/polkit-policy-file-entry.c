@@ -140,7 +140,7 @@ _polkit_policy_file_entry_new   (const char *action_id,
 
 #ifdef POLKIT_AUTHDB_DEFAULT
         /* read override file */
-        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit-public/%s.defaults-override", action_id);
+        path = kit_strdup_printf (PACKAGE_LOCALSTATE_DIR "/lib/polkit-public-1/%s.defaults-override", action_id);
         if (path == NULL)
                 goto error;
         if (!kit_file_get_contents (path, &contents, &contents_size)) {
@@ -482,7 +482,7 @@ polkit_policy_file_entry_set_default (PolKitPolicyFileEntry  *policy_file_entry,
 #ifndef POLKIT_AUTHDB_DEFAULT
         polkit_error_set_error (error, POLKIT_ERROR_NOT_SUPPORTED, "Not supported");
 #else
-        char *helper_argv[7] = {PACKAGE_LIBEXEC_DIR "/polkit-set-default-helper", 
+        char *helper_argv[7] = {PACKAGE_LIBEXEC_DIR "/polkit-set-default-helper-1", 
                                 NULL, /* arg1: action_id */
                                 NULL, /* arg2: "clear" or "set" */
                                 NULL, /* arg3: result_any */

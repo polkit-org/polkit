@@ -1,8 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-dbus.h : helper library for obtaining seat, session and
- * caller information via D-Bus and ConsoleKit
+ * polkit-tracker.c : track callers
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -28,15 +27,32 @@
  *
  **************************************************************************/
 
+#ifdef HAVE_CONFIG_H
+#  include <config.h>
+#endif
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <grp.h>
+#include <unistd.h>
+#include <errno.h>
+#include <ctype.h>
+
+#include "polkit-debug.h"
+#include "polkit-tracker.h"
+
 /**
- * SECTION:polkit-dbus
- * @title: Caller Determination
+ * SECTION:polkit-tracker
+ * @title: Track callers
  * @short_description: Obtaining seat, session and caller information
  * via D-Bus and ConsoleKit.
  *
- * Helper library for obtaining seat, session and caller information
+ * Helper class for obtaining seat, session and caller information
  * via D-Bus and ConsoleKit. This library is only useful when writing
- * a mechanism. 
+ * a mechanism.
  *
  * If the mechanism itself is a daemon exposing a remote services via
  * the system message bus it's often a better idea, to reduce
@@ -44,7 +60,6 @@
  * the low-level functions polkit_caller_new_from_dbus_name() and
  * polkit_caller_new_from_pid().
  *
- * These functions are in <literal>libpolkit-dbus</literal>.
  **/
 
 #ifdef HAVE_CONFIG_H
@@ -66,10 +81,10 @@
 #include <selinux/selinux.h>
 #endif
 
-#include "polkit-dbus.h"
 #include <polkit/polkit-debug.h>
 #include <polkit/polkit-test.h>
 #include <polkit/polkit-private.h>
+#include "polkit-tracker.h"
 
 /**
  * polkit_session_new_from_objpath:
@@ -1523,7 +1538,7 @@ polkit_tracker_get_caller_from_pid (PolKitTracker *pk_tracker, pid_t pid, DBusEr
  *
  * Since: 0.7
  */
-polkit_bool_t  
+polkit_bool_t
 polkit_tracker_is_authorization_relevant (PolKitTracker *pk_tracker, PolKitAuthorization *auth, DBusError *error)
 {
 
@@ -1539,20 +1554,3 @@ polkit_tracker_is_authorization_relevant (PolKitTracker *pk_tracker, PolKitAutho
          */
         return _polkit_is_authorization_relevant_internal (pk_tracker->con, auth, NULL, error);
 }
-
-#ifdef POLKIT_BUILD_TESTS
-
-static polkit_bool_t
-_run_test (void)
-{
-        return TRUE;
-}
-
-KitTest _test_polkit_dbus = {
-        "polkit_dbus",
-        NULL,
-        NULL,
-        _run_test
-};
-
-#endif /* POLKIT_BUILD_TESTS */

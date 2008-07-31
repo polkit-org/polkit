@@ -277,7 +277,7 @@ polkit_policy_cache_debug (PolKitPolicyCache *policy_cache)
  * 
  * Given a action identifier, find the object describing the
  * definition of the policy; e.g. data stemming from files in
- * /usr/share/PolicyKit/policy.
+ * /usr/share/polkit-1/actions.
  * 
  * Returns: A #PolKitPolicyFileEntry entry on sucess; otherwise
  * #NULL if the action wasn't identified. Caller shall not unref
@@ -318,7 +318,7 @@ out:
  * 
  * Given a action, find the object describing the definition of the
  * policy; e.g. data stemming from files in
- * /usr/share/PolicyKit/policy.
+ * /usr/share/polkit-1/actions.
  * 
  * Returns: A #PolKitPolicyFileEntry entry on sucess; otherwise
  * #NULL if the action wasn't identified. Caller shall not unref

@@ -54,7 +54,7 @@
 #define LOG_AUTHPRIV    (10<<3)
 #endif
 
-#include <polkit-dbus/polkit-dbus.h>
+#include <polkit/polkit.h>
 #include <polkit/polkit-private.h>
 
 static polkit_bool_t
@@ -306,7 +306,7 @@ main (int argc, char *argv[])
         setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
 #endif
 
-        openlog ("polkit-read-auth-helper", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
+        openlog ("polkit-read-auth-helper-1", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
         /* check for correct invocation */
         if (argc != 2) {
@@ -391,12 +391,12 @@ skip_check:
         if ((test_dir = getenv ("POLKIT_TEST_LOCALSTATE_DIR")) == NULL) {
                 test_dir = PACKAGE_LOCALSTATE_DIR;
         }
-        kit_assert ((size_t) snprintf (dir_run, sizeof (dir_run), "%s/run/PolicyKit", test_dir) < sizeof (dir_run));
-        kit_assert ((size_t) snprintf (dir_lib, sizeof (dir_lib), "%s/lib/PolicyKit", test_dir) < sizeof (dir_lib));
+        kit_assert ((size_t) snprintf (dir_run, sizeof (dir_run), "%s/run/polkit-1", test_dir) < sizeof (dir_run));
+        kit_assert ((size_t) snprintf (dir_lib, sizeof (dir_lib), "%s/lib/polkit-1", test_dir) < sizeof (dir_lib));
 
 #else
-        char *dir_run = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
-        char *dir_lib = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+        char *dir_run = PACKAGE_LOCALSTATE_DIR "/run/polkit-1";
+        char *dir_lib = PACKAGE_LOCALSTATE_DIR "/lib/polkit-1";
 #endif
 
         if (requesting_info_for_uid == (uid_t) -1) {

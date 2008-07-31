@@ -1,24 +1,24 @@
-<refentry id="polkit-auth.1">
+<refentry id="polkit-auth-1.1">
   <refentryinfo>
-    <title>polkit-auth</title>
+    <title>polkit-auth-1</title>
     <date>August 2007</date>
-    <productname>PolicyKit</productname>
+    <productname>PolicyKit-1</productname>
   </refentryinfo>
   
   <refmeta>
-    <refentrytitle>polkit-auth</refentrytitle>
+    <refentrytitle>polkit-auth-1</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo class="version"></refmiscinfo>
   </refmeta>
   
   <refnamediv>
-    <refname>polkit-auth</refname>
+    <refname>polkit-auth-1</refname>
     <refpurpose>Manage authorizations</refpurpose>
   </refnamediv>
   
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>polkit-auth</command>
+      <command>polkit-auth-1</command>
       <arg><option>--obtain <replaceable>action</replaceable></option></arg>
       <arg><option>--show-obtainable</option></arg>
       <arg><option><arg><option>--user <replaceable>user</replaceable></option></arg> --explicit</option></arg>
@@ -34,7 +34,7 @@
   <refsect1>
     <title>DESCRIPTION</title> 
     <para>
-      polkit-auth is used to inspect, obtain, grant and revoke
+      polkit-auth-1 is used to inspect, obtain, grant and revoke
       PolicyKit authorizations. If invoked without any options, the
       authorizations of the calling process will be printed.
     </para>
@@ -73,7 +73,7 @@
             POLKIT_AUTH_FORCE_TEXT is set. If the environment variable
             POLKIT_AUTH_GRANT_TO_PID is set, the authorization will be
             granted to that process id instead of the invoking process
-            (e.g. the shell from which polkit-auth is launched).
+            (e.g. the shell from which polkit-auth-1 is launched).
           </para>
         </listitem>
       </varlistentry>
@@ -308,7 +308,7 @@
       <citerefentry>
         <refentrytitle>bash</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
-      shell. For completion to properly work for polkit-auth,
+      shell. For completion to properly work for polkit-auth-1,
       arguments should be entered in the order specified in this
       manual page; for example. <option>--user</option> should be
       specified before <option>--revoke</option> to complete only on
@@ -323,8 +323,8 @@
     <title>BUGS</title> 
     <para>
       Please send bug reports to either the distribution or the
-      hal mailing list,
-      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/hal"/>.
+      polkit-devel mailing list,
+      see <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>.
       to subscribe.
     </para>
   </refsect1>
@@ -333,13 +333,10 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>PolicyKit</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>, 
       <citerefentry>
-        <refentrytitle>PolicyKit.conf</refentrytitle><manvolnum>5</manvolnum>
-      </citerefentry>, 
-      <citerefentry>
-        <refentrytitle>polkit-action</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>polkit-action-1</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

@@ -99,9 +99,9 @@ _polkit_authorization_db_auth_file_add (polkit_bool_t transient, uid_t uid, char
         char *newline = "\n";
 
         if (transient)
-                root = PACKAGE_LOCALSTATE_DIR "/run/PolicyKit";
+                root = PACKAGE_LOCALSTATE_DIR "/run/polkit-1";
         else
-                root = PACKAGE_LOCALSTATE_DIR "/lib/PolicyKit";
+                root = PACKAGE_LOCALSTATE_DIR "/lib/polkit-1";
 
         ret = FALSE;
         path = NULL;
@@ -202,9 +202,9 @@ _polkit_authorization_db_auth_file_add (polkit_bool_t transient, uid_t uid, char
         }
 
         /* trigger a reload */
-        if (utimes (PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", NULL) != 0) {
+        if (utimes (PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload", NULL) != 0) {
                 g_warning ("Error updating access+modification time on file '%s': %m\n", 
-                           PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload");
+                           PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload");
         }
 
         ret = TRUE;
@@ -738,7 +738,7 @@ _grant_internal (PolKitAuthorizationDB          *authdb,
                  polkit_bool_t                   is_negative)
 {
         GError *g_error;
-        char *helper_argv[6] = {PACKAGE_LIBEXEC_DIR "/polkit-explicit-grant-helper", NULL, NULL, NULL, NULL, NULL};
+        char *helper_argv[6] = {PACKAGE_LIBEXEC_DIR "/polkit-explicit-grant-helper-1", NULL, NULL, NULL, NULL, NULL};
         gboolean ret;
         gint exit_status;
         char cbuf[1024];

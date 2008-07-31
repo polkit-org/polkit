@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59c)
-AC_INIT(PolicyKit, 0.9, http://lists.freedesktop.org/mailman/listinfo/polkit-devel)
-AM_INIT_AUTOMAKE(PolicyKit, 0.9)
+AC_INIT(PolicyKit, 0.90, http://lists.freedesktop.org/mailman/listinfo/polkit-devel)
+AM_INIT_AUTOMAKE(PolicyKit, 0.90)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
@@ -10,7 +10,7 @@ AM_MAINTAINER_MODE
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details
 #
-LT_CURRENT=2
+LT_CURRENT=1
 LT_REVISION=0
 LT_AGE=0
 AC_SUBST(LT_CURRENT)
@@ -560,16 +560,13 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 AC_OUTPUT([
 Makefile
 data/Makefile
-data/polkit
-data/polkit.pc
-data/polkit-dbus.pc
-data/polkit-grant.pc
+data/polkit-grant-1
+data/polkit-1.pc
+data/polkit-grant-1.pc
 src/Makefile
 src/kit/Makefile
 src/polkit/Makefile
-src/polkit-dbus/Makefile
 src/polkit-grant/Makefile
-polkitd/Makefile
 tools/Makefile
 doc/Makefile
 doc/version.xml
@@ -641,36 +638,36 @@ if test "${POLKIT_AUTHDB}" = default ; then
   echo "NOTE: Remember to create user ${POLKIT_USER} and group ${POLKIT_GROUP}"
   echo "      before 'make install'"
   echo
-  echo "NOTE: The directories ${localstatedir}/run/PolicyKit and ${localstatedir}/lib/PolicyKit will be"
+  echo "NOTE: The directories ${localstatedir}/run/polkit-1 and ${localstatedir}/lib/polkit-1 will be"
   echo "      owned by group ${POLKIT_GROUP} and will be mode 770."
   echo
-  echo "NOTE: The directory ${localstatedir}/lib/PolicyKit-public will be"
+  echo "NOTE: The directory ${localstatedir}/lib/polkit-public-1 will be"
   echo "      owned by user ${POLKIT_USER} and will be mode 755."
   echo
-  echo "NOTE: The file ${localstatedir}/lib/misc/PolicyKit.reload will be"
+  echo "NOTE: The file ${localstatedir}/lib/misc/polkit-1.reload will be"
   echo "      owned by user ${POLKIT_USER} and group ${POLKIT_GROUP} and will be mode 664."
   echo
-  echo "NOTE: ${libexecdir}/polkit-set-default-helper will be owned by"
+  echo "NOTE: ${libexecdir}/polkit-set-default-helper-1 will be owned by"
   echo "      user ${POLKIT_USER} and installed with mode 4755 (setuid binary)."
   echo
-  echo "NOTE: ${libexecdir}/polkit-read-auth-helper will be owned by"
+  echo "NOTE: ${libexecdir}/polkit-read-auth-helper-1 will be owned by"
   echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
   echo
-  echo "NOTE: ${libexecdir}/polkit-revoke-helper will be owned by"
+  echo "NOTE: ${libexecdir}/polkit-revoke-helper-1 will be owned by"
   echo "      group '${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
   echo
-  echo "NOTE: ${libexecdir}/polkit-grant-helper will be owned by"
+  echo "NOTE: ${libexecdir}/polkit-grant-helper-1 will be owned by"
   echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
   echo
-  echo "NOTE: ${libexecdir}/polkit-explicit-grant-helper will be owned by"
+  echo "NOTE: ${libexecdir}/polkit-explicit-grant-helper-1 will be owned by"
   echo "      group ${POLKIT_GROUP} and installed with mode 2755 (setgid binary)."
   echo
-  echo "NOTE: ${libexecdir}/polkit-grant-helper-pam will be owned by group"
+  echo "NOTE: ${libexecdir}/polkit-grant-helper-pam-1 will be owned by group"
   echo "      ${POLKIT_GROUP} and installed with mode 4754 (setuid root binary)."
 fi
 
 echo
-echo "NOTE: ${libexecdir}/polkit-resolve-exe-helper will be installed with"
+echo "NOTE: ${libexecdir}/polkit-resolve-exe-helper-1 will be installed with"
 echo "      mode 4755 (setuid root binary)."
 echo
 echo "NOTE: For packaging, remember to retain the modes and ownership."

@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+policydir=@datarootdir@/polkit-1/policy/
+actiondir=@datarootdir@/polkit-1/policy/
+
+Name: polkit
+Description: Authorization API
+Version: @VERSION@
+Libs: -L${libdir} -lpolkit-1
+Cflags: -I${includedir}/polkit-1

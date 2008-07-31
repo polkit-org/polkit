@@ -53,7 +53,6 @@
 #endif
 #include <syslog.h>
 
-#include "polkit-config.h"
 #include "polkit-debug.h"
 #include "polkit-context.h"
 #include "polkit-policy-cache.h"
@@ -77,9 +76,9 @@
  * decisions. Typically, it's used as a singleton:
  *
  * <itemizedlist>
- * <listitem>First, the Mechanism need to declare one or more PolicyKit Actions by dropping a <literal>.policy</literal> file into <literal>/usr/share/PolicyKit/policy</literal>. This is described in the PolicyKit specification.</listitem>
+ * <listitem>First, the Mechanism need to declare one or more PolicyKit Actions by dropping a <literal>.policy</literal> file into <literal>/usr/share/polkit-1/actions</literal>. This is described in the PolicyKit specification.</listitem>
  * <listitem>The mechanism starts up and uses polkit_context_new() to create a new context</listitem>
- * <listitem>If the mechanism is a long running daemon, it should use polkit_context_set_config_changed() to register a callback when configuration changes. This is useful if, for example, the mechanism needs to revise decisions based on earlier answers from libpolkit. For example, a daemon that manages permissions on <literal>/dev</literal> may want to add/remove ACL's when configuration changes; for example, the system administrator could have changed the PolicyKit configuration file <literal>/etc/PolicyKit/PolicyKit.conf</literal> such that some user is now privileged to access a specific device.</listitem>
+ * <listitem>If the mechanism is a long running daemon, it should use polkit_context_set_config_changed() to register a callback when configuration changes. This is useful if, for example, the mechanism needs to revise decisions based on earlier answers from libpolkit. For example, a daemon that manages permissions on <literal>/dev</literal> may want to add/remove ACL's when configuration changes.
  * <listitem>If polkit_context_set_config_changed() is used, the mechanism must also use polkit_context_set_io_watch_functions() to integrate libpolkit into the mainloop.</listitem>
  * <listitem>The mechanism needs to call polkit_context_init() such that libpolkit can load configuration files and properly initialize.</listitem>
  * <listitem>Whenever the mechanism needs to make a decision whether a caller is allowed to make a perform some action, the mechanism prepares a #PolKitAction and #PolKitCaller object (or #PolKitSession if applicable) and calls polkit_context_can_caller_do_action() (or polkit_context_can_session_do_action() if applicable). The mechanism may use the libpolkit-dbus library (specifically the polkit_caller_new_from_dbus_name() or polkit_caller_new_from_pid() functions) but may opt, for performance reasons, to construct #PolKitCaller (or #PolKitSession if applicable) from it's own cache of information.</listitem>
@@ -111,8 +110,6 @@ struct _PolKitContext
 
         PolKitPolicyCache *priv_cache;
 
-        PolKitConfig *config;
-
         PolKitAuthorizationDB *authdb;
 
         polkit_bool_t load_descriptions;
@@ -120,13 +117,11 @@ struct _PolKitContext
 #ifdef HAVE_INOTIFY
         int inotify_fd;
         int inotify_fd_watch_id;
-        int inotify_config_wd;
         int inotify_policy_wd;
         int inotify_grant_perm_wd;
 #elif HAVE_KQUEUE
 	int kqueue_fd;
 	int kqueue_fd_watch_id;
-	int kqueue_config_fd;
 	int kqueue_policy_fd;
 	int kqueue_grant_perm_fd;
 #endif
@@ -156,7 +151,7 @@ polkit_context_new (void)
  * @error: return location for error
  * 
  * Initializes a new context; loads PolicyKit files from
- * /usr/share/PolicyKit/policy.
+ * /usr/share/polkit-1/actions.
  *
  * Returns: #FALSE if @error was set, otherwise #TRUE
  **/
@@ -169,7 +164,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 
         kit_return_val_if_fail (pk_context != NULL, FALSE);
 
-        pk_context->policy_dir = kit_strdup (PACKAGE_DATA_DIR "/PolicyKit/policy");
+        pk_context->policy_dir = kit_strdup (PACKAGE_DATA_DIR "/polkit-1/actions");
         polkit_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
         /* NOTE: we don't populate the cache until it's needed.. */
@@ -185,35 +180,24 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         goto error;
                 }
 
-                /* Watch the /etc/PolicyKit/PolicyKit.conf file */
-                pk_context->inotify_config_wd = port_add_watch (pk_context->inotify_fd,
-                                                                   PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf",
-                                                                   FILE_MODIFIED | FILE_ATTRIB);
-                if (pk_context->inotify_config_wd < 0) {
-                        polkit_debug ("failed to add watch on file '" PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf': %s",
-                                   strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-
-                /* Watch the /usr/share/PolicyKit/policy directory */
+                /* Watch the /usr/share/polkit-1/actions directory */
                 pk_context->inotify_policy_wd = port_add_watch (pk_context->inotify_fd,
-                                                                   PACKAGE_DATA_DIR "/PolicyKit/policy",
+                                                                   PACKAGE_DATA_DIR "/polkit-1/actions",
                                                                    FILE_MODIFIED | FILE_ATTRIB);
                 if (pk_context->inotify_policy_wd < 0) {
-                        polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/PolicyKit/policy': %s",
+                        polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/polkit-1/actions': %s",
                                    strerror (errno));
                         /* TODO: set error */
                         goto error;
                 }
 
 #ifdef POLKIT_AUTHDB_DEFAULT
-                /* Watch the /var/lib/misc/PolicyKit.reload file */
+                /* Watch the /var/lib/misc/polkit-1.reload file */
                 pk_context->inotify_grant_perm_wd = port_add_watch (pk_context->inotify_fd,
-                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload",
+                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload",
                                                                        FILE_MODIFIED | FILE_ATTRIB);
                 if (pk_context->inotify_grant_perm_wd < 0) {
-                        polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload': %s",
+                        polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload': %s",
                                    strerror (errno));
                         /* TODO: set error */
                         goto error;
@@ -236,31 +220,10 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 			goto error;
 		}
 
-		/* Watch the /etc/PolicyKit/PolicyKit.conf file */
-		pk_context->kqueue_config_fd = open (PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf", O_RDONLY);
-		if (pk_context->kqueue_config_fd < 0) {
-			polkit_debug ("failed '" PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf' for reading: %s",
-				strerror (errno));
-			/* TODO: set error */
-			goto error;
-		}
-
-		EV_SET (&ev, pk_context->kqueue_config_fd, EVFILT_VNODE,
-			EV_ADD | EV_ENABLE | EV_CLEAR,
-			NOTE_DELETE | NOTE_EXTEND | NOTE_WRITE | NOTE_RENAME,
-			0, 0);
-		if (kevent (pk_context->kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
-			polkit_debug ("failed to add watch on file '" PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf': %s",
-				strerror (errno));
-			close (pk_context->kqueue_config_fd);
-			/* TODO: set error */
-			goto error;
-		}
-
-		/* Watch the /usr/share/PolicyKit/policy directory */
-		pk_context->kqueue_policy_fd = open (PACKAGE_DATA_DIR "/PolicyKit/policy", O_RDONLY);
+		/* Watch the /usr/share/polkit-1/actions directory */
+		pk_context->kqueue_policy_fd = open (PACKAGE_DATA_DIR "/polkit-1/actions", O_RDONLY);
 		if (pk_context->kqueue_policy_fd < 0) {
-			polkit_debug ("failed to open '" PACKAGE_DATA_DIR "/PolicyKit/policy for reading: %s",
+			polkit_debug ("failed to open '" PACKAGE_DATA_DIR "/polkit-1/actions for reading: %s",
 				strerror (errno));
 			/* TODO: set error */
 			goto error;
@@ -271,7 +234,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 			NOTE_DELETE | NOTE_EXTEND | NOTE_WRITE | NOTE_RENAME,
 			0, 0);
 		if (kevent (pk_context->kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
-			polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/PolicyKit/policy': %s",
+			polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/polkit-1/actions': %s",
 				strerror (errno));
 			close (pk_context->kqueue_policy_fd);
 			/* TODO: set error */
@@ -279,10 +242,10 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 		}
 
 #ifdef POLKIT_AUTHDB_DEFAULT
-		/* Watch the /var/lib/misc/PolicyKit.reload file */
-		pk_context->kqueue_grant_perm_fd = open (PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", O_RDONLY);
+		/* Watch the /var/lib/misc/polkit-1.reload file */
+		pk_context->kqueue_grant_perm_fd = open (PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload", O_RDONLY);
 		if (pk_context->kqueue_grant_perm_fd < 0) {
-			polkit_debug ("failed to open '" PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload' for reading: %s",
+			polkit_debug ("failed to open '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload' for reading: %s",
 				strerror (errno));
 			/* TODO: set error */
 			goto error;
@@ -293,7 +256,7 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 			NOTE_DELETE | NOTE_EXTEND | NOTE_WRITE | NOTE_RENAME | NOTE_ATTRIB,
 			0, 0);
 		if (kevent (pk_context->kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
-			polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload': %s",
+			polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload': %s",
 				strerror (errno));
 			close (pk_context->kqueue_grant_perm_fd);
 			/* TODO: set error */
@@ -317,35 +280,24 @@ polkit_context_init (PolKitContext *pk_context, PolKitError **error)
                         goto error;
                 }
 
-                /* Watch the /etc/PolicyKit/PolicyKit.conf file */
-                pk_context->inotify_config_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                   PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf", 
-                                                                   IN_MODIFY | IN_CREATE | IN_ATTRIB);
-                if (pk_context->inotify_config_wd < 0) {
-                        polkit_debug ("failed to add watch on file '" PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf': %s",
-                                   strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-
-                /* Watch the /usr/share/PolicyKit/policy directory */
+                /* Watch the /usr/share/polkit-1/actions directory */
                 pk_context->inotify_policy_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                   PACKAGE_DATA_DIR "/PolicyKit/policy", 
+                                                                   PACKAGE_DATA_DIR "/polkit-1/actions", 
                                                                    IN_MODIFY | IN_CREATE | IN_DELETE | IN_ATTRIB);
                 if (pk_context->inotify_policy_wd < 0) {
-                        polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/PolicyKit/policy': %s",
+                        polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/polkit-1/actions': %s",
                                    strerror (errno));
                         /* TODO: set error */
                         goto error;
                 }
 
 #ifdef POLKIT_AUTHDB_DEFAULT
-                /* Watch the /var/lib/misc/PolicyKit.reload file */
+                /* Watch the /var/lib/misc/polkit-1.reload file */
                 pk_context->inotify_grant_perm_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload", 
+                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload", 
                                                                        IN_MODIFY | IN_CREATE | IN_ATTRIB);
                 if (pk_context->inotify_grant_perm_wd < 0) {
-                        polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/PolicyKit.reload': %s",
+                        polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload': %s",
                                    strerror (errno));
                         /* TODO: set error */
                         goto error;
@@ -637,13 +589,7 @@ polkit_context_force_reload (PolKitContext *pk_context)
                 polkit_policy_cache_unref (pk_context->priv_cache);
                 pk_context->priv_cache = NULL;
         }
-        
-        /* Purge existing old config file */
-        polkit_debug ("purging configuration file");
-        if (pk_context->config != NULL) {
-                polkit_config_unref (pk_context->config);
-                pk_context->config = NULL;
-        }
+
         
         /* Purge authorization entries from the cache */
         _polkit_authorization_db_invalidate_cache (pk_context->authdb);
@@ -744,20 +690,13 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                       PolKitError          **error)
 {
         PolKitPolicyCache *cache;
-        PolKitResult result_from_config;
         PolKitResult result_from_grantdb;
         polkit_bool_t from_authdb;
         polkit_bool_t from_authdb_negative;
         PolKitResult result;
-        PolKitConfig *config;
 
         result = POLKIT_RESULT_NO;
         kit_return_val_if_fail (pk_context != NULL, result);
-
-        config = polkit_context_get_config (pk_context, NULL);
-        /* if the configuration file is malformed, always say no */
-        if (config == NULL)
-                goto out;
 
         if (action == NULL || session == NULL)
                 goto out;
@@ -772,8 +711,6 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
         if (cache == NULL)
                 goto out;
 
-        result_from_config = polkit_config_can_session_do_action (config, action, session);
-
         result_from_grantdb = POLKIT_RESULT_UNKNOWN;
         from_authdb_negative = FALSE;
         if (polkit_authorization_db_is_session_authorized (pk_context->authdb, 
@@ -784,28 +721,6 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                                            NULL /* TODO */)) {
                 if (from_authdb)
                         result_from_grantdb = POLKIT_RESULT_YES;
-        }
-
-        /* Fist, the config file is authoritative.. so only use the
-         * value from the authdb if the config file allows to gain via
-         * authentication 
-         */
-        if (result_from_config != POLKIT_RESULT_UNKNOWN) {
-                /* it does.. use it.. although try to use an existing grant if there is one */
-                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
-                    result_from_grantdb == POLKIT_RESULT_YES) {
-                        result = POLKIT_RESULT_YES;
-                } else {
-                        result = result_from_config;
-                }
-                goto found;
         }
 
         /* If we have a positive answer from the authdb, use it */
@@ -884,19 +799,12 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
 {
         PolKitPolicyCache *cache;
         PolKitResult result;
-        PolKitResult result_from_config;
         PolKitResult result_from_grantdb;
-        PolKitConfig *config;
         polkit_bool_t from_authdb;
         polkit_bool_t from_authdb_negative;
 
         result = POLKIT_RESULT_NO;
         kit_return_val_if_fail (pk_context != NULL, result);
-
-        /* if the configuration file is malformed, always say no */
-        config = polkit_context_get_config (pk_context, NULL);
-        if (config == NULL)
-                goto out;
 
         if (action == NULL || caller == NULL)
                 goto out;
@@ -911,8 +819,6 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
         if (!polkit_caller_validate (caller))
                 goto out;
 
-        result_from_config = polkit_config_can_caller_do_action (config, action, caller);
-
         result_from_grantdb = POLKIT_RESULT_UNKNOWN;
         from_authdb_negative = FALSE;
         if (polkit_authorization_db_is_caller_authorized (pk_context->authdb, 
@@ -924,28 +830,6 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                                           NULL /* TODO */)) {
                 if (from_authdb)
                         result_from_grantdb = POLKIT_RESULT_YES;
-        }
-
-        /* Fist, the config file is authoritative.. so only use the
-         * value from the authdb if the config file allows to gain via
-         * authentication 
-         */
-        if (result_from_config != POLKIT_RESULT_UNKNOWN) {
-                /* it does.. use it.. although try to use an existing grant if there is one */
-                if ((result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_ONE_SHOT ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_SESSION ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_ADMIN_AUTH_KEEP_ALWAYS ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_ONE_SHOT ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION ||
-                     result_from_config == POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS) &&
-                    result_from_grantdb == POLKIT_RESULT_YES) {
-                        result = POLKIT_RESULT_YES;
-                } else {
-                        result = result_from_config;
-                }
-                goto found;
         }
 
         /* If we have a positive answer from the authdb, use it */
@@ -1022,45 +906,6 @@ polkit_context_can_caller_do_action (PolKitContext   *pk_context,
                                      PolKitCaller    *caller)
 {
         return polkit_context_is_caller_authorized (pk_context, action, caller, FALSE, NULL);
-}
-
-/**
- * polkit_context_get_config:
- * @pk_context: the PolicyKit context
- * @error: Return location for error
- *
- * Returns an object that provides access to the
- * /etc/PolicyKit/PolicyKit.conf configuration files. Applications
- * using PolicyKit should never use this method; it's only here for
- * integration with other PolicyKit components.
- *
- * Returns: A #PolKitConfig object or NULL if the configuration file
- * is malformed. Caller should not unref this object.
- */
-PolKitConfig *
-polkit_context_get_config (PolKitContext *pk_context, PolKitError **error)
-{
-        if (pk_context->config == NULL) {
-                PolKitError **pk_error;
-                PolKitError *pk_error2;
-
-                pk_error2 = NULL;
-                if (error != NULL)
-                        pk_error = error;
-                else
-                        pk_error = &pk_error2;
-
-                polkit_debug ("loading configuration file");
-                pk_context->config = polkit_config_new (PACKAGE_SYSCONF_DIR "/PolicyKit/PolicyKit.conf", pk_error);
-                /* if configuration file was bad, log it */
-                if (pk_context->config == NULL) {
-                        kit_warning ("failed to load configuration file: %s", 
-                                     polkit_error_get_error_message (*pk_error));
-                        if (pk_error == &pk_error2)
-                                polkit_error_free (*pk_error);
-                }
-        }
-        return pk_context->config;
 }
 
 /**

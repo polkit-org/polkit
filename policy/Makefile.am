@@ -1,12 +1,12 @@
 
-polkit_policydir = $(datadir)/PolicyKit/policy
+polkit_actiondir = $(datadir)/polkit-1/actions
 
-dist_polkit_policy_DATA = org.freedesktop.policykit.policy
+dist_polkit_action_DATA = org.freedesktop.policykit.policy
 
 @INTLTOOL_POLICY_RULE@
 
 check:
-	$(top_builddir)/tools/polkit-policy-file-validate $(top_srcdir)/policy/$(dist_polkit_policy_DATA)
+	$(top_builddir)/tools/polkit-policy-file-validate-1 $(top_srcdir)/policy/$(dist_polkit_action_DATA)
 
 clean-local :
 	rm -f *~

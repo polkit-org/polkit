@@ -11,22 +11,19 @@ INCLUDES = \
 	@GLIB_CFLAGS@ \
 	@DBUS_CFLAGS@
 
-bin_PROGRAMS = polkit-config-file-validate polkit-policy-file-validate polkit-action polkit-auth
+bin_PROGRAMS = polkit-policy-file-validate-1 polkit-action-1 polkit-auth-1
 
-polkit_config_file_validate_SOURCES = polkit-config-file-validate.c
-polkit_config_file_validate_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
+polkit_policy_file_validate_1_SOURCES = polkit-policy-file-validate.c
+polkit_policy_file_validate_1_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit-1.la
 
-polkit_policy_file_validate_SOURCES = polkit-policy-file-validate.c
-polkit_policy_file_validate_LDADD = $(top_builddir)/src/kit/libkit.la $(top_builddir)/src/polkit/libpolkit.la
+polkit_auth_1_SOURCES = polkit-auth.c
+polkit_auth_1_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit-1.la $(top_builddir)/src/polkit-grant/libpolkit-grant-1.la
 
-polkit_auth_SOURCES = polkit-auth.c
-polkit_auth_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/src/polkit/libpolkit.la $(top_builddir)/src/polkit-grant/libpolkit-grant.la $(top_builddir)/src/polkit-dbus/libpolkit-dbus.la
-
-polkit_action_SOURCES = polkit-action.c
-polkit_action_LDADD = $(top_builddir)/src/polkit/libpolkit.la
+polkit_action_1_SOURCES = polkit-action.c
+polkit_action_1_LDADD = $(top_builddir)/src/polkit/libpolkit-1.la
 
 profiledir = $(sysconfdir)/profile.d
-profile_SCRIPTS = polkit-bash-completion.sh
+profile_SCRIPTS = polkit-bash-completion-1.sh
 
 EXTRA_DIST = $(profile_SCRIPTS)
 

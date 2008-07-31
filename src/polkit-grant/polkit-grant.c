@@ -495,8 +495,8 @@ polkit_grant_initiate_auth (PolKitGrant  *polkit_grant,
 
         /* TODO: verify incoming args */
 
-        /* helper_argv[0] = "/home/davidz/Hacking/PolicyKit/polkit-grant/.libs/polkit-grant-helper"; */
-        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-grant-helper";
+        /* helper_argv[0] = "/home/davidz/Hacking/PolicyKit/polkit-grant/.libs/polkit-grant-helper-1"; */
+        helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-grant-helper-1";
         helper_argv[1] = g_strdup_printf ("%d", pid);
         helper_argv[2] = action_id;
         helper_argv[3] = NULL;

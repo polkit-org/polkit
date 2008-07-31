@@ -52,7 +52,6 @@ extern KitTest _test_policy_cache;
 extern KitTest _test_authorization_constraint;
 extern KitTest _test_authorization;
 extern KitTest _test_authorization_db;
-extern KitTest _test_config;
 extern KitTest _test_sysdeps;
 extern KitTest _test_utils;
 extern KitTest _test_context;
