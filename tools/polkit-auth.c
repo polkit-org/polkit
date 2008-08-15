@@ -599,21 +599,20 @@ out:
 }
 
 static polkit_bool_t
-pfe_iterator_cb (PolKitPolicyCache *policy_cache,
-                 PolKitPolicyFileEntry *pfe,
+pfe_iterator_cb (PolKitActionDescription *pfe,
                  void *user_data)
 {
         PolKitAction *action;
 
         action = polkit_action_new ();
-        polkit_action_set_action_id (action, polkit_policy_file_entry_get_id (pfe));
+        polkit_action_set_action_id (action, polkit_action_description_get_id (pfe));
 
         if (polkit_context_is_caller_authorized (pk_context,
                                                  action,
                                                  pk_caller,
                                                  FALSE,
                                                  NULL) == POLKIT_RESULT_YES) {
-                printf ("%s\n", polkit_policy_file_entry_get_id (pfe));
+                printf ("%s\n", polkit_action_description_get_id (pfe));
         }
 
         polkit_action_unref (action);
@@ -622,14 +621,13 @@ pfe_iterator_cb (PolKitPolicyCache *policy_cache,
 }
 
 static polkit_bool_t
-pfe_iterator_show_obtainable_cb (PolKitPolicyCache *policy_cache,
-                                 PolKitPolicyFileEntry *pfe,
+pfe_iterator_show_obtainable_cb (PolKitActionDescription *pfe,
                                  void *user_data)
 {
         PolKitAction *action;
 
         action = polkit_action_new ();
-        polkit_action_set_action_id (action, polkit_policy_file_entry_get_id (pfe));
+        polkit_action_set_action_id (action, polkit_action_description_get_id (pfe));
 
         switch (polkit_context_is_caller_authorized (pk_context,
                                                      action,
@@ -650,7 +648,7 @@ pfe_iterator_show_obtainable_cb (PolKitPolicyCache *policy_cache,
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_SESSION:
         case POLKIT_RESULT_ONLY_VIA_SELF_AUTH_KEEP_ALWAYS:
-                printf ("%s\n", polkit_policy_file_entry_get_id (pfe));
+                printf ("%s\n", polkit_action_description_get_id (pfe));
                 break;
         }
 
@@ -995,8 +993,6 @@ main (int argc, char *argv[])
 
                 ret = 0;
         } else if (opt_show_obtainable) {
-                PolKitPolicyCache *pk_policy_cache;
-
                 if (!ensure_dbus_and_ck ())
                         goto out;
 
@@ -1004,14 +1000,11 @@ main (int argc, char *argv[])
                  * then querying whether the caller is authorized 
                  */
 
-                pk_policy_cache = polkit_context_get_policy_cache (pk_context);
-                polkit_policy_cache_foreach (pk_policy_cache,
-                                             pfe_iterator_show_obtainable_cb,
-                                             NULL);
+                polkit_context_action_description_foreach (pk_context,
+                                                           pfe_iterator_show_obtainable_cb,
+                                                           NULL);
                 ret = 0;
         } else {
-                PolKitPolicyCache *pk_policy_cache;
-
                 if (!ensure_dbus_and_ck ())
                         goto out;
 
@@ -1019,10 +1012,9 @@ main (int argc, char *argv[])
                  * then querying whether the caller is authorized 
                  */
 
-                pk_policy_cache = polkit_context_get_policy_cache (pk_context);
-                polkit_policy_cache_foreach (pk_policy_cache,
-                                             pfe_iterator_cb,
-                                             NULL);
+                polkit_context_action_description_foreach (pk_context,
+                                                           pfe_iterator_cb,
+                                                           NULL);
                 ret = 0;
         }
 

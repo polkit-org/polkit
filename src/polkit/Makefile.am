@@ -31,17 +31,15 @@ libpolkit_1include_HEADERS =              		\
 	polkit-seat.h					\
 	polkit-session.h				\
 	polkit-caller.h					\
-	polkit-policy-file-entry.h			\
-	polkit-policy-file.h				\
-	polkit-policy-cache.h				\
-	polkit-policy-default.h				\
+	polkit-action-description.h			\
+	polkit-implicit-authorization.h			\
 	polkit-authorization.h				\
 	polkit-authorization-constraint.h		\
 	polkit-authorization-db.h			\
 	polkit-tracker.h				\
 	polkit-simple.h
 
-libpolkit_1_la_SOURCES =                                					\
+libpolkit_1_la_SOURCES =                                				\
 	polkit.h									\
 	polkit-private.h								\
 	polkit-types.h									\
@@ -53,10 +51,8 @@ libpolkit_1_la_SOURCES =                                					\
 	polkit-seat.h				polkit-seat.c				\
 	polkit-session.h			polkit-session.c			\
 	polkit-caller.h				polkit-caller.c				\
-	polkit-policy-file-entry.h		polkit-policy-file-entry.c		\
-	polkit-policy-file.h			polkit-policy-file.c			\
-	polkit-policy-cache.h			polkit-policy-cache.c			\
-	polkit-policy-default.h			polkit-policy-default.c			\
+	polkit-action-description.h		polkit-action-description.c		\
+	polkit-implicit-authorization.h		polkit-implicit-authorization.c		\
 	polkit-debug.h				polkit-debug.c				\
 	polkit-utils.h				polkit-utils.c				\
 	polkit-authorization.h			polkit-authorization.c			\

@@ -134,22 +134,6 @@ oom:
         return authdb;
 }
 
-polkit_bool_t
-_polkit_authorization_db_pfe_foreach   (PolKitPolicyCache *policy_cache, 
-                                        PolKitPolicyCacheForeachFunc callback,
-                                        void *user_data)
-{
-        return FALSE;
-}
-
-PolKitPolicyFileEntry* 
-_polkit_authorization_db_pfe_get_by_id (PolKitPolicyCache *policy_cache, 
-                                        const char *action_id)
-{
-        return NULL;
-}
-
-
 /**
  * polkit_authorization_db_ref:
  * @authdb: the object

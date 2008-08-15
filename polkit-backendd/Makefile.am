@@ -36,7 +36,9 @@ polkit_backendd_CPPFLAGS = 					\
 	$(AM_CPPFLAGS)
 
 polkit_backendd_LDADD = 				        \
-	$(DBUS_GLIB_LIBS) $(top_builddir)/src/polkit/libpolkit-1.la
+	$(DBUS_GLIB_LIBS) 					\
+	$(top_builddir)/src/kit/libkit.la			\
+	$(top_builddir)/src/polkit/libpolkit-1.la
 
 
 servicedir       = $(datadir)/dbus-1/system-services

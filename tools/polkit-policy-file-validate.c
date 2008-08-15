@@ -56,14 +56,13 @@ usage (int argc, char *argv[])
 }
 
 static polkit_bool_t
-entry_foreach_cb (PolKitPolicyFile      *policy_file, 
-                  PolKitPolicyFileEntry *policy_file_entry,
-                  void                  *user_data)
+entry_foreach_cb (PolKitActionDescription *action_description,
+                  void                    *user_data)
 {
         const char *id;
         const char *prefix = user_data;
 
-        id = polkit_policy_file_entry_get_id (policy_file_entry);
+        id = polkit_action_description_get_id (action_description);
         if (!kit_str_has_prefix (id, prefix) || 
             strchr (id + strlen (prefix), '.') != NULL) {
                 printf ("WARNING: The action %s does not\n"
@@ -80,7 +79,6 @@ entry_foreach_cb (PolKitPolicyFile      *policy_file,
 static polkit_bool_t
 validate_file (const char *file)
 {
-        PolKitPolicyFile *policy_file;
         PolKitError *error;
         char *prefix;
         polkit_bool_t ret;
@@ -88,7 +86,6 @@ validate_file (const char *file)
 
         ret = FALSE;
         prefix = NULL;
-        policy_file = NULL;
 
         if (!kit_str_has_suffix (file, ".policy")) {
                 printf ("%s doesn't have a .policy suffix\n", file);
@@ -105,14 +102,13 @@ validate_file (const char *file)
         prefix [strlen (prefix) - 6] = '\0';
 
         error = NULL;
-        policy_file = polkit_policy_file_new (file, TRUE, &error);
-        if (policy_file == NULL) {
+        warned = FALSE;
+        polkit_action_description_get_from_file (file, entry_foreach_cb, prefix, &error);
+        if (polkit_error_is_set (error)) {
                 printf ("%s did not validate: %s\n", file, polkit_error_get_error_message (error));
                 polkit_error_free (error);
                 goto out;
         }
-        warned = FALSE;
-        polkit_policy_file_entry_foreach (policy_file, entry_foreach_cb, prefix);
         if (warned) {
                 goto out;
         }
@@ -120,8 +116,6 @@ validate_file (const char *file)
         ret = TRUE;
 out:
         kit_free (prefix);
-        if (policy_file != NULL)
-                polkit_policy_file_unref (policy_file);
         return ret;
 }
 

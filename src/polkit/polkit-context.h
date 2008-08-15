@@ -39,10 +39,10 @@
 #include <polkit/polkit-result.h>
 #include <polkit/polkit-context.h>
 #include <polkit/polkit-action.h>
+#include <polkit/polkit-action-description.h>
 #include <polkit/polkit-seat.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
-#include <polkit/polkit-policy-cache.h>
 #include <polkit/polkit-authorization-db.h>
 
 POLKIT_BEGIN_DECLS
@@ -75,103 +75,25 @@ typedef void (*PolKitContextConfigChangedCB) (PolKitContext  *pk_context,
                                               void           *user_data);
 
 /**
- * PolKitContextAddIOWatch:
- * @pk_context: the polkit context
- * @fd: the file descriptor to watch
+ * PolKitActionDescriptionForeachFunc:
+ * @action_description: the entry
+ * @user_data: user data
  *
- * Type for function supplied by the application to integrate a watch
- * on a file descriptor into the applications main loop. The
- * application must call polkit_context_io_func() when there is data
- * to read from the file descriptor.
+ * Type for function used in to iterate over action descriptions.
  *
- * For glib mainloop, the function will typically look like this:
- *
- * <programlisting>
- * static gboolean
- * io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
- * {
- *         int fd;
- *         PolKitContext *pk_context = user_data;
- *         fd = g_io_channel_unix_get_fd (channel);
- *         polkit_context_io_func (pk_context, fd);
- *         return TRUE;
- * }
- * 
- * static int 
- * io_add_watch (PolKitContext *pk_context, int fd)
- * {
- *         guint id = 0;
- *         GIOChannel *channel;
- *         channel = g_io_channel_unix_new (fd);
- *         if (channel == NULL)
- *                 goto out;
- *         id = g_io_add_watch (channel, G_IO_IN, io_watch_have_data, pk_context);
- *         if (id == 0) {
- *                 g_io_channel_unref (channel);
- *                 goto out;
- *         }
- *         g_io_channel_unref (channel);
- * out:
- *         return id;
- * }
- * </programlisting>
- *
- * Returns: 0 if the watch couldn't be set up; otherwise an unique
- * identifier for the watch.
+ * Returns: #TRUE to short-circuit, e.g.  stop the iteration
  **/
-typedef int (*PolKitContextAddIOWatch) (PolKitContext *pk_context, int fd);
-
-/**
- * PolKitContextRemoveIOWatch:
- * @pk_context: the context object
- * @watch_id: the id obtained from using the supplied function
- * of type #PolKitContextAddIOWatch
- *
- * Type for function supplied by the application to remove a watch set
- * up via the supplied function of type #PolKitContextAddIOWatch
- *
- * For the glib mainloop, the function will typically look like this:
- *
- * <programlisting>
- * static void 
- * io_remove_watch (PolKitContext *pk_context, int watch_id)
- * {
- *         g_source_remove (watch_id);
- * }
- * </programlisting>
- *
- **/
-typedef void (*PolKitContextRemoveIOWatch) (PolKitContext *pk_context, int watch_id);
-
+typedef polkit_bool_t (*PolKitActionDescriptionForeachFunc) (PolKitActionDescription *action_description,
+                                                             void                    *user_data);
 
 PolKitContext *polkit_context_new                    (void);
 void           polkit_context_set_config_changed     (PolKitContext                        *pk_context, 
                                                       PolKitContextConfigChangedCB          cb, 
                                                       void                                 *user_data);
-void           polkit_context_set_io_watch_functions (PolKitContext                        *pk_context,
-                                                      PolKitContextAddIOWatch               io_add_watch_func,
-                                                      PolKitContextRemoveIOWatch            io_remove_watch_func);
-void           polkit_context_set_load_descriptions  (PolKitContext                        *pk_context);
 polkit_bool_t  polkit_context_init                   (PolKitContext                        *pk_context, 
                                                       PolKitError                         **error);
 PolKitContext *polkit_context_ref                    (PolKitContext                        *pk_context);
 void           polkit_context_unref                  (PolKitContext                        *pk_context);
-
-void           polkit_context_force_reload           (PolKitContext                        *pk_context);
-
-void           polkit_context_io_func                (PolKitContext *pk_context, int fd);
-
-PolKitPolicyCache *polkit_context_get_policy_cache   (PolKitContext *pk_context);
-
-POLKIT_GNUC_DEPRECATED
-PolKitResult polkit_context_can_session_do_action    (PolKitContext   *pk_context,
-                                                      PolKitAction    *action,
-                                                      PolKitSession   *session);
-
-POLKIT_GNUC_DEPRECATED 
-PolKitResult polkit_context_can_caller_do_action     (PolKitContext   *pk_context,
-                                                      PolKitAction    *action,
-                                                      PolKitCaller    *caller);
 
 PolKitResult polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                                   PolKitAction          *action,
@@ -183,6 +105,20 @@ PolKitResult polkit_context_is_session_authorized (PolKitContext         *pk_con
                                                    PolKitAction          *action,
                                                    PolKitSession         *session,
                                                    PolKitError          **error);
+
+polkit_bool_t polkit_context_action_description_foreach (PolKitContext                      *pk_context,
+                                                         PolKitActionDescriptionForeachFunc  cb,
+                                                         void                               *user_data);
+
+PolKitActionDescription *polkit_context_get_action_description (PolKitContext   *pk_context,
+                                                                const char      *action_id);
+
+/* TODO: move to private static lib */
+polkit_bool_t polkit_action_description_get_from_file (const char                         *path,
+                                                       PolKitActionDescriptionForeachFunc  cb,
+                                                       void                               *user_data,
+                                                       PolKitError                       **error);
+
 
 PolKitAuthorizationDB *polkit_context_get_authorization_db (PolKitContext *pk_context);
 

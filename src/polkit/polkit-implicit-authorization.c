@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-policy-default.c : policy definition for the defaults
+ * polkit-implicit-authorization.c : policy definition for the defaults
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -42,13 +42,13 @@
 
 #include "polkit-debug.h"
 #include "polkit-error.h"
-#include "polkit-policy-default.h"
+#include "polkit-implicit-authorization.h"
 #include "polkit-private.h"
 #include "polkit-test.h"
 #include "polkit-private.h"
 
 /**
- * SECTION:polkit-policy-default
+ * SECTION:polkit-implicit-authorization
  * @title: Defaults
  * @short_description: Models the default policy for an action.
  *
@@ -56,12 +56,12 @@
  **/
 
 /**
- * PolKitPolicyDefault:
+ * PolKitImplicitAuthorization:
  *
  * Objects of this class are used to record information about a
  * default policy for an action.
  **/
-struct _PolKitPolicyDefault
+struct _PolKitImplicitAuthorization
 {
         int refcount;
         PolKitResult default_any;
@@ -70,7 +70,7 @@ struct _PolKitPolicyDefault
 };
 
 /**
- * polkit_policy_default_new:
+ * polkit_implicit_authorization_new:
  *
  * Construct a new object with all defaults set as restrictive as possible.
  *
@@ -78,12 +78,12 @@ struct _PolKitPolicyDefault
  *
  * Since: 0.7
  */
-PolKitPolicyDefault *
-polkit_policy_default_new (void)
+PolKitImplicitAuthorization *
+polkit_implicit_authorization_new (void)
 {
-        PolKitPolicyDefault *pd;
+        PolKitImplicitAuthorization *pd;
 
-        pd = kit_new0 (PolKitPolicyDefault, 1);
+        pd = kit_new0 (PolKitImplicitAuthorization, 1);
         if (pd == NULL)
                 goto out;
         pd->refcount = 1;
@@ -95,8 +95,8 @@ out:
 }
 
 /**
- * polkit_policy_default_clone:
- * @policy_default: object to clone
+ * polkit_implicit_authorization_clone:
+ * @implicit_authorization: object to clone
  *
  * Create a new object with the same value as the given object
  *
@@ -104,36 +104,36 @@ out:
  *
  * Since: 0.7
  */
-PolKitPolicyDefault *
-polkit_policy_default_clone (PolKitPolicyDefault *policy_default)
+PolKitImplicitAuthorization *
+polkit_implicit_authorization_clone (PolKitImplicitAuthorization *implicit_authorization)
 {
-        PolKitPolicyDefault *pd;
+        PolKitImplicitAuthorization *pd;
 
-        kit_return_val_if_fail (policy_default != NULL, NULL);
+        kit_return_val_if_fail (implicit_authorization != NULL, NULL);
 
-        pd = polkit_policy_default_new ();
+        pd = polkit_implicit_authorization_new ();
         if (pd == NULL)
                 goto out;
         pd->refcount = 1;
-        pd->default_any      = policy_default->default_any;
-        pd->default_inactive = policy_default->default_inactive;
-        pd->default_active   = policy_default->default_active;
+        pd->default_any      = implicit_authorization->default_any;
+        pd->default_inactive = implicit_authorization->default_inactive;
+        pd->default_active   = implicit_authorization->default_active;
 out:
         return pd;
 }
 
 
 /**
- * polkit_policy_default_equals:
- * @a: a #PolKitPolicyDefault object
- * @b: a #PolKitPolicyDefault object
+ * polkit_implicit_authorization_equals:
+ * @a: a #PolKitImplicitAuthorization object
+ * @b: a #PolKitImplicitAuthorization object
  *
  * Compare if two objects are equal.
  *
  * Returns: %TRUE only if the objects are equal
  */
 polkit_bool_t
-polkit_policy_default_equals (PolKitPolicyDefault *a, PolKitPolicyDefault *b)
+polkit_implicit_authorization_equals (PolKitImplicitAuthorization *a, PolKitImplicitAuthorization *b)
 {
         polkit_bool_t ret;
 
@@ -151,14 +151,14 @@ polkit_policy_default_equals (PolKitPolicyDefault *a, PolKitPolicyDefault *b)
         return ret;
 }
 
-PolKitPolicyDefault *
-_polkit_policy_default_new (PolKitResult defaults_allow_any,
+PolKitImplicitAuthorization *
+_polkit_implicit_authorization_new (PolKitResult defaults_allow_any,
                             PolKitResult defaults_allow_inactive,
                             PolKitResult defaults_allow_active)
 {
-        PolKitPolicyDefault *pd;
+        PolKitImplicitAuthorization *pd;
 
-        pd = kit_new0 (PolKitPolicyDefault, 1);
+        pd = kit_new0 (PolKitImplicitAuthorization, 1);
         if (pd == NULL)
                 goto out;
         pd->refcount = 1;
@@ -170,63 +170,63 @@ out:
 }
 
 /**
- * polkit_policy_default_ref:
- * @policy_default: the policy object
+ * polkit_implicit_authorization_ref:
+ * @implicit_authorization: the policy object
  * 
  * Increase reference count.
  * 
  * Returns: the object
  **/
-PolKitPolicyDefault *
-polkit_policy_default_ref (PolKitPolicyDefault *policy_default)
+PolKitImplicitAuthorization *
+polkit_implicit_authorization_ref (PolKitImplicitAuthorization *implicit_authorization)
 {
-        kit_return_val_if_fail (policy_default != NULL, policy_default);
-        policy_default->refcount++;
-        return policy_default;
+        kit_return_val_if_fail (implicit_authorization != NULL, implicit_authorization);
+        implicit_authorization->refcount++;
+        return implicit_authorization;
 }
 
 /**
- * polkit_policy_default_unref:
- * @policy_default: the object
+ * polkit_implicit_authorization_unref:
+ * @implicit_authorization: the object
  * 
  * Decreases the reference count of the object. If it becomes zero,
  * the object is freed. Before freeing, reference counts on embedded
  * objects are decresed by one.
  **/
 void
-polkit_policy_default_unref (PolKitPolicyDefault *policy_default)
+polkit_implicit_authorization_unref (PolKitImplicitAuthorization *implicit_authorization)
 {
-        kit_return_if_fail (policy_default != NULL);
-        policy_default->refcount--;
-        if (policy_default->refcount > 0) 
+        kit_return_if_fail (implicit_authorization != NULL);
+        implicit_authorization->refcount--;
+        if (implicit_authorization->refcount > 0) 
                 return;
-        kit_free (policy_default);
+        kit_free (implicit_authorization);
 }
 
 /**
- * polkit_policy_default_debug:
- * @policy_default: the object
+ * polkit_implicit_authorization_debug:
+ * @implicit_authorization: the object
  * 
  * Print debug details
  **/
 void
-polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
+polkit_implicit_authorization_debug (PolKitImplicitAuthorization *implicit_authorization)
 {
-        kit_return_if_fail (policy_default != NULL);
-        polkit_debug ("PolKitPolicyDefault: refcount=%d\n"
+        kit_return_if_fail (implicit_authorization != NULL);
+        polkit_debug ("PolKitImplicitAuthorization: refcount=%d\n"
                       "        default_any=%s\n"
                       "   default_inactive=%s\n"
                       "     default_active=%s", 
-                      policy_default->refcount,
-                      polkit_result_to_string_representation (policy_default->default_any),
-                      polkit_result_to_string_representation (policy_default->default_inactive),
-                      polkit_result_to_string_representation (policy_default->default_active));
+                      implicit_authorization->refcount,
+                      polkit_result_to_string_representation (implicit_authorization->default_any),
+                      polkit_result_to_string_representation (implicit_authorization->default_inactive),
+                      polkit_result_to_string_representation (implicit_authorization->default_active));
 }
 
 
 /**
- * polkit_policy_default_can_session_do_action:
- * @policy_default: the object
+ * polkit_implicit_authorization_can_session_do_action:
+ * @implicit_authorization: the object
  * @action: the type of access to check for
  * @session: the session in question
  * 
@@ -237,7 +237,7 @@ polkit_policy_default_debug (PolKitPolicyDefault *policy_default)
  * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
  **/
 PolKitResult
-polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default,
+polkit_implicit_authorization_can_session_do_action (PolKitImplicitAuthorization *implicit_authorization,
                                              PolKitAction        *action,
                                              PolKitSession       *session)
 {
@@ -247,11 +247,11 @@ polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default
 
         ret = POLKIT_RESULT_NO;
 
-        kit_return_val_if_fail (policy_default != NULL, ret);
+        kit_return_val_if_fail (implicit_authorization != NULL, ret);
         kit_return_val_if_fail (action != NULL, ret);
         kit_return_val_if_fail (session != NULL, ret);
 
-        ret = policy_default->default_any;
+        ret = implicit_authorization->default_any;
 
         polkit_session_get_ck_is_local (session, &is_local);
         polkit_session_get_ck_is_active (session, &is_active);
@@ -260,17 +260,17 @@ polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default
                 goto out;
 
         if (is_active) {
-                ret = policy_default->default_active;
+                ret = implicit_authorization->default_active;
         } else {
-                ret = policy_default->default_inactive;
+                ret = implicit_authorization->default_inactive;
         }
 out:
         return ret;
 }
 
 /**
- * polkit_policy_default_can_caller_do_action:
- * @policy_default: the object
+ * polkit_implicit_authorization_can_caller_do_action:
+ * @implicit_authorization: the object
  * @action: the type of access to check for
  * @caller: the caller in question
  * 
@@ -281,7 +281,7 @@ out:
  * do the given action.
  **/
 PolKitResult
-polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
+polkit_implicit_authorization_can_caller_do_action (PolKitImplicitAuthorization *implicit_authorization,
                                             PolKitAction        *action,
                                             PolKitCaller        *caller)
 {
@@ -292,11 +292,11 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
 
         ret = POLKIT_RESULT_NO;
 
-        kit_return_val_if_fail (policy_default != NULL, ret);
+        kit_return_val_if_fail (implicit_authorization != NULL, ret);
         kit_return_val_if_fail (action != NULL, ret);
         kit_return_val_if_fail (caller != NULL, ret);
 
-        ret = policy_default->default_any;
+        ret = implicit_authorization->default_any;
 
         polkit_caller_get_ck_session (caller, &session);
         if (session == NULL)
@@ -309,9 +309,9 @@ polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
                 goto out;
 
         if (is_active) {
-                ret = policy_default->default_active;
+                ret = implicit_authorization->default_active;
         } else {
-                ret = policy_default->default_inactive;
+                ret = implicit_authorization->default_inactive;
         }
 
 out:
@@ -319,93 +319,93 @@ out:
 }
 
 /**
- * polkit_policy_default_set_allow_any:
- * @policy_default: the object
+ * polkit_implicit_authorization_set_allow_any:
+ * @implicit_authorization: the object
  * @value: the value to set
  * 
  * Set default policy.
  *
  **/
 void
-polkit_policy_default_set_allow_any (PolKitPolicyDefault *policy_default, PolKitResult value)
+polkit_implicit_authorization_set_allow_any (PolKitImplicitAuthorization *implicit_authorization, PolKitResult value)
 {
-        kit_return_if_fail (policy_default != NULL);
-        policy_default->default_any = value;
+        kit_return_if_fail (implicit_authorization != NULL);
+        implicit_authorization->default_any = value;
 }
 
 /**
- * polkit_policy_default_set_allow_inactive:
- * @policy_default: the object
+ * polkit_implicit_authorization_set_allow_inactive:
+ * @implicit_authorization: the object
  * @value: the value to set
  * 
  * Set default policy.
  *
  **/
 void
-polkit_policy_default_set_allow_inactive (PolKitPolicyDefault *policy_default, PolKitResult value)
+polkit_implicit_authorization_set_allow_inactive (PolKitImplicitAuthorization *implicit_authorization, PolKitResult value)
 {
-        kit_return_if_fail (policy_default != NULL);
-        policy_default->default_inactive = value;
+        kit_return_if_fail (implicit_authorization != NULL);
+        implicit_authorization->default_inactive = value;
 }
 
 /**
- * polkit_policy_default_set_allow_active:
- * @policy_default: the object
+ * polkit_implicit_authorization_set_allow_active:
+ * @implicit_authorization: the object
  * @value: the value to set
  * 
  * Set default policy.
  *
  **/
 void
-polkit_policy_default_set_allow_active (PolKitPolicyDefault *policy_default, PolKitResult value)
+polkit_implicit_authorization_set_allow_active (PolKitImplicitAuthorization *implicit_authorization, PolKitResult value)
 {
-        kit_return_if_fail (policy_default != NULL);
-        policy_default->default_active = value;
+        kit_return_if_fail (implicit_authorization != NULL);
+        implicit_authorization->default_active = value;
 }
 
 /**
- * polkit_policy_default_get_allow_any:
- * @policy_default: the object
+ * polkit_implicit_authorization_get_allow_any:
+ * @implicit_authorization: the object
  * 
  * Get default policy.
  * 
  * Returns: default policy
  **/
 PolKitResult
-polkit_policy_default_get_allow_any (PolKitPolicyDefault *policy_default)
+polkit_implicit_authorization_get_allow_any (PolKitImplicitAuthorization *implicit_authorization)
 {
-        kit_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
-        return policy_default->default_any;
+        kit_return_val_if_fail (implicit_authorization != NULL, POLKIT_RESULT_NO);
+        return implicit_authorization->default_any;
 }
 
 /**
- * polkit_policy_default_get_allow_inactive:
- * @policy_default: the object
+ * polkit_implicit_authorization_get_allow_inactive:
+ * @implicit_authorization: the object
  * 
  * Get default policy.
  * 
  * Returns: default policy
  **/
 PolKitResult
-polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *policy_default)
+polkit_implicit_authorization_get_allow_inactive (PolKitImplicitAuthorization *implicit_authorization)
 {
-        kit_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
-        return policy_default->default_inactive;
+        kit_return_val_if_fail (implicit_authorization != NULL, POLKIT_RESULT_NO);
+        return implicit_authorization->default_inactive;
 }
 
 /**
- * polkit_policy_default_get_allow_active:
- * @policy_default: the object
+ * polkit_implicit_authorization_get_allow_active:
+ * @implicit_authorization: the object
  * 
  * Get default policy.
  * 
  * Returns: default policy
  **/
 PolKitResult
-polkit_policy_default_get_allow_active (PolKitPolicyDefault *policy_default)
+polkit_implicit_authorization_get_allow_active (PolKitImplicitAuthorization *implicit_authorization)
 {
-        kit_return_val_if_fail (policy_default != NULL, POLKIT_RESULT_NO);
-        return policy_default->default_active;
+        kit_return_val_if_fail (implicit_authorization != NULL, POLKIT_RESULT_NO);
+        return implicit_authorization->default_active;
 }
 
 
@@ -415,7 +415,7 @@ static polkit_bool_t
 _ts (PolKitSession *s, PolKitResult any, PolKitResult inactive, PolKitResult active, PolKitResult *ret)
 {
         PolKitAction *a;
-        PolKitPolicyDefault *d;
+        PolKitImplicitAuthorization *d;
         polkit_bool_t oom;
 
         oom = TRUE;
@@ -425,29 +425,29 @@ _ts (PolKitSession *s, PolKitResult any, PolKitResult inactive, PolKitResult act
 
         if ((a = polkit_action_new ()) != NULL) {
                 if (polkit_action_set_action_id (a, "org.dummy")) {
-                        if ((d = _polkit_policy_default_new (any,
+                        if ((d = _polkit_implicit_authorization_new (any,
                                                              inactive,
                                                              active)) != NULL) {
                                 PolKitCaller *c;
 
-                                *ret = polkit_policy_default_can_session_do_action (d, a, s);
+                                *ret = polkit_implicit_authorization_can_session_do_action (d, a, s);
                                 oom = FALSE;
 
                                 if ((c = polkit_caller_new ()) != NULL) {
-                                        kit_assert (polkit_policy_default_can_caller_do_action (d, a, c) == any);
+                                        kit_assert (polkit_implicit_authorization_can_caller_do_action (d, a, c) == any);
 
                                         kit_assert (polkit_caller_set_ck_session (c, s));
-                                        kit_assert (polkit_policy_default_can_caller_do_action (d, a, c) == *ret);
+                                        kit_assert (polkit_implicit_authorization_can_caller_do_action (d, a, c) == *ret);
                                         polkit_caller_unref (c);
                                 }
 
-                                polkit_policy_default_ref (d);
-                                polkit_policy_default_get_allow_any (d);
-                                polkit_policy_default_get_allow_inactive (d);
-                                polkit_policy_default_get_allow_active (d);
-                                polkit_policy_default_unref (d);
-                                polkit_policy_default_debug (d);
-                                polkit_policy_default_unref (d);
+                                polkit_implicit_authorization_ref (d);
+                                polkit_implicit_authorization_get_allow_any (d);
+                                polkit_implicit_authorization_get_allow_inactive (d);
+                                polkit_implicit_authorization_get_allow_active (d);
+                                polkit_implicit_authorization_unref (d);
+                                polkit_implicit_authorization_debug (d);
+                                polkit_implicit_authorization_unref (d);
                         }
                 }
                 polkit_action_unref (a);
@@ -562,8 +562,8 @@ _run_test (void)
         return TRUE;
 }
 
-KitTest _test_policy_default = {
-        "polkit_policy_default",
+KitTest _test_implicit_authorization = {
+        "polkit_implicit_authorization",
         NULL,
         NULL,
         _run_test

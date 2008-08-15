@@ -53,7 +53,7 @@ usage (int argc, char *argv[])
 }
 
 static polkit_bool_t
-_print_annotations (PolKitPolicyFileEntry *policy_file_entry,
+_print_annotations (PolKitActionDescription *action_description,
                     const char *key,
                     const char *value,
                     void *user_data)
@@ -63,23 +63,23 @@ _print_annotations (PolKitPolicyFileEntry *policy_file_entry,
 }
 
 static void
-_print_details_for_entry (PolKitPolicyFileEntry *pfe)
+_print_details_for_entry (PolKitActionDescription *pfe)
 {
         int n;
         const char *action_id;
-        PolKitPolicyDefault *def;
-        PolKitPolicyDefault *def_factory;
+        PolKitImplicitAuthorization *def;
+        PolKitImplicitAuthorization *def_factory;
 
-        action_id = polkit_policy_file_entry_get_id (pfe);
-        def = polkit_policy_file_entry_get_default (pfe);
-        def_factory = polkit_policy_file_entry_get_default_factory (pfe);
+        action_id = polkit_action_description_get_id (pfe);
+        def = polkit_action_description_get_implicit_authorization (pfe);
+        def_factory = polkit_action_description_get_implicit_authorization_factory (pfe);
 
         printf ("action_id:        %s\n"
                 "description:      %s\n"
                 "message:          %s\n",
                 action_id,
-                polkit_policy_file_entry_get_action_description (pfe),
-                polkit_policy_file_entry_get_action_message (pfe));
+                polkit_action_description_get_action_description (pfe),
+                polkit_action_description_get_action_message (pfe));
 
         for (n = 0; n < 3; n++) {
                 PolKitResult result;
@@ -90,18 +90,18 @@ _print_details_for_entry (PolKitPolicyFileEntry *pfe)
                 default:
                 case 0:
                         str = "default_any:     ";
-                        result = polkit_policy_default_get_allow_any (def);
-                        result_factory = polkit_policy_default_get_allow_any (def_factory);
+                        result = polkit_implicit_authorization_get_allow_any (def);
+                        result_factory = polkit_implicit_authorization_get_allow_any (def_factory);
                         break;
                 case 1:
                         str = "default_inactive:";
-                        result = polkit_policy_default_get_allow_inactive (def);
-                        result_factory = polkit_policy_default_get_allow_inactive (def_factory);
+                        result = polkit_implicit_authorization_get_allow_inactive (def);
+                        result_factory = polkit_implicit_authorization_get_allow_inactive (def_factory);
                         break;
                 case 2:
                         str = "default_active:  ";
-                        result = polkit_policy_default_get_allow_active (def);
-                        result_factory = polkit_policy_default_get_allow_active (def_factory);
+                        result = polkit_implicit_authorization_get_allow_active (def);
+                        result_factory = polkit_implicit_authorization_get_allow_active (def_factory);
                         break;
                 }
 
@@ -114,36 +114,34 @@ _print_details_for_entry (PolKitPolicyFileEntry *pfe)
                 }
         }
 
-        polkit_policy_file_entry_annotations_foreach (pfe, _print_annotations, NULL);
+        polkit_action_description_annotations_foreach (pfe, _print_annotations, NULL);
 }
 
 static polkit_bool_t
-_print_entry (PolKitPolicyCache *policy_cache,
-              PolKitPolicyFileEntry *pfe,
+_print_entry (PolKitActionDescription *pfe,
               void *user_data)
 {
         const char *action_id;
 
-        action_id = polkit_policy_file_entry_get_id (pfe);
+        action_id = polkit_action_description_get_id (pfe);
         printf ("%s\n", action_id);
 
         return FALSE;
 }
 
 static polkit_bool_t
-_print_entry_override (PolKitPolicyCache *policy_cache,
-                       PolKitPolicyFileEntry *pfe,
+_print_entry_override (PolKitActionDescription *pfe,
                        void *user_data)
 {
         const char *action_id;
-        PolKitPolicyDefault *def;
-        PolKitPolicyDefault *def_factory;
+        PolKitImplicitAuthorization *def;
+        PolKitImplicitAuthorization *def_factory;
 
-        def = polkit_policy_file_entry_get_default (pfe);
-        def_factory = polkit_policy_file_entry_get_default_factory (pfe);
+        def = polkit_action_description_get_implicit_authorization (pfe);
+        def_factory = polkit_action_description_get_implicit_authorization_factory (pfe);
 
-        if (!polkit_policy_default_equals (def, def_factory)) {
-                action_id = polkit_policy_file_entry_get_id (pfe);
+        if (!polkit_implicit_authorization_equals (def, def_factory)) {
+                action_id = polkit_action_description_get_id (pfe);
                 printf ("%s\n", action_id);
         }
 
@@ -156,7 +154,6 @@ main (int argc, char *argv[])
         int n;
         int ret;
         PolKitContext *ctx;
-        PolKitPolicyCache *cache;
         PolKitError *error;
         char *action_id;
         char *reset_action_id;
@@ -211,44 +208,37 @@ main (int argc, char *argv[])
         if (ctx == NULL)
                 goto out;
         error = NULL;
-        polkit_context_set_load_descriptions (ctx);
         if (!polkit_context_init (ctx, &error)) {
                 fprintf (stderr, "Init failed: %s\n", polkit_error_get_error_message (error));
                 polkit_context_unref (ctx);
                 goto out;
         }
 
-        cache = polkit_context_get_policy_cache (ctx);
-        if (cache == NULL) {
-                polkit_context_unref (ctx);
-                goto out;
-        }
-
         if (argc == 1) {
-                polkit_policy_cache_foreach (cache, _print_entry, NULL);
+                polkit_context_action_description_foreach (ctx, _print_entry, NULL);
                 goto done;
         }
 
         if (show_overrides) {
-                polkit_policy_cache_foreach (cache, _print_entry_override, NULL);
+                polkit_context_action_description_foreach (ctx, _print_entry_override, NULL);
                 goto done;
         }
 
         while (TRUE) {
                 if (reset_action_id != NULL) {
-                        PolKitPolicyDefault *def;
-                        PolKitPolicyFileEntry *pfe;
+                        PolKitImplicitAuthorization *def;
+                        PolKitActionDescription *pfe;
                         PolKitError *pk_error;
 
-                        pfe = polkit_policy_cache_get_entry_by_id (cache, reset_action_id);
+                        pfe = polkit_context_get_action_description (ctx, reset_action_id);
                         if (pfe == NULL) {
                                 fprintf (stderr, "Cannot find policy file entry for action id '%s'\n", reset_action_id);
                                 goto out;
                         }
-                        def = polkit_policy_file_entry_get_default_factory (pfe);
+                        def = polkit_action_description_get_implicit_authorization_factory (pfe);
 
                         pk_error = NULL;
-                        if (!polkit_policy_file_entry_set_default (pfe, def, &pk_error)) {
+                        if (!polkit_action_description_set_implicit_authorization (pfe, def, &pk_error)) {
                                 fprintf (stderr, "Error: code=%d: %s: %s\n",
                                          polkit_error_get_error_code (pk_error),
                                          polkit_error_get_error_name (pk_error),
@@ -261,20 +251,20 @@ main (int argc, char *argv[])
                 }
 
                 if (set_def_any_action_id != NULL) {
-                        PolKitPolicyDefault *def;
-                        PolKitPolicyFileEntry *pfe;
+                        PolKitImplicitAuthorization *def;
+                        PolKitActionDescription *pfe;
                         PolKitError *pk_error;
 
-                        pfe = polkit_policy_cache_get_entry_by_id (cache, set_def_any_action_id);
+                        pfe = polkit_context_get_action_description (ctx, set_def_any_action_id);
                         if (pfe == NULL) {
                                 fprintf (stderr, "Cannot find policy file entry for action id '%s'\n", set_def_any_action_id);
                                 goto out;
                         }
 
-                        def = polkit_policy_default_clone (polkit_policy_file_entry_get_default (pfe));
-                        polkit_policy_default_set_allow_any (def, set_def_any_value);
+                        def = polkit_implicit_authorization_clone (polkit_action_description_get_implicit_authorization (pfe));
+                        polkit_implicit_authorization_set_allow_any (def, set_def_any_value);
                         pk_error = NULL;
-                        if (!polkit_policy_file_entry_set_default (pfe, def, &pk_error)) {
+                        if (!polkit_action_description_set_implicit_authorization (pfe, def, &pk_error)) {
                                 fprintf (stderr, "Error: code=%d: %s: %s\n",
                                          polkit_error_get_error_code (pk_error),
                                          polkit_error_get_error_name (pk_error),
@@ -282,26 +272,26 @@ main (int argc, char *argv[])
                                 polkit_error_free (pk_error);
                                 goto out;
                         }
-                        polkit_policy_default_unref (def);
+                        polkit_implicit_authorization_unref (def);
 
                         set_def_any_action_id = NULL;
                 }
 
                 if (set_def_inactive_action_id != NULL) {
-                        PolKitPolicyDefault *def;
-                        PolKitPolicyFileEntry *pfe;
+                        PolKitImplicitAuthorization *def;
+                        PolKitActionDescription *pfe;
                         PolKitError *pk_error;
 
-                        pfe = polkit_policy_cache_get_entry_by_id (cache, set_def_inactive_action_id);
+                        pfe = polkit_context_get_action_description (ctx, set_def_inactive_action_id);
                         if (pfe == NULL) {
                                 fprintf (stderr, "Cannot find policy file entry for action id '%s'\n", set_def_inactive_action_id);
                                 goto out;
                         }
 
-                        def = polkit_policy_default_clone (polkit_policy_file_entry_get_default (pfe));
-                        polkit_policy_default_set_allow_inactive (def, set_def_inactive_value);
+                        def = polkit_implicit_authorization_clone (polkit_action_description_get_implicit_authorization (pfe));
+                        polkit_implicit_authorization_set_allow_inactive (def, set_def_inactive_value);
                         pk_error = NULL;
-                        if (!polkit_policy_file_entry_set_default (pfe, def, &pk_error)) {
+                        if (!polkit_action_description_set_implicit_authorization (pfe, def, &pk_error)) {
                                 fprintf (stderr, "Error: code=%d: %s: %s\n",
                                          polkit_error_get_error_code (pk_error),
                                          polkit_error_get_error_name (pk_error),
@@ -309,26 +299,26 @@ main (int argc, char *argv[])
                                 polkit_error_free (pk_error);
                                 goto out;
                         }
-                        polkit_policy_default_unref (def);
+                        polkit_implicit_authorization_unref (def);
 
                         set_def_inactive_action_id = NULL;
                 }
 
                 if (set_def_active_action_id != NULL) {
-                        PolKitPolicyDefault *def;
-                        PolKitPolicyFileEntry *pfe;
+                        PolKitImplicitAuthorization *def;
+                        PolKitActionDescription *pfe;
                         PolKitError *pk_error;
 
-                        pfe = polkit_policy_cache_get_entry_by_id (cache, set_def_active_action_id);
+                        pfe = polkit_context_get_action_description (ctx, set_def_active_action_id);
                         if (pfe == NULL) {
                                 fprintf (stderr, "Cannot find policy file entry for action id '%s'\n", set_def_active_action_id);
                                 goto out;
                         }
 
-                        def = polkit_policy_default_clone (polkit_policy_file_entry_get_default (pfe));
-                        polkit_policy_default_set_allow_active (def, set_def_active_value);
+                        def = polkit_implicit_authorization_clone (polkit_action_description_get_implicit_authorization (pfe));
+                        polkit_implicit_authorization_set_allow_active (def, set_def_active_value);
                         pk_error = NULL;
-                        if (!polkit_policy_file_entry_set_default (pfe, def, &pk_error)) {
+                        if (!polkit_action_description_set_implicit_authorization (pfe, def, &pk_error)) {
                                 fprintf (stderr, "Error: code=%d: %s: %s\n",
                                          polkit_error_get_error_code (pk_error),
                                          polkit_error_get_error_name (pk_error),
@@ -336,14 +326,14 @@ main (int argc, char *argv[])
                                 polkit_error_free (pk_error);
                                 goto out;
                         }
-                        polkit_policy_default_unref (def);
+                        polkit_implicit_authorization_unref (def);
 
                         set_def_active_action_id = NULL;
                 }
                 
                 if (action_id != NULL) {
-                        PolKitPolicyFileEntry *pfe;
-                        pfe = polkit_policy_cache_get_entry_by_id (cache, action_id);
+                        PolKitActionDescription *pfe;
+                        pfe = polkit_context_get_action_description (ctx, action_id);
                         if (pfe == NULL) {
                                 fprintf (stderr, "Cannot find policy file entry for action id '%s'\n", action_id);
                                 goto out;

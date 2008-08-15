@@ -60,33 +60,22 @@ polkit_bool_t _polkit_authorization_db_auth_file_add (polkit_bool_t transient, u
 PolKitAuthorizationDB *_polkit_authorization_db_new            (void);
 void                   _polkit_authorization_db_invalidate_cache (PolKitAuthorizationDB *authdb);
 
-polkit_bool_t          _polkit_authorization_db_pfe_foreach   (PolKitPolicyCache *policy_cache, 
-                                                               PolKitPolicyCacheForeachFunc callback,
-                                                               void *user_data);
 
-PolKitPolicyFileEntry* _polkit_authorization_db_pfe_get_by_id (PolKitPolicyCache *policy_cache, 
-                                                               const char *action_id);
+PolKitImplicitAuthorization *_polkit_implicit_authorization_new (PolKitResult defaults_allow_any,
+                                                                 PolKitResult defaults_allow_inactive,
+                                                                 PolKitResult defaults_allow_active);
 
-
-PolKitPolicyCache     *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);
-
-PolKitPolicyCache *_polkit_policy_cache_new       (const char *dirname, polkit_bool_t load_descriptions, PolKitError **error);
-
-PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any,
-                                                 PolKitResult defaults_allow_inactive,
-                                                 PolKitResult defaults_allow_active);
-
-polkit_bool_t _polkit_policy_file_entry_set_descriptions (PolKitPolicyFileEntry *pfe,
+polkit_bool_t _polkit_action_description_set_descriptions (PolKitActionDescription *pfe,
                                                           const char *policy_description,
                                                           const char *policy_message);
 
 
-PolKitPolicyDefault *_polkit_policy_default_new (PolKitResult defaults_allow_any,
-                                                 PolKitResult defaults_allow_inactive,
-                                                 PolKitResult defaults_allow_active);
+PolKitImplicitAuthorization *_polkit_implicit_authorization_new (PolKitResult defaults_allow_any,
+                                                                 PolKitResult defaults_allow_inactive,
+                                                                 PolKitResult defaults_allow_active);
 
 
-PolKitPolicyFileEntry *_polkit_policy_file_entry_new   (const char *action_id, 
+PolKitActionDescription *_polkit_action_description_new   (const char *action_id, 
                                                         const char *vendor,
                                                         const char *vendor_url,
                                                         const char *icon_name,

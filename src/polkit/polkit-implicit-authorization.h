@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
 /***************************************************************************
  *
- * polkit-policy-default.h : policy definition for the defaults
+ * polkit-implicit-authorization.h : policy definition for the defaults
  *
  * Copyright (C) 2007 David Zeuthen, <david@fubar.dk>
  *
@@ -31,8 +31,8 @@
 #error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef POLKIT_POLICY_DEFAULT_H
-#define POLKIT_POLICY_DEFAULT_H
+#ifndef POLKIT_IMPLICIT_AUTHORIZATION_H
+#define POLKIT_IMPLICIT_AUTHORIZATION_H
 
 #include <polkit/polkit-types.h>
 #include <polkit/polkit-result.h>
@@ -43,38 +43,38 @@
 
 POLKIT_BEGIN_DECLS
 
-struct _PolKitPolicyDefault;
-typedef struct _PolKitPolicyDefault PolKitPolicyDefault;
+struct _PolKitImplicitAuthorization;
+typedef struct _PolKitImplicitAuthorization PolKitImplicitAuthorization;
 
-PolKitPolicyDefault    *polkit_policy_default_new   (void);
-PolKitPolicyDefault    *polkit_policy_default_ref   (PolKitPolicyDefault *policy_default);
-void                    polkit_policy_default_unref (PolKitPolicyDefault *policy_default);
-void                    polkit_policy_default_debug (PolKitPolicyDefault *policy_default);
-PolKitPolicyDefault    *polkit_policy_default_clone (PolKitPolicyDefault *policy_default);
+PolKitImplicitAuthorization    *polkit_implicit_authorization_new   (void);
+PolKitImplicitAuthorization    *polkit_implicit_authorization_ref   (PolKitImplicitAuthorization *implicit_authorization);
+void                    polkit_implicit_authorization_unref (PolKitImplicitAuthorization *implicit_authorization);
+void                    polkit_implicit_authorization_debug (PolKitImplicitAuthorization *implicit_authorization);
+PolKitImplicitAuthorization    *polkit_implicit_authorization_clone (PolKitImplicitAuthorization *implicit_authorization);
 
-polkit_bool_t           polkit_policy_default_equals (PolKitPolicyDefault *a, PolKitPolicyDefault *b);
+polkit_bool_t           polkit_implicit_authorization_equals (PolKitImplicitAuthorization *a, PolKitImplicitAuthorization *b);
 
-PolKitResult polkit_policy_default_can_session_do_action (PolKitPolicyDefault *policy_default,
+PolKitResult polkit_implicit_authorization_can_session_do_action (PolKitImplicitAuthorization *implicit_authorization,
                                                           PolKitAction        *action,
                                                           PolKitSession       *session);
 
-PolKitResult polkit_policy_default_can_caller_do_action (PolKitPolicyDefault *policy_default,
+PolKitResult polkit_implicit_authorization_can_caller_do_action (PolKitImplicitAuthorization *implicit_authorization,
                                                          PolKitAction        *action,
                                                          PolKitCaller        *caller);
 
-PolKitResult polkit_policy_default_get_allow_any      (PolKitPolicyDefault *policy_default);
-PolKitResult polkit_policy_default_get_allow_inactive (PolKitPolicyDefault *policy_default);
-PolKitResult polkit_policy_default_get_allow_active   (PolKitPolicyDefault *policy_default);
+PolKitResult polkit_implicit_authorization_get_allow_any      (PolKitImplicitAuthorization *implicit_authorization);
+PolKitResult polkit_implicit_authorization_get_allow_inactive (PolKitImplicitAuthorization *implicit_authorization);
+PolKitResult polkit_implicit_authorization_get_allow_active   (PolKitImplicitAuthorization *implicit_authorization);
 
-void         polkit_policy_default_set_allow_any      (PolKitPolicyDefault *policy_default, PolKitResult value);
-void         polkit_policy_default_set_allow_inactive (PolKitPolicyDefault *policy_default, PolKitResult value);
-void         polkit_policy_default_set_allow_active   (PolKitPolicyDefault *policy_default, PolKitResult value);
+void         polkit_implicit_authorization_set_allow_any      (PolKitImplicitAuthorization *implicit_authorization, PolKitResult value);
+void         polkit_implicit_authorization_set_allow_inactive (PolKitImplicitAuthorization *implicit_authorization, PolKitResult value);
+void         polkit_implicit_authorization_set_allow_active   (PolKitImplicitAuthorization *implicit_authorization, PolKitResult value);
 
 
 /* TODO: export knobs for "default policy" */
 
 POLKIT_END_DECLS
 
-#endif /* POLKIT_POLICY_DEFAULT_H */
+#endif /* POLKIT_IMPLICIT_AUTHORIZATION_H */
 
 

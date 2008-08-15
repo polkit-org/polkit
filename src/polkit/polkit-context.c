@@ -31,31 +31,25 @@
 #  include <config.h>
 #endif
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#if HAVE_SOLARIS
+#include <sys/stat.h>
+#endif
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
 #include <errno.h>
-#ifdef HAVE_SOLARIS
-#include <port.h>
-#include <sys/stat.h>
-#else
-#ifdef HAVE_INOTIFY
-#include <sys/inotify.h>
-#elif HAVE_KQUEUE
-#include <sys/event.h>
-#include <sys/time.h>
-#include <fcntl.h>
-#endif
-#endif
 #include <syslog.h>
+#include <fcntl.h>
+#include <dirent.h>
 
 #include "polkit-debug.h"
 #include "polkit-context.h"
-#include "polkit-policy-cache.h"
 #include "polkit-private.h"
 #include "polkit-test.h"
 
@@ -103,28 +97,11 @@ struct _PolKitContext
         PolKitContextConfigChangedCB config_changed_cb;
         void *config_changed_user_data;
 
-        PolKitContextAddIOWatch      io_add_watch_func;
-        PolKitContextRemoveIOWatch   io_remove_watch_func;
-
         char *policy_dir;
-
-        PolKitPolicyCache *priv_cache;
 
         PolKitAuthorizationDB *authdb;
 
-        polkit_bool_t load_descriptions;
-
-#ifdef HAVE_INOTIFY
-        int inotify_fd;
-        int inotify_fd_watch_id;
-        int inotify_policy_wd;
-        int inotify_grant_perm_wd;
-#elif HAVE_KQUEUE
-	int kqueue_fd;
-	int kqueue_fd_watch_id;
-	int kqueue_policy_fd;
-	int kqueue_grant_perm_fd;
-#endif
+        KitList *action_descriptions;
 };
 
 /**
@@ -158,230 +135,16 @@ polkit_context_new (void)
 polkit_bool_t
 polkit_context_init (PolKitContext *pk_context, PolKitError **error)
 {
-#ifdef HAVE_KQUEUE
-	struct kevent ev;
-#endif
 
         kit_return_val_if_fail (pk_context != NULL, FALSE);
 
         pk_context->policy_dir = kit_strdup (PACKAGE_DATA_DIR "/polkit-1/actions");
         polkit_debug ("Using policy files from directory %s", pk_context->policy_dir);
 
-        /* NOTE: we don't populate the cache until it's needed.. */
-
-        /* NOTE: we don't load the configuration file until it's needed */
-
-#ifdef HAVE_SOLARIS
-        if (pk_context->io_add_watch_func != NULL) {
-                pk_context->inotify_fd = port_create ();
-                if (pk_context->inotify_fd < 0) {
-                        polkit_debug ("failed to port_create: %s", strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-
-                /* Watch the /usr/share/polkit-1/actions directory */
-                pk_context->inotify_policy_wd = port_add_watch (pk_context->inotify_fd,
-                                                                   PACKAGE_DATA_DIR "/polkit-1/actions",
-                                                                   FILE_MODIFIED | FILE_ATTRIB);
-                if (pk_context->inotify_policy_wd < 0) {
-                        polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/polkit-1/actions': %s",
-                                   strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-
-#ifdef POLKIT_AUTHDB_DEFAULT
-                /* Watch the /var/lib/misc/polkit-1.reload file */
-                pk_context->inotify_grant_perm_wd = port_add_watch (pk_context->inotify_fd,
-                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload",
-                                                                       FILE_MODIFIED | FILE_ATTRIB);
-                if (pk_context->inotify_grant_perm_wd < 0) {
-                        polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload': %s",
-                                   strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-#endif
-
-                pk_context->inotify_fd_watch_id = pk_context->io_add_watch_func (pk_context, pk_context->inotify_fd);
-                if (pk_context->inotify_fd_watch_id == 0) {
-                        polkit_debug ("failed to add io watch");
-                        /* TODO: set error */
-                        goto error;
-                }
-        }
-#elif HAVE_KQUEUE
-	if (pk_context->io_add_watch_func != NULL) {
-		pk_context->kqueue_fd = kqueue ();
-		if (pk_context->kqueue_fd < 0) {
-			polkit_debug ("failed to initialize kqueue: %s", strerror (errno));
-			/* TODO: set error */
-			goto error;
-		}
-
-		/* Watch the /usr/share/polkit-1/actions directory */
-		pk_context->kqueue_policy_fd = open (PACKAGE_DATA_DIR "/polkit-1/actions", O_RDONLY);
-		if (pk_context->kqueue_policy_fd < 0) {
-			polkit_debug ("failed to open '" PACKAGE_DATA_DIR "/polkit-1/actions for reading: %s",
-				strerror (errno));
-			/* TODO: set error */
-			goto error;
-		}
-
-		EV_SET (&ev, pk_context->kqueue_policy_fd, EVFILT_VNODE,
-			EV_ADD | EV_ENABLE | EV_CLEAR,
-			NOTE_DELETE | NOTE_EXTEND | NOTE_WRITE | NOTE_RENAME,
-			0, 0);
-		if (kevent (pk_context->kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
-			polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/polkit-1/actions': %s",
-				strerror (errno));
-			close (pk_context->kqueue_policy_fd);
-			/* TODO: set error */
-			goto error;
-		}
-
-#ifdef POLKIT_AUTHDB_DEFAULT
-		/* Watch the /var/lib/misc/polkit-1.reload file */
-		pk_context->kqueue_grant_perm_fd = open (PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload", O_RDONLY);
-		if (pk_context->kqueue_grant_perm_fd < 0) {
-			polkit_debug ("failed to open '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload' for reading: %s",
-				strerror (errno));
-			/* TODO: set error */
-			goto error;
-		}
-
-		EV_SET (&ev, pk_context->kqueue_grant_perm_fd, EVFILT_VNODE,
-			EV_ADD | EV_ENABLE | EV_CLEAR,
-			NOTE_DELETE | NOTE_EXTEND | NOTE_WRITE | NOTE_RENAME | NOTE_ATTRIB,
-			0, 0);
-		if (kevent (pk_context->kqueue_fd, &ev, 1, NULL, 0, NULL) == -1) {
-			polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload': %s",
-				strerror (errno));
-			close (pk_context->kqueue_grant_perm_fd);
-			/* TODO: set error */
-			goto error;
-		}
-#endif
-
-		pk_context->kqueue_fd_watch_id = pk_context->io_add_watch_func (pk_context, pk_context->kqueue_fd);
-		if (pk_context->kqueue_fd_watch_id == 0) {
-			polkit_debug ("failed to add io watch");
-			/* TODO: set error */
-			goto error;
-		}
-	}
-#else
-        if (pk_context->io_add_watch_func != NULL) {
-                pk_context->inotify_fd = inotify_init ();
-                if (pk_context->inotify_fd < 0) {
-                        polkit_debug ("failed to initialize inotify: %s", strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-
-                /* Watch the /usr/share/polkit-1/actions directory */
-                pk_context->inotify_policy_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                   PACKAGE_DATA_DIR "/polkit-1/actions", 
-                                                                   IN_MODIFY | IN_CREATE | IN_DELETE | IN_ATTRIB);
-                if (pk_context->inotify_policy_wd < 0) {
-                        polkit_debug ("failed to add watch on directory '" PACKAGE_DATA_DIR "/polkit-1/actions': %s",
-                                   strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-
-#ifdef POLKIT_AUTHDB_DEFAULT
-                /* Watch the /var/lib/misc/polkit-1.reload file */
-                pk_context->inotify_grant_perm_wd = inotify_add_watch (pk_context->inotify_fd, 
-                                                                       PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload", 
-                                                                       IN_MODIFY | IN_CREATE | IN_ATTRIB);
-                if (pk_context->inotify_grant_perm_wd < 0) {
-                        polkit_debug ("failed to add watch on file '" PACKAGE_LOCALSTATE_DIR "/lib/misc/polkit-1.reload': %s",
-                                   strerror (errno));
-                        /* TODO: set error */
-                        goto error;
-                }
-#endif
-
-                pk_context->inotify_fd_watch_id = pk_context->io_add_watch_func (pk_context, pk_context->inotify_fd);
-                if (pk_context->inotify_fd_watch_id == 0) {
-                        polkit_debug ("failed to add io watch");
-                        /* TODO: set error */
-                        goto error;
-                }
-        }
-#endif
-
         return TRUE;
-error:
-        return FALSE;
+        //error:
+        //return FALSE;
 }
-
-#ifdef HAVE_SOLARIS
-
-struct fileportinfo {
-        struct file_obj fobj;
-        int events;
-        int port;
-};
-
-/**
- * port_add_watch:
- * @port: the port object
- * @name: filename which will be added to the port
- * @events: the event which will be watched for
- *
- * add file watch .
- *
- * Returns: the object
- **/
-int
-port_add_watch (int port, const char *name, uint32_t events)
-{
-        struct fileportinfo *fpi;
-
-        if ( (fpi = kit_malloc (sizeof(struct fileportinfo)) ) == NULL ) {
-                polkit_debug ("Faile to kit_malloc!");
-                /* TODO: set error */
-                return -1;
-        }
-
-        fpi->fobj.fo_name = strdup (name);
-        fpi->events = events;
-        fpi->port = port;
-
-        if ( file_associate (fpi, events) < 0 ) {
-                polkit_debug ("Failed to associate with file %s: %s", fpi->fobj.fo_name, strerror (errno));
-                /* TODO: set error */
-                return -1;
-        }
-        return 0;
-}
-
-int
-file_associate (struct fileportinfo *fpinfo, int events)
-{
-        struct stat sb;
-
-        if ( stat (fpinfo->fobj.fo_name, &sb) == -1) {
-                polkit_debug ("Failed to stat file %s: %s", fpinfo->fobj.fo_name, strerror (errno));
-                /* TODO: set error */
-                return -1;
-        }
-
-        fpinfo->fobj.fo_atime = sb.st_atim;
-        fpinfo->fobj.fo_mtime = sb.st_mtim;
-        fpinfo->fobj.fo_ctime = sb.st_ctim;
-
-        if ( port_associate (fpinfo->port, PORT_SOURCE_FILE, (uintptr_t)&(fpinfo->fobj), events, (void *)fpinfo ) == -1) {
-                polkit_debug ("Failed to register file %s: %s", fpinfo->fobj.fo_name, strerror (errno));
-                /* TODO: set error */
-                return -1;
-        }
-        return 0;
-}
-#endif
 
 /**
  * polkit_context_ref:
@@ -451,224 +214,6 @@ polkit_context_set_config_changed (PolKitContext                *pk_context,
 }
 
 /**
- * polkit_context_io_func:
- * @pk_context: the object
- * @fd: the file descriptor passed to the supplied function of type #PolKitContextAddIOWatch.
- * 
- * Method that the application must call when there is data to read
- * from a file descriptor registered with the supplied function of
- * type #PolKitContextAddIOWatch.
- **/
-void 
-polkit_context_io_func (PolKitContext *pk_context, int fd)
-{
-        polkit_bool_t config_changed;
-
-        kit_return_if_fail (pk_context != NULL);
-
-        polkit_debug ("polkit_context_io_func: data on fd %d", fd);
-
-        config_changed = FALSE;
-
-#ifdef HAVE_SOLARIS
-        if (fd == pk_context->inotify_fd) {
-                port_event_t pe;
-                struct file_obj *fobjp;
-                struct fileportinfo *fpip;
-
-                while ( !port_get (fd, &pe, NULL) ) {
-                        switch (pe.portev_source) {
-                        case PORT_SOURCE_FILE:
-                                fpip = (struct fileportinfo *)pe.portev_object;
-                                fobjp = &fpip->fobj;
-                                polkit_debug ("filename = %s, events = %d", fobjp->fo_name, pe.portev_events);
-                                config_changed = TRUE;
-                                polkit_debug ("Config changed");
-                                file_associate ((struct fileportinfo *)pe.portev_object, pe.portev_events);
-                                break;
-                        default:
-                                polkit_debug ("Event from unexpected source");
-                        }
-                        if ( config_changed )
-                                break;
-                }
-        }
-
-#elif HAVE_KQUEUE
-	if (fd == pk_context->kqueue_fd) {
-		struct kevent ev[1024];
-		struct timespec nullts = { 0, 0 };
-		int res;
-		int i = 0;
-
-		res = kevent (fd, NULL, 0, ev, 1024, &nullts);
-
-		if (res > 0) {
-			/* Sleep for a half-second to avoid potential races
-			 * during install/uninstall. */
-			usleep (500000);
-
-			while (i < res) {
-				struct kevent *evptr;
-
-				evptr = &ev[i];
-				polkit_debug ("ident=%d filter=%d flags=%u fflags=%u",
-					   evptr->ident, evptr->filter, evptr->flags, evptr->fflags);
-				polkit_debug ("config changed!");
-				config_changed = TRUE;
-
-				i++;
-			}
-		} else {
-			polkit_debug ("failed to read kqueue event: %s", strerror (errno));
-		}
-	}
-#else
-        if (fd == pk_context->inotify_fd) {
-/* size of the event structure, not counting name */
-#define EVENT_SIZE  (sizeof (struct inotify_event))
-/* reasonable guess as to size of 1024 events */
-#define BUF_LEN        (1024 * (EVENT_SIZE + 16))
-                char buf[BUF_LEN];
-                int len;
-                int i = 0;
-again:
-                len = read (fd, buf, BUF_LEN);
-                if (len < 0) {
-                        if (errno == EINTR) {
-                                goto again;
-                        } else {
-                                polkit_debug ("read: %s", strerror (errno));
-                        }
-                } else if (len > 0) {
-                        /* BUF_LEN too small? */
-                }
-                while (i < len) {
-                        struct inotify_event *event;
-                        event = (struct inotify_event *) &buf[i];
-                        polkit_debug ("wd=%d mask=%u cookie=%u len=%u",
-                                   event->wd, event->mask, event->cookie, event->len);
-
-                        polkit_debug ("config changed!");
-                        config_changed = TRUE;
-
-                        i += EVENT_SIZE + event->len;
-                }
-        }
-#endif
-
-        if (config_changed) {
-                polkit_context_force_reload (pk_context);
-
-                if (pk_context->config_changed_cb != NULL) {
-                        pk_context->config_changed_cb (pk_context, 
-                                                       pk_context->config_changed_user_data);
-                }
-        }
-}
-
-/**
- * polkit_context_force_reload:
- * @pk_context: context
- *
- * Force a reload. 
- *
- * Note that there is no reason to call this method in response to a
- * config changed callback.
- *
- * Since: 0.7 
- */
-void
-polkit_context_force_reload (PolKitContext *pk_context)
-{
-        kit_return_if_fail (pk_context != NULL);
-
-        /* purge existing policy files */
-        polkit_debug ("purging policy files");
-        if (pk_context->priv_cache != NULL) {
-                polkit_policy_cache_unref (pk_context->priv_cache);
-                pk_context->priv_cache = NULL;
-        }
-
-        
-        /* Purge authorization entries from the cache */
-        _polkit_authorization_db_invalidate_cache (pk_context->authdb);
-}
-
-
-/**
- * polkit_context_set_io_watch_functions:
- * @pk_context: the context object
- * @io_add_watch_func: the function that the PolicyKit library can invoke to start watching a file descriptor
- * @io_remove_watch_func: the function that the PolicyKit library can invoke to stop watching a file descriptor
- * 
- * Register a functions that PolicyKit can use for watching IO descriptors.
- *
- * This method must be called before polkit_context_init().
- **/
-void
-polkit_context_set_io_watch_functions (PolKitContext                        *pk_context, 
-                                       PolKitContextAddIOWatch               io_add_watch_func,
-                                       PolKitContextRemoveIOWatch            io_remove_watch_func)
-{
-        kit_return_if_fail (pk_context != NULL);
-        pk_context->io_add_watch_func = io_add_watch_func;
-        pk_context->io_remove_watch_func = io_remove_watch_func;
-}
-
-/**
- * polkit_context_set_load_descriptions:
- * @pk_context: the context
- * 
- * Set whether policy descriptions should be loaded. By default these
- * are not loaded to keep memory use down. TODO: specify whether they
- * are localized and how.
- *
- * This method must be called before polkit_context_init().
- **/
-void
-polkit_context_set_load_descriptions  (PolKitContext *pk_context)
-{
-        kit_return_if_fail (pk_context != NULL);
-        pk_context->load_descriptions = TRUE;
-}
-
-/**
- * polkit_context_get_policy_cache:
- * @pk_context: the context
- * 
- * Get the #PolKitPolicyCache object that holds all the defined policies as well as their defaults.
- * 
- * Returns: the #PolKitPolicyCache object. Caller shall not unref it.
- **/
-PolKitPolicyCache *
-polkit_context_get_policy_cache (PolKitContext *pk_context)
-{
-        kit_return_val_if_fail (pk_context != NULL, NULL);
-
-        if (pk_context->priv_cache == NULL) {
-                PolKitError *error;
-
-                polkit_debug ("Populating cache from directory %s", pk_context->policy_dir);
-
-                error = NULL;
-                pk_context->priv_cache = _polkit_policy_cache_new (pk_context->policy_dir, 
-                                                                   pk_context->load_descriptions, 
-                                                                   &error);
-                if (pk_context->priv_cache == NULL) {
-                        kit_warning ("Error loading policy files from %s: %s", 
-                                   pk_context->policy_dir, polkit_error_get_error_message (error));
-                        polkit_error_free (error);
-                } else {
-                        polkit_policy_cache_debug (pk_context->priv_cache);
-                }
-        }
-
-        return pk_context->priv_cache;
-}
-
-
-/**
  * polkit_context_is_session_authorized:
  * @pk_context: the PolicyKit context
  * @action: the type of access to check for
@@ -689,7 +234,7 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
                                       PolKitSession         *session,
                                       PolKitError          **error)
 {
-        PolKitPolicyCache *cache;
+        //PolKitPolicyCache *cache;
         PolKitResult result_from_grantdb;
         polkit_bool_t from_authdb;
         polkit_bool_t from_authdb_negative;
@@ -707,9 +252,9 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
         if (!polkit_session_validate (session))
                 goto out;
 
-        cache = polkit_context_get_policy_cache (pk_context);
-        if (cache == NULL)
-                goto out;
+        //cache = polkit_context_get_policy_cache (pk_context);
+        //if (cache == NULL)
+        //        goto out;
 
         result_from_grantdb = POLKIT_RESULT_UNKNOWN;
         from_authdb_negative = FALSE;
@@ -731,15 +276,15 @@ polkit_context_is_session_authorized (PolKitContext         *pk_context,
 
         /* Otherwise, unless we found a negative auth, fall back to defaults as specified in the .policy file */
         if (!from_authdb_negative) {
-                PolKitPolicyFileEntry *pfe;
+                PolKitActionDescription *pfe;
 
-                pfe = polkit_policy_cache_get_entry (cache, action);
+                pfe = NULL; //pfe = polkit_policy_cache_get_entry (cache, action);
                 if (pfe != NULL) {
-                        PolKitPolicyDefault *policy_default;
+                        PolKitImplicitAuthorization *implicit_authorization;
 
-                        policy_default = polkit_policy_file_entry_get_default (pfe);
-                        if (policy_default != NULL) {
-                                result = polkit_policy_default_can_session_do_action (policy_default, action, session);
+                        implicit_authorization = polkit_action_description_get_implicit_authorization (pfe);
+                        if (implicit_authorization != NULL) {
+                                result = polkit_implicit_authorization_can_session_do_action (implicit_authorization, action, session);
                         }
                 }
         }
@@ -797,7 +342,7 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
                                      polkit_bool_t          revoke_if_one_shot,
                                      PolKitError          **error)
 {
-        PolKitPolicyCache *cache;
+        //PolKitPolicyCache *cache;
         PolKitResult result;
         PolKitResult result_from_grantdb;
         polkit_bool_t from_authdb;
@@ -809,9 +354,9 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
         if (action == NULL || caller == NULL)
                 goto out;
 
-        cache = polkit_context_get_policy_cache (pk_context);
-        if (cache == NULL)
-                goto out;
+        //cache = polkit_context_get_policy_cache (pk_context);
+        //if (cache == NULL)
+        //       goto out;
 
         /* now validate the incoming objects */
         if (!polkit_action_validate (action))
@@ -840,15 +385,15 @@ polkit_context_is_caller_authorized (PolKitContext         *pk_context,
 
         /* Otherwise, unless we found a negative auth, fall back to defaults as specified in the .policy file */
         if (!from_authdb_negative) {
-                PolKitPolicyFileEntry *pfe;
+                PolKitActionDescription *pfe;
 
-                pfe = polkit_policy_cache_get_entry (cache, action);
+                pfe = NULL; //pfe = polkit_policy_cache_get_entry (cache, action);
                 if (pfe != NULL) {
-                        PolKitPolicyDefault *policy_default;
+                        PolKitImplicitAuthorization *implicit_authorization;
 
-                        policy_default = polkit_policy_file_entry_get_default (pfe);
-                        if (policy_default != NULL) {
-                                result = polkit_policy_default_can_caller_do_action (policy_default, action, caller);
+                        implicit_authorization = polkit_action_description_get_implicit_authorization (pfe);
+                        if (implicit_authorization != NULL) {
+                                result = polkit_implicit_authorization_can_caller_do_action (implicit_authorization, action, caller);
                         }
                 }
         }
@@ -861,51 +406,6 @@ found:
 out:
         polkit_debug ("... result was %s", polkit_result_to_string_representation (result));
         return result;
-}
-
-/**
- * polkit_context_can_session_do_action:
- * @pk_context: the PolicyKit context
- * @action: the type of access to check for
- * @session: the session in question
- *
- * Determine if a given session can do a given action.
- *
- * This can fail with the following errors: 
- * #POLKIT_ERROR_NOT_AUTHORIZED_TO_READ_AUTHORIZATIONS_FOR_OTHER_USERS
- *
- * Returns: A #PolKitResult - can only be one of
- * #POLKIT_RESULT_YES, #POLKIT_RESULT_NO.
- *
- * Deprecated: 0.7: use polkit_context_is_session_authorized() instead.
- */
-PolKitResult
-polkit_context_can_session_do_action (PolKitContext   *pk_context,
-                                      PolKitAction    *action,
-                                      PolKitSession   *session)
-{
-        return polkit_context_is_session_authorized (pk_context, action, session, NULL);
-}
-
-/**
- * polkit_context_can_caller_do_action:
- * @pk_context: the PolicyKit context
- * @action: the type of access to check for
- * @caller: the caller in question
- *
- * Determine if a given caller can do a given action.
- *
- * Returns: A #PolKitResult specifying if, and how, the caller can
- * do a specific action
- *
- * Deprecated: 0.7: use polkit_context_is_caller_authorized() instead.
- */
-PolKitResult
-polkit_context_can_caller_do_action (PolKitContext   *pk_context,
-                                     PolKitAction    *action,
-                                     PolKitCaller    *caller)
-{
-        return polkit_context_is_caller_authorized (pk_context, action, caller, FALSE, NULL);
 }
 
 /**
@@ -941,4 +441,182 @@ KitTest _test_context = {
         _run_test
 };
 
+
 #endif /* POLKIT_BUILD_TESTS */
+
+
+static polkit_bool_t
+_prepend_entry (PolKitActionDescription  *action_description,
+                void                   *user_data)
+{
+        KitList *l;
+        PolKitContext *pk_context = user_data;
+
+        polkit_action_description_ref (action_description);
+        l = kit_list_prepend (pk_context->action_descriptions, action_description);
+        if (l == NULL) {
+                polkit_action_description_unref (action_description);
+                goto oom;
+        }
+        pk_context->action_descriptions = l;
+        return FALSE;
+oom:
+        return TRUE;
+}
+
+static void
+get_descriptions (PolKitContext  *pk_context, PolKitError **error)
+{
+        DIR *dir;
+#ifdef HAVE_READDIR64
+        struct dirent64 *d;
+#else
+	struct dirent *d;
+#endif
+        struct stat statbuf;
+        const char *dirname = PACKAGE_DATA_DIR "/polkit-1/actions";
+
+        dir = NULL;
+
+        dir = opendir (dirname);
+        if (dir == NULL) {
+                polkit_error_set_error (error, POLKIT_ERROR_POLICY_FILE_INVALID,
+                                        "Cannot load policy files from directory %s: %m",
+                                        dirname);
+                goto out;
+        }
+
+#ifdef HAVE_READDIR64
+        while ((d = readdir64 (dir)) != NULL) {
+#else
+	while ((d = readdir (dir)) != NULL) {
+#endif
+                char *path;
+                PolKitError *pk_error;
+                size_t name_len;
+                char *filename;
+                static const char suffix[] = ".policy";
+
+                path = kit_strdup_printf ("%s/%s", dirname, d->d_name);
+                if (path == NULL) {
+                        polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory");
+                        goto out;
+                }
+
+                if (stat (path, &statbuf) != 0)  {
+                        polkit_error_set_error (error, POLKIT_ERROR_GENERAL_ERROR, "stat()");
+                        kit_free (path);
+                        goto out;
+                }
+                
+                if (!S_ISREG (statbuf.st_mode)) {
+                        kit_free (path);
+                        continue;
+                }
+
+                filename = d->d_name;
+                name_len = strlen (filename);
+                if (name_len < sizeof (suffix) || strcmp ((filename + name_len - sizeof (suffix) + 1), suffix) != 0) {
+                        kit_free (path);
+                        continue;
+                }
+
+                polkit_debug ("Loading %s", path);
+                pk_error = NULL;
+
+                if (polkit_action_description_get_from_file (path, _prepend_entry, pk_context, &pk_error)) {
+                        /* OOM failure from _prepend_entry */
+                        polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY, "Out of memory");
+                        goto out;
+                }
+
+                if (polkit_error_is_set (pk_error)) {
+                        if (polkit_error_get_error_code (pk_error) == POLKIT_ERROR_OUT_OF_MEMORY) {
+                                if (error != NULL)
+                                        *error = pk_error;
+                                else
+                                        polkit_error_free (pk_error);
+                                goto out;
+                        }
+
+                        kit_warning ("ignoring malformed policy file: %s",
+                                     polkit_error_get_error_message (pk_error));
+                        polkit_error_free (pk_error);
+                }
+
+        }
+        closedir (dir);
+
+        return;
+
+out:
+        if (dir != NULL)
+                closedir(dir);
+}
+
+static void
+ensure_descriptions (PolKitContext  *pk_context)
+{
+        PolKitError *error;
+        error = NULL;
+
+        if (pk_context->action_descriptions != NULL)
+                goto out;
+
+        get_descriptions (pk_context, &error);
+        if (polkit_error_is_set (error)) {
+                kit_warning ("Error loading policy files: %s: %s",
+                             polkit_error_get_error_name (error),
+                             polkit_error_get_error_message (error));
+                polkit_error_free (error);
+                goto out;
+        }
+
+ out:
+        ;
+}
+
+polkit_bool_t
+polkit_context_action_description_foreach (PolKitContext                      *pk_context,
+                                           PolKitActionDescriptionForeachFunc  cb,
+                                           void                               *user_data)
+{
+        KitList *l;
+        polkit_bool_t short_circuit;
+
+        ensure_descriptions (pk_context);
+
+        short_circuit = FALSE;
+        for (l = pk_context->action_descriptions; l != NULL; l = l->next) {
+                PolKitActionDescription *action_description = l->data;
+
+                if (cb (action_description, user_data)) {
+                        short_circuit = TRUE;
+                        break;
+                }
+        }
+
+        return short_circuit;
+}
+
+PolKitActionDescription *
+polkit_context_get_action_description (PolKitContext   *pk_context,
+                                       const char      *action_id)
+{
+        KitList *l;
+        PolKitActionDescription *action_description;
+
+        ensure_descriptions (pk_context);
+
+        action_description = NULL;
+
+        for (l = pk_context->action_descriptions; l != NULL; l = l->next) {
+                PolKitActionDescription *ad = l->data;
+                if (strcmp (polkit_action_description_get_id (ad), action_id) == 0) {
+                        action_description = ad;
+                        break;
+                }
+        }
+
+        return action_description;
+}

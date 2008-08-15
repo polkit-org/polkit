@@ -40,10 +40,8 @@
 #include <polkit/polkit-seat.h>
 #include <polkit/polkit-session.h>
 #include <polkit/polkit-caller.h>
-#include <polkit/polkit-policy-file-entry.h>
-#include <polkit/polkit-policy-file.h>
-#include <polkit/polkit-policy-cache.h>
-#include <polkit/polkit-policy-default.h>
+#include <polkit/polkit-action-description.h>
+#include <polkit/polkit-implicit-authorization.h>
 #include <polkit/polkit-authorization.h>
 #include <polkit/polkit-authorization-db.h>
 #include <polkit/polkit-tracker.h>

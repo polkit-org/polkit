@@ -73,6 +73,9 @@ gboolean polkit_daemon_backend_hello (PolKitDaemonBackend   *daemon,
                                       const char            *message,
                                       DBusGMethodInvocation *context);
 
+gboolean polkit_daemon_backend_get_policy_entries (PolKitDaemonBackend   *daemon,
+                                                   DBusGMethodInvocation *context);
+
 G_END_DECLS
 
 #endif /* __POLKIT_DAEMON_BACKEND_H__ */

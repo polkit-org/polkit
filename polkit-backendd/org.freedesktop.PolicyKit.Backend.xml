@@ -9,5 +9,10 @@
       <arg name="result" direction="out" type="s"/>
     </method>
 
+    <method name="GetPolicyEntries">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value=""/>
+      <arg name="result" direction="out" type="as"/>
+    </method>
+
   </interface>
 </node>

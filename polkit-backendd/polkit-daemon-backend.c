@@ -49,6 +49,9 @@
 
 #include "polkit-daemon-backend.h"
 
+#include <polkit/polkit.h>
+#include <polkit/polkit-private.h>
+
 static gboolean no_exit = FALSE;
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -253,6 +256,37 @@ polkit_daemon_backend_hello (PolKitDaemonBackend   *daemon,
 
         s = g_strdup_printf ("You said '%s'", message);
         dbus_g_method_return (context, s);
+        g_free (s);
 
         return TRUE;
 }
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+
+
+gboolean
+polkit_daemon_backend_get_policy_entries (PolKitDaemonBackend   *daemon,
+                                          DBusGMethodInvocation *context)
+{
+        GPtrArray *a;
+        PolKitPolicyCache *c;
+
+        c = _polkit_policy_cache_new (PACKAGE_DATA_DIR "polkit-1/actions", TRUE, NULL);
+        polkit_policy_cache_unref (c);
+
+        a = g_ptr_array_new ();
+        g_ptr_array_add (a, g_strdup ("foo"));
+        g_ptr_array_add (a, g_strdup ("bar"));
+        g_ptr_array_add (a, g_strdup ("baz"));
+
+        g_ptr_array_add (a, NULL);
+        dbus_g_method_return (context, a->pdata);
+
+        g_ptr_array_foreach (a, (GFunc) g_free, NULL);
+        g_ptr_array_free (a, TRUE);
+
+        return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
