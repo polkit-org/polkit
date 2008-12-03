@@ -118,21 +118,13 @@ if test "x$GCC" = "xyes"; then
   changequote([,])dnl
 fi
 
-PKG_CHECK_MODULES(GLIB, [gio-2.0 >= 2.14.0])
-AC_SUBST(GIO_CFLAGS)
-AC_SUBST(GIO_LIBS)
-
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.14.0 gio-2.0 >= 2.14.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(DBUS, [dbus-1 >= 1.0])
-AC_SUBST(DBUS_CFLAGS)
-AC_SUBST(DBUS_LIBS)
-
-PKG_CHECK_MODULES(DBUS_GLIB, [dbus-glib-1 >= 0.73])
-AC_SUBST(DBUS_GLIB_CFLAGS)
-AC_SUBST(DBUS_GLIB_LIBS)
+PKG_CHECK_MODULES(EGG_DBUS, [eggdbus-1 >= 0.1])
+AC_SUBST(EGG_DBUS_CFLAGS)
+AC_SUBST(EGG_DBUS_LIBS)
 
 EXPAT_LIB=""
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
@@ -167,10 +159,13 @@ Makefile
 data/Makefile
 src/Makefile
 src/polkit/Makefile
+src/polkitbackend/Makefile
 src/polkitd/Makefile
 src/programs/Makefile
 docs/version.xml
 docs/Makefile
+docs/polkit/Makefile
+docs/polkitbackend/Makefile
 docs/man/Makefile
 po/Makefile.in
 ])

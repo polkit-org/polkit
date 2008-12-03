@@ -1,5 +1,5 @@
 
-SUBDIRS = polkit polkitd programs
+SUBDIRS = polkit polkitbackend polkitd programs
 
 clean-local :
 	rm -f *~

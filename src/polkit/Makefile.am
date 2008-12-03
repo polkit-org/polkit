@@ -14,16 +14,20 @@ INCLUDES =                                                      \
         -D_REENTRANT                                            \
         $(NULL)
 
-BUILT_SOURCES =							\
-        polkitbackendstubglue.h					\
-        polkitauthorityglue.h				\
+BUILT_SOURCES =									\
+	polkitbindings.h			polkitbindings.c		\
+	polkitbindingstypes.h							\
+	polkitauthority.h			polkitauthority.c		\
+	polkitbindingsmarshal.h			polkitbindingsmarshal.c		\
+	polkitbindingsmarshal.list						\
         $(NULL)
 
-polkitbackendstubglue.h: $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml Makefile.am
-	dbus-binding-tool --prefix=_polkit_backend_stub --mode=glib-server --output=polkitbackendstubglue.h $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml
-
-polkitauthorityglue.h: $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml Makefile.am
-	dbus-binding-tool --mode=glib-client --output=polkitauthorityglue.h $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml
+$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml
+	dbus2gobject										\
+	  --namespace       "Polkit"								\
+	  --dbus-namespace  "org.freedesktop.PolicyKit1"					\
+	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml	\
+	  $(NULL)
 
 lib_LTLIBRARIES=libpolkit-gobject-1.la
 
@@ -31,45 +35,42 @@ libpolkit_gobject_1includedir=$(includedir)/polkit-1/polkit
 
 libpolkit_gobject_1include_HEADERS =                        		\
         polkit.h							\
+        polkitauthoritystub.h						\
 	polkitactiondescription.h					\
         polkitauthority.h						\
         polkitauthorizationclaim.h					\
         polkitauthorizationresult.h					\
-	polkitbackend.h							\
         polkiterror.h							\
         polkitsubject.h							\
         polkituser.h							\
         polkitprocess.h							\
+	polkitbindings.h						\
+	polkitbindingstypes.h						\
+	polkitauthority.h						\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   	\
         polkit.h							\
-        polkitauthority.h		polkitauthority.c		\
+        polkitauthoritystub.h		polkitauthoritystub.c		\
 	polkitactiondescription.h	polkitactiondescription.c	\
         polkitauthorizationclaim.h	polkitauthorizationclaim.c	\
         polkitauthorizationresult.h	polkitauthorizationresult.c	\
-	polkitbackend.h			polkitbackend.c			\
-        polkitbackendstub.h		polkitbackendstub.c		\
         polkiterror.h			polkiterror.c			\
         polkitsubject.h			polkitsubject.c			\
-        polkitlocalbackend.h		polkitlocalbackend.c		\
         polkituser.h			polkituser.c			\
         polkitprocess.h			polkitprocess.c			\
-	polkitserialization.h		polkitserialization.c		\
         $(BUILT_SOURCES)						\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\
         -D_POLKIT_COMPILATION                                  		\
         $(GLIB_CFLAGS)							\
-        $(GIO_CFLAGS)							\
-        $(DBUS_GLIB_CFLAGS)						\
+        $(EGG_DBUS_CFLAGS)						\
         $(NULL)
 
 libpolkit_gobject_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
-        $(GIO_LIBS)							\
-        $(DBUS_GLIB_LIBS)						\
+        $(EGG_DBUS_LIBS)						\
         $(NULL)
 
 CLEANFILES = $(BUILT_SOURCES)

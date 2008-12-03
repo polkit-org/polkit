@@ -26,41 +26,31 @@
 int
 main (int argc, char *argv[])
 {
-        GList *ret;
-        GError *error;
-        GFile *dir;
-
-        g_type_init ();
-
-        dir = g_file_new_for_commandline_arg (argv[1]);
-
-        error = NULL;
-        ret = polkit_action_description_new_from_directory (dir,
-                                                            NULL,
-                                                            &error);
-        if (error != NULL) {
-                g_print ("Got error: %s\n", error->message);
-                g_error_free (error);
-                goto out;
-        }
-
-        g_debug ("rock'n'roll!");
-
-        g_list_foreach (ret, (GFunc) g_object_unref, NULL);
-        g_list_free (ret);
-
- out:
-        return 0;
-
-#if 0
-        PolkitAuthorizationResult result;
         GError *error;
         PolkitAuthority *authority;
+        gchar *result;
 
         g_type_init ();
 
         authority = polkit_authority_get ();
 
+        error = NULL;
+        polkit_authority_invoke_say_hello (authority,
+                                           0, /* call_flags */
+                                           "Hi there!",
+                                           &result,
+                                           NULL,
+                                           &error);
+        g_print ("Authority replied: %s\n", result);
+        g_free (result);
+
+        g_object_unref (authority);
+
+        return 0;
+}
+
+
+#if 0
         PolkitSubject *subject1;
         PolkitSubject *subject2;
         PolkitSubject *subject3;
@@ -94,8 +84,4 @@ main (int argc, char *argv[])
                 g_print ("Got result: %d\n", result);
         }
 
-        g_object_unref (authority);
-
-         return 0;
 #endif
-}

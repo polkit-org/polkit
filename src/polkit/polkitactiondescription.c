@@ -314,6 +314,7 @@ polkit_action_description_get_annotations (PolkitActionDescription  *action_desc
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+#if 0
 #include <expat.h> /* TODO: move to separate file */
 
 enum {
@@ -818,7 +819,6 @@ error:
         XML_StopParser (pd->parser, FALSE);
 }
 
-
 /**
  * polkit_action_description_get_from_file:
  * @path: path to file, e.g. <literal>/usr/share/polkit-1/actions/org.freedesktop.policykit.policy</literal>
@@ -876,12 +876,9 @@ polkit_action_description_get_from_file (const char                         *pat
 /* #ifdef POLKIT_BUILD_TESTS
    TODO: expat appears to leak on certain OOM paths
 */
-#if 0
         XML_Memory_Handling_Suite memsuite = {p_malloc, p_realloc, kit_free};
         pd.parser = XML_ParserCreate_MM (NULL, &memsuite, NULL);
-#else
         pd.parser = XML_ParserCreate (NULL);
-#endif
         pd.stack_depth = 0;
         if (pd.parser == NULL) {
                 polkit_error_set_error (error, POLKIT_ERROR_OUT_OF_MEMORY,
@@ -1109,4 +1106,4 @@ polkit_action_description_new_from_directory (GFile         *directory,
                 g_object_unref (e);
         return ret;
 }
-
+#endif

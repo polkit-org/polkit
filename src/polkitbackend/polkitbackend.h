@@ -21,23 +21,13 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_H
-#define __POLKIT_H
+#ifndef __POLKIT_BACKEND_H
+#define __POLKIT_BACKEND_H
 
-#define _POLKIT_INSIDE_POLKIT_H 1
-#include <polkit/polkitbindings.h>
+#define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
+#include <polkitbackend/polkitbackendlocal.h>
+#undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
 
-#include <polkit/polkitauthoritystub.h>
-#include <polkit/polkiterror.h>
-#include <polkit/polkitsubject.h>
-#include <polkit/polkitauthorizationclaim.h>
-#include <polkit/polkitauthorizationresult.h>
-#include <polkit/polkituser.h>
-#include <polkit/polkitprocess.h>
-#include <polkit/polkitactiondescription.h>
-
-#undef _POLKIT_INSIDE_POLKIT_H
-
-#endif /* __POLKIT_H */
+#endif /* __POLKIT_BACKEND_H */
 
 
