@@ -96,9 +96,8 @@ authority_iface_handle_say_hello (PolkitAuthority *instance,
 
         result = g_strdup_printf ("You said '%s' to the AUTHORITY!", message);
 
-        polkit_authority_handle_say_hello_finish (instance,
-                                                  result,
-                                                  method_invocation);
+        polkit_authority_handle_say_hello_finish (method_invocation,
+                                                  result);
 
         g_free (result);
 }
@@ -133,9 +132,8 @@ authority_iface_handle_enumerate_users (PolkitAuthority *instance,
 
         list = g_list_reverse (list);
 
-        polkit_authority_handle_enumerate_users_finish (instance,
-                                                        list,
-                                                        method_invocation);
+        polkit_authority_handle_enumerate_users_finish (method_invocation,
+                                                        list);
 
  out:
         g_list_foreach (list, (GFunc) g_object_unref, NULL);
