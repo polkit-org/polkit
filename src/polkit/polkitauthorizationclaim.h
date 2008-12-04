@@ -25,11 +25,11 @@
 #error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef __POLKIT_AUTHORIZATION_CLAIM_H__
-#define __POLKIT_AUTHORIZATION_CLAIM_H__
-
 #include <glib-object.h>
 #include <polkit/polkitsubject.h>
+
+#ifndef __POLKIT_AUTHORIZATION_CLAIM_H__
+#define __POLKIT_AUTHORIZATION_CLAIM_H__
 
 G_BEGIN_DECLS
 

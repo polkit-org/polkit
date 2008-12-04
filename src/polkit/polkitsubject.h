@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -21,52 +19,49 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#if !defined (_POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
-#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
-#endif
+#ifndef __POLKIT_SUBJECT_H
+#define __POLKIT_SUBJECT_H
 
-#ifndef __POLKIT_SUBJECT_H__
-#define __POLKIT_SUBJECT_H__
-
+#include <sys/types.h>
+#include <unistd.h>
 #include <glib-object.h>
+#include <polkit/polkitbindings.h>
 
 G_BEGIN_DECLS
 
-#define POLKIT_TYPE_SUBJECT            (polkit_subject_get_type ())
-#define POLKIT_SUBJECT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), POLKIT_TYPE_SUBJECT, PolkitSubject))
-#define POLKIT_IS_SUBJECT(obj)	 (G_TYPE_CHECK_INSTANCE_TYPE ((obj), POLKIT_TYPE_SUBJECT))
-#define POLKIT_SUBJECT_GET_IFACE(obj)  (G_TYPE_INSTANCE_GET_INTERFACE ((obj), POLKIT_TYPE_SUBJECT, PolkitSubjectIface))
+#define POLKIT_TYPE_SUBJECT         (polkit_subject_get_type())
+#define POLKIT_SUBJECT(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_SUBJECT, PolkitSubject))
+#define POLKIT_IS_SUBJECT(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_SUBJECT))
+#define POLKIT_SUBJECT_GET_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE((o), POLKIT_TYPE_SUBJECT, PolkitSubjectIface))
 
-/**
- * PolkitSubject:
- *
- * An abstract type that specifies a subject.
- **/
-typedef struct _PolkitSubject      PolkitSubject;
+#if 0
+typedef struct _PolkitSubject PolkitSubject; /* Dummy typedef */
+#endif
 typedef struct _PolkitSubjectIface PolkitSubjectIface;
 
-/**
- * PolkitSubjectIface:
- * @g_iface: The parent interface.
- * @equal: Checks if two #PolkitSubject<!-- -->s are equal.
- *
- * #PolkitSubjectIface is used to implement #PolkitSubject types for various
- * different subjects
- */
+typedef enum
+{
+  POLKIT_SUBJECT_KIND_UNIX_PROCESS,
+  POLKIT_SUBJECT_KIND_UNIX_USER,
+  POLKIT_SUBJECT_KIND_UNIX_GROUP,
+} PolkitSubjectKind;
+
 struct _PolkitSubjectIface
 {
-        GTypeInterface g_iface;
-
-        /* Virtual Table */
-
-        gboolean (* equal) (PolkitSubject *subject1,
-                            PolkitSubject *subject2);
+  GTypeInterface g_iface;
 };
 
-GType    polkit_subject_get_type  (void) G_GNUC_CONST;
-gboolean polkit_subject_equal     (PolkitSubject  *subject1,
-                                   PolkitSubject  *subject2);
+GType              polkit_subject_get_type              (void) G_GNUC_CONST;
+PolkitSubject     *polkit_subject_new_for_unix_process  (pid_t          unix_process_id);
+PolkitSubject     *polkit_subject_new_for_unix_user     (uid_t          unix_user_id);
+PolkitSubject     *polkit_subject_new_for_unix_group    (gid_t          unix_group_id);
+PolkitSubjectKind  polkit_subject_get_kind              (PolkitSubject *subject);
+pid_t              polkit_subject_unix_process_get_id   (PolkitSubject *subject);
+uid_t              polkit_subject_unix_user_get_id      (PolkitSubject *subject);
+gid_t              polkit_subject_unix_group_get_id     (PolkitSubject *subject);
+gboolean           polkit_subject_equal                 (PolkitSubject *a,
+                                                         PolkitSubject *b);
 
 G_END_DECLS
 
-#endif /* __POLKIT_SUBJECT_H__ */
+#endif /* __POLKIT_SUBJECT_H */

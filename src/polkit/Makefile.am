@@ -42,8 +42,6 @@ libpolkit_gobject_1include_HEADERS =                        		\
         polkitauthorizationresult.h					\
         polkiterror.h							\
         polkitsubject.h							\
-        polkituser.h							\
-        polkitprocess.h							\
 	polkitbindings.h						\
 	polkitbindingstypes.h						\
 	polkitauthority.h						\
@@ -57,8 +55,6 @@ libpolkit_gobject_1_la_SOURCES =                                   	\
         polkitauthorizationresult.h	polkitauthorizationresult.c	\
         polkiterror.h			polkiterror.c			\
         polkitsubject.h			polkitsubject.c			\
-        polkituser.h			polkituser.c			\
-        polkitprocess.h			polkitprocess.c			\
         $(BUILT_SOURCES)						\
         $(NULL)
 

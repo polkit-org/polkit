@@ -32,8 +32,6 @@
 #include <polkit/polkitsubject.h>
 #include <polkit/polkitauthorizationclaim.h>
 #include <polkit/polkitauthorizationresult.h>
-#include <polkit/polkituser.h>
-#include <polkit/polkitprocess.h>
 #include <polkit/polkitactiondescription.h>
 
 #undef _POLKIT_INSIDE_POLKIT_H
