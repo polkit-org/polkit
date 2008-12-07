@@ -69,5 +69,20 @@ MAINTAINERCLEANFILES =		\
 if ENABLE_GTK_DOC
 include $(top_srcdir)/gtk-doc.make
 else
-EXTRA_DIST =
+CLEANFILES =
 endif
+
+CLEANFILES +=   *~					\
+		polkitbackend-scan.*			\
+		polkitbackend.*				\
+		*.bak					\
+		polkitbackend-decl-list.txt		\
+		polkitbackend-decl.txt			\
+		polkitbackend-overrides.txt		\
+		polkitbackend-undeclared.txt		\
+		polkitbackend-undocumented.txt		\
+		polkitbackend-sections.txt		\
+		*.stamp					\
+		-rf html xml				\
+		$(NULL)
+

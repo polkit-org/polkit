@@ -58,17 +58,23 @@ HTML_IMAGES = 				\
 # Extra options to supply to gtkdoc-fixref
 FIXXREF_OPTIONS=
 
-MAINTAINERCLEANFILES =		\
-	*~			\
-	Makefile.in		\
-	polkit.types		\
-	polkit-*.txt		\
-	$(NULL)
-
 if ENABLE_GTK_DOC
 include $(top_srcdir)/gtk-doc.make
 else
-EXTRA_DIST =
+CLEANFILES =
 endif
 
-EXTRA_DIST += version.xml.in
+CLEANFILES +=   *~				\
+		polkit-scan.*			\
+		polkit.*			\
+		*.bak				\
+		polkit-decl-list.txt		\
+		polkit-decl.txt			\
+		polkit-overrides.txt		\
+		polkit-undeclared.txt		\
+		polkit-undocumented.txt		\
+		polkit-sections.txt		\
+		*.stamp				\
+		-rf html xml			\
+		$(NULL)
+
