@@ -30,7 +30,7 @@ static PolkitAuthority *
 get_authority_backend (void)
 {
   /* TODO: use extension points etc. */
-  return POLKIT_AUTHORITY (polkit_backend_local_new ());
+  return POLKIT_AUTHORITY (polkit_backend_local_authority_new ());
 }
 
 int

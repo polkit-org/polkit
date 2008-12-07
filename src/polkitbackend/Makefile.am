@@ -20,12 +20,14 @@ libpolkit_backend_1includedir=$(includedir)/polkit-1/polkitbackend
 
 libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackend.h							\
-	polkitbackendlocal.h						\
+	polkitbackendlocalauthority.h					\
+	polkitbackendactionpool.h					\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   	\
         polkitbackend.h							\
-	polkitbackendlocal.h		polkitbackendlocal.c		\
+	polkitbackendlocalauthority.h	polkitbackendlocalauthority.c	\
+	polkitbackendactionpool.h	polkitbackendactionpool.c	\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\

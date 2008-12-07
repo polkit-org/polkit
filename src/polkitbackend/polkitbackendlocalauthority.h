@@ -25,27 +25,27 @@
 
 #include <glib-object.h>
 
-#ifndef __POLKIT_BACKEND_LOCAL_H
-#define __POLKIT_BACKEND_LOCAL_H
+#ifndef __POLKIT_BACKEND_LOCAL_AUTHORITY_H
+#define __POLKIT_BACKEND_LOCAL_AUTHORITY_H
 
 G_BEGIN_DECLS
 
-#define POLKIT_TYPE_BACKEND_LOCAL         (polkit_backend_local_get_type ())
-#define POLKIT_BACKEND_LOCAL(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_BACKEND_LOCAL, PolkitBackendLocal))
-#define POLKIT_BACKEND_LOCAL_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), POLKIT_TYPE_BACKEND_LOCAL, PolkitBackendLocalClass))
-#define POLKIT_BACKEND_LOCAL_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), POLKIT_TYPE_BACKEND_LOCAL,PolkitBackendLocalClass))
-#define POLKIT_IS_BACKEND_LOCAL(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_BACKEND_LOCAL))
-#define POLKIT_IS_BACKEND_LOCAL_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_TYPE_BACKEND_LOCAL))
+#define POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY         (polkit_backend_local_authority_get_type ())
+#define POLKIT_BACKEND_LOCAL_AUTHORITY(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY, PolkitBackendLocalAuthority))
+#define POLKIT_BACKEND_LOCAL_AUTHORITY_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY, PolkitBackendLocalAuthorityClass))
+#define POLKIT_BACKEND_LOCAL_AUTHORITY_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY,PolkitBackendLocalAuthorityClass))
+#define POLKIT_BACKEND_IS_LOCAL_AUTHORITY(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY))
+#define POLKIT_BACKEND_IS_LOCAL_AUTHORITY_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY))
 
-typedef struct _PolkitBackendLocal         PolkitBackendLocal;
-typedef struct _PolkitBackendLocalClass    PolkitBackendLocalClass;
+typedef struct _PolkitBackendLocalAuthority         PolkitBackendLocalAuthority;
+typedef struct _PolkitBackendLocalAuthorityClass    PolkitBackendLocalAuthorityClass;
 
-struct _PolkitBackendLocal
+struct _PolkitBackendLocalAuthority
 {
   GObject parent_instance;
 };
 
-struct _PolkitBackendLocalClass
+struct _PolkitBackendLocalAuthorityClass
 {
   GObjectClass parent_class;
 
@@ -63,11 +63,11 @@ struct _PolkitBackendLocalClass
   void (*_polkit_reserved8) (void);
 };
 
-GType               polkit_backend_local_get_type (void) G_GNUC_CONST;
+GType                        polkit_backend_local_authority_get_type (void) G_GNUC_CONST;
 
-PolkitBackendLocal *polkit_backend_local_new      (void);
+PolkitBackendLocalAuthority *polkit_backend_local_authority_new      (void);
 
 G_END_DECLS
 
-#endif /* __POLKIT_BACKEND_LOCAL_H */
+#endif /* __POLKIT_BACKEND_LOCAL_AUTHORITY_H */
 
