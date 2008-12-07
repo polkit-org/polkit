@@ -2,9 +2,19 @@
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
 
-  <!-- User defined struct -->
-  <annotation name="org.gtk.EggDBus.DeclareStruct"       value="Subject">
-    <annotation name="org.gtk.EggDBus.Struct.Signature"    value="(sa{sv})"/>
+  <!-- User defined struct for Subjects -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="Subject">
+    <annotation name="org.gtk.EggDBus.Struct.Signature" value="(sa{sv})"/>
+  </annotation>
+
+  <!-- The error domain used -->
+  <annotation name="org.gtk.EggDBus.DeclareErrorDomain" value="Error">
+    <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Failed">
+      <annotation name="org.gtk.EggDBus.DocString" value="The operation failed"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.NotSupported">
+      <annotation name="org.gtk.EggDBus.DocString" value="Operation is not supported"/>
+    </annotation>
   </annotation>
 
   <interface name="org.freedesktop.PolicyKit1.Authority">

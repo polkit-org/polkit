@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -46,13 +44,13 @@ typedef struct _PolkitActionDescriptionPrivate PolkitActionDescriptionPrivate;
 
 struct _PolkitActionDescription
 {
-        GObject                         parent_instance;
-        PolkitActionDescriptionPrivate *priv;
+  GObject                         parent_instance;
+  PolkitActionDescriptionPrivate *priv;
 };
 
 struct _PolkitActionDescriptionClass
 {
-        GObjectClass parent_class;
+  GObjectClass parent_class;
 };
 
 GType                      polkit_action_description_get_type           (void) G_GNUC_CONST;

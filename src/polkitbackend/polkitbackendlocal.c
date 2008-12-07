@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -32,7 +30,7 @@
 
 typedef struct
 {
-        guint foo;
+  guint foo;
 } PolkitBackendLocalPrivate;
 
 static void authority_iface_init (PolkitAuthorityIface *authority_iface,
@@ -48,43 +46,43 @@ G_DEFINE_TYPE_WITH_CODE (PolkitBackendLocal, polkit_backend_local, G_TYPE_OBJECT
 static void
 polkit_backend_local_finalize (GObject *object)
 {
-        PolkitBackendLocal *backend;
-        PolkitBackendLocalPrivate *priv;
+  PolkitBackendLocal *backend;
+  PolkitBackendLocalPrivate *priv;
 
-        backend = POLKIT_BACKEND_LOCAL (object);
-        priv = POLKIT_BACKEND_LOCAL_GET_PRIVATE (backend);
+  backend = POLKIT_BACKEND_LOCAL (object);
+  priv = POLKIT_BACKEND_LOCAL_GET_PRIVATE (backend);
 
-        G_OBJECT_CLASS (polkit_backend_local_parent_class)->finalize (object);
+  G_OBJECT_CLASS (polkit_backend_local_parent_class)->finalize (object);
 }
 
 static void
 polkit_backend_local_class_init (PolkitBackendLocalClass *klass)
 {
-        GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-        gobject_class->finalize = polkit_backend_local_finalize;
+  gobject_class->finalize = polkit_backend_local_finalize;
 
-        g_type_class_add_private (klass, sizeof (PolkitBackendLocalPrivate));
+  g_type_class_add_private (klass, sizeof (PolkitBackendLocalPrivate));
 }
 
 
 static void
 polkit_backend_local_init (PolkitBackendLocal *backend)
 {
-        PolkitBackendLocalPrivate *priv;
+  PolkitBackendLocalPrivate *priv;
 
-        priv = POLKIT_BACKEND_LOCAL_GET_PRIVATE (backend);
+  priv = POLKIT_BACKEND_LOCAL_GET_PRIVATE (backend);
 }
 
 PolkitBackendLocal *
 polkit_backend_local_new (void)
 {
-        PolkitBackendLocal *backend;
+  PolkitBackendLocal *backend;
 
-        backend = POLKIT_BACKEND_LOCAL (g_object_new (POLKIT_TYPE_BACKEND_LOCAL,
-                                                      NULL));
+  backend = POLKIT_BACKEND_LOCAL (g_object_new (POLKIT_TYPE_BACKEND_LOCAL,
+                                                NULL));
 
-        return backend;
+  return backend;
 }
 
 static void
@@ -92,58 +90,61 @@ authority_iface_handle_say_hello (PolkitAuthority *instance,
                                   const gchar *message,
                                   EggDBusMethodInvocation *method_invocation)
 {
-        gchar *result;
+  gchar *result;
 
-        result = g_strdup_printf ("You said '%s' to the AUTHORITY!", message);
+  result = g_strdup_printf ("You said '%s' to the AUTHORITY!", message);
 
-        polkit_authority_handle_say_hello_finish (method_invocation,
-                                                  result);
+  polkit_authority_handle_say_hello_finish (method_invocation,
+                                            result);
 
-        g_free (result);
+  g_free (result);
 }
 
 static void
 authority_iface_handle_enumerate_users (PolkitAuthority *instance,
                                         EggDBusMethodInvocation *method_invocation)
 {
-        struct passwd *passwd;
-        GList *list;
+  struct passwd *passwd;
+  GList *list;
 
-        list = NULL;
+  list = NULL;
 
-        passwd = getpwent ();
-        if (passwd == NULL) {
-                egg_dbus_method_invocation_return_error (method_invocation,
-                                                         POLKIT_ERROR,
-                                                         POLKIT_ERROR_FAILED,
-                                                         "getpwent failed: %s",
-                                                         strerror (errno));
-                goto out;
-        }
+  passwd = getpwent ();
+  if (passwd == NULL)
+    {
+      egg_dbus_method_invocation_return_error (method_invocation,
+                                               POLKIT_ERROR,
+                                               POLKIT_ERROR_FAILED,
+                                               "getpwent failed: %s",
+                                               strerror (errno));
+      goto out;
+    }
 
-        do {
-                PolkitSubject *subject;
+  do
+    {
+      PolkitSubject *subject;
 
-                subject = polkit_subject_new_for_unix_user (passwd->pw_uid);
+      subject = polkit_subject_new_for_unix_user (passwd->pw_uid);
 
-                list = g_list_prepend (list, subject);
-        } while ((passwd = getpwent ()) != NULL);
-        endpwent ();
+      list = g_list_prepend (list, subject);
+    }
+  while ((passwd = getpwent ()) != NULL);
+  endpwent ();
 
-        list = g_list_reverse (list);
+  list = g_list_reverse (list);
 
-        polkit_authority_handle_enumerate_users_finish (method_invocation,
-                                                        list);
+  polkit_authority_handle_enumerate_users_finish (method_invocation,
+                                                  list);
 
  out:
-        g_list_foreach (list, (GFunc) g_object_unref, NULL);
-        g_list_free (list);
+  g_list_foreach (list, (GFunc) g_object_unref, NULL);
+  g_list_free (list);
 }
 
 static void
 authority_iface_init (PolkitAuthorityIface *authority_iface,
                       gpointer              iface_data)
 {
-        authority_iface->handle_say_hello        = authority_iface_handle_say_hello;
-        authority_iface->handle_enumerate_users  = authority_iface_handle_enumerate_users;
+  authority_iface->handle_say_hello        = authority_iface_handle_say_hello;
+  authority_iface->handle_enumerate_users  = authority_iface_handle_enumerate_users;
 }

@@ -179,7 +179,7 @@ polkit_subject_new_for_unix_group (gid_t unix_group_id)
 PolkitSubjectKind
 polkit_subject_get_kind (PolkitSubject *subject)
 {
-  gchar *kind_str;
+  const gchar *kind_str;
   PolkitSubjectKind kind;
 
   g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), -1);
@@ -200,8 +200,6 @@ polkit_subject_get_kind (PolkitSubject *subject)
       g_warning ("unknown kind str '%s'", kind_str);
       kind = -1;
     }
-
-  g_free (kind_str);
 
   return kind;
 }
@@ -288,8 +286,6 @@ polkit_subject_unix_process_get_id (PolkitSubject *subject)
   variant = g_hash_table_lookup (value, "unix-process-id");
   pid = (pid_t) egg_dbus_variant_get_uint32 (variant);
 
-  egg_dbus_hash_table_unref (value);
-
   return pid;
 }
 
@@ -319,8 +315,6 @@ polkit_subject_unix_user_get_id (PolkitSubject *subject)
   variant = g_hash_table_lookup (value, "unix-user-id");
   uid = (uid_t) egg_dbus_variant_get_uint32 (variant);
 
-  egg_dbus_hash_table_unref (value);
-
   return uid;
 }
 
@@ -349,8 +343,6 @@ polkit_subject_unix_group_get_id (PolkitSubject *subject)
 
   variant = g_hash_table_lookup (value, "unix-group-id");
   gid = (gid_t) egg_dbus_variant_get_uint32 (variant);
-
-  egg_dbus_hash_table_unref (value);
 
   return gid;
 }

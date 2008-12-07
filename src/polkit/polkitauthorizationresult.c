@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -39,17 +37,17 @@
 GType
 polkit_authorization_result_get_type (void)
 {
-        static GType etype = 0;
+  static GType etype = 0;
 
-        if (etype == 0)
-        {
-                static const GEnumValue values[] = {
-                        ENUM_ENTRY (POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED,   "NotAuthorized"),
-                        ENUM_ENTRY (POLKIT_AUTHORIZATION_RESULT_AUTHORIZED,       "Authorized"),
-                        ENUM_ENTRY (POLKIT_AUTHORIZATION_RESULT_CHALLENGE,        "Challenge"),
-                        { 0, 0, 0 }
-                };
-                etype = g_enum_register_static ("PolkitAuthorizationResult", values);
-        }
-        return etype;
+  if (etype == 0)
+    {
+      static const GEnumValue values[] = {
+        ENUM_ENTRY (POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED,   "NotAuthorized"),
+        ENUM_ENTRY (POLKIT_AUTHORIZATION_RESULT_AUTHORIZED,       "Authorized"),
+        ENUM_ENTRY (POLKIT_AUTHORIZATION_RESULT_CHALLENGE,        "Challenge"),
+        { 0, 0, 0 }
+      };
+      etype = g_enum_register_static ("PolkitAuthorizationResult", values);
+    }
+  return etype;
 }

@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -37,26 +35,25 @@
 
 struct _PolkitActionDescriptionPrivate
 {
-        char *action_id;
-        GIcon *icon;
-        char *description;
-        char *message;
-        char *vendor_name;
-        char *vendor_url;
-        GHashTable *annotations;
+  char *action_id;
+  GIcon *icon;
+  char *description;
+  char *message;
+  char *vendor_name;
+  char *vendor_url;
+  GHashTable *annotations;
 };
 
 enum {
-        PROP_0,
-        PROP_ACTION_ID,
-        PROP_ICON,
-        PROP_DESCRIPTION,
-        PROP_MESSAGE,
-        PROP_VENDOR_NAME,
-        PROP_VENDOR_URL,
-        PROP_ANNOTATIONS,
+  PROP_0,
+  PROP_ACTION_ID,
+  PROP_ICON,
+  PROP_DESCRIPTION,
+  PROP_MESSAGE,
+  PROP_VENDOR_NAME,
+  PROP_VENDOR_URL,
+  PROP_ANNOTATIONS,
 };
-
 
 G_DEFINE_TYPE (PolkitActionDescription, polkit_action_description, G_TYPE_OBJECT)
 
@@ -68,248 +65,249 @@ polkit_action_description_get_property (GObject    *object,
                                         GValue     *value,
                                         GParamSpec *pspec)
 {
-        PolkitActionDescription *action_description = POLKIT_ACTION_DESCRIPTION (object);
+  PolkitActionDescription *action_description = POLKIT_ACTION_DESCRIPTION (object);
 
-        switch (prop_id) {
-        case PROP_ACTION_ID:
-                g_value_set_string (value, action_description->priv->action_id);
-                break;
+  switch (prop_id)
+    {
+    case PROP_ACTION_ID:
+      g_value_set_string (value, action_description->priv->action_id);
+      break;
 
-        case PROP_ICON:
-                g_value_set_object (value, action_description->priv->icon);
-                break;
+    case PROP_ICON:
+      g_value_set_object (value, action_description->priv->icon);
+      break;
 
-        case PROP_DESCRIPTION:
-                g_value_set_string (value, action_description->priv->description);
-                break;
+    case PROP_DESCRIPTION:
+      g_value_set_string (value, action_description->priv->description);
+      break;
 
-        case PROP_MESSAGE:
-                g_value_set_string (value, action_description->priv->message);
-                break;
+    case PROP_MESSAGE:
+      g_value_set_string (value, action_description->priv->message);
+      break;
 
-        case PROP_VENDOR_NAME:
-                g_value_set_string (value, action_description->priv->vendor_name);
-                break;
+    case PROP_VENDOR_NAME:
+      g_value_set_string (value, action_description->priv->vendor_name);
+      break;
 
-        case PROP_VENDOR_URL:
-                g_value_set_string (value, action_description->priv->vendor_url);
-                break;
+    case PROP_VENDOR_URL:
+      g_value_set_string (value, action_description->priv->vendor_url);
+      break;
 
-        case PROP_ANNOTATIONS:
-                g_value_set_boxed (value, action_description->priv->annotations);
-                break;
+    case PROP_ANNOTATIONS:
+      g_value_set_boxed (value, action_description->priv->annotations);
+      break;
 
-        default:
-                G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-                break;
-        }
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
 }
 
 static void
 polkit_action_description_init (PolkitActionDescription *action_description)
 {
-        action_description->priv = POLKIT_ACTION_DESCRIPTION_GET_PRIVATE (action_description);
-        action_description->priv->annotations = g_hash_table_new_full (g_str_hash,
-                                                                       g_str_equal,
-                                                                       g_free,
-                                                                       g_free);
+  action_description->priv = POLKIT_ACTION_DESCRIPTION_GET_PRIVATE (action_description);
+  action_description->priv->annotations = g_hash_table_new_full (g_str_hash,
+                                                                 g_str_equal,
+                                                                 g_free,
+                                                                 g_free);
 }
 
 static void
 polkit_action_description_finalize (GObject *object)
 {
-        PolkitActionDescription *action_description;
+  PolkitActionDescription *action_description;
 
-        g_return_if_fail (object != NULL);
-        g_return_if_fail (POLKIT_IS_ACTION_DESCRIPTION (object));
+  g_return_if_fail (object != NULL);
+  g_return_if_fail (POLKIT_IS_ACTION_DESCRIPTION (object));
 
-        action_description = POLKIT_ACTION_DESCRIPTION (object);
+  action_description = POLKIT_ACTION_DESCRIPTION (object);
 
-        if (action_description->priv->icon != NULL)
-                g_object_unref (action_description->priv->icon);
-        g_free (action_description->priv->action_id);
-        g_free (action_description->priv->description);
-        g_free (action_description->priv->message);
-        g_free (action_description->priv->vendor_name);
-        g_free (action_description->priv->vendor_url);
-        g_hash_table_unref (action_description->priv->annotations);
+  if (action_description->priv->icon != NULL)
+    g_object_unref (action_description->priv->icon);
+  g_free (action_description->priv->action_id);
+  g_free (action_description->priv->description);
+  g_free (action_description->priv->message);
+  g_free (action_description->priv->vendor_name);
+  g_free (action_description->priv->vendor_url);
+  g_hash_table_unref (action_description->priv->annotations);
 
-        G_OBJECT_CLASS (polkit_action_description_parent_class)->finalize (object);
+  G_OBJECT_CLASS (polkit_action_description_parent_class)->finalize (object);
 }
 
 static void
 polkit_action_description_class_init (PolkitActionDescriptionClass *klass)
 {
-        GObjectClass   *object_class = G_OBJECT_CLASS (klass);
+  GObjectClass   *object_class = G_OBJECT_CLASS (klass);
 
-        object_class->get_property = polkit_action_description_get_property;
-        object_class->finalize = polkit_action_description_finalize;
+  object_class->get_property = polkit_action_description_get_property;
+  object_class->finalize = polkit_action_description_finalize;
 
-        /**
-         * PolkitActionDescription:action-id:
-         *
-         * The action id for the action being described.
-         */
-        g_object_class_install_property (object_class,
-                                         PROP_ACTION_ID,
-                                         g_param_spec_string ("action-id",
-                                                              "action-id",
-                                                              "The action identifier for the action",
-                                                              NULL,
-                                                              G_PARAM_READABLE |
-                                                              G_PARAM_STATIC_NAME |
-                                                              G_PARAM_STATIC_NICK |
-                                                              G_PARAM_STATIC_BLURB));
+  /**
+   * PolkitActionDescription:action-id:
+   *
+   * The action id for the action being described.
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_ACTION_ID,
+                                   g_param_spec_string ("action-id",
+                                                        "action-id",
+                                                        "The action identifier for the action",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
 
-        /**
-         * PolkitActionDescription:icon:
-         *
-         * The icon for the action being described.
-         */
-        g_object_class_install_property (object_class,
-                                         PROP_ICON,
-                                         g_param_spec_object ("icon",
-                                                              "icon",
-                                                              "The icon for the action",
-                                                              G_TYPE_ICON,
-                                                              G_PARAM_READABLE |
-                                                              G_PARAM_STATIC_NAME |
-                                                              G_PARAM_STATIC_NICK |
-                                                              G_PARAM_STATIC_BLURB));
+  /**
+   * PolkitActionDescription:icon:
+   *
+   * The icon for the action being described.
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_ICON,
+                                   g_param_spec_object ("icon",
+                                                        "icon",
+                                                        "The icon for the action",
+                                                        G_TYPE_ICON,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
 
-        /**
-         * PolkitActionDescription:description:
-         *
-         * A localized human readable description of the action.
-         */
-        g_object_class_install_property (object_class,
-                                         PROP_DESCRIPTION,
-                                         g_param_spec_string ("description",
-                                                              "description",
-                                                              "Description of action",
-                                                              NULL,
-                                                              G_PARAM_READABLE |
-                                                              G_PARAM_STATIC_NAME |
-                                                              G_PARAM_STATIC_NICK |
-                                                              G_PARAM_STATIC_BLURB));
+  /**
+   * PolkitActionDescription:description:
+   *
+   * A localized human readable description of the action.
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_DESCRIPTION,
+                                   g_param_spec_string ("description",
+                                                        "description",
+                                                        "Description of action",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
 
-        /**
-         * PolkitActionDescription:message:
-         *
-         * A localized human readable message to display to the user
-         * when he lacks an authorization for the action.
-         */
-        g_object_class_install_property (object_class,
-                                         PROP_MESSAGE,
-                                         g_param_spec_string ("message",
-                                                              "message",
-                                                              "Message for the action",
-                                                              NULL,
-                                                              G_PARAM_READABLE |
-                                                              G_PARAM_STATIC_NAME |
-                                                              G_PARAM_STATIC_NICK |
-                                                              G_PARAM_STATIC_BLURB));
+  /**
+   * PolkitActionDescription:message:
+   *
+   * A localized human readable message to display to the user
+   * when he lacks an authorization for the action.
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_MESSAGE,
+                                   g_param_spec_string ("message",
+                                                        "message",
+                                                        "Message for the action",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
 
-        /**
-         * PolkitActionDescription:vendor-name:
-         *
-         * The name of the organization supplying the action.
-         */
-        g_object_class_install_property (object_class,
-                                         PROP_VENDOR_NAME,
-                                         g_param_spec_string ("vendor-name",
-                                                              "vendor-name",
-                                                              "Vendor for the action",
-                                                              NULL,
-                                                              G_PARAM_READABLE |
-                                                              G_PARAM_STATIC_NAME |
-                                                              G_PARAM_STATIC_NICK |
-                                                              G_PARAM_STATIC_BLURB));
+  /**
+   * PolkitActionDescription:vendor-name:
+   *
+   * The name of the organization supplying the action.
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_VENDOR_NAME,
+                                   g_param_spec_string ("vendor-name",
+                                                        "vendor-name",
+                                                        "Vendor for the action",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
 
-        /**
-         * PolkitActionDescription:vendor-url:
-         *
-         * An URL (Uniform Resource Locator) describing the action.
-         */
-        g_object_class_install_property (object_class,
-                                         PROP_VENDOR_URL,
-                                         g_param_spec_string ("vendor-url",
-                                                              "vendor-url",
-                                                              "Vendor URL for the action",
-                                                              NULL,
-                                                              G_PARAM_READABLE |
-                                                              G_PARAM_STATIC_NAME |
-                                                              G_PARAM_STATIC_NICK |
-                                                              G_PARAM_STATIC_BLURB));
+  /**
+   * PolkitActionDescription:vendor-url:
+   *
+   * An URL (Uniform Resource Locator) describing the action.
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_VENDOR_URL,
+                                   g_param_spec_string ("vendor-url",
+                                                        "vendor-url",
+                                                        "Vendor URL for the action",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
 
-        /**
-         * PolkitActionDescription:annotations:
-         *
-         * A set of key/value pairs giving more information about the action.
-         */
-        g_object_class_install_property (object_class,
-                                         PROP_ANNOTATIONS,
-                                         g_param_spec_boxed ("annotations",
-                                                             "annotations",
-                                                             "Annotations for the action",
-                                                             G_TYPE_HASH_TABLE,
-                                                             G_PARAM_READABLE |
-                                                             G_PARAM_STATIC_NAME |
-                                                             G_PARAM_STATIC_NICK |
-                                                             G_PARAM_STATIC_BLURB));
+  /**
+   * PolkitActionDescription:annotations:
+   *
+   * A set of key/value pairs giving more information about the action.
+   */
+  g_object_class_install_property (object_class,
+                                   PROP_ANNOTATIONS,
+                                   g_param_spec_boxed ("annotations",
+                                                       "annotations",
+                                                       "Annotations for the action",
+                                                       G_TYPE_HASH_TABLE,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_NAME |
+                                                       G_PARAM_STATIC_NICK |
+                                                       G_PARAM_STATIC_BLURB));
 
-        g_type_class_add_private (klass, sizeof (PolkitActionDescriptionPrivate));
+  g_type_class_add_private (klass, sizeof (PolkitActionDescriptionPrivate));
 }
 
 const gchar *
 polkit_action_description_get_action_id (PolkitActionDescription *action_description)
 {
-        g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-        return action_description->priv->action_id;
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
+  return action_description->priv->action_id;
 }
 
 GIcon *
 polkit_action_description_get_icon (PolkitActionDescription  *action_description)
 {
-        g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-        if (action_description->priv->icon != NULL)
-                return g_object_ref (action_description->priv->icon);
-        return NULL;
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
+  if (action_description->priv->icon != NULL)
+    return g_object_ref (action_description->priv->icon);
+  return NULL;
 }
 
 const gchar *
 polkit_action_description_get_description (PolkitActionDescription *action_description)
 {
-        g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-        return action_description->priv->description;
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
+  return action_description->priv->description;
 }
 
 const gchar *
 polkit_action_description_get_message (PolkitActionDescription *action_description)
 {
-        g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-        return action_description->priv->message;
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
+  return action_description->priv->message;
 }
 
 const gchar *
 polkit_action_description_get_vendor_name (PolkitActionDescription *action_description)
 {
-        g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-        return action_description->priv->vendor_name;
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
+  return action_description->priv->vendor_name;
 }
 
 const gchar *
 polkit_action_description_get_vendor_url (PolkitActionDescription *action_description)
 {
-        g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-        return action_description->priv->vendor_url;
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
+  return action_description->priv->vendor_url;
 }
 
 GHashTable *
 polkit_action_description_get_annotations (PolkitActionDescription  *action_description)
 {
-        g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-        return action_description->priv->annotations;
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
+  return action_description->priv->annotations;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

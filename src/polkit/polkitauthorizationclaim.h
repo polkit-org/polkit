@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -46,13 +44,13 @@ typedef struct _PolkitAuthorizationClaimPrivate PolkitAuthorizationClaimPrivate;
 
 struct _PolkitAuthorizationClaim
 {
-        GObject             parent_instance;
-        PolkitAuthorizationClaimPrivate *priv;
+  GObject             parent_instance;
+  PolkitAuthorizationClaimPrivate *priv;
 };
 
 struct _PolkitAuthorizationClaimClass
 {
-        GObjectClass parent_class;
+  GObjectClass parent_class;
 };
 
 GType                      polkit_authorization_claim_get_type         (void) G_GNUC_CONST;

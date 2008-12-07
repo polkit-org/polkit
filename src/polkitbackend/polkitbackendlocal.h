@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -44,25 +42,25 @@ typedef struct _PolkitBackendLocalClass    PolkitBackendLocalClass;
 
 struct _PolkitBackendLocal
 {
-        GObject parent_instance;
+  GObject parent_instance;
 };
 
 struct _PolkitBackendLocalClass
 {
-        GObjectClass parent_class;
+  GObjectClass parent_class;
 
-        /*< public >*/
+  /*< public >*/
 
-        /*< private >*/
-        /* Padding for future expansion */
-        void (*_polkit_reserved1) (void);
-        void (*_polkit_reserved2) (void);
-        void (*_polkit_reserved3) (void);
-        void (*_polkit_reserved4) (void);
-        void (*_polkit_reserved5) (void);
-        void (*_polkit_reserved6) (void);
-        void (*_polkit_reserved7) (void);
-        void (*_polkit_reserved8) (void);
+  /*< private >*/
+  /* Padding for future expansion */
+  void (*_polkit_reserved1) (void);
+  void (*_polkit_reserved2) (void);
+  void (*_polkit_reserved3) (void);
+  void (*_polkit_reserved4) (void);
+  void (*_polkit_reserved5) (void);
+  void (*_polkit_reserved6) (void);
+  void (*_polkit_reserved7) (void);
+  void (*_polkit_reserved8) (void);
 };
 
 GType               polkit_backend_local_get_type (void) G_GNUC_CONST;

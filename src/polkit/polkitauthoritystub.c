@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -38,24 +36,27 @@ static PolkitAuthority *the_authority = NULL;
 PolkitAuthority *
 polkit_authority_get (void)
 {
-        PolkitAuthority *authority;
+  PolkitAuthority *authority;
 
-        polkit_bindings_register_types (); /* TODO: use __attribute ((constructor)) */
+  polkit_bindings_register_types (); /* TODO: use __attribute ((constructor)) */
 
-        if (the_authority != NULL) {
-                authority = g_object_ref (the_authority);
-        } else {
-                EggDBusConnection *connection;
+  if (the_authority != NULL)
+    {
+      authority = g_object_ref (the_authority);
+    }
+  else
+    {
+      EggDBusConnection *connection;
 
-                connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-                authority = POLKIT_AUTHORITY (egg_dbus_connection_get_proxy (connection,
-                                                                             "org.freedesktop.PolicyKit1",
-                                                                             "/org/freedesktop/PolicyKit1/Authority"));
+      connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+      authority = POLKIT_AUTHORITY (egg_dbus_connection_get_proxy (connection,
+                                                                   "org.freedesktop.PolicyKit1",
+                                                                   "/org/freedesktop/PolicyKit1/Authority"));
 
-                /* TODO: take a weak reference and set the_authority to NULL on destruction */
+      /* TODO: take a weak reference and set the_authority to NULL on destruction */
 
-                /* TODO: unref connection since authority holds a reference? */
-        }
+      /* TODO: unref connection since authority holds a reference? */
+    }
 
-        return authority;
+  return authority;
 }

@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -43,9 +41,9 @@ G_BEGIN_DECLS
  * The possible results when checking whether a claim is authorized.
  */
 typedef enum {
-        POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED,
-        POLKIT_AUTHORIZATION_RESULT_AUTHORIZED,
-        POLKIT_AUTHORIZATION_RESULT_CHALLENGE
+  POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED,
+  POLKIT_AUTHORIZATION_RESULT_AUTHORIZED,
+  POLKIT_AUTHORIZATION_RESULT_CHALLENGE
 } PolkitAuthorizationResult;
 
 GType polkit_authorization_result_get_type (void) G_GNUC_CONST;

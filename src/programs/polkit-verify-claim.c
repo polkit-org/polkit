@@ -1,5 +1,3 @@
-/* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 8 -*- */
-
 /*
  * Copyright (C) 2008 Red Hat, Inc.
  *
@@ -26,27 +24,27 @@
 int
 main (int argc, char *argv[])
 {
-        GError *error;
-        PolkitAuthority *authority;
-        gchar *result;
+  GError *error;
+  PolkitAuthority *authority;
+  gchar *result;
 
-        g_type_init ();
+  g_type_init ();
 
-        authority = polkit_authority_get ();
+  authority = polkit_authority_get ();
 
-        error = NULL;
-        polkit_authority_invoke_say_hello (authority,
-                                           0, /* call_flags */
-                                           "Hi there!",
-                                           &result,
-                                           NULL,
-                                           &error);
-        g_print ("Authority replied: %s\n", result);
-        g_free (result);
+  error = NULL;
+  polkit_authority_invoke_say_hello (authority,
+                                     0, /* call_flags */
+                                     "Hi there!",
+                                     &result,
+                                     NULL,
+                                     &error);
+  g_print ("Authority replied: %s\n", result);
+  g_free (result);
 
-        g_object_unref (authority);
+  g_object_unref (authority);
 
-        return 0;
+  return 0;
 }
 
 
