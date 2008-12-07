@@ -167,8 +167,8 @@ authority_iface_handle_enumerate_actions (PolkitAuthority         *authority,
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
-  list = polkit_backend_action_pool_get_localized_actions (priv->action_pool,
-                                                           locale);
+  list = polkit_backend_action_pool_get_all_actions (priv->action_pool,
+                                                     locale);
 
   polkit_authority_handle_enumerate_actions_finish (method_invocation,
                                                     list);

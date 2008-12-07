@@ -40,6 +40,7 @@ libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
         $(EGG_DBUS_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(EXPAT_LIBS)							\
         $(NULL)
 
 CLEANFILES = $(BUILT_SOURCES)
