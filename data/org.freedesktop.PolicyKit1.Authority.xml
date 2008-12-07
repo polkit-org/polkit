@@ -7,7 +7,7 @@
     <annotation name="org.gtk.EggDBus.Struct.Signature" value="(sa{sv})"/>
   </annotation>
 
-  <!-- The error domain used -->
+  <!-- The error domain used for reporting erros -->
   <annotation name="org.gtk.EggDBus.DeclareErrorDomain" value="Error">
     <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Failed">
       <annotation name="org.gtk.EggDBus.DocString" value="The operation failed"/>
@@ -16,6 +16,20 @@
       <annotation name="org.gtk.EggDBus.DocString" value="Operation is not supported"/>
     </annotation>
   </annotation>
+
+  <!-- An enumeration for  -->
+  <annotation name="org.gtk.EggDBus.DeclareEnum" value="AuthorizationResult">
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="NotAuthorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is not authorized for the specified action"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="Authorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is authorized for the specified action"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="Challenge">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is authorized if more information is provided"/>
+    </annotation>
+  </annotation>
+
 
   <interface name="org.freedesktop.PolicyKit1.Authority">
 

@@ -20,6 +20,7 @@ BUILT_SOURCES =									\
 	polkitauthority.h			polkitauthority.c		\
 	polkiterror.h				polkiterror.c			\
 	polkitbindingsmarshal.h			polkitbindingsmarshal.c		\
+        polkitauthorizationresult.h		polkitauthorizationresult.c	\
 	polkitbindingsmarshal.list						\
         $(NULL)
 
@@ -53,7 +54,6 @@ libpolkit_gobject_1_la_SOURCES =                                   	\
         polkitauthoritystub.h		polkitauthoritystub.c		\
 	polkitactiondescription.h	polkitactiondescription.c	\
         polkitauthorizationclaim.h	polkitauthorizationclaim.c	\
-        polkitauthorizationresult.h	polkitauthorizationresult.c	\
         polkitsubject.h			polkitsubject.c			\
         $(BUILT_SOURCES)						\
         $(NULL)
