@@ -30,6 +30,16 @@
 
   </annotation>
 
+  <!-- User defined struct for AuthorizationClaim -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="AuthorizationClaim">
+    <annotation name="org.gtk.EggDBus.Struct.Signature" value="((sa{sv})sa{ss})"/>
+
+    <!-- element 0: (sa{sv}):            subject -->
+    <!-- element 1: string:              action-id -->
+    <!-- element 2: map<string,string>:  attributes -->
+
+  </annotation>
+
   <!-- The error domain used for reporting errors -->
   <annotation name="org.gtk.EggDBus.DeclareErrorDomain" value="Error">
     <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Failed">
@@ -68,6 +78,15 @@
     <method name="EnumerateActions">
       <arg name="locale" direction="in" type="s"/>
       <arg name="action_descriptions" direction="out" type="a(ssssssa{ss})"/>
+    </method>
+
+    <method name="CheckClaim">
+      <arg name="claim" direction="in" type="((sa{sv})sa{ss})">
+        <annotation name="org.gtk.EggDBus.StructType" value="AuthorizationClaim"/>
+      </arg>
+      <arg name="result" direction="out" type="i">
+        <annotation name="org.gtk.EggDBus.EnumType" value="AuthorizationResult"/>
+      </arg>
     </method>
 
   </interface>

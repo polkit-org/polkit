@@ -31,43 +31,37 @@
 
 G_BEGIN_DECLS
 
-#define POLKIT_TYPE_AUTHORIZATION_CLAIM         (polkit_authorization_claim_get_type ())
+#define POLKIT_TYPE_AUTHORIZATION_CLAIM         (polkit_authorization_claim_get_type())
 #define POLKIT_AUTHORIZATION_CLAIM(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_AUTHORIZATION_CLAIM, PolkitAuthorizationClaim))
-#define POLKIT_AUTHORIZATION_CLAIM_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST((k), POLKIT_TYPE_AUTHORIZATION_CLAIM, PolkitAuthorizationClaimClass))
 #define POLKIT_IS_AUTHORIZATION_CLAIM(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_AUTHORIZATION_CLAIM))
-#define POLKIT_IS_AUTHORIZATION_CLAIM_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_TYPE_AUTHORIZATION_CLAIM))
-#define POLKIT_AUTHORIZATION_CLAIM_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), POLKIT_TYPE_AUTHORIZATION_CLAIM, PolkitAuthorizationClaimClass))
+#define POLKIT_AUTHORIZATION_CLAIM_GET_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE((o), POLKIT_TYPE_AUTHORIZATION_CLAIM, PolkitAuthorizationClaimIface))
 
-typedef struct _PolkitAuthorizationClaim        PolkitAuthorizationClaim;
-typedef struct _PolkitAuthorizationClaimClass   PolkitAuthorizationClaimClass;
-typedef struct _PolkitAuthorizationClaimPrivate PolkitAuthorizationClaimPrivate;
+#if 0
+typedef struct _PolkitAuthorizationClaim PolkitAuthorizationClaim; /* Dummy typedef */
+#endif
+typedef struct _PolkitAuthorizationClaimIface PolkitAuthorizationClaimIface;
 
-struct _PolkitAuthorizationClaim
+struct _PolkitAuthorizationClaimIface
 {
-  GObject             parent_instance;
-  PolkitAuthorizationClaimPrivate *priv;
+  GTypeInterface g_iface;
 };
 
-struct _PolkitAuthorizationClaimClass
-{
-  GObjectClass parent_class;
-};
+GType                       polkit_authorization_claim_get_type        (void) G_GNUC_CONST;
+PolkitAuthorizationClaim   *polkit_authorization_claim_new             (PolkitSubject            *subject,
+                                                                        const gchar              *action_id);
 
-GType                      polkit_authorization_claim_get_type         (void) G_GNUC_CONST;
-PolkitAuthorizationClaim * polkit_authorization_claim_new              (PolkitSubject             *subject,
-                                                                        const gchar               *action_id);
-PolkitSubject *            polkit_authorization_claim_get_subject      (PolkitAuthorizationClaim  *authorization_claim);
-void                       polkit_authorization_claim_set_subject      (PolkitAuthorizationClaim  *authorization_claim,
-                                                                        PolkitSubject             *subject);
-gchar *                    polkit_authorization_claim_get_action_id    (PolkitAuthorizationClaim  *authorization_claim);
-void                       polkit_authorization_claim_set_action_id    (PolkitAuthorizationClaim  *authorization_claim,
-                                                                        const gchar               *action_id);
-GHashTable *               polkit_authorization_claim_get_attributes   (PolkitAuthorizationClaim  *authorization_claim);
-char *                     polkit_authorization_claim_get_attribute    (PolkitAuthorizationClaim  *authorization_claim,
-                                                                        const gchar               *key);
-void                       polkit_authorization_claim_set_attribute    (PolkitAuthorizationClaim  *authorization_claim,
-                                                                        const gchar               *key,
-                                                                        const gchar               *value);
+void                        polkit_authorization_claim_set_subject     (PolkitAuthorizationClaim *authorization_claim,
+                                                                        PolkitSubject            *subject);
+void                        polkit_authorization_claim_set_action_id   (PolkitAuthorizationClaim *authorization_claim,
+                                                                        const gchar              *action_id);
+void                        polkit_authorization_claim_set_attribute   (PolkitAuthorizationClaim *authorization_claim,
+                                                                        const gchar              *key,
+                                                                        const gchar              *value);
+
+PolkitSubject              *polkit_authorization_claim_get_subject     (PolkitAuthorizationClaim *authorization_claim);
+const gchar                *polkit_authorization_claim_get_action_id   (PolkitAuthorizationClaim *authorization_claim);
+GHashTable                 *polkit_authorization_claim_get_attributes  (PolkitAuthorizationClaim *authorization_claim);
+
 
 G_END_DECLS
 
