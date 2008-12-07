@@ -5,9 +5,32 @@
   <!-- User defined struct for Subjects -->
   <annotation name="org.gtk.EggDBus.DeclareStruct" value="Subject">
     <annotation name="org.gtk.EggDBus.Struct.Signature" value="(sa{sv})"/>
+
+    <!-- element 0: string:          the subject type; known values: "unix-user", "unix-group", "unix-process" -->
+
+    <!-- element 1: map<string,any>: key/value pairs depending on the subject type -->
+
+    <!-- TODO: document values in hash table for each subject type-->
+
   </annotation>
 
-  <!-- The error domain used for reporting erros -->
+  <!-- User defined struct for ActionDescription -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="ActionDescription">
+    <annotation name="org.gtk.EggDBus.Struct.Signature" value="(ssssssa{ss})"/>
+
+    <!-- element 0: string:              action-id -->
+    <!-- element 1: string:              description -->
+    <!-- element 2: string:              message -->
+    <!-- element 3: string:              vendor name -->
+    <!-- element 4: string:              vendor url -->
+    <!-- element 5: string:              icon name -->
+    <!-- element 6: map<string,string>:  annotations -->
+
+    <!-- TODO: also include defaults -->
+
+  </annotation>
+
+  <!-- The error domain used for reporting errors -->
   <annotation name="org.gtk.EggDBus.DeclareErrorDomain" value="Error">
     <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Failed">
       <annotation name="org.gtk.EggDBus.DocString" value="The operation failed"/>
@@ -17,7 +40,7 @@
     </annotation>
   </annotation>
 
-  <!-- An enumeration for  -->
+  <!-- An enumeration for results of CheckClaim() (TODO: implement this method) -->
   <annotation name="org.gtk.EggDBus.DeclareEnum" value="AuthorizationResult">
     <annotation name="org.gtk.EggDBus.Enum.Member" value="NotAuthorized">
       <annotation name="org.gtk.EggDBus.DocString" value="The subject is not authorized for the specified action"/>
@@ -40,6 +63,11 @@
 
     <method name="EnumerateUsers">
       <arg name="users" direction="out" type="a(sa{sv})"/>
+    </method>
+
+    <method name="EnumerateActions">
+      <arg name="locale" direction="in" type="s"/>
+      <arg name="action_descriptions" direction="out" type="a(ssssssa{ss})"/>
     </method>
 
   </interface>
