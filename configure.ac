@@ -156,6 +156,7 @@ AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 
 AC_OUTPUT([
 Makefile
+actions/Makefile
 data/Makefile
 src/Makefile
 src/polkit/Makefile
