@@ -41,7 +41,7 @@ G_DEFINE_TYPE_WITH_CODE (PolkitBackendLocalAuthority, polkit_backend_local_autho
                                                 authority_iface_init)
                          );
 
-#define POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY, PolkitBackendLocalAuthorityPrivate))
+#define POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY, PolkitBackendLocalAuthorityPrivate))
 
 
 static void
@@ -87,7 +87,7 @@ polkit_backend_local_authority_new (void)
 {
   PolkitBackendLocalAuthority *local_authority;
 
-  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (g_object_new (POLKIT_TYPE_BACKEND_LOCAL_AUTHORITY,
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (g_object_new (POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY,
                                                                   NULL));
 
   return local_authority;

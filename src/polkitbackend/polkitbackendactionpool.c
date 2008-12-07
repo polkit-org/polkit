@@ -98,7 +98,7 @@ enum
   PROP_DIRECTORY,
 };
 
-#define POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_TYPE_BACKEND_ACTION_POOL, PolkitBackendActionPoolPrivate))
+#define POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_ACTION_POOL, PolkitBackendActionPoolPrivate))
 
 G_DEFINE_TYPE (PolkitBackendActionPool, polkit_backend_action_pool, G_TYPE_OBJECT);
 
@@ -231,7 +231,7 @@ polkit_backend_action_pool_new (GFile *directory)
 {
   PolkitBackendActionPool *pool;
 
-  pool = POLKIT_BACKEND_ACTION_POOL (g_object_new (POLKIT_TYPE_BACKEND_ACTION_POOL,
+  pool = POLKIT_BACKEND_ACTION_POOL (g_object_new (POLKIT_BACKEND_TYPE_ACTION_POOL,
                                                    "directory", directory,
                                                    NULL));
 

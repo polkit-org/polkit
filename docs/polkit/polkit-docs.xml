@@ -71,7 +71,7 @@
     <xi:include href="xml/polkitsubject.xml"/>
     <chapter id="extending">
       <title>Extending PolicyKit</title>
-      <xi:include href="../polkitbackend/xml/polkitbackendlocal.xml"/>
+      <xi:include href="../polkitbackend/xml/polkitbackendlocalauthority.xml"/>
       <xi:include href="../polkitbackend/xml/polkitbackendactionpool.xml"/>
     </chapter>
   </reference>
