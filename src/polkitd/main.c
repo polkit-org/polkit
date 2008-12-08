@@ -52,13 +52,13 @@ main (int argc, char **argv)
   connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
 
   error = NULL;
-  if (!egg_dbus_bus_invoke_request_name (egg_dbus_connection_get_bus_proxy (connection),
-                                         0, /* call flags */
-                                         "org.freedesktop.PolicyKit1",
-                                         0, /* flags */
-                                         &rn_ret,
-                                         NULL,
-                                         &error))
+  if (!egg_dbus_bus_invoke_request_name_sync (egg_dbus_connection_get_bus_proxy (connection),
+                                              0, /* call flags */
+                                              "org.freedesktop.PolicyKit1",
+                                              0, /* flags */
+                                              &rn_ret,
+                                              NULL,
+                                              &error))
     {
       g_warning ("error: %s", error->message);
       g_error_free (error);

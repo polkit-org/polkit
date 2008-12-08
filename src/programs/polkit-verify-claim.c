@@ -33,12 +33,12 @@ main (int argc, char *argv[])
   authority = polkit_authority_get ();
 
   error = NULL;
-  polkit_authority_invoke_say_hello (authority,
-                                     0, /* call_flags */
-                                     "Hi there!",
-                                     &result,
-                                     NULL,
-                                     &error);
+  polkit_authority_invoke_say_hello_sync (authority,
+                                          0, /* call_flags */
+                                          "Hi there!",
+                                          &result,
+                                          NULL,
+                                          &error);
   g_print ("Authority replied: %s\n", result);
   g_free (result);
 
