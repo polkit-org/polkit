@@ -2,41 +2,63 @@
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
 <node>
 
-  <!-- User defined struct for Subjects -->
+  <!-- Subject struct -->
   <annotation name="org.gtk.EggDBus.DeclareStruct" value="Subject">
-    <annotation name="org.gtk.EggDBus.Struct.Signature" value="(sa{sv})"/>
 
-    <!-- element 0: string:          the subject type; known values: "unix-user", "unix-group", "unix-process" -->
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:subject_kind">
+      <annotation name="org.gtk.EggDBus.DocString" value="Kind of subject"/>
+    </annotation>
 
-    <!-- element 1: map<string,any>: key/value pairs depending on the subject type -->
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{sv}:subject_details">
+      <annotation name="org.gtk.EggDBus.DocString" value="Details about the subject"/>
+    </annotation>
 
-    <!-- TODO: document values in hash table for each subject type-->
+    <!-- TODO: document values in hash map for each subject type-->
 
   </annotation>
 
-  <!-- User defined struct for ActionDescription -->
+  <!-- ActionDescription struct -->
   <annotation name="org.gtk.EggDBus.DeclareStruct" value="ActionDescription">
-    <annotation name="org.gtk.EggDBus.Struct.Signature" value="(ssssssa{ss})"/>
 
-    <!-- element 0: string:              action-id -->
-    <!-- element 1: string:              description -->
-    <!-- element 2: string:              message -->
-    <!-- element 3: string:              vendor name -->
-    <!-- element 4: string:              vendor url -->
-    <!-- element 5: string:              icon name -->
-    <!-- element 6: map<string,string>:  annotations -->
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:description">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Description"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:message">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Message"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_name">
+      <annotation name="org.gtk.EggDBus.DocString" value="Vendor Name"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_url">
+      <annotation name="org.gtk.EggDBus.DocString" value="Vendor URL"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:icon_name">
+      <annotation name="org.gtk.EggDBus.DocString" value="Icon Name"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{ss}:annotations">
+      <annotation name="org.gtk.EggDBus.DocString" value="Annotations"/>
+    </annotation>
 
     <!-- TODO: also include defaults -->
 
   </annotation>
 
-  <!-- User defined struct for AuthorizationClaim -->
+  <!-- AuthorizationClaim struct -->
   <annotation name="org.gtk.EggDBus.DeclareStruct" value="AuthorizationClaim">
-    <annotation name="org.gtk.EggDBus.Struct.Signature" value="((sa{sv})sa{ss})"/>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="(sa{sv}):subject">
+      <annotation name="org.gtk.EggDBus.DocString" value="Subject the claim is for"/>
+    </annotation>
 
-    <!-- element 0: (sa{sv}):            subject -->
-    <!-- element 1: string:              action-id -->
-    <!-- element 2: map<string,string>:  attributes -->
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier for the claim"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{ss}:attributes">
+      <annotation name="org.gtk.EggDBus.DocString" value="Attributes for the claim"/>
+    </annotation>
 
   </annotation>
 

@@ -21,26 +21,49 @@
 
 #include <polkit/polkit.h>
 
+static PolkitAuthority *authority;
+
+static void
+list_actions (void)
+{
+  GError *error;
+  GList *actions;
+  GList *l;
+
+  error = NULL;
+  actions = polkit_authority_enumerate_actions_sync (authority,
+                                                     "",
+                                                     NULL,
+                                                     &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error enumerating actions: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  for (l = actions; l != NULL; l = l->next)
+    {
+      PolkitActionDescription *action = POLKIT_ACTION_DESCRIPTION (l->data);
+
+      g_print ("%s\n", polkit_action_description_get_action_id (action));
+    }
+
+  g_list_foreach (actions, (GFunc) g_object_unref, NULL);
+  g_list_free (actions);
+
+ out:
+  ;
+}
+
 int
 main (int argc, char *argv[])
 {
-  GError *error;
-  PolkitAuthority *authority;
-  gchar *result;
-
   g_type_init ();
 
   authority = polkit_authority_get ();
 
-  error = NULL;
-  polkit_authority_invoke_say_hello_sync (authority,
-                                          0, /* call_flags */
-                                          "Hi there!",
-                                          &result,
-                                          NULL,
-                                          &error);
-  g_print ("Authority replied: %s\n", result);
-  g_free (result);
+  list_actions ();
 
   g_object_unref (authority);
 

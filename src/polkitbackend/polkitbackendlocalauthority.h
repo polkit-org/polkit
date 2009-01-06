@@ -23,10 +23,11 @@
 #error "Only <polkitbackend/polkitbackend.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#include <glib-object.h>
-
 #ifndef __POLKIT_BACKEND_LOCAL_AUTHORITY_H
 #define __POLKIT_BACKEND_LOCAL_AUTHORITY_H
+
+#include <glib-object.h>
+#include <polkitbackend/polkitbackendauthority.h>
 
 G_BEGIN_DECLS
 
@@ -42,12 +43,12 @@ typedef struct _PolkitBackendLocalAuthorityClass    PolkitBackendLocalAuthorityC
 
 struct _PolkitBackendLocalAuthority
 {
-  GObject parent_instance;
+  PolkitBackendAuthority parent_instance;
 };
 
 struct _PolkitBackendLocalAuthorityClass
 {
-  GObjectClass parent_class;
+  PolkitBackendAuthorityClass parent_class;
 
   /*< public >*/
 
@@ -63,9 +64,8 @@ struct _PolkitBackendLocalAuthorityClass
   void (*_polkit_reserved8) (void);
 };
 
-GType                        polkit_backend_local_authority_get_type (void) G_GNUC_CONST;
-
-PolkitBackendLocalAuthority *polkit_backend_local_authority_new      (void);
+GType                   polkit_backend_local_authority_get_type (void) G_GNUC_CONST;
+PolkitBackendAuthority *polkit_backend_local_authority_new      (void);
 
 G_END_DECLS
 

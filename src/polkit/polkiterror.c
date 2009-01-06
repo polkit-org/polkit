@@ -19,17 +19,22 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_H
-#define __POLKIT_BACKEND_H
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
-#define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
-#include <polkitbackend/polkitbackendtypes.h>
-#include <polkitbackend/polkitbackendauthority.h>
-#include <polkitbackend/polkitbackendlocalauthority.h>
-#include <polkitbackend/polkitbackendactionpool.h>
-#include <polkitbackend/polkitbackendserver.h>
-#undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
+#include "polkiterror.h"
+#include "polkitprivate.h"
 
-#endif /* __POLKIT_BACKEND_H */
+GQuark
+polkit_error_quark (void)
+{
+  return _polkit_error_quark ();
+}
 
+GType
+polkit_error_get_type (void)
+{
+  return _polkit_error_get_type ();
+}
 

@@ -22,27 +22,23 @@
 #ifndef __POLKIT_ACTION_DESCRIPTION_H
 #define __POLKIT_ACTION_DESCRIPTION_H
 
-#include <sys/types.h>
-#include <unistd.h>
 #include <glib-object.h>
-#include <polkit/polkitbindings.h>
+#include <gio/gio.h>
+#include <polkit/polkittypes.h>
 
 G_BEGIN_DECLS
 
-#define POLKIT_TYPE_ACTION_DESCRIPTION         (polkit_action_description_get_type())
-#define POLKIT_ACTION_DESCRIPTION(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_ACTION_DESCRIPTION, PolkitActionDescription))
-#define POLKIT_IS_ACTION_DESCRIPTION(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_ACTION_DESCRIPTION))
-#define POLKIT_ACTION_DESCRIPTION_GET_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE((o), POLKIT_TYPE_ACTION_DESCRIPTION, PolkitActionDescriptionIface))
+#define POLKIT_TYPE_ACTION_DESCRIPTION          (polkit_action_description_get_type())
+#define POLKIT_ACTION_DESCRIPTION(o)            (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_ACTION_DESCRIPTION, PolkitActionDescription))
+#define POLKIT_ACTION_DESCRIPTION_CLASS(k)      (G_TYPE_CHECK_CLASS_CAST((k), POLKIT_TYPE_ACTION_DESCRIPTION, PolkitActionDescriptionClass))
+#define POLKIT_ACTION_DESCRIPTION_GET_CLASS(o)  (G_TYPE_INSTANCE_GET_CLASS ((o), POLKIT_TYPE_ACTION_DESCRIPTION, PolkitActionDescriptionClass))
+#define POLKIT_IS_ACTION_DESCRIPTION(o)         (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_ACTION_DESCRIPTION))
+#define POLKIT_IS_ACTION_DESCRIPTION_CLASS(k)   (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_TYPE_ACTION_DESCRIPTION))
 
 #if 0
-typedef struct _PolkitActionDescription PolkitActionDescription; /* Dummy typedef */
+typedef struct _PolkitActionDescription PolkitActionDescription;
 #endif
-typedef struct _PolkitActionDescriptionIface PolkitActionDescriptionIface;
-
-struct _PolkitActionDescriptionIface
-{
-  GTypeInterface g_iface;
-};
+typedef struct _PolkitActionDescriptionClass PolkitActionDescriptionClass;
 
 GType         polkit_action_description_get_type         (void) G_GNUC_CONST;
 const gchar  *polkit_action_description_get_action_id    (PolkitActionDescription *action_description);
@@ -51,7 +47,6 @@ const gchar  *polkit_action_description_get_message      (PolkitActionDescriptio
 const gchar  *polkit_action_description_get_vendor_name  (PolkitActionDescription *action_description);
 const gchar  *polkit_action_description_get_vendor_url   (PolkitActionDescription *action_description);
 GIcon        *polkit_action_description_get_icon         (PolkitActionDescription *action_description);
-GHashTable   *polkit_action_description_get_annotations  (PolkitActionDescription *action_description);
 
 G_END_DECLS
 

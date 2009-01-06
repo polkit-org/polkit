@@ -12,21 +12,24 @@ INCLUDES =                                                      \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
+	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
-BUILT_SOURCES =									\
-	polkitbindings.h			polkitbindings.c		\
-	polkitbindingstypes.h							\
-	polkitauthority.h			polkitauthority.c		\
-	polkiterror.h				polkiterror.c			\
-	polkitbindingsmarshal.h			polkitbindingsmarshal.c		\
-        polkitauthorizationresult.h		polkitauthorizationresult.c	\
-	polkitbindingsmarshal.list						\
-        $(NULL)
+BUILT_SOURCES =										\
+	_polkitactiondescription.c		_polkitactiondescription.h		\
+	_polkitauthority.c			_polkitauthority.h			\
+	_polkitauthorizationclaim.c		_polkitauthorizationclaim.h		\
+	_polkitauthorizationresult.c		_polkitauthorizationresult.h		\
+	_polkitbindings.c			_polkitbindings.h			\
+	_polkitbindingsmarshal.c		_polkitbindingsmarshal.h		\
+	_polkitbindingstypes.h								\
+	_polkiterror.c				_polkiterror.h				\
+	_polkitsubject.c			_polkitsubject.h			\
+	$(NULL)
 
 $(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml
-	dbus2gobject										\
-	  --namespace       "Polkit"								\
+	eggdbus-binding-tool									\
+	  --namespace       "_Polkit"								\
 	  --dbus-namespace  "org.freedesktop.PolicyKit1"					\
 	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml	\
 	  $(NULL)
@@ -35,27 +38,19 @@ lib_LTLIBRARIES=libpolkit-gobject-1.la
 
 libpolkit_gobject_1includedir=$(includedir)/polkit-1/polkit
 
-libpolkit_gobject_1include_HEADERS =                        		\
-        polkit.h							\
-        polkitauthoritystub.h						\
-	polkitactiondescription.h					\
-        polkitauthority.h						\
-        polkitauthorizationclaim.h					\
-        polkitauthorizationresult.h					\
-        polkiterror.h							\
-        polkitsubject.h							\
-	polkitbindings.h						\
-	polkitbindingstypes.h						\
-	polkitauthority.h						\
+libpolkit_gobject_1include_HEADERS =                        				\
+        polkit.h									\
+	polkitactiondescription.h							\
+	polkitauthority.h								\
+	polkiterror.h									\
         $(NULL)
 
-libpolkit_gobject_1_la_SOURCES =                                   	\
-        polkit.h							\
-        polkitauthoritystub.h		polkitauthoritystub.c		\
-	polkitactiondescription.h	polkitactiondescription.c	\
-        polkitauthorizationclaim.h	polkitauthorizationclaim.c	\
-        polkitsubject.h			polkitsubject.c			\
-        $(BUILT_SOURCES)						\
+libpolkit_gobject_1_la_SOURCES =                                   			\
+        polkit.h									\
+        $(BUILT_SOURCES)								\
+	polkitactiondescription.c		polkitactiondescription.h		\
+	polkitauthority.c			polkitauthority.h			\
+	polkiterror.c				polkiterror.h				\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\

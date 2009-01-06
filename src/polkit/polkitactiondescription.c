@@ -22,232 +22,120 @@
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
-#include <string.h>
-#include "polkitbindings.h"
+
 #include "polkitactiondescription.h"
+#include "_polkitactiondescription.h"
+
+#include "polkitprivate.h"
 
 /**
  * SECTION:polkitactiondescription
  * @title: PolkitActionDescription
- * @short_description: Descriptions of actions
+ * @short_description: Actions
  *
- * The #PolkitActionDescription type is used to described registered PolicyKit actions.
+ * Encapsulates an action.
  */
+
+struct _PolkitActionDescription
+{
+  GObject parent_instance;
+
+  _PolkitActionDescription *real;
+};
+
+struct _PolkitActionDescriptionClass
+{
+  GObjectClass parent_class;
+};
+
+G_DEFINE_TYPE (PolkitActionDescription, polkit_action_description, G_TYPE_OBJECT);
 
 static void
-base_init (gpointer g_iface)
+polkit_action_description_init (PolkitActionDescription *action_description)
 {
 }
 
-GType
-polkit_action_description_get_type (void)
+static void
+polkit_action_description_finalize (GObject *object)
 {
-  static GType iface_type = 0;
+  PolkitActionDescription *action_description;
 
-  if (iface_type == 0)
-    {
-      static const GTypeInfo info =
-      {
-        sizeof (PolkitActionDescriptionIface),
-        base_init,              /* base_init      */
-        NULL,                   /* base_finalize  */
-        NULL,                   /* class_init     */
-        NULL,                   /* class_finalize */
-        NULL,                   /* class_data     */
-        0,                      /* instance_size  */
-        0,                      /* n_preallocs    */
-        NULL,                   /* instance_init  */
-        NULL                    /* value_table    */
-      };
+  action_description = POLKIT_ACTION_DESCRIPTION (object);
 
-      iface_type = g_type_register_static (G_TYPE_INTERFACE, "PolkitActionDescription", &info, 0);
-
-      g_type_interface_add_prerequisite (iface_type, EGG_DBUS_TYPE_STRUCTURE);
-    }
-
-  return iface_type;
+  g_object_unref (action_description->real);
 }
 
-#define ACTION_DESCRIPTION_SIGNATURE "(ssssssa{ss})"
+static void
+polkit_action_description_class_init (PolkitActionDescriptionClass *klass)
+{
+  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-/**
- * polkit_action_description_get_action_id:
- * @action_description: A #PolkitActionDescription.
- *
- * Gets the action identifer for @action_description.
- *
- * Returns: The action identifier for @action_description.
- */
-const gchar *
+  gobject_class->finalize = polkit_action_description_finalize;
+}
+
+PolkitActionDescription *
+polkit_action_description_new_for_real (_PolkitActionDescription *real)
+{
+  PolkitActionDescription *action_description;
+
+  action_description = POLKIT_ACTION_DESCRIPTION (g_object_new (POLKIT_TYPE_ACTION_DESCRIPTION, NULL));
+  action_description->real = g_object_ref (real);
+
+  return action_description;
+}
+
+_PolkitActionDescription *
+polkit_action_description_get_real (PolkitActionDescription *action_description)
+{
+  return action_description->real;
+}
+
+const gchar  *
 polkit_action_description_get_action_id (PolkitActionDescription *action_description)
 {
-  const gchar *s;
-
-  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-  g_return_val_if_fail (strcmp (egg_dbus_structure_get_signature (EGG_DBUS_STRUCTURE (action_description)), ACTION_DESCRIPTION_SIGNATURE) == 0, NULL);
-
-  egg_dbus_structure_get_element (EGG_DBUS_STRUCTURE (action_description),
-                                  0, &s,
-                                  -1);
-
-  return s;
+  return _polkit_action_description_get_action_id (action_description->real);
 }
 
-/**
- * polkit_action_description_get_description:
- * @action_description: A #PolkitActionDescription.
- *
- * Gets a human readable description of @action_description.
- *
- * Returns: The human readable description for @action_description or %NULL if not set.
- */
-const gchar *
+const gchar  *
 polkit_action_description_get_description (PolkitActionDescription *action_description)
 {
-  const gchar *s;
-
-  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-  g_return_val_if_fail (strcmp (egg_dbus_structure_get_signature (EGG_DBUS_STRUCTURE (action_description)), ACTION_DESCRIPTION_SIGNATURE) == 0, NULL);
-
-  egg_dbus_structure_get_element (EGG_DBUS_STRUCTURE (action_description),
-                                  1, &s,
-                                  -1);
-
-  return strlen (s) > 0 ? s : NULL;
+  return _polkit_action_description_get_description (action_description->real);
 }
 
-/**
- * polkit_action_description_get_message:
- * @action_description: A #PolkitActionDescription.
- *
- * Gets the message shown for @action_description.
- *
- * Returns: The message for @action_description or %NULL if not set.
- */
-const gchar *
+const gchar  *
 polkit_action_description_get_message (PolkitActionDescription *action_description)
 {
-  const gchar *s;
-
-  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-  g_return_val_if_fail (strcmp (egg_dbus_structure_get_signature (EGG_DBUS_STRUCTURE (action_description)), ACTION_DESCRIPTION_SIGNATURE) == 0, NULL);
-
-  egg_dbus_structure_get_element (EGG_DBUS_STRUCTURE (action_description),
-                                  2, &s,
-                                  -1);
-
-  return strlen (s) > 0 ? s : NULL;
+  return _polkit_action_description_get_message (action_description->real);
 }
 
-/**
- * polkit_action_description_get_vendor_name:
- * @action_description: A #PolkitActionDescription.
- *
- * Gets the name of the vendor for @action_description.
- *
- * Returns: The vendor of @action_description or %NULL if not set.
- */
-const gchar *
+const gchar  *
 polkit_action_description_get_vendor_name (PolkitActionDescription *action_description)
 {
-  const gchar *s;
-
-  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-  g_return_val_if_fail (strcmp (egg_dbus_structure_get_signature (EGG_DBUS_STRUCTURE (action_description)), ACTION_DESCRIPTION_SIGNATURE) == 0, NULL);
-
-  egg_dbus_structure_get_element (EGG_DBUS_STRUCTURE (action_description),
-                                  3, &s,
-                                  -1);
-
-  return strlen (s) > 0 ? s : NULL;
+  return _polkit_action_description_get_vendor_name (action_description->real);
 }
 
-/**
- * polkit_action_description_get_vendor_url:
- * @action_description: A #PolkitActionDescription.
- *
- * Gets the vendor URL for @action_description.
- *
- * Returns: The vendor URL for @action_description or %NULL if not set.
- */
-const gchar *
+const gchar  *
 polkit_action_description_get_vendor_url (PolkitActionDescription *action_description)
 {
-  const gchar *s;
-
-  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-  g_return_val_if_fail (strcmp (egg_dbus_structure_get_signature (EGG_DBUS_STRUCTURE (action_description)), ACTION_DESCRIPTION_SIGNATURE) == 0, NULL);
-
-  egg_dbus_structure_get_element (EGG_DBUS_STRUCTURE (action_description),
-                                  4, &s,
-                                  -1);
-
-  return strlen (s) > 0 ? s : NULL;
+  return _polkit_action_description_get_vendor_url (action_description->real);
 }
 
-/**
- * polkit_action_description_get_icon:
- * @action_description: A #PolkitActionDescription.
- *
- * Gets the #GIcon for @action_description.
- *
- * Returns: A #GIcon (free with g_object_unref() when done with it) or %NULL if not set.
- */
 GIcon *
 polkit_action_description_get_icon (PolkitActionDescription *action_description)
 {
-  const gchar *s;
+  const gchar *icon_name;
   GIcon *icon;
+  GError *error;
 
-  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-  g_return_val_if_fail (strcmp (egg_dbus_structure_get_signature (EGG_DBUS_STRUCTURE (action_description)), ACTION_DESCRIPTION_SIGNATURE) == 0, NULL);
+  icon_name = _polkit_action_description_get_icon_name (action_description->real);
 
-  egg_dbus_structure_get_element (EGG_DBUS_STRUCTURE (action_description),
-                                  5, &s,
-                                  -1);
-
-  if (strlen (s) > 0)
+  error = NULL;
+  icon = g_icon_new_for_string (icon_name, &error);
+  if (icon_name == NULL)
     {
-      icon = NULL;
-    }
-  else
-    {
-      GError *error;
-
-      error = NULL;
-      icon = g_icon_new_for_string (s, &error);
-      if (icon == NULL)
-        {
-          g_warning ("Error getting icon for action description: %s", error->message);
-          g_error_free (error);
-        }
+      g_warning ("polkit_action_description_get_icon: %s", error->message);
+      g_error_free (error);
     }
 
   return icon;
 }
-
-/**
- * polkit_action_description_get_annotations:
- * @action_description: A #PolkitActionDescription.
- *
- * Gets the annotations for @action_description.
- *
- * Returns: A #GHashTable from strings to strings with the annotations
- * for @action_description. Do not destroy or unref this hash table;
- * it is owned by @action_description.
- */
-GHashTable *
-polkit_action_description_get_annotations (PolkitActionDescription *action_description)
-{
-  GHashTable *hash;
-
-  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
-  g_return_val_if_fail (strcmp (egg_dbus_structure_get_signature (EGG_DBUS_STRUCTURE (action_description)), ACTION_DESCRIPTION_SIGNATURE) == 0, NULL);
-
-  egg_dbus_structure_get_element (EGG_DBUS_STRUCTURE (action_description),
-                                  6, &hash,
-                                  -1);
-
-  return hash;
-}
-

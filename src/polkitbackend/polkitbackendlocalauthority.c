@@ -33,16 +33,13 @@ typedef struct
 
 } PolkitBackendLocalAuthorityPrivate;
 
-static void authority_iface_init (PolkitAuthorityIface *authority_iface,
-                                  gpointer              iface_data);
+static GList *polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority *authority,
+                                                                const gchar            *locale);
 
-G_DEFINE_TYPE_WITH_CODE (PolkitBackendLocalAuthority, polkit_backend_local_authority, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (POLKIT_TYPE_AUTHORITY,
-                                                authority_iface_init)
-                         );
+
+G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
 #define POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY, PolkitBackendLocalAuthorityPrivate))
-
 
 static void
 polkit_backend_local_authority_init (PolkitBackendLocalAuthority *local_authority)
@@ -75,24 +72,42 @@ polkit_backend_local_authority_finalize (GObject *object)
 static void
 polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *klass)
 {
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+  GObjectClass *gobject_class;
+  PolkitBackendAuthorityClass *authority_class;
+
+  gobject_class = G_OBJECT_CLASS (klass);
+  authority_class = POLKIT_BACKEND_AUTHORITY_CLASS (klass);
 
   gobject_class->finalize = polkit_backend_local_authority_finalize;
+
+  authority_class->enumerate_actions = polkit_backend_local_authority_enumerate_actions;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendLocalAuthorityPrivate));
 }
 
-PolkitBackendLocalAuthority *
+PolkitBackendAuthority *
 polkit_backend_local_authority_new (void)
 {
-  PolkitBackendLocalAuthority *local_authority;
-
-  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (g_object_new (POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY,
-                                                                  NULL));
-
-  return local_authority;
+  return POLKIT_BACKEND_AUTHORITY (g_object_new (POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY,
+                                                 NULL));
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+static GList *
+polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority *authority,
+                                                  const gchar            *locale)
+{
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  return polkit_backend_action_pool_get_all_actions (priv->action_pool, locale);
+}
+
+#if 0
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
@@ -189,3 +204,4 @@ authority_iface_init (PolkitAuthorityIface *authority_iface,
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+#endif

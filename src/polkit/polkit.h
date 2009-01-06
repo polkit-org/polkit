@@ -23,17 +23,11 @@
 #define __POLKIT_H
 
 #define _POLKIT_INSIDE_POLKIT_H 1
-#include <polkit/polkitbindings.h>
 
-#include <polkit/polkitauthoritystub.h>
-#include <polkit/polkiterror.h>
-#include <polkit/polkitsubject.h>
-#include <polkit/polkitauthorizationclaim.h>
-#include <polkit/polkitauthorizationresult.h>
 #include <polkit/polkitactiondescription.h>
+#include <polkit/polkitauthority.h>
+#include <polkit/polkiterror.h>
 
 #undef _POLKIT_INSIDE_POLKIT_H
 
 #endif /* __POLKIT_H */
-
-

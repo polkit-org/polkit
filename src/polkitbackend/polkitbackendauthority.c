@@ -19,15 +19,33 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include <polkit/polkitbindings.h>
+#include "config.h"
+#include <errno.h>
+#include <pwd.h>
+#include <string.h>
+#include <polkit/polkit.h>
+#include "polkitbackendauthority.h"
 
-#ifndef __POLKIT_AUTHORITY_STUB_H
-#define __POLKIT_AUTHORITY_STUB_H
+G_DEFINE_ABSTRACT_TYPE (PolkitBackendAuthority, polkit_backend_authority, G_TYPE_OBJECT);
 
-G_BEGIN_DECLS
+static void
+polkit_backend_authority_init (PolkitBackendAuthority *local_authority)
+{
+}
 
-PolkitAuthority *polkit_authority_get (void);
+static void
+polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
+{
+}
 
-G_END_DECLS
+GList *
+polkit_backend_authority_enumerate_actions (PolkitBackendAuthority *authority,
+                                            const gchar            *locale)
+{
+  PolkitBackendAuthorityClass *klass;
 
-#endif /* __POLKIT_AUTHORITY_STUB_H */
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  return klass->enumerate_actions (authority, locale);
+}
+

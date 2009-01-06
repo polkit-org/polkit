@@ -12,6 +12,7 @@ INCLUDES =                                              		\
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\"               		\
 	-D_POSIX_PTHREAD_SEMANTICS                      		\
 	-D_REENTRANT	                                		\
+	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE			\
 	$(NULL)
 
 libexec_PROGRAMS = polkitd-1

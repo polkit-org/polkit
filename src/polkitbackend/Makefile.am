@@ -12,6 +12,7 @@ INCLUDES =                                                      \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
+	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
 lib_LTLIBRARIES=libpolkit-backend-1.la
@@ -20,14 +21,20 @@ libpolkit_backend_1includedir=$(includedir)/polkit-1/polkitbackend
 
 libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackend.h							\
+	polkitbackendtypes.h						\
+	polkitbackendauthority.h					\
 	polkitbackendlocalauthority.h					\
 	polkitbackendactionpool.h					\
+	polkitbackendserver.h						\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   	\
         polkitbackend.h							\
+	polkitbackendtypes.h						\
+	polkitbackendauthority.h	polkitbackendauthority.c	\
 	polkitbackendlocalauthority.h	polkitbackendlocalauthority.c	\
 	polkitbackendactionpool.h	polkitbackendactionpool.c	\
+	polkitbackendserver.h		polkitbackendserver.c		\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\

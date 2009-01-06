@@ -19,17 +19,16 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_H
-#define __POLKIT_BACKEND_H
+#ifndef __POLKIT_BACKEND_TYPES_H
+#define __POLKIT_BACKEND_TYPES_H
 
-#define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
-#include <polkitbackend/polkitbackendtypes.h>
-#include <polkitbackend/polkitbackendauthority.h>
-#include <polkitbackend/polkitbackendlocalauthority.h>
-#include <polkitbackend/polkitbackendactionpool.h>
-#include <polkitbackend/polkitbackendserver.h>
-#undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
+#include <glib-object.h>
 
-#endif /* __POLKIT_BACKEND_H */
+struct _PolkitBackendAuthority;
+typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
 
+struct _PolkitBackendServer;
+typedef struct _PolkitBackendServer PolkitBackendServer;
+
+#endif /* __POLKIT_BACKEND_TYPES_H */
 

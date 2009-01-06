@@ -26,7 +26,10 @@
 #include <pwd.h>
 #include <string.h>
 #include <expat.h>
+
 #include <polkit/polkit.h>
+#include <polkit/polkitprivate.h>
+
 #include "polkitbackendactionpool.h"
 
 typedef struct
@@ -43,7 +46,7 @@ typedef struct
   GHashTable *localized_message;
 
   /* this maps from annotation key (string) to annotation value (also a string) */
-  GHashTable *annotations;
+  EggDBusHashMap *annotations;
 } ParsedAction;
 
 static void
@@ -59,7 +62,7 @@ parsed_action_free (ParsedAction *action)
   g_hash_table_unref (action->localized_description);
   g_hash_table_unref (action->localized_message);
 
-  g_hash_table_unref (action->annotations);
+  g_object_unref (action->annotations);
   g_free (action);
 }
 
@@ -256,10 +259,10 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
 {
   PolkitBackendActionPoolPrivate *priv;
   PolkitActionDescription *ret;
+  _PolkitActionDescription *real;
   ParsedAction *parsed_action;
   gchar *description;
   gchar *message;
-  GValue *values;
 
   g_return_val_if_fail (POLKIT_BACKEND_IS_ACTION_POOL (pool), NULL);
 
@@ -284,23 +287,16 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
                                  parsed_action->message,
                                  locale));
 
-  values = g_new0 (GValue, 7);
-  g_value_init (&(values[0]), G_TYPE_STRING);
-  g_value_set_string (&(values[0]), parsed_action->action_id);
-  g_value_init (&(values[1]), G_TYPE_STRING);
-  g_value_set_string (&(values[1]), description != NULL ? description : g_strdup (""));
-  g_value_init (&(values[2]), G_TYPE_STRING);
-  g_value_set_string (&(values[2]), message != NULL ? message : g_strdup (""));
-  g_value_init (&(values[3]), G_TYPE_STRING);
-  g_value_set_string (&(values[3]), parsed_action->vendor_name != NULL ? parsed_action->vendor_name : g_strdup (""));
-  g_value_init (&(values[4]), G_TYPE_STRING);
-  g_value_set_string (&(values[4]), parsed_action->vendor_url != NULL ? parsed_action->vendor_url : g_strdup (""));
-  g_value_init (&(values[5]), G_TYPE_STRING);
-  g_value_set_string (&(values[5]), parsed_action->icon_name != NULL ? parsed_action->icon_name : g_strdup (""));
-  g_value_init (&(values[6]), G_TYPE_HASH_TABLE);
-  g_value_set_boxed (&(values[6]), parsed_action->annotations);
+  real = _polkit_action_description_new (action_id,
+                                         description,
+                                         message,
+                                         parsed_action->vendor_name,
+                                         parsed_action->vendor_url,
+                                         parsed_action->icon_name,
+                                         parsed_action->annotations);
 
-  ret = POLKIT_ACTION_DESCRIPTION (egg_dbus_structure_new ("(ssssssa{ss})", 7, values));
+  ret = polkit_action_description_new_for_real (real);
+  g_object_unref (real);
 
  out:
   return ret;
@@ -510,7 +506,7 @@ typedef struct {
   char *elem_lang;
 
   char *annotate_key;
-  GHashTable *annotations;
+  EggDBusHashMap *annotations;
 
   PolkitBackendActionPool *pool;
 } ParserData;
@@ -532,20 +528,23 @@ pd_unref_action_data (ParserData *pd)
   pd->policy_description_nolang = NULL;
   g_free (pd->policy_message_nolang);
   pd->policy_message_nolang = NULL;
-  if (pd->policy_descriptions != NULL) {
-    g_hash_table_unref (pd->policy_descriptions);
-    pd->policy_descriptions = NULL;
-  }
-  if (pd->policy_messages != NULL) {
-    g_hash_table_unref (pd->policy_messages);
-    pd->policy_messages = NULL;
-  }
+  if (pd->policy_descriptions != NULL)
+    {
+      g_hash_table_unref (pd->policy_descriptions);
+      pd->policy_descriptions = NULL;
+    }
+  if (pd->policy_messages != NULL)
+    {
+      g_hash_table_unref (pd->policy_messages);
+      pd->policy_messages = NULL;
+    }
   g_free (pd->annotate_key);
   pd->annotate_key = NULL;
-  if (pd->annotations != NULL) {
-    g_hash_table_unref (pd->annotations);
-    pd->annotations = NULL;
-  }
+  if (pd->annotations != NULL)
+    {
+      g_object_unref (pd->annotations);
+      pd->annotations = NULL;
+    }
   g_free (pd->elem_lang);
   pd->elem_lang = NULL;
 }
@@ -604,10 +603,7 @@ _start (void *data, const char *el, const char **attr)
                                                        g_str_equal,
                                                        g_free,
                                                        g_free);
-          pd->annotations = g_hash_table_new_full (g_str_hash,
-                                                   g_str_equal,
-                                                   g_free,
-                                                   g_free);
+          pd->annotations = egg_dbus_hash_map_new (G_TYPE_STRING, g_free, G_TYPE_STRING, g_free);
           /* initialize defaults */
           //pd->defaults_allow_any = POLKIT_RESULT_NO;
           //pd->defaults_allow_inactive = POLKIT_RESULT_NO;
@@ -838,9 +834,9 @@ _cdata (void *data, const char *s, int len)
       break;
 
     case STATE_IN_ANNOTATE:
-      g_hash_table_insert (pd->annotations,
-                           g_strdup (pd->annotate_key),
-                           str);
+      egg_dbus_hash_map_insert (pd->annotations,
+                                g_strdup (pd->annotate_key),
+                                str);
       str = NULL;
       break;
 

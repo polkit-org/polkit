@@ -19,17 +19,40 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_H
-#define __POLKIT_BACKEND_H
+#ifndef __POLKIT_ERROR_H
+#define __POLKIT_ERROR_H
 
-#define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
-#include <polkitbackend/polkitbackendtypes.h>
-#include <polkitbackend/polkitbackendauthority.h>
-#include <polkitbackend/polkitbackendlocalauthority.h>
-#include <polkitbackend/polkitbackendactionpool.h>
-#include <polkitbackend/polkitbackendserver.h>
-#undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
+#include <glib-object.h>
 
-#endif /* __POLKIT_BACKEND_H */
+G_BEGIN_DECLS
 
+/**
+ * POLKIT_ERROR:
+ *
+ * Error domain for errors when using PolicyKit. Errors in this domain will be from the #PolkitError
+ * enumeration. See #GError for information on error domains
+ */
+#define POLKIT_ERROR polkit_error_quark()
 
+GQuark polkit_error_quark (void);
+
+GType polkit_error_get_type (void) G_GNUC_CONST;
+
+#define POLKIT_TYPE_ERROR (polkit_error_get_type ())
+
+/**
+ * PolkitError:
+ * @POLKIT_ERROR_FAILED: The operation failed
+ * @POLKIT_ERROR_NOT_SUPPORTED: Operation is not supported
+ *
+ * Errors when using PolicyKit.
+ */
+typedef enum
+{
+  POLKIT_ERROR_FAILED = 0,
+  POLKIT_ERROR_NOT_SUPPORTED = 1,
+} PolkitError;
+
+G_END_DECLS
+
+#endif /* __POLKIT_ERROR_H */
