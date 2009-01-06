@@ -19,6 +19,10 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include <string.h>
 #include <polkit/polkit.h>
 
@@ -26,10 +30,12 @@ static PolkitAuthority *authority;
 
 static gboolean opt_list_actions = FALSE;
 static gchar *opt_show_action    = NULL;
+static gboolean opt_show_version = FALSE;
 
 static GOptionEntry option_entries[] = {
-  {"list-actions", 'l', 0, G_OPTION_ARG_NONE, &opt_list_actions, "List registered actions", NULL },
-  {"show-action", 's', 0, G_OPTION_ARG_STRING, &opt_show_action, "Show details for an action", "Action ID" },
+  {"list-actions", 'l', 0, G_OPTION_ARG_NONE, &opt_list_actions, "List registered actions", NULL},
+  {"show-action", 's', 0, G_OPTION_ARG_STRING, &opt_show_action, "Show details for an action", "action_id"},
+  {"version", 'V', 0, G_OPTION_ARG_NONE, &opt_show_version, "Show version", NULL},
   {NULL, },
 };
 
@@ -68,6 +74,11 @@ main (int argc, char *argv[])
   else if (opt_show_action != NULL)
     {
       ret = show_action (opt_show_action);
+    }
+  else if (opt_show_version)
+    {
+      g_print ("polkit-1 %s\n", PACKAGE_VERSION);
+      ret = TRUE;
     }
   else
     {
