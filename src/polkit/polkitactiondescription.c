@@ -23,6 +23,7 @@
 #  include "config.h"
 #endif
 
+#include <string.h>
 #include "polkitactiondescription.h"
 #include "_polkitactiondescription.h"
 
@@ -139,7 +140,7 @@ polkit_action_description_get_icon (PolkitActionDescription *action_description)
     goto out;
 
   icon_name = _polkit_action_description_get_icon_name (action_description->real);
-  if (icon_name == NULL)
+  if (icon_name == NULL || strlen (icon_name) == 0)
     goto out;
 
   error = NULL;
