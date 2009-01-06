@@ -19,18 +19,23 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#include <string.h>
 #include <polkit/polkit.h>
 
 static PolkitAuthority *authority;
 
 static gboolean opt_list_actions = FALSE;
+static gchar *opt_show_action    = NULL;
 
 static GOptionEntry option_entries[] = {
   {"list-actions", 'l', 0, G_OPTION_ARG_NONE, &opt_list_actions, "List registered actions", NULL },
+  {"show-action", 's', 0, G_OPTION_ARG_STRING, &opt_show_action, "Show details for an action", "Action ID" },
   {NULL, },
 };
 
 static gboolean list_actions (void);
+
+static gboolean show_action (const gchar *action_id);
 
 int
 main (int argc, char *argv[])
@@ -60,6 +65,10 @@ main (int argc, char *argv[])
     {
       ret = list_actions ();
     }
+  else if (opt_show_action != NULL)
+    {
+      ret = show_action (opt_show_action);
+    }
   else
     {
       gchar *s;
@@ -77,7 +86,102 @@ main (int argc, char *argv[])
   g_option_context_free (option_ctx);
 
  out:
+  g_free (opt_show_action);
+
   return ret ? 0 : 1;
+}
+
+static void
+print_action (PolkitActionDescription *action)
+{
+  const gchar *vendor;
+  const gchar *vendor_url;
+  GIcon *icon;
+  const gchar * const *annotation_keys;
+  guint n;
+
+  vendor = polkit_action_description_get_vendor_name (action);
+  vendor_url = polkit_action_description_get_vendor_url (action);
+  icon = polkit_action_description_get_icon (action);
+
+  g_print ("action_id:       %s\n", polkit_action_description_get_action_id (action));
+  g_print ("description:     %s\n", polkit_action_description_get_description (action));
+  g_print ("message:         %s\n", polkit_action_description_get_message (action));
+  if (vendor != NULL)
+    g_print ("vendor:          %s\n", vendor);
+  if (vendor_url != NULL)
+    g_print ("vendor_url:      %s\n", vendor_url);
+
+  if (icon != NULL)
+    {
+      gchar *s;
+      s = g_icon_to_string (icon);
+      g_print ("icon:            %s\n", s);
+      g_free (s);
+    }
+
+  annotation_keys = polkit_action_description_get_annotation_keys (action);
+  for (n = 0; annotation_keys[n] != NULL; n++)
+    {
+      const gchar *key;
+      const gchar *value;
+
+      key = annotation_keys[n];
+      value = polkit_action_description_get_annotation (action, key);
+      g_print ("annotation:      %s -> %s\n", key, value);
+    }
+}
+
+static gboolean
+show_action (const gchar *action_id)
+{
+  gboolean ret;
+  GError *error;
+  GList *actions;
+  GList *l;
+
+  ret = FALSE;
+
+  error = NULL;
+  actions = polkit_authority_enumerate_actions_sync (authority,
+                                                     NULL,
+                                                     NULL,
+                                                     &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error enumerating actions: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  for (l = actions; l != NULL; l = l->next)
+    {
+      PolkitActionDescription *action = POLKIT_ACTION_DESCRIPTION (l->data);
+      const gchar *id;
+
+      id = polkit_action_description_get_action_id (action);
+
+      if (strcmp (id, action_id) == 0)
+        {
+          print_action (action);
+          break;
+        }
+    }
+
+  g_list_foreach (actions, (GFunc) g_object_unref, NULL);
+  g_list_free (actions);
+
+  if (l != NULL)
+    {
+      ret = TRUE;
+    }
+  else
+    {
+      g_printerr ("Error: No action with action id %s\n", action_id);
+    }
+
+ out:
+  return ret;
 }
 
 static gboolean

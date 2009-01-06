@@ -44,11 +44,10 @@ GType         polkit_authority_get_type         (void) G_GNUC_CONST;
 
 PolkitAuthority *polkit_authority_get (void);
 
-GList           *polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
-                                                          const gchar     *locale,
-                                                          GCancellable    *cancellable,
-                                                          GError         **error);
-
+GList                    *polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
+                                                                   const gchar     *locale,
+                                                                   GCancellable    *cancellable,
+                                                                   GError         **error);
 G_END_DECLS
 
 #endif /* __POLKIT_AUTHORITY_H */

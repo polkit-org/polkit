@@ -40,13 +40,16 @@ typedef struct _PolkitActionDescription PolkitActionDescription;
 #endif
 typedef struct _PolkitActionDescriptionClass PolkitActionDescriptionClass;
 
-GType         polkit_action_description_get_type         (void) G_GNUC_CONST;
-const gchar  *polkit_action_description_get_action_id    (PolkitActionDescription *action_description);
-const gchar  *polkit_action_description_get_description  (PolkitActionDescription *action_description);
-const gchar  *polkit_action_description_get_message      (PolkitActionDescription *action_description);
-const gchar  *polkit_action_description_get_vendor_name  (PolkitActionDescription *action_description);
-const gchar  *polkit_action_description_get_vendor_url   (PolkitActionDescription *action_description);
-GIcon        *polkit_action_description_get_icon         (PolkitActionDescription *action_description);
+GType                polkit_action_description_get_type              (void) G_GNUC_CONST;
+const gchar         *polkit_action_description_get_action_id         (PolkitActionDescription *action_description);
+const gchar         *polkit_action_description_get_description       (PolkitActionDescription *action_description);
+const gchar         *polkit_action_description_get_message           (PolkitActionDescription *action_description);
+const gchar         *polkit_action_description_get_vendor_name       (PolkitActionDescription *action_description);
+const gchar         *polkit_action_description_get_vendor_url        (PolkitActionDescription *action_description);
+GIcon               *polkit_action_description_get_icon              (PolkitActionDescription *action_description);
+const gchar         *polkit_action_description_get_annotation        (PolkitActionDescription *action_description,
+                                                                      const gchar             *key);
+const gchar * const *polkit_action_description_get_annotation_keys   (PolkitActionDescription *action_description);
 
 G_END_DECLS
 
