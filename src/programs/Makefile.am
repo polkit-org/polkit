@@ -15,18 +15,16 @@ INCLUDES =                                              	\
 	-D_REENTRANT	                                	\
 	$(NULL)
 
-bin_PROGRAMS = polkit-verify-claim-1
+bin_PROGRAMS = polkit-1
 
-polkit_verify_claim_1_SOURCES = polkit-verify-claim.c
+polkit_1_SOURCES = polkit.c
 
-polkit_verify_claim_1_CFLAGS =                             	\
+polkit_1_CFLAGS =                             			\
 	$(GLIB_CFLAGS)						\
-	$(EGG_DBUS_CFLAGS)					\
 	$(NULL)
 
-polkit_verify_claim_1_LDADD =  	                      		\
+polkit_1_LDADD =  	                      			\
 	$(GLIB_LDADD)						\
-	$(EGG_DBUS_LDADD)					\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
 	$(NULL)
 

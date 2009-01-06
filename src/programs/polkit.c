@@ -23,16 +23,76 @@
 
 static PolkitAuthority *authority;
 
-static void
+static gboolean opt_list_actions = FALSE;
+
+static GOptionEntry option_entries[] = {
+  {"list-actions", 'l', 0, G_OPTION_ARG_NONE, &opt_list_actions, "List registered actions", NULL },
+  {NULL, },
+};
+
+static gboolean list_actions (void);
+
+int
+main (int argc, char *argv[])
+{
+  gboolean ret;
+  GError *error;
+  GOptionContext *option_ctx;
+
+  ret = FALSE;
+
+  g_type_init ();
+
+  option_ctx = g_option_context_new ("polkit-1");
+  g_option_context_add_main_entries (option_ctx, option_entries, NULL);
+  g_option_context_set_summary (option_ctx, "PolicyKit commandline tool");
+  error = NULL;
+  if (!g_option_context_parse (option_ctx, &argc, &argv, &error))
+    {
+      g_printerr ("Error parsing options: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  authority = polkit_authority_get ();
+
+  if (opt_list_actions)
+    {
+      ret = list_actions ();
+    }
+  else
+    {
+      gchar *s;
+
+      /* print usage */
+      s = g_option_context_get_help (option_ctx, TRUE, NULL);
+      g_print ("%s", s);
+      g_free (s);
+      ret = 0;
+      goto out;
+    }
+
+  g_object_unref (authority);
+
+  g_option_context_free (option_ctx);
+
+ out:
+  return ret ? 0 : 1;
+}
+
+static gboolean
 list_actions (void)
 {
+  gboolean ret;
   GError *error;
   GList *actions;
   GList *l;
 
+  ret = FALSE;
+
   error = NULL;
   actions = polkit_authority_enumerate_actions_sync (authority,
-                                                     "",
+                                                     NULL,
                                                      NULL,
                                                      &error);
   if (error != NULL)
@@ -52,22 +112,10 @@ list_actions (void)
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
 
+  ret = TRUE;
+
  out:
-  ;
-}
-
-int
-main (int argc, char *argv[])
-{
-  g_type_init ();
-
-  authority = polkit_authority_get ();
-
-  list_actions ();
-
-  g_object_unref (authority);
-
-  return 0;
+  return ret;
 }
 
 
