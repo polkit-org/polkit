@@ -44,6 +44,8 @@ typedef struct _PolkitUnixProcessClass PolkitUnixProcessClass;
 
 GType           polkit_unix_process_get_type       (void) G_GNUC_CONST;
 PolkitSubject  *polkit_unix_process_new            (pid_t pid);
+PolkitSubject  *polkit_unix_process_new_full       (pid_t pid,
+                                                    guint64 start_time);
 
 pid_t           polkit_unix_process_get_pid        (PolkitUnixProcess *process);
 guint64         polkit_unix_process_get_start_time (PolkitUnixProcess *process);

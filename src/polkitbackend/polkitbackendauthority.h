@@ -51,8 +51,15 @@ struct _PolkitBackendAuthorityClass
 
   /*< public >*/
 
-  GList * (*enumerate_actions) (PolkitBackendAuthority *authority,
-                                const gchar            *locale);
+  GList * (*enumerate_actions) (PolkitBackendAuthority  *authority,
+                                const gchar             *locale,
+                                GError                 **error);
+
+  GList * (*enumerate_users)   (PolkitBackendAuthority  *authority,
+                                GError                 **error);
+
+  GList * (*enumerate_groups)  (PolkitBackendAuthority  *authority,
+                                GError                 **error);
 
   /*< private >*/
   /* Padding for future expansion */
@@ -69,7 +76,14 @@ struct _PolkitBackendAuthorityClass
 GType                        polkit_backend_authority_get_type (void) G_GNUC_CONST;
 
 GList                       *polkit_backend_authority_enumerate_actions (PolkitBackendAuthority *authority,
-                                                                         const gchar            *locale);
+                                                                         const gchar            *locale,
+                                                                         GError                **error);
+
+GList                       *polkit_backend_authority_enumerate_users  (PolkitBackendAuthority *authority,
+                                                                        GError                **error);
+
+GList                       *polkit_backend_authority_enumerate_groups (PolkitBackendAuthority *authority,
+                                                                        GError                **error);
 
 G_END_DECLS
 

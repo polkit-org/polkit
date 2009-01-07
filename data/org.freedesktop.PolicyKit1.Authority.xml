@@ -92,6 +92,10 @@
       <arg name="users" direction="out" type="a(sa{sv})"/>
     </method>
 
+    <method name="EnumerateGroups">
+      <arg name="groups" direction="out" type="a(sa{sv})"/>
+    </method>
+
     <method name="EnumerateActions">
       <arg name="locale" direction="in" type="s"/>
       <arg name="action_descriptions" direction="out" type="a(ssssssa{ss})"/>

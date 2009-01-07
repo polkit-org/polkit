@@ -178,7 +178,8 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
                              pid_t              pid)
 {
   process->pid = pid;
-  process->start_time = get_start_time_for_pid (pid);
+  if (pid != (pid_t) -1)
+    process->start_time = get_start_time_for_pid (pid);
 }
 
 PolkitSubject *
@@ -188,6 +189,20 @@ polkit_unix_process_new (pid_t pid)
                                        "pid", pid,
                                        NULL));
 }
+
+PolkitSubject *
+polkit_unix_process_new_full (pid_t pid,
+                              guint64 start_time)
+{
+  PolkitUnixProcess *process;
+
+  process = POLKIT_UNIX_PROCESS (polkit_unix_process_new ((pid_t) -1));
+  process->pid = pid;
+  process->start_time = start_time;
+
+  return POLKIT_SUBJECT (process);
+}
+
 
 static gboolean
 polkit_unix_process_equal (PolkitSubject *a,
@@ -204,10 +219,19 @@ polkit_unix_process_equal (PolkitSubject *a,
     (process_a->start_time == process_b->start_time);
 }
 
+static gchar *
+polkit_unix_process_to_string (PolkitSubject *subject)
+{
+  PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
+
+  return g_strdup_printf ("unix-process:%d:%" G_GUINT64_FORMAT, process->pid, process->start_time);
+}
+
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
-  subject_iface->equal = polkit_unix_process_equal;
+  subject_iface->equal     = polkit_unix_process_equal;
+  subject_iface->to_string = polkit_unix_process_to_string;
 }
 
 #ifdef HAVE_SOLARIS

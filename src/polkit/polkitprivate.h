@@ -25,7 +25,19 @@
 #include "polkitactiondescription.h"
 #include "_polkitbindings.h"
 
+/* notes:
+ *
+ * - the _new_for_real() functions will ref the passed arg (you will still own the ref)
+ * - the _get_real() functions will return a ref (you will own the ref)
+ *
+ */
+
 PolkitActionDescription  *polkit_action_description_new_for_real (_PolkitActionDescription *real);
-_PolkitActionDescription *polkit_action_description_get_real (PolkitActionDescription *action_description);
+_PolkitActionDescription *polkit_action_description_get_real     (PolkitActionDescription  *action_description);
+
+PolkitSubject  *polkit_subject_new_for_real (_PolkitSubject *real);
+_PolkitSubject *polkit_subject_get_real     (PolkitSubject  *subject);
+
+
 
 #endif /* __POLKIT_PRIVATE_H */

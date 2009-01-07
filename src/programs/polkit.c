@@ -29,17 +29,23 @@
 static PolkitAuthority *authority;
 
 static gboolean opt_list_actions = FALSE;
+static gboolean opt_list_users   = FALSE;
+static gboolean opt_list_groups  = FALSE;
 static gchar *opt_show_action    = NULL;
 static gboolean opt_show_version = FALSE;
 
 static GOptionEntry option_entries[] = {
   {"list-actions", 'l', 0, G_OPTION_ARG_NONE, &opt_list_actions, "List registered actions", NULL},
+  {"list-users", 0, 0, G_OPTION_ARG_NONE, &opt_list_users, "List known users", NULL},
+  {"list-groups", 0, 0, G_OPTION_ARG_NONE, &opt_list_groups, "List known groups", NULL},
   {"show-action", 's', 0, G_OPTION_ARG_STRING, &opt_show_action, "Show details for an action", "action_id"},
   {"version", 'V', 0, G_OPTION_ARG_NONE, &opt_show_version, "Show version", NULL},
   {NULL, },
 };
 
 static gboolean list_actions (void);
+static gboolean list_users (void);
+static gboolean list_groups (void);
 
 static gboolean show_action (const gchar *action_id);
 
@@ -70,6 +76,14 @@ main (int argc, char *argv[])
   if (opt_list_actions)
     {
       ret = list_actions ();
+    }
+  else if (opt_list_users)
+    {
+      ret = list_users ();
+    }
+  else if (opt_list_groups)
+    {
+      ret = list_groups ();
     }
   else if (opt_show_action != NULL)
     {
@@ -226,6 +240,84 @@ list_actions (void)
 
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+static void
+print_subjects (GList *subjects)
+{
+  GList *l;
+
+  for (l = subjects; l != NULL; l = l->next)
+    {
+      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
+      gchar *s;
+
+      s = polkit_subject_to_string (subject);
+      g_print ("%s\n", s);
+      g_free (s);
+    }
+}
+
+static gboolean
+list_users (void)
+{
+  gboolean ret;
+  GError *error;
+  GList *subjects;
+
+  ret = FALSE;
+
+  error = NULL;
+  subjects = polkit_authority_enumerate_users_sync (authority,
+                                                    NULL,
+                                                    &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error enumerating users: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  print_subjects (subjects);
+
+  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
+  g_list_free (subjects);
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+static gboolean
+list_groups (void)
+{
+  gboolean ret;
+  GError *error;
+  GList *subjects;
+
+  ret = FALSE;
+
+  error = NULL;
+  subjects = polkit_authority_enumerate_groups_sync (authority,
+                                                     NULL,
+                                                     &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error enumerating users: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  print_subjects (subjects);
+
+  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
+  g_list_free (subjects);
 
   ret = TRUE;
 

@@ -48,6 +48,15 @@ GList                    *polkit_authority_enumerate_actions_sync (PolkitAuthori
                                                                    const gchar     *locale,
                                                                    GCancellable    *cancellable,
                                                                    GError         **error);
+
+GList                    *polkit_authority_enumerate_users_sync (PolkitAuthority *authority,
+                                                                 GCancellable    *cancellable,
+                                                                 GError         **error);
+
+GList                    *polkit_authority_enumerate_groups_sync (PolkitAuthority *authority,
+                                                                  GCancellable    *cancellable,
+                                                                  GError         **error);
+
 G_END_DECLS
 
 #endif /* __POLKIT_AUTHORITY_H */

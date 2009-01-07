@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <grp.h>
 #include "polkitunixgroup.h"
 #include "polkitsubject.h"
 #include "polkitprivate.h"
@@ -168,8 +169,23 @@ polkit_unix_group_equal (PolkitSubject *a,
   return group_a->gid == group_b->gid;
 }
 
+static gchar *
+polkit_unix_group_to_string (PolkitSubject *subject)
+{
+  PolkitUnixGroup *group = POLKIT_UNIX_GROUP (subject);
+  struct group *gr;
+
+  gr = getgrgid (group->gid);
+
+  if (gr == NULL)
+    return g_strdup_printf ("unix-group:%d", group->gid);
+  else
+    return g_strdup_printf ("unix-group:%s", gr->gr_name);
+}
+
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
-  subject_iface->equal = polkit_unix_group_equal;
+  subject_iface->equal     = polkit_unix_group_equal;
+  subject_iface->to_string = polkit_unix_group_to_string;
 }

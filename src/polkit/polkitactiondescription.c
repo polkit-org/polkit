@@ -97,7 +97,7 @@ polkit_action_description_new_for_real (_PolkitActionDescription *real)
 _PolkitActionDescription *
 polkit_action_description_get_real (PolkitActionDescription *action_description)
 {
-  return action_description->real;
+  return g_object_ref (action_description->real);
 }
 
 const gchar  *

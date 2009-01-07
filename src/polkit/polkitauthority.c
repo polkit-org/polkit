@@ -135,6 +135,78 @@ polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
 
   result = g_list_reverse (result);
 
+  g_object_unref (array_seq);
+
+ out:
+  return result;
+}
+
+GList *
+polkit_authority_enumerate_users_sync (PolkitAuthority *authority,
+                                       GCancellable    *cancellable,
+                                       GError         **error)
+{
+  EggDBusArraySeq *array_seq;
+  GList *result;
+  guint n;
+
+  result = NULL;
+
+  if (!_polkit_authority_enumerate_users_sync (authority->real,
+                                               EGG_DBUS_CALL_FLAGS_NONE,
+                                               &array_seq,
+                                               cancellable,
+                                               error))
+    goto out;
+
+  for (n = 0; n < array_seq->size; n++)
+    {
+      _PolkitSubject *real_subject;
+
+      real_subject = array_seq->data.v_ptr[n];
+
+      result = g_list_prepend (result, polkit_subject_new_for_real (real_subject));
+    }
+
+  result = g_list_reverse (result);
+
+  g_object_unref (array_seq);
+
+ out:
+  return result;
+}
+
+GList *
+polkit_authority_enumerate_groups_sync (PolkitAuthority *authority,
+                                        GCancellable    *cancellable,
+                                        GError         **error)
+{
+  EggDBusArraySeq *array_seq;
+  GList *result;
+  guint n;
+
+  result = NULL;
+
+  if (!_polkit_authority_enumerate_groups_sync (authority->real,
+                                                EGG_DBUS_CALL_FLAGS_NONE,
+                                                &array_seq,
+                                                cancellable,
+                                                error))
+    goto out;
+
+  for (n = 0; n < array_seq->size; n++)
+    {
+      _PolkitSubject *real_subject;
+
+      real_subject = array_seq->data.v_ptr[n];
+
+      result = g_list_prepend (result, polkit_subject_new_for_real (real_subject));
+    }
+
+  result = g_list_reverse (result);
+
+  g_object_unref (array_seq);
+
  out:
   return result;
 }

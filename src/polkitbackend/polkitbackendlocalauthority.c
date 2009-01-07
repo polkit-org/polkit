@@ -22,6 +22,7 @@
 #include "config.h"
 #include <errno.h>
 #include <pwd.h>
+#include <grp.h>
 #include <string.h>
 #include <polkit/polkit.h>
 #include "polkitbackendlocalauthority.h"
@@ -33,9 +34,15 @@ typedef struct
 
 } PolkitBackendLocalAuthorityPrivate;
 
-static GList *polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority *authority,
-                                                                const gchar            *locale);
+static GList *polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority  *authority,
+                                                                const gchar             *locale,
+                                                                GError                 **error);
 
+static GList *polkit_backend_local_authority_enumerate_users   (PolkitBackendAuthority  *authority,
+                                                                GError                 **error);
+
+static GList *polkit_backend_local_authority_enumerate_groups  (PolkitBackendAuthority  *authority,
+                                                                GError                 **error);
 
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
@@ -81,6 +88,8 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
   gobject_class->finalize = polkit_backend_local_authority_finalize;
 
   authority_class->enumerate_actions = polkit_backend_local_authority_enumerate_actions;
+  authority_class->enumerate_users   = polkit_backend_local_authority_enumerate_users;
+  authority_class->enumerate_groups  = polkit_backend_local_authority_enumerate_groups;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendLocalAuthorityPrivate));
 }
@@ -95,8 +104,9 @@ polkit_backend_local_authority_new (void)
 /* ---------------------------------------------------------------------------------------------------- */
 
 static GList *
-polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority *authority,
-                                                  const gchar            *locale)
+polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority  *authority,
+                                                  const gchar             *locale,
+                                                  GError                 **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -105,6 +115,90 @@ polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority *author
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
   return polkit_backend_action_pool_get_all_actions (priv->action_pool, locale);
+}
+
+static GList *
+polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority  *authority,
+                                                GError                 **error)
+{
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  struct passwd *passwd;
+  GList *list;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  list = NULL;
+
+  passwd = getpwent ();
+  if (passwd == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "getpwent failed: %s",
+                   strerror (errno));
+      goto out;
+    }
+
+  do
+    {
+      PolkitSubject *subject;
+
+      subject = polkit_unix_user_new (passwd->pw_uid);
+
+      list = g_list_prepend (list, subject);
+    }
+  while ((passwd = getpwent ()) != NULL);
+  endpwent ();
+
+  list = g_list_reverse (list);
+
+ out:
+  return list;
+}
+
+static GList *
+polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority  *authority,
+                                                 GError                 **error)
+{
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  struct group *group;
+  GList *list;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  list = NULL;
+
+  group = getgrent ();
+  if (group == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "getgrent failed: %s",
+                   strerror (errno));
+      goto out;
+    }
+
+  do
+    {
+      PolkitSubject *subject;
+
+      subject = polkit_unix_group_new (group->gr_gid);
+
+      list = g_list_prepend (list, subject);
+    }
+  while ((group = getgrent ()) != NULL);
+  endgrent ();
+
+  list = g_list_reverse (list);
+
+ out:
+  return list;
 }
 
 #if 0

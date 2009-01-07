@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <pwd.h>
 #include "polkitunixuser.h"
 #include "polkitsubject.h"
 #include "polkitprivate.h"
@@ -168,8 +169,23 @@ polkit_unix_user_equal (PolkitSubject *a,
   return user_a->uid == user_b->uid;
 }
 
+static gchar *
+polkit_unix_user_to_string (PolkitSubject *subject)
+{
+  PolkitUnixUser *user = POLKIT_UNIX_USER (subject);
+  struct passwd *passwd;
+
+  passwd = getpwuid (user->uid);
+
+  if (passwd == NULL)
+    return g_strdup_printf ("unix-user:%d", user->uid);
+  else
+    return g_strdup_printf ("unix-user:%s", passwd->pw_name);
+}
+
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
-  subject_iface->equal = polkit_unix_user_equal;
+  subject_iface->equal     = polkit_unix_user_equal;
+  subject_iface->to_string = polkit_unix_user_to_string;
 }

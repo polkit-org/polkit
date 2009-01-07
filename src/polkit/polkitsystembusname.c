@@ -176,8 +176,17 @@ polkit_system_bus_name_equal (PolkitSubject *a,
   return strcmp (name_a->name, name_b->name) == 0;
 }
 
+static gchar *
+polkit_system_bus_name_to_string (PolkitSubject *subject)
+{
+  PolkitSystemBusName *system_bus_name = POLKIT_SYSTEM_BUS_NAME (subject);
+
+  return g_strdup_printf ("system-bus-name:%s", system_bus_name->name);
+}
+
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
-  subject_iface->equal = polkit_system_bus_name_equal;
+  subject_iface->equal     = polkit_system_bus_name_equal;
+  subject_iface->to_string = polkit_system_bus_name_to_string;
 }

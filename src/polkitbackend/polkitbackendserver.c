@@ -91,17 +91,29 @@ authority_handle_enumerate_actions (_PolkitAuthority        *instance,
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
   EggDBusArraySeq *array;
+  GError *error;
   GList *actions;
   GList *l;
 
-  actions = polkit_backend_authority_enumerate_actions (server->authority, locale);
+  error = NULL;
+  actions = polkit_backend_authority_enumerate_actions (server->authority, locale, &error);
 
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_ACTION_DESCRIPTION, NULL, NULL, NULL);
+  if (error != NULL)
+    {
+      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  array = egg_dbus_array_seq_new (_POLKIT_TYPE_ACTION_DESCRIPTION, (GDestroyNotify) g_object_unref, NULL, NULL);
 
   for (l = actions; l != NULL; l = l->next)
     {
       PolkitActionDescription *ad = POLKIT_ACTION_DESCRIPTION (l->data);
-      egg_dbus_array_seq_add (array, polkit_action_description_get_real (ad));
+      _PolkitActionDescription *real;
+
+      real = polkit_action_description_get_real (ad);
+      egg_dbus_array_seq_add (array, real);
     }
 
   _polkit_authority_handle_enumerate_actions_finish (method_invocation, array);
@@ -110,10 +122,99 @@ authority_handle_enumerate_actions (_PolkitAuthority        *instance,
 
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
+
+ out:
+  ;
+}
+
+static void
+authority_handle_enumerate_users (_PolkitAuthority        *instance,
+                                  EggDBusMethodInvocation *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  EggDBusArraySeq *array;
+  GError *error;
+  GList *subjects;
+  GList *l;
+
+  error = NULL;
+  subjects = polkit_backend_authority_enumerate_users (server->authority, &error);
+
+  if (error != NULL)
+    {
+      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
+
+  for (l = subjects; l != NULL; l = l->next)
+    {
+      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
+      _PolkitSubject *real;
+
+      real = polkit_subject_get_real (subject);
+      egg_dbus_array_seq_add (array, real);
+    }
+
+  _polkit_authority_handle_enumerate_users_finish (method_invocation, array);
+
+  g_object_unref (array);
+
+  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
+  g_list_free (subjects);
+
+ out:
+  ;
+}
+
+static void
+authority_handle_enumerate_groups (_PolkitAuthority        *instance,
+                                   EggDBusMethodInvocation *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  EggDBusArraySeq *array;
+  GError *error;
+  GList *subjects;
+  GList *l;
+
+  error = NULL;
+  subjects = polkit_backend_authority_enumerate_groups (server->authority, &error);
+
+  if (error != NULL)
+    {
+      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
+
+  for (l = subjects; l != NULL; l = l->next)
+    {
+      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
+      _PolkitSubject *real;
+
+      real = polkit_subject_get_real (subject);
+      egg_dbus_array_seq_add (array, real);
+    }
+
+  _polkit_authority_handle_enumerate_groups_finish (method_invocation, array);
+
+  g_object_unref (array);
+
+  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
+  g_list_free (subjects);
+
+ out:
+  ;
 }
 
 static void
 authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
   authority_iface->handle_enumerate_actions = authority_handle_enumerate_actions;
+  authority_iface->handle_enumerate_users   = authority_handle_enumerate_users;
+  authority_iface->handle_enumerate_groups  = authority_handle_enumerate_groups;
 }
