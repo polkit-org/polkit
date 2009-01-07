@@ -88,11 +88,6 @@
 
   <interface name="org.freedesktop.PolicyKit1.Authority">
 
-    <method name="SayHello">
-      <arg name="message" direction="in" type="s"/>
-      <arg name="result" direction="out" type="s"/>
-    </method>
-
     <method name="EnumerateUsers">
       <arg name="users" direction="out" type="a(sa{sv})"/>
     </method>

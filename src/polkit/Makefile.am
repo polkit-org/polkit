@@ -43,6 +43,11 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitactiondescription.h							\
 	polkitauthority.h								\
 	polkiterror.h									\
+	polkitsubject.h									\
+	polkitunixuser.h								\
+	polkitunixgroup.h								\
+	polkitunixprocess.h								\
+	polkitsystembusname.h								\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
@@ -51,6 +56,11 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitactiondescription.c		polkitactiondescription.h		\
 	polkitauthority.c			polkitauthority.h			\
 	polkiterror.c				polkiterror.h				\
+	polkitsubject.c				polkitsubject.h				\
+	polkitunixuser.c			polkitunixuser.h			\
+	polkitunixgroup.c			polkitunixgroup.h			\
+	polkitunixprocess.c			polkitunixprocess.h			\
+	polkitsystembusname.c			polkitsystembusname.h			\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\

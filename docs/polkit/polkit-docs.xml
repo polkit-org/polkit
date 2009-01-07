@@ -64,15 +64,19 @@
       </para>
     </partintro>
     <xi:include href="xml/polkitauthority.xml"/>
-    <xi:include href="xml/polkitauthorizationclaim.xml"/>
-    <xi:include href="xml/polkitauthorizationresult.xml"/>
     <xi:include href="xml/polkitactiondescription.xml"/>
     <xi:include href="xml/polkiterror.xml"/>
     <xi:include href="xml/polkitsubject.xml"/>
+    <xi:include href="xml/polkitunixuser.xml"/>
+    <xi:include href="xml/polkitunixgroup.xml"/>
+    <xi:include href="xml/polkitunixprocess.xml"/>
+    <xi:include href="xml/polkitsystembusname.xml"/>
     <chapter id="extending">
       <title>Extending PolicyKit</title>
+      <xi:include href="../polkitbackend/xml/polkitbackendauthority.xml"/>
       <xi:include href="../polkitbackend/xml/polkitbackendlocalauthority.xml"/>
       <xi:include href="../polkitbackend/xml/polkitbackendactionpool.xml"/>
+      <xi:include href="../polkitbackend/xml/polkitbackendserver.xml"/>
     </chapter>
   </reference>
 

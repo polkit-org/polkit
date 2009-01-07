@@ -19,30 +19,37 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_TYPES_H
-#define __POLKIT_TYPES_H
+#ifndef __POLKIT_SUBJECT_H
+#define __POLKIT_SUBJECT_H
 
 #include <glib-object.h>
+#include <gio/gio.h>
+#include <polkit/polkittypes.h>
 
-struct _PolkitAuthority;
-typedef struct _PolkitAuthority PolkitAuthority;
+G_BEGIN_DECLS
 
-struct _PolkitActionDescription;
-typedef struct _PolkitActionDescription PolkitActionDescription;
+#define POLKIT_TYPE_SUBJECT         (polkit_subject_get_type())
+#define POLKIT_SUBJECT(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_SUBJECT, PolkitSubject))
+#define POLKIT_IS_SUBJECT(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_SUBJECT))
+#define POLKIT_SUBJECT_GET_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE((o), POLKIT_TYPE_SUBJECT, PolkitSubjectIface))
 
+#if 0
 typedef struct _PolkitSubject PolkitSubject; /* Dummy typedef */
+#endif
+typedef struct _PolkitSubjectIface PolkitSubjectIface;
 
-struct _PolkitUnixUser;
-typedef struct _PolkitUnixUser PolkitUnixUser;
+struct _PolkitSubjectIface
+{
+  GTypeInterface parent_iface;
 
-struct _PolkitUnixGroup;
-typedef struct _PolkitUnixGroup PolkitUnixGroup;
+  gboolean (*equal) (PolkitSubject *a,
+                     PolkitSubject *b);
+};
 
-struct _PolkitUnixProcess;
-typedef struct _PolkitUnixProcess PolkitUnixProcess;
+GType    polkit_subject_get_type (void) G_GNUC_CONST;
+gboolean polkit_subject_equal    (PolkitSubject *a,
+                                  PolkitSubject *b);
 
-struct _PolkitSystemBusName;
-typedef struct _PolkitSystemBusName PolkitSystemBusName;
+G_END_DECLS
 
-
-#endif /* __POLKIT_TYPES_H */
+#endif /* __POLKIT_SUBJECT_H */
