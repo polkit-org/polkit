@@ -31,17 +31,15 @@ static PolkitAuthority *authority;
 static gboolean opt_list_actions = FALSE;
 static gboolean opt_list_users   = FALSE;
 static gboolean opt_list_groups  = FALSE;
-static gchar *opt_show_action    = NULL;
+static gboolean opt_list_authorizations  = FALSE;
+static gboolean opt_list_explicit_authorizations  = FALSE;
+
+static gboolean opt_show_help = FALSE;
 static gboolean opt_show_version = FALSE;
 
-static GOptionEntry option_entries[] = {
-  {"list-actions", 'l', 0, G_OPTION_ARG_NONE, &opt_list_actions, "List registered actions", NULL},
-  {"list-users", 0, 0, G_OPTION_ARG_NONE, &opt_list_users, "List known users", NULL},
-  {"list-groups", 0, 0, G_OPTION_ARG_NONE, &opt_list_groups, "List known groups", NULL},
-  {"show-action", 's', 0, G_OPTION_ARG_STRING, &opt_show_action, "Show details for an action", "action_id"},
-  {"version", 'V', 0, G_OPTION_ARG_NONE, &opt_show_version, "Show version", NULL},
-  {NULL, },
-};
+static gboolean opt_verbose = FALSE;
+
+static PolkitSubject *subject;
 
 static gboolean list_actions (void);
 static gboolean list_users (void);
@@ -49,31 +47,122 @@ static gboolean list_groups (void);
 
 static gboolean show_action (const gchar *action_id);
 
+static void
+usage (int argc, char *argv[])
+{
+  GError *error;
+
+  error = NULL;
+  if (!g_spawn_command_line_sync ("man polkit-1",
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  &error))
+    {
+      g_printerr ("Cannot show manual page: %s\n", error->message);
+      g_error_free (error);
+    }
+}
+
 int
 main (int argc, char *argv[])
 {
   gboolean ret;
-  GError *error;
-  GOptionContext *option_ctx;
+  gint n;
+  gboolean in_list;
 
   ret = FALSE;
 
   g_type_init ();
 
-  option_ctx = g_option_context_new ("polkit-1");
-  g_option_context_add_main_entries (option_ctx, option_entries, NULL);
-  g_option_context_set_summary (option_ctx, "PolicyKit commandline tool");
-  error = NULL;
-  if (!g_option_context_parse (option_ctx, &argc, &argv, &error))
+  in_list = FALSE;
+  for (n = 1; n < argc; n++)
     {
-      g_printerr ("Error parsing options: %s\n", error->message);
-      g_error_free (error);
-      goto out;
+      if (in_list)
+        {
+          if (strcmp (argv[n], "actions") == 0)
+            {
+              opt_list_actions = TRUE;
+            }
+          else if (strcmp (argv[n], "users") == 0)
+            {
+              opt_list_users = TRUE;
+            }
+          else if (strcmp (argv[n], "groups") == 0)
+            {
+              opt_list_groups = TRUE;
+            }
+          else if (strcmp (argv[n], "authorizations") == 0)
+            {
+              opt_list_authorizations = TRUE;
+            }
+          else if (strcmp (argv[n], "explicit-authorizations") == 0)
+            {
+              opt_list_explicit_authorizations = TRUE;
+
+              n++;
+              if (n >= argc)
+                {
+                  usage (argc, argv);
+                  goto out;
+                }
+
+              subject = NULL; //polkit_subject_from_string (argv[n]);
+              if (subject == NULL)
+                {
+                  g_printerr ("Malformed subject identifier '%s'", argv[n]);
+                  goto out;
+                }
+
+            }
+          else
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          in_list = FALSE;
+        }
+      else if (strcmp (argv[n], "list") == 0)
+        {
+          in_list = TRUE;
+          continue;
+        }
+      else if (strcmp (argv[n], "--help") == 0)
+        {
+          opt_show_help = TRUE;
+        }
+      else if (strcmp (argv[n], "--version") == 0)
+        {
+          opt_show_version = TRUE;
+        }
+      else if (strcmp (argv[n], "--verbose") == 0)
+        {
+          opt_verbose = TRUE;
+        }
+      else
+        {
+          usage (argc, argv);
+          goto out;
+        }
     }
 
   authority = polkit_authority_get ();
 
-  if (opt_list_actions)
+  if (opt_show_help)
+    {
+      usage (argc, argv);
+      ret = TRUE;
+      goto out;
+    }
+  else if (opt_show_version)
+    {
+      g_print ("PolicyKit version %s\n", PACKAGE_VERSION);
+      /* TODO: print backend name / version */
+      ret = TRUE;
+      goto out;
+    }
+  else if (opt_list_actions)
     {
       ret = list_actions ();
     }
@@ -85,33 +174,18 @@ main (int argc, char *argv[])
     {
       ret = list_groups ();
     }
-  else if (opt_show_action != NULL)
-    {
-      ret = show_action (opt_show_action);
-    }
-  else if (opt_show_version)
-    {
-      g_print ("polkit-1 %s\n", PACKAGE_VERSION);
-      ret = TRUE;
-    }
   else
     {
-      gchar *s;
-
-      /* print usage */
-      s = g_option_context_get_help (option_ctx, TRUE, NULL);
-      g_print ("%s", s);
-      g_free (s);
-      ret = 0;
-      goto out;
+      usage (argc, argv);
     }
 
-  g_object_unref (authority);
-
-  g_option_context_free (option_ctx);
 
  out:
-  g_free (opt_show_action);
+  if (authority != NULL)
+    g_object_unref (authority);
+
+  if (subject != NULL)
+    g_object_unref (subject);
 
   return ret ? 0 : 1;
 }
@@ -234,8 +308,19 @@ list_actions (void)
   for (l = actions; l != NULL; l = l->next)
     {
       PolkitActionDescription *action = POLKIT_ACTION_DESCRIPTION (l->data);
+      const gchar *action_id;
 
-      g_print ("%s\n", polkit_action_description_get_action_id (action));
+      action_id = polkit_action_description_get_action_id (action);
+
+      if (opt_verbose)
+        {
+          show_action (action_id);
+          g_print ("\n");
+        }
+      else
+        {
+          g_print ("%s\n", action_id);
+        }
     }
 
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
@@ -324,40 +409,3 @@ list_groups (void)
  out:
   return ret;
 }
-
-
-#if 0
-        PolkitSubject *subject1;
-        PolkitSubject *subject2;
-        PolkitSubject *subject3;
-
-        subject1 = polkit_user_new ("moe");
-        subject2 = polkit_user_new ("bernie");
-        subject3 = polkit_process_new (42);
-
-        GList *claims;
-        claims = NULL;
-        claims = g_list_prepend (claims, polkit_authorization_claim_new (subject1, "org.foo.1"));
-        claims = g_list_prepend (claims, polkit_authorization_claim_new (subject2, "org.foo.2"));
-        claims = g_list_prepend (claims, polkit_authorization_claim_new (subject3, "org.foo.3"));
-
-        PolkitAuthorizationClaim *claim;
-        claim = polkit_authorization_claim_new (subject3, "org.foo.4");
-        polkit_authorization_claim_set_attribute (claim, "foo", "bar");
-        polkit_authorization_claim_set_attribute (claim, "unix-device", "/dev/sda");
-        claims = g_list_prepend (claims, claim);
-
-
-        error = NULL;
-        result = polkit_authority_check_claims_sync (authority,
-                                                       claims,
-                                                       NULL,
-                                                       &error);
-        if (error != NULL) {
-                g_print ("Got error: %s\n", error->message);
-                g_error_free (error);
-        } else {
-                g_print ("Got result: %d\n", result);
-        }
-
-#endif

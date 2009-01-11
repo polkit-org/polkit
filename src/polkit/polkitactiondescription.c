@@ -73,6 +73,9 @@ polkit_action_description_finalize (GObject *object)
 
   if (action_description->icon != NULL)
     g_object_unref (action_description->icon);
+
+  if (G_OBJECT_CLASS (polkit_action_description_parent_class)->finalize != NULL)
+    G_OBJECT_CLASS (polkit_action_description_parent_class)->finalize (object);
 }
 
 static void

@@ -57,6 +57,11 @@ GList                    *polkit_authority_enumerate_groups_sync (PolkitAuthorit
                                                                   GCancellable    *cancellable,
                                                                   GError         **error);
 
+PolkitAuthorizationResult polkit_authority_check_claim_sync (PolkitAuthority          *authority,
+                                                             PolkitAuthorizationClaim *claim,
+                                                             GCancellable             *cancellable,
+                                                             GError                  **error);
+
 G_END_DECLS
 
 #endif /* __POLKIT_AUTHORITY_H */

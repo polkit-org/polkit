@@ -108,6 +108,7 @@
       <arg name="result" direction="out" type="i">
         <annotation name="org.gtk.EggDBus.EnumType" value="AuthorizationResult"/>
       </arg>
+      <arg name="attributes" direction="out" type="a{ss}"/>
     </method>
 
   </interface>

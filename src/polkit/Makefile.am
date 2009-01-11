@@ -48,6 +48,8 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitunixgroup.h								\
 	polkitunixprocess.h								\
 	polkitsystembusname.h								\
+	polkitauthorizationclaim.h							\
+	polkitauthorizationresult.h							\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
@@ -61,6 +63,8 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitunixgroup.c			polkitunixgroup.h			\
 	polkitunixprocess.c			polkitunixprocess.h			\
 	polkitsystembusname.c			polkitsystembusname.h			\
+	polkitauthorizationclaim.c		polkitauthorizationclaim.h		\
+	polkitauthorizationresult.c		polkitauthorizationresult.h		\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\

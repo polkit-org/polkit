@@ -25,13 +25,15 @@
 #define _POLKIT_INSIDE_POLKIT_H 1
 
 #include <polkit/polkitactiondescription.h>
-#include <polkit/polkitauthority.h>
 #include <polkit/polkiterror.h>
 #include <polkit/polkitsubject.h>
 #include <polkit/polkitunixuser.h>
 #include <polkit/polkitunixgroup.h>
 #include <polkit/polkitunixprocess.h>
 #include <polkit/polkitsystembusname.h>
+#include <polkit/polkitauthorizationclaim.h>
+#include <polkit/polkitauthorizationresult.h>
+#include <polkit/polkitauthority.h>
 
 #undef _POLKIT_INSIDE_POLKIT_H
 

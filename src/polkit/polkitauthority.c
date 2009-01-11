@@ -23,6 +23,7 @@
 #  include "config.h"
 #endif
 
+#include "polkitauthorizationresult.h"
 #include "polkitauthority.h"
 
 #include "polkitprivate.h"
@@ -82,6 +83,9 @@ polkit_authority_finalize (GObject *object)
   g_object_unref (authority->authority_object_proxy);
 
   the_authority = NULL;
+
+  if (G_OBJECT_CLASS (polkit_authority_parent_class)->finalize != NULL)
+    G_OBJECT_CLASS (polkit_authority_parent_class)->finalize (object);
 }
 
 static void
@@ -210,3 +214,39 @@ polkit_authority_enumerate_groups_sync (PolkitAuthority *authority,
  out:
   return result;
 }
+
+PolkitAuthorizationResult
+polkit_authority_check_claim_sync (PolkitAuthority          *authority,
+                                   PolkitAuthorizationClaim *claim,
+                                   GCancellable             *cancellable,
+                                   GError                  **error)
+{
+  _PolkitAuthorizationResult result;
+  _PolkitAuthorizationClaim *real_claim;
+  EggDBusHashMap *result_attributes;
+
+  result = _POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+  real_claim = NULL;
+
+  real_claim = polkit_authorization_claim_get_real (claim);
+
+  if (!_polkit_authority_check_claim_sync (authority->real,
+                                           EGG_DBUS_CALL_FLAGS_NONE,
+                                           real_claim,
+                                           &result,
+                                           &result_attributes,
+                                           cancellable,
+                                           error))
+    goto out;
+
+  /* TODO: pass these back */
+  if (result_attributes != NULL)
+    g_object_unref (result_attributes);
+
+ out:
+  if (real_claim != NULL)
+    g_object_unref (real_claim);
+
+  return result;
+}
+

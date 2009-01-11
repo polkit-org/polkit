@@ -44,5 +44,8 @@ typedef struct _PolkitUnixProcess PolkitUnixProcess;
 struct _PolkitSystemBusName;
 typedef struct _PolkitSystemBusName PolkitSystemBusName;
 
+struct _PolkitAuthorizationClaim;
+typedef struct _PolkitAuthorizationClaim PolkitAuthorizationClaim;
+
 
 #endif /* __POLKIT_TYPES_H */
