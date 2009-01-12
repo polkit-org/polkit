@@ -51,15 +51,15 @@ struct _PolkitBackendAuthorityClass
 
   /*< public >*/
 
-  GList * (*enumerate_actions) (PolkitBackendAuthority  *authority,
-                                const gchar             *locale,
-                                GError                 **error);
+  void (*enumerate_actions) (PolkitBackendAuthority   *authority,
+                             const gchar              *locale,
+                             PolkitBackendPendingCall *pending_call);
 
-  GList * (*enumerate_users)   (PolkitBackendAuthority  *authority,
-                                GError                 **error);
+  void (*enumerate_users)   (PolkitBackendAuthority   *authority,
+                             PolkitBackendPendingCall *pending_call);
 
-  GList * (*enumerate_groups)  (PolkitBackendAuthority  *authority,
-                                GError                 **error);
+  void (*enumerate_groups)  (PolkitBackendAuthority   *authority,
+                             PolkitBackendPendingCall *pending_call);
 
   /*< private >*/
   /* Padding for future expansion */
@@ -73,17 +73,26 @@ struct _PolkitBackendAuthorityClass
   void (*_polkit_reserved8) (void);
 };
 
-GType                        polkit_backend_authority_get_type (void) G_GNUC_CONST;
+GType    polkit_backend_authority_get_type (void) G_GNUC_CONST;
 
-GList                       *polkit_backend_authority_enumerate_actions (PolkitBackendAuthority *authority,
-                                                                         const gchar            *locale,
-                                                                         GError                **error);
+void     polkit_backend_authority_enumerate_actions        (PolkitBackendAuthority   *authority,
+                                                            const gchar              *locale,
+                                                            PolkitBackendPendingCall *pending_call);
 
-GList                       *polkit_backend_authority_enumerate_users  (PolkitBackendAuthority *authority,
-                                                                        GError                **error);
+void     polkit_backend_authority_enumerate_users          (PolkitBackendAuthority   *authority,
+                                                            PolkitBackendPendingCall *pending_call);
 
-GList                       *polkit_backend_authority_enumerate_groups (PolkitBackendAuthority *authority,
-                                                                        GError                **error);
+void     polkit_backend_authority_enumerate_groups         (PolkitBackendAuthority   *authority,
+                                                            PolkitBackendPendingCall *pending_call);
+
+void     polkit_backend_authority_enumerate_actions_finish (PolkitBackendPendingCall *pending_call,
+                                                            GList                    *actions);
+
+void     polkit_backend_authority_enumerate_users_finish   (PolkitBackendPendingCall *pending_call,
+                                                            GList                    *users);
+
+void     polkit_backend_authority_enumerate_groups_finish  (PolkitBackendPendingCall *pending_call,
+                                                            GList                    *groups);
 
 G_END_DECLS
 

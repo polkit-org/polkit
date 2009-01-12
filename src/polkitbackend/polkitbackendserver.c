@@ -28,6 +28,7 @@
 
 #include "polkitbackendauthority.h"
 #include "polkitbackendserver.h"
+#include "polkitbackendprivate.h"
 
 struct _PolkitBackendServer
 {
@@ -90,20 +91,19 @@ authority_handle_enumerate_actions (_PolkitAuthority        *instance,
                                     EggDBusMethodInvocation *method_invocation)
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  polkit_backend_authority_enumerate_actions (server->authority, locale, pending_call);
+}
+
+void
+polkit_backend_authority_enumerate_actions_finish (PolkitBackendPendingCall *pending_call,
+                                                   GList                    *actions)
+{
   EggDBusArraySeq *array;
-  GError *error;
-  GList *actions;
   GList *l;
-
-  error = NULL;
-  actions = polkit_backend_authority_enumerate_actions (server->authority, locale, &error);
-
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
 
   array = egg_dbus_array_seq_new (_POLKIT_TYPE_ACTION_DESCRIPTION, (GDestroyNotify) g_object_unref, NULL, NULL);
 
@@ -116,15 +116,15 @@ authority_handle_enumerate_actions (_PolkitAuthority        *instance,
       egg_dbus_array_seq_add (array, real);
     }
 
-  _polkit_authority_handle_enumerate_actions_finish (method_invocation, array);
+  _polkit_authority_handle_enumerate_actions_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
+                                                     array);
 
   g_object_unref (array);
 
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
 
- out:
-  ;
+  g_object_unref (pending_call);
 }
 
 static void
@@ -132,24 +132,23 @@ authority_handle_enumerate_users (_PolkitAuthority        *instance,
                                   EggDBusMethodInvocation *method_invocation)
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  polkit_backend_authority_enumerate_users (server->authority, pending_call);
+}
+
+void
+polkit_backend_authority_enumerate_users_finish (PolkitBackendPendingCall *pending_call,
+                                                 GList                    *users)
+{
   EggDBusArraySeq *array;
-  GError *error;
-  GList *subjects;
   GList *l;
-
-  error = NULL;
-  subjects = polkit_backend_authority_enumerate_users (server->authority, &error);
-
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
 
   array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
 
-  for (l = subjects; l != NULL; l = l->next)
+  for (l = users; l != NULL; l = l->next)
     {
       PolkitSubject *subject = POLKIT_SUBJECT (l->data);
       _PolkitSubject *real;
@@ -158,15 +157,13 @@ authority_handle_enumerate_users (_PolkitAuthority        *instance,
       egg_dbus_array_seq_add (array, real);
     }
 
-  _polkit_authority_handle_enumerate_users_finish (method_invocation, array);
+  _polkit_authority_handle_enumerate_users_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
+                                                   array);
 
   g_object_unref (array);
 
-  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
-  g_list_free (subjects);
-
- out:
-  ;
+  g_list_foreach (users, (GFunc) g_object_unref, NULL);
+  g_list_free (users);
 }
 
 static void
@@ -174,24 +171,23 @@ authority_handle_enumerate_groups (_PolkitAuthority        *instance,
                                    EggDBusMethodInvocation *method_invocation)
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  polkit_backend_authority_enumerate_groups (server->authority, pending_call);
+}
+
+void
+polkit_backend_authority_enumerate_groups_finish (PolkitBackendPendingCall *pending_call,
+                                                  GList                    *groups)
+{
   EggDBusArraySeq *array;
-  GError *error;
-  GList *subjects;
   GList *l;
-
-  error = NULL;
-  subjects = polkit_backend_authority_enumerate_groups (server->authority, &error);
-
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
 
   array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
 
-  for (l = subjects; l != NULL; l = l->next)
+  for (l = groups; l != NULL; l = l->next)
     {
       PolkitSubject *subject = POLKIT_SUBJECT (l->data);
       _PolkitSubject *real;
@@ -200,15 +196,13 @@ authority_handle_enumerate_groups (_PolkitAuthority        *instance,
       egg_dbus_array_seq_add (array, real);
     }
 
-  _polkit_authority_handle_enumerate_groups_finish (method_invocation, array);
+  _polkit_authority_handle_enumerate_groups_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
+                                                    array);
 
   g_object_unref (array);
 
-  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
-  g_list_free (subjects);
-
- out:
-  ;
+  g_list_foreach (groups, (GFunc) g_object_unref, NULL);
+  g_list_free (groups);
 }
 
 static void

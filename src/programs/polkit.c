@@ -48,6 +48,8 @@ static gboolean list_actions (void);
 static gboolean list_users (void);
 static gboolean list_groups (void);
 
+static gboolean check (void);
+
 static gboolean show_action (const gchar *action_id);
 
 static void
@@ -210,8 +212,13 @@ main (int argc, char *argv[])
     }
   else if (opt_check)
     {
-      g_print ("subject '%s' action-id '%s'\n", polkit_subject_to_string (subject), action_id);
-      g_assert (FALSE);
+      if (subject == NULL || action_id == NULL)
+        {
+          usage (argc, argv);
+          goto out;
+        }
+
+      ret = check ();
     }
   else
     {
@@ -450,3 +457,38 @@ list_groups (void)
  out:
   return ret;
 }
+
+static gboolean
+check (void)
+{
+  PolkitAuthorizationResult result;
+  PolkitAuthorizationClaim *claim;
+  GError *error;
+
+  error = NULL;
+  claim = NULL;
+  result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+
+  claim = polkit_authorization_claim_new (subject,
+                                          action_id);
+
+  result = polkit_authority_check_claim_sync (authority,
+                                              claim,
+                                              NULL,
+                                              &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error checking authorization claim: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  g_debug ("result = %d", result);
+
+ out:
+  if (claim != NULL)
+    g_object_unref (claim);
+
+  return result == POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+}
+

@@ -25,15 +25,18 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendauthority.h					\
 	polkitbackendlocalauthority.h					\
 	polkitbackendactionpool.h					\
+	polkitbackendpendingcall.h					\
 	polkitbackendserver.h						\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   	\
         polkitbackend.h							\
 	polkitbackendtypes.h						\
+	polkitbackendprivate.h						\
 	polkitbackendauthority.h	polkitbackendauthority.c	\
 	polkitbackendlocalauthority.h	polkitbackendlocalauthority.c	\
 	polkitbackendactionpool.h	polkitbackendactionpool.c	\
+	polkitbackendpendingcall.h	polkitbackendpendingcall.c	\
 	polkitbackendserver.h		polkitbackendserver.c		\
         $(NULL)
 

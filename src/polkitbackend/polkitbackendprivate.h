@@ -19,18 +19,16 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_H
-#define __POLKIT_BACKEND_H
+#ifndef __POLKIT_BACKEND_PRIVATE_H
+#define __POLKIT_BACKEND_PRIVATE_H
 
-#define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
-#include <polkitbackend/polkitbackendtypes.h>
-#include <polkitbackend/polkitbackendpendingcall.h>
-#include <polkitbackend/polkitbackendauthority.h>
-#include <polkitbackend/polkitbackendlocalauthority.h>
-#include <polkitbackend/polkitbackendactionpool.h>
-#include <polkitbackend/polkitbackendserver.h>
-#undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
+#include <polkit/_polkitbindings.h>
+#include "polkitbackendpendingcall.h"
+#include "polkitbackendserver.h"
 
-#endif /* __POLKIT_BACKEND_H */
+PolkitBackendPendingCall *_polkit_backend_pending_call_new (EggDBusMethodInvocation *method_invocation,
+                                                            PolkitBackendServer     *server);
 
+EggDBusMethodInvocation  *_polkit_backend_pending_call_get_method_invocation (PolkitBackendPendingCall *pending_call);
 
+#endif /* __POLKIT_BACKEND_PRIVATE_H */

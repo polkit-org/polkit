@@ -38,36 +38,36 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
 {
 }
 
-GList *
-polkit_backend_authority_enumerate_actions (PolkitBackendAuthority  *authority,
-                                            const gchar             *locale,
-                                            GError                 **error)
+void
+polkit_backend_authority_enumerate_actions (PolkitBackendAuthority   *authority,
+                                            const gchar              *locale,
+                                            PolkitBackendPendingCall *pending_call)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->enumerate_actions (authority, locale, error);
+  klass->enumerate_actions (authority, locale, pending_call);
 }
 
-GList *
-polkit_backend_authority_enumerate_users (PolkitBackendAuthority  *authority,
-                                          GError                 **error)
+void
+polkit_backend_authority_enumerate_users (PolkitBackendAuthority   *authority,
+                                          PolkitBackendPendingCall *pending_call)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->enumerate_users (authority, error);
+  klass->enumerate_users (authority, pending_call);
 }
 
-GList *
-polkit_backend_authority_enumerate_groups (PolkitBackendAuthority  *authority,
-                                           GError                 **error)
+void
+polkit_backend_authority_enumerate_groups (PolkitBackendAuthority   *authority,
+                                           PolkitBackendPendingCall *pending_call)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->enumerate_groups (authority, error);
+  klass->enumerate_groups (authority, pending_call);
 }

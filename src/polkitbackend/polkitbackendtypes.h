@@ -27,6 +27,9 @@
 struct _PolkitBackendAuthority;
 typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
 
+struct _PolkitBackendPendingCall;
+typedef struct _PolkitBackendPendingCall PolkitBackendPendingCall;
+
 struct _PolkitBackendServer;
 typedef struct _PolkitBackendServer PolkitBackendServer;
 

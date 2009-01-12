@@ -27,6 +27,7 @@
 #include <polkit/polkit.h>
 #include "polkitbackendlocalauthority.h"
 #include "polkitbackendactionpool.h"
+#include "polkitbackendpendingcall.h"
 
 typedef struct
 {
@@ -34,15 +35,15 @@ typedef struct
 
 } PolkitBackendLocalAuthorityPrivate;
 
-static GList *polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority  *authority,
-                                                                const gchar             *locale,
-                                                                GError                 **error);
+static void polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *authority,
+                                                              const gchar              *locale,
+                                                              PolkitBackendPendingCall *pending_call);
 
-static GList *polkit_backend_local_authority_enumerate_users   (PolkitBackendAuthority  *authority,
-                                                                GError                 **error);
+static void polkit_backend_local_authority_enumerate_users   (PolkitBackendAuthority   *authority,
+                                                              PolkitBackendPendingCall *pending_call);
 
-static GList *polkit_backend_local_authority_enumerate_groups  (PolkitBackendAuthority  *authority,
-                                                                GError                 **error);
+static void polkit_backend_local_authority_enumerate_groups  (PolkitBackendAuthority   *authority,
+                                                              PolkitBackendPendingCall *pending_call);
 
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
@@ -103,23 +104,27 @@ polkit_backend_local_authority_new (void)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static GList *
-polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority  *authority,
-                                                  const gchar             *locale,
-                                                  GError                 **error)
+static void
+polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *authority,
+                                                  const gchar              *locale,
+                                                  PolkitBackendPendingCall *pending_call)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
+  GList *actions;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
-  return polkit_backend_action_pool_get_all_actions (priv->action_pool, locale);
+  actions = polkit_backend_action_pool_get_all_actions (priv->action_pool, locale);
+
+  polkit_backend_authority_enumerate_actions_finish (pending_call,
+                                                     actions);
 }
 
-static GList *
-polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority  *authority,
-                                                GError                 **error)
+static void
+polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *authority,
+                                                PolkitBackendPendingCall *pending_call)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -134,11 +139,11 @@ polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority  *authori
   passwd = getpwent ();
   if (passwd == NULL)
     {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_FAILED,
-                   "getpwent failed: %s",
-                   strerror (errno));
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "getpwent failed: %s",
+                                                strerror (errno));
       goto out;
     }
 
@@ -155,13 +160,15 @@ polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority  *authori
 
   list = g_list_reverse (list);
 
+  polkit_backend_authority_enumerate_users_finish (pending_call, list);
+
  out:
-  return list;
+  ;
 }
 
-static GList *
-polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority  *authority,
-                                                 GError                 **error)
+static void
+polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *authority,
+                                                 PolkitBackendPendingCall *pending_call)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -176,11 +183,11 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority  *author
   group = getgrent ();
   if (group == NULL)
     {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_FAILED,
-                   "getgrent failed: %s",
-                   strerror (errno));
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "getpwent failed: %s",
+                                                strerror (errno));
       goto out;
     }
 
@@ -197,105 +204,8 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority  *author
 
   list = g_list_reverse (list);
 
- out:
-  return list;
-}
-
-#if 0
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-authority_iface_handle_say_hello (PolkitAuthority *authority,
-                                  const gchar *message,
-                                  EggDBusMethodInvocation *method_invocation)
-{
-  gchar *result;
-
-  result = g_strdup_printf ("You said '%s' to the AUTHORITY!", message);
-
-  polkit_authority_handle_say_hello_finish (method_invocation,
-                                            result);
-
-  g_free (result);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-authority_iface_handle_enumerate_users (PolkitAuthority *authority,
-                                        EggDBusMethodInvocation *method_invocation)
-{
-  struct passwd *passwd;
-  GList *list;
-
-  list = NULL;
-
-  passwd = getpwent ();
-  if (passwd == NULL)
-    {
-      egg_dbus_method_invocation_return_error (method_invocation,
-                                               POLKIT_ERROR,
-                                               POLKIT_ERROR_FAILED,
-                                               "getpwent failed: %s",
-                                               strerror (errno));
-      goto out;
-    }
-
-  do
-    {
-      PolkitSubject *subject;
-
-      subject = polkit_subject_new_for_unix_user (passwd->pw_uid);
-
-      list = g_list_prepend (list, subject);
-    }
-  while ((passwd = getpwent ()) != NULL);
-  endpwent ();
-
-  list = g_list_reverse (list);
-
-  polkit_authority_handle_enumerate_users_finish (method_invocation,
-                                                  list);
+  polkit_backend_authority_enumerate_groups_finish (pending_call, list);
 
  out:
-  g_list_foreach (list, (GFunc) g_object_unref, NULL);
-  g_list_free (list);
+  ;
 }
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-authority_iface_handle_enumerate_actions (PolkitAuthority         *authority,
-                                          const gchar             *locale,
-                                          EggDBusMethodInvocation *method_invocation)
-{
-  PolkitBackendLocalAuthority *local_authority;
-  PolkitBackendLocalAuthorityPrivate *priv;
-  GList *list;
-
-  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
-
-  list = polkit_backend_action_pool_get_all_actions (priv->action_pool,
-                                                     locale);
-
-  polkit_authority_handle_enumerate_actions_finish (method_invocation,
-                                                    list);
-
-  g_list_foreach (list, (GFunc) g_object_unref, NULL);
-  g_list_free (list);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-authority_iface_init (PolkitAuthorityIface *authority_iface,
-                      gpointer              iface_data)
-{
-  authority_iface->handle_say_hello          = authority_iface_handle_say_hello;
-  authority_iface->handle_enumerate_users    = authority_iface_handle_enumerate_users;
-  authority_iface->handle_enumerate_actions  = authority_iface_handle_enumerate_actions;
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-#endif
