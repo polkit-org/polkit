@@ -30,6 +30,7 @@
 #include "polkitunixgroup.h"
 #include "polkitunixprocess.h"
 #include "polkitsystembusname.h"
+#include "polkiterror.h"
 #include "polkitprivate.h"
 
 static void
@@ -80,6 +81,80 @@ gchar *
 polkit_subject_to_string (PolkitSubject *subject)
 {
   return POLKIT_SUBJECT_GET_IFACE (subject)->to_string (subject);
+}
+
+PolkitSubject *
+polkit_subject_from_string  (const gchar   *str,
+                             GError       **error)
+{
+  PolkitSubject *subject;
+  guint64 val;
+  gchar *endptr;
+
+  g_return_val_if_fail (str != NULL, NULL);
+
+  /* TODO: we could do something with VFuncs like in g_icon_from_string() */
+
+  subject = NULL;
+
+  if (g_str_has_prefix (str, "unix-user:"))
+    {
+      val = g_ascii_strtoull (str + sizeof "unix-user:" - 1,
+                              &endptr,
+                              10);
+      if (*endptr == '\0')
+        subject = polkit_unix_user_new ((uid_t) val);
+      else
+        subject = polkit_unix_user_new_for_name (str + sizeof "unix-user:" - 1,
+                                                 error);
+    }
+  else if (g_str_has_prefix (str, "unix-group:"))
+    {
+      val = g_ascii_strtoull (str + sizeof "unix-group:" - 1,
+                              &endptr,
+                              10);
+      if (*endptr == '\0')
+        subject = polkit_unix_group_new ((gid_t) val);
+      else
+        subject = polkit_unix_group_new_for_name (str + sizeof "unix-group:" - 1,
+                                                  error);
+    }
+  else if (g_str_has_prefix (str, "unix-process:"))
+    {
+      val = g_ascii_strtoull (str + sizeof "unix-process:" - 1,
+                              &endptr,
+                              10);
+      if (*endptr == '\0')
+        {
+          subject = polkit_unix_process_new ((pid_t) val);
+          if (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) == 0)
+            {
+              g_object_unref (subject);
+              subject = NULL;
+              g_set_error (error,
+                           POLKIT_ERROR,
+                           POLKIT_ERROR_FAILED,
+                           "No process with pid %" G_GUINT64_FORMAT,
+                           val);
+            }
+        }
+    }
+  else if (g_str_has_prefix (str, "system-bus-name:"))
+    {
+      subject = polkit_system_bus_name_new (str + sizeof "system-bus-name:" - 1);
+    }
+
+  if (subject == NULL && (error != NULL && *error == NULL))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Malformed subject string '%s'",
+                   str);
+    }
+
+
+  return subject;
 }
 
 PolkitSubject *

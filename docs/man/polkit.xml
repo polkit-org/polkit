@@ -54,6 +54,7 @@
 
     <cmdsynopsis>
       <command>polkit-1 check</command>
+      <arg choice="plain"><replaceable>subject</replaceable></arg>
       <arg choice="plain"><replaceable>action-id</replaceable></arg>
     </cmdsynopsis>
 
@@ -193,10 +194,11 @@
     <refsect2>
       <para>
         <command>polkit-1 check</command>
+        <arg choice="plain"><replaceable>subject</replaceable></arg>
         <arg choice="plain"><replaceable>action-id</replaceable></arg>
       </para>
       <para>
-        Checks if the calling process is authorized for <replaceable>action-id</replaceable>.
+        Checks if <replaceable>subject</replaceable> is authorized for <replaceable>action-id</replaceable>.
       </para>
     </refsect2>
 

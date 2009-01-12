@@ -27,6 +27,7 @@
 #include <pwd.h>
 #include "polkitunixuser.h"
 #include "polkitsubject.h"
+#include "polkiterror.h"
 #include "polkitprivate.h"
 
 /**
@@ -154,6 +155,32 @@ polkit_unix_user_new (uid_t uid)
   return POLKIT_SUBJECT (g_object_new (POLKIT_TYPE_UNIX_USER,
                                        "uid", uid,
                                        NULL));
+}
+
+PolkitSubject *
+polkit_unix_user_new_for_name (const gchar    *name,
+                               GError        **error)
+{
+  struct passwd *passwd;
+  PolkitSubject *subject;
+
+  subject = NULL;
+
+  passwd = getpwnam (name);
+  if (passwd == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "No UNIX user with name %s: %m",
+                   name);
+      goto out;
+    }
+
+  subject = polkit_unix_user_new (passwd->pw_uid);
+
+ out:
+  return subject;
 }
 
 static gboolean

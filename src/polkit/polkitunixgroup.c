@@ -27,6 +27,7 @@
 #include <grp.h>
 #include "polkitunixgroup.h"
 #include "polkitsubject.h"
+#include "polkiterror.h"
 #include "polkitprivate.h"
 
 /**
@@ -154,6 +155,32 @@ polkit_unix_group_new (gid_t gid)
   return POLKIT_SUBJECT (g_object_new (POLKIT_TYPE_UNIX_GROUP,
                                        "gid", gid,
                                        NULL));
+}
+
+PolkitSubject *
+polkit_unix_group_new_for_name (const gchar    *name,
+                                GError        **error)
+{
+  struct group *group;
+  PolkitSubject *subject;
+
+  subject = NULL;
+
+  group = getgrnam (name);
+  if (group == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "No UNIX group with name %s: %m",
+                   name);
+      goto out;
+    }
+
+  subject = polkit_unix_group_new (group->gr_gid);
+
+ out:
+  return subject;
 }
 
 static gboolean

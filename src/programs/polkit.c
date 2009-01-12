@@ -33,13 +33,16 @@ static gboolean opt_list_users   = FALSE;
 static gboolean opt_list_groups  = FALSE;
 static gboolean opt_list_authorizations  = FALSE;
 static gboolean opt_list_explicit_authorizations  = FALSE;
+static gboolean opt_check = FALSE;
 
 static gboolean opt_show_help = FALSE;
 static gboolean opt_show_version = FALSE;
 
 static gboolean opt_verbose = FALSE;
 
-static PolkitSubject *subject;
+static PolkitSubject *subject = NULL;
+
+static gchar *action_id = NULL;
 
 static gboolean list_actions (void);
 static gboolean list_users (void);
@@ -67,11 +70,13 @@ usage (int argc, char *argv[])
 int
 main (int argc, char *argv[])
 {
-  gboolean ret;
   gint n;
+  gboolean ret;
   gboolean in_list;
+  GError *error;
 
   ret = FALSE;
+  error = NULL;
 
   g_type_init ();
 
@@ -107,10 +112,11 @@ main (int argc, char *argv[])
                   goto out;
                 }
 
-              subject = NULL; //polkit_subject_from_string (argv[n]);
+              subject = polkit_subject_from_string (argv[n], &error);
               if (subject == NULL)
                 {
-                  g_printerr ("Malformed subject identifier '%s'", argv[n]);
+                  g_printerr ("Error parsing subject: %s\n", error->message);
+                  g_error_free (error);
                   goto out;
                 }
 
@@ -127,6 +133,34 @@ main (int argc, char *argv[])
         {
           in_list = TRUE;
           continue;
+        }
+      else if (strcmp (argv[n], "check") == 0)
+        {
+          opt_check = TRUE;
+
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          subject = polkit_subject_from_string (argv[n], &error);
+          if (subject == NULL)
+            {
+              g_printerr ("Error parsing subject: %s\n", error->message);
+              g_error_free (error);
+              goto out;
+            }
+
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          action_id = g_strdup (argv[n++]);
         }
       else if (strcmp (argv[n], "--help") == 0)
         {
@@ -174,6 +208,11 @@ main (int argc, char *argv[])
     {
       ret = list_groups ();
     }
+  else if (opt_check)
+    {
+      g_print ("subject '%s' action-id '%s'\n", polkit_subject_to_string (subject), action_id);
+      g_assert (FALSE);
+    }
   else
     {
       usage (argc, argv);
@@ -186,6 +225,8 @@ main (int argc, char *argv[])
 
   if (subject != NULL)
     g_object_unref (subject);
+
+  g_free (action_id);
 
   return ret ? 0 : 1;
 }

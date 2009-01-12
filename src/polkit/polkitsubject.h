@@ -48,10 +48,12 @@ struct _PolkitSubjectIface
   gchar *  (*to_string) (PolkitSubject *subject);
 };
 
-GType    polkit_subject_get_type  (void) G_GNUC_CONST;
-gboolean polkit_subject_equal     (PolkitSubject *a,
-                                   PolkitSubject *b);
-gchar   *polkit_subject_to_string (PolkitSubject *subject);
+GType          polkit_subject_get_type     (void) G_GNUC_CONST;
+gboolean       polkit_subject_equal        (PolkitSubject *a,
+                                            PolkitSubject *b);
+gchar         *polkit_subject_to_string    (PolkitSubject *subject);
+PolkitSubject *polkit_subject_from_string  (const gchar   *str,
+                                            GError       **error);
 
 G_END_DECLS
 

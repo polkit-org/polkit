@@ -42,11 +42,13 @@ typedef struct _PolkitUnixUser PolkitUnixUser;
 #endif
 typedef struct _PolkitUnixUserClass PolkitUnixUserClass;
 
-GType           polkit_unix_user_get_type (void) G_GNUC_CONST;
-PolkitSubject  *polkit_unix_user_new      (uid_t uid);
-uid_t           polkit_unix_user_get_uid  (PolkitUnixUser *user);
-void            polkit_unix_user_set_uid  (PolkitUnixUser *user,
-                                           uid_t uid);
+GType           polkit_unix_user_get_type     (void) G_GNUC_CONST;
+PolkitSubject  *polkit_unix_user_new          (uid_t           uid);
+PolkitSubject  *polkit_unix_user_new_for_name (const gchar    *name,
+                                               GError        **error);
+uid_t           polkit_unix_user_get_uid      (PolkitUnixUser *user);
+void            polkit_unix_user_set_uid      (PolkitUnixUser *user,
+                                               uid_t           uid);
 
 G_END_DECLS
 
