@@ -29,6 +29,7 @@ typedef struct
 {
   EggDBusMethodInvocation *method_invocation;
   PolkitBackendServer *server;
+  PolkitSubject *inquirer;
 } PolkitBackendPendingCallPrivate;
 
 G_DEFINE_TYPE (PolkitBackendPendingCall, polkit_backend_pending_call, G_TYPE_OBJECT);
@@ -55,6 +56,9 @@ polkit_backend_pending_call_finalize (GObject *object)
 
   g_object_unref (priv->method_invocation);
   g_object_unref (priv->server);
+
+  if (priv->inquirer != NULL)
+    g_object_unref (priv->inquirer);
 
   G_OBJECT_CLASS (polkit_backend_pending_call_parent_class)->finalize (object);
 }
@@ -109,8 +113,17 @@ _polkit_backend_pending_call_get_method_invocation (PolkitBackendPendingCall *pe
 PolkitSubject *
 polkit_backend_pending_call_get_caller (PolkitBackendPendingCall *pending_call)
 {
-  /* TODO: implement */
-  return NULL;
+  PolkitBackendPendingCallPrivate *priv;
+
+  priv = POLKIT_BACKEND_PENDING_CALL_GET_PRIVATE (pending_call);
+
+  if (priv->inquirer != NULL)
+    goto out;
+
+  priv->inquirer = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (priv->method_invocation));
+
+ out:
+  return priv->inquirer;
 }
 
 void

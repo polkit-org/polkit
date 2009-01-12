@@ -220,9 +220,30 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
                                             PolkitAuthorizationClaim *claim,
                                             PolkitBackendPendingCall *pending_call)
 {
+  gchar *inquirer_str;
+  gchar *subject_str;
+  PolkitSubject *inquirer;
+  PolkitSubject *subject;
+  const gchar *action_id;
+
+  inquirer = polkit_backend_pending_call_get_caller (pending_call);
+  subject = polkit_authorization_claim_get_subject (claim);
+  action_id = polkit_authorization_claim_get_action_id (claim);
+
+  inquirer_str = polkit_subject_to_string (inquirer);
+  subject_str = polkit_subject_to_string (subject);
+
+  g_debug ("%s is inquiring whether %s is authorized for %s",
+           inquirer_str,
+           subject_str,
+           action_id);
+
   polkit_backend_pending_call_return_error (pending_call,
                                             POLKIT_ERROR,
                                             POLKIT_ERROR_NOT_SUPPORTED,
                                             "Not implemented");
+
+  g_free (inquirer_str);
+  g_free (subject_str);
 }
 
