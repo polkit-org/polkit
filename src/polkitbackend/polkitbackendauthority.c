@@ -71,3 +71,15 @@ polkit_backend_authority_enumerate_groups (PolkitBackendAuthority   *authority,
 
   klass->enumerate_groups (authority, pending_call);
 }
+
+void
+polkit_backend_authority_check_claim (PolkitBackendAuthority    *authority,
+                                      PolkitAuthorizationClaim  *claim,
+                                      PolkitBackendPendingCall  *pending_call)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  klass->check_claim (authority, claim, pending_call);
+}

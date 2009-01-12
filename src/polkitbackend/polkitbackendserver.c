@@ -164,6 +164,8 @@ polkit_backend_authority_enumerate_users_finish (PolkitBackendPendingCall *pendi
 
   g_list_foreach (users, (GFunc) g_object_unref, NULL);
   g_list_free (users);
+
+  g_object_unref (pending_call);
 }
 
 static void
@@ -203,6 +205,43 @@ polkit_backend_authority_enumerate_groups_finish (PolkitBackendPendingCall *pend
 
   g_list_foreach (groups, (GFunc) g_object_unref, NULL);
   g_list_free (groups);
+
+  g_object_unref (pending_call);
+}
+
+static void
+authority_handle_check_claim (_PolkitAuthority          *instance,
+                              _PolkitAuthorizationClaim *real_claim,
+                              EggDBusMethodInvocation   *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+  PolkitAuthorizationClaim *claim;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  claim = polkit_authorization_claim_new_for_real (real_claim);
+
+  g_object_set_data_full (G_OBJECT (pending_call), "claim", claim, (GDestroyNotify) g_object_unref);
+
+  polkit_backend_authority_check_claim (server->authority, claim, pending_call);
+}
+
+void
+polkit_backend_authority_check_claim_finish (PolkitBackendPendingCall  *pending_call,
+                                             PolkitAuthorizationResult  result)
+{
+  EggDBusHashMap *attributes;
+
+  attributes = egg_dbus_hash_map_new (G_TYPE_STRING, g_free, G_TYPE_STRING, g_free);
+
+  _polkit_authority_handle_check_claim_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
+                                               result,
+                                               attributes);
+
+  g_object_unref (attributes);
+
+  g_object_unref (pending_call);
 }
 
 static void
@@ -211,4 +250,5 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
   authority_iface->handle_enumerate_actions = authority_handle_enumerate_actions;
   authority_iface->handle_enumerate_users   = authority_handle_enumerate_users;
   authority_iface->handle_enumerate_groups  = authority_handle_enumerate_groups;
+  authority_iface->handle_check_claim       = authority_handle_check_claim;
 }

@@ -45,6 +45,10 @@ static void polkit_backend_local_authority_enumerate_users   (PolkitBackendAutho
 static void polkit_backend_local_authority_enumerate_groups  (PolkitBackendAuthority   *authority,
                                                               PolkitBackendPendingCall *pending_call);
 
+static void polkit_backend_local_authority_check_claim       (PolkitBackendAuthority   *authority,
+                                                              PolkitAuthorizationClaim *claim,
+                                                              PolkitBackendPendingCall *pending_call);
+
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
 #define POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY, PolkitBackendLocalAuthorityPrivate))
@@ -91,6 +95,7 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
   authority_class->enumerate_actions = polkit_backend_local_authority_enumerate_actions;
   authority_class->enumerate_users   = polkit_backend_local_authority_enumerate_users;
   authority_class->enumerate_groups  = polkit_backend_local_authority_enumerate_groups;
+  authority_class->check_claim       = polkit_backend_local_authority_check_claim;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendLocalAuthorityPrivate));
 }
@@ -209,3 +214,15 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *autho
  out:
   ;
 }
+
+static void
+polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
+                                            PolkitAuthorizationClaim *claim,
+                                            PolkitBackendPendingCall *pending_call)
+{
+  polkit_backend_pending_call_return_error (pending_call,
+                                            POLKIT_ERROR,
+                                            POLKIT_ERROR_NOT_SUPPORTED,
+                                            "Not implemented");
+}
+
