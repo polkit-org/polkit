@@ -28,10 +28,13 @@
 #include "polkitbackendlocalauthority.h"
 #include "polkitbackendactionpool.h"
 #include "polkitbackendpendingcall.h"
+#include "polkitbackendsessionmonitor.h"
 
 typedef struct
 {
   PolkitBackendActionPool *action_pool;
+
+  PolkitBackendSessionMonitor *session_monitor;
 
 } PolkitBackendLocalAuthorityPrivate;
 
@@ -64,6 +67,8 @@ polkit_backend_local_authority_init (PolkitBackendLocalAuthority *local_authorit
   action_desc_directory = g_file_new_for_path (PACKAGE_DATA_DIR "/polkit-1/actions");
   priv->action_pool = polkit_backend_action_pool_new (action_desc_directory);
   g_object_unref (action_desc_directory);
+
+  priv->session_monitor = polkit_backend_session_monitor_new ();
 }
 
 static void
@@ -77,6 +82,9 @@ polkit_backend_local_authority_finalize (GObject *object)
 
   if (priv->action_pool != NULL)
     g_object_unref (priv->action_pool);
+
+  if (priv->session_monitor != NULL)
+    g_object_unref (priv->session_monitor);
 
   G_OBJECT_CLASS (polkit_backend_local_authority_parent_class)->finalize (object);
 }
