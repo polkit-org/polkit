@@ -27,6 +27,7 @@
 #define __POLKIT_BACKEND_LOCAL_AUTHORITY_H
 
 #include <glib-object.h>
+#include <polkitbackend/polkitbackendtypes.h>
 #include <polkitbackend/polkitbackendauthority.h>
 
 G_BEGIN_DECLS
@@ -38,7 +39,10 @@ G_BEGIN_DECLS
 #define POLKIT_BACKEND_IS_LOCAL_AUTHORITY(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY))
 #define POLKIT_BACKEND_IS_LOCAL_AUTHORITY_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY))
 
+#if 0
 typedef struct _PolkitBackendLocalAuthority         PolkitBackendLocalAuthority;
+#endif
+
 typedef struct _PolkitBackendLocalAuthorityClass    PolkitBackendLocalAuthorityClass;
 
 struct _PolkitBackendLocalAuthority

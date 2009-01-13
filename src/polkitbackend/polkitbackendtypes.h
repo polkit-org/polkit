@@ -27,11 +27,18 @@
 struct _PolkitBackendAuthority;
 typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
 
+struct _PolkitBackendLocalAuthority;
+typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
+
 struct _PolkitBackendPendingCall;
 typedef struct _PolkitBackendPendingCall PolkitBackendPendingCall;
 
 struct _PolkitBackendServer;
 typedef struct _PolkitBackendServer PolkitBackendServer;
+
+struct _PolkitBackendSessionMonitor;
+typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
+
 
 #endif /* __POLKIT_BACKEND_TYPES_H */
 

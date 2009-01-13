@@ -15,6 +15,25 @@ INCLUDES =                                                      \
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
+BUILT_SOURCES =										\
+	ckmanager.c				ckmanager.h				\
+	cksession.c				cksession.h				\
+	ckseat.c				ckseat.h				\
+	ckdevice.c				ckdevice.h				\
+	ckbindings.c				ckbindings.h				\
+	ckbindingsmarshal.list								\
+	ckbindingsmarshal.c			ckbindingsmarshal.h			\
+	ckbindingstypes.h								\
+	ckerror.c				ckerror.h				\
+	$(NULL)
+
+$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/src/polkitbackend/org.freedesktop.ConsoleKit.xml
+	eggdbus-binding-tool									\
+	  --namespace       "Ck"								\
+	  --dbus-namespace  "org.freedesktop.ConsoleKit"					\
+	  --introspection-xml $(top_srcdir)/src/polkitbackend/org.freedesktop.ConsoleKit.xml	\
+	  $(NULL)
+
 lib_LTLIBRARIES=libpolkit-backend-1.la
 
 libpolkit_backend_1includedir=$(includedir)/polkit-1/polkitbackend
@@ -27,6 +46,7 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendactionpool.h					\
 	polkitbackendpendingcall.h					\
 	polkitbackendserver.h						\
+	polkitbackendsessionmonitor.h					\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   	\
@@ -38,6 +58,8 @@ libpolkit_backend_1_la_SOURCES =                                   	\
 	polkitbackendactionpool.h	polkitbackendactionpool.c	\
 	polkitbackendpendingcall.h	polkitbackendpendingcall.c	\
 	polkitbackendserver.h		polkitbackendserver.c		\
+	polkitbackendsessionmonitor.h	polkitbackendsessionmonitor.c	\
+	$(BUILT_SOURCES)						\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\
