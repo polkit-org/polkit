@@ -40,6 +40,7 @@ struct _PolkitAuthority
 {
   GObject parent_instance;
 
+  EggDBusConnection *system_bus;
   EggDBusObjectProxy *authority_object_proxy;
 
   _PolkitAuthority *real;
@@ -60,17 +61,13 @@ G_DEFINE_TYPE (PolkitAuthority, polkit_authority, G_TYPE_OBJECT);
 static void
 polkit_authority_init (PolkitAuthority *authority)
 {
-  EggDBusConnection *system_bus;
+  authority->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
 
-  system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-
-  authority->authority_object_proxy = egg_dbus_connection_get_object_proxy (system_bus,
+  authority->authority_object_proxy = egg_dbus_connection_get_object_proxy (authority->system_bus,
                                                                             "org.freedesktop.PolicyKit1",
                                                                             "/org/freedesktop/PolicyKit1/Authority");
 
   authority->real = _POLKIT_QUERY_INTERFACE_AUTHORITY (authority->authority_object_proxy);
-
-  g_object_unref (system_bus);
 }
 
 static void
@@ -81,6 +78,7 @@ polkit_authority_finalize (GObject *object)
   authority = POLKIT_AUTHORITY (object);
 
   g_object_unref (authority->authority_object_proxy);
+  g_object_unref (authority->system_bus);
 
   the_authority = NULL;
 
@@ -108,11 +106,51 @@ polkit_authority_get (void)
   return the_authority;
 }
 
+static void
+generic_cb (GObject      *source_obj,
+            GAsyncResult *res,
+            gpointer      user_data)
+{
+  GAsyncResult **target_res = user_data;
+
+  *target_res = g_object_ref (res);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_enumerate_actions_async (PolkitAuthority     *authority,
+                                          const gchar         *locale,
+                                          GCancellable        *cancellable,
+                                          GAsyncReadyCallback  callback,
+                                          gpointer             user_data)
+{
+  guint call_id;
+
+  call_id = _polkit_authority_enumerate_actions (authority->real,
+                                                 EGG_DBUS_CALL_FLAGS_NONE,
+                                                 locale,
+                                                 cancellable,
+                                                 callback,
+                                                 user_data);
+
+  return call_id;
+}
+
+void
+polkit_authority_enumerate_actions (PolkitAuthority     *authority,
+                                    const gchar         *locale,
+                                    GCancellable        *cancellable,
+                                    GAsyncReadyCallback  callback,
+                                    gpointer             user_data)
+{
+  polkit_authority_enumerate_actions_async (authority, locale, cancellable, callback, user_data);
+}
+
 GList *
-polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
-                                         const gchar     *locale,
-                                         GCancellable    *cancellable,
-                                         GError         **error)
+polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
+                                           GAsyncResult    *res,
+                                           GError         **error)
 {
   EggDBusArraySeq *array_seq;
   GList *result;
@@ -120,12 +158,10 @@ polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
 
   result = NULL;
 
-  if (!_polkit_authority_enumerate_actions_sync (authority->real,
-                                                 EGG_DBUS_CALL_FLAGS_NONE,
-                                                 locale,
-                                                 &array_seq,
-                                                 cancellable,
-                                                 error))
+  if (!_polkit_authority_enumerate_actions_finish (authority->real,
+                                                   &array_seq,
+                                                   res,
+                                                   error))
     goto out;
 
   for (n = 0; n < array_seq->size; n++)
@@ -145,10 +181,60 @@ polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
   return result;
 }
 
+
 GList *
-polkit_authority_enumerate_users_sync (PolkitAuthority *authority,
-                                       GCancellable    *cancellable,
-                                       GError         **error)
+polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
+                                         const gchar     *locale,
+                                         GCancellable    *cancellable,
+                                         GError         **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  GList *result;
+
+  call_id = polkit_authority_enumerate_actions_async (authority, locale, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  result = polkit_authority_enumerate_actions_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_enumerate_users_async (PolkitAuthority     *authority,
+                                        GCancellable        *cancellable,
+                                        GAsyncReadyCallback  callback,
+                                        gpointer             user_data)
+{
+  guint call_id;
+
+  call_id = _polkit_authority_enumerate_users (authority->real,
+                                               EGG_DBUS_CALL_FLAGS_NONE,
+                                               cancellable,
+                                               callback,
+                                               user_data);
+
+  return call_id;
+}
+
+void
+polkit_authority_enumerate_users (PolkitAuthority     *authority,
+                                  GCancellable        *cancellable,
+                                  GAsyncReadyCallback  callback,
+                                  gpointer             user_data)
+{
+  polkit_authority_enumerate_users_async (authority, cancellable, callback, user_data);
+}
+
+GList *
+polkit_authority_enumerate_users_finish (PolkitAuthority *authority,
+                                         GAsyncResult    *res,
+                                         GError         **error)
 {
   EggDBusArraySeq *array_seq;
   GList *result;
@@ -156,11 +242,92 @@ polkit_authority_enumerate_users_sync (PolkitAuthority *authority,
 
   result = NULL;
 
-  if (!_polkit_authority_enumerate_users_sync (authority->real,
-                                               EGG_DBUS_CALL_FLAGS_NONE,
-                                               &array_seq,
-                                               cancellable,
-                                               error))
+  if (!_polkit_authority_enumerate_users_finish (authority->real,
+                                                 &array_seq,
+                                                 res,
+                                                 error))
+    goto out;
+
+  for (n = 0; n < array_seq->size; n++)
+    {
+      _PolkitSubject *real_subject;
+
+      real_subject = array_seq->data.v_ptr[n];
+
+      result = g_list_prepend (result, polkit_subject_new_for_real (real_subject));
+    }
+
+  result = g_list_reverse (result);
+
+  g_object_unref (array_seq);
+
+ out:
+  return result;
+}
+
+GList *
+polkit_authority_enumerate_users_sync (PolkitAuthority *authority,
+                                       GCancellable    *cancellable,
+                                       GError         **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  GList *result;
+
+  call_id = polkit_authority_enumerate_users_async (authority, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  result = polkit_authority_enumerate_users_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_enumerate_groups_async (PolkitAuthority     *authority,
+                                        GCancellable        *cancellable,
+                                        GAsyncReadyCallback  callback,
+                                        gpointer             user_data)
+{
+  guint call_id;
+
+  call_id = _polkit_authority_enumerate_groups (authority->real,
+                                                EGG_DBUS_CALL_FLAGS_NONE,
+                                                cancellable,
+                                                callback,
+                                                user_data);
+
+  return call_id;
+}
+
+void
+polkit_authority_enumerate_groups (PolkitAuthority     *authority,
+                                   GCancellable        *cancellable,
+                                   GAsyncReadyCallback  callback,
+                                   gpointer             user_data)
+{
+  polkit_authority_enumerate_groups_async (authority, cancellable, callback, user_data);
+}
+
+GList *
+polkit_authority_enumerate_groups_finish (PolkitAuthority *authority,
+                                          GAsyncResult    *res,
+                                          GError         **error)
+{
+  EggDBusArraySeq *array_seq;
+  GList *result;
+  guint n;
+
+  result = NULL;
+
+  if (!_polkit_authority_enumerate_groups_finish (authority->real,
+                                                  &array_seq,
+                                                  res,
+                                                  error))
     goto out;
 
   for (n = 0; n < array_seq->size; n++)
@@ -185,33 +352,80 @@ polkit_authority_enumerate_groups_sync (PolkitAuthority *authority,
                                         GCancellable    *cancellable,
                                         GError         **error)
 {
-  EggDBusArraySeq *array_seq;
+  guint call_id;
+  GAsyncResult *res;
   GList *result;
-  guint n;
 
-  result = NULL;
+  call_id = polkit_authority_enumerate_groups_async (authority, cancellable, generic_cb, &res);
 
-  if (!_polkit_authority_enumerate_groups_sync (authority->real,
-                                                EGG_DBUS_CALL_FLAGS_NONE,
-                                                &array_seq,
-                                                cancellable,
-                                                error))
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  result = polkit_authority_enumerate_groups_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_check_claim_async (PolkitAuthority          *authority,
+                                    PolkitAuthorizationClaim *claim,
+                                    GCancellable             *cancellable,
+                                    GAsyncReadyCallback       callback,
+                                    gpointer                  user_data)
+{
+  _PolkitAuthorizationClaim *real_claim;
+  guint call_id;
+
+  real_claim = polkit_authorization_claim_get_real (claim);
+
+  call_id = _polkit_authority_check_claim (authority->real,
+                                           EGG_DBUS_CALL_FLAGS_NONE,
+                                           real_claim,
+                                           cancellable,
+                                           callback,
+                                           user_data);
+
+  g_object_unref (real_claim);
+
+  return call_id;
+}
+
+void
+polkit_authority_check_claim (PolkitAuthority          *authority,
+                              PolkitAuthorizationClaim *claim,
+                              GCancellable             *cancellable,
+                              GAsyncReadyCallback       callback,
+                              gpointer                  user_data)
+{
+  polkit_authority_check_claim_async (authority, claim, cancellable, callback, user_data);
+}
+
+PolkitAuthorizationResult
+polkit_authority_check_claim_finish (PolkitAuthority          *authority,
+                                     GAsyncResult             *res,
+                                     GError                  **error)
+{
+  _PolkitAuthorizationResult result;
+  EggDBusHashMap *result_attributes;
+
+  result = _POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+
+  if (!_polkit_authority_check_claim_finish (authority->real,
+                                             &result,
+                                             &result_attributes,
+                                             res,
+                                             error))
     goto out;
 
-  for (n = 0; n < array_seq->size; n++)
-    {
-      _PolkitSubject *real_subject;
-
-      real_subject = array_seq->data.v_ptr[n];
-
-      result = g_list_prepend (result, polkit_subject_new_for_real (real_subject));
-    }
-
-  result = g_list_reverse (result);
-
-  g_object_unref (array_seq);
+  /* TODO: pass these back */
+  if (result_attributes != NULL)
+    g_object_unref (result_attributes);
 
  out:
+
   return result;
 }
 
@@ -221,32 +435,19 @@ polkit_authority_check_claim_sync (PolkitAuthority          *authority,
                                    GCancellable             *cancellable,
                                    GError                  **error)
 {
-  _PolkitAuthorizationResult result;
-  _PolkitAuthorizationClaim *real_claim;
-  EggDBusHashMap *result_attributes;
+  guint call_id;
+  GAsyncResult *res;
+  PolkitAuthorizationResult result;
 
-  result = _POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
-  real_claim = NULL;
+  call_id = polkit_authority_check_claim_async (authority, claim, cancellable, generic_cb, &res);
 
-  real_claim = polkit_authorization_claim_get_real (claim);
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
 
-  if (!_polkit_authority_check_claim_sync (authority->real,
-                                           EGG_DBUS_CALL_FLAGS_NONE,
-                                           real_claim,
-                                           &result,
-                                           &result_attributes,
-                                           cancellable,
-                                           error))
-    goto out;
+  result = polkit_authority_check_claim_finish (authority, res, error);
 
-  /* TODO: pass these back */
-  if (result_attributes != NULL)
-    g_object_unref (result_attributes);
-
- out:
-  if (real_claim != NULL)
-    g_object_unref (real_claim);
+  g_object_unref (res);
 
   return result;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */

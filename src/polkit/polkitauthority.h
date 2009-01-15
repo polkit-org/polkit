@@ -44,6 +44,8 @@ GType         polkit_authority_get_type         (void) G_GNUC_CONST;
 
 PolkitAuthority *polkit_authority_get (void);
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 GList                    *polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
                                                                    const gchar     *locale,
                                                                    GCancellable    *cancellable,
@@ -61,6 +63,48 @@ PolkitAuthorizationResult polkit_authority_check_claim_sync (PolkitAuthority    
                                                              PolkitAuthorizationClaim *claim,
                                                              GCancellable             *cancellable,
                                                              GError                  **error);
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+void                      polkit_authority_enumerate_actions (PolkitAuthority     *authority,
+                                                              const gchar         *locale,
+                                                              GCancellable        *cancellable,
+                                                              GAsyncReadyCallback  callback,
+                                                              gpointer             user_data);
+
+GList *                   polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
+                                                                     GAsyncResult    *res,
+                                                                     GError         **error);
+
+void                      polkit_authority_enumerate_users (PolkitAuthority     *authority,
+                                                            GCancellable        *cancellable,
+                                                            GAsyncReadyCallback  callback,
+                                                            gpointer             user_data);
+
+GList *                   polkit_authority_enumerate_users_finish (PolkitAuthority *authority,
+                                                                   GAsyncResult    *res,
+                                                                   GError         **error);
+
+void                      polkit_authority_enumerate_groups (PolkitAuthority     *authority,
+                                                             GCancellable        *cancellable,
+                                                             GAsyncReadyCallback  callback,
+                                                             gpointer             user_data);
+
+GList *                   polkit_authority_enumerate_groups_finish (PolkitAuthority *authority,
+                                                                    GAsyncResult    *res,
+                                                                    GError         **error);
+
+void                      polkit_authority_check_claim (PolkitAuthority          *authority,
+                                                        PolkitAuthorizationClaim *claim,
+                                                        GCancellable             *cancellable,
+                                                        GAsyncReadyCallback       callback,
+                                                        gpointer                  user_data);
+
+PolkitAuthorizationResult polkit_authority_check_claim_finish (PolkitAuthority          *authority,
+                                                               GAsyncResult             *res,
+                                                               GError                  **error);
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 G_END_DECLS
 
