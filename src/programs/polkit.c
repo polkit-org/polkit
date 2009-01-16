@@ -44,13 +44,18 @@ static PolkitSubject *subject = NULL;
 
 static gchar *action_id = NULL;
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static gboolean list_actions (void);
 static gboolean list_users (void);
 static gboolean list_groups (void);
+static gboolean list_authorizations (void);
 
 static gboolean check (void);
 
 static gboolean show_action (const gchar *action_id);
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static void
 usage (int argc, char *argv[])
@@ -68,6 +73,8 @@ usage (int argc, char *argv[])
       g_error_free (error);
     }
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 int
 main (int argc, char *argv[])
@@ -210,6 +217,10 @@ main (int argc, char *argv[])
     {
       ret = list_groups ();
     }
+  else if (opt_list_authorizations)
+    {
+      ret = list_authorizations ();
+    }
   else if (opt_check)
     {
       if (subject == NULL || action_id == NULL)
@@ -237,6 +248,8 @@ main (int argc, char *argv[])
 
   return ret ? 0 : 1;
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static void
 print_action (PolkitActionDescription *action)
@@ -278,6 +291,8 @@ print_action (PolkitActionDescription *action)
       g_print ("  annotation:  %s -> %s\n", key, value);
     }
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
 show_action (const gchar *action_id)
@@ -380,6 +395,8 @@ list_actions (void)
   return ret;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
 print_subjects (GList *subjects)
 {
@@ -395,6 +412,8 @@ print_subjects (GList *subjects)
       g_free (s);
     }
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
 list_users (void)
@@ -427,6 +446,8 @@ list_users (void)
   return ret;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static gboolean
 list_groups (void)
 {
@@ -458,6 +479,8 @@ list_groups (void)
   return ret;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static gboolean
 check (void)
 {
@@ -483,8 +506,6 @@ check (void)
       goto out;
     }
 
-  g_debug ("result = %d", result);
-
  out:
   if (claim != NULL)
     g_object_unref (claim);
@@ -492,3 +513,161 @@ check (void)
   return result == POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+
+typedef struct
+{
+  PolkitAuthorizationClaim *claim;
+  PolkitAuthorizationResult result;
+} AuthzData;
+
+static GPtrArray *authz_data_array;
+
+static gint authz_data_num_pending = 0;
+
+static GMainLoop *authz_data_loop = NULL;
+
+static void
+authz_data_free (AuthzData *data)
+{
+  g_object_unref (data->claim);
+  g_free (data);
+}
+
+static gint
+authz_data_sort_func (gconstpointer a,
+                      gconstpointer b)
+{
+  AuthzData *da;
+  AuthzData *db;
+  const gchar *aa;
+  const gchar *ab;
+
+  da = (AuthzData *) *((gpointer **) a);
+  db = (AuthzData *) *((gpointer **) b);
+
+  aa = polkit_authorization_claim_get_action_id (da->claim);
+  ab = polkit_authorization_claim_get_action_id (db->claim);
+
+  return strcmp (aa, ab);
+}
+
+static void
+list_authz_cb (GObject      *source_obj,
+               GAsyncResult *res,
+               gpointer      user_data)
+{
+  PolkitAuthority *authority;
+  AuthzData *data;
+  GError *error;
+  PolkitAuthorizationResult result;
+
+  authority = POLKIT_AUTHORITY (source_obj);
+  data = user_data;
+  error = NULL;
+
+  result = polkit_authority_check_claim_finish (authority,
+                                                res,
+                                                &error);
+  if (error != NULL)
+    {
+      g_printerr ("Unable to check claim: %s\n", error->message);
+      g_error_free (error);
+    }
+  else
+    {
+      data->result = result;
+    }
+
+  authz_data_num_pending -= 1;
+
+  if (authz_data_num_pending == 0)
+    g_main_loop_quit (authz_data_loop);
+}
+
+static gboolean
+list_authorizations (void)
+{
+  GError *error;
+  GList *actions;
+  GList *l;
+  gboolean ret;
+  PolkitSubject *calling_process;
+  guint n;
+
+  ret = FALSE;
+
+  authz_data_array = g_ptr_array_new ();
+  authz_data_num_pending = 0;
+  authz_data_loop = g_main_loop_new (NULL, FALSE);
+
+  calling_process = polkit_unix_process_new (getppid ());
+
+  error = NULL;
+  actions = polkit_authority_enumerate_actions_sync (authority,
+                                                     NULL,
+                                                     NULL,
+                                                     &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error enumerating actions: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  for (l = actions; l != NULL; l = l->next)
+    {
+      PolkitActionDescription *action = POLKIT_ACTION_DESCRIPTION (l->data);
+      PolkitAuthorizationClaim *claim;
+      AuthzData *data;
+
+      claim = polkit_authorization_claim_new (calling_process,
+                                              polkit_action_description_get_action_id (action));
+
+      data = g_new0 (AuthzData, 1);
+      data->claim = g_object_ref (claim);
+
+      g_ptr_array_add (authz_data_array, data);
+
+      authz_data_num_pending += 1;
+
+      polkit_authority_check_claim (authority,
+                                    claim,
+                                    NULL,
+                                    list_authz_cb,
+                                    data);
+
+      g_object_unref (claim);
+    }
+
+  g_main_loop_run (authz_data_loop);
+
+  ret = TRUE;
+
+  /* sort authorizations by name */
+  g_ptr_array_sort (authz_data_array, authz_data_sort_func);
+
+  for (n = 0; n < authz_data_array->len; n++)
+    {
+      AuthzData *data = authz_data_array->pdata[n];
+
+      if (data->result == POLKIT_AUTHORIZATION_RESULT_AUTHORIZED)
+        g_print ("%s\n", polkit_authorization_claim_get_action_id (data->claim));
+    }
+
+ out:
+
+  g_list_foreach (actions, (GFunc) g_object_unref, NULL);
+  g_list_free (actions);
+
+  g_ptr_array_foreach (authz_data_array, (GFunc) authz_data_free, NULL);
+  g_ptr_array_free (authz_data_array, TRUE);
+
+  g_object_unref (calling_process);
+
+  g_main_loop_unref (authz_data_loop);
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */

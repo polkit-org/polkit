@@ -246,10 +246,15 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
            subject_str,
            action_id);
 
+  /* TODO: temp */
+  polkit_backend_authority_check_claim_finish (pending_call, POLKIT_AUTHORIZATION_RESULT_AUTHORIZED);
+
+#if 0
   polkit_backend_pending_call_return_error (pending_call,
                                             POLKIT_ERROR,
                                             POLKIT_ERROR_NOT_SUPPORTED,
                                             "Not implemented");
+#endif
 
   g_free (inquirer_str);
   g_free (subject_str);

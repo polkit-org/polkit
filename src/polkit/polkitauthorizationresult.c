@@ -19,32 +19,25 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_TYPES_H
-#define __POLKIT_TYPES_H
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
-#include <glib-object.h>
+#include "polkitauthorizationresult.h"
+#include "polkitprivate.h"
 
-struct _PolkitAuthority;
-typedef struct _PolkitAuthority PolkitAuthority;
 
-struct _PolkitActionDescription;
-typedef struct _PolkitActionDescription PolkitActionDescription;
+/**
+ * SECTION:polkitauthorizationresult
+ * @title: PolkitAuthorizationResult
+ * @short_result: Authorization Results
+ *
+ * Results of a check for an claim.
+ */
 
-typedef struct _PolkitSubject PolkitSubject; /* Dummy typedef */
+GType
+polkit_authorization_result_get_type (void)
+{
+  return _polkit_authorization_result_get_type ();
+}
 
-struct _PolkitUnixUser;
-typedef struct _PolkitUnixUser PolkitUnixUser;
-
-struct _PolkitUnixGroup;
-typedef struct _PolkitUnixGroup PolkitUnixGroup;
-
-struct _PolkitUnixProcess;
-typedef struct _PolkitUnixProcess PolkitUnixProcess;
-
-struct _PolkitSystemBusName;
-typedef struct _PolkitSystemBusName PolkitSystemBusName;
-
-struct _PolkitAuthorizationClaim;
-typedef struct _PolkitAuthorizationClaim PolkitAuthorizationClaim;
-
-#endif /* __POLKIT_TYPES_H */

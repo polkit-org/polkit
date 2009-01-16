@@ -43,5 +43,4 @@ _PolkitSubject *polkit_subject_get_real     (PolkitSubject  *subject);
 PolkitAuthorizationClaim  *polkit_authorization_claim_new_for_real (_PolkitAuthorizationClaim *real);
 _PolkitAuthorizationClaim *polkit_authorization_claim_get_real     (PolkitAuthorizationClaim  *claim);
 
-
 #endif /* __POLKIT_PRIVATE_H */
