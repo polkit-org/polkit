@@ -28,9 +28,10 @@
 
 static PolkitAuthority *authority;
 
-static gboolean opt_list_actions = FALSE;
-static gboolean opt_list_users   = FALSE;
-static gboolean opt_list_groups  = FALSE;
+static gboolean opt_list_actions  = FALSE;
+static gboolean opt_list_users    = FALSE;
+static gboolean opt_list_groups   = FALSE;
+static gboolean opt_list_sessions = FALSE;
 static gboolean opt_list_authorizations  = FALSE;
 static gboolean opt_list_explicit_authorizations  = FALSE;
 static gboolean opt_check = FALSE;
@@ -49,6 +50,7 @@ static gchar *action_id = NULL;
 static gboolean list_actions (void);
 static gboolean list_users (void);
 static gboolean list_groups (void);
+static gboolean list_sessions (void);
 static gboolean list_authorizations (void);
 
 static gboolean check (void);
@@ -105,6 +107,10 @@ main (int argc, char *argv[])
           else if (strcmp (argv[n], "groups") == 0)
             {
               opt_list_groups = TRUE;
+            }
+          else if (strcmp (argv[n], "sessions") == 0)
+            {
+              opt_list_sessions = TRUE;
             }
           else if (strcmp (argv[n], "authorizations") == 0)
             {
@@ -216,6 +222,10 @@ main (int argc, char *argv[])
   else if (opt_list_groups)
     {
       ret = list_groups ();
+    }
+  else if (opt_list_sessions)
+    {
+      ret = list_sessions ();
     }
   else if (opt_list_authorizations)
     {
@@ -464,6 +474,39 @@ list_groups (void)
   if (error != NULL)
     {
       g_printerr ("Error enumerating users: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  print_subjects (subjects);
+
+  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
+  g_list_free (subjects);
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gboolean
+list_sessions (void)
+{
+  gboolean ret;
+  GError *error;
+  GList *subjects;
+
+  ret = FALSE;
+
+  error = NULL;
+  subjects = polkit_authority_enumerate_sessions_sync (authority,
+                                                       NULL,
+                                                       &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error enumerating sessions: %s\n", error->message);
       g_error_free (error);
       goto out;
     }

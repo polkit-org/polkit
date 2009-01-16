@@ -242,7 +242,7 @@ polkit_authority_enumerate_users_async (PolkitAuthority     *authority,
   simple = g_simple_async_result_new (G_OBJECT (authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_enumerate_actions_async);
+                                      polkit_authority_enumerate_users_async);
 
   call_id = _polkit_authority_enumerate_users (authority->real,
                                                EGG_DBUS_CALL_FLAGS_NONE,
@@ -276,7 +276,7 @@ polkit_authority_enumerate_users_finish (PolkitAuthority *authority,
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_enumerate_actions_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_enumerate_users_async);
 
   result = NULL;
 
@@ -338,7 +338,7 @@ polkit_authority_enumerate_groups_async (PolkitAuthority     *authority,
   simple = g_simple_async_result_new (G_OBJECT (authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_enumerate_actions_async);
+                                      polkit_authority_enumerate_groups_async);
 
   call_id = _polkit_authority_enumerate_groups (authority->real,
                                                EGG_DBUS_CALL_FLAGS_NONE,
@@ -372,7 +372,7 @@ polkit_authority_enumerate_groups_finish (PolkitAuthority *authority,
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_enumerate_actions_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_enumerate_groups_async);
 
   result = NULL;
 
@@ -414,6 +414,102 @@ polkit_authority_enumerate_groups_sync (PolkitAuthority *authority,
   egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
 
   result = polkit_authority_enumerate_groups_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_enumerate_sessions_async (PolkitAuthority     *authority,
+                                           GCancellable        *cancellable,
+                                           GAsyncReadyCallback  callback,
+                                           gpointer             user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_enumerate_sessions_async);
+
+  call_id = _polkit_authority_enumerate_sessions (authority->real,
+                                               EGG_DBUS_CALL_FLAGS_NONE,
+                                               cancellable,
+                                               generic_async_cb,
+                                               simple);
+
+  return call_id;
+}
+
+void
+polkit_authority_enumerate_sessions (PolkitAuthority     *authority,
+                                   GCancellable        *cancellable,
+                                   GAsyncReadyCallback  callback,
+                                   gpointer             user_data)
+{
+  polkit_authority_enumerate_sessions_async (authority, cancellable, callback, user_data);
+}
+
+GList *
+polkit_authority_enumerate_sessions_finish (PolkitAuthority *authority,
+                                            GAsyncResult    *res,
+                                            GError         **error)
+{
+  EggDBusArraySeq *array_seq;
+  GList *result;
+  guint n;
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_enumerate_sessions_async);
+
+  result = NULL;
+
+  if (!_polkit_authority_enumerate_sessions_finish (authority->real,
+                                                    &array_seq,
+                                                    real_res,
+                                                    error))
+    goto out;
+
+  for (n = 0; n < array_seq->size; n++)
+    {
+      _PolkitSubject *real_subject;
+
+      real_subject = array_seq->data.v_ptr[n];
+
+      result = g_list_prepend (result, polkit_subject_new_for_real (real_subject));
+    }
+
+  result = g_list_reverse (result);
+
+  g_object_unref (array_seq);
+
+ out:
+  g_object_unref (real_res);
+  return result;
+}
+
+GList *
+polkit_authority_enumerate_sessions_sync (PolkitAuthority *authority,
+                                          GCancellable    *cancellable,
+                                          GError         **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  GList *result;
+
+  call_id = polkit_authority_enumerate_sessions_async (authority, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  result = polkit_authority_enumerate_sessions_finish (authority, res, error);
 
   g_object_unref (res);
 

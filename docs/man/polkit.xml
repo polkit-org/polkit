@@ -42,6 +42,11 @@
         </arg>
         <arg choice="plain">
           <sbr/>
+          sessions
+          <arg><option>--verbose</option></arg>
+        </arg>
+        <arg choice="plain">
+          <sbr/>
           authorizations
         </arg>
         <arg choice="plain">
@@ -168,6 +173,18 @@
         Lists all groups.
         The returned identifiers can be used as <replaceable>subject</replaceable> parameters.
         Prints detailed information about each group if <option>--verbose</option> is given.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 list sessions</command>
+        <arg><option>--verbose</option></arg>
+      </para>
+      <para>
+        Lists all sessions.
+        The returned identifiers can be used as <replaceable>subject</replaceable> parameters.
+        Prints detailed information about each session if <option>--verbose</option> is given.
       </para>
     </refsect2>
 

@@ -313,3 +313,39 @@ polkit_backend_session_monitor_new (void)
   return monitor;
 }
 
+static gboolean
+get_sessions_foreach_cb (EggDBusHashMap *map,
+                         gpointer        key,
+                         gpointer        value,
+                         gpointer        user_data)
+{
+  GList **l;
+  const gchar *session_object_path;
+  PolkitSubject *session;
+
+  l = user_data;
+  session_object_path = key;
+
+  session = polkit_unix_session_new (session_object_path);
+
+  *l = g_list_prepend (*l, session);
+
+  return FALSE;
+}
+
+GList *
+polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monitor)
+{
+  GList *l;
+
+  l = NULL;
+
+  egg_dbus_hash_map_foreach (monitor->session_object_path_to_object_proxy,
+                             get_sessions_foreach_cb,
+                             &l);
+
+  l = g_list_reverse (l);
+
+  return l;
+}
+

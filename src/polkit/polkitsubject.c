@@ -29,6 +29,7 @@
 #include "polkitunixuser.h"
 #include "polkitunixgroup.h"
 #include "polkitunixprocess.h"
+#include "polkitunixsession.h"
 #include "polkitsystembusname.h"
 #include "polkiterror.h"
 #include "polkitprivate.h"
@@ -188,6 +189,11 @@ polkit_subject_new_for_real (_PolkitSubject *real)
       s = polkit_unix_process_new_full (egg_dbus_variant_get_uint (variant),
                                         egg_dbus_variant_get_uint64 (variant2));
     }
+  else if (strcmp (kind, "unix-session") == 0)
+    {
+      variant = egg_dbus_hash_map_lookup (details, "session-id");
+      s = polkit_unix_session_new (egg_dbus_variant_get_string (variant));
+    }
   else if (strcmp (kind, "system-bus-name") == 0)
     {
       variant = egg_dbus_hash_map_lookup (details, "name");
@@ -235,6 +241,13 @@ polkit_subject_get_real (PolkitSubject *subject)
       egg_dbus_hash_map_insert (details,
                                 "start-time",
                                 egg_dbus_variant_new_for_uint64 (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject))));
+    }
+  else if (POLKIT_IS_UNIX_SESSION (subject))
+    {
+      kind = "unix-session";
+      egg_dbus_hash_map_insert (details,
+                                "session-id",
+                                egg_dbus_variant_new_for_string (polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject))));
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {

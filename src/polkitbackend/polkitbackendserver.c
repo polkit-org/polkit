@@ -85,6 +85,8 @@ polkit_backend_server_new (PolkitBackendAuthority *authority)
   return server;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
 authority_handle_enumerate_actions (_PolkitAuthority        *instance,
                                     const gchar             *locale,
@@ -127,6 +129,8 @@ polkit_backend_authority_enumerate_actions_finish (PolkitBackendPendingCall *pen
   g_object_unref (pending_call);
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
 authority_handle_enumerate_users (_PolkitAuthority        *instance,
                                   EggDBusMethodInvocation *method_invocation)
@@ -167,6 +171,8 @@ polkit_backend_authority_enumerate_users_finish (PolkitBackendPendingCall *pendi
 
   g_object_unref (pending_call);
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static void
 authority_handle_enumerate_groups (_PolkitAuthority        *instance,
@@ -209,6 +215,51 @@ polkit_backend_authority_enumerate_groups_finish (PolkitBackendPendingCall *pend
   g_object_unref (pending_call);
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+authority_handle_enumerate_sessions (_PolkitAuthority        *instance,
+                                     EggDBusMethodInvocation *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  polkit_backend_authority_enumerate_sessions (server->authority, pending_call);
+}
+
+void
+polkit_backend_authority_enumerate_sessions_finish (PolkitBackendPendingCall *pending_call,
+                                                    GList                    *sessions)
+{
+  EggDBusArraySeq *array;
+  GList *l;
+
+  array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
+
+  for (l = sessions; l != NULL; l = l->next)
+    {
+      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
+      _PolkitSubject *real;
+
+      real = polkit_subject_get_real (subject);
+      egg_dbus_array_seq_add (array, real);
+    }
+
+  _polkit_authority_handle_enumerate_sessions_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
+                                                      array);
+
+  g_object_unref (array);
+
+  g_list_foreach (sessions, (GFunc) g_object_unref, NULL);
+  g_list_free (sessions);
+
+  g_object_unref (pending_call);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
 authority_handle_check_claim (_PolkitAuthority          *instance,
                               _PolkitAuthorizationClaim *real_claim,
@@ -237,11 +288,14 @@ polkit_backend_authority_check_claim_finish (PolkitBackendPendingCall  *pending_
   g_object_unref (pending_call);
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
 authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
-  authority_iface->handle_enumerate_actions = authority_handle_enumerate_actions;
-  authority_iface->handle_enumerate_users   = authority_handle_enumerate_users;
-  authority_iface->handle_enumerate_groups  = authority_handle_enumerate_groups;
-  authority_iface->handle_check_claim       = authority_handle_check_claim;
+  authority_iface->handle_enumerate_actions   = authority_handle_enumerate_actions;
+  authority_iface->handle_enumerate_users     = authority_handle_enumerate_users;
+  authority_iface->handle_enumerate_groups    = authority_handle_enumerate_groups;
+  authority_iface->handle_enumerate_sessions  = authority_handle_enumerate_sessions;
+  authority_iface->handle_check_claim         = authority_handle_check_claim;
 }

@@ -73,6 +73,17 @@ polkit_backend_authority_enumerate_groups (PolkitBackendAuthority   *authority,
 }
 
 void
+polkit_backend_authority_enumerate_sessions (PolkitBackendAuthority   *authority,
+                                             PolkitBackendPendingCall *pending_call)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  klass->enumerate_sessions (authority, pending_call);
+}
+
+void
 polkit_backend_authority_check_claim (PolkitBackendAuthority    *authority,
                                       PolkitAuthorizationClaim  *claim,
                                       PolkitBackendPendingCall  *pending_call)

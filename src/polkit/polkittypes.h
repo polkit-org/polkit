@@ -41,6 +41,9 @@ typedef struct _PolkitUnixGroup PolkitUnixGroup;
 struct _PolkitUnixProcess;
 typedef struct _PolkitUnixProcess PolkitUnixProcess;
 
+struct _PolkitUnixSession;
+typedef struct _PolkitUnixSession PolkitUnixSession;
+
 struct _PolkitSystemBusName;
 typedef struct _PolkitSystemBusName PolkitSystemBusName;
 

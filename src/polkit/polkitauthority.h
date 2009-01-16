@@ -59,6 +59,10 @@ GList                     *polkit_authority_enumerate_groups_sync (PolkitAuthori
                                                                    GCancellable    *cancellable,
                                                                    GError         **error);
 
+GList                     *polkit_authority_enumerate_sessions_sync (PolkitAuthority *authority,
+                                                                     GCancellable    *cancellable,
+                                                                     GError         **error);
+
 PolkitAuthorizationResult  polkit_authority_check_claim_sync (PolkitAuthority          *authority,
                                                               PolkitAuthorizationClaim *claim,
                                                               GCancellable             *cancellable,
@@ -93,6 +97,15 @@ void                       polkit_authority_enumerate_groups (PolkitAuthority   
 GList *                    polkit_authority_enumerate_groups_finish (PolkitAuthority *authority,
                                                                      GAsyncResult    *res,
                                                                      GError         **error);
+
+void                       polkit_authority_enumerate_sessions (PolkitAuthority     *authority,
+                                                                GCancellable        *cancellable,
+                                                                GAsyncReadyCallback  callback,
+                                                                gpointer             user_data);
+
+GList *                    polkit_authority_enumerate_sessions_finish (PolkitAuthority *authority,
+                                                                       GAsyncResult    *res,
+                                                                       GError         **error);
 
 void                       polkit_authority_check_claim (PolkitAuthority          *authority,
                                                          PolkitAuthorizationClaim *claim,

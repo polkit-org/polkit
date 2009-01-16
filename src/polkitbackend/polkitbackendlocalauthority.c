@@ -38,19 +38,22 @@ typedef struct
 
 } PolkitBackendLocalAuthorityPrivate;
 
-static void polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *authority,
-                                                              const gchar              *locale,
-                                                              PolkitBackendPendingCall *pending_call);
+static void polkit_backend_local_authority_enumerate_actions  (PolkitBackendAuthority   *authority,
+                                                               const gchar              *locale,
+                                                               PolkitBackendPendingCall *pending_call);
 
-static void polkit_backend_local_authority_enumerate_users   (PolkitBackendAuthority   *authority,
-                                                              PolkitBackendPendingCall *pending_call);
+static void polkit_backend_local_authority_enumerate_users    (PolkitBackendAuthority   *authority,
+                                                               PolkitBackendPendingCall *pending_call);
 
-static void polkit_backend_local_authority_enumerate_groups  (PolkitBackendAuthority   *authority,
-                                                              PolkitBackendPendingCall *pending_call);
+static void polkit_backend_local_authority_enumerate_groups   (PolkitBackendAuthority   *authority,
+                                                               PolkitBackendPendingCall *pending_call);
 
-static void polkit_backend_local_authority_check_claim       (PolkitBackendAuthority   *authority,
-                                                              PolkitAuthorizationClaim *claim,
-                                                              PolkitBackendPendingCall *pending_call);
+static void polkit_backend_local_authority_enumerate_sessions (PolkitBackendAuthority   *authority,
+                                                               PolkitBackendPendingCall *pending_call);
+
+static void polkit_backend_local_authority_check_claim        (PolkitBackendAuthority   *authority,
+                                                               PolkitAuthorizationClaim *claim,
+                                                               PolkitBackendPendingCall *pending_call);
 
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
@@ -100,10 +103,11 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
 
   gobject_class->finalize = polkit_backend_local_authority_finalize;
 
-  authority_class->enumerate_actions = polkit_backend_local_authority_enumerate_actions;
-  authority_class->enumerate_users   = polkit_backend_local_authority_enumerate_users;
-  authority_class->enumerate_groups  = polkit_backend_local_authority_enumerate_groups;
-  authority_class->check_claim       = polkit_backend_local_authority_check_claim;
+  authority_class->enumerate_actions   = polkit_backend_local_authority_enumerate_actions;
+  authority_class->enumerate_users     = polkit_backend_local_authority_enumerate_users;
+  authority_class->enumerate_groups    = polkit_backend_local_authority_enumerate_groups;
+  authority_class->enumerate_sessions  = polkit_backend_local_authority_enumerate_sessions;
+  authority_class->check_claim         = polkit_backend_local_authority_check_claim;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendLocalAuthorityPrivate));
 }
@@ -134,6 +138,8 @@ polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *auth
   polkit_backend_authority_enumerate_actions_finish (pending_call,
                                                      actions);
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static void
 polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *authority,
@@ -179,6 +185,8 @@ polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *author
   ;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
 polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *authority,
                                                  PolkitBackendPendingCall *pending_call)
@@ -222,6 +230,26 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *autho
  out:
   ;
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+polkit_backend_local_authority_enumerate_sessions (PolkitBackendAuthority   *authority,
+                                                 PolkitBackendPendingCall *pending_call)
+{
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  GList *list;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  list = polkit_backend_session_monitor_get_sessions (priv->session_monitor);
+
+  polkit_backend_authority_enumerate_sessions_finish (pending_call, list);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static void
 polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,

@@ -51,19 +51,22 @@ struct _PolkitBackendAuthorityClass
 
   /*< public >*/
 
-  void (*enumerate_actions) (PolkitBackendAuthority   *authority,
-                             const gchar              *locale,
-                             PolkitBackendPendingCall *pending_call);
+  void (*enumerate_actions)  (PolkitBackendAuthority   *authority,
+                              const gchar              *locale,
+                              PolkitBackendPendingCall *pending_call);
 
-  void (*enumerate_users)   (PolkitBackendAuthority   *authority,
-                             PolkitBackendPendingCall *pending_call);
+  void (*enumerate_users)    (PolkitBackendAuthority   *authority,
+                              PolkitBackendPendingCall *pending_call);
 
-  void (*enumerate_groups)  (PolkitBackendAuthority   *authority,
-                             PolkitBackendPendingCall *pending_call);
+  void (*enumerate_groups)   (PolkitBackendAuthority   *authority,
+                              PolkitBackendPendingCall *pending_call);
 
-  void (*check_claim)       (PolkitBackendAuthority   *authority,
-                             PolkitAuthorizationClaim *claim,
-                             PolkitBackendPendingCall *pending_call);
+  void (*enumerate_sessions) (PolkitBackendAuthority   *authority,
+                              PolkitBackendPendingCall *pending_call);
+
+  void (*check_claim)        (PolkitBackendAuthority   *authority,
+                              PolkitAuthorizationClaim *claim,
+                              PolkitBackendPendingCall *pending_call);
 
   /*< private >*/
   /* Padding for future expansion */
@@ -81,33 +84,39 @@ GType    polkit_backend_authority_get_type (void) G_GNUC_CONST;
 
 /* --- */
 
-void     polkit_backend_authority_enumerate_actions        (PolkitBackendAuthority    *authority,
-                                                            const gchar               *locale,
-                                                            PolkitBackendPendingCall  *pending_call);
+void     polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
+                                                             const gchar               *locale,
+                                                             PolkitBackendPendingCall  *pending_call);
 
-void     polkit_backend_authority_enumerate_users          (PolkitBackendAuthority    *authority,
-                                                            PolkitBackendPendingCall  *pending_call);
+void     polkit_backend_authority_enumerate_users           (PolkitBackendAuthority    *authority,
+                                                             PolkitBackendPendingCall  *pending_call);
 
-void     polkit_backend_authority_enumerate_groups         (PolkitBackendAuthority    *authority,
-                                                            PolkitBackendPendingCall  *pending_call);
+void     polkit_backend_authority_enumerate_groups          (PolkitBackendAuthority    *authority,
+                                                             PolkitBackendPendingCall  *pending_call);
 
-void     polkit_backend_authority_check_claim              (PolkitBackendAuthority    *authority,
-                                                            PolkitAuthorizationClaim  *claim,
-                                                            PolkitBackendPendingCall  *pending_call);
+void     polkit_backend_authority_enumerate_sessions        (PolkitBackendAuthority    *authority,
+                                                             PolkitBackendPendingCall  *pending_call);
+
+void     polkit_backend_authority_check_claim               (PolkitBackendAuthority    *authority,
+                                                             PolkitAuthorizationClaim  *claim,
+                                                             PolkitBackendPendingCall  *pending_call);
 
 /* --- */
 
-void     polkit_backend_authority_enumerate_actions_finish (PolkitBackendPendingCall  *pending_call,
-                                                            GList                     *actions);
+void     polkit_backend_authority_enumerate_actions_finish  (PolkitBackendPendingCall  *pending_call,
+                                                             GList                     *actions);
 
-void     polkit_backend_authority_enumerate_users_finish   (PolkitBackendPendingCall  *pending_call,
-                                                            GList                     *users);
+void     polkit_backend_authority_enumerate_users_finish    (PolkitBackendPendingCall  *pending_call,
+                                                             GList                     *users);
 
-void     polkit_backend_authority_enumerate_groups_finish  (PolkitBackendPendingCall  *pending_call,
-                                                            GList                     *groups);
+void     polkit_backend_authority_enumerate_groups_finish   (PolkitBackendPendingCall  *pending_call,
+                                                             GList                     *groups);
 
-void     polkit_backend_authority_check_claim_finish       (PolkitBackendPendingCall  *pending_call,
-                                                            PolkitAuthorizationResult  result);
+void     polkit_backend_authority_enumerate_sessions_finish (PolkitBackendPendingCall  *pending_call,
+                                                             GList                     *sessions);
+
+void     polkit_backend_authority_check_claim_finish        (PolkitBackendPendingCall  *pending_call,
+                                                             PolkitAuthorizationResult  result);
 
 
 G_END_DECLS

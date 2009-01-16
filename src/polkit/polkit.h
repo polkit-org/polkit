@@ -30,6 +30,7 @@
 #include <polkit/polkitunixuser.h>
 #include <polkit/polkitunixgroup.h>
 #include <polkit/polkitunixprocess.h>
+#include <polkit/polkitunixsession.h>
 #include <polkit/polkitsystembusname.h>
 #include <polkit/polkitauthorizationclaim.h>
 #include <polkit/polkitauthorizationresult.h>

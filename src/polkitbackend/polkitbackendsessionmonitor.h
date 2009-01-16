@@ -43,8 +43,9 @@ typedef struct _PolkitBackendSessionMonitor         PolkitBackendSessionMonitor;
 #endif
 typedef struct _PolkitBackendSessionMonitorClass    PolkitBackendSessionMonitorClass;
 
-GType                        polkit_backend_session_monitor_get_type (void) G_GNUC_CONST;
-PolkitBackendSessionMonitor *polkit_backend_session_monitor_new      (void);
+GType                        polkit_backend_session_monitor_get_type     (void) G_GNUC_CONST;
+PolkitBackendSessionMonitor *polkit_backend_session_monitor_new          (void);
+GList                       *polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monitor);
 
 G_END_DECLS
 

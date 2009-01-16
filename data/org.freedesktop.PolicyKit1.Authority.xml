@@ -84,16 +84,28 @@
   <interface name="org.freedesktop.PolicyKit1.Authority">
 
     <method name="EnumerateUsers">
-      <arg name="users" direction="out" type="a(sa{sv})"/>
+      <arg name="users" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      </arg>
     </method>
 
     <method name="EnumerateGroups">
-      <arg name="groups" direction="out" type="a(sa{sv})"/>
+      <arg name="groups" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      </arg>
+    </method>
+
+    <method name="EnumerateSessions">
+      <arg name="sessions" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      </arg>
     </method>
 
     <method name="EnumerateActions">
       <arg name="locale" direction="in" type="s"/>
-      <arg name="action_descriptions" direction="out" type="a(ssssssa{ss})"/>
+      <arg name="action_descriptions" direction="out" type="a(ssssssa{ss})">
+        <annotation name="org.gtk.EggDBus.StructType" value="ActionDescription"/>
+      </arg>
     </method>
 
     <method name="CheckClaim">

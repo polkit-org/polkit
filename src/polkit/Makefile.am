@@ -47,6 +47,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitunixuser.h								\
 	polkitunixgroup.h								\
 	polkitunixprocess.h								\
+	polkitunixsession.h								\
 	polkitsystembusname.h								\
 	polkitauthorizationclaim.h							\
 	polkitauthorizationresult.h							\
@@ -62,6 +63,7 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitunixuser.c			polkitunixuser.h			\
 	polkitunixgroup.c			polkitunixgroup.h			\
 	polkitunixprocess.c			polkitunixprocess.h			\
+	polkitunixsession.c			polkitunixsession.h			\
 	polkitsystembusname.c			polkitsystembusname.h			\
 	polkitauthorizationclaim.c		polkitauthorizationclaim.h		\
 	polkitauthorizationresult.c		polkitauthorizationresult.h		\
