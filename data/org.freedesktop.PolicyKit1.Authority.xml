@@ -55,11 +55,6 @@
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
       <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier for the claim"/>
     </annotation>
-
-    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{ss}:attributes">
-      <annotation name="org.gtk.EggDBus.DocString" value="Attributes for the claim"/>
-    </annotation>
-
   </annotation>
 
   <!-- The error domain used for reporting errors -->
@@ -102,13 +97,12 @@
     </method>
 
     <method name="CheckClaim">
-      <arg name="claim" direction="in" type="((sa{sv})sa{ss})">
+      <arg name="claim" direction="in" type="((sa{sv})s)">
         <annotation name="org.gtk.EggDBus.StructType" value="AuthorizationClaim"/>
       </arg>
       <arg name="result" direction="out" type="i">
         <annotation name="org.gtk.EggDBus.EnumType" value="AuthorizationResult"/>
       </arg>
-      <arg name="attributes" direction="out" type="a{ss}"/>
     </method>
 
   </interface>

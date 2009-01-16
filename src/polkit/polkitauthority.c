@@ -470,7 +470,6 @@ polkit_authority_check_claim_finish (PolkitAuthority          *authority,
                                      GError                  **error)
 {
   _PolkitAuthorizationResult result;
-  EggDBusHashMap *result_attributes;
   GSimpleAsyncResult *simple;
   GAsyncResult *real_res;
 
@@ -483,14 +482,9 @@ polkit_authority_check_claim_finish (PolkitAuthority          *authority,
 
   if (!_polkit_authority_check_claim_finish (authority->real,
                                              &result,
-                                             &result_attributes,
                                              real_res,
                                              error))
     goto out;
-
-  /* TODO: pass these back? */
-  if (result_attributes != NULL)
-    g_object_unref (result_attributes);
 
  out:
   g_object_unref (real_res);

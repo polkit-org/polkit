@@ -231,15 +231,8 @@ void
 polkit_backend_authority_check_claim_finish (PolkitBackendPendingCall  *pending_call,
                                              PolkitAuthorizationResult  result)
 {
-  EggDBusHashMap *attributes;
-
-  attributes = egg_dbus_hash_map_new (G_TYPE_STRING, g_free, G_TYPE_STRING, g_free);
-
   _polkit_authority_handle_check_claim_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
-                                               result,
-                                               attributes);
-
-  g_object_unref (attributes);
+                                               result);
 
   g_object_unref (pending_call);
 }
