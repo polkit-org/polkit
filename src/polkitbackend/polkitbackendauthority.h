@@ -64,9 +64,11 @@ struct _PolkitBackendAuthorityClass
   void (*enumerate_sessions) (PolkitBackendAuthority   *authority,
                               PolkitBackendPendingCall *pending_call);
 
-  void (*check_claim)        (PolkitBackendAuthority   *authority,
-                              PolkitAuthorizationClaim *claim,
-                              PolkitBackendPendingCall *pending_call);
+  void (*check_authorization) (PolkitBackendAuthority        *authority,
+                               PolkitSubject                 *subject,
+                               const gchar                   *action_id,
+                               PolkitCheckAuthorizationFlags  flags,
+                               PolkitBackendPendingCall      *pending_call);
 
   /*< private >*/
   /* Padding for future expansion */
@@ -97,9 +99,11 @@ void     polkit_backend_authority_enumerate_groups          (PolkitBackendAuthor
 void     polkit_backend_authority_enumerate_sessions        (PolkitBackendAuthority    *authority,
                                                              PolkitBackendPendingCall  *pending_call);
 
-void     polkit_backend_authority_check_claim               (PolkitBackendAuthority    *authority,
-                                                             PolkitAuthorizationClaim  *claim,
-                                                             PolkitBackendPendingCall  *pending_call);
+void     polkit_backend_authority_check_authorization       (PolkitBackendAuthority        *authority,
+                                                             PolkitSubject                 *subject,
+                                                             const gchar                   *action_id,
+                                                             PolkitCheckAuthorizationFlags  flags,
+                                                             PolkitBackendPendingCall      *pending_call);
 
 /* --- */
 
@@ -115,8 +119,8 @@ void     polkit_backend_authority_enumerate_groups_finish   (PolkitBackendPendin
 void     polkit_backend_authority_enumerate_sessions_finish (PolkitBackendPendingCall  *pending_call,
                                                              GList                     *sessions);
 
-void     polkit_backend_authority_check_claim_finish        (PolkitBackendPendingCall  *pending_call,
-                                                             PolkitAuthorizationResult  result);
+void     polkit_backend_authority_check_authorization_finish (PolkitBackendPendingCall  *pending_call,
+                                                              PolkitAuthorizationResult  result);
 
 
 G_END_DECLS

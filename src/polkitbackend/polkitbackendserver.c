@@ -261,29 +261,35 @@ polkit_backend_authority_enumerate_sessions_finish (PolkitBackendPendingCall *pe
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_handle_check_claim (_PolkitAuthority          *instance,
-                              _PolkitAuthorizationClaim *real_claim,
-                              EggDBusMethodInvocation   *method_invocation)
+authority_handle_check_authorization (_PolkitAuthority               *instance,
+                                      _PolkitSubject                 *real_subject,
+                                      const gchar                    *action_id,
+                                      _PolkitCheckAuthorizationFlags  flags,
+                                      EggDBusMethodInvocation        *method_invocation)
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
   PolkitBackendPendingCall *pending_call;
-  PolkitAuthorizationClaim *claim;
+  PolkitSubject *subject;
 
   pending_call = _polkit_backend_pending_call_new (method_invocation, server);
 
-  claim = polkit_authorization_claim_new_for_real (real_claim);
+  subject = polkit_subject_new_for_real (real_subject);
 
-  g_object_set_data_full (G_OBJECT (pending_call), "claim", claim, (GDestroyNotify) g_object_unref);
+  g_object_set_data_full (G_OBJECT (pending_call), "subject", subject, (GDestroyNotify) g_object_unref);
 
-  polkit_backend_authority_check_claim (server->authority, claim, pending_call);
+  polkit_backend_authority_check_authorization (server->authority,
+                                                subject,
+                                                action_id,
+                                                flags,
+                                                pending_call);
 }
 
 void
-polkit_backend_authority_check_claim_finish (PolkitBackendPendingCall  *pending_call,
-                                             PolkitAuthorizationResult  result)
+polkit_backend_authority_check_authorization_finish (PolkitBackendPendingCall  *pending_call,
+                                                     PolkitAuthorizationResult  result)
 {
-  _polkit_authority_handle_check_claim_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
-                                               result);
+  _polkit_authority_handle_check_authorization_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
+                                                       result);
 
   g_object_unref (pending_call);
 }
@@ -297,5 +303,5 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
   authority_iface->handle_enumerate_users     = authority_handle_enumerate_users;
   authority_iface->handle_enumerate_groups    = authority_handle_enumerate_groups;
   authority_iface->handle_enumerate_sessions  = authority_handle_enumerate_sessions;
-  authority_iface->handle_check_claim         = authority_handle_check_claim;
+  authority_iface->handle_check_authorization = authority_handle_check_authorization;
 }

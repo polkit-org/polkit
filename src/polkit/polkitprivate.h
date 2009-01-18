@@ -40,7 +40,9 @@ _PolkitActionDescription *polkit_action_description_get_real     (PolkitActionDe
 PolkitSubject  *polkit_subject_new_for_real (_PolkitSubject *real);
 _PolkitSubject *polkit_subject_get_real     (PolkitSubject  *subject);
 
+#if 0
 PolkitAuthorizationClaim  *polkit_authorization_claim_new_for_real (_PolkitAuthorizationClaim *real);
 _PolkitAuthorizationClaim *polkit_authorization_claim_get_real     (PolkitAuthorizationClaim  *claim);
+#endif
 
 #endif /* __POLKIT_PRIVATE_H */

@@ -84,13 +84,15 @@ polkit_backend_authority_enumerate_sessions (PolkitBackendAuthority   *authority
 }
 
 void
-polkit_backend_authority_check_claim (PolkitBackendAuthority    *authority,
-                                      PolkitAuthorizationClaim  *claim,
-                                      PolkitBackendPendingCall  *pending_call)
+polkit_backend_authority_check_authorization (PolkitBackendAuthority        *authority,
+                                              PolkitSubject                 *subject,
+                                              const gchar                   *action_id,
+                                              PolkitCheckAuthorizationFlags  flags,
+                                              PolkitBackendPendingCall      *pending_call)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  klass->check_claim (authority, claim, pending_call);
+  klass->check_authorization (authority, subject, action_id, flags, pending_call);
 }

@@ -46,17 +46,6 @@
 
   </annotation>
 
-  <!-- AuthorizationClaim struct -->
-  <annotation name="org.gtk.EggDBus.DeclareStruct" value="AuthorizationClaim">
-    <annotation name="org.gtk.EggDBus.Struct.Member"  value="(sa{sv}):subject">
-      <annotation name="org.gtk.EggDBus.DocString" value="Subject the claim is for"/>
-    </annotation>
-
-    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
-      <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier for the claim"/>
-    </annotation>
-  </annotation>
-
   <!-- The error domain used for reporting errors -->
   <annotation name="org.gtk.EggDBus.DeclareErrorDomain" value="Error">
     <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Failed">
@@ -70,7 +59,7 @@
     </annotation>
   </annotation>
 
-  <!-- An enumeration for results of CheckClaim() (TODO: implement this method) -->
+  <!-- An enumeration for results when checking for an authorization -->
   <annotation name="org.gtk.EggDBus.DeclareEnum" value="AuthorizationResult">
     <annotation name="org.gtk.EggDBus.Enum.Member" value="NotAuthorized">
       <annotation name="org.gtk.EggDBus.DocString" value="The subject is not authorized for the specified action"/>
@@ -83,6 +72,23 @@
     </annotation>
   </annotation>
 
+  <!-- Flags used for checking authorizations -->
+  <annotation name="org.gtk.EggDBus.DeclareFlags" value="CheckAuthorizationFlags">
+    <annotation name="org.gtk.EggDBus.Flags.Member" value="AllowUserInteraction">
+      <annotation name="org.gtk.EggDBus.DocString" value="If the subject can obtain the authorization through authentication, and an authentication agent is available, then attempt to do so. Note, this means that the #CheckAuthorization() method is likely to block for a long time."/>
+    </annotation>
+  </annotation>
+
+  <!-- Authorization struct -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="Authorization">
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier for the authorization"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{sv}:attributes">
+      <annotation name="org.gtk.EggDBus.DocString" value="Attributes of the authorization"/>
+    </annotation>
+  </annotation>
 
   <interface name="org.freedesktop.PolicyKit1.Authority">
 
@@ -111,14 +117,43 @@
       </arg>
     </method>
 
-    <method name="CheckClaim">
-      <arg name="claim" direction="in" type="((sa{sv})s)">
-        <annotation name="org.gtk.EggDBus.StructType" value="AuthorizationClaim"/>
+    <method name="CheckAuthorization">
+      <arg name="subject" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
       </arg>
+      <arg name="action_id" direction="in" type="s"/>
+      <arg name="flags" direction="in" type="i">
+        <annotation name="org.gtk.EggDBus.FlagsType" value="CheckAuthorizationFlags"/>
+      </arg>
+
       <arg name="result" direction="out" type="i">
         <annotation name="org.gtk.EggDBus.EnumType" value="AuthorizationResult"/>
       </arg>
     </method>
+
+    <method name="GrantAuthorization">
+      <arg name="subject" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      </arg>
+      <arg name="action_id" direction="in" type="s"/>
+    </method>
+
+    <method name="RevokeAuthorization">
+      <arg name="subject" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      </arg>
+      <arg name="action_id" direction="in" type="s"/>
+    </method>
+
+    <method name="EnumerateAuthorizations">
+      <arg name="subject" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      </arg>
+      <arg name="authorizations" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
+      </arg>
+    </method>
+
 
   </interface>
 </node>

@@ -24,6 +24,7 @@
 #endif
 
 #include "polkitauthorizationresult.h"
+#include "polkitcheckauthorizationflags.h"
 #include "polkitauthority.h"
 
 #include "polkitprivate.h"
@@ -519,51 +520,61 @@ polkit_authority_enumerate_sessions_sync (PolkitAuthority *authority,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static guint
-polkit_authority_check_claim_async (PolkitAuthority          *authority,
-                                    PolkitAuthorizationClaim *claim,
-                                    GCancellable             *cancellable,
-                                    GAsyncReadyCallback       callback,
-                                    gpointer                  user_data)
+polkit_authority_check_authorization_async (PolkitAuthority               *authority,
+                                            PolkitSubject                 *subject,
+                                            const gchar                   *action_id,
+                                            PolkitCheckAuthorizationFlags  flags,
+                                            GCancellable                  *cancellable,
+                                            GAsyncReadyCallback            callback,
+                                            gpointer                       user_data)
 {
-  _PolkitAuthorizationClaim *real_claim;
+  _PolkitSubject *real_subject;
   guint call_id;
   GSimpleAsyncResult *simple;
 
-  real_claim = polkit_authorization_claim_get_real (claim);
+  real_subject = polkit_subject_get_real (subject);
 
   simple = g_simple_async_result_new (G_OBJECT (authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_check_claim_async);
+                                      polkit_authority_check_authorization_async);
 
-  g_object_set_data_full (G_OBJECT (simple), "claim", g_object_ref (claim), (GDestroyNotify) g_object_unref);
+  call_id = _polkit_authority_check_authorization (authority->real,
+                                                   EGG_DBUS_CALL_FLAGS_NONE,
+                                                   real_subject,
+                                                   action_id,
+                                                   flags,
+                                                   cancellable,
+                                                   generic_async_cb,
+                                                   simple);
 
-  call_id = _polkit_authority_check_claim (authority->real,
-                                           EGG_DBUS_CALL_FLAGS_NONE,
-                                           real_claim,
-                                           cancellable,
-                                           generic_async_cb,
-                                           simple);
-
-  g_object_unref (real_claim);
+  g_object_unref (real_subject);
 
   return call_id;
 }
 
 void
-polkit_authority_check_claim (PolkitAuthority          *authority,
-                              PolkitAuthorizationClaim *claim,
-                              GCancellable             *cancellable,
-                              GAsyncReadyCallback       callback,
-                              gpointer                  user_data)
+polkit_authority_check_authorization (PolkitAuthority               *authority,
+                                      PolkitSubject                 *subject,
+                                      const gchar                   *action_id,
+                                      PolkitCheckAuthorizationFlags  flags,
+                                      GCancellable                  *cancellable,
+                                      GAsyncReadyCallback            callback,
+                                      gpointer                       user_data)
 {
-  polkit_authority_check_claim_async (authority, claim, cancellable, callback, user_data);
+  polkit_authority_check_authorization_async (authority,
+                                              subject,
+                                              action_id,
+                                              flags,
+                                              cancellable,
+                                              callback,
+                                              user_data);
 }
 
 PolkitAuthorizationResult
-polkit_authority_check_claim_finish (PolkitAuthority          *authority,
-                                     GAsyncResult             *res,
-                                     GError                  **error)
+polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
+                                             GAsyncResult             *res,
+                                             GError                  **error)
 {
   _PolkitAuthorizationResult result;
   GSimpleAsyncResult *simple;
@@ -572,11 +583,11 @@ polkit_authority_check_claim_finish (PolkitAuthority          *authority,
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_check_claim_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_check_authorization_async);
 
   result = _POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
 
-  if (!_polkit_authority_check_claim_finish (authority->real,
+  if (!_polkit_authority_check_authorization_finish (authority->real,
                                              &result,
                                              real_res,
                                              error))
@@ -588,20 +599,28 @@ polkit_authority_check_claim_finish (PolkitAuthority          *authority,
 }
 
 PolkitAuthorizationResult
-polkit_authority_check_claim_sync (PolkitAuthority          *authority,
-                                   PolkitAuthorizationClaim *claim,
-                                   GCancellable             *cancellable,
-                                   GError                  **error)
+polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
+                                           PolkitSubject                 *subject,
+                                           const gchar                   *action_id,
+                                           PolkitCheckAuthorizationFlags  flags,
+                                           GCancellable                  *cancellable,
+                                           GError                       **error)
 {
   guint call_id;
   GAsyncResult *res;
   PolkitAuthorizationResult result;
 
-  call_id = polkit_authority_check_claim_async (authority, claim, cancellable, generic_cb, &res);
+  call_id = polkit_authority_check_authorization_async (authority,
+                                                        subject,
+                                                        action_id,
+                                                        flags,
+                                                        cancellable,
+                                                        generic_cb,
+                                                        &res);
 
   egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
 
-  result = polkit_authority_check_claim_finish (authority, res, error);
+  result = polkit_authority_check_authorization_finish (authority, res, error);
 
   g_object_unref (res);
 

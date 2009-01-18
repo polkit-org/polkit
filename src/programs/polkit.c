@@ -528,30 +528,25 @@ static gboolean
 check (void)
 {
   PolkitAuthorizationResult result;
-  PolkitAuthorizationClaim *claim;
   GError *error;
 
   error = NULL;
-  claim = NULL;
   result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
 
-  claim = polkit_authorization_claim_new (subject,
-                                          action_id);
-
-  result = polkit_authority_check_claim_sync (authority,
-                                              claim,
-                                              NULL,
-                                              &error);
+  result = polkit_authority_check_authorization_sync (authority,
+                                                      subject,
+                                                      action_id,
+                                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE,
+                                                      NULL,
+                                                      &error);
   if (error != NULL)
     {
-      g_printerr ("Error checking authorization claim: %s\n", error->message);
+      g_printerr ("Error checking authorization: %s\n", error->message);
       g_error_free (error);
       goto out;
     }
 
  out:
-  if (claim != NULL)
-    g_object_unref (claim);
 
   return result == POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
 }
@@ -561,7 +556,7 @@ check (void)
 
 typedef struct
 {
-  PolkitAuthorizationClaim *claim;
+  gchar *action_id;
   PolkitAuthorizationResult result;
 } AuthzData;
 
@@ -574,7 +569,7 @@ static GMainLoop *authz_data_loop = NULL;
 static void
 authz_data_free (AuthzData *data)
 {
-  g_object_unref (data->claim);
+  g_free (data->action_id);
   g_free (data);
 }
 
@@ -582,18 +577,13 @@ static gint
 authz_data_sort_func (gconstpointer a,
                       gconstpointer b)
 {
-  AuthzData *da;
-  AuthzData *db;
-  const gchar *aa;
-  const gchar *ab;
+  AuthzData *data_a;
+  AuthzData *data_b;
 
-  da = (AuthzData *) *((gpointer **) a);
-  db = (AuthzData *) *((gpointer **) b);
+  data_a = (AuthzData *) *((gpointer **) a);
+  data_b = (AuthzData *) *((gpointer **) b);
 
-  aa = polkit_authorization_claim_get_action_id (da->claim);
-  ab = polkit_authorization_claim_get_action_id (db->claim);
-
-  return strcmp (aa, ab);
+  return strcmp (data_a->action_id, data_b->action_id);
 }
 
 static void
@@ -610,12 +600,12 @@ list_authz_cb (GObject      *source_obj,
   data = user_data;
   error = NULL;
 
-  result = polkit_authority_check_claim_finish (authority,
-                                                res,
-                                                &error);
+  result = polkit_authority_check_authorization_finish (authority,
+                                                        res,
+                                                        &error);
   if (error != NULL)
     {
-      g_printerr ("Unable to check claim: %s\n", error->message);
+      g_printerr ("Unable to check authorization: %s\n", error->message);
       g_error_free (error);
     }
   else
@@ -662,26 +652,25 @@ list_authorizations (void)
   for (l = actions; l != NULL; l = l->next)
     {
       PolkitActionDescription *action = POLKIT_ACTION_DESCRIPTION (l->data);
-      PolkitAuthorizationClaim *claim;
+      const gchar *action_id;
       AuthzData *data;
 
-      claim = polkit_authorization_claim_new (calling_process,
-                                              polkit_action_description_get_action_id (action));
+      action_id = polkit_action_description_get_action_id (action);
 
       data = g_new0 (AuthzData, 1);
-      data->claim = g_object_ref (claim);
+      data->action_id = g_strdup (action_id);
 
       g_ptr_array_add (authz_data_array, data);
 
       authz_data_num_pending += 1;
 
-      polkit_authority_check_claim (authority,
-                                    claim,
-                                    NULL,
-                                    list_authz_cb,
-                                    data);
-
-      g_object_unref (claim);
+      polkit_authority_check_authorization (authority,
+                                            calling_process,
+                                            action_id,
+                                            POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE,
+                                            NULL,
+                                            list_authz_cb,
+                                            data);
     }
 
   g_main_loop_run (authz_data_loop);
@@ -696,7 +685,7 @@ list_authorizations (void)
       AuthzData *data = authz_data_array->pdata[n];
 
       if (data->result == POLKIT_AUTHORIZATION_RESULT_AUTHORIZED)
-        g_print ("%s\n", polkit_authorization_claim_get_action_id (data->claim));
+        g_print ("%s\n", data->action_id);
     }
 
  out:

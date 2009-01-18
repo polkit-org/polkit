@@ -51,13 +51,17 @@ static void polkit_backend_local_authority_enumerate_groups   (PolkitBackendAuth
 static void polkit_backend_local_authority_enumerate_sessions (PolkitBackendAuthority   *authority,
                                                                PolkitBackendPendingCall *pending_call);
 
-static void polkit_backend_local_authority_check_claim        (PolkitBackendAuthority   *authority,
-                                                               PolkitAuthorizationClaim *claim,
-                                                               PolkitBackendPendingCall *pending_call);
+static void polkit_backend_local_authority_check_authorization (PolkitBackendAuthority        *authority,
+                                                                PolkitSubject                 *subject,
+                                                                const gchar                   *action_id,
+                                                                PolkitCheckAuthorizationFlags  flags,
+                                                                PolkitBackendPendingCall      *pending_call);
 
-static PolkitAuthorizationResult check_claim_sync (PolkitBackendAuthority     *authority,
-                                                   PolkitAuthorizationClaim   *claim,
-                                                   GError                    **error);
+static PolkitAuthorizationResult check_authorization_sync (PolkitBackendAuthority         *authority,
+                                                           PolkitSubject                  *subject,
+                                                           const gchar                    *action_id,
+                                                           PolkitCheckAuthorizationFlags   flags,
+                                                           GError                        **error);
 
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
@@ -111,7 +115,7 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
   authority_class->enumerate_users     = polkit_backend_local_authority_enumerate_users;
   authority_class->enumerate_groups    = polkit_backend_local_authority_enumerate_groups;
   authority_class->enumerate_sessions  = polkit_backend_local_authority_enumerate_sessions;
-  authority_class->check_claim         = polkit_backend_local_authority_check_claim;
+  authority_class->check_authorization = polkit_backend_local_authority_check_authorization;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendLocalAuthorityPrivate));
 }
@@ -256,14 +260,15 @@ polkit_backend_local_authority_enumerate_sessions (PolkitBackendAuthority   *aut
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
-                                            PolkitAuthorizationClaim *claim,
-                                            PolkitBackendPendingCall *pending_call)
+polkit_backend_local_authority_check_authorization (PolkitBackendAuthority         *authority,
+                                                    PolkitSubject                  *subject,
+                                                    const gchar                    *action_id,
+                                                    PolkitCheckAuthorizationFlags   flags,
+                                                    PolkitBackendPendingCall       *pending_call)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
   PolkitSubject *inquirer;
-  PolkitSubject *subject;
   gchar *inquirer_str;
   gchar *subject_str;
   PolkitSubject *user_of_inquirer;
@@ -271,7 +276,6 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
   gchar *user_of_inquirer_str;
   gchar *user_of_subject_str;
   PolkitAuthorizationResult result;
-  const gchar *action_id;
   GError *error;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
@@ -279,7 +283,6 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
 
   error = NULL;
   inquirer = NULL;
-  subject = NULL;
   inquirer_str = NULL;
   subject_str = NULL;
   user_of_inquirer = NULL;
@@ -288,8 +291,6 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
   user_of_subject_str = NULL;
 
   inquirer = polkit_backend_pending_call_get_caller (pending_call);
-  subject = polkit_authorization_claim_get_subject (claim);
-  action_id = polkit_authorization_claim_get_action_id (claim);
 
   inquirer_str = polkit_subject_to_string (inquirer);
   subject_str = polkit_subject_to_string (subject);
@@ -330,11 +331,11 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
    */
   if (!polkit_subject_equal (user_of_inquirer, user_of_subject))
     {
-      PolkitAuthorizationClaim *read_claim;
-
-      read_claim = polkit_authorization_claim_new (user_of_inquirer, "org.freedesktop.policykit.read");
-      result = check_claim_sync (authority, read_claim, &error);
-      g_object_unref (read_claim);
+      result = check_authorization_sync (authority,
+                                         user_of_inquirer,
+                                         "org.freedesktop.policykit.read",
+                                         POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE, /* no user interaction */
+                                         &error);
 
       if (error != NULL)
         {
@@ -354,7 +355,7 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
         }
     }
 
-  result = check_claim_sync (authority, claim, &error);
+  result = check_authorization_sync (authority, subject, action_id, flags, &error);
   if (error != NULL)
     {
       polkit_backend_pending_call_return_gerror (pending_call, error);
@@ -362,7 +363,7 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
     }
   else
     {
-      polkit_backend_authority_check_claim_finish (pending_call, result);
+      polkit_backend_authority_check_authorization_finish (pending_call, result);
     }
 
  out:
@@ -382,17 +383,17 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static PolkitAuthorizationResult
-check_claim_sync (PolkitBackendAuthority    *authority,
-                  PolkitAuthorizationClaim  *claim,
-                  GError                   **error)
+check_authorization_sync (PolkitBackendAuthority         *authority,
+                          PolkitSubject                  *subject,
+                          const gchar                    *action_id,
+                          PolkitCheckAuthorizationFlags   flags,
+                          GError                        **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
   PolkitAuthorizationResult result;
-  PolkitSubject *subject;
   PolkitSubject *user_of_subject;
   gchar *subject_str;
-  const gchar *action_id;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
@@ -400,9 +401,6 @@ check_claim_sync (PolkitBackendAuthority    *authority,
   result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
   user_of_subject = NULL;
   subject_str = NULL;
-
-  subject = polkit_authorization_claim_get_subject (claim);
-  action_id = polkit_authorization_claim_get_action_id (claim);
 
   subject_str = polkit_subject_to_string (subject);
 

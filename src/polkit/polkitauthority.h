@@ -63,10 +63,12 @@ GList                     *polkit_authority_enumerate_sessions_sync (PolkitAutho
                                                                      GCancellable    *cancellable,
                                                                      GError         **error);
 
-PolkitAuthorizationResult  polkit_authority_check_claim_sync (PolkitAuthority          *authority,
-                                                              PolkitAuthorizationClaim *claim,
-                                                              GCancellable             *cancellable,
-                                                              GError                  **error);
+PolkitAuthorizationResult  polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
+                                                                      PolkitSubject                 *subject,
+                                                                      const gchar                   *action_id,
+                                                                      PolkitCheckAuthorizationFlags  flags,
+                                                                      GCancellable                  *cancellable,
+                                                                      GError                       **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -107,15 +109,17 @@ GList *                    polkit_authority_enumerate_sessions_finish (PolkitAut
                                                                        GAsyncResult    *res,
                                                                        GError         **error);
 
-void                       polkit_authority_check_claim (PolkitAuthority          *authority,
-                                                         PolkitAuthorizationClaim *claim,
-                                                         GCancellable             *cancellable,
-                                                         GAsyncReadyCallback       callback,
-                                                         gpointer                  user_data);
+void                       polkit_authority_check_authorization (PolkitAuthority               *authority,
+                                                                 PolkitSubject                 *subject,
+                                                                 const gchar                   *action_id,
+                                                                 PolkitCheckAuthorizationFlags  flags,
+                                                                 GCancellable                  *cancellable,
+                                                                 GAsyncReadyCallback            callback,
+                                                                 gpointer                       user_data);
 
-PolkitAuthorizationResult  polkit_authority_check_claim_finish (PolkitAuthority          *authority,
-                                                                GAsyncResult             *res,
-                                                                GError                  **error);
+PolkitAuthorizationResult  polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
+                                                                        GAsyncResult             *res,
+                                                                        GError                  **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

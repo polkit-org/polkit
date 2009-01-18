@@ -18,8 +18,9 @@ INCLUDES =                                                      \
 BUILT_SOURCES =										\
 	_polkitactiondescription.c		_polkitactiondescription.h		\
 	_polkitauthority.c			_polkitauthority.h			\
-	_polkitauthorizationclaim.c		_polkitauthorizationclaim.h		\
+	_polkitauthorization.c			_polkitauthorization.h			\
 	_polkitauthorizationresult.c		_polkitauthorizationresult.h		\
+	_polkitcheckauthorizationflags.c	_polkitcheckauthorizationflags.h	\
 	_polkitbindings.c			_polkitbindings.h			\
 	_polkitbindingsmarshal.c		_polkitbindingsmarshal.h		\
 	_polkitbindingstypes.h								\
@@ -49,8 +50,8 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitunixprocess.h								\
 	polkitunixsession.h								\
 	polkitsystembusname.h								\
-	polkitauthorizationclaim.h							\
 	polkitauthorizationresult.h							\
+	polkitcheckauthorizationflags.h							\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
@@ -65,8 +66,8 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitunixprocess.c			polkitunixprocess.h			\
 	polkitunixsession.c			polkitunixsession.h			\
 	polkitsystembusname.c			polkitsystembusname.h			\
-	polkitauthorizationclaim.c		polkitauthorizationclaim.h		\
 	polkitauthorizationresult.c		polkitauthorizationresult.h		\
+	polkitcheckauthorizationflags.c		polkitcheckauthorizationflags.h		\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\
