@@ -333,6 +333,8 @@ get_sessions_foreach_cb (EggDBusHashMap *map,
   return FALSE;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 GList *
 polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monitor)
 {
@@ -349,3 +351,90 @@ polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monito
   return l;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+/**
+ * polkit_backend_session_monitor_get_user:
+ * @monitor: A #PolkitBackendSessionMonitor.
+ * @subject: A #PolkitSubject.
+ * @error: Return location for error.
+ *
+ * Gets the user corresponding to @subject or %NULL if no user exists.
+ *
+ * Returns: %NULL if @error is set otherwise a #PolkitUnixUser that should be freed with g_object_unref().
+ */
+PolkitSubject *
+polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor  *monitor,
+                                                     PolkitSubject                *subject,
+                                                     GError                      **error)
+{
+  PolkitSubject *user;
+  uid_t uid;
+
+  user = NULL;
+
+  if (POLKIT_IS_UNIX_USER (subject))
+    {
+      user = g_object_ref (subject);
+    }
+  else if (POLKIT_IS_UNIX_PROCESS (subject))
+    {
+      pid_t pid;
+
+      pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject));
+      uid = 500; /* TODO */
+
+      user = polkit_unix_user_new (uid);
+    }
+  else if (POLKIT_IS_UNIX_SESSION (subject))
+    {
+      const gchar *session_id;
+      EggDBusObjectProxy *session_object_proxy;
+      CkSession *session;
+
+      session_id = polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject));
+
+      session_object_proxy = egg_dbus_hash_map_lookup (monitor->session_object_path_to_object_proxy,
+                                                       session_id);
+      if (session_object_proxy == NULL)
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "No ConsoleKit session with id %s",
+                       session_id);
+          goto out;
+        }
+
+      session = CK_QUERY_INTERFACE_SESSION (session_object_proxy);
+
+      uid = (uid_t) ck_session_get_user (session);
+
+      user = polkit_unix_user_new (uid);
+    }
+  else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      /* TODO: cache this stuff */
+      if (!egg_dbus_bus_get_connection_unix_user_sync (egg_dbus_connection_get_bus (monitor->system_bus),
+                                                       EGG_DBUS_CALL_FLAGS_NONE,
+                                                       polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                                                       &uid,
+                                                       NULL,
+                                                       error))
+        goto out;
+
+      user = polkit_unix_user_new (uid);
+    }
+  else
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Cannot get user for subject of type %s",
+                   g_type_name (G_TYPE_FROM_INSTANCE (subject)));
+    }
+
+ out:
+
+  return user;
+}

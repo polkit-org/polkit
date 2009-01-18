@@ -140,6 +140,10 @@ polkit_subject_from_string  (const gchar   *str,
             }
         }
     }
+  else if (g_str_has_prefix (str, "unix-session:"))
+    {
+      subject = polkit_unix_session_new (str + sizeof "unix-session:" - 1);
+    }
   else if (g_str_has_prefix (str, "system-bus-name:"))
     {
       subject = polkit_system_bus_name_new (str + sizeof "system-bus-name:" - 1);

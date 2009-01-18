@@ -55,6 +55,10 @@ static void polkit_backend_local_authority_check_claim        (PolkitBackendAuth
                                                                PolkitAuthorizationClaim *claim,
                                                                PolkitBackendPendingCall *pending_call);
 
+static PolkitAuthorizationResult check_claim_sync (PolkitBackendAuthority     *authority,
+                                                   PolkitAuthorizationClaim   *claim,
+                                                   GError                    **error);
+
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
 #define POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY, PolkitBackendLocalAuthorityPrivate))
@@ -256,11 +260,32 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
                                             PolkitAuthorizationClaim *claim,
                                             PolkitBackendPendingCall *pending_call)
 {
-  gchar *inquirer_str;
-  gchar *subject_str;
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
   PolkitSubject *inquirer;
   PolkitSubject *subject;
+  gchar *inquirer_str;
+  gchar *subject_str;
+  PolkitSubject *user_of_inquirer;
+  PolkitSubject *user_of_subject;
+  gchar *user_of_inquirer_str;
+  gchar *user_of_subject_str;
+  PolkitAuthorizationResult result;
   const gchar *action_id;
+  GError *error;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  error = NULL;
+  inquirer = NULL;
+  subject = NULL;
+  inquirer_str = NULL;
+  subject_str = NULL;
+  user_of_inquirer = NULL;
+  user_of_subject = NULL;
+  user_of_inquirer_str = NULL;
+  user_of_subject_str = NULL;
 
   inquirer = polkit_backend_pending_call_get_caller (pending_call);
   subject = polkit_authorization_claim_get_subject (claim);
@@ -274,17 +299,148 @@ polkit_backend_local_authority_check_claim (PolkitBackendAuthority   *authority,
            subject_str,
            action_id);
 
-  /* TODO: temp */
-  polkit_backend_authority_check_claim_finish (pending_call, POLKIT_AUTHORIZATION_RESULT_AUTHORIZED);
+  user_of_inquirer = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
+                                                                          inquirer,
+                                                                          &error);
+  if (error != NULL)
+    {
+      polkit_backend_pending_call_return_gerror (pending_call, error);
+      g_error_free (error);
+      goto out;
+    }
 
-#if 0
-  polkit_backend_pending_call_return_error (pending_call,
-                                            POLKIT_ERROR,
-                                            POLKIT_ERROR_NOT_SUPPORTED,
-                                            "Not implemented");
-#endif
+  user_of_inquirer_str = polkit_subject_to_string (user_of_inquirer);
+  g_debug (" user of inquirer is %s", user_of_inquirer_str);
+
+  user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
+                                                                         subject,
+                                                                         &error);
+  if (error != NULL)
+    {
+      polkit_backend_pending_call_return_gerror (pending_call, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  user_of_subject_str = polkit_subject_to_string (user_of_subject);
+  g_debug (" user of subject is %s", user_of_subject_str);
+
+  /* if the user of the inquirer and the user of the subject isn't the same, then
+   * the org.freedesktop.policykit.read authorization is required for the inquirer
+   */
+  if (!polkit_subject_equal (user_of_inquirer, user_of_subject))
+    {
+      PolkitAuthorizationClaim *read_claim;
+
+      read_claim = polkit_authorization_claim_new (user_of_inquirer, "org.freedesktop.policykit.read");
+      result = check_claim_sync (authority, read_claim, &error);
+      g_object_unref (read_claim);
+
+      if (error != NULL)
+        {
+          polkit_backend_pending_call_return_gerror (pending_call, error);
+          g_error_free (error);
+          goto out;
+        }
+      else if (result != POLKIT_AUTHORIZATION_RESULT_AUTHORIZED)
+        {
+          polkit_backend_pending_call_return_error (pending_call,
+                                                    POLKIT_ERROR,
+                                                    POLKIT_ERROR_NOT_AUTHORIZED,
+                                                    "%s is not authorized to know about authorizations for %s (requires org.freedesktop.policykit.read authorization)",
+                                                    user_of_inquirer_str,
+                                                    subject_str);
+          goto out;
+        }
+    }
+
+  result = check_claim_sync (authority, claim, &error);
+  if (error != NULL)
+    {
+      polkit_backend_pending_call_return_gerror (pending_call, error);
+      g_error_free (error);
+    }
+  else
+    {
+      polkit_backend_authority_check_claim_finish (pending_call, result);
+    }
+
+ out:
+
+  if (user_of_inquirer != NULL)
+    g_object_unref (user_of_inquirer);
+
+  if (user_of_subject != NULL)
+    g_object_unref (user_of_subject);
 
   g_free (inquirer_str);
   g_free (subject_str);
+  g_free (user_of_inquirer_str);
+  g_free (user_of_subject_str);
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+static PolkitAuthorizationResult
+check_claim_sync (PolkitBackendAuthority    *authority,
+                  PolkitAuthorizationClaim  *claim,
+                  GError                   **error)
+{
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitAuthorizationResult result;
+  PolkitSubject *subject;
+  PolkitSubject *user_of_subject;
+  gchar *subject_str;
+  const gchar *action_id;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+  user_of_subject = NULL;
+  subject_str = NULL;
+
+  subject = polkit_authorization_claim_get_subject (claim);
+  action_id = polkit_authorization_claim_get_action_id (claim);
+
+  subject_str = polkit_subject_to_string (subject);
+
+  g_debug ("checking whether %s is authorized for %s",
+           subject_str,
+           action_id);
+
+  user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
+                                                                         subject,
+                                                                         error);
+  if (user_of_subject == NULL)
+      goto out;
+
+  if (POLKIT_IS_UNIX_USER (user_of_subject) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_subject)) == 0)
+    {
+      /* uid 0, root, is _always_ authorized for anything */
+      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+      goto out;
+    }
+
+#if 0
+  g_set_error (error,
+               POLKIT_ERROR,
+               POLKIT_ERROR_NOT_SUPPORTED,
+               "Not implemented (subject=%s action_id=%s)",
+               subject_str, action_id);
+#endif
+
+  /* TODO */
+  result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+
+ out:
+  g_free (subject_str);
+
+  if (user_of_subject != NULL)
+    g_object_unref (user_of_subject);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */

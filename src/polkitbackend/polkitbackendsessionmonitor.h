@@ -47,6 +47,10 @@ GType                        polkit_backend_session_monitor_get_type     (void) 
 PolkitBackendSessionMonitor *polkit_backend_session_monitor_new          (void);
 GList                       *polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monitor);
 
+PolkitSubject               *polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor *monitor,
+                                                                                  PolkitSubject               *subject,
+                                                                                  GError                     **error);
+
 G_END_DECLS
 
 #endif /* __POLKIT_BACKEND_SESSION_MONITOR_H */

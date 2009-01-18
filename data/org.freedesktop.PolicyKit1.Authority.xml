@@ -65,6 +65,9 @@
     <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.NotSupported">
       <annotation name="org.gtk.EggDBus.DocString" value="Operation is not supported"/>
     </annotation>
+    <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.NotAuthorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="Not authorized to perform operation"/>
+    </annotation>
   </annotation>
 
   <!-- An enumeration for results of CheckClaim() (TODO: implement this method) -->
