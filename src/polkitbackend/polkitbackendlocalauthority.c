@@ -59,6 +59,7 @@ static gboolean check_authorization_for_identity (PolkitBackendLocalAuthority *a
                                                   const gchar                 *action_id);
 
 static gboolean check_temporary_authorization_for_subject (PolkitBackendLocalAuthority *authority,
+                                                           PolkitIdentity              *identity,
                                                            PolkitSubject               *subject,
                                                            const gchar                 *action_id);
 
@@ -478,7 +479,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   /* TODO: first see if there's an implicit authorization for subject available */
 
   /* then see if there's a temporary authorization for the subject */
-  if (check_temporary_authorization_for_subject (local_authority, subject, action_id))
+  if (check_temporary_authorization_for_subject (local_authority, user_of_subject, subject, action_id))
     {
       g_debug (" is authorized (has temporary authorization)");
       result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
@@ -672,7 +673,11 @@ static AuthorizationStore  *authorization_store_new (PolkitIdentity *identity);
 static GList               *authorization_store_get_all_authorizations (AuthorizationStore *store);
 
 static PolkitAuthorization *authorization_store_find_permanent_authorization (AuthorizationStore *store,
-                                                                             const gchar *action_id);
+                                                                              const gchar *action_id);
+
+static PolkitAuthorization *authorization_store_find_temporary_authorization (AuthorizationStore *store,
+                                                                              PolkitSubject *subject,
+                                                                              const gchar *action_id);
 
 static gboolean             authorization_store_add_authorization (AuthorizationStore   *store,
                                                                    PolkitAuthorization  *authorization,
@@ -897,6 +902,37 @@ authorization_store_find_permanent_authorization (AuthorizationStore *store,
   return ret;
 }
 
+static PolkitAuthorization *
+authorization_store_find_temporary_authorization (AuthorizationStore *store,
+                                                  PolkitSubject *subject,
+                                                  const gchar *action_id)
+{
+  GList *l;
+  PolkitAuthorization *ret;
+
+  ret = NULL;
+
+  for (l = store->temporary_authorizations; l != NULL; l = l->next)
+    {
+      PolkitAuthorization *authorization = POLKIT_AUTHORIZATION (l->data);
+      const gchar *authorization_action_id;
+      PolkitSubject *authorization_subject;
+
+      authorization_action_id = polkit_authorization_get_action_id (authorization);
+      authorization_subject = polkit_authorization_get_subject (authorization);
+
+      if (strcmp (authorization_action_id, action_id) == 0 &&
+          polkit_subject_equal (authorization_subject, subject))
+        {
+          ret = authorization;
+          goto out;
+        }
+    }
+
+ out:
+  return ret;
+}
+
 static gboolean
 authorization_store_add_authorization (AuthorizationStore   *store,
                                        PolkitAuthorization  *authorization,
@@ -913,11 +949,27 @@ authorization_store_add_authorization (AuthorizationStore   *store,
 
   if (subject != NULL)
     {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_FAILED,
-                   "Temporary authorizations not yet implemented");
-      goto out;
+      /* check if authorization is already present */
+      if (authorization_store_find_temporary_authorization (store, subject, action_id) != NULL)
+        {
+          gchar *subject_str;
+
+          subject_str = polkit_subject_to_string (subject);
+
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot add authorization. Identity already has an authorization for %s for the subject %s",
+                       action_id,
+                       subject_str);
+
+          g_free (subject_str);
+          goto out;
+        }
+
+      store->temporary_authorizations = g_list_prepend (store->temporary_authorizations, g_object_ref (authorization));
+
+      ret = TRUE;
     }
   else
     {
@@ -956,6 +1008,7 @@ authorization_store_remove_authorization (AuthorizationStore   *store,
   gboolean ret;
   PolkitSubject *subject;
   const gchar *action_id;
+  PolkitAuthorization *target;
 
   ret = FALSE;
 
@@ -964,15 +1017,32 @@ authorization_store_remove_authorization (AuthorizationStore   *store,
 
   if (subject != NULL)
     {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_FAILED,
-                   "Temporary authorizations not yet implemented");
+
+      target = authorization_store_find_temporary_authorization (store, subject, action_id);
+
+      if (target == NULL)
+        {
+          gchar *subject_str;
+
+          subject_str = polkit_subject_to_string (subject);
+
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot remove authorization. Identity doesn't has an authorization for %s constrained to the subject %s", action_id, subject_str);
+
+          g_free (subject_str);
+          goto out;
+        }
+
+      store->temporary_authorizations = g_list_remove (store->temporary_authorizations, target);
+
+      ret = TRUE;
+
       goto out;
     }
   else
     {
-      PolkitAuthorization *target;
       GList *old_list;
 
       target = authorization_store_find_permanent_authorization (store, action_id);
@@ -1058,11 +1128,23 @@ check_authorization_for_identity (PolkitBackendLocalAuthority *authority,
 
 static gboolean
 check_temporary_authorization_for_subject (PolkitBackendLocalAuthority *authority,
+                                           PolkitIdentity              *identity,
                                            PolkitSubject               *subject,
                                            const gchar                 *action_id)
 {
-  /* TODO */
-  return FALSE;
+  AuthorizationStore *store;
+  gboolean result;
+
+  result = FALSE;
+
+  store = get_authorization_store_for_identity (authority, identity);
+  if (store == NULL)
+    goto out;
+
+  result = (authorization_store_find_temporary_authorization (store, subject, action_id) != NULL);
+
+ out:
+  return result;
 }
 
 static GList *

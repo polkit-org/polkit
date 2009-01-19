@@ -175,7 +175,7 @@ main (int argc, char *argv[])
               goto out;
             }
 
-          action_id = g_strdup (argv[n++]);
+          action_id = g_strdup (argv[n]);
         }
       else if (strcmp (argv[n], "grant") == 0)
         {
@@ -203,7 +203,7 @@ main (int argc, char *argv[])
               goto out;
             }
 
-          action_id = g_strdup (argv[n++]);
+          action_id = g_strdup (argv[n]);
         }
       else if (strcmp (argv[n], "revoke") == 0)
         {
@@ -231,7 +231,24 @@ main (int argc, char *argv[])
               goto out;
             }
 
-          action_id = g_strdup (argv[n++]);
+          action_id = g_strdup (argv[n]);
+        }
+      else if (strcmp (argv[n], "--subject") == 0)
+        {
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          subject = polkit_subject_from_string (argv[n], &error);
+          if (subject == NULL)
+            {
+              g_printerr ("Error parsing subject: %s\n", error->message);
+              g_error_free (error);
+              goto out;
+            }
         }
       else if (strcmp (argv[n], "--help") == 0)
         {
@@ -779,9 +796,27 @@ list_explicit_authorizations (void)
 
       action_id = polkit_authorization_get_action_id (authorization);
 
-      /* TODO: verbose */
+      if (opt_verbose)
+        {
+          gchar *constrain_str;
+          PolkitSubject *subject;
 
-      g_print ("%s\n", action_id);
+          subject = polkit_authorization_get_subject (authorization);
+          if (subject != NULL)
+            constrain_str = polkit_subject_to_string (subject);
+          else
+            constrain_str = g_strdup ("<nothing>");
+
+          g_print ("%s:\n", action_id);
+          g_print ("  constrained to: %s\n", constrain_str);
+          g_print ("\n");
+
+          g_free (constrain_str);
+        }
+      else
+        {
+          g_print ("%s\n", action_id);
+        }
     }
 
   g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
@@ -806,7 +841,7 @@ do_grant (void)
   ret = FALSE;
 
   authorization = polkit_authorization_new (action_id,
-                                            NULL, /* TODO: handle subject */
+                                            subject,
                                             FALSE); /* TODO: handle negative */
 
   if (!polkit_authority_add_authorization_sync (authority,
@@ -842,7 +877,7 @@ do_revoke (void)
   ret = FALSE;
 
   authorization = polkit_authorization_new (action_id,
-                                            NULL, /* TODO: handle subject */
+                                            subject,
                                             FALSE); /* TODO: handle negative */
 
   if (!polkit_authority_remove_authorization_sync (authority,
