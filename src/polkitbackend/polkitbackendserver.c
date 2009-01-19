@@ -107,7 +107,10 @@ polkit_backend_authority_enumerate_actions_finish (PolkitBackendPendingCall *pen
   EggDBusArraySeq *array;
   GList *l;
 
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_ACTION_DESCRIPTION, (GDestroyNotify) g_object_unref, NULL, NULL);
+  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_ACTION_DESCRIPTION,
+                                  (GDestroyNotify) g_object_unref,
+                                  NULL,
+                                  NULL);
 
   for (l = actions; l != NULL; l = l->next)
     {
@@ -150,7 +153,10 @@ polkit_backend_authority_enumerate_users_finish (PolkitBackendPendingCall *pendi
   EggDBusArraySeq *array;
   GList *l;
 
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_IDENTITY, (GDestroyNotify) g_object_unref, NULL, NULL);
+  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_IDENTITY,
+                                  (GDestroyNotify) g_object_unref,
+                                  NULL,
+                                  NULL);
 
   for (l = users; l != NULL; l = l->next)
     {
@@ -193,7 +199,10 @@ polkit_backend_authority_enumerate_groups_finish (PolkitBackendPendingCall *pend
   EggDBusArraySeq *array;
   GList *l;
 
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_IDENTITY, (GDestroyNotify) g_object_unref, NULL, NULL);
+  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_IDENTITY,
+                                  (GDestroyNotify) g_object_unref,
+                                  NULL,
+                                  NULL);
 
   for (l = groups; l != NULL; l = l->next)
     {
@@ -280,7 +289,10 @@ polkit_backend_authority_enumerate_authorizations_finish (PolkitBackendPendingCa
   EggDBusArraySeq *array;
   GList *l;
 
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_AUTHORIZATION, (GDestroyNotify) g_object_unref, NULL, NULL);
+  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_AUTHORIZATION,
+                                  (GDestroyNotify) g_object_unref,
+                                  NULL,
+                                  NULL);
 
   for (l = authorizations; l != NULL; l = l->next)
     {
