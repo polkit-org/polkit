@@ -35,6 +35,8 @@ static gboolean opt_list_sessions = FALSE;
 static gboolean opt_list_authorizations  = FALSE;
 static gboolean opt_list_explicit_authorizations  = FALSE;
 static gboolean opt_check = FALSE;
+static gboolean opt_grant = FALSE;
+static gboolean opt_revoke = FALSE;
 
 static gboolean opt_show_help = FALSE;
 static gboolean opt_show_version = FALSE;
@@ -52,8 +54,11 @@ static gboolean list_users (void);
 static gboolean list_groups (void);
 static gboolean list_sessions (void);
 static gboolean list_authorizations (void);
+static gboolean list_explicit_authorizations (void);
 
-static gboolean check (void);
+static gboolean do_check (void);
+static gboolean do_grant (void);
+static gboolean do_revoke (void);
 
 static gboolean show_action (const gchar *action_id);
 
@@ -177,6 +182,62 @@ main (int argc, char *argv[])
 
           action_id = g_strdup (argv[n++]);
         }
+      else if (strcmp (argv[n], "grant") == 0)
+        {
+          opt_grant = TRUE;
+
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          subject = polkit_subject_from_string (argv[n], &error);
+          if (subject == NULL)
+            {
+              g_printerr ("Error parsing subject: %s\n", error->message);
+              g_error_free (error);
+              goto out;
+            }
+
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          action_id = g_strdup (argv[n++]);
+        }
+      else if (strcmp (argv[n], "revoke") == 0)
+        {
+          opt_revoke = TRUE;
+
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          subject = polkit_subject_from_string (argv[n], &error);
+          if (subject == NULL)
+            {
+              g_printerr ("Error parsing subject: %s\n", error->message);
+              g_error_free (error);
+              goto out;
+            }
+
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          action_id = g_strdup (argv[n++]);
+        }
       else if (strcmp (argv[n], "--help") == 0)
         {
           opt_show_help = TRUE;
@@ -231,6 +292,10 @@ main (int argc, char *argv[])
     {
       ret = list_authorizations ();
     }
+  else if (opt_list_explicit_authorizations)
+    {
+      ret = list_explicit_authorizations ();
+    }
   else if (opt_check)
     {
       if (subject == NULL || action_id == NULL)
@@ -239,7 +304,27 @@ main (int argc, char *argv[])
           goto out;
         }
 
-      ret = check ();
+      ret = do_check ();
+    }
+  else if (opt_grant)
+    {
+      if (subject == NULL || action_id == NULL)
+        {
+          usage (argc, argv);
+          goto out;
+        }
+
+      ret = do_grant ();
+    }
+  else if (opt_revoke)
+    {
+      if (subject == NULL || action_id == NULL)
+        {
+          usage (argc, argv);
+          goto out;
+        }
+
+      ret = do_revoke ();
     }
   else
     {
@@ -525,7 +610,7 @@ list_sessions (void)
 /* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
-check (void)
+do_check (void)
 {
   PolkitAuthorizationResult result;
   GError *error;
@@ -699,6 +784,121 @@ list_authorizations (void)
   g_object_unref (calling_process);
 
   g_main_loop_unref (authz_data_loop);
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gboolean
+list_explicit_authorizations (void)
+{
+  gboolean ret;
+  GError *error;
+  GList *authorizations;
+  GList *l;
+
+  ret = FALSE;
+
+  error = NULL;
+  authorizations = polkit_authority_enumerate_authorizations_sync (authority,
+                                                            subject,
+                                                            NULL,
+                                                            &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error enumerating authorizations: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  for (l = authorizations; l != NULL; l = l->next)
+    {
+      PolkitAuthorization *authorization = POLKIT_AUTHORIZATION (l->data);
+      const gchar *action_id;
+
+      action_id = polkit_authorization_get_action_id (authorization);
+
+      /* TODO: verbose */
+
+      g_print ("%s\n", action_id);
+    }
+
+  g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
+  g_list_free (authorizations);
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gboolean
+do_grant (void)
+{
+  PolkitAuthorization *authorization;
+  gboolean ret;
+  GError *error;
+
+  error = NULL;
+  ret = FALSE;
+
+  authorization = polkit_authorization_new (action_id,
+                                            subject,
+                                            FALSE); /* TODO: handle negative */
+
+  if (!polkit_authority_add_authorization_sync (authority,
+                                                authorization,
+                                                NULL,
+                                                &error))
+    {
+      g_printerr ("Error adding authorization: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  ret = TRUE;
+
+ out:
+
+  g_object_unref (authorization);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gboolean
+do_revoke (void)
+{
+  PolkitAuthorization *authorization;
+  gboolean ret;
+  GError *error;
+
+  error = NULL;
+  ret = FALSE;
+
+  authorization = polkit_authorization_new (action_id,
+                                            subject,
+                                            FALSE); /* TODO: handle negative */
+
+  if (!polkit_authority_remove_authorization_sync (authority,
+                                                   authorization,
+                                                   NULL,
+                                                   &error))
+    {
+      g_printerr ("Error removing authorization: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  ret = TRUE;
+
+ out:
+
+  g_object_unref (authorization);
+
   return ret;
 }
 

@@ -297,11 +297,123 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendPendingCall  *
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+authority_handle_enumerate_authorizations (_PolkitAuthority               *instance,
+                                           _PolkitSubject                 *real_subject,
+                                           EggDBusMethodInvocation        *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+  PolkitSubject *subject;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  subject = polkit_subject_new_for_real (real_subject);
+
+  g_object_set_data_full (G_OBJECT (pending_call), "subject", subject, (GDestroyNotify) g_object_unref);
+
+  polkit_backend_authority_enumerate_authorizations (server->authority,
+                                                     subject,
+                                                     pending_call);
+}
+
+void
+polkit_backend_authority_enumerate_authorizations_finish (PolkitBackendPendingCall  *pending_call,
+                                                          GList                     *authorizations)
+{
+  EggDBusArraySeq *array;
+  GList *l;
+
+  array = egg_dbus_array_seq_new (_POLKIT_TYPE_AUTHORIZATION, (GDestroyNotify) g_object_unref, NULL, NULL);
+
+  for (l = authorizations; l != NULL; l = l->next)
+    {
+      PolkitAuthorization *a = POLKIT_AUTHORIZATION (l->data);
+      _PolkitAuthorization *real;
+
+      real = polkit_authorization_get_real (a);
+      egg_dbus_array_seq_add (array, real);
+    }
+
+  _polkit_authority_handle_enumerate_authorizations_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
+                                                            array);
+
+  g_object_unref (array);
+
+  g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
+  g_list_free (authorizations);
+
+  g_object_unref (pending_call);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+authority_handle_add_authorization (_PolkitAuthority               *instance,
+                                    _PolkitAuthorization           *real_authorization,
+                                    EggDBusMethodInvocation        *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+  PolkitAuthorization *authorization;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  authorization = polkit_authorization_new_for_real (real_authorization);
+
+  g_object_set_data_full (G_OBJECT (pending_call), "authorization", authorization, (GDestroyNotify) g_object_unref);
+
+  polkit_backend_authority_add_authorization (server->authority,
+                                              authorization,
+                                              pending_call);
+}
+
+void
+polkit_backend_authority_add_authorization_finish (PolkitBackendPendingCall  *pending_call)
+{
+  _polkit_authority_handle_add_authorization_finish (_polkit_backend_pending_call_get_method_invocation (pending_call));
+  g_object_unref (pending_call);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+authority_handle_remove_authorization (_PolkitAuthority               *instance,
+                                       _PolkitAuthorization           *real_authorization,
+                                       EggDBusMethodInvocation        *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+  PolkitAuthorization *authorization;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  authorization = polkit_authorization_new_for_real (real_authorization);
+
+  g_object_set_data_full (G_OBJECT (pending_call), "authorization", authorization, (GDestroyNotify) g_object_unref);
+
+  polkit_backend_authority_remove_authorization (server->authority,
+                                                 authorization,
+                                                 pending_call);
+}
+
+void
+polkit_backend_authority_remove_authorization_finish (PolkitBackendPendingCall  *pending_call)
+{
+  _polkit_authority_handle_remove_authorization_finish (_polkit_backend_pending_call_get_method_invocation (pending_call));
+  g_object_unref (pending_call);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
 authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
-  authority_iface->handle_enumerate_actions   = authority_handle_enumerate_actions;
-  authority_iface->handle_enumerate_users     = authority_handle_enumerate_users;
-  authority_iface->handle_enumerate_groups    = authority_handle_enumerate_groups;
-  authority_iface->handle_enumerate_sessions  = authority_handle_enumerate_sessions;
-  authority_iface->handle_check_authorization = authority_handle_check_authorization;
+  authority_iface->handle_enumerate_actions        = authority_handle_enumerate_actions;
+  authority_iface->handle_enumerate_users          = authority_handle_enumerate_users;
+  authority_iface->handle_enumerate_groups         = authority_handle_enumerate_groups;
+  authority_iface->handle_enumerate_sessions       = authority_handle_enumerate_sessions;
+  authority_iface->handle_check_authorization      = authority_handle_check_authorization;
+  authority_iface->handle_enumerate_authorizations = authority_handle_enumerate_authorizations;
+  authority_iface->handle_add_authorization        = authority_handle_add_authorization;
+  authority_iface->handle_remove_authorization     = authority_handle_remove_authorization;
 }

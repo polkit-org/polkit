@@ -35,6 +35,7 @@
 #include <polkit/polkitauthorizationresult.h>
 #include <polkit/polkitcheckauthorizationflags.h>
 #include <polkit/polkitauthority.h>
+#include <polkit/polkitauthorization.h>
 
 #undef _POLKIT_INSIDE_POLKIT_H
 

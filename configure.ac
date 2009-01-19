@@ -197,4 +197,10 @@ echo "
         Building verbose mode:      ${enable_verbose_mode}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}
+
 "
+
+echo "NOTE: The directory ${localstatedir}/lib/polkit-1 must be owned by root"
+echo "      and have mode 700"
+echo
+

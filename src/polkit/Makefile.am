@@ -52,6 +52,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitsystembusname.h								\
 	polkitauthorizationresult.h							\
 	polkitcheckauthorizationflags.h							\
+	polkitauthorization.h								\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
@@ -68,6 +69,7 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitsystembusname.c			polkitsystembusname.h			\
 	polkitauthorizationresult.c		polkitauthorizationresult.h		\
 	polkitcheckauthorizationflags.c		polkitcheckauthorizationflags.h		\
+	polkitauthorization.c			polkitauthorization.h			\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\

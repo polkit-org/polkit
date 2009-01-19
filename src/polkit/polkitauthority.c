@@ -628,3 +628,289 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_enumerate_authorizations_async (PolkitAuthority     *authority,
+                                                 PolkitSubject       *subject,
+                                                 GCancellable        *cancellable,
+                                                 GAsyncReadyCallback  callback,
+                                                 gpointer             user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+  _PolkitSubject *real_subject;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_enumerate_authorizations_async);
+
+  real_subject = polkit_subject_get_real (subject);
+
+  call_id = _polkit_authority_enumerate_authorizations (authority->real,
+                                                        EGG_DBUS_CALL_FLAGS_NONE,
+                                                        real_subject,
+                                                        cancellable,
+                                                        generic_async_cb,
+                                                        simple);
+
+  g_object_unref (real_subject);
+
+  return call_id;
+}
+
+void
+polkit_authority_enumerate_authorizations (PolkitAuthority     *authority,
+                                           PolkitSubject       *subject,
+                                           GCancellable        *cancellable,
+                                           GAsyncReadyCallback  callback,
+                                           gpointer             user_data)
+{
+  polkit_authority_enumerate_authorizations_async (authority, subject, cancellable, callback, user_data);
+}
+
+GList *
+polkit_authority_enumerate_authorizations_finish (PolkitAuthority *authority,
+                                                  GAsyncResult    *res,
+                                                  GError         **error)
+{
+  EggDBusArraySeq *array_seq;
+  GList *result;
+  guint n;
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_enumerate_authorizations_async);
+
+  result = NULL;
+
+  if (!_polkit_authority_enumerate_authorizations_finish (authority->real,
+                                                          &array_seq,
+                                                          real_res,
+                                                          error))
+    goto out;
+
+  for (n = 0; n < array_seq->size; n++)
+    {
+      _PolkitAuthorization *real_authorization;
+
+      real_authorization = array_seq->data.v_ptr[n];
+
+      result = g_list_prepend (result, polkit_authorization_new_for_real (real_authorization));
+    }
+
+  result = g_list_reverse (result);
+
+  g_object_unref (array_seq);
+
+ out:
+  g_object_unref (real_res);
+  return result;
+}
+
+
+GList *
+polkit_authority_enumerate_authorizations_sync (PolkitAuthority *authority,
+                                                PolkitSubject   *subject,
+                                                GCancellable    *cancellable,
+                                                GError         **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  GList *result;
+
+  call_id = polkit_authority_enumerate_authorizations_async (authority, subject, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  result = polkit_authority_enumerate_authorizations_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_add_authorization_async (PolkitAuthority      *authority,
+                                          PolkitAuthorization  *authorization,
+                                          GCancellable         *cancellable,
+                                          GAsyncReadyCallback   callback,
+                                          gpointer              user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+  _PolkitAuthorization *real_authorization;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_add_authorization_async);
+
+  real_authorization = polkit_authorization_get_real (authorization);
+
+  call_id = _polkit_authority_add_authorization (authority->real,
+                                                 EGG_DBUS_CALL_FLAGS_NONE,
+                                                 real_authorization,
+                                                 cancellable,
+                                                 generic_async_cb,
+                                                 simple);
+
+  g_object_unref (real_authorization);
+
+  return call_id;
+}
+
+void
+polkit_authority_add_authorization (PolkitAuthority      *authority,
+                                    PolkitAuthorization  *authorization,
+                                    GCancellable         *cancellable,
+                                    GAsyncReadyCallback   callback,
+                                    gpointer              user_data)
+{
+  polkit_authority_add_authorization_async (authority, authorization, cancellable, callback, user_data);
+}
+
+gboolean
+polkit_authority_add_authorization_finish (PolkitAuthority *authority,
+                                           GAsyncResult    *res,
+                                           GError         **error)
+{
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+  gboolean ret;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_add_authorization_async);
+
+  ret = _polkit_authority_add_authorization_finish (authority->real,
+                                                    real_res,
+                                                    error);
+
+  if (!ret)
+    goto out;
+
+ out:
+  g_object_unref (real_res);
+  return ret;
+}
+
+
+gboolean
+polkit_authority_add_authorization_sync (PolkitAuthority     *authority,
+                                         PolkitAuthorization *authorization,
+                                         GCancellable        *cancellable,
+                                         GError             **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  gboolean ret;
+
+  call_id = polkit_authority_add_authorization_async (authority, authorization, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  ret = polkit_authority_add_authorization_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_remove_authorization_async (PolkitAuthority      *authority,
+                                             PolkitAuthorization  *authorization,
+                                             GCancellable         *cancellable,
+                                             GAsyncReadyCallback   callback,
+                                             gpointer              user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+  _PolkitAuthorization *real_authorization;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_remove_authorization_async);
+
+  real_authorization = polkit_authorization_get_real (authorization);
+
+  call_id = _polkit_authority_remove_authorization (authority->real,
+                                                 EGG_DBUS_CALL_FLAGS_NONE,
+                                                 real_authorization,
+                                                 cancellable,
+                                                 generic_async_cb,
+                                                 simple);
+
+  g_object_unref (real_authorization);
+
+  return call_id;
+}
+
+void
+polkit_authority_remove_authorization (PolkitAuthority      *authority,
+                                       PolkitAuthorization  *authorization,
+                                       GCancellable         *cancellable,
+                                       GAsyncReadyCallback   callback,
+                                       gpointer              user_data)
+{
+  polkit_authority_remove_authorization_async (authority, authorization, cancellable, callback, user_data);
+}
+
+gboolean
+polkit_authority_remove_authorization_finish (PolkitAuthority *authority,
+                                              GAsyncResult    *res,
+                                              GError         **error)
+{
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+  gboolean ret;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_remove_authorization_async);
+
+  ret = _polkit_authority_remove_authorization_finish (authority->real,
+                                                       real_res,
+                                                       error);
+
+  if (!ret)
+    goto out;
+
+ out:
+  g_object_unref (real_res);
+  return ret;
+}
+
+
+gboolean
+polkit_authority_remove_authorization_sync (PolkitAuthority     *authority,
+                                            PolkitAuthorization *authorization,
+                                            GCancellable        *cancellable,
+                                            GError             **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  gboolean ret;
+
+  call_id = polkit_authority_remove_authorization_async (authority, authorization, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  ret = polkit_authority_remove_authorization_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */

@@ -70,6 +70,21 @@ PolkitAuthorizationResult  polkit_authority_check_authorization_sync (PolkitAuth
                                                                       GCancellable                  *cancellable,
                                                                       GError                       **error);
 
+GList                     *polkit_authority_enumerate_authorizations_sync (PolkitAuthority  *authority,
+                                                                           PolkitSubject    *subject,
+                                                                           GCancellable     *cancellable,
+                                                                           GError          **error);
+
+gboolean                   polkit_authority_add_authorization_sync (PolkitAuthority     *authority,
+                                                                    PolkitAuthorization *authorization,
+                                                                    GCancellable        *cancellable,
+                                                                    GError             **error);
+
+gboolean                   polkit_authority_remove_authorization_sync (PolkitAuthority     *authority,
+                                                                       PolkitAuthorization *authorization,
+                                                                       GCancellable        *cancellable,
+                                                                       GError             **error);
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 void                       polkit_authority_enumerate_actions (PolkitAuthority     *authority,
@@ -120,6 +135,37 @@ void                       polkit_authority_check_authorization (PolkitAuthority
 PolkitAuthorizationResult  polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
                                                                         GAsyncResult             *res,
                                                                         GError                  **error);
+
+void                       polkit_authority_enumerate_authorizations (PolkitAuthority     *authority,
+                                                                      PolkitSubject       *subject,
+                                                                      GCancellable        *cancellable,
+                                                                      GAsyncReadyCallback  callback,
+                                                                      gpointer             user_data);
+
+GList *                    polkit_authority_enumerate_authorizations_finish (PolkitAuthority *authority,
+                                                                             GAsyncResult    *res,
+                                                                             GError         **error);
+
+void                       polkit_authority_add_authorization (PolkitAuthority     *authority,
+                                                               PolkitAuthorization *authorization,
+                                                               GCancellable        *cancellable,
+                                                               GAsyncReadyCallback  callback,
+                                                               gpointer             user_data);
+
+gboolean                   polkit_authority_add_authorization_finish (PolkitAuthority *authority,
+                                                                      GAsyncResult    *res,
+                                                                      GError         **error);
+
+void                       polkit_authority_remove_authorization (PolkitAuthority     *authority,
+                                                                  PolkitAuthorization *authorization,
+                                                                  GCancellable        *cancellable,
+                                                                  GAsyncReadyCallback  callback,
+                                                                  gpointer             user_data);
+
+gboolean                   polkit_authority_remove_authorization_finish (PolkitAuthority *authority,
+                                                                         GAsyncResult    *res,
+                                                                         GError         **error);
+
 
 /* ---------------------------------------------------------------------------------------------------- */
 

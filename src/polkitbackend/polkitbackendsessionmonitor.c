@@ -98,8 +98,6 @@ add_session (PolkitBackendSessionMonitor *monitor,
   CkSession *session;
   EggDBusObjectProxy *object_proxy;
 
-  g_debug ("foo %s", object_path);
-
   object_proxy = egg_dbus_connection_get_object_proxy (monitor->system_bus,
                                                        "org.freedesktop.ConsoleKit",
                                                        object_path);

@@ -82,11 +82,16 @@
   <!-- Authorization struct -->
   <annotation name="org.gtk.EggDBus.DeclareStruct" value="Authorization">
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
-      <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier for the authorization"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action the authorization is for"/>
     </annotation>
 
-    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{sv}:attributes">
-      <annotation name="org.gtk.EggDBus.DocString" value="Attributes of the authorization"/>
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="(sa{sv}):subject">
+      <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Subject that the authorization applies to"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="b:is_negative">
+      <annotation name="org.gtk.EggDBus.DocString" value="Whether the authorization is negative"/>
     </annotation>
   </annotation>
 
@@ -131,25 +136,23 @@
       </arg>
     </method>
 
-    <method name="GrantAuthorization">
-      <arg name="subject" direction="in" type="(sa{sv})">
-        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+    <method name="AddAuthorization">
+      <arg name="authorization" direction="in" type="(s(sa{sv})b)">
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
       </arg>
-      <arg name="action_id" direction="in" type="s"/>
     </method>
 
-    <method name="RevokeAuthorization">
-      <arg name="subject" direction="in" type="(sa{sv})">
-        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+    <method name="RemoveAuthorization">
+      <arg name="authorization" direction="in" type="(s(sa{sv})b)">
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
       </arg>
-      <arg name="action_id" direction="in" type="s"/>
     </method>
 
     <method name="EnumerateAuthorizations">
       <arg name="subject" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
       </arg>
-      <arg name="authorizations" direction="out" type="a(sa{sv})">
+      <arg name="authorizations" direction="out" type="a(s(sa{sv})b)">
         <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
       </arg>
     </method>

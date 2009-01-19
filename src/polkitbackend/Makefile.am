@@ -79,3 +79,7 @@ CLEANFILES = $(BUILT_SOURCES)
 
 clean-local :
 	rm -f *~
+
+install-exec-hook:
+	mkdir -p $(DESTDIR)$(localstatedir)/lib/polkit-1
+	-chmod 600 $(DESTDIR)$(localstatedir)/lib/polkit-1

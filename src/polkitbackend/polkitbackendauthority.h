@@ -70,6 +70,18 @@ struct _PolkitBackendAuthorityClass
                                PolkitCheckAuthorizationFlags  flags,
                                PolkitBackendPendingCall      *pending_call);
 
+  void (*enumerate_authorizations) (PolkitBackendAuthority   *authority,
+                                    PolkitSubject            *subject,
+                                    PolkitBackendPendingCall *pending_call);
+
+  void (*add_authorization) (PolkitBackendAuthority   *authority,
+                             PolkitAuthorization      *authorization,
+                             PolkitBackendPendingCall *pending_call);
+
+  void (*remove_authorization) (PolkitBackendAuthority   *authority,
+                                PolkitAuthorization      *authorization,
+                                PolkitBackendPendingCall *pending_call);
+
   /*< private >*/
   /* Padding for future expansion */
   void (*_polkit_reserved1) (void);
@@ -105,22 +117,41 @@ void     polkit_backend_authority_check_authorization       (PolkitBackendAuthor
                                                              PolkitCheckAuthorizationFlags  flags,
                                                              PolkitBackendPendingCall      *pending_call);
 
+void     polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
+                                                             PolkitSubject             *subject,
+                                                             PolkitBackendPendingCall  *pending_call);
+
+void     polkit_backend_authority_add_authorization         (PolkitBackendAuthority    *authority,
+                                                             PolkitAuthorization       *authorization,
+                                                             PolkitBackendPendingCall  *pending_call);
+
+void     polkit_backend_authority_remove_authorization      (PolkitBackendAuthority    *authority,
+                                                             PolkitAuthorization       *authorization,
+                                                             PolkitBackendPendingCall  *pending_call);
+
 /* --- */
 
-void     polkit_backend_authority_enumerate_actions_finish  (PolkitBackendPendingCall  *pending_call,
-                                                             GList                     *actions);
+void     polkit_backend_authority_enumerate_actions_finish        (PolkitBackendPendingCall  *pending_call,
+                                                                   GList                     *actions);
 
-void     polkit_backend_authority_enumerate_users_finish    (PolkitBackendPendingCall  *pending_call,
-                                                             GList                     *users);
+void     polkit_backend_authority_enumerate_users_finish          (PolkitBackendPendingCall  *pending_call,
+                                                                   GList                     *users);
 
-void     polkit_backend_authority_enumerate_groups_finish   (PolkitBackendPendingCall  *pending_call,
-                                                             GList                     *groups);
+void     polkit_backend_authority_enumerate_groups_finish         (PolkitBackendPendingCall  *pending_call,
+                                                                   GList                     *groups);
 
-void     polkit_backend_authority_enumerate_sessions_finish (PolkitBackendPendingCall  *pending_call,
-                                                             GList                     *sessions);
+void     polkit_backend_authority_enumerate_sessions_finish       (PolkitBackendPendingCall  *pending_call,
+                                                                   GList                     *sessions);
 
-void     polkit_backend_authority_check_authorization_finish (PolkitBackendPendingCall  *pending_call,
-                                                              PolkitAuthorizationResult  result);
+void     polkit_backend_authority_check_authorization_finish      (PolkitBackendPendingCall  *pending_call,
+                                                                   PolkitAuthorizationResult  result);
+
+void     polkit_backend_authority_enumerate_authorizations_finish (PolkitBackendPendingCall  *pending_call,
+                                                                   GList                     *sessions);
+
+void     polkit_backend_authority_add_authorization_finish        (PolkitBackendPendingCall  *pending_call);
+
+void     polkit_backend_authority_remove_authorization_finish     (PolkitBackendPendingCall  *pending_call);
 
 
 G_END_DECLS

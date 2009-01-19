@@ -24,7 +24,6 @@
 
 #include "polkitactiondescription.h"
 #include "polkitsubject.h"
-#include "polkitauthorizationclaim.h"
 #include "_polkitbindings.h"
 
 /* notes:
@@ -40,9 +39,7 @@ _PolkitActionDescription *polkit_action_description_get_real     (PolkitActionDe
 PolkitSubject  *polkit_subject_new_for_real (_PolkitSubject *real);
 _PolkitSubject *polkit_subject_get_real     (PolkitSubject  *subject);
 
-#if 0
-PolkitAuthorizationClaim  *polkit_authorization_claim_new_for_real (_PolkitAuthorizationClaim *real);
-_PolkitAuthorizationClaim *polkit_authorization_claim_get_real     (PolkitAuthorizationClaim  *claim);
-#endif
+PolkitAuthorization  *polkit_authorization_new_for_real (_PolkitAuthorization *real);
+_PolkitAuthorization *polkit_authorization_get_real     (PolkitAuthorization  *authorization);
 
 #endif /* __POLKIT_PRIVATE_H */
