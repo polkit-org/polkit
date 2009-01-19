@@ -73,17 +73,6 @@ polkit_backend_authority_enumerate_groups (PolkitBackendAuthority   *authority,
 }
 
 void
-polkit_backend_authority_enumerate_sessions (PolkitBackendAuthority   *authority,
-                                             PolkitBackendPendingCall *pending_call)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  klass->enumerate_sessions (authority, pending_call);
-}
-
-void
 polkit_backend_authority_check_authorization (PolkitBackendAuthority        *authority,
                                               PolkitSubject                 *subject,
                                               const gchar                   *action_id,
@@ -99,18 +88,19 @@ polkit_backend_authority_check_authorization (PolkitBackendAuthority        *aut
 
 void
 polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
-                                                    PolkitSubject             *subject,
+                                                    PolkitIdentity            *identity,
                                                     PolkitBackendPendingCall  *pending_call)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  klass->enumerate_authorizations (authority, subject, pending_call);
+  klass->enumerate_authorizations (authority, identity, pending_call);
 }
 
 void
 polkit_backend_authority_add_authorization  (PolkitBackendAuthority    *authority,
+                                             PolkitIdentity            *identity,
                                              PolkitAuthorization       *authorization,
                                              PolkitBackendPendingCall  *pending_call)
 {
@@ -118,11 +108,12 @@ polkit_backend_authority_add_authorization  (PolkitBackendAuthority    *authorit
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  klass->add_authorization (authority, authorization, pending_call);
+  klass->add_authorization (authority, identity, authorization, pending_call);
 }
 
 void
 polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *authority,
+                                                PolkitIdentity            *identity,
                                                 PolkitAuthorization       *authorization,
                                                 PolkitBackendPendingCall  *pending_call)
 {
@@ -130,5 +121,5 @@ polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *autho
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  klass->remove_authorization (authority, authorization, pending_call);
+  klass->remove_authorization (authority, identity, authorization, pending_call);
 }

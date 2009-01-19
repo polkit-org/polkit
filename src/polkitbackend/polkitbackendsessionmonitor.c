@@ -361,21 +361,17 @@ polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monito
  *
  * Returns: %NULL if @error is set otherwise a #PolkitUnixUser that should be freed with g_object_unref().
  */
-PolkitSubject *
+PolkitIdentity *
 polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor  *monitor,
                                                      PolkitSubject                *subject,
                                                      GError                      **error)
 {
-  PolkitSubject *user;
+  PolkitIdentity *user;
   uid_t uid;
 
   user = NULL;
 
-  if (POLKIT_IS_UNIX_USER (subject))
-    {
-      user = g_object_ref (subject);
-    }
-  else if (POLKIT_IS_UNIX_PROCESS (subject))
+  if (POLKIT_IS_UNIX_PROCESS (subject))
     {
       pid_t pid;
 

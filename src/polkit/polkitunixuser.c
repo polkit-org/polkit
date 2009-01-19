@@ -26,7 +26,7 @@
 #include <string.h>
 #include <pwd.h>
 #include "polkitunixuser.h"
-#include "polkitsubject.h"
+#include "polkitidentity.h"
 #include "polkiterror.h"
 #include "polkitprivate.h"
 
@@ -56,10 +56,10 @@ enum
   PROP_UID,
 };
 
-static void subject_iface_init (PolkitSubjectIface *subject_iface);
+static void identity_iface_init (PolkitIdentityIface *identity_iface);
 
 G_DEFINE_TYPE_WITH_CODE (PolkitUnixUser, polkit_unix_user, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (POLKIT_TYPE_SUBJECT, subject_iface_init)
+                         G_IMPLEMENT_INTERFACE (POLKIT_TYPE_IDENTITY, identity_iface_init)
                          );
 
 static void
@@ -149,22 +149,22 @@ polkit_unix_user_set_uid (PolkitUnixUser *user,
   user->uid = uid;
 }
 
-PolkitSubject *
+PolkitIdentity *
 polkit_unix_user_new (uid_t uid)
 {
-  return POLKIT_SUBJECT (g_object_new (POLKIT_TYPE_UNIX_USER,
-                                       "uid", uid,
-                                       NULL));
+  return POLKIT_IDENTITY (g_object_new (POLKIT_TYPE_UNIX_USER,
+                                        "uid", uid,
+                                        NULL));
 }
 
-PolkitSubject *
+PolkitIdentity *
 polkit_unix_user_new_for_name (const gchar    *name,
                                GError        **error)
 {
   struct passwd *passwd;
-  PolkitSubject *subject;
+  PolkitIdentity *identity;
 
-  subject = NULL;
+  identity = NULL;
 
   passwd = getpwnam (name);
   if (passwd == NULL)
@@ -177,15 +177,15 @@ polkit_unix_user_new_for_name (const gchar    *name,
       goto out;
     }
 
-  subject = polkit_unix_user_new (passwd->pw_uid);
+  identity = polkit_unix_user_new (passwd->pw_uid);
 
  out:
-  return subject;
+  return identity;
 }
 
 static gboolean
-polkit_unix_user_equal (PolkitSubject *a,
-                        PolkitSubject *b)
+polkit_unix_user_equal (PolkitIdentity *a,
+                        PolkitIdentity *b)
 {
   PolkitUnixUser *user_a;
   PolkitUnixUser *user_b;
@@ -197,9 +197,9 @@ polkit_unix_user_equal (PolkitSubject *a,
 }
 
 static gchar *
-polkit_unix_user_to_string (PolkitSubject *subject)
+polkit_unix_user_to_string (PolkitIdentity *identity)
 {
-  PolkitUnixUser *user = POLKIT_UNIX_USER (subject);
+  PolkitUnixUser *user = POLKIT_UNIX_USER (identity);
   struct passwd *passwd;
 
   passwd = getpwuid (user->uid);
@@ -211,8 +211,8 @@ polkit_unix_user_to_string (PolkitSubject *subject)
 }
 
 static void
-subject_iface_init (PolkitSubjectIface *subject_iface)
+identity_iface_init (PolkitIdentityIface *identity_iface)
 {
-  subject_iface->equal     = polkit_unix_user_equal;
-  subject_iface->to_string = polkit_unix_user_to_string;
+  identity_iface->equal     = polkit_unix_user_equal;
+  identity_iface->to_string = polkit_unix_user_to_string;
 }

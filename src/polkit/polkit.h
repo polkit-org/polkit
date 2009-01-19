@@ -26,9 +26,10 @@
 
 #include <polkit/polkitactiondescription.h>
 #include <polkit/polkiterror.h>
-#include <polkit/polkitsubject.h>
+#include <polkit/polkitidentity.h>
 #include <polkit/polkitunixuser.h>
 #include <polkit/polkitunixgroup.h>
+#include <polkit/polkitsubject.h>
 #include <polkit/polkitunixprocess.h>
 #include <polkit/polkitunixsession.h>
 #include <polkit/polkitsystembusname.h>

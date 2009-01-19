@@ -69,13 +69,17 @@
     <xi:include href="xml/polkitactiondescription.xml"/>
     <xi:include href="xml/polkiterror.xml"/>
     <chapter id="subjects">
-      <title>Subjects and Identities</title>
+      <title>Subjects</title>
       <xi:include href="xml/polkitsubject.xml"/>
-      <xi:include href="xml/polkitunixuser.xml"/>
-      <xi:include href="xml/polkitunixgroup.xml"/>
       <xi:include href="xml/polkitunixprocess.xml"/>
       <xi:include href="xml/polkitunixsession.xml"/>
       <xi:include href="xml/polkitsystembusname.xml"/>
+    </chapter>
+    <chapter id="Identities">
+      <title>Identities</title>
+      <xi:include href="xml/polkitidentity.xml"/>
+      <xi:include href="xml/polkitunixuser.xml"/>
+      <xi:include href="xml/polkitunixgroup.xml"/>
     </chapter>
     <chapter id="extending">
       <title>Extending PolicyKit</title>

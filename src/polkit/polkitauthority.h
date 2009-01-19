@@ -59,10 +59,6 @@ GList                     *polkit_authority_enumerate_groups_sync (PolkitAuthori
                                                                    GCancellable    *cancellable,
                                                                    GError         **error);
 
-GList                     *polkit_authority_enumerate_sessions_sync (PolkitAuthority *authority,
-                                                                     GCancellable    *cancellable,
-                                                                     GError         **error);
-
 PolkitAuthorizationResult  polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
                                                                       PolkitSubject                 *subject,
                                                                       const gchar                   *action_id,
@@ -71,16 +67,18 @@ PolkitAuthorizationResult  polkit_authority_check_authorization_sync (PolkitAuth
                                                                       GError                       **error);
 
 GList                     *polkit_authority_enumerate_authorizations_sync (PolkitAuthority  *authority,
-                                                                           PolkitSubject    *subject,
+                                                                           PolkitIdentity   *identity,
                                                                            GCancellable     *cancellable,
                                                                            GError          **error);
 
 gboolean                   polkit_authority_add_authorization_sync (PolkitAuthority     *authority,
+                                                                    PolkitIdentity      *identity,
                                                                     PolkitAuthorization *authorization,
                                                                     GCancellable        *cancellable,
                                                                     GError             **error);
 
 gboolean                   polkit_authority_remove_authorization_sync (PolkitAuthority     *authority,
+                                                                       PolkitIdentity      *identity,
                                                                        PolkitAuthorization *authorization,
                                                                        GCancellable        *cancellable,
                                                                        GError             **error);
@@ -115,15 +113,6 @@ GList *                    polkit_authority_enumerate_groups_finish (PolkitAutho
                                                                      GAsyncResult    *res,
                                                                      GError         **error);
 
-void                       polkit_authority_enumerate_sessions (PolkitAuthority     *authority,
-                                                                GCancellable        *cancellable,
-                                                                GAsyncReadyCallback  callback,
-                                                                gpointer             user_data);
-
-GList *                    polkit_authority_enumerate_sessions_finish (PolkitAuthority *authority,
-                                                                       GAsyncResult    *res,
-                                                                       GError         **error);
-
 void                       polkit_authority_check_authorization (PolkitAuthority               *authority,
                                                                  PolkitSubject                 *subject,
                                                                  const gchar                   *action_id,
@@ -137,7 +126,7 @@ PolkitAuthorizationResult  polkit_authority_check_authorization_finish (PolkitAu
                                                                         GError                  **error);
 
 void                       polkit_authority_enumerate_authorizations (PolkitAuthority     *authority,
-                                                                      PolkitSubject       *subject,
+                                                                      PolkitIdentity      *identity,
                                                                       GCancellable        *cancellable,
                                                                       GAsyncReadyCallback  callback,
                                                                       gpointer             user_data);
@@ -147,6 +136,7 @@ GList *                    polkit_authority_enumerate_authorizations_finish (Pol
                                                                              GError         **error);
 
 void                       polkit_authority_add_authorization (PolkitAuthority     *authority,
+                                                               PolkitIdentity      *identity,
                                                                PolkitAuthorization *authorization,
                                                                GCancellable        *cancellable,
                                                                GAsyncReadyCallback  callback,
@@ -157,6 +147,7 @@ gboolean                   polkit_authority_add_authorization_finish (PolkitAuth
                                                                       GError         **error);
 
 void                       polkit_authority_remove_authorization (PolkitAuthority     *authority,
+                                                                  PolkitIdentity      *identity,
                                                                   PolkitAuthorization *authorization,
                                                                   GCancellable        *cancellable,
                                                                   GAsyncReadyCallback  callback,

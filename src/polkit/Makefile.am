@@ -26,6 +26,7 @@ BUILT_SOURCES =										\
 	_polkitbindingstypes.h								\
 	_polkiterror.c				_polkiterror.h				\
 	_polkitsubject.c			_polkitsubject.h			\
+	_polkitidentity.c			_polkitidentity.h			\
 	$(NULL)
 
 $(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml
@@ -45,11 +46,12 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitauthority.h								\
 	polkiterror.h									\
 	polkitsubject.h									\
-	polkitunixuser.h								\
-	polkitunixgroup.h								\
 	polkitunixprocess.h								\
 	polkitunixsession.h								\
 	polkitsystembusname.h								\
+	polkitidentity.h								\
+	polkitunixuser.h								\
+	polkitunixgroup.h								\
 	polkitauthorizationresult.h							\
 	polkitcheckauthorizationflags.h							\
 	polkitauthorization.h								\
@@ -62,11 +64,12 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitauthority.c			polkitauthority.h			\
 	polkiterror.c				polkiterror.h				\
 	polkitsubject.c				polkitsubject.h				\
-	polkitunixuser.c			polkitunixuser.h			\
-	polkitunixgroup.c			polkitunixgroup.h			\
 	polkitunixprocess.c			polkitunixprocess.h			\
 	polkitunixsession.c			polkitunixsession.h			\
 	polkitsystembusname.c			polkitsystembusname.h			\
+	polkitidentity.c			polkitidentity.h			\
+	polkitunixuser.c			polkitunixuser.h			\
+	polkitunixgroup.c			polkitunixgroup.h			\
 	polkitauthorizationresult.c		polkitauthorizationresult.h		\
 	polkitcheckauthorizationflags.c		polkitcheckauthorizationflags.h		\
 	polkitauthorization.c			polkitauthorization.h			\

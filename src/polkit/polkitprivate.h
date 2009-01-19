@@ -39,6 +39,9 @@ _PolkitActionDescription *polkit_action_description_get_real     (PolkitActionDe
 PolkitSubject  *polkit_subject_new_for_real (_PolkitSubject *real);
 _PolkitSubject *polkit_subject_get_real     (PolkitSubject  *subject);
 
+PolkitIdentity  *polkit_identity_new_for_real (_PolkitIdentity *real);
+_PolkitIdentity *polkit_identity_get_real     (PolkitIdentity  *identity);
+
 PolkitAuthorization  *polkit_authorization_new_for_real (_PolkitAuthorization *real);
 _PolkitAuthorization *polkit_authorization_get_real     (PolkitAuthorization  *authorization);
 

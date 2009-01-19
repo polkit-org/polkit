@@ -26,8 +26,6 @@
 #include <string.h>
 
 #include "polkitsubject.h"
-#include "polkitunixuser.h"
-#include "polkitunixgroup.h"
 #include "polkitunixprocess.h"
 #include "polkitunixsession.h"
 #include "polkitsystembusname.h"
@@ -98,29 +96,7 @@ polkit_subject_from_string  (const gchar   *str,
 
   subject = NULL;
 
-  if (g_str_has_prefix (str, "unix-user:"))
-    {
-      val = g_ascii_strtoull (str + sizeof "unix-user:" - 1,
-                              &endptr,
-                              10);
-      if (*endptr == '\0')
-        subject = polkit_unix_user_new ((uid_t) val);
-      else
-        subject = polkit_unix_user_new_for_name (str + sizeof "unix-user:" - 1,
-                                                 error);
-    }
-  else if (g_str_has_prefix (str, "unix-group:"))
-    {
-      val = g_ascii_strtoull (str + sizeof "unix-group:" - 1,
-                              &endptr,
-                              10);
-      if (*endptr == '\0')
-        subject = polkit_unix_group_new ((gid_t) val);
-      else
-        subject = polkit_unix_group_new_for_name (str + sizeof "unix-group:" - 1,
-                                                  error);
-    }
-  else if (g_str_has_prefix (str, "unix-process:"))
+  if (g_str_has_prefix (str, "unix-process:"))
     {
       val = g_ascii_strtoull (str + sizeof "unix-process:" - 1,
                               &endptr,
@@ -176,15 +152,9 @@ polkit_subject_new_for_real (_PolkitSubject *real)
   kind = _polkit_subject_get_subject_kind (real);
   details = _polkit_subject_get_subject_details (real);
 
-  if (strcmp (kind, "unix-user") == 0)
+  if (strcmp (kind, "") == 0)
     {
-      variant = egg_dbus_hash_map_lookup (details, "uid");
-      s = polkit_unix_user_new (egg_dbus_variant_get_uint (variant));
-    }
-  else if (strcmp (kind, "unix-group") == 0)
-    {
-      variant = egg_dbus_hash_map_lookup (details, "gid");
-      s = polkit_unix_group_new (egg_dbus_variant_get_uint (variant));
+      /* explicitly left blank (for subjects that are NULL) */
     }
   else if (strcmp (kind, "unix-process") == 0)
     {
@@ -222,19 +192,9 @@ polkit_subject_get_real (PolkitSubject *subject)
   kind = NULL;
   details = egg_dbus_hash_map_new (G_TYPE_STRING, NULL, EGG_DBUS_TYPE_VARIANT, (GDestroyNotify) g_object_unref);
 
-  if (POLKIT_IS_UNIX_USER (subject))
+  if (subject == NULL)
     {
-      kind = "unix-user";
-      egg_dbus_hash_map_insert (details,
-                                "uid",
-                                egg_dbus_variant_new_for_uint (polkit_unix_user_get_uid (POLKIT_UNIX_USER (subject))));
-    }
-  else if (POLKIT_IS_UNIX_GROUP (subject))
-    {
-      kind = "unix-group";
-      egg_dbus_hash_map_insert (details,
-                                "gid",
-                                egg_dbus_variant_new_for_uint (polkit_unix_group_get_gid (POLKIT_UNIX_GROUP (subject))));
+      kind = "";
     }
   else if (POLKIT_IS_UNIX_PROCESS (subject))
     {

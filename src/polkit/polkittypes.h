@@ -32,12 +32,6 @@ typedef struct _PolkitActionDescription PolkitActionDescription;
 
 typedef struct _PolkitSubject PolkitSubject; /* Dummy typedef */
 
-struct _PolkitUnixUser;
-typedef struct _PolkitUnixUser PolkitUnixUser;
-
-struct _PolkitUnixGroup;
-typedef struct _PolkitUnixGroup PolkitUnixGroup;
-
 struct _PolkitUnixProcess;
 typedef struct _PolkitUnixProcess PolkitUnixProcess;
 
@@ -46,6 +40,14 @@ typedef struct _PolkitUnixSession PolkitUnixSession;
 
 struct _PolkitSystemBusName;
 typedef struct _PolkitSystemBusName PolkitSystemBusName;
+
+typedef struct _PolkitIdentity PolkitIdentity; /* Dummy typedef */
+
+struct _PolkitUnixUser;
+typedef struct _PolkitUnixUser PolkitUnixUser;
+
+struct _PolkitUnixGroup;
+typedef struct _PolkitUnixGroup PolkitUnixGroup;
 
 struct _PolkitAuthorization;
 typedef struct _PolkitAuthorization PolkitAuthorization;

@@ -48,9 +48,6 @@ static void polkit_backend_local_authority_enumerate_users    (PolkitBackendAuth
 static void polkit_backend_local_authority_enumerate_groups   (PolkitBackendAuthority   *authority,
                                                                PolkitBackendPendingCall *pending_call);
 
-static void polkit_backend_local_authority_enumerate_sessions (PolkitBackendAuthority   *authority,
-                                                               PolkitBackendPendingCall *pending_call);
-
 static void polkit_backend_local_authority_check_authorization (PolkitBackendAuthority        *authority,
                                                                 PolkitSubject                 *subject,
                                                                 const gchar                   *action_id,
@@ -64,14 +61,16 @@ static PolkitAuthorizationResult check_authorization_sync (PolkitBackendAuthorit
                                                            GError                        **error);
 
 static void polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
-                                                                     PolkitSubject            *subject,
+                                                                     PolkitIdentity            *identity,
                                                                      PolkitBackendPendingCall *pending_call);
 
 static void polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
+                                                              PolkitIdentity           *identity,
                                                               PolkitAuthorization      *authorization,
                                                               PolkitBackendPendingCall *pending_call);
 
 static void polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
+                                                                 PolkitIdentity           *identity,
                                                                  PolkitAuthorization      *authorization,
                                                                  PolkitBackendPendingCall *pending_call);
 
@@ -126,7 +125,6 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
   authority_class->enumerate_actions        = polkit_backend_local_authority_enumerate_actions;
   authority_class->enumerate_users          = polkit_backend_local_authority_enumerate_users;
   authority_class->enumerate_groups         = polkit_backend_local_authority_enumerate_groups;
-  authority_class->enumerate_sessions       = polkit_backend_local_authority_enumerate_sessions;
   authority_class->check_authorization      = polkit_backend_local_authority_check_authorization;
   authority_class->enumerate_authorizations = polkit_backend_local_authority_enumerate_authorizations;
   authority_class->add_authorization        = polkit_backend_local_authority_add_authorization;
@@ -191,11 +189,11 @@ polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *author
 
   do
     {
-      PolkitSubject *subject;
+      PolkitIdentity *identity;
 
-      subject = polkit_unix_user_new (passwd->pw_uid);
+      identity = polkit_unix_user_new (passwd->pw_uid);
 
-      list = g_list_prepend (list, subject);
+      list = g_list_prepend (list, identity);
     }
   while ((passwd = getpwent ()) != NULL);
   endpwent ();
@@ -237,11 +235,11 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *autho
 
   do
     {
-      PolkitSubject *subject;
+      PolkitIdentity *identity;
 
-      subject = polkit_unix_group_new (group->gr_gid);
+      identity = polkit_unix_group_new (group->gr_gid);
 
-      list = g_list_prepend (list, subject);
+      list = g_list_prepend (list, identity);
     }
   while ((group = getgrent ()) != NULL);
   endgrent ();
@@ -252,24 +250,6 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *autho
 
  out:
   ;
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-polkit_backend_local_authority_enumerate_sessions (PolkitBackendAuthority   *authority,
-                                                 PolkitBackendPendingCall *pending_call)
-{
-  PolkitBackendLocalAuthority *local_authority;
-  PolkitBackendLocalAuthorityPrivate *priv;
-  GList *list;
-
-  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
-
-  list = polkit_backend_session_monitor_get_sessions (priv->session_monitor);
-
-  polkit_backend_authority_enumerate_sessions_finish (pending_call, list);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -286,8 +266,8 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
   PolkitSubject *inquirer;
   gchar *inquirer_str;
   gchar *subject_str;
-  PolkitSubject *user_of_inquirer;
-  PolkitSubject *user_of_subject;
+  PolkitIdentity *user_of_inquirer;
+  PolkitIdentity *user_of_subject;
   gchar *user_of_inquirer_str;
   gchar *user_of_subject_str;
   PolkitAuthorizationResult result;
@@ -325,7 +305,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
       goto out;
     }
 
-  user_of_inquirer_str = polkit_subject_to_string (user_of_inquirer);
+  user_of_inquirer_str = polkit_identity_to_string (user_of_inquirer);
   g_debug (" user of inquirer is %s", user_of_inquirer_str);
 
   user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
@@ -338,19 +318,23 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
       goto out;
     }
 
-  user_of_subject_str = polkit_subject_to_string (user_of_subject);
+  user_of_subject_str = polkit_identity_to_string (user_of_subject);
   g_debug (" user of subject is %s", user_of_subject_str);
 
   /* if the user of the inquirer and the user of the subject isn't the same, then
    * the org.freedesktop.policykit.read authorization is required for the inquirer
    */
-  if (!polkit_subject_equal (user_of_inquirer, user_of_subject))
+  if (!polkit_identity_equal (user_of_inquirer, user_of_subject))
     {
+      /* TODO */
+      result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+#if 0
       result = check_authorization_sync (authority,
                                          user_of_inquirer,
                                          "org.freedesktop.policykit.read",
                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE, /* no user interaction */
                                          &error);
+#endif
 
       if (error != NULL)
         {
@@ -407,7 +391,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
   PolkitAuthorizationResult result;
-  PolkitSubject *user_of_subject;
+  PolkitIdentity *user_of_subject;
   gchar *subject_str;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
@@ -460,32 +444,33 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
 
 static void
 polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
-                                                         PolkitSubject            *subject,
+                                                         PolkitIdentity           *identity,
                                                          PolkitBackendPendingCall *pending_call)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
-  gchar *subject_str;
+  gchar *identity_str;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
-  subject_str = polkit_subject_to_string (subject);
+  identity_str = polkit_identity_to_string (identity);
 
-  g_debug ("enumerating authorizations for %s", subject_str);
+  g_debug ("enumerating authorizations for %s", identity_str);
 
   polkit_backend_pending_call_return_error (pending_call,
                                             POLKIT_ERROR,
                                             POLKIT_ERROR_NOT_SUPPORTED,
-                                            "Not implemented (subject=%s)", subject_str);
+                                            "Not implemented (identity=%s)", identity_str);
 
-  g_free (subject_str);
+  g_free (identity_str);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
 polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
+                                                  PolkitIdentity           *identity,
                                                   PolkitAuthorization      *authorization,
                                                   PolkitBackendPendingCall *pending_call)
 {
@@ -499,14 +484,19 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
+  subject_str = NULL;
+
   subject = polkit_authorization_get_subject (authorization);
   action_id = polkit_authorization_get_action_id (authorization);
   is_negative = polkit_authorization_get_is_negative (authorization);
 
-  subject_str = polkit_subject_to_string (subject);
+  if (subject != NULL)
+    subject_str = polkit_subject_to_string (subject);
 
   g_debug ("add authorization with subject=%s, action_id=%s, is_negative=%d",
-           subject_str, action_id, is_negative);
+           subject_str != NULL ? subject_str : "<none>",
+           action_id,
+           is_negative);
 
   polkit_backend_pending_call_return_error (pending_call,
                                             POLKIT_ERROR,
@@ -521,6 +511,7 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
 
 static void
 polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
+                                                     PolkitIdentity           *identity,
                                                      PolkitAuthorization      *authorization,
                                                      PolkitBackendPendingCall *pending_call)
 {
@@ -534,14 +525,19 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
+  subject_str = NULL;
+
   subject = polkit_authorization_get_subject (authorization);
   action_id = polkit_authorization_get_action_id (authorization);
   is_negative = polkit_authorization_get_is_negative (authorization);
 
-  subject_str = polkit_subject_to_string (subject);
+  if (subject != NULL)
+    subject_str = polkit_subject_to_string (subject);
 
   g_debug ("remove authorization with subject=%s, action_id=%s, is_negative=%d",
-           subject_str, action_id, is_negative);
+           subject_str != NULL ? subject_str : "<none>",
+           action_id,
+           is_negative);
 
   polkit_backend_pending_call_return_error (pending_call,
                                             POLKIT_ERROR,

@@ -26,7 +26,7 @@
 #include <string.h>
 #include <grp.h>
 #include "polkitunixgroup.h"
-#include "polkitsubject.h"
+#include "polkitidentity.h"
 #include "polkiterror.h"
 #include "polkitprivate.h"
 
@@ -56,10 +56,10 @@ enum
   PROP_GID,
 };
 
-static void subject_iface_init (PolkitSubjectIface *subject_iface);
+static void identity_iface_init (PolkitIdentityIface *identity_iface);
 
 G_DEFINE_TYPE_WITH_CODE (PolkitUnixGroup, polkit_unix_group, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (POLKIT_TYPE_SUBJECT, subject_iface_init)
+                         G_IMPLEMENT_INTERFACE (POLKIT_TYPE_IDENTITY, identity_iface_init)
                          );
 
 static void
@@ -149,22 +149,22 @@ polkit_unix_group_set_gid (PolkitUnixGroup *group,
   group->gid = gid;
 }
 
-PolkitSubject *
+PolkitIdentity *
 polkit_unix_group_new (gid_t gid)
 {
-  return POLKIT_SUBJECT (g_object_new (POLKIT_TYPE_UNIX_GROUP,
+  return POLKIT_IDENTITY (g_object_new (POLKIT_TYPE_UNIX_GROUP,
                                        "gid", gid,
                                        NULL));
 }
 
-PolkitSubject *
+PolkitIdentity *
 polkit_unix_group_new_for_name (const gchar    *name,
                                 GError        **error)
 {
   struct group *group;
-  PolkitSubject *subject;
+  PolkitIdentity *identity;
 
-  subject = NULL;
+  identity = NULL;
 
   group = getgrnam (name);
   if (group == NULL)
@@ -177,15 +177,15 @@ polkit_unix_group_new_for_name (const gchar    *name,
       goto out;
     }
 
-  subject = polkit_unix_group_new (group->gr_gid);
+  identity = polkit_unix_group_new (group->gr_gid);
 
  out:
-  return subject;
+  return identity;
 }
 
 static gboolean
-polkit_unix_group_equal (PolkitSubject *a,
-                        PolkitSubject *b)
+polkit_unix_group_equal (PolkitIdentity *a,
+                        PolkitIdentity *b)
 {
   PolkitUnixGroup *group_a;
   PolkitUnixGroup *group_b;
@@ -197,9 +197,9 @@ polkit_unix_group_equal (PolkitSubject *a,
 }
 
 static gchar *
-polkit_unix_group_to_string (PolkitSubject *subject)
+polkit_unix_group_to_string (PolkitIdentity *identity)
 {
-  PolkitUnixGroup *group = POLKIT_UNIX_GROUP (subject);
+  PolkitUnixGroup *group = POLKIT_UNIX_GROUP (identity);
   struct group *gr;
 
   gr = getgrgid (group->gid);
@@ -211,8 +211,8 @@ polkit_unix_group_to_string (PolkitSubject *subject)
 }
 
 static void
-subject_iface_init (PolkitSubjectIface *subject_iface)
+identity_iface_init (PolkitIdentityIface *identity_iface)
 {
-  subject_iface->equal     = polkit_unix_group_equal;
-  subject_iface->to_string = polkit_unix_group_to_string;
+  identity_iface->equal     = polkit_unix_group_equal;
+  identity_iface->to_string = polkit_unix_group_to_string;
 }

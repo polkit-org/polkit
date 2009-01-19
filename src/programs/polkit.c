@@ -31,7 +31,6 @@ static PolkitAuthority *authority;
 static gboolean opt_list_actions  = FALSE;
 static gboolean opt_list_users    = FALSE;
 static gboolean opt_list_groups   = FALSE;
-static gboolean opt_list_sessions = FALSE;
 static gboolean opt_list_authorizations  = FALSE;
 static gboolean opt_list_explicit_authorizations  = FALSE;
 static gboolean opt_check = FALSE;
@@ -44,6 +43,7 @@ static gboolean opt_show_version = FALSE;
 static gboolean opt_verbose = FALSE;
 
 static PolkitSubject *subject = NULL;
+static PolkitIdentity *identity = NULL;
 
 static gchar *action_id = NULL;
 
@@ -52,7 +52,6 @@ static gchar *action_id = NULL;
 static gboolean list_actions (void);
 static gboolean list_users (void);
 static gboolean list_groups (void);
-static gboolean list_sessions (void);
 static gboolean list_authorizations (void);
 static gboolean list_explicit_authorizations (void);
 
@@ -113,10 +112,6 @@ main (int argc, char *argv[])
             {
               opt_list_groups = TRUE;
             }
-          else if (strcmp (argv[n], "sessions") == 0)
-            {
-              opt_list_sessions = TRUE;
-            }
           else if (strcmp (argv[n], "authorizations") == 0)
             {
               opt_list_authorizations = TRUE;
@@ -132,10 +127,10 @@ main (int argc, char *argv[])
                   goto out;
                 }
 
-              subject = polkit_subject_from_string (argv[n], &error);
-              if (subject == NULL)
+              identity = polkit_identity_from_string (argv[n], &error);
+              if (identity == NULL)
                 {
-                  g_printerr ("Error parsing subject: %s\n", error->message);
+                  g_printerr ("Error parsing identity: %s\n", error->message);
                   g_error_free (error);
                   goto out;
                 }
@@ -193,10 +188,10 @@ main (int argc, char *argv[])
               goto out;
             }
 
-          subject = polkit_subject_from_string (argv[n], &error);
-          if (subject == NULL)
+          identity = polkit_identity_from_string (argv[n], &error);
+          if (identity == NULL)
             {
-              g_printerr ("Error parsing subject: %s\n", error->message);
+              g_printerr ("Error parsing identity: %s\n", error->message);
               g_error_free (error);
               goto out;
             }
@@ -221,10 +216,10 @@ main (int argc, char *argv[])
               goto out;
             }
 
-          subject = polkit_subject_from_string (argv[n], &error);
-          if (subject == NULL)
+          identity = polkit_identity_from_string (argv[n], &error);
+          if (identity == NULL)
             {
-              g_printerr ("Error parsing subject: %s\n", error->message);
+              g_printerr ("Error parsing identity: %s\n", error->message);
               g_error_free (error);
               goto out;
             }
@@ -284,10 +279,6 @@ main (int argc, char *argv[])
     {
       ret = list_groups ();
     }
-  else if (opt_list_sessions)
-    {
-      ret = list_sessions ();
-    }
   else if (opt_list_authorizations)
     {
       ret = list_authorizations ();
@@ -308,7 +299,7 @@ main (int argc, char *argv[])
     }
   else if (opt_grant)
     {
-      if (subject == NULL || action_id == NULL)
+      if (identity == NULL || action_id == NULL)
         {
           usage (argc, argv);
           goto out;
@@ -318,7 +309,7 @@ main (int argc, char *argv[])
     }
   else if (opt_revoke)
     {
-      if (subject == NULL || action_id == NULL)
+      if (identity == NULL || action_id == NULL)
         {
           usage (argc, argv);
           goto out;
@@ -338,6 +329,9 @@ main (int argc, char *argv[])
 
   if (subject != NULL)
     g_object_unref (subject);
+
+  if (identity != NULL)
+    g_object_unref (identity);
 
   g_free (action_id);
 
@@ -493,16 +487,16 @@ list_actions (void)
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-print_subjects (GList *subjects)
+print_identities (GList *identities)
 {
   GList *l;
 
-  for (l = subjects; l != NULL; l = l->next)
+  for (l = identities; l != NULL; l = l->next)
     {
-      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
+      PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
       gchar *s;
 
-      s = polkit_subject_to_string (subject);
+      s = polkit_identity_to_string (identity);
       g_print ("%s\n", s);
       g_free (s);
     }
@@ -515,12 +509,12 @@ list_users (void)
 {
   gboolean ret;
   GError *error;
-  GList *subjects;
+  GList *identities;
 
   ret = FALSE;
 
   error = NULL;
-  subjects = polkit_authority_enumerate_users_sync (authority,
+  identities = polkit_authority_enumerate_users_sync (authority,
                                                     NULL,
                                                     &error);
   if (error != NULL)
@@ -530,10 +524,10 @@ list_users (void)
       goto out;
     }
 
-  print_subjects (subjects);
+  print_identities (identities);
 
-  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
-  g_list_free (subjects);
+  g_list_foreach (identities, (GFunc) g_object_unref, NULL);
+  g_list_free (identities);
 
   ret = TRUE;
 
@@ -548,12 +542,12 @@ list_groups (void)
 {
   gboolean ret;
   GError *error;
-  GList *subjects;
+  GList *identities;
 
   ret = FALSE;
 
   error = NULL;
-  subjects = polkit_authority_enumerate_groups_sync (authority,
+  identities = polkit_authority_enumerate_groups_sync (authority,
                                                      NULL,
                                                      &error);
   if (error != NULL)
@@ -563,43 +557,10 @@ list_groups (void)
       goto out;
     }
 
-  print_subjects (subjects);
+  print_identities (identities);
 
-  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
-  g_list_free (subjects);
-
-  ret = TRUE;
-
- out:
-  return ret;
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static gboolean
-list_sessions (void)
-{
-  gboolean ret;
-  GError *error;
-  GList *subjects;
-
-  ret = FALSE;
-
-  error = NULL;
-  subjects = polkit_authority_enumerate_sessions_sync (authority,
-                                                       NULL,
-                                                       &error);
-  if (error != NULL)
-    {
-      g_printerr ("Error enumerating sessions: %s\n", error->message);
-      g_error_free (error);
-      goto out;
-    }
-
-  print_subjects (subjects);
-
-  g_list_foreach (subjects, (GFunc) g_object_unref, NULL);
-  g_list_free (subjects);
+  g_list_foreach (identities, (GFunc) g_object_unref, NULL);
+  g_list_free (identities);
 
   ret = TRUE;
 
@@ -801,9 +762,9 @@ list_explicit_authorizations (void)
 
   error = NULL;
   authorizations = polkit_authority_enumerate_authorizations_sync (authority,
-                                                            subject,
-                                                            NULL,
-                                                            &error);
+                                                                   identity,
+                                                                   NULL,
+                                                                   &error);
   if (error != NULL)
     {
       g_printerr ("Error enumerating authorizations: %s\n", error->message);
@@ -845,10 +806,11 @@ do_grant (void)
   ret = FALSE;
 
   authorization = polkit_authorization_new (action_id,
-                                            subject,
+                                            NULL, /* TODO: handle subject */
                                             FALSE); /* TODO: handle negative */
 
   if (!polkit_authority_add_authorization_sync (authority,
+                                                identity,
                                                 authorization,
                                                 NULL,
                                                 &error))
@@ -880,10 +842,11 @@ do_revoke (void)
   ret = FALSE;
 
   authorization = polkit_authorization_new (action_id,
-                                            subject,
+                                            NULL, /* TODO: handle subject */
                                             FALSE); /* TODO: handle negative */
 
   if (!polkit_authority_remove_authorization_sync (authority,
+                                                   identity,
                                                    authorization,
                                                    NULL,
                                                    &error))

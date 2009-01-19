@@ -150,14 +150,14 @@ polkit_backend_authority_enumerate_users_finish (PolkitBackendPendingCall *pendi
   EggDBusArraySeq *array;
   GList *l;
 
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
+  array = egg_dbus_array_seq_new (_POLKIT_TYPE_IDENTITY, (GDestroyNotify) g_object_unref, NULL, NULL);
 
   for (l = users; l != NULL; l = l->next)
     {
-      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
-      _PolkitSubject *real;
+      PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
+      _PolkitIdentity *real;
 
-      real = polkit_subject_get_real (subject);
+      real = polkit_identity_get_real (identity);
       egg_dbus_array_seq_add (array, real);
     }
 
@@ -193,14 +193,14 @@ polkit_backend_authority_enumerate_groups_finish (PolkitBackendPendingCall *pend
   EggDBusArraySeq *array;
   GList *l;
 
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
+  array = egg_dbus_array_seq_new (_POLKIT_TYPE_IDENTITY, (GDestroyNotify) g_object_unref, NULL, NULL);
 
   for (l = groups; l != NULL; l = l->next)
     {
-      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
-      _PolkitSubject *real;
+      PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
+      _PolkitIdentity *real;
 
-      real = polkit_subject_get_real (subject);
+      real = polkit_identity_get_real (identity);
       egg_dbus_array_seq_add (array, real);
     }
 
@@ -211,49 +211,6 @@ polkit_backend_authority_enumerate_groups_finish (PolkitBackendPendingCall *pend
 
   g_list_foreach (groups, (GFunc) g_object_unref, NULL);
   g_list_free (groups);
-
-  g_object_unref (pending_call);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-authority_handle_enumerate_sessions (_PolkitAuthority        *instance,
-                                     EggDBusMethodInvocation *method_invocation)
-{
-  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
-  PolkitBackendPendingCall *pending_call;
-
-  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
-
-  polkit_backend_authority_enumerate_sessions (server->authority, pending_call);
-}
-
-void
-polkit_backend_authority_enumerate_sessions_finish (PolkitBackendPendingCall *pending_call,
-                                                    GList                    *sessions)
-{
-  EggDBusArraySeq *array;
-  GList *l;
-
-  array = egg_dbus_array_seq_new (_POLKIT_TYPE_SUBJECT, (GDestroyNotify) g_object_unref, NULL, NULL);
-
-  for (l = sessions; l != NULL; l = l->next)
-    {
-      PolkitSubject *subject = POLKIT_SUBJECT (l->data);
-      _PolkitSubject *real;
-
-      real = polkit_subject_get_real (subject);
-      egg_dbus_array_seq_add (array, real);
-    }
-
-  _polkit_authority_handle_enumerate_sessions_finish (_polkit_backend_pending_call_get_method_invocation (pending_call),
-                                                      array);
-
-  g_object_unref (array);
-
-  g_list_foreach (sessions, (GFunc) g_object_unref, NULL);
-  g_list_free (sessions);
 
   g_object_unref (pending_call);
 }
@@ -298,21 +255,21 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendPendingCall  *
 
 static void
 authority_handle_enumerate_authorizations (_PolkitAuthority               *instance,
-                                           _PolkitSubject                 *real_subject,
+                                           _PolkitIdentity                 *real_identity,
                                            EggDBusMethodInvocation        *method_invocation)
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
   PolkitBackendPendingCall *pending_call;
-  PolkitSubject *subject;
+  PolkitIdentity *identity;
 
   pending_call = _polkit_backend_pending_call_new (method_invocation, server);
 
-  subject = polkit_subject_new_for_real (real_subject);
+  identity = polkit_identity_new_for_real (real_identity);
 
-  g_object_set_data_full (G_OBJECT (pending_call), "subject", subject, (GDestroyNotify) g_object_unref);
+  g_object_set_data_full (G_OBJECT (pending_call), "identity", identity, (GDestroyNotify) g_object_unref);
 
   polkit_backend_authority_enumerate_authorizations (server->authority,
-                                                     subject,
+                                                     identity,
                                                      pending_call);
 }
 
@@ -349,20 +306,26 @@ polkit_backend_authority_enumerate_authorizations_finish (PolkitBackendPendingCa
 
 static void
 authority_handle_add_authorization (_PolkitAuthority               *instance,
+                                    _PolkitIdentity                *real_identity,
                                     _PolkitAuthorization           *real_authorization,
                                     EggDBusMethodInvocation        *method_invocation)
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
   PolkitBackendPendingCall *pending_call;
+  PolkitIdentity *identity;
   PolkitAuthorization *authorization;
 
   pending_call = _polkit_backend_pending_call_new (method_invocation, server);
 
+  identity = polkit_identity_new_for_real (real_identity);
+
   authorization = polkit_authorization_new_for_real (real_authorization);
 
+  g_object_set_data_full (G_OBJECT (pending_call), "identity", identity, (GDestroyNotify) g_object_unref);
   g_object_set_data_full (G_OBJECT (pending_call), "authorization", authorization, (GDestroyNotify) g_object_unref);
 
   polkit_backend_authority_add_authorization (server->authority,
+                                              identity,
                                               authorization,
                                               pending_call);
 }
@@ -378,20 +341,26 @@ polkit_backend_authority_add_authorization_finish (PolkitBackendPendingCall  *pe
 
 static void
 authority_handle_remove_authorization (_PolkitAuthority               *instance,
+                                       _PolkitIdentity                *real_identity,
                                        _PolkitAuthorization           *real_authorization,
                                        EggDBusMethodInvocation        *method_invocation)
 {
   PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
   PolkitBackendPendingCall *pending_call;
+  PolkitIdentity *identity;
   PolkitAuthorization *authorization;
 
   pending_call = _polkit_backend_pending_call_new (method_invocation, server);
 
+  identity = polkit_identity_new_for_real (real_identity);
+
   authorization = polkit_authorization_new_for_real (real_authorization);
 
+  g_object_set_data_full (G_OBJECT (pending_call), "identity", identity, (GDestroyNotify) g_object_unref);
   g_object_set_data_full (G_OBJECT (pending_call), "authorization", authorization, (GDestroyNotify) g_object_unref);
 
   polkit_backend_authority_remove_authorization (server->authority,
+                                                 identity,
                                                  authorization,
                                                  pending_call);
 }
@@ -411,7 +380,6 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
   authority_iface->handle_enumerate_actions        = authority_handle_enumerate_actions;
   authority_iface->handle_enumerate_users          = authority_handle_enumerate_users;
   authority_iface->handle_enumerate_groups         = authority_handle_enumerate_groups;
-  authority_iface->handle_enumerate_sessions       = authority_handle_enumerate_sessions;
   authority_iface->handle_check_authorization      = authority_handle_check_authorization;
   authority_iface->handle_enumerate_authorizations = authority_handle_enumerate_authorizations;
   authority_iface->handle_add_authorization        = authority_handle_add_authorization;

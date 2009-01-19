@@ -42,16 +42,11 @@
         </arg>
         <arg choice="plain">
           <sbr/>
-          sessions
-          <arg><option>--verbose</option></arg>
-        </arg>
-        <arg choice="plain">
-          <sbr/>
           authorizations
         </arg>
         <arg choice="plain">
           <sbr/>
-          explicit-authorizations <replaceable>subject</replaceable>
+          explicit-authorizations <replaceable>identity</replaceable>
           <arg><option>--verbose</option></arg>
         </arg>
       </group>
@@ -65,13 +60,13 @@
 
     <cmdsynopsis>
       <command>polkit-1 grant</command>
-      <arg choice="plain"><replaceable>subject</replaceable></arg>
+      <arg choice="plain"><replaceable>identity</replaceable></arg>
       <arg choice="plain"><replaceable>action-id</replaceable></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
       <command>polkit-1 revoke</command>
-      <arg choice="plain"><replaceable>subject</replaceable></arg>
+      <arg choice="plain"><replaceable>identity</replaceable></arg>
       <arg choice="plain"><replaceable>action-id</replaceable></arg>
     </cmdsynopsis>
 
@@ -159,8 +154,9 @@
       </para>
       <para>
         Lists all users.
-        The returned identifiers can be used as <replaceable>subject</replaceable> parameters.
+        The returned identifiers can be used as <replaceable>identity</replaceable> parameters.
         Prints detailed information about each user if <option>--verbose</option> is given.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
       </para>
     </refsect2>
 
@@ -171,20 +167,9 @@
       </para>
       <para>
         Lists all groups.
-        The returned identifiers can be used as <replaceable>subject</replaceable> parameters.
+        The returned identifiers can be used as <replaceable>identity</replaceable> parameters.
         Prints detailed information about each group if <option>--verbose</option> is given.
-      </para>
-    </refsect2>
-
-    <refsect2>
-      <para>
-        <command>polkit-1 list sessions</command>
-        <arg><option>--verbose</option></arg>
-      </para>
-      <para>
-        Lists all sessions.
-        The returned identifiers can be used as <replaceable>subject</replaceable> parameters.
-        Prints detailed information about each session if <option>--verbose</option> is given.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
       </para>
     </refsect2>
 
@@ -199,12 +184,13 @@
 
     <refsect2>
       <para>
-        <command>polkit-1 list explicit-authorizations <replaceable>subject</replaceable></command>
+        <command>polkit-1 list explicit-authorizations <replaceable>identity</replaceable></command>
         <arg><option>--verbose</option></arg>
       </para>
       <para>
-        Lists all explicit authorizations for <replaceable>subject</replaceable>.
+        Lists all explicit authorizations for <replaceable>identity</replaceable>.
         Prints detailed information about each authorization if <option>--verbose</option> is given.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
       </para>
     </refsect2>
 
@@ -216,28 +202,31 @@
       </para>
       <para>
         Checks if <replaceable>subject</replaceable> is authorized for <replaceable>action-id</replaceable>.
+        See <xref linkend="polkit-1-subject"/> for details about <replaceable>subject</replaceable>.
       </para>
     </refsect2>
 
     <refsect2>
       <para>
         <command>polkit-1 grant</command>
-        <arg choice="plain"><replaceable>subject</replaceable></arg>
+        <arg choice="plain"><replaceable>identity</replaceable></arg>
         <arg choice="plain"><replaceable>action-id</replaceable></arg>
       </para>
       <para>
-        Grants an authorization to <replaceable>subject</replaceable> for <replaceable>action-id</replaceable>.
+        Grants an authorization to <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
       </para>
     </refsect2>
 
     <refsect2>
       <para>
         <command>polkit-1 revoke</command>
-        <arg choice="plain"><replaceable>subject</replaceable></arg>
+        <arg choice="plain"><replaceable>identity</replaceable></arg>
         <arg choice="plain"><replaceable>action-id</replaceable></arg>
       </para>
       <para>
-        Revokes an authorization from <replaceable>subject</replaceable> for <replaceable>action-id</replaceable>.
+        Revokes an authorization from <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
       </para>
     </refsect2>
 
@@ -317,6 +306,20 @@
       </para>
     </refsect2>
 
+  </refsect1>
+
+  <refsect1 id="polkit-1-subject">
+    <title>SUBJECTS</title>
+    <para>
+      TODO: Write me.
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkit-1-identity">
+    <title>IDENTITIES</title>
+    <para>
+      TODO: Write me.
+    </para>
   </refsect1>
 
   <refsect1><title>AUTHOR</title>

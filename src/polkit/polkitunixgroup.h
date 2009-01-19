@@ -43,8 +43,8 @@ typedef struct _PolkitUnixGroup PolkitUnixGroup;
 typedef struct _PolkitUnixGroupClass PolkitUnixGroupClass;
 
 GType           polkit_unix_group_get_type     (void) G_GNUC_CONST;
-PolkitSubject  *polkit_unix_group_new          (gid_t            gid);
-PolkitSubject  *polkit_unix_group_new_for_name (const gchar     *name,
+PolkitIdentity *polkit_unix_group_new          (gid_t            gid);
+PolkitIdentity *polkit_unix_group_new_for_name (const gchar     *name,
                                                 GError         **error);
 gid_t           polkit_unix_group_get_gid      (PolkitUnixGroup *group);
 void            polkit_unix_group_set_gid      (PolkitUnixGroup *group,
