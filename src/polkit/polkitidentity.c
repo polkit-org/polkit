@@ -65,6 +65,12 @@ polkit_identity_get_type (void)
   return iface_type;
 }
 
+guint
+polkit_identity_hash (PolkitIdentity *identity)
+{
+  return POLKIT_IDENTITY_GET_IFACE (identity)->hash (identity);
+}
+
 gboolean
 polkit_identity_equal (PolkitIdentity *a,
                       PolkitIdentity *b)

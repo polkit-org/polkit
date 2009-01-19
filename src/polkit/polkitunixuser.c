@@ -196,6 +196,16 @@ polkit_unix_user_equal (PolkitIdentity *a,
   return user_a->uid == user_b->uid;
 }
 
+static guint
+polkit_unix_user_hash (PolkitIdentity *identity)
+{
+  PolkitUnixUser *user;
+
+  user = POLKIT_UNIX_USER (identity);
+
+  return g_direct_hash (GINT_TO_POINTER (((gint) (user->uid)) * 2));
+}
+
 static gchar *
 polkit_unix_user_to_string (PolkitIdentity *identity)
 {
@@ -213,6 +223,7 @@ polkit_unix_user_to_string (PolkitIdentity *identity)
 static void
 identity_iface_init (PolkitIdentityIface *identity_iface)
 {
+  identity_iface->hash      = polkit_unix_user_hash;
   identity_iface->equal     = polkit_unix_user_equal;
   identity_iface->to_string = polkit_unix_user_to_string;
 }

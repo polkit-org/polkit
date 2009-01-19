@@ -183,6 +183,16 @@ polkit_unix_group_new_for_name (const gchar    *name,
   return identity;
 }
 
+static guint
+polkit_unix_group_hash (PolkitIdentity *identity)
+{
+  PolkitUnixGroup *group;
+
+  group = POLKIT_UNIX_GROUP (identity);
+
+  return g_direct_hash (GINT_TO_POINTER (((gint) (group->gid)) * 2 + 1));
+}
+
 static gboolean
 polkit_unix_group_equal (PolkitIdentity *a,
                         PolkitIdentity *b)
@@ -213,6 +223,7 @@ polkit_unix_group_to_string (PolkitIdentity *identity)
 static void
 identity_iface_init (PolkitIdentityIface *identity_iface)
 {
+  identity_iface->hash      = polkit_unix_group_hash;
   identity_iface->equal     = polkit_unix_group_equal;
   identity_iface->to_string = polkit_unix_group_to_string;
 }
