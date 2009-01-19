@@ -45,11 +45,7 @@ typedef struct
 struct AuthorizationStore;
 typedef struct AuthorizationStore AuthorizationStore;
 
-static AuthorizationStore *authorization_store_new (PolkitIdentity *identity);
-
 static void                authorization_store_free (AuthorizationStore *store);
-
-static GList              *authorization_store_get_all_authorizations (AuthorizationStore *store);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -474,6 +470,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   /* then see if there's a temporary authorization for the subject */
   if (check_temporary_authorization_for_subject (local_authority, subject, action_id))
     {
+      g_debug (" is authorized (has temporary authorization)");
       result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
       goto out;
     }
@@ -481,6 +478,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   /* then see if we have an authorization for the user */
   if (check_authorization_for_identity (local_authority, user_of_subject, action_id))
     {
+      g_debug (" is authorized (user identity has authorization)");
       result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
       goto out;
     }
@@ -493,20 +491,13 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
 
       if (check_authorization_for_identity (local_authority, group, action_id))
         {
+          g_debug (" is authorized (group identity has authorization)");
           result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
           goto out;
         }
     }
 
-#if 0
-  g_set_error (error,
-               POLKIT_ERROR,
-               POLKIT_ERROR_NOT_SUPPORTED,
-               "Not implemented (subject=%s action_id=%s)",
-               subject_str, action_id);
-#endif
-
-  /* TODO */
+  g_debug (" not authorized");
 
  out:
   g_free (subject_str);
@@ -516,6 +507,8 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
 
   if (user_of_subject != NULL)
     g_object_unref (user_of_subject);
+
+  g_debug (" ");
 
   return result;
 }
@@ -538,7 +531,7 @@ polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority 
 
   g_debug ("enumerating authorizations for %s", identity_str);
 
-  /* TODO: check caller is authorized */
+  /* TODO: check if caller is authorized */
 
   polkit_backend_authority_enumerate_authorizations_finish (pending_call,
                                                             get_authorizations_for_identity (local_authority,
@@ -578,6 +571,8 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
            subject_str != NULL ? subject_str : "<none>",
            action_id,
            is_negative);
+
+  /* TODO: check if caller is authorized */
 
   polkit_backend_pending_call_return_error (pending_call,
                                             POLKIT_ERROR,
@@ -620,6 +615,8 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
            action_id,
            is_negative);
 
+  /* TODO: check if caller is authorized */
+
   polkit_backend_pending_call_return_error (pending_call,
                                             POLKIT_ERROR,
                                             POLKIT_ERROR_NOT_SUPPORTED,
@@ -642,6 +639,12 @@ struct AuthorizationStore
   GList *temporary_authorizations;
 
 };
+
+static AuthorizationStore *authorization_store_new (PolkitIdentity *identity);
+static GList              *authorization_store_get_all_authorizations (AuthorizationStore *store);
+
+static gboolean            authorization_store_has_permanent_authorization (AuthorizationStore *store,
+                                                                            const gchar *action_id);
 
 /* private */
 static void  authorization_store_reload_permanent_authorizations (AuthorizationStore *store);
@@ -740,6 +743,10 @@ authorization_store_reload_permanent_authorizations (AuthorizationStore *store)
       gboolean is_negative;
       PolkitAuthorization *authorization;
 
+      /* skip blank lines and comments */
+      if (strlen (line) == 0 || line[0] == '#')
+        continue;
+
       tokens = g_strsplit (line, " ", 0);
       num_tokens = g_strv_length (tokens);
 
@@ -777,6 +784,32 @@ authorization_store_get_all_authorizations (AuthorizationStore *store)
   return result;
 }
 
+static gboolean
+authorization_store_has_permanent_authorization (AuthorizationStore *store,
+                                                 const gchar *action_id)
+{
+  GList *l;
+  gboolean ret;
+
+  ret = FALSE;
+
+  for (l = store->authorizations; l != NULL; l = l->next)
+    {
+      PolkitAuthorization *authorization = POLKIT_AUTHORIZATION (l->data);
+      const gchar *authorization_action_id;
+
+      authorization_action_id = polkit_authorization_get_action_id (authorization);
+      if (strcmp (authorization_action_id, action_id) == 0)
+        {
+          ret = TRUE;
+          goto out;
+        }
+    }
+
+ out:
+  return ret;
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static AuthorizationStore *
@@ -811,8 +844,19 @@ check_authorization_for_identity (PolkitBackendLocalAuthority *authority,
                                   PolkitIdentity              *identity,
                                   const gchar                 *action_id)
 {
-  /* TODO */
-  return FALSE;
+  AuthorizationStore *store;
+  gboolean result;
+
+  result = FALSE;
+
+  store = get_authorization_store_for_identity (authority, identity);
+  if (store == NULL)
+    goto out;
+
+  result = authorization_store_has_permanent_authorization (store, action_id);
+
+ out:
+  return result;
 }
 
 static gboolean
@@ -838,6 +882,8 @@ get_authorizations_for_identity (PolkitBackendLocalAuthority *authority,
 {
   AuthorizationStore *store;
   GList *result;
+
+  result = NULL;
 
   store = get_authorization_store_for_identity (authority, identity);
   if (store == NULL)
