@@ -60,7 +60,7 @@ static gboolean check_authorization_for_identity (PolkitBackendLocalAuthority *a
                                                   PolkitIdentity              *identity,
                                                   const gchar                 *action_id);
 
-static gboolean check_temporary_authorization_for_subject (PolkitBackendLocalAuthority *authority,
+static gboolean check_temporary_authorization_for_identity (PolkitBackendLocalAuthority *authority,
                                                            PolkitIdentity              *identity,
                                                            PolkitSubject               *subject,
                                                            const gchar                 *action_id);
@@ -481,7 +481,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   /* TODO: first see if there's an implicit authorization for subject available */
 
   /* then see if there's a temporary authorization for the subject */
-  if (check_temporary_authorization_for_subject (local_authority, user_of_subject, subject, action_id))
+  if (check_temporary_authorization_for_identity (local_authority, user_of_subject, subject, action_id))
     {
       g_debug (" is authorized (has temporary authorization)");
       result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
@@ -496,7 +496,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       goto out;
     }
 
-  /* then see if we have an authorization for any of the groups the user is in */
+  /* then see if we have a permanent authorization for any of the groups the user is in */
   groups_of_user = get_groups_for_user (local_authority, user_of_subject);
   for (l = groups_of_user; l != NULL; l = l->next)
     {
@@ -1147,10 +1147,10 @@ check_authorization_for_identity (PolkitBackendLocalAuthority *authority,
 }
 
 static gboolean
-check_temporary_authorization_for_subject (PolkitBackendLocalAuthority *authority,
-                                           PolkitIdentity              *identity,
-                                           PolkitSubject               *subject,
-                                           const gchar                 *action_id)
+check_temporary_authorization_for_identity (PolkitBackendLocalAuthority *authority,
+                                            PolkitIdentity              *identity,
+                                            PolkitSubject               *subject,
+                                            const gchar                 *action_id)
 {
   AuthorizationStore *store;
   gboolean result;
