@@ -118,6 +118,7 @@ static PolkitAuthorizationResult check_authorization_sync (PolkitBackendAuthorit
                                                            PolkitSubject                  *subject,
                                                            const gchar                    *action_id,
                                                            PolkitCheckAuthorizationFlags   flags,
+                                                           PolkitImplicitAuthorization    *out_implicit_authorization,
                                                            GError                        **error);
 
 static void polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
@@ -358,6 +359,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
   gchar *user_of_inquirer_str;
   gchar *user_of_subject_str;
   PolkitAuthorizationResult result;
+  PolkitImplicitAuthorization implicit_authorization;
   GError *error;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
@@ -420,6 +422,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
                                          inquirer,
                                          "org.freedesktop.policykit.read",
                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE, /* no user interaction */
+                                         NULL,
                                          &error);
 
       if (error != NULL)
@@ -440,16 +443,20 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
         }
     }
 
-  result = check_authorization_sync (authority, subject, action_id, flags, &error);
+  result = check_authorization_sync (authority,
+                                     subject,
+                                     action_id,
+                                     flags,
+                                     &implicit_authorization,
+                                     &error);
   if (error != NULL)
     {
       polkit_backend_pending_call_return_gerror (pending_call, error);
       g_error_free (error);
+      goto out;
     }
-  else
-    {
-      polkit_backend_authority_check_authorization_finish (pending_call, result);
-    }
+
+  polkit_backend_authority_check_authorization_finish (pending_call, result);
 
  out:
 
@@ -472,15 +479,21 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
                           PolkitSubject                  *subject,
                           const gchar                    *action_id,
                           PolkitCheckAuthorizationFlags   flags,
+                          PolkitImplicitAuthorization    *out_implicit_authorization,
                           GError                        **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
   PolkitAuthorizationResult result;
   PolkitIdentity *user_of_subject;
+  PolkitSubject *session_for_subject;
   gchar *subject_str;
   GList *groups_of_user;
   GList *l;
+  PolkitActionDescription *action_desc;
+  gboolean session_is_local;
+  gboolean session_is_active;
+  PolkitImplicitAuthorization implicit_authorization;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
@@ -490,12 +503,31 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   user_of_subject = NULL;
   groups_of_user = NULL;
   subject_str = NULL;
+  session_for_subject = NULL;
+
+  session_is_local = FALSE;
+  session_is_active = FALSE;
 
   subject_str = polkit_subject_to_string (subject);
 
   g_debug ("checking whether %s is authorized for %s",
            subject_str,
            action_id);
+
+  /* get the action description */
+  action_desc = polkit_backend_action_pool_get_action (priv->action_pool,
+                                                       action_id,
+                                                       NULL);
+
+  if (action_desc == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Action %s is not registered",
+                   action_id);
+      goto out;
+    }
 
   /* every subject has a user */
   user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
@@ -511,7 +543,44 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       goto out;
     }
 
-  /* TODO: first see if there's an implicit authorization for subject available */
+  /* a subject *may* be in a session */
+  session_for_subject = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                                subject,
+                                                                                NULL);
+  g_debug ("  %p", session_for_subject);
+  if (session_for_subject != NULL)
+    {
+      session_is_local = polkit_backend_session_monitor_is_session_local (priv->session_monitor, session_for_subject);
+      session_is_active = polkit_backend_session_monitor_is_session_active (priv->session_monitor, session_for_subject);
+
+      g_debug (" subject is in session %s (local=%d active=%d)",
+               polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session_for_subject)),
+               session_is_local,
+               session_is_active);
+    }
+
+  /* find the implicit authorization to use; it depends on is_local and is_active */
+  if (session_is_local)
+    {
+      if (session_is_active)
+        implicit_authorization = polkit_action_description_get_implicit_active (action_desc);
+      else
+        implicit_authorization = polkit_action_description_get_implicit_inactive (action_desc);
+    }
+  else
+    {
+      implicit_authorization = polkit_action_description_get_implicit_any (action_desc);
+    }
+
+  /* first see if there's an implicit authorization for subject available */
+  if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED)
+    {
+      g_debug (" is authorized (has implicit authorization local=%d active=%d)",
+               session_is_local,
+               session_is_active);
+      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+      goto out;
+    }
 
   /* then see if there's a temporary authorization for the subject */
   if (check_temporary_authorization_for_identity (local_authority, user_of_subject, subject, action_id))
@@ -543,8 +612,21 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
         }
     }
 
-  g_debug (" not authorized");
+  if (implicit_authorization != POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED)
+    {
+      result = POLKIT_AUTHORIZATION_RESULT_CHALLENGE;
 
+      /* return implicit_authorization so the caller can use an authentication agent if applicable */
+      if (out_implicit_authorization != NULL)
+        *out_implicit_authorization = implicit_authorization;
+
+      g_debug (" challenge (implicit_authorization = %s)",
+               polkit_implicit_authorization_to_string (implicit_authorization));
+    }
+  else
+    {
+      g_debug (" not authorized");
+    }
  out:
   g_free (subject_str);
 
@@ -553,6 +635,12 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
 
   if (user_of_subject != NULL)
     g_object_unref (user_of_subject);
+
+  if (session_for_subject != NULL)
+    g_object_unref (session_for_subject);
+
+  if (action_desc != NULL)
+    g_object_unref (action_desc);
 
   g_debug (" ");
 

@@ -55,6 +55,12 @@ PolkitSubject               *polkit_backend_session_monitor_get_session_for_subj
                                                                                      PolkitSubject               *subject,
                                                                                      GError                     **error);
 
+gboolean                     polkit_backend_session_monitor_is_session_local  (PolkitBackendSessionMonitor *monitor,
+                                                                               PolkitSubject               *session);
+
+gboolean                     polkit_backend_session_monitor_is_session_active (PolkitBackendSessionMonitor *monitor,
+                                                                               PolkitSubject               *session);
+
 G_END_DECLS
 
 #endif /* __POLKIT_BACKEND_SESSION_MONITOR_H */

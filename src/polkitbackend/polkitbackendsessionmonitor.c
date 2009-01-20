@@ -141,7 +141,7 @@ manager_seat_added (CkManager   *manager,
 {
   PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
 
-  g_debug ("seat %s added", object_path);
+  //g_debug ("seat %s added", object_path);
 
   add_seat (monitor, object_path);
 }
@@ -153,7 +153,7 @@ manager_seat_removed (CkManager   *manager,
 {
   PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
 
-  g_debug ("seat %s removed", object_path);
+  //g_debug ("seat %s removed", object_path);
 
   remove_seat (monitor, object_path);
 }
@@ -165,7 +165,7 @@ seat_session_added (CkSeat      *seat,
 {
   PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
 
-  g_debug ("session %s added", object_path);
+  //g_debug ("session %s added", object_path);
 
   add_session (monitor, object_path);
 }
@@ -177,7 +177,7 @@ seat_session_removed (CkSeat      *seat,
 {
   PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
 
-  g_debug ("session %s removed", object_path);
+  //g_debug ("session %s removed", object_path);
 
   remove_session (monitor, object_path);
 }
@@ -191,9 +191,7 @@ session_active_changed (CkSession   *session,
 
   object_proxy = egg_dbus_interface_proxy_get_object_proxy (EGG_DBUS_INTERFACE_PROXY (session));
 
-  g_debug ("session %s active changed to %d",
-           egg_dbus_object_proxy_get_object_path (object_proxy),
-           is_active);
+  //g_debug ("session %s active changed to %d", egg_dbus_object_proxy_get_object_path (object_proxy), is_active);
 
   egg_dbus_object_proxy_invalidate_properties (object_proxy);
 }
@@ -452,7 +450,23 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
 
   session = NULL;
 
-  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+  if (POLKIT_IS_UNIX_PROCESS (subject))
+    {
+      gchar *session_id;
+
+      if (!ck_manager_get_session_for_unix_process_sync (monitor->ck_manager,
+                                                         EGG_DBUS_CALL_FLAGS_NONE,
+                                                         polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)),
+                                                         &session_id,
+                                                         NULL,
+                                                         error))
+        goto out;
+
+      session = polkit_unix_session_new (session_id);
+
+      g_free (session_id);
+    }
+  else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
       pid_t pid;
       gchar *session_id;
@@ -490,5 +504,60 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
  out:
 
   return session;
+}
+
+gboolean
+polkit_backend_session_monitor_is_session_local  (PolkitBackendSessionMonitor *monitor,
+                                                  PolkitSubject               *session)
+{
+  EggDBusObjectProxy *object_proxy;
+  const gchar *session_id;
+  CkSession *ck_session;
+  gboolean ret;
+
+  g_return_val_if_fail (POLKIT_IS_UNIX_SESSION (session), FALSE);
+
+  ret = FALSE;
+
+  session_id = polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session));
+
+  object_proxy = egg_dbus_hash_map_lookup (monitor->session_object_path_to_object_proxy, session_id);
+  if (object_proxy == NULL)
+    goto out;
+
+  ck_session = CK_QUERY_INTERFACE_SESSION (object_proxy);
+
+  ret = ck_session_get_is_local (ck_session);
+
+ out:
+  return ret;
+}
+
+
+gboolean
+polkit_backend_session_monitor_is_session_active (PolkitBackendSessionMonitor *monitor,
+                                                  PolkitSubject               *session)
+{
+  EggDBusObjectProxy *object_proxy;
+  const gchar *session_id;
+  CkSession *ck_session;
+  gboolean ret;
+
+  g_return_val_if_fail (POLKIT_IS_UNIX_SESSION (session), FALSE);
+
+  ret = FALSE;
+
+  session_id = polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session));
+
+  object_proxy = egg_dbus_hash_map_lookup (monitor->session_object_path_to_object_proxy, session_id);
+  if (object_proxy == NULL)
+    goto out;
+
+  ck_session = CK_QUERY_INTERFACE_SESSION (object_proxy);
+
+  ret = ck_session_get_active (ck_session);
+
+ out:
+  return ret;
 }
 

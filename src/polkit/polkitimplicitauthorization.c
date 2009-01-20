@@ -85,8 +85,6 @@ polkit_implicit_authorization_from_string (const gchar *string,
   if (out_implicit_authorization != NULL)
     *out_implicit_authorization = result;
 
-  g_debug ("parsed '%s' to %d", string, result);
-
   return ret;
 }
 
