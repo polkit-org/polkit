@@ -178,5 +178,17 @@
       </arg>
     </method>
 
+    <method name="RegisterAuthenticationAgent">
+      <arg name="object_path" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="Path of authentication agent object on the unique name of the caller"/>
+      </arg>
+    </method>
+
+    <method name="UnregisterAuthenticationAgent">
+      <arg name="object_path" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="Path of authentication agent object on the unique name of the caller"/>
+      </arg>
+    </method>
+
   </interface>
 </node>

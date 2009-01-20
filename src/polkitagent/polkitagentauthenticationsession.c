@@ -36,9 +36,9 @@
 #include <sys/wait.h>
 #include <pwd.h>
 
-#include "polkitauthenticationsession.h"
+#include "polkitagentauthenticationsession.h"
 
-struct _PolkitAuthenticationSession
+struct _PolkitAgentAuthenticationSession
 {
   GObject parent_instance;
 
@@ -56,62 +56,62 @@ struct _PolkitAuthenticationSession
   gboolean success;
   gboolean helper_is_running;
 
-  PolkitAuthenticationSessionConversationPromptEchoOff func_prompt_echo_off;
-  PolkitAuthenticationSessionConversationPromptEchoOn func_prompt_echo_on;
-  PolkitAuthenticationSessionConversationErrorMessage func_error_message;
-  PolkitAuthenticationSessionConversationTextInfo func_text_info;
-  PolkitAuthenticationSessionDone func_done;
+  PolkitAgentAuthenticationSessionConversationPromptEchoOff func_prompt_echo_off;
+  PolkitAgentAuthenticationSessionConversationPromptEchoOn func_prompt_echo_on;
+  PolkitAgentAuthenticationSessionConversationErrorMessage func_error_message;
+  PolkitAgentAuthenticationSessionConversationTextInfo func_text_info;
+  PolkitAgentAuthenticationSessionDone func_done;
   void *user_data;
 };
 
-struct _PolkitAuthenticationSessionClass
+struct _PolkitAgentAuthenticationSessionClass
 {
   GObjectClass parent_class;
 
 };
 
-G_DEFINE_TYPE (PolkitAuthenticationSession, polkit_authentication_session, G_TYPE_OBJECT);
+G_DEFINE_TYPE (PolkitAgentAuthenticationSession, polkit_agent_authentication_session, G_TYPE_OBJECT);
 
 static void
-polkit_authentication_session_init (PolkitAuthenticationSession *session)
+polkit_agent_authentication_session_init (PolkitAgentAuthenticationSession *session)
 {
 }
 
 static void
-polkit_authentication_session_finalize (GObject *object)
+polkit_agent_authentication_session_finalize (GObject *object)
 {
-  PolkitAuthenticationSession *session;
+  PolkitAgentAuthenticationSession *session;
 
-  session = POLKIT_AUTHENTICATION_SESSION (object);
+  session = POLKIT_AGENT_AUTHENTICATION_SESSION (object);
 
   g_free (session->cookie);
   if (session->identity != NULL)
     g_object_unref (session->identity);
 
-  if (G_OBJECT_CLASS (polkit_authentication_session_parent_class)->finalize != NULL)
-    G_OBJECT_CLASS (polkit_authentication_session_parent_class)->finalize (object);
+  if (G_OBJECT_CLASS (polkit_agent_authentication_session_parent_class)->finalize != NULL)
+    G_OBJECT_CLASS (polkit_agent_authentication_session_parent_class)->finalize (object);
 }
 
 static void
-polkit_authentication_session_class_init (PolkitAuthenticationSessionClass *klass)
+polkit_agent_authentication_session_class_init (PolkitAgentAuthenticationSessionClass *klass)
 {
   GObjectClass *gobject_class;
 
   gobject_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->finalize = polkit_authentication_session_finalize;
+  gobject_class->finalize = polkit_agent_authentication_session_finalize;
 
 
 
 }
 
-PolkitAuthenticationSession *
-polkit_authentication_session_new (PolkitIdentity *identity,
+PolkitAgentAuthenticationSession *
+polkit_agent_authentication_session_new (PolkitIdentity *identity,
                                  const gchar    *cookie)
 {
-  PolkitAuthenticationSession *session;
+  PolkitAgentAuthenticationSession *session;
 
-  session = POLKIT_AUTHENTICATION_SESSION (g_object_new (POLKIT_TYPE_AUTHENTICATION_SESSION, NULL));
+  session = POLKIT_AGENT_AUTHENTICATION_SESSION (g_object_new (POLKIT_AGENT_TYPE_AUTHENTICATION_SESSION, NULL));
 
   session->identity = g_object_ref (identity);
   session->cookie = g_strdup (cookie);
@@ -120,12 +120,12 @@ polkit_authentication_session_new (PolkitIdentity *identity,
 }
 
 void
-polkit_authentication_session_set_functions (PolkitAuthenticationSession *session,
-                                           PolkitAuthenticationSessionConversationPromptEchoOff func_prompt_echo_off,
-                                           PolkitAuthenticationSessionConversationPromptEchoOn func_prompt_echo_on,
-                                           PolkitAuthenticationSessionConversationErrorMessage func_error_message,
-                                           PolkitAuthenticationSessionConversationTextInfo func_text_info,
-                                           PolkitAuthenticationSessionDone func_done,
+polkit_agent_authentication_session_set_functions (PolkitAgentAuthenticationSession *session,
+                                           PolkitAgentAuthenticationSessionConversationPromptEchoOff func_prompt_echo_off,
+                                           PolkitAgentAuthenticationSessionConversationPromptEchoOn func_prompt_echo_on,
+                                           PolkitAgentAuthenticationSessionConversationErrorMessage func_error_message,
+                                           PolkitAgentAuthenticationSessionConversationTextInfo func_text_info,
+                                           PolkitAgentAuthenticationSessionDone func_done,
                                            void *user_data)
 {
   session->func_prompt_echo_off = func_prompt_echo_off;
@@ -139,7 +139,7 @@ polkit_authentication_session_set_functions (PolkitAuthenticationSession *sessio
 static void
 child_watch_func (GPid pid, gint status, gpointer user_data)
 {
-  PolkitAuthenticationSession *session = POLKIT_AUTHENTICATION_SESSION (user_data);
+  PolkitAgentAuthenticationSession *session = POLKIT_AGENT_AUTHENTICATION_SESSION (user_data);
   gint exit_code;
   gboolean input_was_bogus;
 
@@ -163,7 +163,7 @@ child_watch_func (GPid pid, gint status, gpointer user_data)
 static gboolean
 io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_data)
 {
-  PolkitAuthenticationSession *session = POLKIT_AUTHENTICATION_SESSION (user_data);
+  PolkitAgentAuthenticationSession *session = POLKIT_AGENT_AUTHENTICATION_SESSION (user_data);
   char *line;
   size_t line_len;
   gchar *id;
@@ -259,7 +259,7 @@ io_watch_have_data (GIOChannel *channel, GIOCondition condition, gpointer user_d
 }
 
 gboolean
-polkit_authentication_session_initiate_auth (PolkitAuthenticationSession *session)
+polkit_agent_authentication_session_initiate_auth (PolkitAgentAuthenticationSession *session)
 {
   uid_t uid;
   GError *error;
@@ -335,7 +335,7 @@ error:
 
 
 void
-polkit_authentication_session_cancel (PolkitAuthenticationSession *session)
+polkit_agent_authentication_session_cancel (PolkitAgentAuthenticationSession *session)
 {
   GPid pid;
 

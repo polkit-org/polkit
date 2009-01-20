@@ -35,6 +35,14 @@ struct _PolkitBackendServer
   GObject parent_instance;
 
   PolkitBackendAuthority *authority;
+
+  EggDBusConnection *system_bus;
+
+  EggDBusObjectProxy *bus_proxy;
+
+  EggDBusBus *bus;
+
+  gulong name_owner_changed_id;
 };
 
 struct _PolkitBackendServerClass
@@ -60,6 +68,12 @@ polkit_backend_server_finalize (GObject *object)
 
   server = POLKIT_BACKEND_SERVER (object);
 
+  g_signal_handler_disconnect (server->bus, server->name_owner_changed_id);
+
+  g_object_unref (server->bus_proxy);
+
+  g_object_unref (server->system_bus);
+
   g_object_unref (server->authority);
 }
 
@@ -73,6 +87,16 @@ polkit_backend_server_class_init (PolkitBackendServerClass *klass)
   gobject_class->finalize = polkit_backend_server_finalize;
 }
 
+static void
+name_owner_changed (EggDBusBus *instance,
+                    gchar      *name,
+                    gchar      *old_owner,
+                    gchar      *new_owner,
+                    PolkitBackendServer *server)
+{
+  polkit_backend_authority_system_bus_name_owner_changed (server->authority, name, old_owner, new_owner);
+}
+
 PolkitBackendServer *
 polkit_backend_server_new (PolkitBackendAuthority *authority)
 {
@@ -81,6 +105,20 @@ polkit_backend_server_new (PolkitBackendAuthority *authority)
   server = POLKIT_BACKEND_SERVER (g_object_new (POLKIT_BACKEND_TYPE_SERVER, NULL));
 
   server->authority = g_object_ref (authority);
+
+  /* TODO: it's a bit wasteful listening to all name-owner-changed signals... needs to be optimized */
+
+  server->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+  server->bus_proxy = egg_dbus_connection_get_object_proxy (server->system_bus,
+                                                            "org.freedesktop.DBus",
+                                                            "/org/freedesktop/DBus");
+
+  server->bus = EGG_DBUS_QUERY_INTERFACE_BUS (server->bus_proxy);
+
+  server->name_owner_changed_id = g_signal_connect (server->bus,
+                                                    "name-owner-changed",
+                                                    (GCallback) name_owner_changed,
+                                                    server);
 
   return server;
 }
@@ -387,13 +425,63 @@ polkit_backend_authority_remove_authorization_finish (PolkitBackendPendingCall  
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+authority_handle_register_authentication_agent (_PolkitAuthority               *instance,
+                                                const gchar                    *object_path,
+                                                EggDBusMethodInvocation        *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  polkit_backend_authority_register_authentication_agent (server->authority,
+                                                          object_path,
+                                                          pending_call);
+}
+
+void
+polkit_backend_authority_register_authentication_agent_finish (PolkitBackendPendingCall  *pending_call)
+{
+  _polkit_authority_handle_register_authentication_agent_finish (_polkit_backend_pending_call_get_method_invocation (pending_call));
+  g_object_unref (pending_call);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+authority_handle_unregister_authentication_agent (_PolkitAuthority               *instance,
+                                                  const gchar                    *object_path,
+                                                  EggDBusMethodInvocation        *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  polkit_backend_authority_unregister_authentication_agent (server->authority,
+                                                          object_path,
+                                                          pending_call);
+}
+
+void
+polkit_backend_authority_unregister_authentication_agent_finish (PolkitBackendPendingCall  *pending_call)
+{
+  _polkit_authority_handle_unregister_authentication_agent_finish (_polkit_backend_pending_call_get_method_invocation (pending_call));
+  g_object_unref (pending_call);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
 authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
-  authority_iface->handle_enumerate_actions        = authority_handle_enumerate_actions;
-  authority_iface->handle_enumerate_users          = authority_handle_enumerate_users;
-  authority_iface->handle_enumerate_groups         = authority_handle_enumerate_groups;
-  authority_iface->handle_check_authorization      = authority_handle_check_authorization;
-  authority_iface->handle_enumerate_authorizations = authority_handle_enumerate_authorizations;
-  authority_iface->handle_add_authorization        = authority_handle_add_authorization;
-  authority_iface->handle_remove_authorization     = authority_handle_remove_authorization;
+  authority_iface->handle_enumerate_actions               = authority_handle_enumerate_actions;
+  authority_iface->handle_enumerate_users                 = authority_handle_enumerate_users;
+  authority_iface->handle_enumerate_groups                = authority_handle_enumerate_groups;
+  authority_iface->handle_check_authorization             = authority_handle_check_authorization;
+  authority_iface->handle_enumerate_authorizations        = authority_handle_enumerate_authorizations;
+  authority_iface->handle_add_authorization               = authority_handle_add_authorization;
+  authority_iface->handle_remove_authorization            = authority_handle_remove_authorization;
+  authority_iface->handle_register_authentication_agent   = authority_handle_register_authentication_agent;
+  authority_iface->handle_unregister_authentication_agent = authority_handle_unregister_authentication_agent;
 }

@@ -40,6 +40,8 @@ typedef struct
 
   GHashTable *hash_identity_to_authority_store;
 
+  GHashTable *hash_session_to_authentication_agent;
+
 } PolkitBackendLocalAuthorityPrivate;
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -49,10 +51,18 @@ typedef struct AuthorizationStore AuthorizationStore;
 
 static void                authorization_store_free (AuthorizationStore *store);
 
-/* ---------------------------------------------------------------------------------------------------- */
-
 static AuthorizationStore *get_authorization_store_for_identity (PolkitBackendLocalAuthority *authority,
                                                                  PolkitIdentity *identity);
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+struct AuthenticationAgent;
+typedef struct AuthenticationAgent AuthenticationAgent;
+
+static void                authentication_agent_free (AuthenticationAgent *agent);
+
+static AuthenticationAgent *get_authentication_agent_for_subject (PolkitBackendLocalAuthority *authority,
+                                                                  PolkitSubject *subject);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -82,6 +92,11 @@ static gboolean remove_authorization_for_identity (PolkitBackendLocalAuthority *
                                                    GError                     **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+static void polkit_backend_local_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
+                                                                          const gchar              *name,
+                                                                          const gchar              *old_owner,
+                                                                          const gchar              *new_owner);
 
 static void polkit_backend_local_authority_enumerate_actions  (PolkitBackendAuthority   *authority,
                                                                const gchar              *locale,
@@ -119,6 +134,14 @@ static void polkit_backend_local_authority_remove_authorization (PolkitBackendAu
                                                                  PolkitAuthorization      *authorization,
                                                                  PolkitBackendPendingCall *pending_call);
 
+static void polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
+                                                                          const gchar              *object_path,
+                                                                          PolkitBackendPendingCall *pending_call);
+
+static void polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
+                                                                            const gchar              *object_path,
+                                                                            PolkitBackendPendingCall *pending_call);
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
@@ -142,6 +165,11 @@ polkit_backend_local_authority_init (PolkitBackendLocalAuthority *local_authorit
                                                                   (GDestroyNotify) g_object_unref,
                                                                   (GDestroyNotify) authorization_store_free);
 
+  priv->hash_session_to_authentication_agent = g_hash_table_new_full ((GHashFunc) polkit_subject_hash,
+                                                                      (GEqualFunc) polkit_subject_equal,
+                                                                      (GDestroyNotify) g_object_unref,
+                                                                      (GDestroyNotify) authentication_agent_free);
+
   priv->session_monitor = polkit_backend_session_monitor_new ();
 }
 
@@ -162,6 +190,8 @@ polkit_backend_local_authority_finalize (GObject *object)
 
   g_hash_table_unref (priv->hash_identity_to_authority_store);
 
+  g_hash_table_unref (priv->hash_session_to_authentication_agent);
+
   G_OBJECT_CLASS (polkit_backend_local_authority_parent_class)->finalize (object);
 }
 
@@ -176,13 +206,16 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
 
   gobject_class->finalize = polkit_backend_local_authority_finalize;
 
-  authority_class->enumerate_actions        = polkit_backend_local_authority_enumerate_actions;
-  authority_class->enumerate_users          = polkit_backend_local_authority_enumerate_users;
-  authority_class->enumerate_groups         = polkit_backend_local_authority_enumerate_groups;
-  authority_class->check_authorization      = polkit_backend_local_authority_check_authorization;
-  authority_class->enumerate_authorizations = polkit_backend_local_authority_enumerate_authorizations;
-  authority_class->add_authorization        = polkit_backend_local_authority_add_authorization;
-  authority_class->remove_authorization     = polkit_backend_local_authority_remove_authorization;
+  authority_class->system_bus_name_owner_changed   = polkit_backend_local_authority_system_bus_name_owner_changed;
+  authority_class->enumerate_actions               = polkit_backend_local_authority_enumerate_actions;
+  authority_class->enumerate_users                 = polkit_backend_local_authority_enumerate_users;
+  authority_class->enumerate_groups                = polkit_backend_local_authority_enumerate_groups;
+  authority_class->check_authorization             = polkit_backend_local_authority_check_authorization;
+  authority_class->enumerate_authorizations        = polkit_backend_local_authority_enumerate_authorizations;
+  authority_class->add_authorization               = polkit_backend_local_authority_add_authorization;
+  authority_class->remove_authorization            = polkit_backend_local_authority_remove_authorization;
+  authority_class->register_authentication_agent   = polkit_backend_local_authority_register_authentication_agent;
+  authority_class->unregister_authentication_agent = polkit_backend_local_authority_unregister_authentication_agent;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendLocalAuthorityPrivate));
 }
@@ -678,6 +711,203 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
  out:
 
   g_free (subject_str);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+struct AuthenticationAgent
+{
+  PolkitSubject *session;
+
+  gchar *object_path;
+  gchar *unique_system_bus_name;
+};
+
+static void
+authentication_agent_free (AuthenticationAgent *agent)
+{
+  g_object_unref (agent->session);
+  g_free (agent->object_path);
+  g_free (agent->unique_system_bus_name);
+  g_free (agent);
+}
+
+static AuthenticationAgent *
+authentication_agent_new (PolkitSubject *session,
+                          const gchar *unique_system_bus_name,
+                          const gchar *object_path)
+{
+  AuthenticationAgent *agent;
+
+  agent = g_new0 (AuthenticationAgent, 1);
+
+  agent->session = g_object_ref (session);
+  agent->object_path = g_strdup (object_path);
+  agent->unique_system_bus_name = g_strdup (unique_system_bus_name);
+
+  return agent;
+}
+
+static AuthenticationAgent *
+get_authentication_agent_for_subject (PolkitBackendLocalAuthority *authority,
+                                      PolkitSubject *subject)
+{
+  PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitSubject *session_for_subject;
+  AuthenticationAgent *agent;
+
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
+
+  agent = NULL;
+  session_for_subject = NULL;
+
+  session_for_subject = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                                subject,
+                                                                                NULL);
+  if (session_for_subject == NULL)
+    goto out;
+
+  agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_subject);
+
+ out:
+  if (session_for_subject != NULL)
+    g_object_unref (session_for_subject);
+}
+
+static AuthenticationAgent *
+get_authentication_agent_by_unique_system_bus_name (PolkitBackendLocalAuthority *authority,
+                                                    const gchar *unique_system_bus_name)
+{
+  PolkitBackendLocalAuthorityPrivate *priv;
+  GHashTableIter hash_iter;
+  AuthenticationAgent *agent;
+
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
+
+  g_hash_table_iter_init (&hash_iter, priv->hash_session_to_authentication_agent);
+  while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
+    {
+      if (strcmp (agent->unique_system_bus_name, unique_system_bus_name) == 0)
+        goto out;
+    }
+
+  agent = NULL;
+
+  out:
+  return agent;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
+                                                              const gchar              *object_path,
+                                                              PolkitBackendPendingCall *pending_call)
+{
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitSubject *caller;
+  PolkitSubject *session_for_caller;
+  AuthenticationAgent *agent;
+  GError *error;
+
+  error = NULL;
+  session_for_caller = NULL;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  caller = polkit_backend_pending_call_get_caller (pending_call);
+
+  session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                              caller,
+                                                                              &error);
+
+  if (session_for_caller == NULL)
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "Cannot determine session");
+
+      goto out;
+    }
+
+  agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_caller);
+  if (agent != NULL)
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "An authentication agent already exists for session");
+      goto out;
+    }
+
+  /* TODO: validate that object path is well-formed */
+
+  agent = authentication_agent_new (session_for_caller,
+                                    polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
+                                    object_path);
+
+  g_hash_table_insert (priv->hash_session_to_authentication_agent,
+                       g_object_ref (session_for_caller),
+                       agent);
+
+  g_debug ("Added authentication agent for session %s at name %s, object path %s",
+           polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session_for_caller)),
+           polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
+           object_path);
+
+  polkit_backend_authority_register_authentication_agent_finish (pending_call);
+
+ out:
+  if (session_for_caller != NULL)
+    g_object_unref (session_for_caller);
+}
+
+static void
+polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
+                                                                const gchar              *object_path,
+                                                                PolkitBackendPendingCall *pending_call)
+{
+  polkit_backend_pending_call_return_error (pending_call,
+                                            POLKIT_ERROR,
+                                            POLKIT_ERROR_FAILED,
+                                            "Not implemented");
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+polkit_backend_local_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
+                                                              const gchar              *name,
+                                                              const gchar              *old_owner,
+                                                              const gchar              *new_owner)
+{
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  AuthenticationAgent *agent;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  //g_debug ("name-owner-changed: '%s' '%s' '%s'", name, old_owner, new_owner);
+
+  if (name[0] == ':' && strlen (new_owner) == 0)
+    {
+      agent = get_authentication_agent_by_unique_system_bus_name (local_authority, name);
+      if (agent != NULL)
+        {
+          g_debug ("Removing authentication agent for session %s at name %s, object path %s (disconnected from bus)",
+                   polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (agent->session)),
+                   agent->unique_system_bus_name,
+                   agent->object_path);
+
+          /* this works because we have exactly one agent per session */
+          g_hash_table_remove (priv->hash_session_to_authentication_agent, agent->session);
+        }
+    }
+
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

@@ -51,6 +51,10 @@ PolkitIdentity              *polkit_backend_session_monitor_get_user_for_subject
                                                                                   PolkitSubject               *subject,
                                                                                   GError                     **error);
 
+PolkitSubject               *polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMonitor *monitor,
+                                                                                     PolkitSubject               *subject,
+                                                                                     GError                     **error);
+
 G_END_DECLS
 
 #endif /* __POLKIT_BACKEND_SESSION_MONITOR_H */

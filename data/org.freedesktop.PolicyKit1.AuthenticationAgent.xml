@@ -1,0 +1,29 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+         "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+
+<node name="/">
+
+  <interface name="org.freedesktop.PolicyKit1.AuthenticationAgent">
+
+    <method name="BeginAuthentication">
+
+      <!-- The action id for the action that the user is authentication for -->
+      <arg name="action_id" direction="in" type="s"/>
+
+      <!-- A cookie identifying the authentication request -->
+      <arg name="cookie" direction="in" type="s"/>
+
+      <!-- A list of identities of that the user can use for authentication -->
+      <arg name="identities" direction="in" type="a(sa{sv})"/>
+
+    </method>
+
+    <method name="EndAuthentication">
+
+      <arg name="cookie" direction="in" type="s"/>
+
+    </method>
+
+  </interface>
+
+</node>

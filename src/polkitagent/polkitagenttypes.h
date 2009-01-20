@@ -26,8 +26,11 @@
 
 G_BEGIN_DECLS
 
-struct _PolkitAuthenticationSession;
-typedef struct _PolkitAuthenticationSession PolkitAuthenticationSession;
+struct _PolkitAgentAuthenticationSession;
+typedef struct _PolkitAgentAuthenticationSession PolkitAgentAuthenticationSession;
+
+struct _PolkitAgentAuthenticationAgent;
+typedef struct _PolkitAgentAuthenticationAgent PolkitAgentAuthenticationAgent;
 
 
 G_END_DECLS

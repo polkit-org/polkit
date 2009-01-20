@@ -12,23 +12,41 @@ INCLUDES =                                                      \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
+	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
+BUILT_SOURCES =											\
+	_polkitagentauthenticationagent.c		_polkitagentauthenticationagent.h	\
+	_polkitagentbindings.c				_polkitagentbindings.h			\
+	_polkitagentbindingsmarshal.list							\
+	_polkitagentbindingsmarshal.c			_polkitagentbindingsmarshal.h		\
+	_polkitagentbindingstypes.h								\
+	$(NULL)
+
+$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml
+	eggdbus-binding-tool										\
+	  --namespace       "_PolkitAgent"								\
+	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
+	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
+	  $(NULL)
 
 lib_LTLIBRARIES=libpolkit-agent-1.la
 
 libpolkit_agent_1includedir=$(includedir)/polkit-1/polkitagent
 
-libpolkit_agent_1include_HEADERS =                        		\
-	polkitagent.h							\
-	polkitagenttypes.h						\
-	polkitauthenticationsession.h					\
+libpolkit_agent_1include_HEADERS =                        				\
+	polkitagent.h									\
+	polkitagenttypes.h								\
+	polkitagentauthenticationsession.h						\
+	polkitagentauthenticationagent.h						\
         $(NULL)
 
-libpolkit_agent_1_la_SOURCES =                                   	\
-        polkitagent.h							\
-	polkitagenttypes.h						\
-	polkitauthenticationsession.h	polkitauthenticationsession.c	\
+libpolkit_agent_1_la_SOURCES =                                   			\
+        polkitagent.h									\
+	polkitagenttypes.h								\
+	polkitagentauthenticationsession.h	polkitagentauthenticationsession.c	\
+	polkitagentauthenticationagent.h	polkitagentauthenticationagent.c	\
+	$(BUILT_SOURCES)								\
         $(NULL)
 
 libpolkit_agent_1_la_CFLAGS =                                        	\

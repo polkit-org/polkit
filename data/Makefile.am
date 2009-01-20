@@ -1,5 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
+NULL =
+
 servicedir       = $(datadir)/dbus-1/system-services
 service_in_files = org.freedesktop.PolicyKit1.service.in
 service_DATA     = $(service_in_files:.service.in=.service)
@@ -24,13 +26,16 @@ pkgconfig_DATA = polkit-gobject-1.pc polkit-backend-1.pc polkit-agent-1.pc
 
 CLEANFILES = $(BUILT_SOURCES)
 
-EXTRA_DIST = 						\
-	org.freedesktop.PolicyKit1.Authority.xml 	\
-	$(service_in_files) 				\
-	$(dbusconf_in_files) 				\
-	polkit-gobject-1.in 				\
-	polkit-backend-1.in 				\
-	polkit-agent-1.in
+EXTRA_DIST = 							\
+	org.freedesktop.PolicyKit1.Authority.xml 		\
+	org.freedesktop.PolicyKit1.AuthenticationAgent.xml 	\
+	$(service_in_files) 					\
+	$(dbusconf_in_files) 					\
+	polkit-gobject-1.in 					\
+	polkit-backend-1.in 					\
+	polkit-agent-1.in					\
+	$(NULL)
+
 
 clean-local :
 	rm -f *~ $(service_DATA) $(dbusconf_DATA)

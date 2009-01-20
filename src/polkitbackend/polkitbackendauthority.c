@@ -39,6 +39,19 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
 }
 
 void
+polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
+                                                        const gchar              *name,
+                                                        const gchar              *old_owner,
+                                                        const gchar              *new_owner)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  klass->system_bus_name_owner_changed (authority, name, old_owner, new_owner);
+}
+
+void
 polkit_backend_authority_enumerate_actions (PolkitBackendAuthority   *authority,
                                             const gchar              *locale,
                                             PolkitBackendPendingCall *pending_call)
@@ -123,3 +136,28 @@ polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *autho
 
   klass->remove_authorization (authority, identity, authorization, pending_call);
 }
+
+void
+polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
+                                                        const gchar               *object_path,
+                                                        PolkitBackendPendingCall  *pending_call)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  klass->register_authentication_agent (authority, object_path, pending_call);
+}
+
+void
+polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
+                                                          const gchar               *object_path,
+                                                          PolkitBackendPendingCall  *pending_call)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  klass->unregister_authentication_agent (authority, object_path, pending_call);
+}
+

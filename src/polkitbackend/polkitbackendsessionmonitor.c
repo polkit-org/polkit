@@ -432,3 +432,63 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
 
   return user;
 }
+
+/**
+ * polkit_backend_session_monitor_get_session_for_subject:
+ * @monitor: A #PolkitBackendSessionMonitor.
+ * @subject: A #PolkitSubject.
+ * @error: Return location for error.
+ *
+ * Gets the session corresponding to @subject or %NULL if no session exists.
+ *
+ * Returns: %NULL if @error is set otherwise a #PolkitUnixSession that should be freed with g_object_unref().
+ */
+PolkitSubject *
+polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMonitor *monitor,
+                                                        PolkitSubject               *subject,
+                                                        GError                     **error)
+{
+  PolkitSubject *session;
+
+  session = NULL;
+
+  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      pid_t pid;
+      gchar *session_id;
+
+      /* TODO: cache this stuff */
+      if (!egg_dbus_bus_get_connection_unix_process_id_sync (egg_dbus_connection_get_bus (monitor->system_bus),
+                                                             EGG_DBUS_CALL_FLAGS_NONE,
+                                                             polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                                                             &pid,
+                                                             NULL,
+                                                             error))
+        goto out;
+
+      if (!ck_manager_get_session_for_unix_process_sync (monitor->ck_manager,
+                                                         EGG_DBUS_CALL_FLAGS_NONE,
+                                                         pid,
+                                                         &session_id,
+                                                         NULL,
+                                                         error))
+        goto out;
+
+      session = polkit_unix_session_new (session_id);
+
+      g_free (session_id);
+    }
+  else
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Cannot get user for subject of type %s",
+                   g_type_name (G_TYPE_FROM_INSTANCE (subject)));
+    }
+
+ out:
+
+  return session;
+}
+

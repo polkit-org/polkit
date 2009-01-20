@@ -51,6 +51,12 @@ struct _PolkitBackendAuthorityClass
 
   /*< public >*/
 
+  /* TODO: need something more efficient such that we don't watch all name changes */
+  void (*system_bus_name_owner_changed)  (PolkitBackendAuthority   *authority,
+                                          const gchar              *name,
+                                          const gchar              *old_owner,
+                                          const gchar              *new_owner);
+
   void (*enumerate_actions)  (PolkitBackendAuthority   *authority,
                               const gchar              *locale,
                               PolkitBackendPendingCall *pending_call);
@@ -81,6 +87,14 @@ struct _PolkitBackendAuthorityClass
                                 PolkitAuthorization      *authorization,
                                 PolkitBackendPendingCall *pending_call);
 
+  void (*register_authentication_agent) (PolkitBackendAuthority   *authority,
+                                         const gchar              *object_path,
+                                         PolkitBackendPendingCall *pending_call);
+
+  void (*unregister_authentication_agent) (PolkitBackendAuthority   *authority,
+                                           const gchar              *object_path,
+                                           PolkitBackendPendingCall *pending_call);
+
   /*< private >*/
   /* Padding for future expansion */
   void (*_polkit_reserved1) (void);
@@ -96,6 +110,11 @@ struct _PolkitBackendAuthorityClass
 GType    polkit_backend_authority_get_type (void) G_GNUC_CONST;
 
 /* --- */
+
+void     polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
+                                                                 const gchar              *name,
+                                                                 const gchar              *old_owner,
+                                                                 const gchar              *new_owner);
 
 void     polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
                                                              const gchar               *locale,
@@ -127,6 +146,14 @@ void     polkit_backend_authority_remove_authorization      (PolkitBackendAuthor
                                                              PolkitAuthorization       *authorization,
                                                              PolkitBackendPendingCall  *pending_call);
 
+void     polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
+                                                                 const gchar               *object_path,
+                                                                 PolkitBackendPendingCall  *pending_call);
+
+void     polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
+                                                                   const gchar               *object_path,
+                                                                   PolkitBackendPendingCall  *pending_call);
+
 /* --- */
 
 void     polkit_backend_authority_enumerate_actions_finish        (PolkitBackendPendingCall  *pending_call,
@@ -147,6 +174,9 @@ void     polkit_backend_authority_enumerate_authorizations_finish (PolkitBackend
 void     polkit_backend_authority_add_authorization_finish        (PolkitBackendPendingCall  *pending_call);
 
 void     polkit_backend_authority_remove_authorization_finish     (PolkitBackendPendingCall  *pending_call);
+
+void     polkit_backend_authority_register_authentication_agent_finish   (PolkitBackendPendingCall  *pending_call);
+void     polkit_backend_authority_unregister_authentication_agent_finish (PolkitBackendPendingCall  *pending_call);
 
 
 G_END_DECLS

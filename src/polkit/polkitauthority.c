@@ -860,3 +860,189 @@ polkit_authority_remove_authorization_sync (PolkitAuthority     *authority,
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_register_authentication_agent_async (PolkitAuthority      *authority,
+                                                      const gchar          *object_path,
+                                                      GCancellable         *cancellable,
+                                                      GAsyncReadyCallback   callback,
+                                                      gpointer              user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_register_authentication_agent_async);
+
+  call_id = _polkit_authority_register_authentication_agent (authority->real,
+                                                             EGG_DBUS_CALL_FLAGS_NONE,
+                                                             object_path,
+                                                             cancellable,
+                                                             generic_async_cb,
+                                                             simple);
+
+  return call_id;
+}
+
+void
+polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
+                                                const gchar          *object_path,
+                                                GCancellable         *cancellable,
+                                                GAsyncReadyCallback   callback,
+                                                gpointer              user_data)
+{
+  polkit_authority_register_authentication_agent_async (authority,
+                                                        object_path,
+                                                        cancellable,
+                                                        callback,
+                                                        user_data);
+}
+
+gboolean
+polkit_authority_register_authentication_agent_finish (PolkitAuthority *authority,
+                                                       GAsyncResult    *res,
+                                                       GError         **error)
+{
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+  gboolean ret;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_register_authentication_agent_async);
+
+  ret = _polkit_authority_register_authentication_agent_finish (authority->real,
+                                                                real_res,
+                                                                error);
+
+  if (!ret)
+    goto out;
+
+ out:
+  g_object_unref (real_res);
+  return ret;
+}
+
+
+gboolean
+polkit_authority_register_authentication_agent_sync (PolkitAuthority     *authority,
+                                                     const gchar         *object_path,
+                                                     GCancellable        *cancellable,
+                                                     GError             **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  gboolean ret;
+
+  call_id = polkit_authority_register_authentication_agent_async (authority,
+                                                                  object_path,
+                                                                  cancellable,
+                                                                  generic_cb,
+                                                                  &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  ret = polkit_authority_register_authentication_agent_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_unregister_authentication_agent_async (PolkitAuthority      *authority,
+                                                        const gchar          *object_path,
+                                                        GCancellable         *cancellable,
+                                                        GAsyncReadyCallback   callback,
+                                                        gpointer              user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_unregister_authentication_agent_async);
+
+  call_id = _polkit_authority_unregister_authentication_agent (authority->real,
+                                                             EGG_DBUS_CALL_FLAGS_NONE,
+                                                             object_path,
+                                                             cancellable,
+                                                             generic_async_cb,
+                                                             simple);
+
+  return call_id;
+}
+
+void
+polkit_authority_unregister_authentication_agent (PolkitAuthority      *authority,
+                                                  const gchar          *object_path,
+                                                  GCancellable         *cancellable,
+                                                  GAsyncReadyCallback   callback,
+                                                  gpointer              user_data)
+{
+  polkit_authority_unregister_authentication_agent_async (authority,
+                                                        object_path,
+                                                        cancellable,
+                                                        callback,
+                                                        user_data);
+}
+
+gboolean
+polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *authority,
+                                                         GAsyncResult    *res,
+                                                         GError         **error)
+{
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+  gboolean ret;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_unregister_authentication_agent_async);
+
+  ret = _polkit_authority_unregister_authentication_agent_finish (authority->real,
+                                                                real_res,
+                                                                error);
+
+  if (!ret)
+    goto out;
+
+ out:
+  g_object_unref (real_res);
+  return ret;
+}
+
+
+gboolean
+polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *authority,
+                                                       const gchar         *object_path,
+                                                       GCancellable        *cancellable,
+                                                       GError             **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  gboolean ret;
+
+  call_id = polkit_authority_unregister_authentication_agent_async (authority,
+                                                                    object_path,
+                                                                    cancellable,
+                                                                    generic_cb,
+                                                                    &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  ret = polkit_authority_unregister_authentication_agent_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
