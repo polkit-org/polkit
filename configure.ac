@@ -406,9 +406,13 @@ Makefile
 actions/Makefile
 data/Makefile
 data/polkit-1
+data/polkit-gobject-1.pc
+data/polkit-backend-1.pc
+data/polkit-agent-1.pc
 src/Makefile
 src/polkit/Makefile
 src/polkitbackend/Makefile
+src/polkitagent/Makefile
 src/polkitd/Makefile
 src/programs/Makefile
 docs/version.xml

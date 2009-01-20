@@ -19,9 +19,18 @@ pamdir = $(sysconfdir)/pam.d
 pam_DATA = polkit-1
 endif
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = polkit-gobject-1.pc polkit-backend-1.pc polkit-agent-1.pc
+
 CLEANFILES = $(BUILT_SOURCES)
 
-EXTRA_DIST = org.freedesktop.PolicyKit1.Authority.xml $(service_in_files) $(dbusconf_in_files) polkit-1.in
+EXTRA_DIST = 						\
+	org.freedesktop.PolicyKit1.Authority.xml 	\
+	$(service_in_files) 				\
+	$(dbusconf_in_files) 				\
+	polkit-gobject-1.in 				\
+	polkit-backend-1.in 				\
+	polkit-agent-1.in
 
 clean-local :
 	rm -f *~ $(service_DATA) $(dbusconf_DATA)
