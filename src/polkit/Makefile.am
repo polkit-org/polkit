@@ -42,6 +42,7 @@ libpolkit_gobject_1includedir=$(includedir)/polkit-1/polkit
 
 libpolkit_gobject_1include_HEADERS =                        				\
         polkit.h									\
+        polkittypes.h									\
 	polkitactiondescription.h							\
 	polkitauthority.h								\
 	polkiterror.h									\
