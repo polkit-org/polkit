@@ -809,9 +809,7 @@ polkit_backend_local_authority_register_authentication_agent (PolkitBackendAutho
   PolkitSubject *caller;
   PolkitSubject *session_for_caller;
   AuthenticationAgent *agent;
-  GError *error;
 
-  error = NULL;
   session_for_caller = NULL;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
@@ -820,16 +818,14 @@ polkit_backend_local_authority_register_authentication_agent (PolkitBackendAutho
   caller = polkit_backend_pending_call_get_caller (pending_call);
 
   session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
-                                                                              caller,
-                                                                              &error);
-
+                                                                               caller,
+                                                                               NULL);
   if (session_for_caller == NULL)
     {
       polkit_backend_pending_call_return_error (pending_call,
                                                 POLKIT_ERROR,
                                                 POLKIT_ERROR_FAILED,
                                                 "Cannot determine session");
-
       goto out;
     }
 
@@ -870,10 +866,72 @@ polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAut
                                                                 const gchar              *object_path,
                                                                 PolkitBackendPendingCall *pending_call)
 {
-  polkit_backend_pending_call_return_error (pending_call,
-                                            POLKIT_ERROR,
-                                            POLKIT_ERROR_FAILED,
-                                            "Not implemented");
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitSubject *caller;
+  PolkitSubject *session_for_caller;
+  AuthenticationAgent *agent;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  caller = polkit_backend_pending_call_get_caller (pending_call);
+
+  session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                               caller,
+                                                                               NULL);
+  if (session_for_caller == NULL)
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "Cannot determine session");
+      goto out;
+    }
+
+  agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_caller);
+  if (agent == NULL)
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "No such agent registered");
+      goto out;
+    }
+
+  if (strcmp (agent->unique_system_bus_name,
+              polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller))) != 0)
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "System bus names do not match");
+      goto out;
+    }
+
+  if (strcmp (agent->object_path, object_path) != 0)
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "Object paths do not match");
+      goto out;
+    }
+
+
+  g_debug ("Removing authentication agent for session %s at name %s, object path %s (unregistered)",
+           polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (agent->session)),
+           agent->unique_system_bus_name,
+           agent->object_path);
+
+  /* this works because we have exactly one agent per session */
+  g_hash_table_remove (priv->hash_session_to_authentication_agent, agent->session);
+
+  polkit_backend_authority_unregister_authentication_agent_finish (pending_call);
+
+ out:
+  if (session_for_caller != NULL)
+    g_object_unref (session_for_caller);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
