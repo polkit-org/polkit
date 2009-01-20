@@ -59,7 +59,21 @@ static AuthorizationStore *get_authorization_store_for_identity (PolkitBackendLo
 struct AuthenticationAgent;
 typedef struct AuthenticationAgent AuthenticationAgent;
 
+typedef void (*AuthenticationAgentCallback) (AuthenticationAgent         *agent,
+                                             PolkitSubject               *subject,
+                                             const gchar                 *action_id,
+                                             PolkitImplicitAuthorization  implicit_authorization,
+                                             gboolean                     authentication_success,
+                                             gpointer                     user_data);
+
 static void                authentication_agent_free (AuthenticationAgent *agent);
+
+static void                authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
+                                                                    PolkitSubject               *subject,
+                                                                    const gchar                 *action_id,
+                                                                    PolkitImplicitAuthorization  implicit_authorization,
+                                                                    AuthenticationAgentCallback  callback,
+                                                                    gpointer                     user_data);
 
 static AuthenticationAgent *get_authentication_agent_for_subject (PolkitBackendLocalAuthority *authority,
                                                                   PolkitSubject *subject);
@@ -343,6 +357,45 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *autho
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+check_authorization_challenge_cb (AuthenticationAgent         *agent,
+                                  PolkitSubject               *subject,
+                                  const gchar                 *action_id,
+                                  PolkitImplicitAuthorization  implicit_authorization,
+                                  gboolean                     authentication_success,
+                                  gpointer                     user_data)
+{
+  PolkitBackendPendingCall *pending_call = POLKIT_BACKEND_PENDING_CALL (user_data);
+  PolkitAuthorizationResult result;
+  gchar *subject_str;
+
+  subject_str = polkit_subject_to_string (subject);
+
+  g_debug ("In check_authorization_challenge_cb\n"
+           "  subject                %s\n"
+           "  action_id              %s\n"
+           "  authentication_success %d\n",
+           subject_str,
+           action_id,
+           authentication_success);
+
+  if (authentication_success)
+    {
+      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+
+      /* TODO: store temporary authorization depending on value of implicit_authorization */
+    }
+  else
+    {
+      /* TODO: maybe return FAILED_CHALLENGE instead? */
+      result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+    }
+
+  polkit_backend_authority_check_authorization_finish (pending_call, result);
+
+  g_free (subject_str);
+}
+
+static void
 polkit_backend_local_authority_check_authorization (PolkitBackendAuthority         *authority,
                                                     PolkitSubject                  *subject,
                                                     const gchar                    *action_id,
@@ -454,6 +507,35 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
       polkit_backend_pending_call_return_gerror (pending_call, error);
       g_error_free (error);
       goto out;
+    }
+
+  /* TODO: temporary hack */
+  flags |= POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
+
+  /* Caller is up for a challenge! With light sabers! Use an authentication agent if one exists... */
+  if ((result == POLKIT_AUTHORIZATION_RESULT_CHALLENGE) &&
+      (flags & POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION))
+    {
+      AuthenticationAgent *agent;
+
+      agent = get_authentication_agent_for_subject (local_authority, subject);
+      if (agent == NULL)
+        {
+          g_debug (" challenge requested, but no authentication agent available");
+        }
+      else
+        {
+          g_debug (" using authentication agent for challenge");
+
+          authentication_agent_initiate_challenge (agent,
+                                                   subject,
+                                                   action_id,
+                                                   implicit_authorization,
+                                                   check_authorization_challenge_cb,
+                                                   pending_call);
+          goto out;
+        }
+
     }
 
   polkit_backend_authority_check_authorization_finish (pending_call, result);
@@ -860,6 +942,8 @@ get_authentication_agent_for_subject (PolkitBackendLocalAuthority *authority,
  out:
   if (session_for_subject != NULL)
     g_object_unref (session_for_subject);
+
+  return agent;
 }
 
 static AuthenticationAgent *
@@ -883,6 +967,24 @@ get_authentication_agent_by_unique_system_bus_name (PolkitBackendLocalAuthority 
 
   out:
   return agent;
+}
+
+static void
+authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
+                                         PolkitSubject               *subject,
+                                         const gchar                 *action_id,
+                                         PolkitImplicitAuthorization  implicit_authorization,
+                                         AuthenticationAgentCallback  callback,
+                                         gpointer                     user_data)
+{
+  /* TODO */
+
+  callback (agent,
+            subject,
+            action_id,
+            implicit_authorization,
+            FALSE,
+            user_data);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
