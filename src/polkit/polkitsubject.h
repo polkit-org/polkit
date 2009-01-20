@@ -42,6 +42,8 @@ struct _PolkitSubjectIface
 {
   GTypeInterface parent_iface;
 
+  guint    (*hash)      (PolkitSubject *subject);
+
   gboolean (*equal)     (PolkitSubject *a,
                          PolkitSubject *b);
 
@@ -49,6 +51,7 @@ struct _PolkitSubjectIface
 };
 
 GType          polkit_subject_get_type     (void) G_GNUC_CONST;
+guint          polkit_subject_hash         (PolkitSubject *subject);
 gboolean       polkit_subject_equal        (PolkitSubject *a,
                                             PolkitSubject *b);
 gchar         *polkit_subject_to_string    (PolkitSubject *subject);

@@ -166,6 +166,14 @@ polkit_system_bus_name_new (const gchar *name)
                                        NULL));
 }
 
+static guint
+polkit_system_bus_name_hash (PolkitSubject *subject)
+{
+  PolkitSystemBusName *system_bus_name = POLKIT_SYSTEM_BUS_NAME (subject);
+
+  return g_str_hash (system_bus_name->name);
+}
+
 static gboolean
 polkit_system_bus_name_equal (PolkitSubject *a,
                               PolkitSubject *b)
@@ -190,6 +198,7 @@ polkit_system_bus_name_to_string (PolkitSubject *subject)
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
+  subject_iface->hash      = polkit_system_bus_name_hash;
   subject_iface->equal     = polkit_system_bus_name_equal;
   subject_iface->to_string = polkit_system_bus_name_to_string;
 }

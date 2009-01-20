@@ -154,6 +154,14 @@ polkit_unix_session_new (const gchar *session_id)
                                        NULL));
 }
 
+static guint
+polkit_unix_session_hash (PolkitSubject *subject)
+{
+  PolkitUnixSession *session = POLKIT_UNIX_SESSION (subject);
+
+  return g_str_hash (session->session_id);
+}
+
 static gboolean
 polkit_unix_session_equal (PolkitSubject *a,
                            PolkitSubject *b)
@@ -178,6 +186,7 @@ polkit_unix_session_to_string (PolkitSubject *subject)
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
+  subject_iface->hash      = polkit_unix_session_hash;
   subject_iface->equal     = polkit_unix_session_equal;
   subject_iface->to_string = polkit_unix_session_to_string;
 }

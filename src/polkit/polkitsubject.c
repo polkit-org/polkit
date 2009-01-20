@@ -66,6 +66,12 @@ polkit_subject_get_type (void)
   return iface_type;
 }
 
+guint
+polkit_subject_hash (PolkitSubject *subject)
+{
+  return POLKIT_SUBJECT_GET_IFACE (subject)->hash (subject);
+}
+
 gboolean
 polkit_subject_equal (PolkitSubject *a,
                       PolkitSubject *b)

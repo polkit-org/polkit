@@ -203,6 +203,13 @@ polkit_unix_process_new_full (pid_t pid,
   return POLKIT_SUBJECT (process);
 }
 
+static guint
+polkit_unix_process_hash (PolkitSubject *subject)
+{
+  PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
+
+  return g_direct_hash (GINT_TO_POINTER ((process->pid + process->start_time))) ;
+}
 
 static gboolean
 polkit_unix_process_equal (PolkitSubject *a,
@@ -230,6 +237,7 @@ polkit_unix_process_to_string (PolkitSubject *subject)
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
+  subject_iface->hash      = polkit_unix_process_hash;
   subject_iface->equal     = polkit_unix_process_equal;
   subject_iface->to_string = polkit_unix_process_to_string;
 }
