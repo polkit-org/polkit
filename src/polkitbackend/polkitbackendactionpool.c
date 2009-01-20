@@ -41,6 +41,10 @@ typedef struct
   gchar *description;
   gchar *message;
 
+  PolkitImplicitAuthorization implicit_authorization_any;
+  PolkitImplicitAuthorization implicit_authorization_inactive;
+  PolkitImplicitAuthorization implicit_authorization_active;
+
   /* each of these map from the locale identifer (e.g. da_DK) to the localized value */
   GHashTable *localized_description;
   GHashTable *localized_message;
@@ -293,6 +297,9 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
                                          parsed_action->vendor_name,
                                          parsed_action->vendor_url,
                                          parsed_action->icon_name,
+                                         parsed_action->implicit_authorization_any,
+                                         parsed_action->implicit_authorization_inactive,
+                                         parsed_action->implicit_authorization_active,
                                          parsed_action->annotations);
 
   ret = polkit_action_description_new_for_real (real);
@@ -492,9 +499,9 @@ typedef struct {
   char *vendor_url;
   char *icon_name;
 
-  //PolKitResult defaults_allow_any;
-  //PolKitResult defaults_allow_inactive;
-  //PolKitResult defaults_allow_active;
+  PolkitImplicitAuthorization implicit_authorization_any;
+  PolkitImplicitAuthorization implicit_authorization_inactive;
+  PolkitImplicitAuthorization implicit_authorization_active;
 
   GHashTable *policy_descriptions;
   GHashTable *policy_messages;
@@ -605,9 +612,9 @@ _start (void *data, const char *el, const char **attr)
                                                        g_free);
           pd->annotations = egg_dbus_hash_map_new (G_TYPE_STRING, g_free, G_TYPE_STRING, g_free);
           /* initialize defaults */
-          //pd->defaults_allow_any = POLKIT_RESULT_NO;
-          //pd->defaults_allow_inactive = POLKIT_RESULT_NO;
-          //pd->defaults_allow_active = POLKIT_RESULT_NO;
+          pd->implicit_authorization_any = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
+          pd->implicit_authorization_inactive = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
+          pd->implicit_authorization_active = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
         }
       else if (strcmp (el, "vendor") == 0 && num_attr == 0)
         {
@@ -819,18 +826,18 @@ _cdata (void *data, const char *s, int len)
       break;
 
     case STATE_IN_DEFAULTS_ALLOW_ANY:
-      //if (!polkit_result_from_string_representation (str, &pd->defaults_allow_any))
-      //        goto error;
+      if (!polkit_implicit_authorization_from_string (str, &pd->implicit_authorization_any))
+        goto error;
       break;
 
     case STATE_IN_DEFAULTS_ALLOW_INACTIVE:
-      //if (!polkit_result_from_string_representation (str, &pd->defaults_allow_inactive))
-      //        goto error;
+      if (!polkit_implicit_authorization_from_string (str, &pd->implicit_authorization_inactive))
+        goto error;
       break;
 
     case STATE_IN_DEFAULTS_ALLOW_ACTIVE:
-      //if (!polkit_result_from_string_representation (str, &pd->defaults_allow_active))
-      //        goto error;
+      if (!polkit_implicit_authorization_from_string (str, &pd->implicit_authorization_active))
+        goto error;
       break;
 
     case STATE_IN_ANNOTATE:
@@ -895,6 +902,10 @@ _end (void *data, const char *el)
         action->localized_description = pd->policy_descriptions;
         action->localized_message     = pd->policy_messages;
         action->annotations           = pd->annotations;
+
+        action->implicit_authorization_any = pd->implicit_authorization_any;
+        action->implicit_authorization_inactive = pd->implicit_authorization_inactive;
+        action->implicit_authorization_active = pd->implicit_authorization_active;
 
         g_hash_table_insert (priv->parsed_actions, action->action_id, action);
 

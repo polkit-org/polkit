@@ -20,6 +20,7 @@ BUILT_SOURCES =										\
 	_polkitauthority.c			_polkitauthority.h			\
 	_polkitauthorization.c			_polkitauthorization.h			\
 	_polkitauthorizationresult.c		_polkitauthorizationresult.h		\
+	_polkitimplicitauthorization.c		_polkitimplicitauthorization.h		\
 	_polkitcheckauthorizationflags.c	_polkitcheckauthorizationflags.h	\
 	_polkitbindings.c			_polkitbindings.h			\
 	_polkitbindingsmarshal.c		_polkitbindingsmarshal.h		\
@@ -56,6 +57,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitauthorizationresult.h							\
 	polkitcheckauthorizationflags.h							\
 	polkitauthorization.h								\
+	polkitimplicitauthorization.h							\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
@@ -74,6 +76,7 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitauthorizationresult.c		polkitauthorizationresult.h		\
 	polkitcheckauthorizationflags.c		polkitcheckauthorizationflags.h		\
 	polkitauthorization.c			polkitauthorization.h			\
+	polkitimplicitauthorization.c		polkitimplicitauthorization.h		\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\

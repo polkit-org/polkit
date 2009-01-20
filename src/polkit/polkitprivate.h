@@ -22,6 +22,7 @@
 #ifndef __POLKIT_PRIVATE_H
 #define __POLKIT_PRIVATE_H
 
+#include "polkitimplicitauthorization.h"
 #include "polkitactiondescription.h"
 #include "polkitsubject.h"
 #include "_polkitbindings.h"

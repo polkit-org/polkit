@@ -32,32 +32,80 @@
 
   </annotation>
 
+  <!-- An enumeration for implicit authorizations -->
+  <annotation name="org.gtk.EggDBus.DeclareEnum" value="ImplicitAuthorization">
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="NotAuthorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="Subject is not authorized."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AuthenticationRequired">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication is required."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AdministratorAuthenticationRequired">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication as an administrator is required."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AuthenticationRequiredRetained">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication is required. If the authorization is obtained, it is retained."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AdministratorAuthenticationRequiredRetained">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication as an administrator is required. If the authorization is obtained, it is retained."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="Authorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is authorized"/>
+    </annotation>
+
+  </annotation>
+
   <!-- ActionDescription struct -->
   <annotation name="org.gtk.EggDBus.DeclareStruct" value="ActionDescription">
 
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
       <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier"/>
     </annotation>
+
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:description">
       <annotation name="org.gtk.EggDBus.DocString" value="Action Description"/>
     </annotation>
+
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:message">
       <annotation name="org.gtk.EggDBus.DocString" value="Action Message"/>
     </annotation>
+
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_name">
       <annotation name="org.gtk.EggDBus.DocString" value="Vendor Name"/>
     </annotation>
+
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_url">
       <annotation name="org.gtk.EggDBus.DocString" value="Vendor URL"/>
     </annotation>
+
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:icon_name">
       <annotation name="org.gtk.EggDBus.DocString" value="Icon Name"/>
     </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_any">
+      <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Defaults for any kind of subject"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_inactive">
+      <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Defaults for subjects in local inactive sessions"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_active">
+      <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Defaults for subjects in local active sessions"/>
+    </annotation>
+
     <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{ss}:annotations">
       <annotation name="org.gtk.EggDBus.DocString" value="Annotations"/>
     </annotation>
-
-    <!-- TODO: also include defaults -->
 
   </annotation>
 
@@ -126,7 +174,7 @@
 
     <method name="EnumerateActions">
       <arg name="locale" direction="in" type="s"/>
-      <arg name="action_descriptions" direction="out" type="a(ssssssa{ss})">
+      <arg name="action_descriptions" direction="out" type="a(ssssssiiia{ss})">
         <annotation name="org.gtk.EggDBus.StructType" value="ActionDescription"/>
       </arg>
     </method>

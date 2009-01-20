@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include "polkitimplicitauthorization.h"
 #include "polkitactiondescription.h"
 #include "_polkitactiondescription.h"
 
@@ -132,6 +133,25 @@ polkit_action_description_get_vendor_url (PolkitActionDescription *action_descri
 {
   return _polkit_action_description_get_vendor_url (action_description->real);
 }
+
+PolkitImplicitAuthorization
+polkit_action_description_get_implicit_any (PolkitActionDescription *action_description)
+{
+  return _polkit_action_description_get_implicit_any (action_description->real);
+}
+
+PolkitImplicitAuthorization
+polkit_action_description_get_implicit_inactive (PolkitActionDescription *action_description)
+{
+  return _polkit_action_description_get_implicit_inactive (action_description->real);
+}
+
+PolkitImplicitAuthorization
+polkit_action_description_get_implicit_active (PolkitActionDescription *action_description)
+{
+  return _polkit_action_description_get_implicit_active (action_description->real);
+}
+
 
 GIcon *
 polkit_action_description_get_icon (PolkitActionDescription *action_description)

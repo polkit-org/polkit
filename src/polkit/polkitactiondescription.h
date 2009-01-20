@@ -47,6 +47,11 @@ const gchar         *polkit_action_description_get_message           (PolkitActi
 const gchar         *polkit_action_description_get_vendor_name       (PolkitActionDescription *action_description);
 const gchar         *polkit_action_description_get_vendor_url        (PolkitActionDescription *action_description);
 GIcon               *polkit_action_description_get_icon              (PolkitActionDescription *action_description);
+
+PolkitImplicitAuthorization polkit_action_description_get_implicit_any (PolkitActionDescription *action_description);
+PolkitImplicitAuthorization polkit_action_description_get_implicit_inactive (PolkitActionDescription *action_description);
+PolkitImplicitAuthorization polkit_action_description_get_implicit_active (PolkitActionDescription *action_description);
+
 const gchar         *polkit_action_description_get_annotation        (PolkitActionDescription *action_description,
                                                                       const gchar             *key);
 const gchar * const *polkit_action_description_get_annotation_keys   (PolkitActionDescription *action_description);

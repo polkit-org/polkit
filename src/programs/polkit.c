@@ -371,20 +371,24 @@ print_action (PolkitActionDescription *action)
   icon = polkit_action_description_get_icon (action);
 
   g_print ("%s:\n", polkit_action_description_get_action_id (action));
-  g_print ("  description: %s\n", polkit_action_description_get_description (action));
-  g_print ("  message:     %s\n", polkit_action_description_get_message (action));
+  g_print ("  description:       %s\n", polkit_action_description_get_description (action));
+  g_print ("  message:           %s\n", polkit_action_description_get_message (action));
   if (vendor != NULL)
-    g_print ("  vendor:      %s\n", vendor);
+    g_print ("  vendor:            %s\n", vendor);
   if (vendor_url != NULL)
-    g_print ("  vendor_url:  %s\n", vendor_url);
+    g_print ("  vendor_url:        %s\n", vendor_url);
 
   if (icon != NULL)
     {
       gchar *s;
       s = g_icon_to_string (icon);
-      g_print ("  icon:        %s\n", s);
+      g_print ("  icon:              %s\n", s);
       g_free (s);
     }
+
+  g_print ("  implicit any:      %s\n", polkit_implicit_authorization_to_string (polkit_action_description_get_implicit_any (action)));
+  g_print ("  implicit inactive: %s\n", polkit_implicit_authorization_to_string (polkit_action_description_get_implicit_inactive (action)));
+  g_print ("  implicit active:   %s\n", polkit_implicit_authorization_to_string (polkit_action_description_get_implicit_active (action)));
 
   annotation_keys = polkit_action_description_get_annotation_keys (action);
   for (n = 0; annotation_keys[n] != NULL; n++)
@@ -394,7 +398,7 @@ print_action (PolkitActionDescription *action)
 
       key = annotation_keys[n];
       value = polkit_action_description_get_annotation (action, key);
-      g_print ("  annotation:  %s -> %s\n", key, value);
+      g_print ("  annotation:        %s -> %s\n", key, value);
     }
 }
 
