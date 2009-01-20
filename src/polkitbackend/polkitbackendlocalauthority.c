@@ -589,6 +589,16 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
 
   /* TODO: check if caller is authorized */
 
+  /* We can only add temporary authorizations to users, not e.g. groups */
+  if (subject != NULL && !POLKIT_IS_UNIX_USER (identity))
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "Can only add temporary authorizations to users");
+      goto out;
+    }
+
   if (!add_authorization_for_identity (local_authority,
                                        identity,
                                        authorization,
@@ -602,6 +612,7 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
       polkit_backend_authority_add_authorization_finish (pending_call);
     }
 
+ out:
   g_free (subject_str);
 }
 
@@ -641,6 +652,16 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
 
   /* TODO: check if caller is authorized */
 
+  /* We can only remove temporary authorizations to users, not e.g. groups */
+  if (subject != NULL && !POLKIT_IS_UNIX_USER (identity))
+    {
+      polkit_backend_pending_call_return_error (pending_call,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_FAILED,
+                                                "Can only remove temporary authorizations from users");
+      goto out;
+    }
+
   if (!remove_authorization_for_identity (local_authority,
                                           identity,
                                           authorization,
@@ -653,6 +674,8 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
     {
       polkit_backend_authority_remove_authorization_finish (pending_call);
     }
+
+ out:
 
   g_free (subject_str);
 }
