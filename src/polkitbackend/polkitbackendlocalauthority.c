@@ -24,6 +24,8 @@
 #include <pwd.h>
 #include <grp.h>
 #include <string.h>
+#include <glib/gstdio.h>
+
 #include <polkit/polkit.h>
 #include "polkitbackendlocalauthority.h"
 #include "polkitbackendactionpool.h"
@@ -825,6 +827,24 @@ authorization_store_save_permanent_authorizations (AuthorizationStore  *store,
   gboolean ret;
 
   ret = FALSE;
+  str = NULL;
+
+  /* simply unlink the file if there are no authorizations */
+  if (store->authorizations == NULL)
+    {
+      if (g_unlink (store->path) != 0)
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot remove authorization. Error unlinking file %s: %m",
+                       store->path);
+          goto out;
+        }
+
+      ret = TRUE;
+      goto out;
+    }
 
   s = g_string_new ("# polkit-1 " PACKAGE_VERSION " authorizations file\n"
                     "#\n"
@@ -1151,8 +1171,42 @@ static GList *
 get_groups_for_user (PolkitBackendLocalAuthority *authority,
                      PolkitIdentity              *user)
 {
-  /* TODO */
-  return NULL;
+  uid_t uid;
+  struct passwd *passwd;
+  GList *result;
+  gid_t groups[512];
+  int num_groups = 512;
+  int n;
+
+  result = NULL;
+
+  /* TODO: it would be, uhm, good to cache this information */
+
+  uid = polkit_unix_user_get_uid (POLKIT_UNIX_USER (user));
+  passwd = getpwuid (uid);
+  if (passwd == NULL)
+    {
+      g_warning ("No user with uid %d", uid);
+      goto out;
+    }
+
+  /* TODO: should resize etc etc etc */
+
+  if (getgrouplist (passwd->pw_name,
+                    passwd->pw_gid,
+                    groups,
+                    &num_groups) < 0)
+    {
+      g_warning ("Error looking up groups for uid %d: %m", uid);
+      goto out;
+    }
+
+  for (n = 0; n < num_groups; n++)
+    result = g_list_prepend (result, polkit_unix_group_new (groups[n]));
+
+ out:
+
+  return result;
 }
 
 static GList *
