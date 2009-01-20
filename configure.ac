@@ -144,6 +144,253 @@ if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
 fi
 
+dnl ---------------------------------------------------------------------------
+dnl - User
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(polkit_user,[  --with-polkit-user=<user>  user for PolicyKit])
+if test -z "$with_polkit_user" ; then
+    POLKIT_USER=polkituser
+else
+    POLKIT_USER=$with_polkit_user
+fi
+AC_SUBST(POLKIT_USER)
+AC_DEFINE_UNQUOTED(POLKIT_USER, "$POLKIT_USER", [User for PolicyKit])
+
+dnl ---------------------------------------------------------------------------
+dnl - Select which authentication framework to use
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([authfw],
+	    AS_HELP_STRING([--with-authfw=<name>], 
+                           [Authentication framework (none/pam/shadow)]))
+if ! test -z "$with_authfw" ; then
+  if test x$with_authdb = xdummy ; then
+    if ! test x$with_authfw = xnone ; then
+      AC_MSG_ERROR([Only 'none' is a valid authentication framework for the dummy authorization database])
+    fi
+  else
+      if test x$with_authfw = xnone ; then
+        AC_MSG_ERROR(['none' is only a valid authentication framework for the dummy authorization database])
+      fi
+  fi
+  POLKIT_AUTHFW=$with_authfw
+else
+  if test x$with_authdb = xdummy ; then
+    POLKIT_AUTHFW=none
+  else
+    POLKIT_AUTHFW=pam
+  fi
+fi
+
+AC_SUBST(POLKIT_AUTHFW)
+AC_DEFINE_UNQUOTED(POLKIT_AUTHFW,"$POLKIT_AUTHFW", [Authentication Framework to use])
+
+case $POLKIT_AUTHFW in
+  none)
+    need_pam=no
+    AC_DEFINE(POLKIT_AUTHFW_NONE, 1, [If using no authentication framework])
+    ;;
+
+  pam)
+    need_pam=yes
+    AC_DEFINE(POLKIT_AUTHFW_PAM, 1, [If using the PAM authentication framework])
+    ;;
+
+  shadow)
+    need_pam=no
+    AUTH_LIBS="${AUTH_LIBS} -lcrypt"
+    AC_DEFINE(POLKIT_AUTHFW_SHADOW, 1, [If using the Shadow authentication framework])
+    ;;
+
+  *)
+    AC_MSG_ERROR([Unknown Authentication Framework: $POLKIT_AUTHFW])
+    ;;
+esac
+
+AM_CONDITIONAL(POLKIT_AUTHFW_NONE, [test x$POLKIT_AUTHFW = xnone], [Using no authfw])
+AM_CONDITIONAL(POLKIT_AUTHFW_PAM, [test x$POLKIT_AUTHFW = xpam], [Using PAM authfw])
+AM_CONDITIONAL(POLKIT_AUTHFW_SHADOW, [test x$POLKIT_AUTHFW = xshadow], [Using Shadow authfw])
+
+
+dnl ---------------------------------------------------------------------------
+dnl - Check for PAM
+dnl ---------------------------------------------------------------------------
+
+withval=""
+AC_ARG_WITH(pam-prefix,
+[  --with-pam-prefix=<prefix> specify where pam files go],[
+if test x$withval != x; then
+   AC_MSG_RESULT("PAM files will be installed in prefix ${withval}.")
+fi])
+if test x$withval != x; then
+	PAM_PREFIX_UNEXPANDED="$withval"
+else
+	PAM_PREFIX_UNEXPANDED="$sysconfdir"
+fi
+PAM_PREFIX=`eval echo $PAM_PREFIX_UNEXPANDED`
+AC_SUBST(PAM_PREFIX)
+
+have_pam=no
+if test "$need_pam" = yes ; then
+  AC_CHECK_LIB(pam, pam_start, have_pam=yes)
+fi
+
+if test x$have_pam = xno; then
+    if test "$need_pam" = yes ; then
+      AC_ERROR([Could not find pam/pam-devel, please install the needed packages.])
+    fi
+else
+    AUTH_LIBS="${AUTH_LIBS} -lpam"
+    AC_DEFINE(HAVE_PAM, 1, [Define if PAM support is included])
+
+    # On Linux, sigtimedwait() is in libc; on Solaris, it's in librt.
+    have_timedwait=no
+    AC_CHECK_LIB(c, sigtimedwait, [have_timedwait=yes])
+    if test "$have_timedwait" = no ; then
+      AC_CHECK_LIB(rt, sigtimedwait, [AUTH_LIBS="${AUTH_LIBS} -lrt"])
+    fi
+
+    AC_MSG_CHECKING(how to call pam_strerror)
+    AC_CACHE_VAL(ac_cv_pam_strerror_args,
+     [AC_TRY_COMPILE([#include <stdio.h>
+                      #include <stdlib.h>
+                      #include <security/pam_appl.h>],
+                     [pam_handle_t *pamh = 0;
+                      char *s = pam_strerror(pamh, PAM_SUCCESS);],
+                     [ac_pam_strerror_args=2],
+                     [AC_TRY_COMPILE([#include <stdio.h>
+                                      #include <stdlib.h>
+                                      #include <security/pam_appl.h>],
+                                     [char *s =
+                                       pam_strerror(PAM_SUCCESS);],
+                                     [ac_pam_strerror_args=1],
+                                     [ac_pam_strerror_args=0])])
+      ac_cv_pam_strerror_args=$ac_pam_strerror_args])
+    ac_pam_strerror_args=$ac_cv_pam_strerror_args
+    if test "$ac_pam_strerror_args" = 1 ; then
+      AC_MSG_RESULT(one argument)
+    elif test "$ac_pam_strerror_args" = 2 ; then
+      AC_DEFINE(PAM_STRERROR_TWO_ARGS, 1, [Define if pam_strerror takes two arguments])
+      AC_MSG_RESULT(two arguments)
+    else
+      AC_MSG_RESULT(unknown)
+    fi
+ 
+fi
+
+AM_CONDITIONAL(HAVE_PAM, test x$have_pam = xyes)
+AC_SUBST(HAVE_PAM)
+AC_SUBST(AUTH_LIBS)
+
+AC_CHECK_HEADER(security/pam_modutil.h, [AC_DEFINE(HAVE_PAM_MODUTIL_H, [], "Have pam_modutil.h")])
+AC_CHECK_HEADER(security/pam_ext.h, [AC_DEFINE(HAVE_PAM_EXT_H, [], "Have pam_ext.h")])
+AC_CHECK_LIB(pam, pam_vsyslog, [AC_DEFINE(HAVE_PAM_VSYSLOG, [], "Have pam_vsyslog")])
+
+AC_ARG_WITH(pam-module-dir, [  --with-pam-module-dir=[dirname]  directory to install PAM security module])
+if ! test -z "$with_pam_module_dir"; then
+    PAM_MODULE_DIR=$with_pam_module_dir
+else
+    PAM_MODULE_DIR="/lib/security"
+fi
+
+AC_SUBST(PAM_MODULE_DIR)
+
+AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat/suse/gentoo/pardus/solaris)])
+
+#### Check our operating system (distro-tweaks required)
+if test "z$with_os_type" = "z"; then
+	AC_CHECK_FILE(/etc/redhat-release,distro_type="redhat")
+	AC_CHECK_FILE(/etc/SuSE-release,distro_type="suse")
+	AC_CHECK_FILE(/etc/gentoo-release,distro_type="gentoo")
+	AC_CHECK_FILE(/etc/pardus-release,distro_type="pardus")
+	if test "z$distro_type" = "z"; then
+		echo "Linux distribution autodetection failed, specify the distribution to target using --with-os-type="
+	else
+		operating_system=`echo ${distro_type} | tr '[[:upper:]]' '[[:lower:]]' `
+	fi
+fi
+
+#### Sort out OS (distro-tweaks required)
+if test x$with_os_type = x; then
+    if test x$operating_system = xredhat ; then
+        with_os_type=redhat
+    elif test x$operating_system = xsuse ; then
+        with_os_type=suse
+    elif test x$operating_system = xgentoo ; then
+        with_os_type=gentoo
+    elif test x$operating_system = xpardus ; then
+        with_os_type=pardus
+    elif test x$operating_system = xsolaris ; then
+	with_os_type=solaris
+    else
+        with_os_type=unknown
+    fi
+fi
+
+# (distro-tweaks required)
+AM_CONDITIONAL(OS_TYPE_UNKNOWN, test x$with_os_type = xunknown, [Running on unknown OS])
+AM_CONDITIONAL(OS_TYPE_RED_HAT, test x$with_os_type = xredhat, [Running on Red Hat OS'es])
+AM_CONDITIONAL(OS_TYPE_SUSE, test x$with_os_type = xsuse, [Running on SUSE OS'es])
+AM_CONDITIONAL(OS_TYPE_GENTOO, test x$with_os_type = xgentoo, [Running on Gentoo OS'es])
+AM_CONDITIONAL(OS_TYPE_PARDUS, test x$with_os_type = xpardus, [Running on Pardus OS'es])
+AM_CONDITIONAL(OS_TYPE_SOLARIS, test x$with_os_type = xsolaris, [Running os Solaris OS'es])
+AM_CONDITIONAL(OS_TYPE_FREEBSD, test x$with_os_type = xfreebsd, [Running on FreeBSD OS'es])
+
+AC_ARG_WITH(pam-include, [  --with-pam-include=<file>  pam file to include])
+
+#### Set up pam file to include (distro-tweaks required)
+if ! test -z "$with_pam_include"; then
+   PAM_FILE_INCLUDE_AUTH=$with_pam_include
+   PAM_FILE_INCLUDE_ACCOUNT=$with_pam_include
+   PAM_FILE_INCLUDE_PASSWORD=$with_pam_include
+   PAM_FILE_INCLUDE_SESSION=$with_pam_include
+elif test x$with_os_type = xredhat -o x$with_os_type = xgentoo -o x$with_os_type = xpardus ; then
+   PAM_FILE_INCLUDE_AUTH=system-auth
+   PAM_FILE_INCLUDE_ACCOUNT=system-auth
+   PAM_FILE_INCLUDE_PASSWORD=system-auth
+   PAM_FILE_INCLUDE_SESSION=system-auth
+elif test x$with_os_type = xsuse -o x$with_os_type = xsolaris ; then
+   PAM_FILE_INCLUDE_AUTH=common-auth
+   PAM_FILE_INCLUDE_ACCOUNT=common-account
+   PAM_FILE_INCLUDE_PASSWORD=common-password
+   PAM_FILE_INCLUDE_SESSION=common-session
+elif test x$with_os_type = xfreebsd ; then
+    PAM_FILE_INCLUDE_AUTH=system
+    PAM_FILE_INCLUDE_ACCOUNT=system
+    PAM_FILE_INCLUDE_PASSWORD=system
+    PAM_FILE_INCLUDE_SESSION=system
+else
+   PAM_FILE_INCLUDE_AUTH=system-auth
+   PAM_FILE_INCLUDE_ACCOUNT=system-auth
+   PAM_FILE_INCLUDE_PASSWORD=system-auth
+   PAM_FILE_INCLUDE_SESSION=system-auth
+fi
+
+AC_SUBST(PAM_FILE_INCLUDE_AUTH)
+AC_SUBST(PAM_FILE_INCLUDE_ACCOUNT)
+AC_SUBST(PAM_FILE_INCLUDE_PASSWORD)
+AC_SUBST(PAM_FILE_INCLUDE_SESSION)
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_AUTH, "$PAM_FILE_INCLUDE_AUTH", [pam file auth])
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_ACCOUNT, "$PAM_FILE_INCLUDE_ACCOUNT", [pam file account])
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_PASSWORD, "$PAM_FILE_INCLUDE_PASSWORD", [pam file password])
+AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_SESSION, "$PAM_FILE_INCLUDE_SESSION", [pam file session])
+
+dnl ---------------------------------------------------------------------------
+dnl - check OS 
+dnl ---------------------------------------------------------------------------
+case "$host_os" in
+  *linux*)
+	;;
+  *solaris*)
+	AC_DEFINE([HAVE_SOLARIS], 1, [Is this a Solaris system?])
+	;;
+  *freebsd*)
+  	AC_DEFINE([HAVE_FREEBSD], 1, [Is this a FreeBSD system?])
+	;;
+esac
+
+
 # ********************
 # Internationalisation
 # ********************
@@ -158,6 +405,7 @@ AC_OUTPUT([
 Makefile
 actions/Makefile
 data/Makefile
+data/polkit-1
 src/Makefile
 src/polkit/Makefile
 src/polkitbackend/Makefile
@@ -191,9 +439,21 @@ echo "
         cppflags:                   ${CPPFLAGS}
         xsltproc:                   ${XSLTPROC}
 
+        Distribution/OS:            ${with_os_type}
+        user for PolicyKit:         ${POLKIT_USER}
+        authentication framework:   ${POLKIT_AUTHFW}
+        PAM support:                ${have_pam}"
+
+if test "$have_pam" = yes ; then
+echo "
+        PAM file auth:              ${PAM_FILE_INCLUDE_AUTH}
+        PAM file account:           ${PAM_FILE_INCLUDE_ACCOUNT}
+        PAM file password:          ${PAM_FILE_INCLUDE_PASSWORD}
+        PAM file session:           ${PAM_FILE_INCLUDE_SESSION}"
+fi
+
+echo "
         Maintainer mode:            ${USE_MAINTAINER_MODE}
-        Building unit tests:        ${enable_tests}
-        GCC coverage profiling:     ${enable_gcov}
         Building verbose mode:      ${enable_verbose_mode}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}

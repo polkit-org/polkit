@@ -14,9 +14,14 @@ dbusconf_DATA = $(dbusconf_in_files:.conf.in=.conf)
 $(dbusconf_DATA): $(dbusconf_in_files) Makefile
 	@sed -e "s|\@polkituser\@|$(POLKIT_USER)|" $< > $@
 
+if POLKIT_AUTHFW_PAM
+pamdir = $(sysconfdir)/pam.d
+pam_DATA = polkit-1
+endif
+
 CLEANFILES = $(BUILT_SOURCES)
 
-EXTRA_DIST = org.freedesktop.PolicyKit1.Authority.xml $(service_in_files) $(dbusconf_in_files)
+EXTRA_DIST = org.freedesktop.PolicyKit1.Authority.xml $(service_in_files) $(dbusconf_in_files) polkit-1.in
 
 clean-local :
 	rm -f *~ $(service_DATA) $(dbusconf_DATA)
