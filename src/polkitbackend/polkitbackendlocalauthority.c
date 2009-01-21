@@ -1591,7 +1591,7 @@ polkit_backend_local_authority_system_bus_name_owner_changed (PolkitBackendAutho
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
-  g_debug ("name-owner-changed: '%s' '%s' '%s'", name, old_owner, new_owner);
+  //g_debug ("name-owner-changed: '%s' '%s' '%s'", name, old_owner, new_owner);
 
   if (name[0] == ':' && strlen (new_owner) == 0)
     {

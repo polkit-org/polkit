@@ -31,7 +31,7 @@
 /**
  * SECTION:polkitimplicitauthorization
  * @title: PolkitImplicitAuthorization
- * @short_result: Implicit Authorizations
+ * @short_description: Implicit Authorizations
  *
  * Possible implicit authorizations.
  */

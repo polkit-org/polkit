@@ -56,18 +56,13 @@
   </bookinfo>
 
   <reference id="ref-api">
-    <title>API Reference</title>
-    <partintro>
-      <para>
-        This part presents the class and function reference for the
-        <literal>libpolkit-gobject-1</literal> library.
-      </para>
-    </partintro>
+    <title>Core API Reference</title>
     <xi:include href="xml/polkitauthority.xml"/>
-    <xi:include href="xml/polkitauthorizationclaim.xml"/>
+    <xi:include href="xml/polkiterror.xml"/>
     <xi:include href="xml/polkitauthorizationresult.xml"/>
     <xi:include href="xml/polkitactiondescription.xml"/>
-    <xi:include href="xml/polkiterror.xml"/>
+    <xi:include href="xml/polkitauthorization.xml"/>
+    <xi:include href="xml/polkitimplicitauthorization.xml"/>
     <chapter id="subjects">
       <title>Subjects</title>
       <xi:include href="xml/polkitsubject.xml"/>
@@ -81,26 +76,28 @@
       <xi:include href="xml/polkitunixuser.xml"/>
       <xi:include href="xml/polkitunixgroup.xml"/>
     </chapter>
-    <chapter id="extending">
-      <title>Extending PolicyKit</title>
-      <xi:include href="../polkitbackend/xml/polkitbackendauthority.xml"/>
-      <xi:include href="../polkitbackend/xml/polkitbackendlocalauthority.xml"/>
-      <xi:include href="../polkitbackend/xml/polkitbackendactionpool.xml"/>
-      <xi:include href="../polkitbackend/xml/polkitbackendserver.xml"/>
-      <xi:include href="../polkitbackend/xml/polkitbackendsessionmonitor.xml"/>
-    </chapter>
   </reference>
 
-  <chapter id="manpages">
-    <title>Manual Pages</title>
-      <xi:include href="../man/PolicyKit.xml"/>
-      <xi:include href="../man/polkit.xml"/>
-  </chapter>
+  <reference id="ref-backend-api">
+    <title>Backend API Reference</title>
+    <xi:include href="../polkitbackend/xml/polkitbackendauthority.xml"/>
+    <xi:include href="../polkitbackend/xml/polkitbackendlocalauthority.xml"/>
+    <xi:include href="../polkitbackend/xml/polkitbackendactionpool.xml"/>
+    <xi:include href="../polkitbackend/xml/polkitbackendserver.xml"/>
+    <xi:include href="../polkitbackend/xml/polkitbackendsessionmonitor.xml"/>
+  </reference>
 
-  <chapter id="polkit-hierarchy">
-    <title>Object Hierarchy</title>
-      <xi:include href="xml/tree_index.sgml"/>
-  </chapter>
+  <reference id="ref-authentication-agent-api">
+    <title>Authentication Agent API Reference</title>
+    <xi:include href="../polkitagent/xml/polkitagentauthenticationagent.xml"/>
+    <xi:include href="../polkitagent/xml/polkitagentauthenticationsession.xml"/>
+  </reference>
+
+  <reference id="manpages">
+    <title>Manual Pages</title>
+    <xi:include href="../man/PolicyKit.xml"/>
+    <xi:include href="../man/polkit.xml"/>
+  </reference>
 
   <index>
     <title>Index</title>

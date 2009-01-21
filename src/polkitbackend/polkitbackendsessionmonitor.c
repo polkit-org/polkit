@@ -28,6 +28,14 @@
 #include "polkitbackendsessionmonitor.h"
 #include "ckbindings.h"
 
+/**
+ * SECTION:polkitbackendsessionmonitor
+ * @title: PolkitBackendSessionMonitor
+ * @short_description: Monitor sessions
+ *
+ * The #PolkitBackendSessionMonitor is a utility class to track and monitor sessions.
+ */
+
 struct _PolkitBackendSessionMonitor
 {
   GObject parent_instance;

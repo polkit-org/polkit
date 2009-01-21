@@ -30,6 +30,14 @@
 #include "polkitbackendserver.h"
 #include "polkitbackendprivate.h"
 
+/**
+ * SECTION:polkitbackendserver
+ * @title: PolkitBackendServer
+ * @short_description: Proxies authorization backends
+ *
+ * The #PolkitBackendServer class is used for proxying #PolkitBackendAuthority instances on the system message bus.
+ */
+
 struct _PolkitBackendServer
 {
   GObject parent_instance;

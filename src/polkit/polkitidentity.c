@@ -31,6 +31,14 @@
 #include "polkiterror.h"
 #include "polkitprivate.h"
 
+/**
+ * SECTION:polkitidentity
+ * @title: PolkitIdentity
+ * @short_description: Identities
+ *
+ * Identities.
+ */
+
 static void
 base_init (gpointer g_iface)
 {

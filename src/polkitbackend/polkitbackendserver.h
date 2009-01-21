@@ -38,6 +38,9 @@ G_BEGIN_DECLS
 #define POLKIT_BACKEND_IS_SERVER(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_BACKEND_TYPE_SERVER))
 #define POLKIT_BACKEND_IS_SERVER_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_BACKEND_TYPE_SERVER))
 
+#if 0
+typedef struct _PolkitBackendServer    PolkitBackendServer;
+#endif
 typedef struct _PolkitBackendServerClass    PolkitBackendServerClass;
 
 GType                polkit_backend_server_get_type (void) G_GNUC_CONST;

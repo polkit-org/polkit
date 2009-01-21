@@ -24,6 +24,14 @@
  *       And we REALLY REALLY really really should use signals instead of callbacks...
  */
 
+/**
+ * SECTION:polkitagentauthenticationsession
+ * @title: PolkitAgentAuthenticationSession
+ * @short_description: Authentcation Sessions
+ *
+ * The #PolkitAgentAuthenticationSession class is used for implementing authentication agents.
+ */
+
 
 /* for getline(), see below */
 #define _GNU_SOURCE

@@ -26,6 +26,14 @@
 #include "polkiterror.h"
 #include "polkitprivate.h"
 
+/**
+ * SECTION:polkiterror
+ * @title: PolkitError
+ * @short_description: Error codes
+ *
+ * Error codes.
+ */
+
 GQuark
 polkit_error_quark (void)
 {

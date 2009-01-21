@@ -1,4 +1,4 @@
 
-SUBDIRS = man polkitbackend polkit
+SUBDIRS = man polkitbackend polkitagent polkit
 
 EXTRA_DIST = version.xml.in

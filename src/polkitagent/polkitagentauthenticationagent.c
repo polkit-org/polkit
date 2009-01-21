@@ -26,6 +26,14 @@
 
 #include "polkitagentauthenticationagent.h"
 
+/**
+ * SECTION:polkitagentauthenticationagent
+ * @title: PolkitAgentAuthenticationAgent
+ * @short_description: Authentication Agent
+ *
+ * The #PolkitAgentAuthenticationAgent class is used for implementing authentication agents.
+ */
+
 struct _PolkitAgentAuthenticationAgent
 {
   GObject parent_instance;

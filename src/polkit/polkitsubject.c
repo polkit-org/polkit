@@ -32,6 +32,14 @@
 #include "polkiterror.h"
 #include "polkitprivate.h"
 
+/**
+ * SECTION:polkitsubject
+ * @title: PolkitSubject
+ * @short_description: Subjects
+ *
+ * Subjects.
+ */
+
 static void
 base_init (gpointer g_iface)
 {
