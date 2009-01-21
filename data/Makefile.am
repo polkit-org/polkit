@@ -31,9 +31,10 @@ EXTRA_DIST = 							\
 	org.freedesktop.PolicyKit1.AuthenticationAgent.xml 	\
 	$(service_in_files) 					\
 	$(dbusconf_in_files) 					\
-	polkit-gobject-1.in 					\
-	polkit-backend-1.in 					\
-	polkit-agent-1.in					\
+	polkit-1.in						\
+	polkit-gobject-1.pc.in 					\
+	polkit-backend-1.pc.in 					\
+	polkit-agent-1.pc.in					\
 	$(NULL)
 
 

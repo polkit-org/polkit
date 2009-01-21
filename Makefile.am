@@ -6,7 +6,6 @@ NULL =
 
 EXTRA_DIST = 			\
 	HACKING 		\
-	mkinstalldirs 		\
 	$(NULL)
 
 # xsltproc barfs on 'make distcheck'; disable for now
