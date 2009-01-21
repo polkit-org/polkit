@@ -161,3 +161,16 @@ polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority
   klass->unregister_authentication_agent (authority, object_path, pending_call);
 }
 
+void
+polkit_backend_authority_authentication_agent_response (PolkitBackendAuthority    *authority,
+                                                        const gchar               *cookie,
+                                                        PolkitIdentity            *identity,
+                                                        PolkitBackendPendingCall  *pending_call)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  klass->authentication_agent_response (authority, cookie, identity, pending_call);
+}
+

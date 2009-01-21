@@ -35,7 +35,7 @@ struct _PolkitAgentAuthenticationAgent
   PolkitAuthority *authority;
 
   PolkitAgentAuthenticationAgentBeginFunc begin_func;
-  PolkitAgentAuthenticationAgentEndFunc end_func;
+  PolkitAgentAuthenticationAgentCancelFunc cancel_func;
   gpointer user_data;
 };
 
@@ -100,7 +100,7 @@ polkit_agent_authentication_agent_class_init (PolkitAgentAuthenticationAgentClas
 
 PolkitAgentAuthenticationAgent *
 polkit_agent_authentication_agent_new (PolkitAgentAuthenticationAgentBeginFunc begin_func,
-                                       PolkitAgentAuthenticationAgentEndFunc end_func,
+                                       PolkitAgentAuthenticationAgentCancelFunc cancel_func,
                                        gpointer user_data,
                                        GError **error)
 {
@@ -109,7 +109,7 @@ polkit_agent_authentication_agent_new (PolkitAgentAuthenticationAgentBeginFunc b
   agent = POLKIT_AGENT_AUTHENTICATION_AGENT (g_object_new (POLKIT_AGENT_TYPE_AUTHENTICATION_AGENT, NULL));
 
   agent->begin_func = begin_func;
-  agent->end_func = end_func;
+  agent->cancel_func = cancel_func;
   agent->user_data = user_data;
 
   if (!polkit_authority_register_authentication_agent_sync (agent->authority,
@@ -147,41 +147,51 @@ handle_begin_authentication (_PolkitAgentAuthenticationAgent *instance,
   list = g_list_reverse (list);
 
   error = NULL;
-  if (!agent->begin_func (agent,
-                          action_id,
-                          cookie,
-                          list,
-                          &error,
-                          agent->user_data))
+
+  agent->begin_func (agent,
+                     action_id,
+                     cookie,
+                     list,
+                     (gpointer) method_invocation);
+
+  g_list_free (list);
+}
+
+void
+polkit_agent_authentication_agent_finish (PolkitAgentAuthenticationAgent *agent,
+                                          gpointer                        pending_call,
+                                          GError                         *error)
+{
+  EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (pending_call);
+
+  if (error != NULL)
     {
       egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
     }
   else
     {
       _polkit_agent_authentication_agent_handle_begin_authentication_finish (method_invocation);
     }
-
-  g_list_free (list);
 }
 
+
 static void
-handle_end_authentication (_PolkitAgentAuthenticationAgent *instance,
-                           const gchar *cookie,
-                           EggDBusMethodInvocation *method_invocation)
+handle_cancel_authentication (_PolkitAgentAuthenticationAgent *instance,
+                              const gchar *cookie,
+                              EggDBusMethodInvocation *method_invocation)
 {
   PolkitAgentAuthenticationAgent *agent = POLKIT_AGENT_AUTHENTICATION_AGENT (instance);
 
-  agent->end_func (agent,
-                   cookie,
-                   agent->user_data);
+  agent->cancel_func (agent,
+                      cookie,
+                      agent->user_data);
 
-  _polkit_agent_authentication_agent_handle_end_authentication_finish (method_invocation);
+  _polkit_agent_authentication_agent_handle_cancel_authentication_finish (method_invocation);
 }
 
 static void
 authentication_agent_iface_init (_PolkitAgentAuthenticationAgentIface *agent_iface)
 {
   agent_iface->handle_begin_authentication = handle_begin_authentication;
-  agent_iface->handle_end_authentication = handle_end_authentication;
+  agent_iface->handle_cancel_authentication = handle_cancel_authentication;
 }

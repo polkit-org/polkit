@@ -15,23 +15,33 @@ INCLUDES =                                                      \
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
-BUILT_SOURCES =										\
-	ckmanager.c				ckmanager.h				\
-	cksession.c				cksession.h				\
-	ckseat.c				ckseat.h				\
-	ckdevice.c				ckdevice.h				\
-	ckbindings.c				ckbindings.h				\
-	ckbindingsmarshal.list								\
-	ckbindingsmarshal.c			ckbindingsmarshal.h			\
-	ckbindingstypes.h								\
-	ckerror.c				ckerror.h				\
+BUILT_SOURCES =											\
+	ckmanager.c					ckmanager.h				\
+	cksession.c					cksession.h				\
+	ckseat.c					ckseat.h				\
+	ckdevice.c					ckdevice.h				\
+	ckbindings.c					ckbindings.h				\
+	ckbindingsmarshal.list									\
+	ckbindingsmarshal.c				ckbindingsmarshal.h			\
+	ckbindingstypes.h									\
+	ckerror.c					ckerror.h				\
+	_polkitagentauthenticationagent.c		_polkitagentauthenticationagent.h	\
+	_polkitagentbindings.c				_polkitagentbindings.h			\
+	_polkitagentbindingsmarshal.list							\
+	_polkitagentbindingsmarshal.c			_polkitagentbindingsmarshal.h		\
+	_polkitagentbindingstypes.h								\
 	$(NULL)
 
-$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/src/polkitbackend/org.freedesktop.ConsoleKit.xml
-	eggdbus-binding-tool									\
-	  --namespace       "Ck"								\
-	  --dbus-namespace  "org.freedesktop.ConsoleKit"					\
-	  --introspection-xml $(top_srcdir)/src/polkitbackend/org.freedesktop.ConsoleKit.xml	\
+$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/src/polkitbackend/org.freedesktop.ConsoleKit.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml
+	eggdbus-binding-tool										\
+	  --namespace       "Ck"									\
+	  --dbus-namespace  "org.freedesktop.ConsoleKit"						\
+	  --introspection-xml $(top_srcdir)/src/polkitbackend/org.freedesktop.ConsoleKit.xml		\
+	  $(NULL)
+	eggdbus-binding-tool										\
+	  --namespace       "_PolkitAgent"								\
+	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
+	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
 	  $(NULL)
 
 lib_LTLIBRARIES=libpolkit-backend-1.la

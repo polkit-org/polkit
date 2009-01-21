@@ -238,5 +238,16 @@
       </arg>
     </method>
 
+    <method name="AuthenticationAgentResponse">
+      <arg name="cookie" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request that was passed to the authentication agent"/>
+      </arg>
+
+      <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The identity that was authenticated"/>
+      </arg>
+    </method>
+
   </interface>
 </node>

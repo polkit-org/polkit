@@ -65,7 +65,8 @@ libpolkit_agent_1_la_LIBADD =                               		\
 libexec_PROGRAMS = polkit-agent-helper-1
 
 polkit_agent_helper_1_SOURCES = polkitagenthelper.c
-polkit_agent_helper_1_LDADD = $(AUTH_LIBS)
+polkit_agent_helper_1_CFLAGS  = $(GLIB_CFLAGS)
+polkit_agent_helper_1_LDADD   = $(AUTH_LIBS) $(top_builddir)/src/polkit/libpolkit-gobject-1.la
 
 # polkit-agent-helper-1 need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root

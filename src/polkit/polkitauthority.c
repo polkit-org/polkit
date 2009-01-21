@@ -1046,3 +1046,107 @@ polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *auth
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_authentication_agent_response_async (PolkitAuthority      *authority,
+                                                      const gchar          *cookie,
+                                                      PolkitIdentity       *identity,
+                                                      GCancellable         *cancellable,
+                                                      GAsyncReadyCallback   callback,
+                                                      gpointer              user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+  _PolkitIdentity *real_identity;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_authentication_agent_response_async);
+
+  real_identity = polkit_identity_get_real (identity);
+
+  call_id = _polkit_authority_authentication_agent_response (authority->real,
+                                                             EGG_DBUS_CALL_FLAGS_NONE,
+                                                             cookie,
+                                                             real_identity,
+                                                             cancellable,
+                                                             generic_async_cb,
+                                                             simple);
+
+  g_object_unref (real_identity);
+
+  return call_id;
+}
+
+void
+polkit_authority_authentication_agent_response (PolkitAuthority      *authority,
+                                                const gchar          *cookie,
+                                                PolkitIdentity       *identity,
+                                                GCancellable         *cancellable,
+                                                GAsyncReadyCallback   callback,
+                                                gpointer              user_data)
+{
+  polkit_authority_authentication_agent_response_async (authority,
+                                                        cookie,
+                                                        identity,
+                                                        cancellable,
+                                                        callback,
+                                                        user_data);
+}
+
+gboolean
+polkit_authority_authentication_agent_response_finish (PolkitAuthority *authority,
+                                                       GAsyncResult    *res,
+                                                       GError         **error)
+{
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+  gboolean ret;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_authentication_agent_response_async);
+
+  ret = _polkit_authority_authentication_agent_response_finish (authority->real,
+                                                                real_res,
+                                                                error);
+
+  if (!ret)
+    goto out;
+
+ out:
+  g_object_unref (real_res);
+  return ret;
+}
+
+
+gboolean
+polkit_authority_authentication_agent_response_sync (PolkitAuthority     *authority,
+                                                     const gchar         *cookie,
+                                                     PolkitIdentity      *identity,
+                                                     GCancellable        *cancellable,
+                                                     GError             **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  gboolean ret;
+
+  call_id = polkit_authority_authentication_agent_response_async (authority,
+                                                                  cookie,
+                                                                  identity,
+                                                                  cancellable,
+                                                                  generic_cb,
+                                                                  &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  ret = polkit_authority_authentication_agent_response_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */

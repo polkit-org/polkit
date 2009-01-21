@@ -19,8 +19,8 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_AGENT_AUTHENTICATION_SESSION_H
-#define __POLKIT_AGENT_AUTHENTICATION_SESSION_H
+#ifndef __POLKIT_AGENT_AUTHENTICATION_AGENT_H
+#define __POLKIT_AGENT_AUTHENTICATION_AGENT_H
 
 #include <polkit/polkit.h>
 #include <polkitagent/polkitagenttypes.h>
@@ -41,25 +41,29 @@ typedef struct _PolkitAgentAuthenticationAgentClass    PolkitAgentAuthentication
 
 /* TODO: we probably want to express this interface in another way but this is good enough for now */
 
-typedef gboolean (*PolkitAgentAuthenticationAgentBeginFunc) (PolkitAgentAuthenticationAgent *agent,
-                                                             const gchar                    *action_id,
-                                                             const gchar                    *cookie,
-                                                             GList                          *identities,
-                                                             GError                        **error,
-                                                             gpointer                        user_data);
-
-typedef void (*PolkitAgentAuthenticationAgentEndFunc)   (PolkitAgentAuthenticationAgent *agent,
+typedef void (*PolkitAgentAuthenticationAgentBeginFunc) (PolkitAgentAuthenticationAgent *agent,
+                                                         const gchar                    *action_id,
                                                          const gchar                    *cookie,
-                                                         gpointer                        user_data);
+                                                         GList                          *identities,
+                                                         gpointer                        pending_call);
+
+typedef void (*PolkitAgentAuthenticationAgentCancelFunc)   (PolkitAgentAuthenticationAgent *agent,
+                                                            const gchar                    *cookie,
+                                                            gpointer                        user_data);
 
 GType                           polkit_agent_authentication_agent_get_type (void) G_GNUC_CONST;
+
 PolkitAgentAuthenticationAgent *polkit_agent_authentication_agent_new (PolkitAgentAuthenticationAgentBeginFunc begin_func,
-                                                                       PolkitAgentAuthenticationAgentEndFunc end_func,
+                                                                       PolkitAgentAuthenticationAgentCancelFunc cancel_func,
                                                                        gpointer user_data,
                                                                        GError **error);
+
+void                            polkit_agent_authentication_agent_finish (PolkitAgentAuthenticationAgent *agent,
+                                                                          gpointer                        pending_call,
+                                                                          GError                         *error);
 
 /* --- */
 
 G_END_DECLS
 
-#endif /* __POLKIT_AGENT_AUTHENTICATION_SESSION_H */
+#endif /* __POLKIT_AGENT_AUTHENTICATION_AGENT_H */

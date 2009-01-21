@@ -286,7 +286,7 @@ polkit_agent_authentication_session_initiate_auth (PolkitAgentAuthenticationSess
       goto error;
     }
 
-  helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-session-helper-1";
+  helper_argv[0] = PACKAGE_LIBEXEC_DIR "/polkit-agent-helper-1";
   helper_argv[1] = passwd->pw_name;
   helper_argv[2] = session->cookie;
   helper_argv[3] = NULL;

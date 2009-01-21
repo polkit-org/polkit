@@ -95,6 +95,11 @@ struct _PolkitBackendAuthorityClass
                                            const gchar              *object_path,
                                            PolkitBackendPendingCall *pending_call);
 
+  void (*authentication_agent_response) (PolkitBackendAuthority   *authority,
+                                         const gchar              *cookie,
+                                         PolkitIdentity           *identity,
+                                         PolkitBackendPendingCall *pending_call);
+
   /*< private >*/
   /* Padding for future expansion */
   void (*_polkit_reserved1) (void);
@@ -154,6 +159,11 @@ void     polkit_backend_authority_unregister_authentication_agent (PolkitBackend
                                                                    const gchar               *object_path,
                                                                    PolkitBackendPendingCall  *pending_call);
 
+void     polkit_backend_authority_authentication_agent_response (PolkitBackendAuthority    *authority,
+                                                                 const gchar               *cookie,
+                                                                 PolkitIdentity            *identity,
+                                                                 PolkitBackendPendingCall  *pending_call);
+
 /* --- */
 
 void     polkit_backend_authority_enumerate_actions_finish        (PolkitBackendPendingCall  *pending_call,
@@ -176,7 +186,10 @@ void     polkit_backend_authority_add_authorization_finish        (PolkitBackend
 void     polkit_backend_authority_remove_authorization_finish     (PolkitBackendPendingCall  *pending_call);
 
 void     polkit_backend_authority_register_authentication_agent_finish   (PolkitBackendPendingCall  *pending_call);
+
 void     polkit_backend_authority_unregister_authentication_agent_finish (PolkitBackendPendingCall  *pending_call);
+
+void     polkit_backend_authority_authentication_agent_response_finish (PolkitBackendPendingCall  *pending_call);
 
 
 G_END_DECLS

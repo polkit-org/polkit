@@ -473,6 +473,37 @@ polkit_backend_authority_unregister_authentication_agent_finish (PolkitBackendPe
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+authority_handle_authentication_agent_response (_PolkitAuthority               *instance,
+                                                const gchar                    *cookie,
+                                                _PolkitIdentity                *real_identity,
+                                                EggDBusMethodInvocation        *method_invocation)
+{
+  PolkitBackendServer *server = POLKIT_BACKEND_SERVER (instance);
+  PolkitBackendPendingCall *pending_call;
+  PolkitIdentity *identity;
+
+  pending_call = _polkit_backend_pending_call_new (method_invocation, server);
+
+  identity = polkit_identity_new_for_real (real_identity);
+
+  g_object_set_data_full (G_OBJECT (pending_call), "identity", identity, (GDestroyNotify) g_object_unref);
+
+  polkit_backend_authority_authentication_agent_response (server->authority,
+                                                          cookie,
+                                                          identity,
+                                                          pending_call);
+}
+
+void
+polkit_backend_authority_authentication_agent_response_finish (PolkitBackendPendingCall  *pending_call)
+{
+  _polkit_authority_handle_authentication_agent_response_finish (_polkit_backend_pending_call_get_method_invocation (pending_call));
+  g_object_unref (pending_call);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
 authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
   authority_iface->handle_enumerate_actions               = authority_handle_enumerate_actions;
@@ -484,4 +515,5 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
   authority_iface->handle_remove_authorization            = authority_handle_remove_authorization;
   authority_iface->handle_register_authentication_agent   = authority_handle_register_authentication_agent;
   authority_iface->handle_unregister_authentication_agent = authority_handle_unregister_authentication_agent;
+  authority_iface->handle_authentication_agent_response   = authority_handle_authentication_agent_response;
 }

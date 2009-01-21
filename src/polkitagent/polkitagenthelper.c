@@ -29,6 +29,8 @@
 #include <syslog.h>
 #include <security/pam_appl.h>
 
+#include <polkit/polkit.h>
+
 #ifdef HAVE_SOLARIS
 #  define LOG_AUTHPRIV    (10<<3)
 #endif
@@ -38,7 +40,9 @@
  * sensitive information.
  */
 #undef PAH_DEBUG
-#define PAH_DEBUG
+//#define PAH_DEBUG
+
+static gboolean send_dbus_message (const char *cookie, const char *user);
 
 static int conversation_function (int n, const struct pam_message **msg, struct pam_response **resp, void *data);
 
@@ -154,9 +158,11 @@ main (int argc, char *argv[])
   fprintf (stderr, "polkit-agent-helper-1: successfully authenticated user '%s'.\n", user_to_auth);
 #endif /* PAH_DEBUG */
 
-  /* TODO: now send a D-Bus message to the PolicyKit daemon that
-   *       includes a) the cookie; and b) the user we authenticated
+  /* now send a D-Bus message to the PolicyKit daemon that
+   * includes a) the cookie; and b) the user we authenticated
    */
+  if (!send_dbus_message (cookie, user_to_auth))
+    goto error;
 
   fprintf (stdout, "SUCCESS\n");
   fflush (stdout);
@@ -252,4 +258,52 @@ error:
   memset (aresp, 0, n * sizeof *aresp);
   *resp = NULL;
   return PAM_CONV_ERR;
+}
+
+static gboolean
+send_dbus_message (const char *cookie, const char *user)
+{
+  PolkitAuthority *authority;
+  PolkitIdentity *identity;
+  GError *error;
+  gboolean ret;
+
+  ret = FALSE;
+
+  error = NULL;
+
+  g_type_init ();
+
+  authority = polkit_authority_get ();
+
+  identity = polkit_unix_user_new_for_name (user, &error);
+  if (identity == NULL)
+    {
+      g_printerr ("Error constructing identity: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  if (!polkit_authority_authentication_agent_response_sync (authority,
+                                                            cookie,
+                                                            identity,
+                                                            NULL,
+                                                            &error))
+    {
+      g_printerr ("Error sending response to PolicyKit daemon: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  ret = TRUE;
+
+ out:
+
+  if (identity != NULL)
+    g_object_unref (identity);
+
+  if (authority != NULL)
+    g_object_unref (authority);
+
+  return ret;
 }
