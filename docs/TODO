@@ -1,6 +1,63 @@
 
-TODO:
+Core TODO items
+---------------
 
  - move all commits to main PolicyKit repo
 
- - [MORE STUFF HERE]
+ - trawl through all TODO's in code and update this file
+
+ - document the D-Bus interfaces
+   - should be done in eggdbus; e.g.
+     - D-Bus XML --(eggdbus-binding-tool)--> DocBook --(gtk-doc)--> HTML
+
+ - document the GObject API
+
+ - local files authority backend
+   - split out AuthorizationStore into separate class
+   - split out AuthenticationAgent and AuthenticationSession to separate classes
+
+ - maybe rename .policy to .action for policy XML files
+
+ - provide a polkit-validate-action-file-1 tool to check/validate
+   .policy/.action XML files
+
+ - check / validate all incoming arguments
+   - and other security/paranoia code
+
+ - write a couple of introductory sections detailing the system architecture
+   - a developer-audience; and
+   - a system administrator audience
+
+ - write a PolicyKit 0.9.x -> polkit 1.0 porting guide
+
+ - use a GIO extension point to decide what authority backend to use
+
+ - expose a public ObtainAuthorization() method
+
+ - separate core API (e.g. CheckAuthorization()) from the administration API
+   (e.g. AddAuthorization()) both in the D-Bus interface and in the GObject
+   client libraries
+
+ - provide a way to tweak the defaults for actions (or maybe not)
+
+ - do we need negative authorizations? If so, implement code for it, otherwise
+   remove it from the PolkitAuthorization class
+
+ - make sure simple operations work when no system bus is present
+   - e.g. %post RPM scripts adding/removing authorizations to identities
+
+polkit-gnome TODO items
+-----------------------
+
+ - show a notification icon when the session/user has temporary authorizations
+   - along with an option to give these up
+
+ - make the AuthenticationAgent process (which runs for the lifetime of the
+   session) spawn a process to display the authentication dialog
+   - to make it lighter on resource usage
+   - to work around Metacity focus stealing prevention bugs
+
+ - port libpolkit-gnome to new API
+
+ - port polkit-gnome-authorization to new API
+
