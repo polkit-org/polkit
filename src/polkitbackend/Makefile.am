@@ -87,6 +87,10 @@ libpolkit_backend_1_la_LIBADD =                               		\
 
 CLEANFILES = $(BUILT_SOURCES)
 
+EXTRA_DIST =								\
+	org.freedesktop.ConsoleKit.xml					\
+	$(NULL)
+
 clean-local :
 	rm -f *~
 
