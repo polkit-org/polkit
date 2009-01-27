@@ -658,8 +658,6 @@ do_run (gint argc, gchar *argv[])
       goto out;
     }
 
-  g_printerr ("Launching program %s\n", argv[0]);
-
   execvp (argv[0], argv);
 
   g_printerr ("Error launching program: %m\n");
