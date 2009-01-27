@@ -49,6 +49,8 @@ Core TODO items
  - emit a Changed() signal on the Authority interface when authorizations
    change
 
+ - provide a way to cancel a CheckAuthorization() call
+
 Backend TODO items
 ------------------
 
