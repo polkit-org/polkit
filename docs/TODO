@@ -15,13 +15,13 @@ Core TODO items
  - provide a polkit-validate-action-file-1 tool to check/validate
    .policy/.action XML files
 
- - write a couple of introductory sections detailing the system architecture
+ - write a couple of introductory sections detailing the system architecture for
    - a developer-audience; and
    - a system administrator audience
 
  - write a PolicyKit 0.9.x -> polkit 1.0 porting guide
 
- - expose a public ObtainAuthorization() method
+ - provide a public ObtainAuthorization() method
 
  - separate core API (e.g. CheckAuthorization()) from the administration API
    (e.g. AddAuthorization()) both in the D-Bus interface and in the GObject
@@ -39,6 +39,16 @@ Core TODO items
  - make sure simple operations work when no system bus is present
    - e.g. %post RPM scripts adding/removing authorizations to identities
 
+ - rework the classes in the PolkitAgent* library so the API is easier to
+   work with
+
+ - for administrator authentication, make it possible to use 'wheel' group
+   sudo-style authentication (e.g. select one or more identities that the
+   user can choose to authenticate as)
+
+ - emit a Changed() signal on the Authority interface when authorizations
+   change
+
 Backend TODO items
 ------------------
 
@@ -50,7 +60,6 @@ Backend TODO items
  - local files authority backend
    - split out AuthorizationStore into separate class
    - split out AuthenticationAgent and AuthenticationSession to separate classes
-
 
 polkit-gnome TODO items
 -----------------------
@@ -66,4 +75,3 @@ polkit-gnome TODO items
  - port libpolkit-gnome to new API
 
  - port polkit-gnome-authorization to new API
-
