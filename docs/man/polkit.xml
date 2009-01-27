@@ -1,0 +1,358 @@
+<refentry id="polkit-1.1">
+  <refentryinfo>
+    <title>polkit-1</title>
+    <date>January 2009</date>
+    <productname>PolicyKit-1</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>polkit-1</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>polkit-1</refname>
+    <refpurpose>PolicyKit Authorization Tool</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>polkit-1</command>
+      <arg><option>--version</option></arg>
+      <arg><option>--help</option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>polkit-1 list</command>
+      <group>
+        <arg choice="plain">
+          actions
+          <arg><option>--verbose</option></arg>
+        </arg>
+        <arg choice="plain">
+          <sbr/>
+          users
+          <arg><option>--verbose</option></arg>
+        </arg>
+        <arg choice="plain">
+          <sbr/>
+          groups
+          <arg><option>--verbose</option></arg>
+        </arg>
+        <arg choice="plain">
+          <sbr/>
+          authorizations
+        </arg>
+        <arg choice="plain">
+          <sbr/>
+          explicit-authorizations <replaceable>identity</replaceable>
+          <arg><option>--verbose</option></arg>
+        </arg>
+      </group>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>polkit-1 check</command>
+      <arg choice="plain"><replaceable>subject</replaceable></arg>
+      <arg choice="plain"><replaceable>action-id</replaceable></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>polkit-1 grant</command>
+      <arg choice="plain"><replaceable>identity</replaceable></arg>
+      <arg choice="plain"><replaceable>action-id</replaceable></arg>
+      <arg><option>--subject <replaceable>subject</replaceable></option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>polkit-1 revoke</command>
+      <arg choice="plain"><replaceable>identity</replaceable></arg>
+      <arg choice="plain"><replaceable>action-id</replaceable></arg>
+      <arg><option>--subject <replaceable>subject</replaceable></option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>polkit-1 action</command>
+      <arg choice="plain"><replaceable>action-id</replaceable></arg>
+      <sbr/>
+      <group>
+        <arg choice="plain">
+          set-implicit-any
+          <replaceable>value</replaceable>
+        </arg>
+        <arg choice="plain">
+          <sbr/>
+          set-implicit-inactive
+          <replaceable>value</replaceable>
+        </arg>
+        <arg choice="plain">
+          <sbr/>
+          set-implicit-active
+          <replaceable>value</replaceable>
+        </arg>
+        <arg choice="plain">
+          <sbr/>
+          reset-implicit
+        </arg>
+      </group>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>polkit-1 run</command>
+      <arg choice="plain"><replaceable>action-id</replaceable></arg>
+      <arg choice="plain"><replaceable>PROGRAM</replaceable></arg>
+      <group rep="repeat">
+        <arg choice="plain"><replaceable>ARGUMENTS</replaceable></arg>
+      </group>
+    </cmdsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1><title>DESCRIPTION</title>
+    <para>
+      Manage PolicyKit authorizations.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>OPTIONS</title>
+    <variablelist>
+      <varlistentry>
+        <term><option>--version</option></term>
+        <listitem>
+          <para>
+            Show version and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--help</option></term>
+        <listitem>
+          <para>
+            Show this information.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 list actions</command>
+        <arg><option>--verbose</option></arg>
+      </para>
+      <para>
+        Lists all identifiers for registered PolicyKit actions. The returned identifiers can be
+        used as <replaceable>action-id</replaceable> parameters.
+        Prints detailed information about each action if <option>--verbose</option> is given.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 list users</command>
+        <arg><option>--verbose</option></arg>
+      </para>
+      <para>
+        Lists all users.
+        The returned identifiers can be used as <replaceable>identity</replaceable> parameters.
+        Prints detailed information about each user if <option>--verbose</option> is given.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 list groups</command>
+        <arg><option>--verbose</option></arg>
+      </para>
+      <para>
+        Lists all groups.
+        The returned identifiers can be used as <replaceable>identity</replaceable> parameters.
+        Prints detailed information about each group if <option>--verbose</option> is given.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 list authorizations</command>
+      </para>
+      <para>
+        Lists all <replaceable>action-id</replaceable>s that the calling process is authorized for.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 list explicit-authorizations <replaceable>identity</replaceable></command>
+        <arg><option>--verbose</option></arg>
+      </para>
+      <para>
+        Lists all explicit authorizations for <replaceable>identity</replaceable>.
+        Prints detailed information about each authorization if <option>--verbose</option> is given.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 check</command>
+        <arg choice="plain"><replaceable>subject</replaceable></arg>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+      </para>
+      <para>
+        Checks if <replaceable>subject</replaceable> is authorized for <replaceable>action-id</replaceable>.
+        See <xref linkend="polkit-1-subject"/> for details about <replaceable>subject</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 grant</command>
+        <arg choice="plain"><replaceable>identity</replaceable></arg>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+        <arg><option>--subject <replaceable>subject</replaceable></option></arg>
+      </para>
+      <para>
+        Grants an authorization to <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>
+        optionally constraining its use for <replaceable>subject</replaceable>.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>
+        and <xref linkend="polkit-1-subject"/> for details about <replaceable>subject</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 revoke</command>
+        <arg choice="plain"><replaceable>identity</replaceable></arg>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+        <arg><option>--subject <replaceable>subject</replaceable></option></arg>
+      </para>
+      <para>
+        Revokes an authorization from <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>
+        which, optionally, is constrained to <replaceable>subject</replaceable>.
+        See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>
+        and <xref linkend="polkit-1-subject"/> for details about <replaceable>subject</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 action</command>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+        <arg choice="plain">
+          set-implicit-any
+          <replaceable>value</replaceable>
+        </arg>
+      </para>
+      <para>
+        Sets the implicit authorizations on
+        <replaceable>action-id</replaceable> to <replaceable>value</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 action</command>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+        <arg choice="plain">
+          set-implicit-inactive
+          <replaceable>value</replaceable>
+        </arg>
+      </para>
+      <para>
+        Sets the implicit authorizations for local inactive sessions on
+        <replaceable>action-id</replaceable> to <replaceable>value</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 action</command>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+        <arg choice="plain">
+          set-implicit-active
+          <replaceable>value</replaceable>
+        </arg>
+      </para>
+      <para>
+        Sets the implicit authorizations for local active sessions on
+        <replaceable>action-id</replaceable> to <replaceable>value</replaceable>.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 action</command>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+        <arg choice="plain">
+          reset-implicit
+        </arg>
+      </para>
+      <para>
+        Resets all implicit authorizations on <replaceable>action-id</replaceable> to factory defaults.
+      </para>
+    </refsect2>
+
+    <refsect2>
+      <para>
+        <command>polkit-1 run</command>
+        <arg choice="plain"><replaceable>action-id</replaceable></arg>
+        <arg choice="plain"><replaceable>PROGRAM</replaceable></arg>
+        <group rep="repeat">
+          <arg choice="plain"><replaceable>ARGUMENTS</replaceable></arg>
+        </group>
+      </para>
+      <para>
+        Attempts to ensure that a PolicyKit authorization for <replaceable>action-id</replaceable>
+        is available and runs the <replaceable>PROGRAM</replaceable> if an authorization is
+        in place. This may involve having to make the user obtain the authorization through
+        authentication. If an authorization cannot be obtained, <replaceable>PROGRAM</replaceable>
+        will not be runned.
+      </para>
+    </refsect2>
+
+  </refsect1>
+
+  <refsect1 id="polkit-1-subject">
+    <title>SUBJECTS</title>
+    <para>
+      TODO: Write me.
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkit-1-identity">
+    <title>IDENTITIES</title>
+    <para>
+      TODO: Write me.
+    </para>
+  </refsect1>
+
+  <refsect1><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen <email>davidz@redhat.com</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      on how to subscribe.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

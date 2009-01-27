@@ -1,0 +1,253 @@
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
+"http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node>
+
+  <!-- Subject struct -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="Subject">
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:subject_kind">
+      <annotation name="org.gtk.EggDBus.DocString" value="Kind of subject"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{sv}:subject_details">
+      <annotation name="org.gtk.EggDBus.DocString" value="Details about the subject"/>
+    </annotation>
+
+    <!-- TODO: document values in hash map for each subject type-->
+
+  </annotation>
+
+  <!-- Identity struct -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="Identity">
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:identity_kind">
+      <annotation name="org.gtk.EggDBus.DocString" value="Kind of identity"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{sv}:identity_details">
+      <annotation name="org.gtk.EggDBus.DocString" value="Details about the identity"/>
+    </annotation>
+
+    <!-- TODO: document values in hash map for each identity type-->
+
+  </annotation>
+
+  <!-- An enumeration for implicit authorizations -->
+  <annotation name="org.gtk.EggDBus.DeclareEnum" value="ImplicitAuthorization">
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="NotAuthorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="Subject is not authorized."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AuthenticationRequired">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication is required."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AdministratorAuthenticationRequired">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication as an administrator is required."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AuthenticationRequiredRetained">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication is required. If the authorization is obtained, it is retained."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="AdministratorAuthenticationRequiredRetained">
+      <annotation name="org.gtk.EggDBus.DocString" value="Authentication as an administrator is required. If the authorization is obtained, it is retained."/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="Authorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is authorized"/>
+    </annotation>
+
+  </annotation>
+
+  <!-- ActionDescription struct -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="ActionDescription">
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:description">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Description"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:message">
+      <annotation name="org.gtk.EggDBus.DocString" value="Action Message"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_name">
+      <annotation name="org.gtk.EggDBus.DocString" value="Vendor Name"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_url">
+      <annotation name="org.gtk.EggDBus.DocString" value="Vendor URL"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:icon_name">
+      <annotation name="org.gtk.EggDBus.DocString" value="Icon Name"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_any">
+      <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Defaults for any kind of subject"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_inactive">
+      <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Defaults for subjects in local inactive sessions"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_active">
+      <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Defaults for subjects in local active sessions"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{ss}:annotations">
+      <annotation name="org.gtk.EggDBus.DocString" value="Annotations"/>
+    </annotation>
+
+  </annotation>
+
+  <!-- The error domain used for reporting errors -->
+  <annotation name="org.gtk.EggDBus.DeclareErrorDomain" value="Error">
+    <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Failed">
+      <annotation name="org.gtk.EggDBus.DocString" value="The operation failed"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.NotSupported">
+      <annotation name="org.gtk.EggDBus.DocString" value="Operation is not supported"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.NotAuthorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="Not authorized to perform operation"/>
+    </annotation>
+  </annotation>
+
+  <!-- An enumeration for results when checking for an authorization -->
+  <annotation name="org.gtk.EggDBus.DeclareEnum" value="AuthorizationResult">
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="NotAuthorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is not authorized for the specified action"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="Authorized">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is authorized for the specified action"/>
+    </annotation>
+    <annotation name="org.gtk.EggDBus.Enum.Member" value="Challenge">
+      <annotation name="org.gtk.EggDBus.DocString" value="The subject is authorized if more information is provided"/>
+    </annotation>
+  </annotation>
+
+  <!-- Flags used for checking authorizations -->
+  <annotation name="org.gtk.EggDBus.DeclareFlags" value="CheckAuthorizationFlags">
+    <annotation name="org.gtk.EggDBus.Flags.Member" value="AllowUserInteraction">
+      <annotation name="org.gtk.EggDBus.DocString" value="If the subject can obtain the authorization through authentication, and an authentication agent is available, then attempt to do so. Note, this means that the #CheckAuthorization() method is likely to block for a long time."/>
+    </annotation>
+  </annotation>
+
+  <!-- Authorization struct -->
+  <annotation name="org.gtk.EggDBus.DeclareStruct" value="Authorization">
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
+      <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action the authorization is for"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="(sa{sv}):subject">
+      <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Subject that the authorization applies to"/>
+    </annotation>
+
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="b:is_negative">
+      <annotation name="org.gtk.EggDBus.DocString" value="Whether the authorization is negative"/>
+    </annotation>
+  </annotation>
+
+  <interface name="org.freedesktop.PolicyKit1.Authority">
+
+    <method name="EnumerateUsers">
+      <arg name="users" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+      </arg>
+    </method>
+
+    <method name="EnumerateGroups">
+      <arg name="groups" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+      </arg>
+    </method>
+
+    <method name="EnumerateActions">
+      <arg name="locale" direction="in" type="s"/>
+      <arg name="action_descriptions" direction="out" type="a(ssssssiiia{ss})">
+        <annotation name="org.gtk.EggDBus.StructType" value="ActionDescription"/>
+      </arg>
+    </method>
+
+    <method name="CheckAuthorization">
+      <arg name="subject" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      </arg>
+      <arg name="action_id" direction="in" type="s"/>
+      <arg name="flags" direction="in" type="i">
+        <annotation name="org.gtk.EggDBus.FlagsType" value="CheckAuthorizationFlags"/>
+      </arg>
+
+      <arg name="result" direction="out" type="i">
+        <annotation name="org.gtk.EggDBus.EnumType" value="AuthorizationResult"/>
+      </arg>
+    </method>
+
+    <method name="AddAuthorization">
+      <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The identity to add @authorization to"/>
+      </arg>
+      <arg name="authorization" direction="in" type="(s(sa{sv})b)">
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The authorization to add for @identity"/>
+      </arg>
+    </method>
+
+    <method name="RemoveAuthorization">
+      <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The identity to remove @authorization from"/>
+      </arg>
+      <arg name="authorization" direction="in" type="(s(sa{sv})b)">
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The authorization to remove from @identity"/>
+      </arg>
+    </method>
+
+    <method name="EnumerateAuthorizations">
+      <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The identity to enumerate authorizations for"/>
+      </arg>
+      <arg name="authorizations" direction="out" type="a(s(sa{sv})b)">
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="An array of authorizations for @identity"/>
+      </arg>
+    </method>
+
+    <method name="RegisterAuthenticationAgent">
+      <arg name="object_path" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="Path of authentication agent object on the unique name of the caller"/>
+      </arg>
+    </method>
+
+    <method name="UnregisterAuthenticationAgent">
+      <arg name="object_path" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="Path of authentication agent object on the unique name of the caller"/>
+      </arg>
+    </method>
+
+    <method name="AuthenticationAgentResponse">
+      <arg name="cookie" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request that was passed to the authentication agent"/>
+      </arg>
+
+      <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The identity that was authenticated"/>
+      </arg>
+    </method>
+
+  </interface>
+</node>
