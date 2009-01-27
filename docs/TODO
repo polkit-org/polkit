@@ -51,6 +51,9 @@ Core TODO items
 
  - provide a way to cancel a CheckAuthorization() call
 
+ - use file monitors on the /usr/share/polkit-1/actions and
+   /var/lib/polkit-1 directories and DTRT
+
 Backend TODO items
 ------------------
 
