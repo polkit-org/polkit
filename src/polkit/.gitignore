@@ -1,9 +1,0 @@
-.deps
-.libs
-*.la
-*.lo
-*.o
-Makefile
-Makefile.in
-polkit-interface-manager-glue.h
-polkit-interface-session-glue.h

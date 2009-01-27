@@ -1,9 +1,0 @@
-.deps
-.libs
-*.o
-Makefile
-Makefile.in
-polkit-is-privileged
-polkit-list-privileges
-polkit-grant-privilege
-polkit-revoke-privilege

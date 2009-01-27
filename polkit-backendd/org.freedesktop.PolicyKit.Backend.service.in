@@ -1,4 +1,0 @@
-[D-BUS Service]
-Name=org.freedesktop.PolicyKit.Backend
-Exec=@libexecdir@/polkit-backendd
-User=root
