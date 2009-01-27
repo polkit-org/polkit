@@ -200,12 +200,34 @@ dir_monitor_changed (GFileMonitor     *monitor,
    *       Because when editing a file with emacs we get 4-8 events..
    */
 
-  /* now throw away all caches */
-  g_hash_table_remove_all (priv->parsed_files);
-  g_hash_table_remove_all (priv->parsed_actions);
-  priv->has_loaded_all_files = FALSE;
+  if (file != NULL)
+    {
+      gchar *name;
 
-  g_signal_emit_by_name (pool, "changed");
+      name = g_file_get_basename (file);
+
+      //g_debug ("event_type=%d file=%p name=%s", event_type, file, name);
+
+      if (!g_str_has_prefix (name, ".") &&
+          !g_str_has_prefix (name, "#") &&
+          g_str_has_suffix (name, ".policy") &&
+          (event_type == G_FILE_MONITOR_EVENT_CREATED ||
+           event_type == G_FILE_MONITOR_EVENT_DELETED ||
+           event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT))
+        {
+
+          //g_debug ("match");
+
+          /* now throw away all caches */
+          g_hash_table_remove_all (priv->parsed_files);
+          g_hash_table_remove_all (priv->parsed_actions);
+          priv->has_loaded_all_files = FALSE;
+
+          g_signal_emit_by_name (pool, "changed");
+        }
+
+      g_free (name);
+    }
 }
 
 
