@@ -2,8 +2,6 @@
 Core TODO items
 ---------------
 
- - move all commits to main PolicyKit repo
-
  - trawl through all TODO's in code and update this file
 
  - document the D-Bus interfaces
