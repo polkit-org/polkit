@@ -40,7 +40,11 @@ struct _PolkitAgentAuthenticationAgent
 
   EggDBusConnection *system_bus;
 
+  EggDBusObjectProxy *authority_proxy;
+
   PolkitAuthority *authority;
+
+  gboolean is_registered;
 
   PolkitAgentAuthenticationAgentBeginFunc begin_func;
   PolkitAgentAuthenticationAgentCancelFunc cancel_func;
@@ -61,6 +65,56 @@ G_DEFINE_TYPE_WITH_CODE (PolkitAgentAuthenticationAgent, polkit_agent_authentica
                          );
 
 static void
+polkit_agent_authentication_agent_register (PolkitAgentAuthenticationAgent *agent)
+{
+  GError *error;
+
+  g_debug ("Attempting to register Authentication Agent with PolicyKit daemon");
+
+  error = NULL;
+  if (!polkit_authority_register_authentication_agent_sync (agent->authority,
+                                                            "/org/freedesktop/PolicyKit1/AuthenticationAgent",
+                                                            NULL,
+                                                            &error))
+    {
+      g_warning ("Unable to register authentication agent: %s", error->message);
+      g_error_free (error);
+    }
+  else
+    {
+      agent->is_registered = TRUE;
+    }
+}
+
+static void
+name_owner_notify (EggDBusObjectProxy *object_proxy,
+                   GParamSpec *pspec,
+                   gpointer user_data)
+{
+  PolkitAgentAuthenticationAgent *agent = POLKIT_AGENT_AUTHENTICATION_AGENT (user_data);
+  gchar *owner;
+
+  owner = egg_dbus_object_proxy_get_name_owner (agent->authority_proxy);
+
+  if (owner == NULL)
+    {
+      g_warning ("PolicyKit daemon disconnected from the bus. We are no longer a registered authentication agent.");
+      agent->is_registered = FALSE;
+    }
+  else
+    {
+      /* only register if there is a name owner */
+      if (!agent->is_registered)
+        {
+          g_debug ("PolicyKit daemon connected to bus. Attempting to re-register as an authentication agent.");
+          polkit_agent_authentication_agent_register (agent);
+        }
+    }
+
+  g_free (owner);
+}
+
+static void
 polkit_agent_authentication_agent_init (PolkitAgentAuthenticationAgent *agent)
 {
   agent->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
@@ -72,6 +126,20 @@ polkit_agent_authentication_agent_init (PolkitAgentAuthenticationAgent *agent)
                                           G_TYPE_INVALID);
 
   agent->authority = polkit_authority_get ();
+
+  /* the only use of this proxy is to re-register with the polkit daemon
+   * if it jumps off the bus and comes back (which is useful for debugging)
+   */
+  agent->authority_proxy = egg_dbus_connection_get_object_proxy (agent->system_bus,
+                                                                 "org.freedesktop.PolicyKit1",
+                                                                 "/org/freedesktop/PolicyKit1/Authority");
+
+  g_signal_connect (agent->authority_proxy,
+                    "notify::name-owner",
+                    G_CALLBACK (name_owner_notify),
+                    agent);
+
+  polkit_agent_authentication_agent_register (agent);
 }
 
 static void
@@ -92,6 +160,8 @@ polkit_agent_authentication_agent_finalize (GObject *object)
 
   g_object_unref (agent->authority);
 
+  g_object_unref (agent->authority_proxy);
+
   g_object_unref (agent->system_bus);
 
   if (G_OBJECT_CLASS (polkit_agent_authentication_agent_parent_class)->finalize != NULL)
@@ -109,8 +179,7 @@ polkit_agent_authentication_agent_class_init (PolkitAgentAuthenticationAgentClas
 PolkitAgentAuthenticationAgent *
 polkit_agent_authentication_agent_new (PolkitAgentAuthenticationAgentBeginFunc begin_func,
                                        PolkitAgentAuthenticationAgentCancelFunc cancel_func,
-                                       gpointer user_data,
-                                       GError **error)
+                                       gpointer user_data)
 {
   PolkitAgentAuthenticationAgent *agent;
 
@@ -119,15 +188,6 @@ polkit_agent_authentication_agent_new (PolkitAgentAuthenticationAgentBeginFunc b
   agent->begin_func = begin_func;
   agent->cancel_func = cancel_func;
   agent->user_data = user_data;
-
-  if (!polkit_authority_register_authentication_agent_sync (agent->authority,
-                                                            "/org/freedesktop/PolicyKit1/AuthenticationAgent",
-                                                            NULL,
-                                                            error))
-    {
-      g_object_unref (agent);
-      agent = NULL;
-    }
 
   return agent;
 }

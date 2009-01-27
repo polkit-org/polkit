@@ -55,8 +55,7 @@ GType                           polkit_agent_authentication_agent_get_type (void
 
 PolkitAgentAuthenticationAgent *polkit_agent_authentication_agent_new (PolkitAgentAuthenticationAgentBeginFunc begin_func,
                                                                        PolkitAgentAuthenticationAgentCancelFunc cancel_func,
-                                                                       gpointer user_data,
-                                                                       GError **error);
+                                                                       gpointer user_data);
 
 void                            polkit_agent_authentication_agent_finish (PolkitAgentAuthenticationAgent *agent,
                                                                           gpointer                        pending_call,
