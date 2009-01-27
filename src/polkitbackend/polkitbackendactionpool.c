@@ -19,8 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-/* TODO: watch for directory / file changes */
-
 #include "config.h"
 #include <errno.h>
 #include <pwd.h>
@@ -88,6 +86,8 @@ typedef struct
   /* directory with .policy files, e.g. /usr/share/polkit-1/actions */
   GFile *directory;
 
+  GFileMonitor *dir_monitor;
+
   /* maps from action_id to a ParsedAction struct */
   GHashTable *parsed_actions;
 
@@ -106,6 +106,14 @@ enum
 };
 
 #define POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_ACTION_POOL, PolkitBackendActionPoolPrivate))
+
+enum
+{
+  CHANGED_SIGNAL,
+  LAST_SIGNAL,
+};
+
+static guint signals[LAST_SIGNAL] = {0};
 
 G_DEFINE_TYPE (PolkitBackendActionPool, polkit_backend_action_pool, G_TYPE_OBJECT);
 
@@ -138,6 +146,9 @@ polkit_backend_action_pool_finalize (GObject *object)
 
   if (priv->directory != NULL)
     g_object_unref (priv->directory);
+
+  if (priv->dir_monitor != NULL)
+    g_object_unref (priv->dir_monitor);
 
   if (priv->parsed_actions != NULL)
     g_hash_table_unref (priv->parsed_actions);
@@ -173,6 +184,32 @@ polkit_backend_action_pool_get_property (GObject     *object,
 }
 
 static void
+dir_monitor_changed (GFileMonitor     *monitor,
+                     GFile            *file,
+                     GFile            *other_file,
+                     GFileMonitorEvent event_type,
+                     gpointer          user_data)
+{
+  PolkitBackendActionPool *pool;
+  PolkitBackendActionPoolPrivate *priv;
+
+  pool = POLKIT_BACKEND_ACTION_POOL (user_data);
+  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+
+  /* TODO: maybe rate-limit so storms of events are collapsed into one with a 500ms resolution?
+   *       Because when editing a file with emacs we get 4-8 events..
+   */
+
+  /* now throw away all caches */
+  g_hash_table_remove_all (priv->parsed_files);
+  g_hash_table_remove_all (priv->parsed_actions);
+  priv->has_loaded_all_files = FALSE;
+
+  g_signal_emit_by_name (pool, "changed");
+}
+
+
+static void
 polkit_backend_action_pool_set_property (GObject       *object,
                                          guint          prop_id,
                                          const GValue  *value,
@@ -180,6 +217,7 @@ polkit_backend_action_pool_set_property (GObject       *object,
 {
   PolkitBackendActionPool *pool;
   PolkitBackendActionPoolPrivate *priv;
+  GError *error;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
   priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
@@ -188,6 +226,24 @@ polkit_backend_action_pool_set_property (GObject       *object,
     {
     case PROP_DIRECTORY:
       priv->directory = g_value_dup_object (value);
+
+      error = NULL;
+      priv->dir_monitor = g_file_monitor_directory (priv->directory,
+                                                    G_FILE_MONITOR_NONE,
+                                                    NULL,
+                                                    &error);
+      if (priv->dir_monitor == NULL)
+        {
+          g_warning ("Error monitoring actions directory: %s", error->message);
+          g_error_free (error);
+        }
+      else
+        {
+          g_signal_connect (priv->dir_monitor,
+                            "changed",
+                            (GCallback) dir_monitor_changed,
+                            pool);
+        }
       break;
 
     default:
@@ -223,6 +279,22 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
                                                         G_PARAM_STATIC_NAME |
                                                         G_PARAM_STATIC_NICK |
                                                         G_PARAM_STATIC_BLURB));
+
+  /**
+   * PolkitBackendActionPool::changed:
+   * @action_pool: A #PolkitBackendActionPool.
+   *
+   * Emitted when action files in the supplied directory changes.
+   */
+  signals[CHANGED_SIGNAL] = g_signal_new ("changed",
+                                          POLKIT_BACKEND_TYPE_ACTION_POOL,
+                                          G_SIGNAL_RUN_LAST,
+                                          0,                      /* class offset     */
+                                          NULL,                   /* accumulator      */
+                                          NULL,                   /* accumulator data */
+                                          g_cclosure_marshal_VOID__VOID,
+                                          G_TYPE_NONE,
+                                          0);
 }
 
 /**

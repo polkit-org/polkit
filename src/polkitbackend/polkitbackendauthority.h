@@ -51,6 +51,11 @@ struct _PolkitBackendAuthorityClass
 
   /*< public >*/
 
+  /* Signals */
+  void (*changed)  (PolkitBackendAuthority   *authority);
+
+  /* VTable */
+
   /* TODO: need something more efficient such that we don't watch all name changes */
   void (*system_bus_name_owner_changed)  (PolkitBackendAuthority   *authority,
                                           const gchar              *name,

@@ -46,13 +46,10 @@ Core TODO items
    sudo-style authentication (e.g. select one or more identities that the
    user can choose to authenticate as)
 
- - emit a Changed() signal on the Authority interface when authorizations
-   change
-
  - provide a way to cancel a CheckAuthorization() call
 
- - use file monitors on the /usr/share/polkit-1/actions and
-   /var/lib/polkit-1 directories and DTRT
+ - maybe use file monitors on /var/lib/polkit-1 directories and
+   emit the Changed() signal
 
 Backend TODO items
 ------------------

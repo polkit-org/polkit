@@ -184,21 +184,35 @@ static void polkit_backend_local_authority_authentication_agent_response (Polkit
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static void
+action_pool_changed (PolkitBackendActionPool *action_pool,
+                     PolkitBackendLocalAuthority *authority)
+{
+  g_signal_emit_by_name (authority, "changed");
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 G_DEFINE_TYPE (PolkitBackendLocalAuthority, polkit_backend_local_authority, POLKIT_BACKEND_TYPE_AUTHORITY);
 
 #define POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY, PolkitBackendLocalAuthorityPrivate))
 
 static void
-polkit_backend_local_authority_init (PolkitBackendLocalAuthority *local_authority)
+polkit_backend_local_authority_init (PolkitBackendLocalAuthority *authority)
 {
   PolkitBackendLocalAuthorityPrivate *priv;
   GFile *action_desc_directory;
 
-  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
 
   action_desc_directory = g_file_new_for_path (PACKAGE_DATA_DIR "/polkit-1/actions");
   priv->action_pool = polkit_backend_action_pool_new (action_desc_directory);
   g_object_unref (action_desc_directory);
+
+  g_signal_connect (priv->action_pool,
+                    "changed",
+                    (GCallback) action_pool_changed,
+                    authority);
 
   priv->hash_identity_to_authority_store = g_hash_table_new_full ((GHashFunc) polkit_identity_hash,
                                                                   (GEqualFunc) polkit_identity_equal,
@@ -2218,6 +2232,9 @@ add_authorization_for_identity (PolkitBackendLocalAuthority *authority,
   ret = authorization_store_add_authorization (store,
                                                authorization,
                                                error);
+
+  if (ret)
+    g_signal_emit_by_name (authority, "changed");
 
  out:
   return ret;

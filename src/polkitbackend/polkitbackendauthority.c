@@ -26,6 +26,14 @@
 #include <polkit/polkit.h>
 #include "polkitbackendauthority.h"
 
+enum
+{
+  CHANGED_SIGNAL,
+  LAST_SIGNAL,
+};
+
+static guint signals[LAST_SIGNAL] = {0};
+
 G_DEFINE_ABSTRACT_TYPE (PolkitBackendAuthority, polkit_backend_authority, G_TYPE_OBJECT);
 
 static void
@@ -36,6 +44,21 @@ polkit_backend_authority_init (PolkitBackendAuthority *local_authority)
 static void
 polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
 {
+  /**
+   * PolkitBackendAuthority::changed:
+   * @authority: A #PolkitBackendAuthority.
+   *
+   * Emitted when actions and/or authorizations change
+   */
+  signals[CHANGED_SIGNAL] = g_signal_new ("changed",
+                                          POLKIT_BACKEND_TYPE_AUTHORITY,
+                                          G_SIGNAL_RUN_LAST,
+                                          0,                      /* class offset     */
+                                          NULL,                   /* accumulator      */
+                                          NULL,                   /* accumulator data */
+                                          g_cclosure_marshal_VOID__VOID,
+                                          G_TYPE_NONE,
+                                          0);
 }
 
 void

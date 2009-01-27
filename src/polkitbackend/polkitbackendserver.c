@@ -51,6 +51,8 @@ struct _PolkitBackendServer
   EggDBusBus *bus;
 
   gulong name_owner_changed_id;
+
+  gulong authority_changed_id;
 };
 
 struct _PolkitBackendServerClass
@@ -82,6 +84,8 @@ polkit_backend_server_finalize (GObject *object)
 
   g_object_unref (server->system_bus);
 
+  g_signal_handler_disconnect (server->authority, server->authority_changed_id);
+
   g_object_unref (server->authority);
 }
 
@@ -103,6 +107,13 @@ name_owner_changed (EggDBusBus *instance,
                     PolkitBackendServer *server)
 {
   polkit_backend_authority_system_bus_name_owner_changed (server->authority, name, old_owner, new_owner);
+}
+
+static void
+authority_changed (PolkitBackendAuthority *authority,
+                   PolkitBackendServer *server)
+{
+  _polkit_authority_emit_signal_changed (_POLKIT_AUTHORITY (server), NULL);
 }
 
 PolkitBackendServer *
@@ -127,6 +138,11 @@ polkit_backend_server_new (PolkitBackendAuthority *authority)
                                                     "name-owner-changed",
                                                     (GCallback) name_owner_changed,
                                                     server);
+
+  server->authority_changed_id = g_signal_connect (authority,
+                                                   "changed",
+                                                   (GCallback) authority_changed,
+                                                   server);
 
   return server;
 }

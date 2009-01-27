@@ -57,7 +57,24 @@ struct _PolkitAuthorityClass
 
 static PolkitAuthority *the_authority = NULL;
 
+enum
+{
+  CHANGED_SIGNAL,
+  LAST_SIGNAL,
+};
+
+static guint signals[LAST_SIGNAL] = {0};
+
 G_DEFINE_TYPE (PolkitAuthority, polkit_authority, G_TYPE_OBJECT);
+
+static void
+real_authority_changed (_PolkitAuthority *real_authority,
+                        gpointer user_data)
+{
+  PolkitAuthority *authority = POLKIT_AUTHORITY (user_data);
+
+  g_signal_emit_by_name (authority, "changed");
+}
 
 static void
 polkit_authority_init (PolkitAuthority *authority)
@@ -69,6 +86,11 @@ polkit_authority_init (PolkitAuthority *authority)
                                                                             "/org/freedesktop/PolicyKit1/Authority");
 
   authority->real = _POLKIT_QUERY_INTERFACE_AUTHORITY (authority->authority_object_proxy);
+
+  g_signal_connect (authority->real,
+                    "changed",
+                    (GCallback) real_authority_changed,
+                    authority);
 }
 
 static void
@@ -93,6 +115,22 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
   gobject_class->finalize = polkit_authority_finalize;
+
+  /**
+   * PolkitAuthority::changed:
+   * @authority: A #PolkitAuthority.
+   *
+   * Emitted when actions and/or authorizations change
+   */
+  signals[CHANGED_SIGNAL] = g_signal_new ("changed",
+                                          POLKIT_TYPE_AUTHORITY,
+                                          G_SIGNAL_RUN_LAST,
+                                          0,                      /* class offset     */
+                                          NULL,                   /* accumulator      */
+                                          NULL,                   /* accumulator data */
+                                          g_cclosure_marshal_VOID__VOID,
+                                          G_TYPE_NONE,
+                                          0);
 }
 
 PolkitAuthority *

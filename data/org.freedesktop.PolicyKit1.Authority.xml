@@ -249,5 +249,9 @@
       </arg>
     </method>
 
+    <signal name="Changed">
+      <annotation name="org.gtk.EggDBus.DocString" value="Emitted when actions and/or authorizations change"/>
+    </signal>
+
   </interface>
 </node>
