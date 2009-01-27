@@ -562,7 +562,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
     }
 
   /* TODO: temporary hack */
-  flags |= POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
+  //flags |= POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
 
   /* Caller is up for a challenge! With light sabers! Use an authentication agent if one exists... */
   if ((result == POLKIT_AUTHORIZATION_RESULT_CHALLENGE) &&

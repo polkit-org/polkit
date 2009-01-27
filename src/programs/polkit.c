@@ -36,6 +36,7 @@ static gboolean opt_list_explicit_authorizations  = FALSE;
 static gboolean opt_check = FALSE;
 static gboolean opt_grant = FALSE;
 static gboolean opt_revoke = FALSE;
+static gboolean opt_run = FALSE;
 
 static gboolean opt_show_help = FALSE;
 static gboolean opt_show_version = FALSE;
@@ -55,6 +56,7 @@ static gboolean list_groups (void);
 static gboolean list_authorizations (void);
 static gboolean list_explicit_authorizations (void);
 
+static gboolean do_run (gint argc, gchar *argv[]);
 static gboolean do_check (void);
 static gboolean do_grant (void);
 static gboolean do_revoke (void);
@@ -88,6 +90,7 @@ main (int argc, char *argv[])
   gint n;
   gboolean ret;
   gboolean in_list;
+  gboolean stop_processing_args;
   GError *error;
 
   ret = FALSE;
@@ -96,7 +99,8 @@ main (int argc, char *argv[])
   g_type_init ();
 
   in_list = FALSE;
-  for (n = 1; n < argc; n++)
+  stop_processing_args = FALSE;
+  for (n = 1; n < argc && !stop_processing_args; n++)
     {
       if (in_list)
         {
@@ -148,6 +152,27 @@ main (int argc, char *argv[])
         {
           in_list = TRUE;
           continue;
+        }
+      else if (strcmp (argv[n], "run") == 0)
+        {
+          opt_run = TRUE;
+
+          n++;
+          if (n >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          action_id = g_strdup (argv[n]);
+
+          if (n + 1 >= argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          stop_processing_args = TRUE;
         }
       else if (strcmp (argv[n], "check") == 0)
         {
@@ -303,6 +328,16 @@ main (int argc, char *argv[])
   else if (opt_list_explicit_authorizations)
     {
       ret = list_explicit_authorizations ();
+    }
+  else if (opt_run)
+    {
+      if (action_id == NULL)
+        {
+          usage (argc, argv);
+          goto out;
+        }
+
+      ret = do_run (argc - n, argv + n);
     }
   else if (opt_check)
     {
@@ -586,6 +621,53 @@ list_groups (void)
   ret = TRUE;
 
  out:
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gint
+do_run (gint argc, gchar *argv[])
+{
+  PolkitAuthorizationResult result;
+  PolkitSubject *calling_process;
+  GError *error;
+  gboolean ret;
+
+  ret = FALSE;
+  error = NULL;
+
+  calling_process = polkit_unix_process_new (getpid ());
+
+  result = polkit_authority_check_authorization_sync (authority,
+                                                      calling_process,
+                                                      action_id,
+                                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                      NULL,
+                                                      &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error checking authorization for action %s: %s\n", action_id, error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  if (result != POLKIT_AUTHORIZATION_RESULT_AUTHORIZED)
+    {
+      g_printerr ("Error obtaining authorization for action %s\n", action_id);
+      goto out;
+    }
+
+  g_printerr ("Launching program %s\n", argv[0]);
+
+  execvp (argv[0], argv);
+
+  g_printerr ("Error launching program: %m\n");
+
+ out:
+
+  g_object_unref (calling_process);
+
   return ret;
 }
 
