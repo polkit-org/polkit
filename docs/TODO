@@ -77,6 +77,9 @@ polkit-gnome TODO items
    - to make it lighter on resource usage
    - to work around Metacity focus stealing prevention bugs
 
+ - perhaps it would be nice to re-register the authentication agent if polkitd-1
+   jumps off the bus and comes back
+
  - port libpolkit-gnome to new API
 
  - port polkit-gnome-authorization to new API
