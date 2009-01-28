@@ -2,8 +2,6 @@
 Core TODO items
 ---------------
 
- - trawl through all TODO's in code and update this file
-
  - document the D-Bus interfaces
    - should be done in eggdbus; e.g.
      - D-Bus XML --(eggdbus-binding-tool)--> DocBook --(gtk-doc)--> HTML
@@ -51,6 +49,17 @@ Core TODO items
  - maybe use file monitors on /var/lib/polkit-1 directories and
    emit the Changed() signal
 
+ - PolkitAuthority probably needs locking around its singleton for
+   multithreaded backends
+ 
+ - rewrite the PolkitAgentAuthenticationSession class to use signals
+   instead of callbacks, maybe do the same for PolkitAgentAuthenticationAgent
+
+ - support authorization for identities other than Unix users in
+   PolkitAgentAuthenticationSessiono
+
+ - consider adding POLKIT_AUTHORIZATION_RESULT_FAILED_CHALLENGE
+
 Backend TODO items
 ------------------
 
@@ -62,6 +71,25 @@ Backend TODO items
  - local files authority backend
    - split out AuthorizationStore into separate class
    - split out AuthenticationAgent and AuthenticationSession to separate classes
+   - check if callers are authorized to enumerate, add or remove authorizations
+   - use random cookies
+   - speed up lookups using a hash on the cookie
+   - cache Unix group information
+   - handle root/wheel for implicit authorizations
+
+ - validate object paths when registering authentication agents
+
+ - allow backends to extend the syntax for subjects and identities, e.g.
+   have something like ipa-user:... 
+
+ - rate-limit file monitoring in PolkitBackendActionPool
+
+ - avoid watching all name owner changes in PolkitBackendAuthority and 
+   PolkitBackendServer
+
+ - get the right UID for Unix process subjects
+
+ - cache user information for dbus connections
 
 polkit-gnome TODO items
 -----------------------
