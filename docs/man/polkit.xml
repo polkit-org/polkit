@@ -319,14 +319,49 @@
   <refsect1 id="polkit-1-subject">
     <title>SUBJECTS</title>
     <para>
-      TODO: Write me.
+      Subjects represent the entities that may initiate requests requiring
+      authorization: processes, user sessions, or DBus services. To determine
+      whether a subject has an authorization, PolicyKit determines which
+      identities the subject matches.
+      See <xref linkend="polkit-1-identity"/> for details about <replaceable>identities</replaceable>.
+    </para>
+    <para>
+      To specify a Unix process as the subject, use
+      <literal>unix-process:<replaceable>pid</replaceable></literal>,
+      where <replaceable>pid</replaceable> is a numerical process id.
+    </para>
+    <para>
+      To specify a user session as the subject, use
+      <literal>unix-session:<replaceable>session-id</replaceable></literal>,
+      where <replaceable>session-id</replaceable> is the object path of
+      the ConsoleKit session object, e.g. /org/freedesktop/ConsoleKit/Session5.
+    </para>
+    <para>
+      To specify a DBus service, use
+      <literal>system-bus-name:<replaceable>bus-name</replaceable></literal>,
+      where <replaceable>bus-name</replaceable> is a DBus bus name, either
+      a well-known name like org.freedesktop.ConsoleKit, or a canonical
+      name like :1.16.
     </para>
   </refsect1>
 
   <refsect1 id="polkit-1-identity">
     <title>IDENTITIES</title>
     <para>
-      TODO: Write me.
+      Identities represent the entities that authorizations are granted to:
+      individual users or groups of users.
+    </para>
+    <para>
+      To specify an individual user as identity, use
+      <literal>unix-user:<replaceable>uid-or-name</replaceable></literal>,
+      where <replaceable>uid-or-name</replaceable> can be either a numeric
+      id of a Unix user, or the username of a Unix user.
+    </para>
+    <para>
+      To specify a group of users as identity, use
+      <literal>unix-group:<replaceable>gid-or-name</replaceable></literal>,
+      where <replaceable>gid-or-name</replaceable> can be either a numeric
+      id of a Unix group, or the name of a Unix group.
     </para>
   </refsect1>
 
