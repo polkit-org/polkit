@@ -64,26 +64,31 @@ G_DEFINE_TYPE_WITH_CODE (PolkitAgentAuthenticationAgent, polkit_agent_authentica
                                                 authentication_agent_iface_init)
                          );
 
-static void
-polkit_agent_authentication_agent_register (PolkitAgentAuthenticationAgent *agent)
+static gboolean
+polkit_agent_authentication_agent_register (PolkitAgentAuthenticationAgent  *agent,
+                                            GError                         **error)
 {
-  GError *error;
+  GError *local_error;
+  gboolean ret;
 
-  g_debug ("Attempting to register Authentication Agent with PolicyKit daemon");
+  ret = FALSE;
 
-  error = NULL;
+  local_error = NULL;
   if (!polkit_authority_register_authentication_agent_sync (agent->authority,
                                                             "/org/freedesktop/PolicyKit1/AuthenticationAgent",
                                                             NULL,
-                                                            &error))
+                                                            &local_error))
     {
-      g_warning ("Unable to register authentication agent: %s", error->message);
-      g_error_free (error);
+      g_warning ("Unable to register authentication agent: %s", local_error->message);
+      g_propagate_error (error, local_error);
     }
   else
     {
       agent->is_registered = TRUE;
+      ret = TRUE;
     }
+
+  return ret;
 }
 
 static void
@@ -98,7 +103,11 @@ name_owner_notify (EggDBusObjectProxy *object_proxy,
 
   if (owner == NULL)
     {
-      g_warning ("PolicyKit daemon disconnected from the bus. We are no longer a registered authentication agent.");
+      g_printerr ("PolicyKit daemon disconnected from the bus.\n");
+
+      if (agent->is_registered)
+        g_printerr ("We are no longer a registered authentication agent.\n");
+
       agent->is_registered = FALSE;
     }
   else
@@ -106,8 +115,21 @@ name_owner_notify (EggDBusObjectProxy *object_proxy,
       /* only register if there is a name owner */
       if (!agent->is_registered)
         {
-          g_debug ("PolicyKit daemon connected to bus. Attempting to re-register as an authentication agent.");
-          polkit_agent_authentication_agent_register (agent);
+          GError *error;
+
+          g_printerr ("PolicyKit daemon reconnected to bus.\n");
+          g_printerr ("Attempting to re-register as an authentication agent.\n");
+
+          error = NULL;
+          if (polkit_agent_authentication_agent_register (agent, &error))
+            {
+              g_printerr ("We are now a registered authentication agent.\n");
+            }
+          else
+            {
+              g_printerr ("Failed to register as an authentication agent: %s\n", error->message);
+              g_error_free (error);
+            }
         }
     }
 
@@ -117,6 +139,8 @@ name_owner_notify (EggDBusObjectProxy *object_proxy,
 static void
 polkit_agent_authentication_agent_init (PolkitAgentAuthenticationAgent *agent)
 {
+  GError *error;
+
   agent->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
 
   egg_dbus_connection_register_interface (agent->system_bus,
@@ -139,7 +163,12 @@ polkit_agent_authentication_agent_init (PolkitAgentAuthenticationAgent *agent)
                     G_CALLBACK (name_owner_notify),
                     agent);
 
-  polkit_agent_authentication_agent_register (agent);
+  error = NULL;
+  if (!polkit_agent_authentication_agent_register (agent, &error))
+    {
+      g_printerr ("Failed to register as an authentication agent: %s\n", error->message);
+      g_error_free (error);
+    }
 }
 
 static void
