@@ -534,9 +534,6 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
    */
   if (!polkit_identity_equal (user_of_inquirer, user_of_subject))
     {
-      /* TODO */
-      result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
-
       result = check_authorization_sync (authority,
                                          inquirer,
                                          "org.freedesktop.policykit.read",
