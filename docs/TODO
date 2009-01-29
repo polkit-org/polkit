@@ -1,4 +1,3 @@
-
 Core TODO items
 ---------------
 
@@ -51,7 +50,7 @@ Core TODO items
 
  - PolkitAuthority probably needs locking around its singleton for
    multithreaded backends
- 
+
  - rewrite the PolkitAgentAuthenticationSession class to use signals
    instead of callbacks, maybe do the same for PolkitAgentAuthenticationAgent
 
@@ -80,11 +79,11 @@ Backend TODO items
  - validate object paths when registering authentication agents
 
  - allow backends to extend the syntax for subjects and identities, e.g.
-   have something like ipa-user:... 
+   have something like ipa-user:...
 
  - rate-limit file monitoring in PolkitBackendActionPool
 
- - avoid watching all name owner changes in PolkitBackendAuthority and 
+ - avoid watching all name owner changes in PolkitBackendAuthority and
    PolkitBackendServer
 
  - get the right UID for Unix process subjects
