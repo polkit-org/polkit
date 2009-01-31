@@ -34,10 +34,7 @@ G_BEGIN_DECLS
 #define POLKIT_AGENT_IS_SESSION(o)         (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_AGENT_TYPE_SESSION))
 #define POLKIT_AGENT_IS_SESSION_CLASS(k)   (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_AGENT_TYPE_SESSION))
 
-
-#if 0
-typedef struct _PolkitAgentSession PolkitAgentSession;
-#endif
+struct _PolkitAgentSessionClass;
 typedef struct _PolkitAgentSessionClass PolkitAgentSessionClass;
 
 GType                polkit_agent_session_get_type    (void) G_GNUC_CONST;

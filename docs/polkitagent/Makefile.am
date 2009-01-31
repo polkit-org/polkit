@@ -59,11 +59,14 @@ HTML_IMAGES = 				\
 # Extra options to supply to gtkdoc-fixref
 FIXXREF_OPTIONS=
 
-MAINTAINERCLEANFILES =		\
-	*~			\
-	Makefile.in		\
-	polkitagent.types	\
-	polkit-*.txt		\
+MAINTAINERCLEANFILES =				\
+	*~					\
+	Makefile.in				\
+	polkitagent-decl-list.txt		\
+	polkitagent-decl.txt			\
+	polkitagent-overrides.txt		\
+	polkitagent-undeclared.txt		\
+	polkitagent-undocumented.txt		\
 	$(NULL)
 
 if ENABLE_GTK_DOC
@@ -74,7 +77,11 @@ endif
 
 CLEANFILES +=   *~					\
 		polkitagent-scan.*			\
-		polkitagent.*				\
+		polkitagent.args			\
+		polkitagent.hierarchy			\
+		polkitagent.interfaces			\
+		polkitagent.prerequisites		\
+		polkitagent.signals			\
 		*.bak					\
 		polkitagent-decl-list.txt		\
 		polkitagent-decl.txt			\

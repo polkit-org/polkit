@@ -34,9 +34,7 @@ G_BEGIN_DECLS
 #define POLKIT_AGENT_IS_LISTENER(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_AGENT_TYPE_LISTENER))
 #define POLKIT_AGENT_IS_LISTENER_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_AGENT_TYPE_LISTENER))
 
-#if 0
-typedef struct _PolkitAgentListener PolkitAgentListener;
-#endif
+struct _PolkitAgentListenerClass;
 typedef struct _PolkitAgentListenerClass PolkitAgentListenerClass;
 
 /**
@@ -63,17 +61,17 @@ struct _PolkitAgentListenerClass
   GObjectClass parent_class;
 
   /* Vtable */
-  void (*initiate_authentication)  (PolkitAgentListener  *listener,
-                                    const gchar          *action_id,
-                                    const gchar          *cookie,
-                                    GList                *identities,
-                                    GCancellable         *cancellable,
-                                    GAsyncReadyCallback   callback,
-                                    gpointer              user_data);
+  void     (*initiate_authentication)        (PolkitAgentListener  *listener,
+                                              const gchar          *action_id,
+                                              const gchar          *cookie,
+                                              GList                *identities,
+                                              GCancellable         *cancellable,
+                                              GAsyncReadyCallback   callback,
+                                              gpointer              user_data);
 
-  gboolean (*initiate_authentication_finish)  (PolkitAgentListener  *listener,
-                                               GAsyncResult         *res,
-                                               GError              **error);
+  gboolean (*initiate_authentication_finish) (PolkitAgentListener  *listener,
+                                              GAsyncResult         *res,
+                                              GError              **error);
 
   /*< private >*/
   /* Padding for future expansion */

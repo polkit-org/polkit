@@ -1,5 +1,6 @@
 <SECTION>
 <FILE>polkitagentsession</FILE>
+<TITLE>PolkitAgentSession</TITLE>
 PolkitAgentSession
 polkit_agent_session_new
 polkit_agent_session_initiate

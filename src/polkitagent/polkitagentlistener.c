@@ -31,7 +31,7 @@
  * @title: PolkitAgentListener
  * @short_description: Abstract base class for Authentication Agents
  *
- * The #PolkitAgentListener is an abstract base class used for implementing authentication
+ * #PolkitAgentListener is an abstract base class used for implementing authentication
  * agents. To implement an authentication agent, simply subclass #PolkitAgentListener and
  * implement the @initiate_authentication and @initiate_authentication_finish VFuncs.
  *
