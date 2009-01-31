@@ -37,19 +37,32 @@ G_BEGIN_DECLS
 #if 0
 typedef struct _PolkitAgentListener PolkitAgentListener;
 #endif
-typedef struct _PolkitAgentListenerClass    PolkitAgentListenerClass;
+typedef struct _PolkitAgentListenerClass PolkitAgentListenerClass;
 
+/**
+ * PolkitAgentListener:
+ *
+ * The #PolkitAgentListener struct should not be accessed directly.
+ */
 struct _PolkitAgentListener
 {
   GObject parent_instance;
 };
 
+/**
+ * PolkitAgentListenerClass:
+ * @parent_class: The parent class.
+ * @initiate_authentication: Handle an authentication request, see polkit_agent_listener_initiate_authentication().
+ * @initiate_authentication_finish: Finishes handling an authentication request, see polkit_agent_listener_initiate_authentication_finish().
+ *
+ * VFuncs that authentication agents needs to implement.
+ */
 struct _PolkitAgentListenerClass
 {
+  /*< public >*/
   GObjectClass parent_class;
 
-  /*< public >*/
-  /* VFuncs */
+  /* Vtable */
   void (*initiate_authentication)  (PolkitAgentListener  *listener,
                                     const gchar          *action_id,
                                     const gchar          *cookie,
@@ -86,9 +99,10 @@ gboolean  polkit_agent_listener_initiate_authentication_finish  (PolkitAgentList
                                                                  GAsyncResult         *res,
                                                                  GError              **error);
 
-void      polkit_agent_export_listener                          (PolkitAgentListener  *listener,
-                                                                 const gchar          *session_id,
-                                                                 const gchar          *object_path);
+gboolean  polkit_agent_register_listener                          (PolkitAgentListener  *listener,
+                                                                   const gchar          *session_id,
+                                                                   const gchar          *object_path,
+                                                                   GError              **error);
 
 G_END_DECLS
 

@@ -29,12 +29,22 @@
 /**
  * SECTION:polkitagentlistener
  * @title: PolkitAgentListener
- * @short_description: Authentication Agent Listener
+ * @short_description: Abstract base class for Authentication Agents
  *
- * The #PolkitAgentListener is an abstract base class used for implementing authentication agents.
+ * The #PolkitAgentListener is an abstract base class used for implementing authentication
+ * agents. To implement an authentication agent, simply subclass #PolkitAgentListener and
+ * implement the @initiate_authentication and @initiate_authentication_finish VFuncs.
+ *
+ * Typically authentication agents use #PolkitAgentSession to authenticate users (via
+ * passwords) and communicate back the authentication result to the PolicyKit daemon.
+ * This is however not requirement. Depending on the system an authentication agent
+ * may use other means (such as a Yes/No dialog) to obtain sufficient evidence that
+ * the user is one of the requested identities.
+ *
+ * To register a #PolkitAgentListener with the PolicyKit daemon, use polkit_agent_register_listener().
  */
 
-/* private class for exporting an interface D-Bus */
+/* private class for exporting a D-Bus interface */
 
 #define TYPE_SERVER         (server_get_type ())
 #define SERVER(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), TYPE_SERVER, Server))
@@ -229,21 +239,41 @@ listener_died (gpointer user_data,
   g_object_unref (server);
 }
 
-void
-polkit_agent_export_listener (PolkitAgentListener  *listener,
-                              const gchar          *session_id,
-                              const gchar          *object_path)
+/**
+ * polkit_agent_register_listener:
+ * @listener: An instance of a class that is derived from #PolkitAgentListener.
+ * @session_id: The session id to become an authentication agent for or %NULL for the current session.
+ * @object_path: The D-Bus object path to use for the authentication agent or %NULL for the default object path.
+ * @error: Return location for error.
+ *
+ * Registers @listener with the PolicyKit daemon as an authentication agent for @session_id. This
+ * is implemented by registering a D-Bus object at @object_path on the unique name assigned by the
+ * system message bus.
+ *
+ * Whenever the PolicyKit daemon needs to authenticate the user of @session_id for an action, the methods
+ * polkit_agent_listener_initiate_authentication() and polkit_agent_listener_initiate_authentication_finish()
+ * will be invoked on @listener.
+ *
+ * Note that registration of an authentication agent can fail; for example another authentication agent may
+ * already be registered.
+ *
+ * To unregister @listener, simply free it with g_object_unref().
+ *
+ * Returns: %TRUE if @listener has been registered, %FALSE if @error is set.
+ **/
+gboolean
+polkit_agent_register_listener (PolkitAgentListener  *listener,
+                                const gchar          *session_id,
+                                const gchar          *object_path,
+                                GError              **error)
 {
   Server *server;
-  GError *error;
 
   server = SERVER (g_object_new (TYPE_SERVER, NULL));
   server->session_id = g_strdup (session_id);
-  server->object_path = g_strdup (object_path);
+  server->object_path = object_path != NULL ? g_strdup (object_path) :
+                                              g_strdup ("/org/freedesktop/PolicyKit1/AuthenticationAgent");
   server->listener = listener;
-
-  /* take a weak ref and kill server when listener dies */
-  g_object_weak_ref (G_OBJECT (server->listener), listener_died, server);
 
   egg_dbus_connection_register_interface (server->system_bus,
                                           server->object_path,
@@ -251,13 +281,16 @@ polkit_agent_export_listener (PolkitAgentListener  *listener,
                                           G_OBJECT (server),
                                           G_TYPE_INVALID);
 
-  error = NULL;
-  if (!server_register (server, &error))
+  if (!server_register (server, error))
     {
-      g_printerr ("Failed to register as an authentication agent: %s\n", error->message);
-      g_printerr ("Will attempt to register when the PolicyKit daemon is back up\n");
-      g_error_free (error);
+      g_object_unref (server);
+      return FALSE;
     }
+
+  /* take a weak ref and kill server when listener dies */
+  g_object_weak_ref (G_OBJECT (server->listener), listener_died, server);
+
+  return TRUE;
 }
 
 typedef struct
@@ -409,6 +442,27 @@ polkit_agent_listener_class_init (PolkitAgentListenerClass *klass)
 {
 }
 
+/**
+ * polkit_agent_listener_initiate_authentication:
+ * @listener: A #PolkitAgentListener.
+ * @action_id: The action to authenticate for.
+ * @cookie: The cookie for the authentication request.
+ * @identities: A list of #PolkitIdentity objects that the user can choose to authenticate as.
+ * @cancellable: A #GCancellable.
+ * @callback: Function to call when the user is done authenticating.
+ * @user_data: Data to pass to @callback.
+ *
+ * Called on a registered authentication agent (see polkit_agent_register_listener()) when
+ * the user owning the session needs to prove he is one of the identities listed in @identities.
+ *
+ * When the user is done authenticating (for example by dismissing an authentication dialog
+ * or by successfully entering a password or otherwise proving the user is one of the
+ * identities in @identities), @callback will be invoked. The caller then calls
+ * polkit_agent_listener_initiate_authentication_finish() to get the result.
+ *
+ * #PolkitAgentListener derived subclasses imlementing this method MUST not
+ * ignore @cancellable; callers of this function can and will use it.
+ **/
 void
 polkit_agent_listener_initiate_authentication (PolkitAgentListener  *listener,
                                                const gchar          *action_id,
@@ -427,6 +481,17 @@ polkit_agent_listener_initiate_authentication (PolkitAgentListener  *listener,
                                                                        user_data);
 }
 
+/**
+ * polkit_agent_listener_initiate_authentication_finish:
+ * @listener: A #PolkitAgentListener.
+ * @res: A #GAsyncResult obtained from the #GAsyncReadyCallback function passed to polkit_agent_listener_initiate_authentication().
+ * @error: Return location for error.
+ *
+ * Finishes an authentication request from the PolicyKit daemon, see
+ * polkit_agent_listener_initiate_authentication() for details.
+ *
+ * Returns: %TRUE if @error is set.
+ **/
 gboolean
 polkit_agent_listener_initiate_authentication_finish (PolkitAgentListener  *listener,
                                                       GAsyncResult         *res,

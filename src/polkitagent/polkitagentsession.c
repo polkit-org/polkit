@@ -59,8 +59,15 @@
 #include "polkitagentmarshal.h"
 #include "polkitagentsession.h"
 
+/**
+ * PolkitAgentSession:
+ *
+ * The #PolkitAgentSession struct should not be accessed directly.
+ */
 struct _PolkitAgentSession
 {
+  /*< private >*/
+
   GObject parent_instance;
 
   gchar *cookie;

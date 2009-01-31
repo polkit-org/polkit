@@ -81,7 +81,6 @@ CLEANFILES +=   *~					\
 		polkitagent-overrides.txt		\
 		polkitagent-undeclared.txt		\
 		polkitagent-undocumented.txt		\
-		polkitagent-sections.txt		\
 		*.stamp					\
 		-rf html xml				\
 		$(NULL)
