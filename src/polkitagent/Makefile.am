@@ -30,6 +30,16 @@ $(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Aut
 	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
 	  $(NULL)
 
+BUILT_SOURCES += 						\
+	polkitagentmarshal.h		polkitagentmarshal.c	\
+	$(NULL)
+
+polkitagentmarshal.h : polkitagentmarshal.list
+	glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --header > $@.tmp && mv $@.tmp $@
+
+polkitagentmarshal.c: polkitagentmarshal.h polkitagentmarshal.list
+	(echo "#include \"polkitagentmarshal.h\""; glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --body) > $@.tmp && mv $@.tmp $@
+
 lib_LTLIBRARIES=libpolkit-agent-1.la
 
 libpolkit_agent_1includedir=$(includedir)/polkit-1/polkitagent
@@ -77,6 +87,8 @@ install-exec-hook:
 	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-agent-helper-1
 
 CLEANFILES = $(BUILT_SOURCES)
+
+EXTRA_DIST = polkitagentmarshal.list
 
 clean-local :
 	rm -f *~

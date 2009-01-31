@@ -22,9 +22,30 @@
 /**
  * SECTION:polkitagentsession
  * @title: PolkitAgentSession
- * @short_description: Authentcation Sessions
+ * @short_description: Authentication Session
  *
- * The #PolkitAgentSession class is used for interacting with an authentication system.
+ * The #PolkitAgentSession class is an abstraction used for interacting with the
+ * native authentication system (for example PAM) for obtaining authorizations.
+ * This class is typically used together with instances that are derived from
+ * the #PolkitAgentListener abstract base class.
+ *
+ * To perform the actual authentication, #PolkitAgentSession uses a trusted suid helper.
+ * The authentication conversation is done through a pipe. This is transparent; the user
+ * only need to handle the
+ * #PolkitAgentSession::request,
+ * #PolkitAgentSession::show-info,
+ * #PolkitAgentSession::show-error and
+ * #PolkitAgentSession::completed
+ * signals and invoke polkit_agent_session_response() in response to requests.
+ *
+ * If the user successfully authenticates, the authentication helper will invoke
+ * a method on the PolicyKit daemon (see polkit_authority_authentication_agent_response_sync())
+ * with the given @cookie. Upon receiving a positive response from the PolicyKit daemon (via
+ * the authentication helper), the #PolkitAgentSession::completed signal will be emitted
+ * with the @gained_authorization paramter set to %TRUE.
+ *
+ * If the user is unable to authenticate, the #PolkitAgentSession::completed signal will
+ * be emitted with the @gained_authorization paramter set to %FALSE.
  */
 
 #include "config.h"
@@ -35,6 +56,7 @@
 #include <sys/wait.h>
 #include <pwd.h>
 
+#include "polkitagentmarshal.h"
 #include "polkitagentsession.h"
 
 struct _PolkitAgentSession
@@ -64,8 +86,7 @@ struct _PolkitAgentSessionClass
 
 enum
 {
-  REQUEST_ECHO_ON_SIGNAL,
-  REQUEST_ECHO_OFF_SIGNAL,
+  REQUEST_SIGNAL,
   SHOW_INFO_SIGNAL,
   SHOW_ERROR_SIGNAL,
   COMPLETED_SIGNAL,
@@ -111,49 +132,27 @@ polkit_agent_session_class_init (PolkitAgentSessionClass *klass)
   gobject_class->finalize = polkit_agent_session_finalize;
 
   /**
-   * PolkitAgentSession::request-echo-on:
+   * PolkitAgentSession::request:
    * @session: A #PolkitAgentSession.
-   * @request: The request to show the user, e.g. "name: "
+   * @request: The request to show the user, e.g. "name: " or "password: ".
+   * @echo_on: %TRUE if the response to the request SHOULD be echoed on the
+   *           screen, %FALSE if the response MUST NOT be echoed to the screen.
    *
-   * Emitted when the user is requested to answer a question. User input
-   * should be echoed on the screen in the clear.
+   * Emitted when the user is requested to answer a question.
    *
-   * When the response has been collected from the user, call
-   * polkit_agent_session_response().
+   * When the response has been collected from the user, call polkit_agent_session_response().
    */
-  signals[REQUEST_ECHO_ON_SIGNAL] = g_signal_new ("request-echo-on",
-                                                  POLKIT_AGENT_TYPE_SESSION,
-                                                  G_SIGNAL_RUN_LAST,
-                                                  0,                      /* class offset     */
-                                                  NULL,                   /* accumulator      */
-                                                  NULL,                   /* accumulator data */
-                                                  g_cclosure_marshal_VOID__STRING,
-                                                  G_TYPE_NONE,
-                                                  1,
-                                                  G_TYPE_STRING);
-
-  /**
-   * PolkitAgentSession::request-echo-off:
-   * @session: A #PolkitAgentSession.
-   * @request: The request to show the user, e.g. "password: "
-   *
-   * Emitted when the user is requested to answer a question. User input
-   * MUST NOT be echoed on the screen in the clear.
-   *
-   * When the response has been collected from the user, call
-   * polkit_agent_session_response().
-   */
-  signals[REQUEST_ECHO_OFF_SIGNAL] = g_signal_new ("request-echo-off",
-                                                   POLKIT_AGENT_TYPE_SESSION,
-                                                   G_SIGNAL_RUN_LAST,
-                                                   0,                      /* class offset     */
-                                                   NULL,                   /* accumulator      */
-                                                   NULL,                   /* accumulator data */
-                                                   g_cclosure_marshal_VOID__STRING,
-                                                   G_TYPE_NONE,
-                                                   1,
-                                                   G_TYPE_STRING);
-
+  signals[REQUEST_SIGNAL] = g_signal_new ("request",
+                                          POLKIT_AGENT_TYPE_SESSION,
+                                          G_SIGNAL_RUN_LAST,
+                                          0,                      /* class offset     */
+                                          NULL,                   /* accumulator      */
+                                          NULL,                   /* accumulator data */
+                                          polkit_agent_marshal_VOID__STRING_BOOLEAN,
+                                          G_TYPE_NONE,
+                                          2,
+                                          G_TYPE_STRING,
+                                          G_TYPE_BOOLEAN);
 
   /**
    * PolkitAgentSession::show-info:
@@ -194,10 +193,13 @@ polkit_agent_session_class_init (PolkitAgentSessionClass *klass)
   /**
    * PolkitAgentSession::completed:
    * @session: A #PolkitAgentSession.
-   * @authentication_result: %TRUE only if the user sucessfully authenticated.
+   * @gained_authorization: %TRUE only if the authorization was successfully obtained.
    *
    * Emitted when the authentication session has been completed or
-   * cancelled. The user should unref @session.
+   * cancelled. The @gained_authorization parameter is %TRUE only if
+   * the user successfully authenticated.
+   *
+   * Upon receiving this signal, the user should free @session using g_object_unref().
    */
   signals[COMPLETED_SIGNAL] = g_signal_new ("completed",
                                             POLKIT_AGENT_TYPE_SESSION,
@@ -211,6 +213,22 @@ polkit_agent_session_class_init (PolkitAgentSessionClass *klass)
                                             G_TYPE_BOOLEAN);
 }
 
+/**
+ * polkit_agent_session_new:
+ * @identity: The identity to authenticate.
+ * @cookie: The cookie obtained from the PolicyKit daemon
+ *
+ * Creates a new authentication session.
+ *
+ * The caller should connect to the
+ * #PolkitAgentSession::request,
+ * #PolkitAgentSession::show-info,
+ * #PolkitAgentSession::show-error and
+ * #PolkitAgentSession::completed
+ * signals and then call polkit_agent_session_initiate() to initiate the authentication session.
+ *
+ * Returns: A #PolkitAgentSession. Free with g_object_unref().
+ **/
 PolkitAgentSession *
 polkit_agent_session_new (PolkitIdentity *identity,
                           const gchar    *cookie)
@@ -326,11 +344,11 @@ io_watch_have_data (GIOChannel    *channel,
 
   if (g_str_has_prefix (line, "PAM_PROMPT_ECHO_OFF "))
     {
-      g_signal_emit_by_name (session, "request-echo-off", line + sizeof "PAM_PROMPT_ECHO_OFF " - 1);
+      g_signal_emit_by_name (session, "request", line + sizeof "PAM_PROMPT_ECHO_OFF " - 1, FALSE);
     }
   else if (g_str_has_prefix (line, "PAM_PROMPT_ECHO_ON "))
     {
-      g_signal_emit_by_name (session, "request-echo-on", line + sizeof "PAM_PROMPT_ECHO_ON " - 1);
+      g_signal_emit_by_name (session, "request", line + sizeof "PAM_PROMPT_ECHO_ON " - 1, TRUE);
     }
   else if (g_str_has_prefix (line, "PAM_ERROR_MSG "))
     {
@@ -366,6 +384,14 @@ io_watch_have_data (GIOChannel    *channel,
   return TRUE;
 }
 
+/**
+ * polkit_agent_session_response:
+ * @session: A #PolkitAgentSession.
+ * @response: Response from the user, typically a password.
+ *
+ * Function for providing response to requests received
+ * via the #PolkitAgentSession::request signal.
+ **/
 void
 polkit_agent_session_response (PolkitAgentSession *session,
                                const gchar        *response)
@@ -385,6 +411,14 @@ polkit_agent_session_response (PolkitAgentSession *session,
     write (session->child_stdin, newline, 1);
 }
 
+/**
+ * polkit_agent_session_initiate:
+ * @session: A #PolkitAgentSession.
+ *
+ * Initiates the authentication session.
+ *
+ * Use polkit_agent_session_cancel() to cancel the session.
+ **/
 void
 polkit_agent_session_initiate (PolkitAgentSession *session)
 {
@@ -454,6 +488,13 @@ error:
 }
 
 
+/**
+ * polkit_agent_session_cancel:
+ * @session: A #PolkitAgentSession.
+ *
+ * Cancels an authentication session. This will make @session emit the #PolkitAgentSession::completed
+ * signal.
+ **/
 void
 polkit_agent_session_cancel (PolkitAgentSession *session)
 {

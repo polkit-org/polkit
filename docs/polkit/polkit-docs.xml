@@ -89,8 +89,8 @@
 
   <reference id="ref-authentication-agent-api">
     <title>Authentication Agent API Reference</title>
-    <xi:include href="../polkitagent/xml/polkitagentauthenticationagent.xml"/>
-    <xi:include href="../polkitagent/xml/polkitagentauthenticationsession.xml"/>
+    <xi:include href="../polkitagent/xml/polkitagentlistener.xml"/>
+    <xi:include href="../polkitagent/xml/polkitagentsession.xml"/>
   </reference>
 
   <reference id="manpages">
