@@ -40,7 +40,7 @@
  * sensitive information.
  */
 #undef PAH_DEBUG
-#define PAH_DEBUG
+// #define PAH_DEBUG
 
 static gboolean send_dbus_message (const char *cookie, const char *user);
 
@@ -158,16 +158,31 @@ main (int argc, char *argv[])
   fprintf (stderr, "polkit-agent-helper-1: successfully authenticated user '%s'.\n", user_to_auth);
 #endif /* PAH_DEBUG */
 
+  pam_end (pam_h, rc);
+
+#ifdef PAH_DEBUG
+  fprintf (stderr, "polkit-agent-helper-1: sending D-Bus message to PolicyKit daemon\n");
+#endif /* PAH_DEBUG */
+
   /* now send a D-Bus message to the PolicyKit daemon that
    * includes a) the cookie; and b) the user we authenticated
    */
   if (!send_dbus_message (cookie, user_to_auth))
-    goto error;
+    {
+#ifdef PAH_DEBUG
+      fprintf (stderr, "polkit-agent-helper-1: error sending D-Bus message to PolicyKit daemon\n");
+#endif /* PAH_DEBUG */
+      goto error;
+    }
+
+#ifdef PAH_DEBUG
+  fprintf (stderr, "polkit-agent-helper-1: successfully sent D-Bus message to PolicyKit daemon\n");
+#endif /* PAH_DEBUG */
 
   fprintf (stdout, "SUCCESS\n");
   fflush (stdout);
-
-  pam_end (pam_h, rc);
+  fflush (stderr);
+  usleep (10 * 1000); /* since fflush(3) seems buggy */
   return 0;
 
 error:
@@ -176,6 +191,8 @@ error:
 
   fprintf (stdout, "FAILURE\n");
   fflush (stdout);
+  fflush (stderr);
+  usleep (10 * 1000); /* since fflush(3) seems buggy */
   return 1;
 }
 
@@ -290,7 +307,7 @@ send_dbus_message (const char *cookie, const char *user)
                                                             NULL,
                                                             &error))
     {
-      g_printerr ("Error sending response to PolicyKit daemon: %s\n", error->message);
+      g_printerr ("polkit-agent-helper-1: error response to PolicyKit daemon: %s\n", error->message);
       g_error_free (error);
       goto out;
     }

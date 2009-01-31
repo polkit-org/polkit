@@ -234,6 +234,7 @@ kill_helper (PolkitAgentSession *session)
   if (session->child_pid > 0)
     {
       gint status;
+      //g_debug ("Sending SIGTERM to helper");
       kill (session->child_pid, SIGTERM);
       waitpid (session->child_pid, &status, 0);
       session->child_pid = 0;
@@ -320,6 +321,8 @@ io_watch_have_data (GIOChannel    *channel,
   /* remove terminator */
   if (strlen (line) > 0 && line[strlen (line) - 1] == '\n')
     line[strlen (line) - 1] = '\0';
+
+  //g_debug ("Got '%s' from helper", line);
 
   if (g_str_has_prefix (line, "PAM_PROMPT_ECHO_OFF "))
     {
