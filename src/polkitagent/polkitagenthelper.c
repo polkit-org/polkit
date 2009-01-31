@@ -40,7 +40,7 @@
  * sensitive information.
  */
 #undef PAH_DEBUG
-//#define PAH_DEBUG
+#define PAH_DEBUG
 
 static gboolean send_dbus_message (const char *cookie, const char *user);
 

@@ -23,8 +23,8 @@
 #define __POLKIT_AGENT_H
 
 #define _POLKIT_AGENT_INSIDE_POLKIT_AGENT_H 1
-#include <polkitagent/polkitagentauthenticationagent.h>
-#include <polkitagent/polkitagentauthenticationsession.h>
+#include <polkitagent/polkitagentlistener.h>
+#include <polkitagent/polkitagentsession.h>
 #undef _POLKIT_AGENT_INSIDE_POLKIT_AGENT_H
 
 #endif /* __POLKIT_AGENT_H */

@@ -1286,7 +1286,13 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
   cookie = authentication_agent_new_cookie (agent);
 
   /* TODO: add uid 0 OR users in wheel group depending on value of @implicit_authorization */
-  identities = g_list_prepend (NULL, g_object_ref (user_of_subject));
+  identities = NULL;
+  identities = g_list_prepend (identities, g_object_ref (user_of_subject));
+  //#if 0
+  identities = g_list_prepend (identities, polkit_unix_user_new (501));
+  identities = g_list_prepend (identities, polkit_unix_user_new (502));
+  identities = g_list_prepend (identities, polkit_unix_user_new (0));
+  //#endif
 
   session = authentication_session_new (agent,
                                         cookie,

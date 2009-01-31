@@ -37,15 +37,15 @@ libpolkit_agent_1includedir=$(includedir)/polkit-1/polkitagent
 libpolkit_agent_1include_HEADERS =                        				\
 	polkitagent.h									\
 	polkitagenttypes.h								\
-	polkitagentauthenticationsession.h						\
-	polkitagentauthenticationagent.h						\
+	polkitagentsession.h								\
+	polkitagentlistener.h								\
         $(NULL)
 
 libpolkit_agent_1_la_SOURCES =                                   			\
         polkitagent.h									\
 	polkitagenttypes.h								\
-	polkitagentauthenticationsession.h	polkitagentauthenticationsession.c	\
-	polkitagentauthenticationagent.h	polkitagentauthenticationagent.c	\
+	polkitagentsession.h			polkitagentsession.c			\
+	polkitagentlistener.h			polkitagentlistener.c			\
 	$(BUILT_SOURCES)								\
         $(NULL)
 
