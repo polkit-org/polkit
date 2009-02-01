@@ -18,6 +18,7 @@ INCLUDES =                                                      \
 BUILT_SOURCES =										\
 	_polkitactiondescription.c		_polkitactiondescription.h		\
 	_polkitauthority.c			_polkitauthority.h			\
+	_polkitauthoritymanager.c		_polkitauthoritymanager.h		\
 	_polkitauthorization.c			_polkitauthorization.h			\
 	_polkitauthorizationresult.c		_polkitauthorizationresult.h		\
 	_polkitimplicitauthorization.c		_polkitimplicitauthorization.h		\
@@ -30,11 +31,12 @@ BUILT_SOURCES =										\
 	_polkitidentity.c			_polkitidentity.h			\
 	$(NULL)
 
-$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml
-	eggdbus-binding-tool									\
-	  --namespace       "_Polkit"								\
-	  --dbus-namespace  "org.freedesktop.PolicyKit1"					\
-	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml	\
+$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml
+	eggdbus-binding-tool										\
+	  --namespace       "_Polkit"									\
+	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
+	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml		\
+	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml	\
 	  $(NULL)
 
 lib_LTLIBRARIES=libpolkit-gobject-1.la
@@ -47,6 +49,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
         polkittypes.h									\
 	polkitactiondescription.h							\
 	polkitauthority.h								\
+	polkitauthoritymanager.h							\
 	polkiterror.h									\
 	polkitsubject.h									\
 	polkitunixprocess.h								\
@@ -66,6 +69,7 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
         $(BUILT_SOURCES)								\
 	polkitactiondescription.c		polkitactiondescription.h		\
 	polkitauthority.c			polkitauthority.h			\
+	polkitauthoritymanager.c		polkitauthoritymanager.h		\
 	polkiterror.c				polkiterror.h				\
 	polkitsubject.c				polkitsubject.h				\
 	polkitunixprocess.c			polkitunixprocess.h			\

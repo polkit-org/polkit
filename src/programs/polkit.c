@@ -27,6 +27,7 @@
 #include <polkit/polkit.h>
 
 static PolkitAuthority *authority;
+static PolkitAuthorityManager *authority_manager;
 
 static gboolean opt_list_actions  = FALSE;
 static gboolean opt_list_users    = FALSE;
@@ -295,6 +296,7 @@ main (int argc, char *argv[])
     }
 
   authority = polkit_authority_get ();
+  authority_manager = polkit_authority_manager_get ();
 
   if (opt_show_help)
     {
@@ -378,6 +380,9 @@ main (int argc, char *argv[])
  out:
   if (authority != NULL)
     g_object_unref (authority);
+
+  if (authority_manager != NULL)
+    g_object_unref (authority_manager);
 
   if (subject != NULL)
     g_object_unref (subject);
@@ -570,9 +575,9 @@ list_users (void)
   ret = FALSE;
 
   error = NULL;
-  identities = polkit_authority_enumerate_users_sync (authority,
-                                                    NULL,
-                                                    &error);
+  identities = polkit_authority_manager_enumerate_users_sync (authority_manager,
+                                                              NULL,
+                                                              &error);
   if (error != NULL)
     {
       g_printerr ("Error enumerating users: %s\n", error->message);
@@ -603,9 +608,9 @@ list_groups (void)
   ret = FALSE;
 
   error = NULL;
-  identities = polkit_authority_enumerate_groups_sync (authority,
-                                                     NULL,
-                                                     &error);
+  identities = polkit_authority_manager_enumerate_groups_sync (authority_manager,
+                                                               NULL,
+                                                               &error);
   if (error != NULL)
     {
       g_printerr ("Error enumerating users: %s\n", error->message);
@@ -862,10 +867,10 @@ list_explicit_authorizations (void)
   ret = FALSE;
 
   error = NULL;
-  authorizations = polkit_authority_enumerate_authorizations_sync (authority,
-                                                                   identity,
-                                                                   NULL,
-                                                                   &error);
+  authorizations = polkit_authority_manager_enumerate_authorizations_sync (authority_manager,
+                                                                           identity,
+                                                                           NULL,
+                                                                           &error);
   if (error != NULL)
     {
       g_printerr ("Error enumerating authorizations: %s\n", error->message);
@@ -928,11 +933,11 @@ do_grant (void)
                                             subject,
                                             FALSE); /* TODO: handle negative */
 
-  if (!polkit_authority_add_authorization_sync (authority,
-                                                identity,
-                                                authorization,
-                                                NULL,
-                                                &error))
+  if (!polkit_authority_manager_add_authorization_sync (authority_manager,
+                                                        identity,
+                                                        authorization,
+                                                        NULL,
+                                                        &error))
     {
       g_printerr ("Error adding authorization: %s\n", error->message);
       g_error_free (error);
@@ -964,11 +969,11 @@ do_revoke (void)
                                             subject,
                                             FALSE); /* TODO: handle negative */
 
-  if (!polkit_authority_remove_authorization_sync (authority,
-                                                   identity,
-                                                   authorization,
-                                                   NULL,
-                                                   &error))
+  if (!polkit_authority_manager_remove_authorization_sync (authority_manager,
+                                                           identity,
+                                                           authorization,
+                                                           NULL,
+                                                           &error))
     {
       g_printerr ("Error removing authorization: %s\n", error->message);
       g_error_free (error);

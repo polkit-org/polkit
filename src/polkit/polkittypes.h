@@ -27,6 +27,9 @@
 struct _PolkitAuthority;
 typedef struct _PolkitAuthority PolkitAuthority;
 
+struct _PolkitAuthorityManager;
+typedef struct _PolkitAuthorityManager PolkitAuthorityManager;
+
 struct _PolkitActionDescription;
 typedef struct _PolkitActionDescription PolkitActionDescription;
 

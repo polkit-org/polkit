@@ -28,6 +28,7 @@ CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = 							\
 	org.freedesktop.PolicyKit1.Authority.xml 		\
+	org.freedesktop.PolicyKit1.AuthorityManager.xml 	\
 	org.freedesktop.PolicyKit1.AuthenticationAgent.xml 	\
 	$(service_in_files) 					\
 	$(dbusconf_in_files) 					\

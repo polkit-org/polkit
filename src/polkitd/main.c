@@ -89,6 +89,8 @@ main (int argc, char **argv)
                                           "/org/freedesktop/PolicyKit1/Authority",
                                           _POLKIT_TYPE_AUTHORITY,
                                           G_OBJECT (authority),
+                                          _POLKIT_TYPE_AUTHORITY_MANAGER,
+                                          G_OBJECT (authority),
                                           G_TYPE_INVALID);
 
   g_main_loop_run (loop);

@@ -196,7 +196,6 @@ void     polkit_backend_authority_unregister_authentication_agent_finish (Polkit
 
 void     polkit_backend_authority_authentication_agent_response_finish (PolkitBackendPendingCall  *pending_call);
 
-
 G_END_DECLS
 
 #endif /* __POLKIT_BACKEND_AUTHORITY_H */
