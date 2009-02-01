@@ -55,7 +55,6 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendlocalauthority.h					\
 	polkitbackendactionpool.h					\
 	polkitbackendpendingcall.h					\
-	polkitbackendserver.h						\
 	polkitbackendsessionmonitor.h					\
         $(NULL)
 
@@ -67,7 +66,6 @@ libpolkit_backend_1_la_SOURCES =                                   	\
 	polkitbackendlocalauthority.h	polkitbackendlocalauthority.c	\
 	polkitbackendactionpool.h	polkitbackendactionpool.c	\
 	polkitbackendpendingcall.h	polkitbackendpendingcall.c	\
-	polkitbackendserver.h		polkitbackendserver.c		\
 	polkitbackendsessionmonitor.h	polkitbackendsessionmonitor.c	\
 	$(BUILT_SOURCES)						\
         $(NULL)

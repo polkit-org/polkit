@@ -24,10 +24,8 @@
 
 #include <polkit/_polkitbindings.h>
 #include "polkitbackendpendingcall.h"
-#include "polkitbackendserver.h"
 
-PolkitBackendPendingCall *_polkit_backend_pending_call_new (EggDBusMethodInvocation *method_invocation,
-                                                            PolkitBackendServer     *server);
+PolkitBackendPendingCall *_polkit_backend_pending_call_new (EggDBusMethodInvocation *method_invocation);
 
 EggDBusMethodInvocation  *_polkit_backend_pending_call_get_method_invocation (PolkitBackendPendingCall *pending_call);
 

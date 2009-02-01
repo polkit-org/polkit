@@ -83,7 +83,6 @@
     <xi:include href="../polkitbackend/xml/polkitbackendauthority.xml"/>
     <xi:include href="../polkitbackend/xml/polkitbackendlocalauthority.xml"/>
     <xi:include href="../polkitbackend/xml/polkitbackendactionpool.xml"/>
-    <xi:include href="../polkitbackend/xml/polkitbackendserver.xml"/>
     <xi:include href="../polkitbackend/xml/polkitbackendsessionmonitor.xml"/>
   </reference>
 

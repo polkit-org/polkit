@@ -28,7 +28,6 @@
 typedef struct
 {
   EggDBusMethodInvocation *method_invocation;
-  PolkitBackendServer *server;
   PolkitSubject *inquirer;
 } PolkitBackendPendingCallPrivate;
 
@@ -55,7 +54,6 @@ polkit_backend_pending_call_finalize (GObject *object)
   priv = POLKIT_BACKEND_PENDING_CALL_GET_PRIVATE (pending_call);
 
   g_object_unref (priv->method_invocation);
-  g_object_unref (priv->server);
 
   if (priv->inquirer != NULL)
     g_object_unref (priv->inquirer);
@@ -76,8 +74,7 @@ polkit_backend_pending_call_class_init (PolkitBackendPendingCallClass *klass)
 }
 
 PolkitBackendPendingCall *
-_polkit_backend_pending_call_new (EggDBusMethodInvocation *method_invocation,
-                                  PolkitBackendServer     *server)
+_polkit_backend_pending_call_new (EggDBusMethodInvocation *method_invocation)
 {
   PolkitBackendPendingCall *pending_call;
   PolkitBackendPendingCallPrivate *priv;
@@ -88,17 +85,8 @@ _polkit_backend_pending_call_new (EggDBusMethodInvocation *method_invocation,
   priv = POLKIT_BACKEND_PENDING_CALL_GET_PRIVATE (pending_call);
 
   priv->method_invocation = g_object_ref (method_invocation);
-  priv->server = g_object_ref (server);
 
   return pending_call;
-}
-
-PolkitBackendServer *
-polkit_backend_pending_call_get_server (PolkitBackendPendingCall *pending_call)
-{
-  PolkitBackendPendingCallPrivate *priv;
-  priv = POLKIT_BACKEND_PENDING_CALL_GET_PRIVATE (pending_call);
-  return priv->server;
 }
 
 EggDBusMethodInvocation *

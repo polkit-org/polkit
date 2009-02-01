@@ -68,7 +68,6 @@ struct _PolkitBackendPendingCallClass
 
 GType                 polkit_backend_pending_call_get_type     (void) G_GNUC_CONST;
 PolkitSubject        *polkit_backend_pending_call_get_caller   (PolkitBackendPendingCall *pending_call);
-PolkitBackendServer  *polkit_backend_pending_call_get_server   (PolkitBackendPendingCall *pending_call);
 void                  polkit_backend_pending_call_return_error (PolkitBackendPendingCall *pending_call,
                                                                 GQuark                    domain,
                                                                 gint                      code,
