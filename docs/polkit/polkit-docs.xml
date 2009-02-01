@@ -59,10 +59,9 @@
     <title>Core API Reference</title>
     <xi:include href="xml/polkitauthority.xml"/>
     <xi:include href="xml/polkiterror.xml"/>
-    <xi:include href="xml/polkitauthorizationresult.xml"/>
     <xi:include href="xml/polkitactiondescription.xml"/>
+    <xi:include href="xml/polkitauthoritymanager.xml"/>
     <xi:include href="xml/polkitauthorization.xml"/>
-    <xi:include href="xml/polkitimplicitauthorization.xml"/>
     <chapter id="subjects">
       <title>Subjects</title>
       <xi:include href="xml/polkitsubject.xml"/>

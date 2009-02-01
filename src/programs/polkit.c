@@ -457,7 +457,6 @@ show_action (const gchar *action_id)
   error = NULL;
   actions = polkit_authority_enumerate_actions_sync (authority,
                                                      NULL,
-                                                     NULL,
                                                      &error);
   if (error != NULL)
     {
@@ -508,7 +507,6 @@ list_actions (void)
 
   error = NULL;
   actions = polkit_authority_enumerate_actions_sync (authority,
-                                                     NULL,
                                                      NULL,
                                                      &error);
   if (error != NULL)
@@ -791,7 +789,6 @@ list_authorizations (void)
 
   error = NULL;
   actions = polkit_authority_enumerate_actions_sync (authority,
-                                                     NULL,
                                                      NULL,
                                                      &error);
   if (error != NULL)

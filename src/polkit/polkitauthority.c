@@ -33,12 +33,27 @@
  * SECTION:polkitauthority
  * @title: PolkitAuthority
  * @short_description: Authority
+ * @stability: Stable
  *
- * Checking claims.
+ * #PolkitAuthority is used for checking whether a given subject is
+ * authorized to perform a given action. Typically privileged system
+ * daemons or suid helpers will use this when handling requests from
+ * untrusted clients.
+ *
+ * User sessions can register an authentication agent with the
+ * authority. This is used for requests from untrusted clients where
+ * system policy requires that the user needs to acknowledge (through
+ * proving he is the user or the administrator) a given action.
  */
 
+/**
+ * PolkitAuthority:
+ *
+ * The #PolkitAuthority struct should not be accessed directly.
+ */
 struct _PolkitAuthority
 {
+  /*< private >*/
   GObject parent_instance;
 
   EggDBusConnection *system_bus;
@@ -133,6 +148,13 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
                                           0);
 }
 
+/**
+ * polkit_authority_get:
+ *
+ * Gets a reference to the authority.
+ *
+ * Returns: A #PolkitAuthority. Free it with g_object_unref() when done with it.
+ **/
 PolkitAuthority *
 polkit_authority_get (void)
 {
@@ -170,7 +192,6 @@ generic_async_cb (GObject      *source_obj,
 
 static guint
 polkit_authority_enumerate_actions_async (PolkitAuthority     *authority,
-                                          const gchar         *locale,
                                           GCancellable        *cancellable,
                                           GAsyncReadyCallback  callback,
                                           gpointer             user_data)
@@ -185,7 +206,7 @@ polkit_authority_enumerate_actions_async (PolkitAuthority     *authority,
 
   call_id = _polkit_authority_enumerate_actions (authority->real,
                                                  EGG_DBUS_CALL_FLAGS_NONE,
-                                                 locale,
+                                                 "", /* TODO: use current locale */
                                                  cancellable,
                                                  generic_async_cb,
                                                  simple);
@@ -193,16 +214,39 @@ polkit_authority_enumerate_actions_async (PolkitAuthority     *authority,
   return call_id;
 }
 
+/**
+ * polkit_authority_enumerate_actions:
+ * @authority: A #PolkitAuthority.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously retrieves all registered actions.
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_authority_enumerate_actions_finish() to get the result of
+ * the operation.
+ **/
 void
 polkit_authority_enumerate_actions (PolkitAuthority     *authority,
-                                    const gchar         *locale,
                                     GCancellable        *cancellable,
                                     GAsyncReadyCallback  callback,
                                     gpointer             user_data)
 {
-  polkit_authority_enumerate_actions_async (authority, locale, cancellable, callback, user_data);
+  polkit_authority_enumerate_actions_async (authority, cancellable, callback, user_data);
 }
 
+/**
+ * polkit_authority_enumerate_actions_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes retrieving all registered actions.
+ *
+ * Returns: A list of #PolkitActionDescription or %NULL if @error is set. The returned list
+ * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ **/
 GList *
 polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
                                            GAsyncResult    *res,
@@ -246,9 +290,19 @@ polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
 }
 
 
+/**
+ * polkit_authority_enumerate_actions_sync:
+ * @authority: A #PolkitAuthority.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Synchronously retrieves all registered actions.
+ *
+ * Returns: A list of #PolkitActionDescription or %NULL if @error is set. The returned list
+ * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ **/
 GList *
 polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
-                                         const gchar     *locale,
                                          GCancellable    *cancellable,
                                          GError         **error)
 {
@@ -256,7 +310,7 @@ polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
   GAsyncResult *res;
   GList *result;
 
-  call_id = polkit_authority_enumerate_actions_async (authority, locale, cancellable, generic_cb, &res);
+  call_id = polkit_authority_enumerate_actions_async (authority, cancellable, generic_cb, &res);
 
   egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
 
@@ -268,7 +322,6 @@ polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
-
 static guint
 polkit_authority_check_authorization_async (PolkitAuthority               *authority,
                                             PolkitSubject                 *subject,
@@ -303,6 +356,23 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
   return call_id;
 }
 
+/**
+ * polkit_authority_check_authorization:
+ * @authority: A #PolkitAuthority.
+ * @subject: A #PolkitSubject.
+ * @action_id: The action to check for.
+ * @flags: A set of #PolkitCheckAuthorizationFlags.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously checks if @subject is authorized to perform the action represented
+ * by @action_id.
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_authority_check_authorization_finish() to get the result of
+ * the operation.
+ **/
 void
 polkit_authority_check_authorization (PolkitAuthority               *authority,
                                       PolkitSubject                 *subject,
@@ -321,6 +391,16 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
                                               user_data);
 }
 
+/**
+ * polkit_authority_check_authorization_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes checking if a subject is authorized for an action.
+ *
+ * Returns: A #PolkitAuthorizationResult.
+ **/
 PolkitAuthorizationResult
 polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
                                              GAsyncResult             *res,
@@ -348,6 +428,20 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
   return result;
 }
 
+/**
+ * polkit_authority_check_authorization:
+ * @authority: A #PolkitAuthority.
+ * @subject: A #PolkitSubject.
+ * @action_id: The action to check for.
+ * @flags: A set of #PolkitCheckAuthorizationFlags.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Checks if @subject is authorized to perform the action represented by @action_id.
+ *
+ * Returns: A #PolkitAuthorizationResult.
+ */
 PolkitAuthorizationResult
 polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
                                            PolkitSubject                 *subject,
@@ -404,6 +498,20 @@ polkit_authority_register_authentication_agent_async (PolkitAuthority      *auth
   return call_id;
 }
 
+/**
+ * polkit_authority_register_authentication_agent:
+ * @authority: A #PolkitAuthority.
+ * @object_path: The object path for the authentication agent.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously registers an authentication agent.
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_authority_register_authentication_agent_finish() to get the result of
+ * the operation.
+ **/
 void
 polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
                                                 const gchar          *object_path,
@@ -418,6 +526,16 @@ polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
                                                         user_data);
 }
 
+/**
+ * polkit_authority_register_authentication_agent_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes registering an authentication agent.
+ *
+ * Returns: %TRUE if the authentication agent was successfully registered, %FALSE if @error is set.
+ **/
 gboolean
 polkit_authority_register_authentication_agent_finish (PolkitAuthority *authority,
                                                        GAsyncResult    *res,
@@ -445,6 +563,17 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
 }
 
 
+/**
+ * polkit_authority_register_authentication_agent_sync:
+ * @authority: A #PolkitAuthority.
+ * @object_path: The object path for the authentication agent.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Registers an authentication agent.
+ *
+ * Returns: %TRUE if the authentication agent was successfully registered, %FALSE if @error is set.
+ **/
 gboolean
 polkit_authority_register_authentication_agent_sync (PolkitAuthority     *authority,
                                                      const gchar         *object_path,
@@ -497,6 +626,20 @@ polkit_authority_unregister_authentication_agent_async (PolkitAuthority      *au
   return call_id;
 }
 
+/**
+ * polkit_authority_unregister_authentication_agent:
+ * @authority: A #PolkitAuthority.
+ * @object_path: The object path that the authentication agent is registered at.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously unregisters an authentication agent.
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_authority_unregister_authentication_agent_finish() to get the result of
+ * the operation.
+ **/
 void
 polkit_authority_unregister_authentication_agent (PolkitAuthority      *authority,
                                                   const gchar          *object_path,
@@ -511,6 +654,16 @@ polkit_authority_unregister_authentication_agent (PolkitAuthority      *authorit
                                                         user_data);
 }
 
+/**
+ * polkit_authority_unregister_authentication_agent_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes unregistering an authentication agent.
+ *
+ * Returns: %TRUE if the authentication agent was successfully unregistered, %FALSE if @error is set.
+ **/
 gboolean
 polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *authority,
                                                          GAsyncResult    *res,
@@ -537,7 +690,17 @@ polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *author
   return ret;
 }
 
-
+/**
+ * polkit_authority_unregister_authentication_agent_sync:
+ * @authority: A #PolkitAuthority.
+ * @object_path: The object path that the authentication agent is registered at.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Unregisters an authentication agent.
+ *
+ * Returns: %TRUE if the authentication agent was successfully unregistered, %FALSE if @error is set.
+ **/
 gboolean
 polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *authority,
                                                        const gchar         *object_path,
@@ -597,6 +760,25 @@ polkit_authority_authentication_agent_response_async (PolkitAuthority      *auth
   return call_id;
 }
 
+/**
+ * polkit_authority_authentication_agent_response:
+ * @authority: A #PolkitAuthority.
+ * @cookie: The cookie passed to the authentication agent from the authority.
+ * @identity: The identity that was authenticated.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously provide response that @identity successfully authenticated
+ * for the authentication request identified by @cookie.
+ *
+ * This function is only used by the privileged bits of an authentication agent.
+ * It will fail if the caller is not sufficiently privileged (typically uid 0).
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_authority_authentication_agent_response_finish() to get the result of
+ * the operation.
+ **/
 void
 polkit_authority_authentication_agent_response (PolkitAuthority      *authority,
                                                 const gchar          *cookie,
@@ -613,6 +795,16 @@ polkit_authority_authentication_agent_response (PolkitAuthority      *authority,
                                                         user_data);
 }
 
+/**
+ * polkit_authority_authentication_agent_response_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes providing response from an authentication agent.
+ *
+ * Returns: %TRUE if @authority acknowledged the call, %FALSE if @error is set.
+ **/
 gboolean
 polkit_authority_authentication_agent_response_finish (PolkitAuthority *authority,
                                                        GAsyncResult    *res,
@@ -640,6 +832,20 @@ polkit_authority_authentication_agent_response_finish (PolkitAuthority *authorit
 }
 
 
+/**
+ * polkit_authority_authentication_agent_response_sync:
+ * @authority: A #PolkitAuthority.
+ * @cookie: The cookie passed to the authentication agent from the authority.
+ * @identity: The identity that was authenticated.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Provide response that @identity successfully authenticated for the
+ * authentication request identified by @cookie. See polkit_authority_authentication_agent_response()
+ * for limitations on who is allowed is to call this method.
+ *
+ * Returns: %TRUE if @authority acknowledged the call, %FALSE if @error is set.
+ **/
 gboolean
 polkit_authority_authentication_agent_response_sync (PolkitAuthority     *authority,
                                                      const gchar         *cookie,

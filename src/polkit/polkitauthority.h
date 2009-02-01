@@ -47,7 +47,6 @@ PolkitAuthority *polkit_authority_get (void);
 /* ---------------------------------------------------------------------------------------------------- */
 
 GList                     *polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
-                                                                    const gchar     *locale,
                                                                     GCancellable    *cancellable,
                                                                     GError         **error);
 
@@ -102,7 +101,6 @@ gboolean                   polkit_authority_authentication_agent_response_sync (
 /* ---------------------------------------------------------------------------------------------------- */
 
 void                       polkit_authority_enumerate_actions (PolkitAuthority     *authority,
-                                                               const gchar         *locale,
                                                                GCancellable        *cancellable,
                                                                GAsyncReadyCallback  callback,
                                                                gpointer             user_data);

@@ -31,6 +31,7 @@
  * SECTION:polkitauthoritymanager
  * @title: PolkitAuthorityManager
  * @short_description: Authority Manager
+ * @stability: Unstable
  *
  * Checking claims.
  */

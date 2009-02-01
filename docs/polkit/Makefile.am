@@ -66,14 +66,17 @@ endif
 
 CLEANFILES +=   *~				\
 		polkit-scan.*			\
-		polkit.*			\
+		polkit.args			\
+		polkit.hierarchy		\
+		polkit.interfaces		\
+		polkit.prerequisites		\
+		polkit.signals			\
 		*.bak				\
 		polkit-decl-list.txt		\
 		polkit-decl.txt			\
 		polkit-overrides.txt		\
 		polkit-undeclared.txt		\
 		polkit-undocumented.txt		\
-		polkit-sections.txt		\
 		*.stamp				\
 		-rf html xml			\
 		$(NULL)
