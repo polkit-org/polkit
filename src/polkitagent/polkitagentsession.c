@@ -23,6 +23,7 @@
  * SECTION:polkitagentsession
  * @title: PolkitAgentSession
  * @short_description: Authentication Session
+ * @stability: Unstable
  *
  * The #PolkitAgentSession class is an abstraction used for interacting with the
  * native authentication system (for example PAM) for obtaining authorizations.

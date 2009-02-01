@@ -12,6 +12,7 @@ INCLUDES =                                                      \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
+	-DPOLKIT_AGENT_COMPILATION				\
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
@@ -60,7 +61,6 @@ libpolkit_agent_1_la_SOURCES =                                   			\
         $(NULL)
 
 libpolkit_agent_1_la_CFLAGS =                                        	\
-        -D_POLKIT_AGENT_COMPILATION                                  	\
         $(GLIB_CFLAGS)							\
         $(EGG_DBUS_CFLAGS)						\
         $(NULL)

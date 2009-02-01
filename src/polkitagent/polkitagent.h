@@ -22,9 +22,14 @@
 #ifndef __POLKIT_AGENT_H
 #define __POLKIT_AGENT_H
 
-#define _POLKIT_AGENT_INSIDE_POLKIT_AGENT_H 1
+#if !defined (POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE) && !defined (POLKIT_AGENT_COMPILATION)
+#error "libpolkitagent is unstable API and subject to change. You must define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE to acknowledge this."
+#endif
+
+#define POLKIT_AGENT_INSIDE_POLKIT_AGENT_H 1
+#include <polkitagent/polkitagenttypes.h>
 #include <polkitagent/polkitagentlistener.h>
 #include <polkitagent/polkitagentsession.h>
-#undef _POLKIT_AGENT_INSIDE_POLKIT_AGENT_H
+#undef POLKIT_AGENT_INSIDE_POLKIT_AGENT_H
 
 #endif /* __POLKIT_AGENT_H */

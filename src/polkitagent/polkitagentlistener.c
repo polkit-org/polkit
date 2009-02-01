@@ -30,6 +30,7 @@
  * SECTION:polkitagentlistener
  * @title: PolkitAgentListener
  * @short_description: Abstract base class for Authentication Agents
+ * @stability: Unstable
  *
  * #PolkitAgentListener is an abstract base class used for implementing authentication
  * agents. To implement an authentication agent, simply subclass #PolkitAgentListener and
