@@ -23,10 +23,5 @@
 #define __POLKIT_BACKEND_PRIVATE_H
 
 #include <polkit/_polkitbindings.h>
-#include "polkitbackendpendingcall.h"
-
-PolkitBackendPendingCall *_polkit_backend_pending_call_new (EggDBusMethodInvocation *method_invocation);
-
-EggDBusMethodInvocation  *_polkit_backend_pending_call_get_method_invocation (PolkitBackendPendingCall *pending_call);
 
 #endif /* __POLKIT_BACKEND_PRIVATE_H */

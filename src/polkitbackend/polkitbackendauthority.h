@@ -62,48 +62,73 @@ struct _PolkitBackendAuthorityClass
                                           const gchar              *old_owner,
                                           const gchar              *new_owner);
 
-  void (*enumerate_actions)  (PolkitBackendAuthority   *authority,
-                              const gchar              *locale,
-                              PolkitBackendPendingCall *pending_call);
+  GList *(*enumerate_actions)  (PolkitBackendAuthority   *authority,
+                                PolkitSubject            *caller,
+                                const gchar              *locale,
+                                GCancellable             *cancellable,
+                                GError                  **error);
 
-  void (*enumerate_users)    (PolkitBackendAuthority   *authority,
-                              PolkitBackendPendingCall *pending_call);
+  GList *(*enumerate_users)    (PolkitBackendAuthority   *authority,
+                                PolkitSubject            *caller,
+                                GCancellable             *cancellable,
+                                GError                  **error);
 
-  void (*enumerate_groups)   (PolkitBackendAuthority   *authority,
-                              PolkitBackendPendingCall *pending_call);
+  GList *(*enumerate_groups)   (PolkitBackendAuthority   *authority,
+                                PolkitSubject            *caller,
+                                GCancellable             *cancellable,
+                                GError                  **error);
 
   void (*check_authorization) (PolkitBackendAuthority        *authority,
+                               PolkitSubject                 *caller,
                                PolkitSubject                 *subject,
                                const gchar                   *action_id,
                                PolkitCheckAuthorizationFlags  flags,
-                               PolkitBackendPendingCall      *pending_call);
+                               GCancellable                  *cancellable,
+                               GAsyncReadyCallback            callback,
+                               gpointer                       user_data);
 
-  void (*enumerate_authorizations) (PolkitBackendAuthority   *authority,
+  PolkitAuthorizationResult (*check_authorization_finish) (PolkitBackendAuthority  *authority,
+                                                           GAsyncResult            *res,
+                                                           GError                 **error);
+
+  GList *(*enumerate_authorizations) (PolkitBackendAuthority   *authority,
+                                      PolkitSubject            *caller,
+                                      PolkitIdentity           *identity,
+                                      GCancellable             *cancellable,
+                                      GError                  **error);
+
+  gboolean (*add_authorization) (PolkitBackendAuthority   *authority,
+                                 PolkitSubject            *caller,
+                                 PolkitIdentity           *identity,
+                                 PolkitAuthorization      *authorization,
+                                 GCancellable             *cancellable,
+                                 GError                  **error);
+
+  gboolean (*remove_authorization) (PolkitBackendAuthority   *authority,
+                                    PolkitSubject            *caller,
                                     PolkitIdentity           *identity,
-                                    PolkitBackendPendingCall *pending_call);
+                                    PolkitAuthorization      *authorization,
+                                    GCancellable             *cancellable,
+                                    GError                  **error);
 
-  void (*add_authorization) (PolkitBackendAuthority   *authority,
-                             PolkitIdentity           *identity,
-                             PolkitAuthorization      *authorization,
-                             PolkitBackendPendingCall *pending_call);
+  gboolean (*register_authentication_agent) (PolkitBackendAuthority   *authority,
+                                             PolkitSubject            *caller,
+                                             const gchar              *object_path,
+                                             GCancellable             *cancellable,
+                                             GError                  **error);
 
-  void (*remove_authorization) (PolkitBackendAuthority   *authority,
-                                PolkitIdentity           *identity,
-                                PolkitAuthorization      *authorization,
-                                PolkitBackendPendingCall *pending_call);
+  gboolean (*unregister_authentication_agent) (PolkitBackendAuthority   *authority,
+                                               PolkitSubject            *caller,
+                                               const gchar              *object_path,
+                                               GCancellable             *cancellable,
+                                               GError                  **error);
 
-  void (*register_authentication_agent) (PolkitBackendAuthority   *authority,
-                                         const gchar              *object_path,
-                                         PolkitBackendPendingCall *pending_call);
-
-  void (*unregister_authentication_agent) (PolkitBackendAuthority   *authority,
-                                           const gchar              *object_path,
-                                           PolkitBackendPendingCall *pending_call);
-
-  void (*authentication_agent_response) (PolkitBackendAuthority   *authority,
-                                         const gchar              *cookie,
-                                         PolkitIdentity           *identity,
-                                         PolkitBackendPendingCall *pending_call);
+  gboolean (*authentication_agent_response) (PolkitBackendAuthority   *authority,
+                                             PolkitSubject            *caller,
+                                             const gchar              *cookie,
+                                             PolkitIdentity           *identity,
+                                             GCancellable             *cancellable,
+                                             GError                  **error);
 
   /*< private >*/
   /* Padding for future expansion */
@@ -126,75 +151,75 @@ void     polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAu
                                                                  const gchar              *old_owner,
                                                                  const gchar              *new_owner);
 
-void     polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
+GList   *polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
+                                                             PolkitSubject             *caller,
                                                              const gchar               *locale,
-                                                             PolkitBackendPendingCall  *pending_call);
+                                                             GCancellable              *cancellable,
+                                                             GError                   **error);
 
-void     polkit_backend_authority_enumerate_users           (PolkitBackendAuthority    *authority,
-                                                             PolkitBackendPendingCall  *pending_call);
+GList   *polkit_backend_authority_enumerate_users           (PolkitBackendAuthority    *authority,
+                                                             PolkitSubject             *caller,
+                                                             GCancellable              *cancellable,
+                                                             GError                   **error);
 
-void     polkit_backend_authority_enumerate_groups          (PolkitBackendAuthority    *authority,
-                                                             PolkitBackendPendingCall  *pending_call);
+GList   *polkit_backend_authority_enumerate_groups          (PolkitBackendAuthority    *authority,
+                                                             PolkitSubject             *caller,
+                                                             GCancellable              *cancellable,
+                                                             GError                   **error);
 
 void     polkit_backend_authority_check_authorization       (PolkitBackendAuthority        *authority,
+                                                             PolkitSubject                 *caller,
                                                              PolkitSubject                 *subject,
                                                              const gchar                   *action_id,
                                                              PolkitCheckAuthorizationFlags  flags,
-                                                             PolkitBackendPendingCall      *pending_call);
+                                                             GCancellable                  *cancellable,
+                                                             GAsyncReadyCallback            callback,
+                                                             gpointer                       user_data);
 
-void     polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
+PolkitAuthorizationResult polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
+                                                                               GAsyncResult            *res,
+                                                                               GError                 **error);
+
+GList   *polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
+                                                             PolkitSubject             *caller,
                                                              PolkitIdentity            *identity,
-                                                             PolkitBackendPendingCall  *pending_call);
+                                                             GCancellable              *cancellable,
+                                                             GError                   **error);
 
-void     polkit_backend_authority_add_authorization         (PolkitBackendAuthority    *authority,
+gboolean polkit_backend_authority_add_authorization         (PolkitBackendAuthority    *authority,
+                                                             PolkitSubject             *caller,
                                                              PolkitIdentity            *identity,
                                                              PolkitAuthorization       *authorization,
-                                                             PolkitBackendPendingCall  *pending_call);
+                                                             GCancellable              *cancellable,
+                                                             GError                   **error);
 
-void     polkit_backend_authority_remove_authorization      (PolkitBackendAuthority    *authority,
+gboolean polkit_backend_authority_remove_authorization      (PolkitBackendAuthority    *authority,
+                                                             PolkitSubject             *caller,
                                                              PolkitIdentity            *identity,
                                                              PolkitAuthorization       *authorization,
-                                                             PolkitBackendPendingCall  *pending_call);
+                                                             GCancellable              *cancellable,
+                                                             GError                   **error);
 
-void     polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
+gboolean polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
+                                                                 PolkitSubject             *caller,
                                                                  const gchar               *object_path,
-                                                                 PolkitBackendPendingCall  *pending_call);
+                                                                 GCancellable              *cancellable,
+                                                                 GError                   **error);
 
-void     polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
+gboolean polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
+                                                                   PolkitSubject             *caller,
                                                                    const gchar               *object_path,
-                                                                   PolkitBackendPendingCall  *pending_call);
+                                                                   GCancellable              *cancellable,
+                                                                   GError                   **error);
 
-void     polkit_backend_authority_authentication_agent_response (PolkitBackendAuthority    *authority,
+gboolean polkit_backend_authority_authentication_agent_response (PolkitBackendAuthority    *authority,
+                                                                 PolkitSubject             *caller,
                                                                  const gchar               *cookie,
                                                                  PolkitIdentity            *identity,
-                                                                 PolkitBackendPendingCall  *pending_call);
+                                                                 GCancellable              *cancellable,
+                                                                 GError                   **error);
 
 /* --- */
-
-void     polkit_backend_authority_enumerate_actions_finish        (PolkitBackendPendingCall  *pending_call,
-                                                                   GList                     *actions);
-
-void     polkit_backend_authority_enumerate_users_finish          (PolkitBackendPendingCall  *pending_call,
-                                                                   GList                     *users);
-
-void     polkit_backend_authority_enumerate_groups_finish         (PolkitBackendPendingCall  *pending_call,
-                                                                   GList                     *groups);
-
-void     polkit_backend_authority_check_authorization_finish      (PolkitBackendPendingCall  *pending_call,
-                                                                   PolkitAuthorizationResult  result);
-
-void     polkit_backend_authority_enumerate_authorizations_finish (PolkitBackendPendingCall  *pending_call,
-                                                                   GList                     *authorizations);
-
-void     polkit_backend_authority_add_authorization_finish        (PolkitBackendPendingCall  *pending_call);
-
-void     polkit_backend_authority_remove_authorization_finish     (PolkitBackendPendingCall  *pending_call);
-
-void     polkit_backend_authority_register_authentication_agent_finish   (PolkitBackendPendingCall  *pending_call);
-
-void     polkit_backend_authority_unregister_authentication_agent_finish (PolkitBackendPendingCall  *pending_call);
-
-void     polkit_backend_authority_authentication_agent_response_finish (PolkitBackendPendingCall  *pending_call);
 
 gboolean polkit_backend_register_authority (PolkitBackendAuthority   *authority,
                                             const gchar              *well_known_name,

@@ -24,7 +24,6 @@
 
 #define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
 #include <polkitbackend/polkitbackendtypes.h>
-#include <polkitbackend/polkitbackendpendingcall.h>
 #include <polkitbackend/polkitbackendauthority.h>
 #include <polkitbackend/polkitbackendlocalauthority.h>
 #include <polkitbackend/polkitbackendactionpool.h>

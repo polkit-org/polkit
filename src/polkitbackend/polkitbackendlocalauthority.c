@@ -29,7 +29,6 @@
 #include <polkit/polkit.h>
 #include "polkitbackendlocalauthority.h"
 #include "polkitbackendactionpool.h"
-#include "polkitbackendpendingcall.h"
 #include "polkitbackendsessionmonitor.h"
 
 #include "_polkitagentbindings.h"
@@ -132,21 +131,35 @@ static void polkit_backend_local_authority_system_bus_name_owner_changed (Polkit
                                                                           const gchar              *old_owner,
                                                                           const gchar              *new_owner);
 
-static void polkit_backend_local_authority_enumerate_actions  (PolkitBackendAuthority   *authority,
-                                                               const gchar              *locale,
-                                                               PolkitBackendPendingCall *pending_call);
+static GList *polkit_backend_local_authority_enumerate_actions  (PolkitBackendAuthority   *authority,
+                                                                 PolkitSubject            *caller,
+                                                                 const gchar              *locale,
+                                                                 GCancellable             *cancellable,
+                                                                 GError                  **error);
 
-static void polkit_backend_local_authority_enumerate_users    (PolkitBackendAuthority   *authority,
-                                                               PolkitBackendPendingCall *pending_call);
+static GList *polkit_backend_local_authority_enumerate_users    (PolkitBackendAuthority   *authority,
+                                                                 PolkitSubject            *caller,
+                                                                 GCancellable             *cancellable,
+                                                                 GError                  **error);
 
-static void polkit_backend_local_authority_enumerate_groups   (PolkitBackendAuthority   *authority,
-                                                               PolkitBackendPendingCall *pending_call);
+static GList *polkit_backend_local_authority_enumerate_groups   (PolkitBackendAuthority   *authority,
+                                                                 PolkitSubject            *caller,
+                                                                 GCancellable             *cancellable,
+                                                                 GError                  **error);
 
 static void polkit_backend_local_authority_check_authorization (PolkitBackendAuthority        *authority,
+                                                                PolkitSubject                 *caller,
                                                                 PolkitSubject                 *subject,
                                                                 const gchar                   *action_id,
                                                                 PolkitCheckAuthorizationFlags  flags,
-                                                                PolkitBackendPendingCall      *pending_call);
+                                                                GCancellable                  *cancellable,
+                                                                GAsyncReadyCallback            callback,
+                                                                gpointer                       user_data);
+
+static PolkitAuthorizationResult polkit_backend_local_authority_check_authorization_finish (
+                                                                 PolkitBackendAuthority  *authority,
+                                                                 GAsyncResult            *res,
+                                                                 GError                 **error);
 
 static PolkitAuthorizationResult check_authorization_sync (PolkitBackendAuthority         *authority,
                                                            PolkitSubject                  *subject,
@@ -155,32 +168,44 @@ static PolkitAuthorizationResult check_authorization_sync (PolkitBackendAuthorit
                                                            PolkitImplicitAuthorization    *out_implicit_authorization,
                                                            GError                        **error);
 
-static void polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
-                                                                     PolkitIdentity            *identity,
-                                                                     PolkitBackendPendingCall *pending_call);
+static GList *polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
+                                                                       PolkitSubject            *caller,
+                                                                       PolkitIdentity           *identity,
+                                                                       GCancellable             *cancellable,
+                                                                       GError                  **error);
 
-static void polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
-                                                              PolkitIdentity           *identity,
-                                                              PolkitAuthorization      *authorization,
-                                                              PolkitBackendPendingCall *pending_call);
+static gboolean polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
+                                                                  PolkitSubject            *caller,
+                                                                  PolkitIdentity           *identity,
+                                                                  PolkitAuthorization      *authorization,
+                                                                  GCancellable             *cancellable,
+                                                                  GError                  **error);
 
-static void polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
-                                                                 PolkitIdentity           *identity,
-                                                                 PolkitAuthorization      *authorization,
-                                                                 PolkitBackendPendingCall *pending_call);
+static gboolean polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
+                                                                     PolkitSubject            *caller,
+                                                                     PolkitIdentity           *identity,
+                                                                     PolkitAuthorization      *authorization,
+                                                                     GCancellable             *cancellable,
+                                                                     GError                  **error);
 
-static void polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
-                                                                          const gchar              *object_path,
-                                                                          PolkitBackendPendingCall *pending_call);
+static gboolean polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
+                                                                              PolkitSubject            *caller,
+                                                                              const gchar              *object_path,
+                                                                              GCancellable             *cancellable,
+                                                                              GError                  **error);
 
-static void polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
-                                                                            const gchar              *object_path,
-                                                                            PolkitBackendPendingCall *pending_call);
+static gboolean polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
+                                                                                PolkitSubject            *caller,
+                                                                                const gchar              *object_path,
+                                                                                GCancellable             *cancellable,
+                                                                                GError                  **error);
 
-static void polkit_backend_local_authority_authentication_agent_response (PolkitBackendAuthority   *authority,
-                                                                          const gchar              *cookie,
-                                                                          PolkitIdentity           *identity,
-                                                                          PolkitBackendPendingCall *pending_call);
+static gboolean polkit_backend_local_authority_authentication_agent_response (PolkitBackendAuthority   *authority,
+                                                                              PolkitSubject            *caller,
+                                                                              const gchar              *cookie,
+                                                                              PolkitIdentity           *identity,
+                                                                              GCancellable             *cancellable,
+                                                                              GError                  **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -265,6 +290,7 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
   authority_class->enumerate_users                 = polkit_backend_local_authority_enumerate_users;
   authority_class->enumerate_groups                = polkit_backend_local_authority_enumerate_groups;
   authority_class->check_authorization             = polkit_backend_local_authority_check_authorization;
+  authority_class->check_authorization_finish      = polkit_backend_local_authority_check_authorization_finish;
   authority_class->enumerate_authorizations        = polkit_backend_local_authority_enumerate_authorizations;
   authority_class->add_authorization               = polkit_backend_local_authority_add_authorization;
   authority_class->remove_authorization            = polkit_backend_local_authority_remove_authorization;
@@ -285,10 +311,12 @@ polkit_backend_local_authority_new (void)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static GList *
 polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *authority,
+                                                  PolkitSubject            *caller,
                                                   const gchar              *locale,
-                                                  PolkitBackendPendingCall *pending_call)
+                                                  GCancellable             *cancellable,
+                                                  GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -299,15 +327,16 @@ polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *auth
 
   actions = polkit_backend_action_pool_get_all_actions (priv->action_pool, locale);
 
-  polkit_backend_authority_enumerate_actions_finish (pending_call,
-                                                     actions);
+  return actions;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static GList *
 polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *authority,
-                                                PolkitBackendPendingCall *pending_call)
+                                                PolkitSubject            *caller,
+                                                GCancellable             *cancellable,
+                                                GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -322,11 +351,10 @@ polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *author
   passwd = getpwent ();
   if (passwd == NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "getpwent failed: %s",
-                                                strerror (errno));
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "getpwent failed: %m");
       goto out;
     }
 
@@ -343,17 +371,17 @@ polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *author
 
   list = g_list_reverse (list);
 
-  polkit_backend_authority_enumerate_users_finish (pending_call, list);
-
  out:
-  ;
+  return list;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static GList *
 polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *authority,
-                                                 PolkitBackendPendingCall *pending_call)
+                                                 PolkitSubject            *caller,
+                                                 GCancellable             *cancellable,
+                                                 GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -368,11 +396,10 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *autho
   group = getgrent ();
   if (group == NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "getpwent failed: %s",
-                                                strerror (errno));
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "getpwent failed: %m");
       goto out;
     }
 
@@ -389,10 +416,8 @@ polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *autho
 
   list = g_list_reverse (list);
 
-  polkit_backend_authority_enumerate_groups_finish (pending_call, list);
-
  out:
-  ;
+  return list;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -407,7 +432,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
                                   gboolean                     authentication_success,
                                   gpointer                     user_data)
 {
-  PolkitBackendPendingCall *pending_call = POLKIT_BACKEND_PENDING_CALL (user_data);
+  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
   PolkitAuthorizationResult result;
   gchar *subject_str;
 
@@ -456,72 +481,108 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
       result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
     }
 
-  polkit_backend_authority_check_authorization_finish (pending_call, result);
+  g_simple_async_result_set_op_res_gpointer (simple,
+                                             GINT_TO_POINTER ((gint) result),
+                                             NULL);
+  g_simple_async_result_complete (simple);
+  g_object_unref (simple);
 
   g_free (subject_str);
 }
 
+static PolkitAuthorizationResult
+polkit_backend_local_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
+                                                           GAsyncResult            *res,
+                                                           GError                 **error)
+{
+  GSimpleAsyncResult *simple;
+  PolkitAuthorizationResult result;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_backend_local_authority_check_authorization);
+
+  result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+
+  if (g_simple_async_result_propagate_error (simple, error))
+    goto out;
+
+  result = (PolkitAuthorizationResult) (GPOINTER_TO_INT (g_simple_async_result_get_op_res_gpointer (simple)));
+
+ out:
+  return result;
+}
+
 static void
 polkit_backend_local_authority_check_authorization (PolkitBackendAuthority         *authority,
+                                                    PolkitSubject                  *caller,
                                                     PolkitSubject                  *subject,
                                                     const gchar                    *action_id,
                                                     PolkitCheckAuthorizationFlags   flags,
-                                                    PolkitBackendPendingCall       *pending_call)
+                                                    GCancellable                   *cancellable,
+                                                    GAsyncReadyCallback             callback,
+                                                    gpointer                        user_data)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
-  PolkitSubject *inquirer;
-  gchar *inquirer_str;
+  gchar *caller_str;
   gchar *subject_str;
-  PolkitIdentity *user_of_inquirer;
+  PolkitIdentity *user_of_caller;
   PolkitIdentity *user_of_subject;
-  gchar *user_of_inquirer_str;
+  gchar *user_of_caller_str;
   gchar *user_of_subject_str;
   PolkitAuthorizationResult result;
   PolkitImplicitAuthorization implicit_authorization;
   GError *error;
+  GSimpleAsyncResult *simple;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
   error = NULL;
-  inquirer = NULL;
-  inquirer_str = NULL;
+  caller_str = NULL;
   subject_str = NULL;
-  user_of_inquirer = NULL;
+  user_of_caller = NULL;
   user_of_subject = NULL;
-  user_of_inquirer_str = NULL;
+  user_of_caller_str = NULL;
   user_of_subject_str = NULL;
 
-  inquirer = polkit_backend_pending_call_get_caller (pending_call);
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_backend_local_authority_check_authorization);
 
-  inquirer_str = polkit_subject_to_string (inquirer);
+  caller_str = polkit_subject_to_string (caller);
   subject_str = polkit_subject_to_string (subject);
 
   g_debug ("%s is inquiring whether %s is authorized for %s",
-           inquirer_str,
+           caller_str,
            subject_str,
            action_id);
 
-  user_of_inquirer = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
-                                                                          inquirer,
-                                                                          &error);
+  user_of_caller = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
+                                                                        caller,
+                                                                        &error);
   if (error != NULL)
     {
-      polkit_backend_pending_call_return_gerror (pending_call, error);
+      g_simple_async_result_set_from_error (simple, error);
+      g_simple_async_result_complete (simple);
+      g_object_unref (simple);
       g_error_free (error);
       goto out;
     }
 
-  user_of_inquirer_str = polkit_identity_to_string (user_of_inquirer);
-  g_debug (" user of inquirer is %s", user_of_inquirer_str);
+  user_of_caller_str = polkit_identity_to_string (user_of_caller);
+  g_debug (" user of caller is %s", user_of_caller_str);
 
   user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
                                                                          subject,
                                                                          &error);
   if (error != NULL)
     {
-      polkit_backend_pending_call_return_gerror (pending_call, error);
+      g_simple_async_result_set_from_error (simple, error);
+      g_simple_async_result_complete (simple);
+      g_object_unref (simple);
       g_error_free (error);
       goto out;
     }
@@ -529,13 +590,13 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
   user_of_subject_str = polkit_identity_to_string (user_of_subject);
   g_debug (" user of subject is %s", user_of_subject_str);
 
-  /* if the user of the inquirer and the user of the subject isn't the same, then
-   * the org.freedesktop.policykit.read authorization is required for the inquirer
+  /* if the user of the caller and the user of the subject isn't the same, then
+   * the org.freedesktop.policykit.read authorization is required for the caller
    */
-  if (!polkit_identity_equal (user_of_inquirer, user_of_subject))
+  if (!polkit_identity_equal (user_of_caller, user_of_subject))
     {
       result = check_authorization_sync (authority,
-                                         inquirer,
+                                         caller,
                                          "org.freedesktop.policykit.read",
                                          POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE, /* no user interaction */
                                          NULL,
@@ -543,18 +604,22 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
 
       if (error != NULL)
         {
-          polkit_backend_pending_call_return_gerror (pending_call, error);
+          g_simple_async_result_set_from_error (simple, error);
+          g_simple_async_result_complete (simple);
+          g_object_unref (simple);
           g_error_free (error);
           goto out;
         }
       else if (result != POLKIT_AUTHORIZATION_RESULT_AUTHORIZED)
         {
-          polkit_backend_pending_call_return_error (pending_call,
-                                                    POLKIT_ERROR,
-                                                    POLKIT_ERROR_NOT_AUTHORIZED,
-                                                    "%s is not authorized to know about authorizations for %s (requires org.freedesktop.policykit.read authorization)",
-                                                    inquirer_str,
-                                                    subject_str);
+          g_simple_async_result_set_error (simple,
+                                           POLKIT_ERROR,
+                                           POLKIT_ERROR_NOT_AUTHORIZED,
+                                           "%s is not authorized to know about authorizations for %s (requires org.freedesktop.policykit.read authorization)",
+                                           caller_str,
+                                           subject_str);
+          g_simple_async_result_complete (simple);
+          g_object_unref (simple);
           goto out;
         }
     }
@@ -567,13 +632,12 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
                                      &error);
   if (error != NULL)
     {
-      polkit_backend_pending_call_return_gerror (pending_call, error);
+      g_simple_async_result_set_from_error (simple, error);
+      g_simple_async_result_complete (simple);
+      g_object_unref (simple);
       g_error_free (error);
       goto out;
     }
-
-  /* TODO: temporary hack */
-  //flags |= POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION;
 
   /* Caller is up for a challenge! With light sabers! Use an authentication agent if one exists... */
   if ((result == POLKIT_AUTHORIZATION_RESULT_CHALLENGE) &&
@@ -584,7 +648,13 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
       agent = get_authentication_agent_for_subject (local_authority, subject);
       if (agent == NULL)
         {
-          g_debug (" challenge requested, but no authentication agent available");
+          g_simple_async_result_set_error (simple,
+                                           POLKIT_ERROR,
+                                           POLKIT_ERROR_FAILED,
+                                           "Challenge requested, but no suitable authentication agent is available");
+          g_simple_async_result_complete (simple);
+          g_object_unref (simple);
+          goto out;
         }
       else
         {
@@ -595,28 +665,25 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
                                                    user_of_subject,
                                                    local_authority,
                                                    action_id,
-                                                   inquirer,
+                                                   caller,
                                                    implicit_authorization,
                                                    check_authorization_challenge_cb,
-                                                   pending_call);
-          goto out;
+                                                   simple);
         }
 
     }
 
-  polkit_backend_authority_check_authorization_finish (pending_call, result);
-
  out:
 
-  if (user_of_inquirer != NULL)
-    g_object_unref (user_of_inquirer);
+  if (user_of_caller != NULL)
+    g_object_unref (user_of_caller);
 
   if (user_of_subject != NULL)
     g_object_unref (user_of_subject);
 
-  g_free (inquirer_str);
+  g_free (caller_str);
   g_free (subject_str);
-  g_free (user_of_inquirer_str);
+  g_free (user_of_caller_str);
   g_free (user_of_subject_str);
 }
 
@@ -797,14 +864,17 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static GList *
 polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
+                                                         PolkitSubject            *caller,
                                                          PolkitIdentity           *identity,
-                                                         PolkitBackendPendingCall *pending_call)
+                                                         GCancellable             *cancellable,
+                                                         GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
   gchar *identity_str;
+  GList *list;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
@@ -815,20 +885,22 @@ polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority 
 
   /* TODO: check if caller is authorized */
 
-  polkit_backend_authority_enumerate_authorizations_finish (pending_call,
-                                                            get_authorizations_for_identity (local_authority,
-                                                                                             identity));
+  list = get_authorizations_for_identity (local_authority, identity);
 
   g_free (identity_str);
+
+  return list;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static gboolean
 polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
+                                                  PolkitSubject            *caller,
                                                   PolkitIdentity           *identity,
                                                   PolkitAuthorization      *authorization,
-                                                  PolkitBackendPendingCall *pending_call)
+                                                  GCancellable             *cancellable,
+                                                  GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -836,13 +908,14 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
   const gchar *action_id;
   gboolean is_negative;
   gchar *subject_str;
-  GError *error;
+  gboolean ret;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
+  ret = FALSE;
+
   subject_str = NULL;
-  error = NULL;
 
   subject = polkit_authorization_get_subject (authorization);
   action_id = polkit_authorization_get_action_id (authorization);
@@ -861,37 +934,37 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
   /* We can only add temporary authorizations to users, not e.g. groups */
   if (subject != NULL && !POLKIT_IS_UNIX_USER (identity))
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "Can only add temporary authorizations to users");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Can only add temporary authorizations to users");
       goto out;
     }
 
   if (!add_authorization_for_identity (local_authority,
                                        identity,
                                        authorization,
-                                       &error))
+                                       error))
     {
-      polkit_backend_pending_call_return_gerror (pending_call, error);
-      g_error_free (error);
+      goto out;
     }
-  else
-    {
-      polkit_backend_authority_add_authorization_finish (pending_call);
-    }
+
+  ret = TRUE;
 
  out:
   g_free (subject_str);
+  return ret;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static gboolean
 polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
+                                                     PolkitSubject            *caller,
                                                      PolkitIdentity           *identity,
                                                      PolkitAuthorization      *authorization,
-                                                     PolkitBackendPendingCall *pending_call)
+                                                     GCancellable             *cancellable,
+                                                     GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -899,13 +972,14 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
   const gchar *action_id;
   gboolean is_negative;
   gchar *subject_str;
-  GError *error;
+  gboolean ret;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
+  ret = FALSE;
+
   subject_str = NULL;
-  error = NULL;
 
   subject = polkit_authorization_get_subject (authorization);
   action_id = polkit_authorization_get_action_id (authorization);
@@ -921,32 +995,29 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
 
   /* TODO: check if caller is authorized */
 
-  /* We can only remove temporary authorizations to users, not e.g. groups */
+  /* We can only remove temporary authorizations from users, not e.g. groups */
   if (subject != NULL && !POLKIT_IS_UNIX_USER (identity))
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "Can only remove temporary authorizations from users");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Can only remove temporary authorizations from users");
       goto out;
     }
 
   if (!remove_authorization_for_identity (local_authority,
                                           identity,
                                           authorization,
-                                          &error))
+                                          error))
     {
-      polkit_backend_pending_call_return_gerror (pending_call, error);
-      g_error_free (error);
+      goto out;
     }
-  else
-    {
-      polkit_backend_authority_remove_authorization_finish (pending_call);
-    }
+
+  ret = TRUE;
 
  out:
-
   g_free (subject_str);
+  return ret;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1368,43 +1439,44 @@ authentication_session_cancel (AuthenticationSession *session)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static gboolean
 polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
+                                                              PolkitSubject            *caller,
                                                               const gchar              *object_path,
-                                                              PolkitBackendPendingCall *pending_call)
+                                                              GCancellable             *cancellable,
+                                                              GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
-  PolkitSubject *caller;
   PolkitSubject *session_for_caller;
   AuthenticationAgent *agent;
+  gboolean ret;
 
   session_for_caller = NULL;
+  ret = FALSE;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
-
-  caller = polkit_backend_pending_call_get_caller (pending_call);
 
   session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
                                                                                caller,
                                                                                NULL);
   if (session_for_caller == NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "Cannot determine session");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Cannot determine session");
       goto out;
     }
 
   agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_caller);
   if (agent != NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "An authentication agent already exists for session");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "An authentication agent already exists for session");
       goto out;
     }
 
@@ -1423,67 +1495,71 @@ polkit_backend_local_authority_register_authentication_agent (PolkitBackendAutho
            polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
            object_path);
 
-  polkit_backend_authority_register_authentication_agent_finish (pending_call);
+  ret = TRUE;
 
  out:
   if (session_for_caller != NULL)
     g_object_unref (session_for_caller);
+
+  return ret;
 }
 
-static void
+static gboolean
 polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
+                                                                PolkitSubject            *caller,
                                                                 const gchar              *object_path,
-                                                                PolkitBackendPendingCall *pending_call)
+                                                                GCancellable             *cancellable,
+                                                                GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
-  PolkitSubject *caller;
   PolkitSubject *session_for_caller;
   AuthenticationAgent *agent;
+  gboolean ret;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
-  caller = polkit_backend_pending_call_get_caller (pending_call);
+  ret = FALSE;
 
   session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
                                                                                caller,
                                                                                NULL);
   if (session_for_caller == NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "Cannot determine session");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Cannot determine session");
       goto out;
     }
 
   agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_caller);
   if (agent == NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "No such agent registered");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "No such agent registered");
       goto out;
     }
 
   if (strcmp (agent->unique_system_bus_name,
               polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller))) != 0)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "System bus names do not match");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "System bus names do not match");
       goto out;
     }
 
   if (strcmp (agent->object_path, object_path) != 0)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "Object paths do not match");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Object paths do not match");
       goto out;
     }
 
@@ -1496,34 +1572,36 @@ polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAut
   /* this works because we have exactly one agent per session */
   g_hash_table_remove (priv->hash_session_to_authentication_agent, agent->session);
 
-  polkit_backend_authority_unregister_authentication_agent_finish (pending_call);
+  ret = TRUE;
 
  out:
   if (session_for_caller != NULL)
     g_object_unref (session_for_caller);
+  return ret;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
+static gboolean
 polkit_backend_local_authority_authentication_agent_response (PolkitBackendAuthority   *authority,
+                                                              PolkitSubject            *caller,
                                                               const gchar              *cookie,
                                                               PolkitIdentity           *identity,
-                                                              PolkitBackendPendingCall *pending_call)
+                                                              GCancellable             *cancellable,
+                                                              GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
-  PolkitSubject *caller;
   PolkitIdentity *user_of_caller;
   gchar *identity_str;
-  GError *error;
   AuthenticationSession *session;
   GList *l;
+  gboolean ret;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
-  error = NULL;
+  ret = FALSE;
   user_of_caller = NULL;
 
   identity_str = polkit_identity_to_string (identity);
@@ -1532,25 +1610,20 @@ polkit_backend_local_authority_authentication_agent_response (PolkitBackendAutho
            cookie,
            identity_str);
 
-  caller = polkit_backend_pending_call_get_caller (pending_call);
-
   user_of_caller = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
                                                                         caller,
-                                                                        &error);
-  if (error != NULL)
-    {
-      polkit_backend_pending_call_return_gerror (pending_call, error);
-      g_error_free (error);
-      goto out;
-    }
+                                                                        error);
+  if (user_of_caller == NULL)
+    goto out;
 
   /* only uid 0 is allowed to invoke this method */
   if (!POLKIT_IS_UNIX_USER (user_of_caller) || polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "Only uid 0 may invoke this method. This incident has been logged.");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Only uid 0 may invoke this method. This incident has been logged.");
+      /* TODO: actually log this */
       goto out;
     }
 
@@ -1558,10 +1631,10 @@ polkit_backend_local_authority_authentication_agent_response (PolkitBackendAutho
   session = get_authentication_session_for_cookie (local_authority, cookie);
   if (session == NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "No session for cookie");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "No session for cookie");
       goto out;
     }
 
@@ -1573,25 +1646,28 @@ polkit_backend_local_authority_authentication_agent_response (PolkitBackendAutho
       if (polkit_identity_equal (i, identity))
         break;
     }
+
   if (l == NULL)
     {
-      polkit_backend_pending_call_return_error (pending_call,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_FAILED,
-                                                "The authenticated identity is wrong");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "The authenticated identity is wrong");
       goto out;
     }
 
   /* checks out, mark the session as authenticated */
   session->is_authenticated = TRUE;
 
-  polkit_backend_authority_authentication_agent_response_finish (pending_call);
+  ret = TRUE;
 
  out:
   g_free (identity_str);
 
   if (user_of_caller != NULL)
     g_object_unref (user_of_caller);
+
+  return ret;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

@@ -30,9 +30,6 @@ typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
 struct _PolkitBackendLocalAuthority;
 typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
 
-struct _PolkitBackendPendingCall;
-typedef struct _PolkitBackendPendingCall PolkitBackendPendingCall;
-
 struct _PolkitBackendSessionMonitor;
 typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
 
