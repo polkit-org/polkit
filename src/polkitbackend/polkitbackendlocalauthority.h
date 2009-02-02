@@ -39,22 +39,29 @@ G_BEGIN_DECLS
 #define POLKIT_BACKEND_IS_LOCAL_AUTHORITY(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY))
 #define POLKIT_BACKEND_IS_LOCAL_AUTHORITY_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY))
 
-#if 0
-typedef struct _PolkitBackendLocalAuthority         PolkitBackendLocalAuthority;
-#endif
-
 typedef struct _PolkitBackendLocalAuthorityClass    PolkitBackendLocalAuthorityClass;
 
+/**
+ * PolkitBackendLocalAuthority:
+ *
+ * The #PolkitBackendLocalAuthority struct should not be accessed directly.
+ */
 struct _PolkitBackendLocalAuthority
 {
+  /*< private >*/
   PolkitBackendAuthority parent_instance;
 };
 
+/**
+ * PolkitBackendLocalAuthorityClass:
+ * @parent_class: The parent class.
+ *
+ * Class structure for #PolkitBackendLocalAuthority.
+ */
 struct _PolkitBackendLocalAuthorityClass
 {
-  PolkitBackendAuthorityClass parent_class;
-
   /*< public >*/
+  PolkitBackendAuthorityClass parent_class;
 
   /*< private >*/
   /* Padding for future expansion */

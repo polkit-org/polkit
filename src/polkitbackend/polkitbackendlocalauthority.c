@@ -34,6 +34,15 @@
 #include "_polkitagentbindings.h"
 #include <polkit/polkitprivate.h>
 
+/**
+ * SECTION:polkitbackendlocalauthority
+ * @title: PolkitBackendLocalAuthority
+ * @short_description: Local Authority
+ * @stability: Unstable
+ *
+ * An implementation of #PolkitBackendAuthority that stores authorizations on the local file system
+ * and supports interaction with authentication agents.
+ */
 
 typedef struct
 {
@@ -134,17 +143,14 @@ static void polkit_backend_local_authority_system_bus_name_owner_changed (Polkit
 static GList *polkit_backend_local_authority_enumerate_actions  (PolkitBackendAuthority   *authority,
                                                                  PolkitSubject            *caller,
                                                                  const gchar              *locale,
-                                                                 GCancellable             *cancellable,
                                                                  GError                  **error);
 
 static GList *polkit_backend_local_authority_enumerate_users    (PolkitBackendAuthority   *authority,
                                                                  PolkitSubject            *caller,
-                                                                 GCancellable             *cancellable,
                                                                  GError                  **error);
 
 static GList *polkit_backend_local_authority_enumerate_groups   (PolkitBackendAuthority   *authority,
                                                                  PolkitSubject            *caller,
-                                                                 GCancellable             *cancellable,
                                                                  GError                  **error);
 
 static void polkit_backend_local_authority_check_authorization (PolkitBackendAuthority        *authority,
@@ -171,40 +177,34 @@ static PolkitAuthorizationResult check_authorization_sync (PolkitBackendAuthorit
 static GList *polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
                                                                        PolkitSubject            *caller,
                                                                        PolkitIdentity           *identity,
-                                                                       GCancellable             *cancellable,
                                                                        GError                  **error);
 
 static gboolean polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
                                                                   PolkitSubject            *caller,
                                                                   PolkitIdentity           *identity,
                                                                   PolkitAuthorization      *authorization,
-                                                                  GCancellable             *cancellable,
                                                                   GError                  **error);
 
 static gboolean polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
                                                                      PolkitSubject            *caller,
                                                                      PolkitIdentity           *identity,
                                                                      PolkitAuthorization      *authorization,
-                                                                     GCancellable             *cancellable,
                                                                      GError                  **error);
 
 static gboolean polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
                                                                               PolkitSubject            *caller,
                                                                               const gchar              *object_path,
-                                                                              GCancellable             *cancellable,
                                                                               GError                  **error);
 
 static gboolean polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
                                                                                 PolkitSubject            *caller,
                                                                                 const gchar              *object_path,
-                                                                                GCancellable             *cancellable,
                                                                                 GError                  **error);
 
 static gboolean polkit_backend_local_authority_authentication_agent_response (PolkitBackendAuthority   *authority,
                                                                               PolkitSubject            *caller,
                                                                               const gchar              *cookie,
                                                                               PolkitIdentity           *identity,
-                                                                              GCancellable             *cancellable,
                                                                               GError                  **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -315,7 +315,6 @@ static GList *
 polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *authority,
                                                   PolkitSubject            *caller,
                                                   const gchar              *locale,
-                                                  GCancellable             *cancellable,
                                                   GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -335,7 +334,6 @@ polkit_backend_local_authority_enumerate_actions (PolkitBackendAuthority   *auth
 static GList *
 polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *authority,
                                                 PolkitSubject            *caller,
-                                                GCancellable             *cancellable,
                                                 GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -380,7 +378,6 @@ polkit_backend_local_authority_enumerate_users (PolkitBackendAuthority   *author
 static GList *
 polkit_backend_local_authority_enumerate_groups (PolkitBackendAuthority   *authority,
                                                  PolkitSubject            *caller,
-                                                 GCancellable             *cancellable,
                                                  GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -868,7 +865,6 @@ static GList *
 polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
                                                          PolkitSubject            *caller,
                                                          PolkitIdentity           *identity,
-                                                         GCancellable             *cancellable,
                                                          GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -899,7 +895,6 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
                                                   PolkitSubject            *caller,
                                                   PolkitIdentity           *identity,
                                                   PolkitAuthorization      *authorization,
-                                                  GCancellable             *cancellable,
                                                   GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -963,7 +958,6 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
                                                      PolkitSubject            *caller,
                                                      PolkitIdentity           *identity,
                                                      PolkitAuthorization      *authorization,
-                                                     GCancellable             *cancellable,
                                                      GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -1443,7 +1437,6 @@ static gboolean
 polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
                                                               PolkitSubject            *caller,
                                                               const gchar              *object_path,
-                                                              GCancellable             *cancellable,
                                                               GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -1508,7 +1501,6 @@ static gboolean
 polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
                                                                 PolkitSubject            *caller,
                                                                 const gchar              *object_path,
-                                                                GCancellable             *cancellable,
                                                                 GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -1587,7 +1579,6 @@ polkit_backend_local_authority_authentication_agent_response (PolkitBackendAutho
                                                               PolkitSubject            *caller,
                                                               const gchar              *cookie,
                                                               PolkitIdentity           *identity,
-                                                              GCancellable             *cancellable,
                                                               GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;

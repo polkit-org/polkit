@@ -244,7 +244,7 @@ polkit_authority_enumerate_actions (PolkitAuthority     *authority,
  *
  * Finishes retrieving all registered actions.
  *
- * Returns: A list of #PolkitActionDescription or %NULL if @error is set. The returned list
+ * Returns: A list of #PolkitActionDescription objects or %NULL if @error is set. The returned list
  * should be freed with g_list_free() after each element have been freed with g_object_unref().
  **/
 GList *

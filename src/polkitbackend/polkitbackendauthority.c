@@ -29,6 +29,17 @@
 
 #include "polkitbackendprivate.h"
 
+/**
+ * SECTION:polkitbackendauthority
+ * @title: PolkitBackendAuthority
+ * @short_description: Abstract base class for authority backends
+ * @stability: Unstable
+ * @see_also: PolkitBackendLocalAuthority
+ *
+ * To implement an authority backend, simply subclass #PolkitBackendAuthority
+ * and implement the required VFuncs.
+ */
+
 enum
 {
   CHANGED_SIGNAL,
@@ -51,7 +62,7 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
    * PolkitBackendAuthority::changed:
    * @authority: A #PolkitBackendAuthority.
    *
-   * Emitted when actions and/or authorizations change
+   * Emitted when actions and/or authorizations change.
    */
   signals[CHANGED_SIGNAL] = g_signal_new ("changed",
                                           POLKIT_BACKEND_TYPE_AUTHORITY,
@@ -77,46 +88,129 @@ polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority  
   klass->system_bus_name_owner_changed (authority, name, old_owner, new_owner);
 }
 
+/**
+ * polkit_backend_authority_enumerate_actions:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @locale: The locale to retrieve descriptions for.
+ * @error: Return location for error or %NULL.
+ *
+ * Retrieves all registered actions.
+ *
+ * Returns: A list of #PolkitActionDescription objects or %NULL if @error is set. The returned list
+ * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ **/
 GList *
 polkit_backend_authority_enumerate_actions (PolkitBackendAuthority   *authority,
                                             PolkitSubject            *caller,
                                             const gchar              *locale,
-                                            GCancellable             *cancellable,
                                             GError                  **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->enumerate_actions (authority, caller, locale, cancellable, error);
+  if (klass->enumerate_actions == NULL)
+    {
+      g_warning ("enumerate_actions is not implemented (it is not optional)");
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported (bug in backend)");
+      return NULL;
+    }
+  else
+    {
+      return klass->enumerate_actions (authority, caller, locale, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_enumerate_users:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @error: Return location for error or %NULL.
+ *
+ * Enumerates all users known by @authority.
+ *
+ * Returns: A list of #PolkitIdentity objects or %NULL if @error is set. The returned list
+ * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ **/
 GList *
 polkit_backend_authority_enumerate_users (PolkitBackendAuthority   *authority,
                                           PolkitSubject            *caller,
-                                          GCancellable             *cancellable,
                                           GError                  **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->enumerate_users (authority, caller, cancellable, error);
+  if (klass->enumerate_users == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return NULL;
+    }
+  else
+    {
+      return klass->enumerate_users (authority, caller, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_enumerate_groups:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @error: Return location for error or %NULL.
+ *
+ * Enumerates all groups known by @authority.
+ *
+ * Returns: A list of #PolkitIdentity objects or %NULL if @error is set. The returned list
+ * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ **/
 GList *
 polkit_backend_authority_enumerate_groups (PolkitBackendAuthority   *authority,
                                            PolkitSubject            *caller,
-                                           GCancellable             *cancellable,
                                            GError                  **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->enumerate_groups (authority, caller, cancellable, error);
+  if (klass->enumerate_groups == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return NULL;
+    }
+  else
+    {
+      return klass->enumerate_groups (authority, caller, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_check_authorization:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @subject: A #PolkitSubject.
+ * @action_id: The action to check for.
+ * @flags: A set of #PolkitCheckAuthorizationFlags.
+ * @cancellable: A #GCancellable.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously checks if @subject is authorized to perform the action represented
+ * by @action_id.
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_backend_authority_check_authorization_finish() to get the result of
+ * the operation.
+ **/
 void
 polkit_backend_authority_check_authorization (PolkitBackendAuthority        *authority,
                                               PolkitSubject                 *caller,
@@ -131,9 +225,37 @@ polkit_backend_authority_check_authorization (PolkitBackendAuthority        *aut
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  klass->check_authorization (authority, caller, subject, action_id, flags, cancellable, callback, user_data);
+  if (klass->check_authorization == NULL)
+    {
+      GSimpleAsyncResult *simple;
+
+      g_warning ("check_authorization is not implemented (it is not optional)");
+
+      simple = g_simple_async_result_new_error (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_NOT_SUPPORTED,
+                                                "Operation not supported (bug in backend)");
+      g_simple_async_result_complete (simple);
+      g_object_unref (simple);
+    }
+  else
+    {
+      klass->check_authorization (authority, caller, subject, action_id, flags, cancellable, callback, user_data);
+    }
 }
 
+/**
+ * polkit_backend_authority_check_authorization_finish:
+ * @authority: A #PolkitBackendAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes checking if a subject is authorized for an action.
+ *
+ * Returns: A #PolkitAuthorizationResult.
+ **/
 PolkitAuthorizationResult
 polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
                                                      GAsyncResult            *res,
@@ -143,94 +265,234 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *au
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->check_authorization_finish (authority, res, error);
+  if (klass->check_authorization_finish == NULL)
+    {
+      g_warning ("check_authorization_finish is not implemented (it is not optional)");
+      g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error);
+      return POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+    }
+  else
+    {
+      return klass->check_authorization_finish (authority, res, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_enumerate_authorizations:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @identity: The identity to retrieve authorizations from.
+ * @error: Return location for error or %NULL.
+ *
+ * Retrieves all authorizations for @identity.
+ *
+ * Returns: A list of #PolkitAuthorization objects or %NULL if @error is set. The returned list
+ * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ **/
 GList *
 polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
                                                     PolkitSubject             *caller,
                                                     PolkitIdentity            *identity,
-                                                    GCancellable              *cancellable,
                                                     GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->enumerate_authorizations (authority, caller, identity, cancellable, error);
+  if (klass->enumerate_authorizations == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return NULL;
+    }
+  else
+    {
+      return klass->enumerate_authorizations (authority, caller, identity, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_add_authorization:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @identity: The identity to add @authorization to.
+ * @authorization: The authorization to add.
+ * @error: Return location for error or %NULL.
+ *
+ * Adds @authorization to @identity.
+ *
+ * Returns: %TRUE if the operation succeeded or %FALSE if @error is set.
+ **/
 gboolean
 polkit_backend_authority_add_authorization  (PolkitBackendAuthority    *authority,
                                              PolkitSubject             *caller,
                                              PolkitIdentity            *identity,
                                              PolkitAuthorization       *authorization,
-                                             GCancellable              *cancellable,
                                              GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->add_authorization (authority, caller, identity, authorization, cancellable, error);
+  if (klass->add_authorization == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return FALSE;
+    }
+  else
+    {
+      return klass->add_authorization (authority, caller, identity, authorization, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_remove_authorization:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @identity: The identity to remove @authorization from.
+ * @authorization: The authorization to remove.
+ * @error: Return location for error or %NULL.
+ *
+ * Removes @authorization from @identity.
+ *
+ * Returns: %TRUE if the operation succeeded or %FALSE if @error is set.
+ **/
 gboolean
 polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *authority,
                                                 PolkitSubject             *caller,
                                                 PolkitIdentity            *identity,
                                                 PolkitAuthorization       *authorization,
-                                                GCancellable              *cancellable,
                                                 GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->remove_authorization (authority, caller, identity, authorization, cancellable, error);
+  if (klass->remove_authorization == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return FALSE;
+    }
+  else
+    {
+      return klass->remove_authorization (authority, caller, identity, authorization, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_register_authentication_agent:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @object_path: The object path for the authentication agent.
+ * @error: Return location for error or %NULL.
+ *
+ * Registers an authentication agent.
+ *
+ * Returns: %TRUE if the authentication agent was successfully registered, %FALSE if @error is set.
+ **/
 gboolean
 polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
                                                         PolkitSubject             *caller,
                                                         const gchar               *object_path,
-                                                        GCancellable              *cancellable,
                                                         GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->register_authentication_agent (authority, caller, object_path, cancellable, error);
+  if (klass->register_authentication_agent == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return FALSE;
+    }
+  else
+    {
+      return klass->register_authentication_agent (authority, caller, object_path, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_unregister_authentication_agent:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @object_path: The object path that the authentication agent is registered at.
+ * @error: Return location for error or %NULL.
+ *
+ * Unregisters an authentication agent.
+ *
+ * Returns: %TRUE if the authentication agent was successfully unregistered, %FALSE if @error is set.
+ **/
 gboolean
 polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
                                                           PolkitSubject             *caller,
                                                           const gchar               *object_path,
-                                                          GCancellable              *cancellable,
                                                           GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->unregister_authentication_agent (authority, caller, object_path, cancellable, error);
+  if (klass->unregister_authentication_agent == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return FALSE;
+    }
+  else
+    {
+      return klass->unregister_authentication_agent (authority, caller, object_path, error);
+    }
 }
 
+/**
+ * polkit_backend_authority_authentication_agent_response:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @cookie: The cookie passed to the authentication agent from the authority.
+ * @identity: The identity that was authenticated.
+ * @error: Return location for error or %NULL.
+ *
+ * Provide response that @identity successfully authenticated for the
+ * authentication request identified by @cookie.
+ *
+ * Returns: %TRUE if @authority acknowledged the call, %FALSE if @error is set.
+ **/
 gboolean
 polkit_backend_authority_authentication_agent_response (PolkitBackendAuthority    *authority,
                                                         PolkitSubject             *caller,
                                                         const gchar               *cookie,
                                                         PolkitIdentity            *identity,
-                                                        GCancellable              *cancellable,
                                                         GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  return klass->authentication_agent_response (authority, caller, cookie, identity, cancellable, error);
+  if (klass->authentication_agent_response == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return FALSE;
+    }
+  else
+    {
+      return klass->authentication_agent_response (authority, caller, cookie, identity, error);
+    }
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -355,7 +617,6 @@ authority_handle_enumerate_actions (_PolkitAuthority        *instance,
   actions = polkit_backend_authority_enumerate_actions (server->authority,
                                                         caller,
                                                         locale,
-                                                        NULL,
                                                         &error);
   if (error != NULL)
     {
@@ -407,7 +668,6 @@ authority_manager_handle_enumerate_users (_PolkitAuthorityManager *instance,
 
   identities = polkit_backend_authority_enumerate_users (server->authority,
                                                          caller,
-                                                         NULL,
                                                          &error);
   if (error != NULL)
     {
@@ -461,7 +721,6 @@ authority_manager_handle_enumerate_groups (_PolkitAuthorityManager *instance,
 
   identities = polkit_backend_authority_enumerate_groups (server->authority,
                                                           caller,
-                                                          NULL,
                                                           &error);
   if (error != NULL)
     {
@@ -574,7 +833,6 @@ authority_manager_handle_enumerate_authorizations (_PolkitAuthorityManager      
   authorizations = polkit_backend_authority_enumerate_authorizations (server->authority,
                                                                       caller,
                                                                       identity,
-                                                                      NULL,
                                                                       &error);
 
   if (error != NULL)
@@ -638,7 +896,6 @@ authority_manager_handle_add_authorization (_PolkitAuthorityManager        *inst
                                                    caller,
                                                    identity,
                                                    authorization,
-                                                   NULL,
                                                    &error))
     {
       egg_dbus_method_invocation_return_gerror (method_invocation, error);
@@ -680,7 +937,6 @@ authority_manager_handle_remove_authorization (_PolkitAuthorityManager        *i
                                                       caller,
                                                       identity,
                                                       authorization,
-                                                      NULL,
                                                       &error))
     {
       egg_dbus_method_invocation_return_gerror (method_invocation, error);
@@ -713,7 +969,6 @@ authority_handle_register_authentication_agent (_PolkitAuthority               *
   if (!polkit_backend_authority_register_authentication_agent (server->authority,
                                                                caller,
                                                                object_path,
-                                                               NULL,
                                                                &error))
     {
       egg_dbus_method_invocation_return_gerror (method_invocation, error);
@@ -744,7 +999,6 @@ authority_handle_unregister_authentication_agent (_PolkitAuthority              
   if (!polkit_backend_authority_unregister_authentication_agent (server->authority,
                                                                  caller,
                                                                  object_path,
-                                                                 NULL,
                                                                  &error))
     {
       egg_dbus_method_invocation_return_gerror (method_invocation, error);
@@ -780,7 +1034,6 @@ authority_handle_authentication_agent_response (_PolkitAuthority               *
                                                                caller,
                                                                cookie,
                                                                identity,
-                                                               NULL,
                                                                &error))
     {
       egg_dbus_method_invocation_return_gerror (method_invocation, error);

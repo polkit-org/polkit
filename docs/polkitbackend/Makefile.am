@@ -59,11 +59,14 @@ HTML_IMAGES = 				\
 # Extra options to supply to gtkdoc-fixref
 FIXXREF_OPTIONS=
 
-MAINTAINERCLEANFILES =		\
-	*~			\
-	Makefile.in		\
-	polkitbackend.types	\
-	polkit-*.txt		\
+MAINTAINERCLEANFILES =				\
+	*~					\
+	Makefile.in				\
+	polkitbackend-decl-list.txt		\
+	polkitbackend-decl.txt			\
+	polkitbackend-overrides.txt		\
+	polkitbackend-undeclared.txt		\
+	polkitbackend-undocumented.txt		\
 	$(NULL)
 
 if ENABLE_GTK_DOC
@@ -74,14 +77,17 @@ endif
 
 CLEANFILES +=   *~					\
 		polkitbackend-scan.*			\
-		polkitbackend.*				\
+		polkitbackend.args			\
+		polkitbackend.hierarchy			\
+		polkitbackend.interfaces		\
+		polkitbackend.prerequisites		\
+		polkitbackend.signals			\
 		*.bak					\
 		polkitbackend-decl-list.txt		\
 		polkitbackend-decl.txt			\
 		polkitbackend-overrides.txt		\
 		polkitbackend-undeclared.txt		\
 		polkitbackend-undocumented.txt		\
-		polkitbackend-sections.txt		\
 		*.stamp					\
 		-rf html xml				\
 		$(NULL)
