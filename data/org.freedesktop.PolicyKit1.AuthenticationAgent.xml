@@ -4,20 +4,31 @@
 <node name="/">
 
   <interface name="org.freedesktop.PolicyKit1.AuthenticationAgent">
+    <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authentication Agent interface"/>
+    <annotation name="org.gtk.EggDBus.DocString" value="<para>This D-Bus interface is used for communication between the system-wide PolicyKit daemon and one or more authentication agents each running in a user session.</para><para>An authentication agent must implement this interface and register (passing the object path of the object implementing the interface) using the org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent() and org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent() methods on the #org.freedesktop.PolicyKit.Authority interface of the PolicyKit daemon.</para>"/>
 
     <method name="BeginAuthentication">
-      <!-- The action id for the action that the user is authentication for -->
-      <arg name="action_id" direction="in" type="s"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="<para>Called by the PolicyKit daemon when the authentication agent needs the user to authenticate as one of the identities in @identities for the action with the identifier @action_id.</para><para>Upon succesful authentication, the authentication agent must invoke the org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse() method on the #org.freedesktop.PolicyKit.Authority interface of the PolicyKit daemon before returning.</para><para>If the user dismisses the authentication dialog, the authentication agent should return an error.</para>"/>
 
-      <!-- A cookie identifying the authentication request -->
-      <arg name="cookie" direction="in" type="s"/>
+      <arg name="action_id" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The identifier for the action that the user is authentication for."/>
+      </arg>
 
-      <!-- A list of identities of that the user can use for authentication -->
-      <arg name="identities" direction="in" type="a(sa{sv})"/>
+      <arg name="cookie" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="A cookie identifying the authentication request."/>
+      </arg>
+
+      <arg name="identities" direction="in" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.DocString" value="A list of identities of that the user can use for authentication."/>
+      </arg>
     </method>
 
     <method name="CancelAuthentication">
-      <arg name="cookie" direction="in" type="s"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Called by the PolicyKit daemon if the authentication agent needs to cancel an authentication dialog."/>
+
+      <arg name="cookie" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request."/>
+      </arg>
     </method>
 
   </interface>
