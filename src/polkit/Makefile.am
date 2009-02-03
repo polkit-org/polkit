@@ -15,29 +15,22 @@ INCLUDES =                                                      \
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
-BUILT_SOURCES =										\
-	_polkitactiondescription.c		_polkitactiondescription.h		\
-	_polkitauthority.c			_polkitauthority.h			\
-	_polkitauthoritymanager.c		_polkitauthoritymanager.h		\
-	_polkitauthorization.c			_polkitauthorization.h			\
-	_polkitauthorizationresult.c		_polkitauthorizationresult.h		\
-	_polkitimplicitauthorization.c		_polkitimplicitauthorization.h		\
-	_polkitcheckauthorizationflags.c	_polkitcheckauthorizationflags.h	\
-	_polkitbindings.c			_polkitbindings.h			\
-	_polkitbindingsmarshal.c		_polkitbindingsmarshal.h		\
-	_polkitbindingstypes.h								\
-	_polkiterror.c				_polkiterror.h				\
-	_polkitsubject.c			_polkitsubject.h			\
-	_polkitidentity.c			_polkitidentity.h			\
+BUILT_SOURCES = 						\
+	authority-built-sources.stamp				\
 	$(NULL)
 
-$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml
+authority-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml
 	eggdbus-binding-tool										\
-	  --namespace       "_Polkit"									\
-	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
-	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml		\
-	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml	\
-	  $(NULL)
+		--namespace "_Polkit"									\
+		--dbus-namespace "org.freedesktop.PolicyKit1"						\
+		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml 	\
+		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml	\
+		--stamp-file authority-built-sources.stamp						\
+	$(NULL)
+
+# keep in sync with contents of authority-built-sources.stamp (Thanks autotools)
+#
+authority_built_sources = _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingsmarshal.list _polkitbindings.c _polkitbindings.h _polkitbindingstypes.h _polkitauthoritymanager.c _polkitauthoritymanager.h docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml _polkitauthority.c _polkitauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkiterror.c _polkiterror.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitauthorization.c _polkitauthorization.h _polkitactiondescription.c _polkitactiondescription.h _polkitidentity.c _polkitidentity.h _polkitsubject.c _polkitsubject.h
 
 lib_LTLIBRARIES=libpolkit-gobject-1.la
 
@@ -65,8 +58,9 @@ libpolkit_gobject_1include_HEADERS =                        				\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
+	$(BUILT_SOURCES)								\
+	$(authority_built_sources)							\
         polkit.h									\
-        $(BUILT_SOURCES)								\
 	polkitactiondescription.c		polkitactiondescription.h		\
 	polkitauthority.c			polkitauthority.h			\
 	polkitauthoritymanager.c		polkitauthoritymanager.h		\
@@ -95,7 +89,9 @@ libpolkit_gobject_1_la_LIBADD =                               		\
         $(EGG_DBUS_LIBS)						\
         $(NULL)
 
-CLEANFILES = $(BUILT_SOURCES)
+dist-hook :
+	(for i in $(authority_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
 
 clean-local :
-	rm -f *~
+	rm -f *~ $(authority_built_sources) $(BUILT_SOURCES)
+

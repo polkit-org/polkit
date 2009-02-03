@@ -16,30 +16,29 @@ INCLUDES =                                                      \
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
-BUILT_SOURCES =											\
-	_polkitagentauthenticationagent.c		_polkitagentauthenticationagent.h	\
-	_polkitagentbindings.c				_polkitagentbindings.h			\
-	_polkitagentbindingsmarshal.list							\
-	_polkitagentbindingsmarshal.c			_polkitagentbindingsmarshal.h		\
-	_polkitagentbindingstypes.h								\
+BUILT_SOURCES = 						\
+	marshal.stamp						\
+	agent-built-sources.stamp				\
 	$(NULL)
 
-$(BUILT_SOURCES) : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml
+agent-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml
 	eggdbus-binding-tool										\
 	  --namespace       "_PolkitAgent"								\
 	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
 	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
+	  --stamp-file agent-built-sources.stamp							\
 	  $(NULL)
 
-BUILT_SOURCES += 						\
-	polkitagentmarshal.h		polkitagentmarshal.c	\
-	$(NULL)
+# keep in sync with contents of agent-built-sources.stamp (Thanks autotools)
+#
+agent_built_sources = _polkitagentbindingsmarshal.c _polkitagentbindingsmarshal.h _polkitagentbindingsmarshal.list _polkitagentbindings.c _polkitagentbindings.h _polkitagentbindingstypes.h _polkitagentauthenticationagent.c _polkitagentauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml
 
-polkitagentmarshal.h : polkitagentmarshal.list
-	glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --header > $@.tmp && mv $@.tmp $@
+marshal.stamp : Makefile.am $(srcdir)/polkitagentmarshal.list
+	glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --header > polkitagentmarshal.h.tmp && mv polkitagentmarshal.h.tmp polkitagentmarshal.h
+	(echo "#include \"polkitagentmarshal.h\""; glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --body) > polkitagentmarshal.c.tmp && mv polkitagentmarshal.c.tmp polkitagentmarshal.c
+	touch marshal.stamp
 
-polkitagentmarshal.c: polkitagentmarshal.h polkitagentmarshal.list
-	(echo "#include \"polkitagentmarshal.h\""; glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --body) > $@.tmp && mv $@.tmp $@
+marshal_built_sources = polkitagentmarshal.h polkitagentmarshal.c
 
 lib_LTLIBRARIES=libpolkit-agent-1.la
 
@@ -53,11 +52,13 @@ libpolkit_agent_1include_HEADERS =                        				\
         $(NULL)
 
 libpolkit_agent_1_la_SOURCES =                                   			\
+	$(BUILT_SOURCES)								\
+	$(agent_built_sources)								\
+	$(marshal_built_sources)							\
         polkitagent.h									\
 	polkitagenttypes.h								\
 	polkitagentsession.h			polkitagentsession.c			\
 	polkitagentlistener.h			polkitagentlistener.c			\
-	$(BUILT_SOURCES)								\
         $(NULL)
 
 libpolkit_agent_1_la_CFLAGS =                                        	\
@@ -86,9 +87,10 @@ install-exec-hook:
 	-chown root $(DESTDIR)$(libexecdir)/polkit-agent-helper-1
 	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-agent-helper-1
 
-CLEANFILES = $(BUILT_SOURCES)
-
 EXTRA_DIST = polkitagentmarshal.list
 
+dist-hook :
+	(for i in $(agent_built_sources) $(marshal_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
+
 clean-local :
-	rm -f *~
+	rm -f *~ $(agent_built_sources) $(marshal_built_sources) $(BUILT_SOURCES)

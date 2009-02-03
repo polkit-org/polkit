@@ -55,6 +55,13 @@
     </legalnotice>
   </bookinfo>
 
+  <reference id="ref-dbus-api">
+    <title>D-Bus API Reference</title>
+    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml"/>
+    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml"/>
+    <xi:include href="../../src/polkitagent/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
+  </reference>
+
   <reference id="ref-api">
     <title>Core API Reference</title>
     <xi:include href="xml/polkitauthority.xml"/>
