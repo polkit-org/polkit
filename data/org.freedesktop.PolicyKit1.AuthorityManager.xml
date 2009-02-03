@@ -19,42 +19,56 @@
   </annotation>
 
   <interface name="org.freedesktop.PolicyKit1.AuthorityManager">
+    <annotation name="org.gtk.EggDBus.DocString.Summary" value="Manage an Authority"/>
+    <annotation name="org.gtk.EggDBus.DocString" value="This D-Bus interface <emphasis>may</emphasis> be implemented by the <literal>/org/freedesktop/PoliycKit1/Authority</literal> object on the well-known name <literal>org.freedesktop.PolicyKit1</literal> on the system message bus."/>
 
     <method name="EnumerateUsers">
+      <annotation name="org.gtk.EggDBus.DocString" value="Enumerate all users known to the authority."/>
+
       <arg name="users" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.DocString" value="An array of identities."/>
         <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
     </method>
 
     <method name="EnumerateGroups">
+      <annotation name="org.gtk.EggDBus.DocString" value="Enumerate all groups known to the authority."/>
+
       <arg name="groups" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.DocString" value="An array of identities."/>
         <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
     </method>
 
     <method name="AddAuthorization">
+      <annotation name="org.gtk.EggDBus.DocString" value="Add an authorization to @identity."/>
+
       <arg name="identity" direction="in" type="(sa{sv})">
-        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The identity to add @authorization to"/>
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
       <arg name="authorization" direction="in" type="(s(sa{sv})b)">
-        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The authorization to add for @identity"/>
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
       </arg>
     </method>
 
     <method name="RemoveAuthorization">
+      <annotation name="org.gtk.EggDBus.DocString" value="Remove an authorization from @identity."/>
+
       <arg name="identity" direction="in" type="(sa{sv})">
-        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The identity to remove @authorization from"/>
+        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
       <arg name="authorization" direction="in" type="(s(sa{sv})b)">
-        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The authorization to remove from @identity"/>
+        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
       </arg>
     </method>
 
     <method name="EnumerateAuthorizations">
+      <annotation name="org.gtk.EggDBus.DocString" value="Enumerate all authorizations for @identity."/>
+
       <arg name="identity" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The identity to enumerate authorizations for"/>
