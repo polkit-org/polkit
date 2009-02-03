@@ -4,7 +4,7 @@
 <node name="/">
 
   <interface name="org.freedesktop.PolicyKit1.AuthenticationAgent">
-    <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authentication Agent interface"/>
+    <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authentication Agent Interface"/>
     <annotation name="org.gtk.EggDBus.DocString" value="<para>This D-Bus interface is used for communication between the system-wide PolicyKit daemon and one or more authentication agents each running in a user session.</para><para>An authentication agent must implement this interface and register (passing the object path of the object implementing the interface) using the org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent() and org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent() methods on the #org.freedesktop.PolicyKit.Authority interface of the PolicyKit daemon.</para>"/>
 
     <method name="BeginAuthentication">
