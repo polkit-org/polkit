@@ -143,48 +143,71 @@
   </annotation>
 
   <interface name="org.freedesktop.PolicyKit1.Authority">
+    <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authority Interface"/>
+    <annotation name="org.gtk.EggDBus.DocString" value="This D-Bus interface is implemented by the <literal>/org/freedesktop/PoliycKit1/Authority</literal> object on the well-known name <literal>org.freedesktop.PolicyKit1</literal> on the system message bus."/>
 
     <method name="EnumerateActions">
-      <arg name="locale" direction="in" type="s"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Enumerates all registered PolicyKit actions."/>
+
+      <arg name="locale" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The locale to get descriptions in or the blank string to use the system locale."/>
+      </arg>
+
       <arg name="action_descriptions" direction="out" type="a(ssssssiiia{ss})">
+        <annotation name="org.gtk.EggDBus.DocString" value="An array of action description structs."/>
         <annotation name="org.gtk.EggDBus.StructType" value="ActionDescription"/>
       </arg>
     </method>
 
     <method name="CheckAuthorization">
+      <annotation name="org.gtk.EggDBus.DocString" value="Checks if @subject is authorized to perform the action with identifier @action_id."/>
+
       <arg name="subject" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.DocString" value="The subject in question."/>
         <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
       </arg>
-      <arg name="action_id" direction="in" type="s"/>
+
+      <arg name="action_id" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action that @subject is attempting to do."/>
+      </arg>
+
       <arg name="flags" direction="in" type="i">
+        <annotation name="org.gtk.EggDBus.DocString" value="A set of #CheckAuthorizationFlags."/>
         <annotation name="org.gtk.EggDBus.FlagsType" value="CheckAuthorizationFlags"/>
       </arg>
 
       <arg name="result" direction="out" type="i">
+        <annotation name="org.gtk.EggDBus.DocString" value="The result of the authorization check."/>
         <annotation name="org.gtk.EggDBus.EnumType" value="AuthorizationResult"/>
       </arg>
     </method>
 
     <method name="RegisterAuthenticationAgent">
+      <annotation name="org.gtk.EggDBus.DocString" value="Register an authentication agent."/>
+
       <arg name="object_path" direction="in" type="s">
-        <annotation name="org.gtk.EggDBus.DocString" value="Path of authentication agent object on the unique name of the caller"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The object path of authentication agent object on the unique name of the caller."/>
       </arg>
     </method>
 
     <method name="UnregisterAuthenticationAgent">
+      <annotation name="org.gtk.EggDBus.DocString" value="Unregister an authentication agent."/>
+
       <arg name="object_path" direction="in" type="s">
-        <annotation name="org.gtk.EggDBus.DocString" value="Path of authentication agent object on the unique name of the caller"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The object path of authentication agent object on the unique name of the caller."/>
       </arg>
     </method>
 
     <method name="AuthenticationAgentResponse">
+      <annotation name="org.gtk.EggDBus.DocString" value="Method for authentication agents to invoke on successful authentication. This method will fail unless a sufficiently privileged caller invokes it."/>
+
       <arg name="cookie" direction="in" type="s">
-        <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request that was passed to the authentication agent"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request that was passed to the authentication agent."/>
       </arg>
 
       <arg name="identity" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
-        <annotation name="org.gtk.EggDBus.DocString" value="The identity that was authenticated"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The identity that was authenticated."/>
       </arg>
     </method>
 
