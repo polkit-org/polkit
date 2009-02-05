@@ -19,7 +19,7 @@
       </arg>
 
       <arg name="identities" direction="in" type="a(sa{sv})">
-        <annotation name="org.gtk.EggDBus.DocString" value="A list of identities of that the user can use for authentication."/>
+        <annotation name="org.gtk.EggDBus.DocString" value="A list of #Identity structs that the user can use for authentication."/>
       </arg>
     </method>
 
