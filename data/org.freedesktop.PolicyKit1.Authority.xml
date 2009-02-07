@@ -11,11 +11,11 @@
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Subjects"/>
       <annotation name="org.gtk.EggDBus.DocString" value="<para>This struct describes subjects such as UNIX processes. It is typically used to check if a given process is authorized for an action.</para><para>TODO: document required/optional key/value pairs in @subject_details.</para>"/>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:subject_kind">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:subject_kind">
         <annotation name="org.gtk.EggDBus.DocString" value="The type of the subject."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{sv}:subject_details">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Dict<String,Variant>:subject_details">
         <annotation name="org.gtk.EggDBus.DocString" value="Details about the subject. Depending of the value of @subject_kind, a set of well-defined key/value pairs are guaranteed to be available."/>
       </annotation>
 
@@ -26,11 +26,11 @@
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Subjects"/>
       <annotation name="org.gtk.EggDBus.DocString" value="<para>This struct describes identities such as UNIX users and UNIX groups. It is typically used to check if a given process is authorized for an action.</para><para>TODO: document required/optional key/value pairs in @identity_details.</para>"/>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:identity_kind">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:identity_kind">
         <annotation name="org.gtk.EggDBus.DocString" value="Type of identity."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{sv}:identity_details">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Dict<String,Variant>:identity_details">
         <annotation name="org.gtk.EggDBus.DocString" value="Details about the identity. Depending of the value of @identity_kind, a set of well-defined key/value pairs are guaranteed to be available."/>
       </annotation>
 
@@ -43,46 +43,46 @@
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Actions"/>
       <annotation name="org.gtk.EggDBus.DocString" value="This struct describes actions registered with the PolicyKit daemon."/>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:action_id">
         <annotation name="org.gtk.EggDBus.DocString" value="Action Identifier."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:description">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:description">
         <annotation name="org.gtk.EggDBus.DocString" value="Localized description of the action."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:message">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:message">
         <annotation name="org.gtk.EggDBus.DocString" value="Localized message to be displayed when making the user authenticate for an action."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_name">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:vendor_name">
         <annotation name="org.gtk.EggDBus.DocString" value="Name of the provider of the action or the empty string."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:vendor_url">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:vendor_url">
         <annotation name="org.gtk.EggDBus.DocString" value="A URL pointing to a place with more information about the action or the empty string."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:icon_name">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:icon_name">
         <annotation name="org.gtk.EggDBus.DocString" value="The themed icon describing the action or the empty string if no icon is set."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_any">
-        <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="ImplicitAuthorization:implicit_any">
+        <annotation name="org.gtk.EggDBus.Type" value="ImplicitAuthorization"/>
         <annotation name="org.gtk.EggDBus.DocString" value="A value from the #ImplicitAuthorization enumeration for implicit authorizations that apply to any #Subject."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_inactive">
-        <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="ImplicitAuthorization:implicit_inactive">
+        <annotation name="org.gtk.EggDBus.Type" value="ImplicitAuthorization"/>
         <annotation name="org.gtk.EggDBus.DocString" value="A value from the #ImplicitAuthorization enumeration for implicit authorizations that apply any #Subject in an inactive user session on the local console."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="i:implicit_active">
-        <annotation name="org.gtk.EggDBus.EnumType" value="ImplicitAuthorization"/>
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="ImplicitAuthorization:implicit_active">
+        <annotation name="org.gtk.EggDBus.Type" value="ImplicitAuthorization"/>
         <annotation name="org.gtk.EggDBus.DocString" value="A value from the #ImplicitAuthorization enumeration for implicit authorizations that apply any #Subject in an active user session on the local console."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="a{ss}:annotations">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Dict<String,String>:annotations">
         <annotation name="org.gtk.EggDBus.DocString" value="Annotations for the action."/>
       </annotation>
 
@@ -168,9 +168,9 @@
         <annotation name="org.gtk.EggDBus.DocString" value="The locale to get descriptions in or the blank string to use the system locale."/>
       </arg>
 
-      <arg name="action_descriptions" direction="out" type="a(ssssssiiia{ss})">
+      <arg name="action_descriptions" direction="out" type="a(ssssssuuua{ss})">
+        <annotation name="org.gtk.EggDBus.Type" value="Array<ActionDescription>"/>
         <annotation name="org.gtk.EggDBus.DocString" value="An array of #ActionDescription structs."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="ActionDescription"/>
       </arg>
     </method>
 
@@ -179,21 +179,21 @@
 
       <arg name="subject" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.DocString" value="A #Subject struct."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+        <annotation name="org.gtk.EggDBus.Type" value="Subject"/>
       </arg>
 
       <arg name="action_id" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action that @subject is attempting to do."/>
       </arg>
 
-      <arg name="flags" direction="in" type="i">
+      <arg name="flags" direction="in" type="u">
+        <annotation name="org.gtk.EggDBus.Type" value="CheckAuthorizationFlags"/>
         <annotation name="org.gtk.EggDBus.DocString" value="A set of #CheckAuthorizationFlags."/>
-        <annotation name="org.gtk.EggDBus.FlagsType" value="CheckAuthorizationFlags"/>
       </arg>
 
-      <arg name="result" direction="out" type="i">
-        <annotation name="org.gtk.EggDBus.DocString" value="A value from #AuthorizationResult enumeration."/>
-        <annotation name="org.gtk.EggDBus.EnumType" value="AuthorizationResult"/>
+      <arg name="result" direction="out" type="u">
+        <annotation name="org.gtk.EggDBus.Type" value="AuthorizationResult"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="A value from the #AuthorizationResult enumeration."/>
       </arg>
     </method>
 
@@ -221,7 +221,7 @@
       </arg>
 
       <arg name="identity" direction="in" type="(sa{sv})">
-        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
+        <annotation name="org.gtk.EggDBus.Type" value="Identity"/>
         <annotation name="org.gtk.EggDBus.DocString" value="A #Identity struct describing what identity was authenticated."/>
       </arg>
     </method>

@@ -23,10 +23,10 @@
     <annotation name="org.gtk.EggDBus.DocString" value="The #Device type represents devices that are associated with seats."/>
     <annotation name="org.gtk.EggDBus.DocString.Summary" value="Devices"/>
 
-    <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:id1">
+    <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:id1">
       <annotation name="org.gtk.EggDBus.DocString" value="The first device identifier"/>
     </annotation>
-    <annotation name="org.gtk.EggDBus.Struct.Member" value="s:id2">
+    <annotation name="org.gtk.EggDBus.Struct.Member" value="String:id2">
       <annotation name="org.gtk.EggDBus.DocString" value="The second device identifier"/>
     </annotation>
   </annotation>
@@ -74,7 +74,9 @@
       <arg name="result" type="b" direction="out"/>
     </method>
     <method name="OpenSessionWithParameters">
-      <arg name="parameters" type="a(sv)" direction="in"/>
+      <arg name="parameters" type="a(sv)" direction="in">
+        <annotation name="org.gtk.EggDBus.Type" value="Array<Struct<String,Variant>>"/>
+      </arg>
       <arg name="cookie" type="s" direction="out"/>
     </method>
     <method name="OpenSession">

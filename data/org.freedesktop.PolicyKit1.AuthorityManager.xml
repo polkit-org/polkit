@@ -11,16 +11,16 @@
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authorizations"/>
       <annotation name="org.gtk.EggDBus.DocString" value="This struct describes an authorization belonging to an #Identity."/>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="s:action_id">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="String:action_id">
         <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action the authorization is for."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="(sa{sv}):subject">
-        <annotation name="org.gtk.EggDBus.StructType" value="Subject"/>
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Subject:subject">
+        <annotation name="org.gtk.EggDBus.Type" value="Subject"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The #Subject that the authorization applies to."/>
       </annotation>
 
-      <annotation name="org.gtk.EggDBus.Struct.Member"  value="b:is_negative">
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Boolean:is_negative">
         <annotation name="org.gtk.EggDBus.DocString" value="Whether the authorization is negative."/>
       </annotation>
     </annotation>
@@ -29,8 +29,8 @@
       <annotation name="org.gtk.EggDBus.DocString" value="Enumerate all users known to the authority."/>
 
       <arg name="users" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.Type" value="Array<Identity>"/>
         <annotation name="org.gtk.EggDBus.DocString" value="An array of #Identity structs."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
     </method>
 
@@ -38,8 +38,8 @@
       <annotation name="org.gtk.EggDBus.DocString" value="Enumerate all groups known to the authority."/>
 
       <arg name="groups" direction="out" type="a(sa{sv})">
+        <annotation name="org.gtk.EggDBus.Type" value="Array<Identity>"/>
         <annotation name="org.gtk.EggDBus.DocString" value="An array of #Identity structs."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
     </method>
 
@@ -47,12 +47,12 @@
       <annotation name="org.gtk.EggDBus.DocString" value="Add an authorization to @identity."/>
 
       <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.Type" value="Identity"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The #Identity to add @authorization to."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
       <arg name="authorization" direction="in" type="(s(sa{sv})b)">
+        <annotation name="org.gtk.EggDBus.Type" value="Authorization"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The #Authorization to add to @identity."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
       </arg>
     </method>
 
@@ -60,12 +60,12 @@
       <annotation name="org.gtk.EggDBus.DocString" value="Remove an authorization from @identity."/>
 
       <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.Type" value="Identity"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The #Identity to remove @authorization from."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
       </arg>
       <arg name="authorization" direction="in" type="(s(sa{sv})b)">
+        <annotation name="org.gtk.EggDBus.Type" value="Authorization"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The #Authorization to remove from @identity."/>
-        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
       </arg>
     </method>
 
@@ -73,11 +73,12 @@
       <annotation name="org.gtk.EggDBus.DocString" value="Enumerate all authorizations for @identity."/>
 
       <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.Type" value="Identity"/>
         <annotation name="org.gtk.EggDBus.StructType" value="Identity"/>
         <annotation name="org.gtk.EggDBus.DocString" value="An #Identity to enumerate authorizations for."/>
       </arg>
       <arg name="authorizations" direction="out" type="a(s(sa{sv})b)">
-        <annotation name="org.gtk.EggDBus.StructType" value="Authorization"/>
+        <annotation name="org.gtk.EggDBus.Type" value="Array<Authorization>"/>
         <annotation name="org.gtk.EggDBus.DocString" value="An array of #Authorization structs for @identity."/>
       </arg>
     </method>

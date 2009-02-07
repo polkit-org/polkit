@@ -32,6 +32,7 @@ agent-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.Polic
 	eggdbus-binding-tool										\
 	  --namespace       "_PolkitAgent"								\
 	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
+	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml		\
 	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
 	  --stamp-file agent-built-sources.stamp							\
 	  $(NULL)
@@ -42,7 +43,7 @@ ck_built_sources = ckbindingsmarshal.c ckbindingsmarshal.h ckbindingsmarshal.lis
 
 # keep in sync with contents of agent-built-sources.stamp (Thanks autotools)
 #
-agent_built_sources = _polkitagentbindingsmarshal.c _polkitagentbindingsmarshal.h _polkitagentbindingsmarshal.list _polkitagentbindings.c _polkitagentbindings.h _polkitagentbindingstypes.h _polkitagentauthenticationagent.c _polkitagentauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml
+agent_built_sources = _polkitagentbindingsmarshal.c _polkitagentbindingsmarshal.h _polkitagentbindingsmarshal.list _polkitagentbindings.c _polkitagentbindings.h _polkitagentbindingstypes.h _polkitagentauthenticationagent.c _polkitagentauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitagentauthority.c _polkitagentauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkitagenterror.c _polkitagenterror.h _polkitagentimplicitauthorization.c _polkitagentimplicitauthorization.h _polkitagentauthorizationresult.c _polkitagentauthorizationresult.h _polkitagentcheckauthorizationflags.c _polkitagentcheckauthorizationflags.h _polkitagentactiondescription.c _polkitagentactiondescription.h _polkitagentidentity.c _polkitagentidentity.h _polkitagentsubject.c _polkitagentsubject.h
 
 lib_LTLIBRARIES=libpolkit-backend-1.la
 
