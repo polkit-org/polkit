@@ -657,7 +657,7 @@ do_run (gint argc, gchar *argv[])
 
   if (result != POLKIT_AUTHORIZATION_RESULT_AUTHORIZED)
     {
-      g_printerr ("Error obtaining authorization for action %s\n", action_id);
+      g_printerr ("Error obtaining authorization for action %s (%d)\n", action_id, result);
       goto out;
     }
 

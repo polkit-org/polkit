@@ -415,6 +415,7 @@ src/polkitbackend/Makefile
 src/polkitagent/Makefile
 src/polkitd/Makefile
 src/programs/Makefile
+src/examples/Makefile
 docs/version.xml
 docs/Makefile
 docs/polkit/Makefile

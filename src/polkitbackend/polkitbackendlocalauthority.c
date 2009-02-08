@@ -91,6 +91,7 @@ static void                authentication_agent_initiate_challenge (Authenticati
                                                                     const gchar                 *action_id,
                                                                     PolkitSubject               *caller,
                                                                     PolkitImplicitAuthorization  implicit_authorization,
+                                                                    GCancellable                *cancellable,
                                                                     AuthenticationAgentCallback  callback,
                                                                     gpointer                     user_data);
 
@@ -665,11 +666,21 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
                                                    action_id,
                                                    caller,
                                                    implicit_authorization,
+                                                   cancellable,
                                                    check_authorization_challenge_cb,
                                                    simple);
-        }
 
+          /* keep going */
+          goto out;
+        }
     }
+
+  /* Otherwise just return the result */
+  g_simple_async_result_set_op_res_gpointer (simple,
+                                             GINT_TO_POINTER ((gint) result),
+                                             NULL);
+  g_simple_async_result_complete (simple);
+  g_object_unref (simple);
 
  out:
 
@@ -1056,7 +1067,18 @@ struct AuthenticationSession
   guint                        call_id;
 
   gboolean                     is_authenticated;
+
+  GCancellable                *cancellable;
+
+  gulong                       cancellable_signal_handler_id;
 };
+
+static void
+authentication_session_cancelled_cb (GCancellable *cancellable,
+                                     AuthenticationSession *session)
+{
+  authentication_session_cancel (session);
+}
 
 static AuthenticationSession *
 authentication_session_new (AuthenticationAgent         *agent,
@@ -1068,6 +1090,7 @@ authentication_session_new (AuthenticationAgent         *agent,
                             const gchar                 *action_id,
                             const gchar                 *initiated_by_system_bus_unique_name,
                             PolkitImplicitAuthorization  implicit_authorization,
+                            GCancellable                *cancellable,
                             AuthenticationAgentCallback  callback,
                             gpointer                     user_data)
 {
@@ -1084,8 +1107,17 @@ authentication_session_new (AuthenticationAgent         *agent,
   session->action_id = g_strdup (action_id);
   session->initiated_by_system_bus_unique_name = g_strdup (initiated_by_system_bus_unique_name);
   session->implicit_authorization = implicit_authorization;
+  session->cancellable = cancellable != NULL ? g_object_ref (cancellable) : NULL;
   session->callback = callback;
   session->user_data = user_data;
+
+  if (session->cancellable != NULL)
+    {
+      session->cancellable_signal_handler_id = g_signal_connect (session->cancellable,
+                                                                 "cancelled",
+                                                                 G_CALLBACK (authentication_session_cancelled_cb),
+                                                                 session);
+    }
 
   return session;
 }
@@ -1101,6 +1133,10 @@ authentication_session_free (AuthenticationSession *session)
   g_object_unref (session->authority);
   g_free (session->action_id);
   g_free (session->initiated_by_system_bus_unique_name);
+  if (session->cancellable_signal_handler_id > 0)
+    g_signal_handler_disconnect (session->cancellable, session->cancellable_signal_handler_id);
+  if (session->cancellable != NULL)
+    g_object_unref (session->cancellable);
   g_free (session);
 }
 
@@ -1307,7 +1343,6 @@ authentication_agent_begin_callback (GObject *source_object,
     {
       g_warning ("Error performing authentication: %s", error->message);
       g_error_free (error);
-
       gained_authorization = FALSE;
     }
   else
@@ -1339,6 +1374,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          const gchar                 *action_id,
                                          PolkitSubject               *caller,
                                          PolkitImplicitAuthorization  implicit_authorization,
+                                         GCancellable                *cancellable,
                                          AuthenticationAgentCallback  callback,
                                          gpointer                     user_data)
 {
@@ -1369,6 +1405,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                         action_id,
                                         polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                         implicit_authorization,
+                                        cancellable,
                                         callback,
                                         user_data);
 
@@ -1384,7 +1421,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
     }
 
   session->call_id = _polkit_authentication_agent_begin_authentication (agent_dbus,
-                                                                        EGG_DBUS_CALL_FLAGS_NONE,
+                                                                        EGG_DBUS_CALL_FLAGS_TIMEOUT_NONE,
                                                                         action_id,
                                                                         session->cookie,
                                                                         real_identities,
@@ -1525,6 +1562,7 @@ polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAut
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
   ret = FALSE;
+  session_for_caller = NULL;
 
   if (session_id != NULL && strlen (session_id) > 0)
     {

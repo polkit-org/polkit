@@ -530,6 +530,8 @@ struct _Server
   gulong authority_changed_id;
 
   gchar *well_known_name;
+
+  GHashTable *cancellation_id_to_cancellable;
 };
 
 struct _ServerClass
@@ -546,8 +548,12 @@ G_DEFINE_TYPE_WITH_CODE (Server, server, G_TYPE_OBJECT,
                          );
 
 static void
-server_init (Server *local_server)
+server_init (Server *server)
 {
+  server->cancellation_id_to_cancellable = g_hash_table_new_full (g_str_hash,
+                                                                  g_str_equal,
+                                                                  g_free,
+                                                                  g_object_unref);
 }
 
 static void
@@ -569,6 +575,7 @@ server_finalize (GObject *object)
 
   g_signal_handler_disconnect (server->authority, server->authority_changed_id);
 
+  g_hash_table_unref (server->cancellation_id_to_cancellable);
 }
 
 static void
@@ -767,6 +774,7 @@ check_auth_cb (GObject      *source_object,
                gpointer      user_data)
 {
   EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
+  const gchar *full_cancellation_id;
   PolkitAuthorizationResult result;
   GError *error;
 
@@ -774,6 +782,15 @@ check_auth_cb (GObject      *source_object,
   result = polkit_backend_authority_check_authorization_finish (POLKIT_BACKEND_AUTHORITY (source_object),
                                                                 res,
                                                                 &error);
+
+  full_cancellation_id = g_object_get_data (G_OBJECT (method_invocation), "cancellation-id");
+  if (full_cancellation_id != NULL)
+    {
+      Server *server;
+      server = SERVER (g_object_get_data (G_OBJECT (method_invocation), "server"));
+      g_hash_table_remove (server->cancellation_id_to_cancellable, full_cancellation_id);
+    }
+
   if (error != NULL)
     {
       egg_dbus_method_invocation_return_gerror (method_invocation, error);
@@ -790,27 +807,96 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
                                       _PolkitSubject                 *real_subject,
                                       const gchar                    *action_id,
                                       _PolkitCheckAuthorizationFlags  flags,
+                                      const gchar                    *cancellation_id,
                                       EggDBusMethodInvocation        *method_invocation)
 {
   Server *server = SERVER (instance);
+  const gchar *caller_name;
   PolkitSubject *subject;
   PolkitSubject *caller;
+  GCancellable *cancellable;
 
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
+  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
+  caller = polkit_system_bus_name_new (caller_name);
 
   subject = polkit_subject_new_for_real (real_subject);
 
   g_object_set_data_full (G_OBJECT (method_invocation), "caller", caller, (GDestroyNotify) g_object_unref);
   g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
 
+  cancellable = NULL;
+  if (cancellation_id != NULL && strlen (cancellation_id) > 0)
+    {
+      gchar *full_cancellation_id;
+
+      full_cancellation_id = g_strdup_printf ("%s-%s", caller_name, cancellation_id);
+
+      if (g_hash_table_lookup (server->cancellation_id_to_cancellable, full_cancellation_id) != NULL)
+        {
+          egg_dbus_method_invocation_return_error (method_invocation,
+                                                   _POLKIT_ERROR,
+                                                   _POLKIT_ERROR_CANCELLATION_ID_NOT_UNIQUE,
+                                                   "Given cancellation_id %s is already in use for name %s",
+                                                   cancellation_id,
+                                                   caller_name);
+          g_free (full_cancellation_id);
+          goto out;
+        }
+
+      cancellable = g_cancellable_new ();
+
+      g_hash_table_insert (server->cancellation_id_to_cancellable,
+                           full_cancellation_id,
+                           cancellable);
+
+      g_object_set_data (G_OBJECT (method_invocation), "server", server);
+      g_object_set_data (G_OBJECT (method_invocation), "cancellation-id", full_cancellation_id);
+    }
+
   polkit_backend_authority_check_authorization (server->authority,
                                                 caller,
                                                 subject,
                                                 action_id,
                                                 flags,
-                                                NULL, /* TODO: use cancellable */
+                                                cancellable,
                                                 check_auth_cb,
                                                 method_invocation);
+ out:
+  ;
+}
+
+static void
+authority_handle_cancel_check_authorization (_PolkitAuthority               *instance,
+                                             const gchar                    *cancellation_id,
+                                             EggDBusMethodInvocation        *method_invocation)
+{
+  Server *server = SERVER (instance);
+  GCancellable *cancellable;
+  const gchar *caller_name;
+  gchar *full_cancellation_id;
+
+  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
+
+  full_cancellation_id = g_strdup_printf ("%s-%s", caller_name, cancellation_id);
+
+  cancellable = g_hash_table_lookup (server->cancellation_id_to_cancellable, full_cancellation_id);
+  if (cancellable == NULL)
+    {
+      egg_dbus_method_invocation_return_error (method_invocation,
+                                               _POLKIT_ERROR,
+                                               _POLKIT_ERROR_FAILED,
+                                               "No such cancellation_id %s for name %s",
+                                               cancellation_id,
+                                               caller_name);
+      goto out;
+    }
+
+  g_cancellable_cancel (cancellable);
+
+  _polkit_authority_handle_cancel_check_authorization_finish (method_invocation);
+
+ out:
+  g_free (full_cancellation_id);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1064,6 +1150,7 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
   authority_iface->handle_enumerate_actions               = authority_handle_enumerate_actions;
   authority_iface->handle_check_authorization             = authority_handle_check_authorization;
+  authority_iface->handle_cancel_check_authorization      = authority_handle_cancel_check_authorization;
   authority_iface->handle_register_authentication_agent   = authority_handle_register_authentication_agent;
   authority_iface->handle_unregister_authentication_agent = authority_handle_unregister_authentication_agent;
   authority_iface->handle_authentication_agent_response   = authority_handle_authentication_agent_response;

@@ -153,11 +153,20 @@
       <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Failed">
         <annotation name="org.gtk.EggDBus.DocString" value="The operation failed."/>
       </annotation>
+      <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.Cancelled">
+        <annotation name="org.gtk.EggDBus.DocString" value="The operation was cancelled."/>
+      </annotation>
       <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.NotSupported">
         <annotation name="org.gtk.EggDBus.DocString" value="Operation is not supported."/>
       </annotation>
       <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.NotAuthorized">
         <annotation name="org.gtk.EggDBus.DocString" value="Not authorized to perform operation."/>
+      </annotation>
+
+      <!-- errors not exposed in GObject library follows here -->
+      <annotation name="org.gtk.EggDBus.ErrorDomain.Member" value="org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique">
+        <annotation name="org.gtk.EggDBus.ErrorDomain.Member.Value" value="1000"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The passed @cancellation_id is already in use."/>
       </annotation>
     </annotation>
 
@@ -175,7 +184,7 @@
     </method>
 
     <method name="CheckAuthorization">
-      <annotation name="org.gtk.EggDBus.DocString" value="Checks if @subject is authorized to perform the action with identifier @action_id."/>
+      <annotation name="org.gtk.EggDBus.DocString" value="<para>Checks if @subject is authorized to perform the action with identifier @action_id.</para><para>If @cancellation_id is non-empty and already in use for the caller, the %org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique error is returned.</para>"/>
 
       <arg name="subject" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.DocString" value="A #Subject struct."/>
@@ -191,9 +200,21 @@
         <annotation name="org.gtk.EggDBus.DocString" value="A set of #CheckAuthorizationFlags."/>
       </arg>
 
+      <arg name="cancellation_id" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="A unique id used to cancel the the authentication check via org.freedesktop.PolicyKit1.Authority.CancelCheckAuthorization() or the empty string if cancellation is not needed."/>
+      </arg>
+
       <arg name="result" direction="out" type="u">
         <annotation name="org.gtk.EggDBus.Type" value="AuthorizationResult"/>
         <annotation name="org.gtk.EggDBus.DocString" value="A value from the #AuthorizationResult enumeration."/>
+      </arg>
+    </method>
+
+    <method name="CancelCheckAuthorization">
+      <annotation name="org.gtk.EggDBus.DocString" value="Cancels an authorization check."/>
+
+      <arg name="cancellation_id" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The @cancellation_id passed to org.freedesktop.PolicyKit1.Authority.CheckAuthorization()."/>
       </arg>
     </method>
 

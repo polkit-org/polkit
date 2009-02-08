@@ -26,6 +26,7 @@
 #include "polkitauthorizationresult.h"
 #include "polkitcheckauthorizationflags.h"
 #include "polkitauthority.h"
+#include "polkiterror.h"
 
 #include "polkitprivate.h"
 
@@ -60,6 +61,8 @@ struct _PolkitAuthority
   EggDBusObjectProxy *authority_object_proxy;
 
   _PolkitAuthority *real;
+
+  guint cancellation_id_counter;
 };
 
 struct _PolkitAuthorityClass
@@ -334,6 +337,7 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
   _PolkitSubject *real_subject;
   guint call_id;
   GSimpleAsyncResult *simple;
+  gchar *cancellation_id;
 
   real_subject = polkit_subject_get_real (subject);
 
@@ -342,11 +346,19 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
                                       user_data,
                                       polkit_authority_check_authorization_async);
 
+  cancellation_id = NULL;
+  if (cancellable != NULL)
+    {
+      cancellation_id = g_strdup_printf ("cancellation-id-%d", authority->cancellation_id_counter++);
+      g_object_set_data_full (G_OBJECT (simple), "polkit-1-cancellation-id", cancellation_id, g_free);
+    }
+
   call_id = _polkit_authority_check_authorization (authority->real,
-                                                   EGG_DBUS_CALL_FLAGS_NONE,
+                                                   EGG_DBUS_CALL_FLAGS_TIMEOUT_NONE,
                                                    real_subject,
                                                    action_id,
                                                    flags,
+                                                   cancellation_id,
                                                    cancellable,
                                                    generic_async_cb,
                                                    simple);
@@ -391,6 +403,23 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
                                               user_data);
 }
 
+static void
+authorization_check_cancelled_cb (GObject      *source_object,
+                                  GAsyncResult *res,
+                                  gpointer      user_data)
+{
+  GError *error;
+
+  error = NULL;
+  if (!_polkit_authority_cancel_check_authorization_finish (_POLKIT_AUTHORITY (source_object),
+                                                            res,
+                                                            &error))
+    {
+      g_warning ("Error cancelling authorization check: %s", error->message);
+      g_error_free (error);
+    }
+}
+
 /**
  * polkit_authority_check_authorization_finish:
  * @authority: A #PolkitAuthority.
@@ -409,6 +438,7 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
   _PolkitAuthorizationResult result;
   GSimpleAsyncResult *simple;
   GAsyncResult *real_res;
+  GError *local_error;
 
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
@@ -417,13 +447,44 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
 
   result = _POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
 
-  if (!_polkit_authority_check_authorization_finish (authority->real,
-                                             &result,
-                                             real_res,
-                                             error))
-    goto out;
+  local_error = NULL;
+  _polkit_authority_check_authorization_finish (authority->real,
+                                                &result,
+                                                real_res,
+                                                &local_error);
 
- out:
+  if (local_error != NULL)
+    {
+      if (local_error->domain == EGG_DBUS_ERROR && local_error->code == EGG_DBUS_ERROR_CANCELLED)
+        {
+          const gchar *cancellation_id;
+
+          /* if the operation was cancelled locally, make sure to tell the daemon so the authentication
+           * dialog etc. can be removed
+           */
+          cancellation_id = g_object_get_data (G_OBJECT (simple), "polkit-1-cancellation-id");
+          if (cancellation_id != NULL)
+            {
+              _polkit_authority_cancel_check_authorization (authority->real,
+                                                            EGG_DBUS_CALL_FLAGS_NONE,
+                                                            cancellation_id,
+                                                            NULL,
+                                                            authorization_check_cancelled_cb,
+                                                            NULL);
+            }
+
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_CANCELLED,
+                       "The operation was cancelled");
+          g_error_free (local_error);
+        }
+      else
+        {
+          g_propagate_error (error, local_error);
+        }
+    }
+
   g_object_unref (real_res);
   return result;
 }

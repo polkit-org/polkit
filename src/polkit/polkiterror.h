@@ -43,6 +43,7 @@ GType polkit_error_get_type (void) G_GNUC_CONST;
 /**
  * PolkitError:
  * @POLKIT_ERROR_FAILED: The operation failed.
+ * @POLKIT_ERROR_CANCELLED: The operation was cancelled.
  * @POLKIT_ERROR_NOT_SUPPORTED: Operation is not supported.
  * @POLKIT_ERROR_NOT_AUTHORIZED: Not authorized to perform operation.
  *
@@ -51,8 +52,9 @@ GType polkit_error_get_type (void) G_GNUC_CONST;
 typedef enum
 {
   POLKIT_ERROR_FAILED = 0,
-  POLKIT_ERROR_NOT_SUPPORTED = 1,
-  POLKIT_ERROR_NOT_AUTHORIZED = 2,
+  POLKIT_ERROR_CANCELLED = 1,
+  POLKIT_ERROR_NOT_SUPPORTED = 2,
+  POLKIT_ERROR_NOT_AUTHORIZED = 3,
 } PolkitError;
 
 G_END_DECLS
