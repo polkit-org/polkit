@@ -16,21 +16,25 @@ INCLUDES =                                                      \
         $(NULL)
 
 BUILT_SOURCES = 						\
-	authority-built-sources.stamp				\
+	polkit-built-sources.stamp				\
 	$(NULL)
 
-authority-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml
-	eggdbus-binding-tool										\
-		--namespace "_Polkit"									\
-		--dbus-namespace "org.freedesktop.PolicyKit1"						\
-		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml 	\
-		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml	\
-		--stamp-file authority-built-sources.stamp						\
-	$(NULL)
-
-# keep in sync with contents of authority-built-sources.stamp (Thanks autotools)
+# Build all the PolicyKit D-Bus code here, even the code we
+# only in the daemon for agent interaction
 #
-authority_built_sources = _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingsmarshal.list _polkitbindings.c _polkitbindings.h _polkitbindingstypes.h _polkitauthoritymanager.c _polkitauthoritymanager.h docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml _polkitauthority.c _polkitauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkiterror.c _polkiterror.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitauthorization.c _polkitauthorization.h _polkitactiondescription.c _polkitactiondescription.h _polkitidentity.c _polkitidentity.h _polkitsubject.c _polkitsubject.h
+polkit-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml
+	eggdbus-binding-tool											\
+		--namespace "_Polkit"										\
+		--dbus-namespace "org.freedesktop.PolicyKit1"							\
+		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml 		\
+		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml		\
+		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
+		--stamp-file polkit-built-sources.stamp							\
+	$(NULL)
+
+# keep in sync with contents of polkit-built-sources.stamp (Thanks autotools)
+#
+polkit_built_sources = _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingsmarshal.list _polkitbindings.c _polkitbindings.h _polkitbindingstypes.h _polkitauthenticationagent.c _polkitauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitauthoritymanager.c _polkitauthoritymanager.h docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml _polkitauthority.c _polkitauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkiterror.c _polkiterror.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkitauthorization.c _polkitauthorization.h _polkitactiondescription.c _polkitactiondescription.h _polkitidentity.c _polkitidentity.h _polkitsubject.c _polkitsubject.h
 
 lib_LTLIBRARIES=libpolkit-gobject-1.la
 
@@ -59,7 +63,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
 	$(BUILT_SOURCES)								\
-	$(authority_built_sources)							\
+	$(polkit_built_sources)							\
         polkit.h									\
 	polkitactiondescription.c		polkitactiondescription.h		\
 	polkitauthority.c			polkitauthority.h			\
@@ -90,8 +94,8 @@ libpolkit_gobject_1_la_LIBADD =                               		\
         $(NULL)
 
 dist-hook :
-	(for i in $(authority_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
+	(for i in $(polkit_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
 
 clean-local :
-	rm -f *~ $(authority_built_sources) $(BUILT_SOURCES)
+	rm -f *~ $(polkit_built_sources) $(BUILT_SOURCES)
 

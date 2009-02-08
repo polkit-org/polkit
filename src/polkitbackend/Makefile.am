@@ -16,7 +16,6 @@ INCLUDES =                                                      \
         $(NULL)
 
 BUILT_SOURCES = 						\
-	agent-built-sources.stamp				\
 	ck-built-sources.stamp					\
 	$(NULL)
 
@@ -28,22 +27,9 @@ ck-built-sources.stamp : Makefile.am $(srcdir)/org.freedesktop.ConsoleKit.xml
 	  --stamp-file ck-built-sources.stamp								\
 	  $(NULL)
 
-agent-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml
-	eggdbus-binding-tool										\
-	  --namespace       "_PolkitAgent"								\
-	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
-	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml		\
-	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
-	  --stamp-file agent-built-sources.stamp							\
-	  $(NULL)
-
 # keep in sync with contents of ck-built-sources.stamp (Thanks autotools)
 #
-ck_built_sources = ckbindingsmarshal.c ckbindingsmarshal.h ckbindingsmarshal.list ckbindings.c ckbindings.h ckbindingstypes.h cksession.c cksession.h docbook-interface-org.freedesktop.ConsoleKit.Session.xml ckseat.c ckseat.h docbook-interface-org.freedesktop.ConsoleKit.Seat.xml ckmanager.c ckmanager.h docbook-interface-org.freedesktop.ConsoleKit.Manager.xml ckerror.c ckerror.h ckdevice.c ckdevice.h
-
-# keep in sync with contents of agent-built-sources.stamp (Thanks autotools)
-#
-agent_built_sources = _polkitagentbindingsmarshal.c _polkitagentbindingsmarshal.h _polkitagentbindingsmarshal.list _polkitagentbindings.c _polkitagentbindings.h _polkitagentbindingstypes.h _polkitagentauthenticationagent.c _polkitagentauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitagentauthority.c _polkitagentauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkitagenterror.c _polkitagenterror.h _polkitagentimplicitauthorization.c _polkitagentimplicitauthorization.h _polkitagentauthorizationresult.c _polkitagentauthorizationresult.h _polkitagentcheckauthorizationflags.c _polkitagentcheckauthorizationflags.h _polkitagentactiondescription.c _polkitagentactiondescription.h _polkitagentidentity.c _polkitagentidentity.h _polkitagentsubject.c _polkitagentsubject.h
+ck_built_sources = ckbindingsmarshal.c ckbindingsmarshal.h ckbindingsmarshal.list ckbindings.c ckbindings.h ckbindingstypes.h cksession.c cksession.h docbook-interface-org.freedesktop.ConsoleKit.Session.xml ckseat.c ckseat.h docbook-interface-org.freedesktop.ConsoleKit.Seat.xml ckmanager.c ckmanager.h docbook-interface-org.freedesktop.ConsoleKit.Manager.xml ckerror.c ckerror.h docbook-enum-Error.xml ckdevice.c ckdevice.h docbook-struct-Device.xml
 
 lib_LTLIBRARIES=libpolkit-backend-1.la
 
@@ -60,7 +46,6 @@ libpolkit_backend_1include_HEADERS =                        		\
 
 libpolkit_backend_1_la_SOURCES =                                   	\
 	$(ck_built_sources)						\
-	$(agent_built_sources)						\
 	$(BUILT_SOURCES)						\
         polkitbackend.h							\
 	polkitbackendtypes.h						\
@@ -91,10 +76,10 @@ EXTRA_DIST =								\
 	$(NULL)
 
 dist-hook :
-	(for i in $(ck_built_sources) $(agent_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
+	(for i in $(ck_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
 
 clean-local :
-	rm -f *~ $(ck_built_sources) $(agent_built_sources) $(BUILT_SOURCES)
+	rm -f *~ $(ck_built_sources) $(BUILT_SOURCES)
 
 install-exec-hook:
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/polkit-1

@@ -51,7 +51,7 @@ content_files =  			    								\
 	../version.xml			    								\
 	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml			\
 	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml		\
-	../../src/polkitagent/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
+	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml		\
 	../man/PolicyKit.xml										\
 	../man/polkit.xml										\
 	$(NULL)

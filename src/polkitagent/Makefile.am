@@ -18,21 +18,7 @@ INCLUDES =                                                      \
 
 BUILT_SOURCES = 						\
 	marshal.stamp						\
-	agent-built-sources.stamp				\
 	$(NULL)
-
-agent-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml
-	eggdbus-binding-tool										\
-	  --namespace       "_PolkitAgent"								\
-	  --dbus-namespace  "org.freedesktop.PolicyKit1"						\
-	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml		\
-	  --introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
-	  --stamp-file agent-built-sources.stamp							\
-	  $(NULL)
-
-# keep in sync with contents of agent-built-sources.stamp (Thanks autotools)
-#
-agent_built_sources = _polkitagentbindingsmarshal.c _polkitagentbindingsmarshal.h _polkitagentbindingsmarshal.list _polkitagentbindings.c _polkitagentbindings.h _polkitagentbindingstypes.h _polkitagentauthenticationagent.c _polkitagentauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitagentauthority.c _polkitagentauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkitagentcheckauthorizationflags.c _polkitagentcheckauthorizationflags.h _polkitagentauthorizationresult.c _polkitagentauthorizationresult.h _polkitagenterror.c _polkitagenterror.h _polkitagentimplicitauthorization.c _polkitagentimplicitauthorization.h _polkitagentactiondescription.c _polkitagentactiondescription.h _polkitagentidentity.c _polkitagentidentity.h _polkitagentsubject.c _polkitagentsubject.h
 
 marshal.stamp : Makefile.am $(srcdir)/polkitagentmarshal.list
 	glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --header > polkitagentmarshal.h.tmp && mv polkitagentmarshal.h.tmp polkitagentmarshal.h
@@ -54,7 +40,6 @@ libpolkit_agent_1include_HEADERS =                        				\
 
 libpolkit_agent_1_la_SOURCES =                                   			\
 	$(BUILT_SOURCES)								\
-	$(agent_built_sources)								\
 	$(marshal_built_sources)							\
         polkitagent.h									\
 	polkitagenttypes.h								\
@@ -91,7 +76,7 @@ install-exec-hook:
 EXTRA_DIST = polkitagentmarshal.list
 
 dist-hook :
-	(for i in $(agent_built_sources) $(marshal_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
+	(for i in $(marshal_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
 
 clean-local :
-	rm -f *~ $(agent_built_sources) $(marshal_built_sources) $(BUILT_SOURCES)
+	rm -f *~ $(marshal_built_sources) $(BUILT_SOURCES)

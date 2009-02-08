@@ -22,7 +22,6 @@
 #include "config.h"
 
 #include <polkit/polkitprivate.h>
-#include "_polkitagentbindings.h"
 
 #include "polkitagentlistener.h"
 
@@ -86,10 +85,10 @@ struct _ServerClass
 
 static GType server_get_type (void) G_GNUC_CONST;
 
-static void authentication_agent_iface_init (_PolkitAgentAuthenticationAgentIface *agent_iface);
+static void authentication_agent_iface_init (_PolkitAuthenticationAgentIface *agent_iface);
 
 G_DEFINE_TYPE_WITH_CODE (Server, server, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (_POLKIT_AGENT_TYPE_AUTHENTICATION_AGENT,
+                         G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_AUTHENTICATION_AGENT,
                                                 authentication_agent_iface_init)
                          );
 
@@ -278,7 +277,7 @@ polkit_agent_register_listener (PolkitAgentListener  *listener,
 
   egg_dbus_connection_register_interface (server->system_bus,
                                           server->object_path,
-                                          _POLKIT_AGENT_TYPE_AUTHENTICATION_AGENT,
+                                          _POLKIT_TYPE_AUTHENTICATION_AGENT,
                                           G_OBJECT (server),
                                           G_TYPE_INVALID);
 
@@ -347,7 +346,7 @@ auth_cb (GObject      *source_object,
     }
   else
     {
-      _polkit_agent_authentication_agent_handle_begin_authentication_finish (data->method_invocation);
+      _polkit_authentication_agent_handle_begin_authentication_finish (data->method_invocation);
     }
 
   g_hash_table_remove (data->server->cookie_to_pending_auth, data->cookie);
@@ -356,11 +355,11 @@ auth_cb (GObject      *source_object,
 }
 
 static void
-handle_begin_authentication (_PolkitAgentAuthenticationAgent *instance,
-                             const gchar                     *action_id,
-                             const gchar                     *cookie,
-                             EggDBusArraySeq                 *identities,
-                             EggDBusMethodInvocation         *method_invocation)
+handle_begin_authentication (_PolkitAuthenticationAgent *instance,
+                             const gchar                *action_id,
+                             const gchar                *cookie,
+                             EggDBusArraySeq            *identities,
+                             EggDBusMethodInvocation    *method_invocation)
 {
   Server *server = SERVER (instance);
   AuthData *data;
@@ -399,9 +398,9 @@ handle_begin_authentication (_PolkitAgentAuthenticationAgent *instance,
 }
 
 static void
-handle_cancel_authentication (_PolkitAgentAuthenticationAgent *instance,
-                              const gchar                     *cookie,
-                              EggDBusMethodInvocation         *method_invocation)
+handle_cancel_authentication (_PolkitAuthenticationAgent *instance,
+                              const gchar                *cookie,
+                              EggDBusMethodInvocation    *method_invocation)
 {
   Server *server = SERVER (instance);
   AuthData *data;
@@ -418,12 +417,12 @@ handle_cancel_authentication (_PolkitAgentAuthenticationAgent *instance,
   else
     {
       g_cancellable_cancel (data->cancellable);
-      _polkit_agent_authentication_agent_handle_cancel_authentication_finish (method_invocation);
+      _polkit_authentication_agent_handle_cancel_authentication_finish (method_invocation);
     }
 }
 
 static void
-authentication_agent_iface_init (_PolkitAgentAuthenticationAgentIface *agent_iface)
+authentication_agent_iface_init (_PolkitAuthenticationAgentIface *agent_iface)
 {
   agent_iface->handle_begin_authentication = handle_begin_authentication;
   agent_iface->handle_cancel_authentication = handle_cancel_authentication;

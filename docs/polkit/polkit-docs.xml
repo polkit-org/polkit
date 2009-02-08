@@ -59,7 +59,7 @@
     <title>D-Bus API Reference</title>
     <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml"/>
     <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml"/>
-    <xi:include href="../../src/polkitagent/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
+    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
   </reference>
 
   <reference id="ref-api">

@@ -31,7 +31,6 @@
 #include "polkitbackendactionpool.h"
 #include "polkitbackendsessionmonitor.h"
 
-#include "_polkitagentbindings.h"
 #include <polkit/polkitprivate.h>
 
 /**
@@ -1294,15 +1293,15 @@ authentication_agent_begin_callback (GObject *source_object,
                                      GAsyncResult *res,
                                      gpointer user_data)
 {
-  _PolkitAgentAuthenticationAgent *agent_dbus = _POLKIT_AGENT_AUTHENTICATION_AGENT (source_object);
+  _PolkitAuthenticationAgent *agent_dbus = _POLKIT_AUTHENTICATION_AGENT (source_object);
   AuthenticationSession *session = user_data;
   GError *error;
   gboolean gained_authorization;
 
   error = NULL;
-  if (!_polkit_agent_authentication_agent_begin_authentication_finish (agent_dbus,
-                                                                       res,
-                                                                       &error))
+  if (!_polkit_authentication_agent_begin_authentication_finish (agent_dbus,
+                                                                 res,
+                                                                 &error))
     {
       g_warning ("Error performing authentication: %s", error->message);
       g_error_free (error);
@@ -1342,7 +1341,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          gpointer                     user_data)
 {
   AuthenticationSession *session;
-  _PolkitAgentAuthenticationAgent *agent_dbus;
+  _PolkitAuthenticationAgent *agent_dbus;
   gchar *cookie;
   GList *l;
   GList *identities;
@@ -1373,7 +1372,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
 
   agent->active_sessions = g_list_prepend (agent->active_sessions, session);
 
-  agent_dbus = _POLKIT_AGENT_QUERY_INTERFACE_AUTHENTICATION_AGENT (agent->object_proxy);
+  agent_dbus = _POLKIT_QUERY_INTERFACE_AUTHENTICATION_AGENT (agent->object_proxy);
 
   real_identities = egg_dbus_array_seq_new (EGG_DBUS_TYPE_STRUCTURE, g_object_unref, NULL, NULL);
   for (l = identities; l != NULL; l = l->next)
@@ -1382,14 +1381,14 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
       egg_dbus_array_seq_add (real_identities, polkit_identity_get_real (identity));
     }
 
-  session->call_id = _polkit_agent_authentication_agent_begin_authentication (agent_dbus,
-                                                                              EGG_DBUS_CALL_FLAGS_NONE,
-                                                                              action_id,
-                                                                              session->cookie,
-                                                                              real_identities,
-                                                                              NULL,
-                                                                              authentication_agent_begin_callback,
-                                                                              session);
+  session->call_id = _polkit_authentication_agent_begin_authentication (agent_dbus,
+                                                                        EGG_DBUS_CALL_FLAGS_NONE,
+                                                                        action_id,
+                                                                        session->cookie,
+                                                                        real_identities,
+                                                                        NULL,
+                                                                        authentication_agent_begin_callback,
+                                                                        session);
 
   g_list_foreach (identities, (GFunc) g_object_unref, NULL);
   g_list_free (identities);
@@ -1402,29 +1401,29 @@ authentication_agent_cancel_callback (GObject *source_object,
                                       GAsyncResult *res,
                                       gpointer user_data)
 {
-  _PolkitAgentAuthenticationAgent *agent_dbus = _POLKIT_AGENT_AUTHENTICATION_AGENT (source_object);
+  _PolkitAuthenticationAgent *agent_dbus = _POLKIT_AUTHENTICATION_AGENT (source_object);
 
-  _polkit_agent_authentication_agent_cancel_authentication_finish (agent_dbus,
-                                                                   res,
-                                                                   NULL);
+  _polkit_authentication_agent_cancel_authentication_finish (agent_dbus,
+                                                             res,
+                                                             NULL);
 }
 
 static void
 authentication_session_cancel (AuthenticationSession *session)
 {
   EggDBusConnection *system_bus;
-  _PolkitAgentAuthenticationAgent *agent_dbus;
+  _PolkitAuthenticationAgent *agent_dbus;
 
   system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
 
-  agent_dbus = _POLKIT_AGENT_QUERY_INTERFACE_AUTHENTICATION_AGENT (session->agent->object_proxy);
+  agent_dbus = _POLKIT_QUERY_INTERFACE_AUTHENTICATION_AGENT (session->agent->object_proxy);
 
-  _polkit_agent_authentication_agent_cancel_authentication (agent_dbus,
-                                                            EGG_DBUS_CALL_FLAGS_NONE,
-                                                            session->cookie,
-                                                            NULL,
-                                                            authentication_agent_cancel_callback,
-                                                            NULL);
+  _polkit_authentication_agent_cancel_authentication (agent_dbus,
+                                                      EGG_DBUS_CALL_FLAGS_NONE,
+                                                      session->cookie,
+                                                      NULL,
+                                                      authentication_agent_cancel_callback,
+                                                      NULL);
 
   egg_dbus_connection_pending_call_cancel (system_bus, session->call_id);
 
