@@ -102,8 +102,8 @@ server_register (Server   *server,
   ret = FALSE;
 
   local_error = NULL;
-  /* TODO: also pass server->session_id */
   if (!polkit_authority_register_authentication_agent_sync (server->authority,
+                                                            server->session_id,
                                                             server->object_path,
                                                             NULL,
                                                             &local_error))
@@ -198,6 +198,7 @@ server_finalize (GObject *object)
 
       error = NULL;
       if (!polkit_authority_unregister_authentication_agent_sync (server->authority,
+                                                                  server->session_id,
                                                                   server->object_path,
                                                                   NULL,
                                                                   &error))

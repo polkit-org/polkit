@@ -198,7 +198,11 @@
     </method>
 
     <method name="RegisterAuthenticationAgent">
-      <annotation name="org.gtk.EggDBus.DocString" value="Register an authentication agent."/>
+      <annotation name="org.gtk.EggDBus.DocString" value="<para>Register an authentication agent.</para><para>Note that current versions of PolicyKit will only work if @session_id is set to the empty string. In the future it might work for non-empty strings if the caller is sufficiently privileged.</para>"/>
+
+      <arg name="session_id" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The session to register the authentication for or blank for the session the caller of the method is in."/>
+      </arg>
 
       <arg name="object_path" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="The object path of authentication agent object on the unique name of the caller."/>
@@ -207,6 +211,10 @@
 
     <method name="UnregisterAuthenticationAgent">
       <annotation name="org.gtk.EggDBus.DocString" value="Unregister an authentication agent."/>
+
+      <arg name="session_id" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The session identifier passed to org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent()."/>
+      </arg>
 
       <arg name="object_path" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="The object path of authentication agent object on the unique name of the caller."/>

@@ -127,11 +127,13 @@ struct _PolkitBackendAuthorityClass
 
   gboolean (*register_authentication_agent) (PolkitBackendAuthority   *authority,
                                              PolkitSubject            *caller,
+                                             const gchar              *session_id,
                                              const gchar              *object_path,
                                              GError                  **error);
 
   gboolean (*unregister_authentication_agent) (PolkitBackendAuthority   *authority,
                                                PolkitSubject            *caller,
+                                               const gchar              *session_id,
                                                const gchar              *object_path,
                                                GError                  **error);
 
@@ -238,11 +240,13 @@ gboolean polkit_backend_authority_remove_authorization      (PolkitBackendAuthor
 
 gboolean polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
                                                                  PolkitSubject             *caller,
+                                                                 const gchar               *session_id,
                                                                  const gchar               *object_path,
                                                                  GError                   **error);
 
 gboolean polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
                                                                    PolkitSubject             *caller,
+                                                                   const gchar               *session_id,
                                                                    const gchar               *object_path,
                                                                    GError                   **error);
 

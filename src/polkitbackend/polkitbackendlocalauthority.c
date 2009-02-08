@@ -192,11 +192,13 @@ static gboolean polkit_backend_local_authority_remove_authorization (PolkitBacke
 
 static gboolean polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
                                                                               PolkitSubject            *caller,
+                                                                              const gchar              *session_id,
                                                                               const gchar              *object_path,
                                                                               GError                  **error);
 
 static gboolean polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
                                                                                 PolkitSubject            *caller,
+                                                                                const gchar              *session_id,
                                                                                 const gchar              *object_path,
                                                                                 GError                  **error);
 
@@ -1435,6 +1437,7 @@ authentication_session_cancel (AuthenticationSession *session)
 static gboolean
 polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
                                                               PolkitSubject            *caller,
+                                                              const gchar              *session_id,
                                                               const gchar              *object_path,
                                                               GError                  **error)
 {
@@ -1449,6 +1452,15 @@ polkit_backend_local_authority_register_authentication_agent (PolkitBackendAutho
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+  if (session_id != NULL && strlen (session_id) > 0)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "The session_id parameter must be blank for now.");
+      goto out;
+    }
 
   session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
                                                                                caller,
@@ -1499,6 +1511,7 @@ polkit_backend_local_authority_register_authentication_agent (PolkitBackendAutho
 static gboolean
 polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
                                                                 PolkitSubject            *caller,
+                                                                const gchar              *session_id,
                                                                 const gchar              *object_path,
                                                                 GError                  **error)
 {
@@ -1512,6 +1525,15 @@ polkit_backend_local_authority_unregister_authentication_agent (PolkitBackendAut
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
   ret = FALSE;
+
+  if (session_id != NULL && strlen (session_id) > 0)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "The session_id parameter must be blank for now.");
+      goto out;
+    }
 
   session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
                                                                                caller,

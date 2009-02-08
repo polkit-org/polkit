@@ -391,6 +391,7 @@ polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *autho
  * polkit_backend_authority_register_authentication_agent:
  * @authority: A #PolkitBackendAuthority.
  * @caller: The system bus name that initiated the query.
+ * @session_id: The identifier of the session to register for or %NULL for the session of the caller.
  * @object_path: The object path for the authentication agent.
  * @error: Return location for error or %NULL.
  *
@@ -401,6 +402,7 @@ polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *autho
 gboolean
 polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
                                                         PolkitSubject             *caller,
+                                                        const gchar               *session_id,
                                                         const gchar               *object_path,
                                                         GError                   **error)
 {
@@ -418,7 +420,7 @@ polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority  
     }
   else
     {
-      return klass->register_authentication_agent (authority, caller, object_path, error);
+      return klass->register_authentication_agent (authority, caller, session_id, object_path, error);
     }
 }
 
@@ -426,6 +428,7 @@ polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority  
  * polkit_backend_authority_unregister_authentication_agent:
  * @authority: A #PolkitBackendAuthority.
  * @caller: The system bus name that initiated the query.
+ * @session_id: The identifier of the session the agent is registered at or %NULL for the session of the caller.
  * @object_path: The object path that the authentication agent is registered at.
  * @error: Return location for error or %NULL.
  *
@@ -436,6 +439,7 @@ polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority  
 gboolean
 polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
                                                           PolkitSubject             *caller,
+                                                          const gchar               *session_id,
                                                           const gchar               *object_path,
                                                           GError                   **error)
 {
@@ -453,7 +457,7 @@ polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority
     }
   else
     {
-      return klass->unregister_authentication_agent (authority, caller, object_path, error);
+      return klass->unregister_authentication_agent (authority, caller, session_id, object_path, error);
     }
 }
 
@@ -956,6 +960,7 @@ authority_manager_handle_remove_authorization (_PolkitAuthorityManager        *i
 
 static void
 authority_handle_register_authentication_agent (_PolkitAuthority               *instance,
+                                                const gchar                    *session_id,
                                                 const gchar                    *object_path,
                                                 EggDBusMethodInvocation        *method_invocation)
 {
@@ -968,6 +973,7 @@ authority_handle_register_authentication_agent (_PolkitAuthority               *
   error = NULL;
   if (!polkit_backend_authority_register_authentication_agent (server->authority,
                                                                caller,
+                                                               session_id,
                                                                object_path,
                                                                &error))
     {
@@ -986,6 +992,7 @@ authority_handle_register_authentication_agent (_PolkitAuthority               *
 
 static void
 authority_handle_unregister_authentication_agent (_PolkitAuthority               *instance,
+                                                  const gchar                    *session_id,
                                                   const gchar                    *object_path,
                                                   EggDBusMethodInvocation        *method_invocation)
 {
@@ -998,6 +1005,7 @@ authority_handle_unregister_authentication_agent (_PolkitAuthority              
   error = NULL;
   if (!polkit_backend_authority_unregister_authentication_agent (server->authority,
                                                                  caller,
+                                                                 session_id,
                                                                  object_path,
                                                                  &error))
     {

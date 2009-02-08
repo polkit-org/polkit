@@ -83,11 +83,13 @@ gboolean                   polkit_authority_remove_authorization_sync (PolkitAut
                                                                        GError             **error);
 
 gboolean                   polkit_authority_register_authentication_agent_sync (PolkitAuthority     *authority,
+                                                                                const gchar         *session_id,
                                                                                 const gchar         *object_path,
                                                                                 GCancellable        *cancellable,
                                                                                 GError             **error);
 
 gboolean                   polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *authority,
+                                                                                  const gchar         *session_id,
                                                                                   const gchar         *object_path,
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
@@ -173,6 +175,7 @@ gboolean                   polkit_authority_remove_authorization_finish (PolkitA
 
 
 void                       polkit_authority_register_authentication_agent (PolkitAuthority     *authority,
+                                                                           const gchar         *session_id,
                                                                            const gchar         *object_path,
                                                                            GCancellable        *cancellable,
                                                                            GAsyncReadyCallback  callback,
@@ -183,6 +186,7 @@ gboolean                   polkit_authority_register_authentication_agent_finish
                                                                                   GError         **error);
 
 void                       polkit_authority_unregister_authentication_agent (PolkitAuthority     *authority,
+                                                                             const gchar         *session_id,
                                                                              const gchar         *object_path,
                                                                              GCancellable        *cancellable,
                                                                              GAsyncReadyCallback  callback,

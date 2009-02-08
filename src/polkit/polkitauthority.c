@@ -475,6 +475,7 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
 
 static guint
 polkit_authority_register_authentication_agent_async (PolkitAuthority      *authority,
+                                                      const gchar          *session_id,
                                                       const gchar          *object_path,
                                                       GCancellable         *cancellable,
                                                       GAsyncReadyCallback   callback,
@@ -490,6 +491,7 @@ polkit_authority_register_authentication_agent_async (PolkitAuthority      *auth
 
   call_id = _polkit_authority_register_authentication_agent (authority->real,
                                                              EGG_DBUS_CALL_FLAGS_NONE,
+                                                             session_id,
                                                              object_path,
                                                              cancellable,
                                                              generic_async_cb,
@@ -501,6 +503,7 @@ polkit_authority_register_authentication_agent_async (PolkitAuthority      *auth
 /**
  * polkit_authority_register_authentication_agent:
  * @authority: A #PolkitAuthority.
+ * @session_id: The identifier of the session to register for or %NULL for the session of the caller.
  * @object_path: The object path for the authentication agent.
  * @cancellable: A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
@@ -514,12 +517,14 @@ polkit_authority_register_authentication_agent_async (PolkitAuthority      *auth
  **/
 void
 polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
+                                                const gchar          *session_id,
                                                 const gchar          *object_path,
                                                 GCancellable         *cancellable,
                                                 GAsyncReadyCallback   callback,
                                                 gpointer              user_data)
 {
   polkit_authority_register_authentication_agent_async (authority,
+                                                        session_id,
                                                         object_path,
                                                         cancellable,
                                                         callback,
@@ -566,6 +571,7 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
 /**
  * polkit_authority_register_authentication_agent_sync:
  * @authority: A #PolkitAuthority.
+ * @session_id: The identifier of the session to register for or %NULL for the session of the caller.
  * @object_path: The object path for the authentication agent.
  * @cancellable: A #GCancellable or %NULL.
  * @error: Return location for error or %NULL.
@@ -576,6 +582,7 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
  **/
 gboolean
 polkit_authority_register_authentication_agent_sync (PolkitAuthority     *authority,
+                                                     const gchar         *session_id,
                                                      const gchar         *object_path,
                                                      GCancellable        *cancellable,
                                                      GError             **error)
@@ -585,6 +592,7 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
   gboolean ret;
 
   call_id = polkit_authority_register_authentication_agent_async (authority,
+                                                                  session_id,
                                                                   object_path,
                                                                   cancellable,
                                                                   generic_cb,
@@ -603,6 +611,7 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
 
 static guint
 polkit_authority_unregister_authentication_agent_async (PolkitAuthority      *authority,
+                                                        const gchar          *session_id,
                                                         const gchar          *object_path,
                                                         GCancellable         *cancellable,
                                                         GAsyncReadyCallback   callback,
@@ -617,11 +626,12 @@ polkit_authority_unregister_authentication_agent_async (PolkitAuthority      *au
                                       polkit_authority_unregister_authentication_agent_async);
 
   call_id = _polkit_authority_unregister_authentication_agent (authority->real,
-                                                             EGG_DBUS_CALL_FLAGS_NONE,
-                                                             object_path,
-                                                             cancellable,
-                                                             generic_async_cb,
-                                                             simple);
+                                                               EGG_DBUS_CALL_FLAGS_NONE,
+                                                               session_id,
+                                                               object_path,
+                                                               cancellable,
+                                                               generic_async_cb,
+                                                               simple);
 
   return call_id;
 }
@@ -629,6 +639,7 @@ polkit_authority_unregister_authentication_agent_async (PolkitAuthority      *au
 /**
  * polkit_authority_unregister_authentication_agent:
  * @authority: A #PolkitAuthority.
+ * @session_id: The identifier of the session the agent is registered at or %NULL for the session of the caller.
  * @object_path: The object path that the authentication agent is registered at.
  * @cancellable: A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
@@ -642,16 +653,18 @@ polkit_authority_unregister_authentication_agent_async (PolkitAuthority      *au
  **/
 void
 polkit_authority_unregister_authentication_agent (PolkitAuthority      *authority,
+                                                  const gchar          *session_id,
                                                   const gchar          *object_path,
                                                   GCancellable         *cancellable,
                                                   GAsyncReadyCallback   callback,
                                                   gpointer              user_data)
 {
   polkit_authority_unregister_authentication_agent_async (authority,
-                                                        object_path,
-                                                        cancellable,
-                                                        callback,
-                                                        user_data);
+                                                          session_id,
+                                                          object_path,
+                                                          cancellable,
+                                                          callback,
+                                                          user_data);
 }
 
 /**
@@ -693,6 +706,7 @@ polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *author
 /**
  * polkit_authority_unregister_authentication_agent_sync:
  * @authority: A #PolkitAuthority.
+ * @session_id: The identifier of the session the agent is registered at or %NULL for the session of the caller.
  * @object_path: The object path that the authentication agent is registered at.
  * @cancellable: A #GCancellable or %NULL.
  * @error: Return location for error or %NULL.
@@ -703,6 +717,7 @@ polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *author
  **/
 gboolean
 polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *authority,
+                                                       const gchar         *session_id,
                                                        const gchar         *object_path,
                                                        GCancellable        *cancellable,
                                                        GError             **error)
@@ -712,6 +727,7 @@ polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *auth
   gboolean ret;
 
   call_id = polkit_authority_unregister_authentication_agent_async (authority,
+                                                                    session_id,
                                                                     object_path,
                                                                     cancellable,
                                                                     generic_cb,
