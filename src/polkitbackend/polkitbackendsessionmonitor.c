@@ -24,6 +24,8 @@
 #include <pwd.h>
 #include <grp.h>
 #include <string.h>
+#include <glib/gstdio.h>
+
 #include <polkit/polkit.h>
 #include "polkitbackendsessionmonitor.h"
 #include "ckbindings.h"
@@ -380,11 +382,22 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
       pid_t pid;
+      gchar *proc_path;
+      struct stat statbuf;
 
       pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject));
-      uid = 500; /* TODO */
 
-      user = polkit_unix_user_new (uid);
+      proc_path = g_strdup_printf ("/proc/%d", pid);
+      if (g_stat (proc_path, &statbuf) != 0)
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot get user for pid %d",
+                       pid);
+          goto out;
+        }
+      user = polkit_unix_user_new (statbuf.st_uid);
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
