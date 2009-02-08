@@ -26,6 +26,7 @@
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
 #include "polkitbackendauthority.h"
+#include "polkitbackendlocalauthority.h"
 
 #include "polkitbackendprivate.h"
 
@@ -85,7 +86,8 @@ polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority  
 
   klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
 
-  klass->system_bus_name_owner_changed (authority, name, old_owner, new_owner);
+  if (klass->system_bus_name_owner_changed != NULL)
+    klass->system_bus_name_owner_changed (authority, name, old_owner, new_owner);
 }
 
 /**
@@ -1260,4 +1262,56 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
  error:
   g_object_unref (server);
   return FALSE;
+}
+
+
+/**
+ * polkit_backend_authority_get:
+ *
+ * Loads all #GIOModule<!-- -->s from <literal>$(libdir)/polkit-1/backends</literal> to determine
+ * what implementation of #PolkitBackendAuthority to use. Then instantiates an object of the
+ * implementation with the highest priority and unloads all other modules.
+ *
+ * Returns: A #PolkitBackendAuthority. Free with g_object_unref().
+ **/
+PolkitBackendAuthority *
+polkit_backend_authority_get (void)
+{
+  static GIOExtensionPoint *ep = NULL;
+  static volatile GType local_authority_type = G_TYPE_INVALID;
+  GList *modules;
+  GList *authority_implementations;
+  GType authority_type;
+  PolkitBackendAuthority *authority;
+
+  /* define the extension point */
+  if (ep == NULL)
+    {
+      ep = g_io_extension_point_register (POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME);
+      g_io_extension_point_set_required_type (ep, POLKIT_BACKEND_TYPE_AUTHORITY);
+    }
+
+  /* make sure local types are registered */
+  if (local_authority_type == G_TYPE_INVALID)
+    {
+      local_authority_type = POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY;
+    }
+
+  /* load all modules */
+  modules = g_io_modules_load_all_in_directory (PACKAGE_LIB_DIR "/polkit-1/backends");
+
+  /* find all extensions; we have at least one here since we've registered the local backend */
+  authority_implementations = g_io_extension_point_get_extensions (ep);
+
+  /* the returned list is sorted according to priority so just take the highest one */
+  authority_type = g_io_extension_get_type ((GIOExtension*) authority_implementations->data);
+  authority = POLKIT_BACKEND_AUTHORITY (g_object_new (authority_type, NULL));
+
+  /* unload all modules; the module our instantiated authority is in won't be unloaded because
+   * we've instantiated a reference to a type in this module
+   */
+  g_list_foreach (modules, (GFunc) g_type_module_unuse, NULL);
+  g_list_free (modules);
+
+  return authority;
 }

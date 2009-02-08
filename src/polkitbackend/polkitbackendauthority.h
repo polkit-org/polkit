@@ -41,6 +41,13 @@ G_BEGIN_DECLS
 typedef struct _PolkitBackendAuthorityClass    PolkitBackendAuthorityClass;
 
 /**
+ * POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME:
+ *
+ * Extension point name for authority backend implementations.
+ */
+#define POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME "polkit-backend-authority-1"
+
+/**
  * PolkitBackendAuthority:
  *
  * The #PolkitBackendAuthority struct should not be accessed directly.
@@ -257,6 +264,8 @@ gboolean polkit_backend_authority_authentication_agent_response (PolkitBackendAu
                                                                  GError                   **error);
 
 /* --- */
+
+PolkitBackendAuthority *polkit_backend_authority_get (void);
 
 gboolean polkit_backend_register_authority (PolkitBackendAuthority   *authority,
                                             const gchar              *well_known_name,

@@ -26,17 +26,6 @@
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackend.h>
 
-static PolkitBackendAuthority *
-get_authority_backend (void)
-{
-  PolkitBackendAuthority *authority;
-
-  /* TODO: use extension points etc. */
-  authority = polkit_backend_local_authority_new ();
-
-  return authority;
-}
-
 int
 main (int argc, char **argv)
 {
@@ -53,7 +42,9 @@ main (int argc, char **argv)
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  authority = get_authority_backend ();
+  authority = polkit_backend_authority_get ();
+
+  g_print ("Using authority class %s\n", g_type_name (G_TYPE_FROM_INSTANCE (authority)));
 
   if (!polkit_backend_register_authority (authority,
                                           "org.freedesktop.PolicyKit1",

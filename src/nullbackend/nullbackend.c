@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 Red Hat, Inc.
+ * Copyright (C) 2009 Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,19 +19,16 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_H
-#define __POLKIT_BACKEND_H
+#include "polkitbackendnullauthority.h"
 
-#include <polkit/polkit.h>
+void
+g_io_module_load (GIOModule *module)
+{
+  polkit_backend_null_authority_register (module);
+}
 
-#define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
-#include <polkitbackend/polkitbackendtypes.h>
-#include <polkitbackend/polkitbackendauthority.h>
-#include <polkitbackend/polkitbackendlocalauthority.h>
-#include <polkitbackend/polkitbackendactionpool.h>
-#include <polkitbackend/polkitbackendsessionmonitor.h>
-#undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
-
-#endif /* __POLKIT_BACKEND_H */
-
+void
+g_io_module_unload (GIOModule *module)
+{
+}
 

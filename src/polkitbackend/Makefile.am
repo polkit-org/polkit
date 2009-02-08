@@ -84,3 +84,4 @@ clean-local :
 install-exec-hook:
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/polkit-1
 	-chmod 600 $(DESTDIR)$(localstatedir)/lib/polkit-1
+	mkdir -p $(DESTDIR)$(libdir)/polkit-1/backends

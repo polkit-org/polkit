@@ -1,0 +1,46 @@
+
+NULL =
+
+module_flags = -export_dynamic -avoid-version -module -no-undefined -export-symbols-regex '^g_io_module_(load|unload)'
+
+INCLUDES =                                              	\
+	-I$(top_builddir)/src                           	\
+	-I$(top_srcdir)/src                             	\
+	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"       	\
+	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"       	\
+	-DPACKAGE_DATA_DIR=\""$(datadir)"\"             	\
+	-DPACKAGE_BIN_DIR=\""$(bindir)"\"               	\
+	-DPACKAGE_LOCALSTATE_DIR=\""$(localstatedir)"\" 	\
+	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\"         	\
+	-DPACKAGE_LIB_DIR=\""$(libdir)"\"               	\
+	-D_POSIX_PTHREAD_SEMANTICS                      	\
+	-D_REENTRANT	                                	\
+	$(NULL)
+
+polkitmodulesdir = $(libdir)/polkit-1/backends
+polkitmodules_LTLIBRARIES = libpolkit-nullbackend.la
+
+libpolkit_nullbackend_la_SOURCES = 					\
+	nullbackend.c							\
+	polkitbackendnullauthority.c	polkitbackendnullauthority.h	\
+	$(NULL)
+
+libpolkit_nullbackend_la_CFLAGS =                             		\
+	-DG_LOG_DOMAIN=\"PolkitNullBackend\"				\
+	$(GLIB_CFLAGS)							\
+	$(NULL)
+
+libpolkit_nullbackend_la_LDFLAGS =  	                      		\
+	$(module_flags)               					\
+	$(GLIB_LDADD)							\
+	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la	\
+	$(NULL)
+
+libpolkit_nullbackend_la_LIBADD =  	                      		\
+	$(NULL)
+
+nullconfigdir = $(sysconfdir)/polkit-1/nullbackend.conf.d
+nullconfig_DATA = 50-nullbackend.conf
+
+clean-local :
+	rm -f *~
