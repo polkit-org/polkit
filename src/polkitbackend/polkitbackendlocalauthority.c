@@ -1166,22 +1166,21 @@ polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority 
   /* special case: uid 0, root, is _always_ authorized */
   if (polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
     {
+      /* allow users to read their own authorizations */
       if (!polkit_identity_equal (user_of_caller, identity))
         {
           /* in the future, use something like org.freedesktop.policykit1.localauthority.manage to allow this */
           g_set_error (error,
                        POLKIT_ERROR,
                        POLKIT_ERROR_FAILED,
-                       "Can't look at authorizations belonging to other users");
+                       "Can't look at authorizations belonging to other identities");
           goto out;
         }
     }
 
-
   list = get_authorizations_for_identity (local_authority, identity);
 
  out:
-
   g_free (identity_str);
   if (user_of_caller != NULL)
     g_object_unref (user_of_caller);
@@ -1200,6 +1199,7 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitIdentity *user_of_caller;
   PolkitSubject *subject;
   const gchar *action_id;
   gboolean is_negative;
@@ -1212,6 +1212,7 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
   ret = FALSE;
 
   subject_str = NULL;
+  user_of_caller = NULL;
 
   subject = polkit_authorization_get_subject (authorization);
   action_id = polkit_authorization_get_action_id (authorization);
@@ -1225,7 +1226,22 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
            action_id,
            is_negative);
 
-  /* TODO: check if caller is authorized */
+  user_of_caller = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
+                                                                        caller,
+                                                                        error);
+  if (user_of_caller == NULL)
+    goto out;
+
+  /* special case: uid 0, root, is _always_ authorized */
+  if (polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
+    {
+      /* in the future, use something like org.freedesktop.policykit1.localauthority.manage to allow this */
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Not authorized to add authorization");
+      goto out;
+    }
 
   /* We can only add temporary authorizations to users, not e.g. groups */
   if (subject != NULL && !POLKIT_IS_UNIX_USER (identity))
@@ -1249,6 +1265,9 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
 
  out:
   g_free (subject_str);
+  if (user_of_caller != NULL)
+    g_object_unref (user_of_caller);
+
   return ret;
 }
 
@@ -1263,6 +1282,7 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitIdentity *user_of_caller;
   PolkitSubject *subject;
   const gchar *action_id;
   gboolean is_negative;
@@ -1275,6 +1295,7 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
   ret = FALSE;
 
   subject_str = NULL;
+  user_of_caller = NULL;
 
   subject = polkit_authorization_get_subject (authorization);
   action_id = polkit_authorization_get_action_id (authorization);
@@ -1288,7 +1309,22 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
            action_id,
            is_negative);
 
-  /* TODO: check if caller is authorized */
+  user_of_caller = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
+                                                                        caller,
+                                                                        error);
+  if (user_of_caller == NULL)
+    goto out;
+
+  /* special case: uid 0, root, is _always_ authorized */
+  if (polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
+    {
+      /* in the future, use something like org.freedesktop.policykit1.localauthority.manage to allow this */
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Not authorized to remove authorization");
+      goto out;
+    }
 
   /* We can only remove temporary authorizations from users, not e.g. groups */
   if (subject != NULL && !POLKIT_IS_UNIX_USER (identity))
@@ -1312,6 +1348,9 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
 
  out:
   g_free (subject_str);
+  if (user_of_caller != NULL)
+    g_object_unref (user_of_caller);
+
   return ret;
 }
 

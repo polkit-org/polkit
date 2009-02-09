@@ -32,7 +32,12 @@ Core TODO items
  - PolkitAuthority probably needs locking around its singleton for
    multithreaded backends.
 
- - symbol visibility in shared libraries
+ - rethink actions shipped with PolicyKit; we probably just want something
+   simple like
+   - org.freedesktop.policykit1.read
+   - org.freedesktop.policykit1.localauthority.manage
+
+ - restrict symbol visibility in shared libraries
 
 Backend TODO items
 ------------------
