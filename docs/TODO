@@ -1,12 +1,6 @@
 Core TODO items
 ---------------
 
- - document the D-Bus interfaces
-   - should be done in eggdbus; e.g.
-     - D-Bus XML --(eggdbus-binding-tool)--> DocBook --(gtk-doc)--> HTML
-
- - properly document the GObject API
-
  - maybe rename .policy to .action for policy XML files
 
  - provide a polkit-validate-action-file-1 tool to check/validate
@@ -18,14 +12,6 @@ Core TODO items
 
  - write a PolicyKit 0.9.x -> polkit 1.0 porting guide
 
- - provide a public ObtainAuthorization() method
-
- - separate core API (e.g. CheckAuthorization()) from the administration API
-   (e.g. AddAuthorization()) both in the D-Bus interface and in the GObject
-   client libraries
-
- - guard off administration API with I_KNOW_THIS_API_IS_SUBJECT_TO_CHANGE_ETC
-
  - guard off backend API with I_KNOW_THIS_API_IS_SUBJECT_TO_CHANGE_ETC
 
  - provide a way to tweak the defaults for actions (or maybe not)
@@ -36,33 +22,20 @@ Core TODO items
  - make sure simple operations work when no system bus is present
    - e.g. %post RPM scripts adding/removing authorizations to identities
 
- - rework the classes in the PolkitAgent* library so the API is easier to
-   work with
-
  - for administrator authentication, make it possible to use 'wheel' group
    sudo-style authentication (e.g. select one or more identities that the
    user can choose to authenticate as)
-
- - provide a way to cancel a CheckAuthorization() call
 
  - maybe use file monitors on /var/lib/polkit-1 directories and
    emit the Changed() signal
 
  - PolkitAuthority probably needs locking around its singleton for
-   multithreaded backends
+   multithreaded backends.
 
- - rewrite the PolkitAgentAuthenticationSession class to use signals
-   instead of callbacks, maybe do the same for PolkitAgentAuthenticationAgent
-
- - support authorization for identities other than Unix users in
-   PolkitAgentAuthenticationSessiono
-
- - consider adding POLKIT_AUTHORIZATION_RESULT_FAILED_CHALLENGE
+ - symbol visibility in shared libraries
 
 Backend TODO items
 ------------------
-
- - use a GIO extension point to decide what authority backend to use
 
  - check / validate all incoming arguments
    - and other security/paranoia stuff
@@ -81,12 +54,8 @@ Backend TODO items
  - allow backends to extend the syntax for subjects and identities, e.g.
    have something like ipa-user:...
 
- - rate-limit file monitoring in PolkitBackendActionPool
-
  - avoid watching all name owner changes in PolkitBackendAuthority and
    PolkitBackendServer
-
- - get the right UID for Unix process subjects
 
  - cache user information for dbus connections
 
@@ -96,8 +65,8 @@ polkit-gnome TODO items
  - show a notification icon when the session/user has temporary authorizations
    - along with an option to give these up
 
- - make the AuthenticationAgent process (which runs for the lifetime of the
-   session) spawn a process to display the authentication dialog
+ - maybe make the AuthenticationAgent process (which runs for the lifetime of
+   the session) spawn a process to display the authentication dialog
    - to make it lighter on resource usage
    - to work around Metacity focus stealing prevention bugs
 

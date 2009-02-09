@@ -21,7 +21,7 @@ polkitd_1_SOURCES = 							\
 	$(NULL)
 
 polkitd_1_CFLAGS = 							\
-	-I$(top_srcdir)/src						\
+	-DPOLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
 	-DG_LOG_DOMAIN=\"polkitd-1\"					\
 	$(GLIB_CFLAGS)							\
 	$(NULL)

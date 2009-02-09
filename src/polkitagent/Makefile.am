@@ -12,7 +12,6 @@ INCLUDES =                                                      \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
-	-DPOLKIT_AGENT_COMPILATION				\
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
@@ -48,6 +47,8 @@ libpolkit_agent_1_la_SOURCES =                                   			\
         $(NULL)
 
 libpolkit_agent_1_la_CFLAGS =                                        	\
+        -D_POLKIT_COMPILATION                                  		\
+	-D_POLKIT_AGENT_COMPILATION					\
         $(GLIB_CFLAGS)							\
         $(EGG_DBUS_CFLAGS)						\
         $(NULL)
@@ -61,9 +62,19 @@ libpolkit_agent_1_la_LIBADD =                               		\
 
 libexec_PROGRAMS = polkit-agent-helper-1
 
-polkit_agent_helper_1_SOURCES = polkitagenthelper.c
-polkit_agent_helper_1_CFLAGS  = $(GLIB_CFLAGS)
-polkit_agent_helper_1_LDADD   = $(AUTH_LIBS) $(top_builddir)/src/polkit/libpolkit-gobject-1.la
+polkit_agent_helper_1_SOURCES = 					\
+	polkitagenthelper.c						\
+	$(NULL)
+
+polkit_agent_helper_1_CFLAGS  = 					\
+        -D_POLKIT_COMPILATION                                  		\
+	$(GLIB_CFLAGS)							\
+	$(NULL)
+
+polkit_agent_helper_1_LDADD = 						\
+	$(AUTH_LIBS)							\
+	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(NULL)
 
 # polkit-agent-helper-1 need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root

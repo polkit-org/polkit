@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#define POLKIT_I_KNOW_AUTHORITY_MANAGER_API_IS_SUBJECT_TO_CHANGE
 #include <polkit/polkit.h>
 
 static PolkitAuthority *authority;

@@ -19,7 +19,7 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#if !defined(POLKIT_AGENT_INSIDE_POLKIT_AGENT_H) && !defined (POLKIT_AGENT_COMPILATION)
+#if !defined(_POLKIT_AGENT_INSIDE_POLKIT_AGENT_H) && !defined (_POLKIT_AGENT_COMPILATION)
 #error "Only <polkitagent/polkitagent.h> can be included directly, this file may disappear or change contents"
 #endif
 

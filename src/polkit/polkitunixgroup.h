@@ -19,6 +19,10 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#if !defined (_POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef __POLKIT_UNIX_GROUP_H
 #define __POLKIT_UNIX_GROUP_H
 

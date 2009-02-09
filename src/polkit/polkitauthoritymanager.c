@@ -33,7 +33,10 @@
  * @short_description: Authority Manager
  * @stability: Unstable
  *
- * Checking claims.
+ * Manage authorizations.
+ *
+ * To use this unstable API you need to define the symbol
+ * <literal>POLKIT_I_KNOW_AUTHORITY_MANAGER_API_IS_SUBJECT_TO_CHANGE</literal>.
  */
 
 struct _PolkitAuthorityManager

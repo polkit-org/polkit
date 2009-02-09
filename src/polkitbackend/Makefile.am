@@ -57,6 +57,7 @@ libpolkit_backend_1_la_SOURCES =                                   	\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\
+        -D_POLKIT_COMPILATION                                  		\
         -D_POLKIT_BACKEND_COMPILATION                                  	\
         $(GLIB_CFLAGS)							\
         $(EGG_DBUS_CFLAGS)						\

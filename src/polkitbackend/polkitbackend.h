@@ -24,6 +24,10 @@
 
 #include <polkit/polkit.h>
 
+#if !defined (POLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE) && !defined (POLKIT_BACKEND_COMPILATION)
+#error "libpolkitbackend is unstable API and subject to change. You must define POLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE to acknowledge this."
+#endif
+
 #define _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H 1
 #include <polkitbackend/polkitbackendtypes.h>
 #include <polkitbackend/polkitbackendauthority.h>

@@ -19,12 +19,18 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#if !defined (_POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
+#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
+#endif
+
 #ifndef __POLKIT_AUTHORIZATION_H
 #define __POLKIT_AUTHORIZATION_H
 
 #include <glib-object.h>
 #include <gio/gio.h>
 #include <polkit/polkittypes.h>
+
+#if defined (POLKIT_I_KNOW_AUTHORITY_MANAGER_API_IS_SUBJECT_TO_CHANGE) || defined (_POLKIT_COMPILATION)
 
 G_BEGIN_DECLS
 
@@ -53,5 +59,7 @@ PolkitSubject       *polkit_authorization_get_subject      (PolkitAuthorization 
 gboolean             polkit_authorization_get_is_negative  (PolkitAuthorization *authorization);
 
 G_END_DECLS
+
+#endif /* API hiding */
 
 #endif /* __POLKIT_AUTHORIZATION_H */

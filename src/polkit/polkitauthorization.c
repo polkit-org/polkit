@@ -30,8 +30,12 @@
  * SECTION:polkitauthorization
  * @title: PolkitAuthorization
  * @short_description: Authorization
+ * @stability: Unstable
  *
  * This class represents an explicit authorization.
+ *
+ * To use this unstable API you need to define the symbol
+ * <literal>POLKIT_I_KNOW_AUTHORITY_MANAGER_API_IS_SUBJECT_TO_CHANGE</literal>.
  */
 
 struct _PolkitAuthorization
