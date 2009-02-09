@@ -59,14 +59,14 @@
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>polkit-1 grant</command>
+      <command>polkit-1 add</command>
       <arg choice="plain"><replaceable>identity</replaceable></arg>
       <arg choice="plain"><replaceable>action-id</replaceable></arg>
       <arg><option>--subject <replaceable>subject</replaceable></option></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
-      <command>polkit-1 revoke</command>
+      <command>polkit-1 remove</command>
       <arg choice="plain"><replaceable>identity</replaceable></arg>
       <arg choice="plain"><replaceable>action-id</replaceable></arg>
       <arg><option>--subject <replaceable>subject</replaceable></option></arg>
@@ -210,13 +210,13 @@
 
     <refsect2>
       <para>
-        <command>polkit-1 grant</command>
+        <command>polkit-1 add</command>
         <arg choice="plain"><replaceable>identity</replaceable></arg>
         <arg choice="plain"><replaceable>action-id</replaceable></arg>
         <arg><option>--subject <replaceable>subject</replaceable></option></arg>
       </para>
       <para>
-        Grants an authorization to <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>
+        Adds an authorization to <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>
         optionally constraining its use for <replaceable>subject</replaceable>.
         See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>
         and <xref linkend="polkit-1-subject"/> for details about <replaceable>subject</replaceable>.
@@ -225,13 +225,13 @@
 
     <refsect2>
       <para>
-        <command>polkit-1 revoke</command>
+        <command>polkit-1 remove</command>
         <arg choice="plain"><replaceable>identity</replaceable></arg>
         <arg choice="plain"><replaceable>action-id</replaceable></arg>
         <arg><option>--subject <replaceable>subject</replaceable></option></arg>
       </para>
       <para>
-        Revokes an authorization from <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>
+        Removes an authorization from <replaceable>identity</replaceable> for <replaceable>action-id</replaceable>
         which, optionally, is constrained to <replaceable>subject</replaceable>.
         See <xref linkend="polkit-1-identity"/> for details about <replaceable>identity</replaceable>
         and <xref linkend="polkit-1-subject"/> for details about <replaceable>subject</replaceable>.
@@ -348,7 +348,7 @@
   <refsect1 id="polkit-1-identity">
     <title>IDENTITIES</title>
     <para>
-      Identities represent the entities that authorizations are granted to:
+      Identities represent the entities that authorizations are added to:
       individual users or groups of users.
     </para>
     <para>

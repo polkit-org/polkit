@@ -36,8 +36,8 @@ static gboolean opt_list_groups   = FALSE;
 static gboolean opt_list_authorizations  = FALSE;
 static gboolean opt_list_explicit_authorizations  = FALSE;
 static gboolean opt_check = FALSE;
-static gboolean opt_grant = FALSE;
-static gboolean opt_revoke = FALSE;
+static gboolean opt_add = FALSE;
+static gboolean opt_remove = FALSE;
 static gboolean opt_run = FALSE;
 
 static gboolean opt_show_help = FALSE;
@@ -60,8 +60,8 @@ static gboolean list_explicit_authorizations (void);
 
 static gboolean do_run (gint argc, gchar *argv[]);
 static gboolean do_check (void);
-static gboolean do_grant (void);
-static gboolean do_revoke (void);
+static gboolean do_add (void);
+static gboolean do_remove (void);
 
 static gboolean show_action (const gchar *action_id);
 
@@ -204,9 +204,9 @@ main (int argc, char *argv[])
 
           action_id = g_strdup (argv[n]);
         }
-      else if (strcmp (argv[n], "grant") == 0)
+      else if (strcmp (argv[n], "add") == 0)
         {
-          opt_grant = TRUE;
+          opt_add = TRUE;
 
           n++;
           if (n >= argc)
@@ -232,9 +232,9 @@ main (int argc, char *argv[])
 
           action_id = g_strdup (argv[n]);
         }
-      else if (strcmp (argv[n], "revoke") == 0)
+      else if (strcmp (argv[n], "remove") == 0)
         {
-          opt_revoke = TRUE;
+          opt_remove = TRUE;
 
           n++;
           if (n >= argc)
@@ -352,7 +352,7 @@ main (int argc, char *argv[])
 
       ret = do_check ();
     }
-  else if (opt_grant)
+  else if (opt_add)
     {
       if (identity == NULL || action_id == NULL)
         {
@@ -360,9 +360,9 @@ main (int argc, char *argv[])
           goto out;
         }
 
-      ret = do_grant ();
+      ret = do_add ();
     }
-  else if (opt_revoke)
+  else if (opt_remove)
     {
       if (identity == NULL || action_id == NULL)
         {
@@ -370,7 +370,7 @@ main (int argc, char *argv[])
           goto out;
         }
 
-      ret = do_revoke ();
+      ret = do_remove ();
     }
   else
     {
@@ -907,7 +907,7 @@ list_explicit_authorizations (void)
 /* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
-do_grant (void)
+do_add (void)
 {
   PolkitAuthorization *authorization;
   gboolean ret;
@@ -943,7 +943,7 @@ do_grant (void)
 /* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
-do_revoke (void)
+do_remove (void)
 {
   PolkitAuthorization *authorization;
   gboolean ret;
