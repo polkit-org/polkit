@@ -1144,8 +1144,11 @@ polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority 
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitIdentity *user_of_caller;
   gchar *identity_str;
   GList *list;
+
+  list = NULL;
 
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
@@ -1154,11 +1157,34 @@ polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority 
 
   g_debug ("enumerating authorizations for %s", identity_str);
 
-  /* TODO: check if caller is authorized */
+  user_of_caller = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor,
+                                                                        caller,
+                                                                        error);
+  if (user_of_caller == NULL)
+    goto out;
+
+  /* special case: uid 0, root, is _always_ authorized */
+  if (polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
+    {
+      if (!polkit_identity_equal (user_of_caller, identity))
+        {
+          /* in the future, use something like org.freedesktop.policykit1.localauthority.manage to allow this */
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Can't look at authorizations belonging to other users");
+          goto out;
+        }
+    }
+
 
   list = get_authorizations_for_identity (local_authority, identity);
 
+ out:
+
   g_free (identity_str);
+  if (user_of_caller != NULL)
+    g_object_unref (user_of_caller);
 
   return list;
 }
