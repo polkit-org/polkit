@@ -43,5 +43,7 @@ libpolkit_nullbackend_la_LIBADD =  	                      		\
 nullconfigdir = $(sysconfdir)/polkit-1/nullbackend.conf.d
 nullconfig_DATA = 50-nullbackend.conf
 
+EXTRA_DIST = $(nullconfig_DATA)
+
 clean-local :
 	rm -f *~
