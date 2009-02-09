@@ -632,32 +632,21 @@ list_groups (void)
 static gint
 do_run (gint argc, gchar *argv[])
 {
-  PolkitAuthorizationResult result;
   PolkitSubject *calling_process;
   GError *error;
-  gboolean ret;
 
-  ret = FALSE;
-  error = NULL;
 
   calling_process = polkit_unix_process_new (getpid ());
 
-  result = polkit_authority_check_authorization_sync (authority,
-                                                      calling_process,
-                                                      action_id,
-                                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
-                                                      NULL,
-                                                      &error);
-  if (error != NULL)
+  error = NULL;
+  if (!polkit_authority_obtain_authorization_sync (authority,
+                                                   calling_process,
+                                                   action_id,
+                                                   NULL,
+                                                   &error))
     {
-      g_printerr ("Error checking authorization for action %s: %s\n", action_id, error->message);
+      g_printerr ("Error obtaining authorization for action %s: %s\n", action_id, error->message);
       g_error_free (error);
-      goto out;
-    }
-
-  if (result != POLKIT_AUTHORIZATION_RESULT_AUTHORIZED)
-    {
-      g_printerr ("Error obtaining authorization for action %s (%d)\n", action_id, result);
       goto out;
     }
 
@@ -669,7 +658,7 @@ do_run (gint argc, gchar *argv[])
 
   g_object_unref (calling_process);
 
-  return ret;
+  return FALSE;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

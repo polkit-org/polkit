@@ -15,7 +15,7 @@ INCLUDES =                                              	\
 	-D_REENTRANT	                                	\
 	$(NULL)
 
-noinst_PROGRAMS = cancel
+noinst_PROGRAMS = cancel cancelobtain
 
 cancel_SOURCES = cancel.c
 
@@ -24,6 +24,17 @@ cancel_CFLAGS =                             			\
 	$(NULL)
 
 cancel_LDADD =  	                      			\
+	$(GLIB_LDADD)						\
+	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
+	$(NULL)
+
+cancelobtain_SOURCES = cancelobtain.c
+
+cancelobtain_CFLAGS =                             		\
+	$(GLIB_CFLAGS)						\
+	$(NULL)
+
+cancelobtain_LDADD =  	                      			\
 	$(GLIB_LDADD)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
 	$(NULL)
