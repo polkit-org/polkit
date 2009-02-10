@@ -22,10 +22,6 @@ Core TODO items
  - make sure simple operations work when no system bus is present
    - e.g. %post RPM scripts adding/removing authorizations to identities
 
- - for administrator authentication, make it possible to use 'wheel' group
-   sudo-style authentication (e.g. select one or more identities that the
-   user can choose to authenticate as)
-
  - maybe use file monitors on /var/lib/polkit-1 directories and
    emit the Changed() signal
 

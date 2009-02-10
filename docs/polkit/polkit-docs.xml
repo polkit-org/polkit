@@ -90,6 +90,7 @@
     <xi:include href="../polkitbackend/xml/polkitbackendlocalauthority.xml"/>
     <xi:include href="../polkitbackend/xml/polkitbackendactionpool.xml"/>
     <xi:include href="../polkitbackend/xml/polkitbackendsessionmonitor.xml"/>
+    <xi:include href="../polkitbackend/xml/polkitbackendconfigsource.xml"/>
   </reference>
 
   <reference id="ref-authentication-agent-api">

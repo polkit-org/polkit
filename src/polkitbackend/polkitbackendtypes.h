@@ -33,6 +33,8 @@ typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
 struct _PolkitBackendSessionMonitor;
 typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
 
+struct _PolkitBackendConfigSource;
+typedef struct _PolkitBackendConfigSource PolkitBackendConfigSource;
 
 #endif /* __POLKIT_BACKEND_TYPES_H */
 

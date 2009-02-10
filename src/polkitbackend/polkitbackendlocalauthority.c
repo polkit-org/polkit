@@ -30,6 +30,7 @@
 #include "polkitbackendlocalauthority.h"
 #include "polkitbackendactionpool.h"
 #include "polkitbackendsessionmonitor.h"
+#include "polkitbackendconfigsource.h"
 
 #include <polkit/polkitprivate.h>
 
@@ -48,6 +49,8 @@ typedef struct
   PolkitBackendActionPool *action_pool;
 
   PolkitBackendSessionMonitor *session_monitor;
+
+  PolkitBackendConfigSource *config_source;
 
   GHashTable *hash_identity_to_authority_store;
 
@@ -116,6 +119,10 @@ static gboolean check_temporary_authorization_for_identity (PolkitBackendLocalAu
                                                            PolkitIdentity              *identity,
                                                            PolkitSubject               *subject,
                                                            const gchar                 *action_id);
+
+static GList *get_users_in_group (PolkitBackendLocalAuthority *authority,
+                                  PolkitIdentity              *group,
+                                  gboolean                     include_root);
 
 static GList *get_groups_for_user (PolkitBackendLocalAuthority *authority,
                                    PolkitIdentity              *user);
@@ -244,18 +251,21 @@ static void
 polkit_backend_local_authority_init (PolkitBackendLocalAuthority *authority)
 {
   PolkitBackendLocalAuthorityPrivate *priv;
-  GFile *action_desc_directory;
+  GFile *directory;
 
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
 
-  action_desc_directory = g_file_new_for_path (PACKAGE_DATA_DIR "/polkit-1/actions");
-  priv->action_pool = polkit_backend_action_pool_new (action_desc_directory);
-  g_object_unref (action_desc_directory);
-
+  directory = g_file_new_for_path (PACKAGE_DATA_DIR "/polkit-1/actions");
+  priv->action_pool = polkit_backend_action_pool_new (directory);
+  g_object_unref (directory);
   g_signal_connect (priv->action_pool,
                     "changed",
                     (GCallback) action_pool_changed,
                     authority);
+
+  directory = g_file_new_for_path (PACKAGE_SYSCONF_DIR "/polkit-1/localauthority.conf.d");
+  priv->config_source = polkit_backend_config_source_new (directory);
+  g_object_unref (directory);
 
   priv->hash_identity_to_authority_store = g_hash_table_new_full ((GHashFunc) polkit_identity_hash,
                                                                   (GEqualFunc) polkit_identity_equal,
@@ -281,6 +291,9 @@ polkit_backend_local_authority_finalize (GObject *object)
 
   if (priv->action_pool != NULL)
     g_object_unref (priv->action_pool);
+
+  if (priv->config_source != NULL)
+    g_object_unref (priv->config_source);
 
   if (priv->session_monitor != NULL)
     g_object_unref (priv->session_monitor);
@@ -1694,6 +1707,67 @@ authentication_agent_begin_callback (GObject *source_object,
   authentication_session_free (session);
 }
 
+static GList *
+get_admin_auth_identities (PolkitBackendLocalAuthority *authority)
+{
+  PolkitBackendLocalAuthorityPrivate *priv;
+  GList *ret;
+  guint n;
+  gchar **admin_identities;
+  GError *error;
+
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
+
+  error = NULL;
+  admin_identities = polkit_backend_config_source_get_string_list (priv->config_source,
+                                                                   "Configuration",
+                                                                   "AdminIdentities",
+                                                                   &error);
+  if (admin_identities == NULL)
+    {
+      g_warning ("Error getting admin_identities configuration item: %s", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  for (n = 0; admin_identities[n] != NULL; n++)
+    {
+      PolkitIdentity *identity;
+
+      error = NULL;
+      identity = polkit_identity_from_string (admin_identities[n], &error);
+      if (identity == NULL)
+        {
+          g_warning ("Error parsing identity %s: %s", admin_identities[n], error->message);
+          g_error_free (error);
+          continue;
+        }
+
+      if (POLKIT_IS_UNIX_USER (identity))
+        {
+          ret = g_list_append (ret, identity);
+        }
+      else if (POLKIT_IS_UNIX_GROUP (identity))
+        {
+          ret = g_list_concat (ret, get_users_in_group (authority, identity, FALSE));
+        }
+      else
+        {
+          g_warning ("Unsupported identity %s", admin_identities[n]);
+        }
+    }
+
+  g_strfreev (admin_identities);
+
+ out:
+
+  /* default to uid 0 if no admin identities has been found */
+  if (ret == NULL)
+    ret = g_list_prepend (ret, polkit_unix_user_new (0));
+
+  return ret;
+}
+
 static void
 authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          PolkitSubject               *subject,
@@ -1715,14 +1789,18 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
 
   cookie = authentication_agent_new_cookie (agent);
 
-  /* TODO: add uid 0 OR users in wheel group depending on value of @implicit_authorization */
   identities = NULL;
-  identities = g_list_prepend (identities, g_object_ref (user_of_subject));
-#if 0
-  identities = g_list_prepend (identities, polkit_unix_user_new (501));
-  identities = g_list_prepend (identities, polkit_unix_user_new (502));
-  identities = g_list_prepend (identities, polkit_unix_user_new (0));
-#endif
+
+  /* select admin user if required by the implicit authorization */
+  if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED ||
+      implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
+    {
+      identities = get_admin_auth_identities (authority);
+    }
+  else
+    {
+      identities = g_list_prepend (identities, g_object_ref (user_of_subject));
+    }
 
   session = authentication_session_new (agent,
                                         cookie,
@@ -2602,6 +2680,53 @@ check_temporary_authorization_for_identity (PolkitBackendLocalAuthority *authori
 
  out:
   return result;
+}
+
+static GList *
+get_users_in_group (PolkitBackendLocalAuthority *authority,
+                    PolkitIdentity              *group,
+                    gboolean                     include_root)
+{
+  gid_t gid;
+  struct group *grp;
+  GList *ret;
+  guint n;
+
+  ret = NULL;
+
+  gid = polkit_unix_group_get_gid (POLKIT_UNIX_GROUP (group));
+  grp = getgrgid (gid);
+  if (grp == NULL)
+    {
+      g_warning ("Error looking up group with gid %d: %m", gid);
+      goto out;
+    }
+
+  for (n = 0; grp->gr_mem != NULL && grp->gr_mem[n] != NULL; n++)
+    {
+      PolkitIdentity *user;
+      GError *error;
+
+      if (!include_root && strcmp (grp->gr_mem[n], "root") == 0)
+        continue;
+
+      error = NULL;
+      user = polkit_unix_user_new_for_name (grp->gr_mem[n], &error);
+      if (user == NULL)
+        {
+          g_warning ("Unknown username '%s' in group: %s", grp->gr_mem[n], error->message);
+          g_error_free (error);
+        }
+      else
+        {
+          ret = g_list_prepend (ret, user);
+        }
+    }
+
+  ret = g_list_reverse (ret);
+
+ out:
+  return ret;
 }
 
 static GList *

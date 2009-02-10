@@ -42,6 +42,7 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendlocalauthority.h					\
 	polkitbackendactionpool.h					\
 	polkitbackendsessionmonitor.h					\
+	polkitbackendconfigsource.h					\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   	\
@@ -54,6 +55,7 @@ libpolkit_backend_1_la_SOURCES =                                   	\
 	polkitbackendlocalauthority.h	polkitbackendlocalauthority.c	\
 	polkitbackendactionpool.h	polkitbackendactionpool.c	\
 	polkitbackendsessionmonitor.h	polkitbackendsessionmonitor.c	\
+	polkitbackendconfigsource.h	polkitbackendconfigsource.c	\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\
@@ -72,8 +74,12 @@ libpolkit_backend_1_la_LIBADD =                               		\
 
 CLEANFILES = $(BUILT_SOURCES)
 
+localauthorityconfigdir = $(sysconfdir)/polkit-1/localauthority.conf.d
+localauthorityconfig_DATA = 50-localauthority.conf
+
 EXTRA_DIST =								\
 	org.freedesktop.ConsoleKit.xml					\
+	$(localauthorityconfig_DATA)					\
 	$(NULL)
 
 dist-hook :

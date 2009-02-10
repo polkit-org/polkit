@@ -34,6 +34,7 @@
 #include <polkitbackend/polkitbackendlocalauthority.h>
 #include <polkitbackend/polkitbackendactionpool.h>
 #include <polkitbackend/polkitbackendsessionmonitor.h>
+#include <polkitbackend/polkitbackendconfigsource.h>
 #undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
 
 #endif /* __POLKIT_BACKEND_H */

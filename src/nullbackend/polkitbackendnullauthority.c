@@ -94,126 +94,17 @@ polkit_backend_null_authority_class_finalize (PolkitBackendNullAuthorityClass *k
 {
 }
 
-static gint
-compare_filename (GFile *a, GFile *b)
-{
-  gchar *a_uri;
-  gchar *b_uri;
-  gint ret;
-
-  a_uri = g_file_get_uri (a);
-  b_uri = g_file_get_uri (b);
-
-  ret = g_strcmp0 (a_uri, b_uri);
-
-  return ret;
-}
-
-/* Loads and process all .conf files in /etc/polkit-1/nullbackend.conf.d/ in order */
-static void
-load_config (gint *out_priority)
-{
-  GFileEnumerator *enumerator;
-  GFile *directory;
-  GFileInfo *file_info;
-  GError *error;
-  GList *files;
-  GList *l;
-
-  directory = g_file_new_for_path (PACKAGE_SYSCONF_DIR "/polkit-1/nullbackend.conf.d");
-
-  files = NULL;
-
-  error = NULL;
-  enumerator = g_file_enumerate_children (directory,
-                                          "standard::*",
-                                          G_FILE_QUERY_INFO_NONE,
-                                          NULL,
-                                          &error);
-  if (error != NULL)
-    {
-      g_warning ("Error enumerating files: %s", error->message);
-      goto out;
-    }
-
-  while ((file_info = g_file_enumerator_next_file (enumerator, NULL, &error)) != NULL)
-    {
-      const gchar *name;
-
-      name = g_file_info_get_name (file_info);
-
-      /* only consider files ending in .conf */
-      if (g_str_has_suffix (name, ".conf"))
-        files = g_list_prepend (files, g_file_get_child (directory, name));
-
-      g_object_unref (file_info);
-    }
-  if (error != NULL)
-    {
-      g_warning ("Error enumerating files: %s", error->message);
-      goto out;
-    }
-  g_object_unref (enumerator);
-
-  files = g_list_sort (files, (GCompareFunc) compare_filename);
-
-  for (l = files; l != NULL; l = l->next)
-    {
-      GFile *file = G_FILE (l->data);
-      gchar *filename;
-      GKeyFile *key_file;
-
-      filename = g_file_get_path (file);
-
-      key_file = g_key_file_new ();
-      error = NULL;
-      if (!g_key_file_load_from_file (key_file,
-                                      filename,
-                                      G_KEY_FILE_NONE,
-                                      NULL))
-        {
-          g_warning ("Error loading file %s: %s", filename, error->message);
-          g_error_free (error);
-          error = NULL;
-        }
-      else
-        {
-          gint priority;
-
-          priority = g_key_file_get_integer (key_file,
-                                             "Configuration",
-                                             "priority",
-                                             &error);
-          if (error != NULL)
-            {
-              /* don't warn, not all config files may have this key */
-              g_error_free (error);
-            }
-          else
-            {
-              *out_priority = priority;
-            }
-
-          g_key_file_free (key_file);
-        }
-
-      g_free (filename);
-    }
-
- out:
-  g_object_unref (directory);
-  g_list_foreach (files, (GFunc) g_object_unref, NULL);
-  g_list_free (files);
-}
-
 void
 polkit_backend_null_authority_register (GIOModule *module)
 {
   gint priority;
+  GFile *directory;
+  PolkitBackendConfigSource *source;
 
-  priority = -1;
+  directory = g_file_new_for_path (PACKAGE_SYSCONF_DIR "/polkit-1/nullbackend.conf.d");
+  source = polkit_backend_config_source_new (directory);
 
-  load_config (&priority);
+  priority = polkit_backend_config_source_get_integer (source, "Configuration", "Priority", NULL);
 
   polkit_backend_null_authority_register_type (G_TYPE_MODULE (module));
 
@@ -223,6 +114,9 @@ polkit_backend_null_authority_register (GIOModule *module)
                                   POLKIT_BACKEND_TYPE_NULL_AUTHORITY,
                                   "null backend " PACKAGE_VERSION,
                                   priority);
+
+  g_object_unref (directory);
+  g_object_unref (source);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
