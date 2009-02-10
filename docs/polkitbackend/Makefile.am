@@ -4,7 +4,7 @@ NULL =
 AUTOMAKE_OPTIONS = 1.7
 
 # The name of the module.
-DOC_MODULE=polkitbackend
+DOC_MODULE=polkitbackend-1
 
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE=polkitbackend-docs.xml
