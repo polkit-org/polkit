@@ -497,8 +497,7 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * @action_id: The action to check for.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
  * @cancellable: A #GCancellable or %NULL.
- * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
- * @user_data: The data to pass to @callback.
+ * @error: Return location for error or %NULL.
  *
  * Checks if @subject is authorized to perform the action represented by @action_id.
  *
@@ -700,8 +699,7 @@ polkit_authority_obtain_authorization_finish (PolkitAuthority          *authorit
  * @action_id: The action to obtain for.
  * @flags: A set of #PolkitObtainAuthorizationFlags.
  * @cancellable: A #GCancellable or %NULL.
- * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
- * @user_data: The data to pass to @callback.
+ * @error: Return location for error or %NULL.
  *
  * Obtains a temporary authorization for @subject to perform the
  * action represented by @action_id.
