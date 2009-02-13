@@ -1,0 +1,44 @@
+PolicyKit to polkit1 migration notes  (DRAFT)
+
+Build files:
+
+• Replace polkit-dbus and polkit-grant with polkit-gobject-1 >= 0.91
+• There's no polkit-policy-file-validate in 0.91 yet.
+• The install directory for *.policy files is now $datadir/polkit-1/actions
+  not $datadir/PolicyKit/policy
+
+Policy files:
+
+• There's no more auth_admin_keep_always authorisation. Use auth_admin_keep
+  instead, and rethink what you're trying to achieve.
+  auth_admin_keep is kept for the lifetime of the PolkitSubject.
+• If you're getting messages about "action foo is not registered" then check
+  the polkitd-1 daemon output -- it'll print the reason why the policy format
+  is invalid to stdout.
+
+Source files:
+
+• Don't include <polkit-dbus/polkit-dbus.h>, only include <polkit/polkit.h>
+• No kit_* OOM handling in the new library
+• polkit_sysdeps_get_exe_for_pid() doesn't exist anymore, just read contents
+  of /proc/<pid>/cmdline
+• PolKitContext is now PolkitAuthority
+• PolKitError is now GError
+• polkit_bool_t is now gboolean
+• PolKitCaller is now PolkitSubject and a lot less powerful, but much quicker
+  to create
+• polkit_caller_new_from_dbus_name() to polkit_system_bus_name_new()
+• PolKitAction is no more, just use the action_id everywhere.
+• polkit_context_is_caller_authorized() to
+  polkit_authority_check_authorization_sync()
+• No need to do polkit_context_set_io_watch_functions() and icky
+  g_io_add_watch() stuff to get changes from Polkit
+• polkit_context_new() to polkit_authority_get(), and polkit_context_unref() to
+  g_object_unref() as expected
+• polkit_caller_get_pid() no longer exists, use
+  http://cgit.freedesktop.org/PolicyKit/tree/src/polkit-dbus/polkit-dbus.c?id=POLICY_KIT_0_9#n417
+• polkit_caller_get_uid() no longer exists, use dbus_bus_get_unix_user() as in
+  http://cgit.freedesktop.org/PolicyKit/tree/src/polkit-dbus/polkit-dbus.c?id=POLICY_KIT_0_9#n411
+• If you want data about the session from the PolKitContext, you have to ask
+  ConsoleKit directly as in http://cgit.freedesktop.org/PolicyKit/tree/src/polkit-dbus/polkit-dbus.c?id=POLICY_KIT_0_9#n467
+
