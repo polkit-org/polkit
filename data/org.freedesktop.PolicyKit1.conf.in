@@ -7,4 +7,14 @@
   <policy user="root">
     <allow own="org.freedesktop.PolicyKit1"/>
   </policy>
+
+  <policy context="default">
+    <allow send_destination="org.freedesktop.PolicyKit1"/>
+  </policy>
+
+  <!-- Allow uid 0 to send messages on the org.freedesktop.PolicyKit1.AuthenticationAgent interface -->
+  <policy user="root">
+    <allow send_interface="org.freedesktop.PolicyKit1.AuthenticationAgent"/>
+  </policy>
+
 </busconfig>
