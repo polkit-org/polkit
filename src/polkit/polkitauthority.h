@@ -62,7 +62,7 @@ GList                     *polkit_authority_enumerate_groups_sync (PolkitAuthori
                                                                    GCancellable    *cancellable,
                                                                    GError         **error);
 
-PolkitAuthorizationResult  polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
+PolkitAuthorizationResult *polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
                                                                       PolkitSubject                 *subject,
                                                                       const gchar                   *action_id,
                                                                       GHashTable                    *details,
@@ -109,7 +109,7 @@ void                       polkit_authority_check_authorization (PolkitAuthority
                                                                  GAsyncReadyCallback            callback,
                                                                  gpointer                       user_data);
 
-PolkitAuthorizationResult  polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
+PolkitAuthorizationResult *polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
                                                                         GAsyncResult             *res,
                                                                         GError                  **error);
 

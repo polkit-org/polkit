@@ -173,17 +173,17 @@ static void polkit_backend_local_authority_check_authorization (PolkitBackendAut
                                                                 GAsyncReadyCallback            callback,
                                                                 gpointer                       user_data);
 
-static PolkitAuthorizationResult polkit_backend_local_authority_check_authorization_finish (
+static PolkitAuthorizationResult *polkit_backend_local_authority_check_authorization_finish (
                                                                  PolkitBackendAuthority  *authority,
                                                                  GAsyncResult            *res,
                                                                  GError                 **error);
 
-static PolkitAuthorizationResult check_authorization_sync (PolkitBackendAuthority         *authority,
-                                                           PolkitSubject                  *subject,
-                                                           const gchar                    *action_id,
-                                                           PolkitCheckAuthorizationFlags   flags,
-                                                           PolkitImplicitAuthorization    *out_implicit_authorization,
-                                                           GError                        **error);
+static PolkitAuthorizationResult *check_authorization_sync (PolkitBackendAuthority         *authority,
+                                                            PolkitSubject                  *subject,
+                                                            const gchar                    *action_id,
+                                                            PolkitCheckAuthorizationFlags   flags,
+                                                            PolkitImplicitAuthorization    *out_implicit_authorization,
+                                                            GError                        **error);
 
 static GList *polkit_backend_local_authority_enumerate_authorizations (PolkitBackendAuthority   *authority,
                                                                        PolkitSubject            *caller,
@@ -454,9 +454,10 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
                                   gpointer                     user_data)
 {
   GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
   gchar *subject_str;
 
+  result = NULL;
   subject_str = polkit_subject_to_string (subject);
 
   g_debug ("In check_authorization_challenge_cb\n"
@@ -469,7 +470,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
 
   if (authentication_success)
     {
-      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+      result = polkit_authorization_result_new (TRUE, FALSE, NULL);
 
       /* store temporary authorization depending on value of implicit_authorization */
       if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED_RETAINED ||
@@ -498,37 +499,37 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
     }
   else
     {
-      /* TODO: maybe return FAILED_CHALLENGE instead? */
-      result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+      /* TODO: maybe return set is_challenge? */
+      result = polkit_authorization_result_new (FALSE, FALSE, NULL);
     }
 
   g_simple_async_result_set_op_res_gpointer (simple,
-                                             GINT_TO_POINTER ((gint) result),
-                                             NULL);
+                                             result,
+                                             g_object_unref);
   g_simple_async_result_complete (simple);
   g_object_unref (simple);
 
   g_free (subject_str);
 }
 
-static PolkitAuthorizationResult
+static PolkitAuthorizationResult *
 polkit_backend_local_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
                                                            GAsyncResult            *res,
                                                            GError                 **error)
 {
   GSimpleAsyncResult *simple;
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
 
   simple = G_SIMPLE_ASYNC_RESULT (res);
 
   g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_backend_local_authority_check_authorization);
 
-  result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+  result = NULL;
 
   if (g_simple_async_result_propagate_error (simple, error))
     goto out;
 
-  result = (PolkitAuthorizationResult) (GPOINTER_TO_INT (g_simple_async_result_get_op_res_gpointer (simple)));
+  result = g_object_ref (g_simple_async_result_get_op_res_gpointer (simple));
 
  out:
   return result;
@@ -553,7 +554,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
   PolkitIdentity *user_of_subject;
   gchar *user_of_caller_str;
   gchar *user_of_subject_str;
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
   PolkitImplicitAuthorization implicit_authorization;
   GError *error;
   GSimpleAsyncResult *simple;
@@ -568,6 +569,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
   user_of_subject = NULL;
   user_of_caller_str = NULL;
   user_of_subject_str = NULL;
+  result = NULL;
 
   simple = g_simple_async_result_new (G_OBJECT (authority),
                                       callback,
@@ -643,7 +645,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
     }
 
   /* Caller is up for a challenge! With light sabers! Use an authentication agent if one exists... */
-  if ((result == POLKIT_AUTHORIZATION_RESULT_CHALLENGE) &&
+  if (polkit_authorization_result_get_is_challenge (result) &&
       (flags & POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION))
     {
       AuthenticationAgent *agent;
@@ -661,6 +663,9 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
         }
       else
         {
+          g_object_unref (result);
+          result = NULL;
+
           g_debug (" using authentication agent for challenge");
 
           authentication_agent_initiate_challenge (agent,
@@ -682,8 +687,8 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
 
   /* Otherwise just return the result */
   g_simple_async_result_set_op_res_gpointer (simple,
-                                             GINT_TO_POINTER ((gint) result),
-                                             NULL);
+                                             result,
+                                             g_object_unref);
   g_simple_async_result_complete (simple);
   g_object_unref (simple);
 
@@ -703,7 +708,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static PolkitAuthorizationResult
+static PolkitAuthorizationResult *
 check_authorization_sync (PolkitBackendAuthority         *authority,
                           PolkitSubject                  *subject,
                           const gchar                    *action_id,
@@ -713,7 +718,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
   PolkitIdentity *user_of_subject;
   PolkitSubject *session_for_subject;
   gchar *subject_str;
@@ -727,7 +732,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
-  result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+  result = NULL;
 
   user_of_subject = NULL;
   groups_of_user = NULL;
@@ -768,7 +773,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   /* special case: uid 0, root, is _always_ authorized for anything */
   if (POLKIT_IS_UNIX_USER (user_of_subject) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_subject)) == 0)
     {
-      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+      result = polkit_authorization_result_new (TRUE, FALSE, NULL);
       goto out;
     }
 
@@ -807,7 +812,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       g_debug (" is authorized (has implicit authorization local=%d active=%d)",
                session_is_local,
                session_is_active);
-      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+      result = polkit_authorization_result_new (TRUE, FALSE, NULL);
       goto out;
     }
 
@@ -815,7 +820,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   if (check_temporary_authorization_for_identity (local_authority, user_of_subject, subject, action_id))
     {
       g_debug (" is authorized (has temporary authorization)");
-      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+      result = polkit_authorization_result_new (TRUE, FALSE, NULL);
       goto out;
     }
 
@@ -823,7 +828,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   if (check_authorization_for_identity (local_authority, user_of_subject, action_id))
     {
       g_debug (" is authorized (user identity has authorization)");
-      result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+      result = polkit_authorization_result_new (TRUE, FALSE, NULL);
       goto out;
     }
 
@@ -836,14 +841,14 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       if (check_authorization_for_identity (local_authority, group, action_id))
         {
           g_debug (" is authorized (group identity has authorization)");
-          result = POLKIT_AUTHORIZATION_RESULT_AUTHORIZED;
+          result = polkit_authorization_result_new (TRUE, FALSE, NULL);
           goto out;
         }
     }
 
   if (implicit_authorization != POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED)
     {
-      result = POLKIT_AUTHORIZATION_RESULT_CHALLENGE;
+      result = polkit_authorization_result_new (FALSE, TRUE, NULL);
 
       /* return implicit_authorization so the caller can use an authentication agent if applicable */
       if (out_implicit_authorization != NULL)
@@ -854,6 +859,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
     }
   else
     {
+      result = polkit_authorization_result_new (FALSE, FALSE, NULL);
       g_debug (" not authorized");
     }
  out:

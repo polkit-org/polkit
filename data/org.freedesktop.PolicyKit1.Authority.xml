@@ -109,18 +109,20 @@
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <!-- An enumeration for results when checking for an authorization -->
-    <annotation name="org.gtk.EggDBus.DeclareEnum" value="AuthorizationResult">
-      <annotation name="org.gtk.EggDBus.DocString.Summary" value="Possible results for checking authorizations"/>
-      <annotation name="org.gtk.EggDBus.DocString" value="Possible results that the org.freedesktop.PolicyKit1.Authority.CheckAuthorization() method can return."/>
+    <annotation name="org.gtk.EggDBus.DeclareStruct" value="AuthorizationResult">
+      <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authorization Results"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Describes the result of calling org.freedesktop.PolicyKit1.Authority.CheckAuthorization()."/>
 
-      <annotation name="org.gtk.EggDBus.Enum.Member" value="NotAuthorized">
-        <annotation name="org.gtk.EggDBus.DocString" value="The given #Subject is not authorized for the specified action."/>
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Boolean:is_authorized">
+        <annotation name="org.gtk.EggDBus.DocString" value="#TRUE if the given #Subject is authorized for the given action."/>
       </annotation>
-      <annotation name="org.gtk.EggDBus.Enum.Member" value="Authorized">
-        <annotation name="org.gtk.EggDBus.DocString" value="The given #Subject is authorized for the specified action."/>
+
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Boolean:is_challenge">
+        <annotation name="org.gtk.EggDBus.DocString" value="#TRUE if the given #Subject could be authorized if more information was provided, and %CheckAuthorizationFlags.AllowUserInteraction wasn't passed."/>
       </annotation>
-      <annotation name="org.gtk.EggDBus.Enum.Member" value="Challenge">
-        <annotation name="org.gtk.EggDBus.DocString" value="The given #Subject is authorized if more information is provided."/>
+
+      <annotation name="org.gtk.EggDBus.Struct.Member"  value="Dict<String,String>:details">
+        <annotation name="org.gtk.EggDBus.DocString" value="Details for the result or empty if not authorized."/>
       </annotation>
     </annotation>
 
@@ -226,9 +228,9 @@
         <annotation name="org.gtk.EggDBus.DocString" value="A unique id used to cancel the the authentication check via org.freedesktop.PolicyKit1.Authority.CancelCheckAuthorization() or the empty string if cancellation is not needed."/>
       </arg>
 
-      <arg name="result" direction="out" type="u">
+      <arg name="result" direction="out" type="(bba{ss})">
         <annotation name="org.gtk.EggDBus.Type" value="AuthorizationResult"/>
-        <annotation name="org.gtk.EggDBus.DocString" value="A value from the #AuthorizationResult enumeration."/>
+        <annotation name="org.gtk.EggDBus.DocString" value="An #AuthorizationResult structure."/>
       </arg>
     </method>
 

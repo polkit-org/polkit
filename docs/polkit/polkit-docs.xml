@@ -65,6 +65,7 @@
   <reference id="ref-api">
     <title>Core API Reference</title>
     <xi:include href="xml/polkitauthority.xml"/>
+    <xi:include href="xml/polkitauthorizationresult.xml"/>
     <xi:include href="xml/polkiterror.xml"/>
     <xi:include href="xml/polkitactiondescription.xml"/>
     <xi:include href="xml/polkitauthoritymanager.xml"/>

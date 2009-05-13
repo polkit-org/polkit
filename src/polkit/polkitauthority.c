@@ -448,14 +448,15 @@ authorization_check_cancelled_cb (GObject      *source_object,
  *
  * Finishes checking if a subject is authorized for an action.
  *
- * Returns: A #PolkitAuthorizationResult.
+ * Returns: A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  **/
-PolkitAuthorizationResult
+PolkitAuthorizationResult *
 polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
                                              GAsyncResult             *res,
                                              GError                  **error)
 {
-  _PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
+  _PolkitAuthorizationResult *real_result;
   GSimpleAsyncResult *simple;
   GAsyncResult *real_res;
   GError *local_error;
@@ -465,11 +466,11 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
 
   g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_check_authorization_async);
 
-  result = _POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+  result = NULL;
 
   local_error = NULL;
   _polkit_authority_check_authorization_finish (authority->real,
-                                                &result,
+                                                &real_result,
                                                 real_res,
                                                 &local_error);
 
@@ -504,8 +505,14 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
           g_propagate_error (error, local_error);
         }
     }
-
   g_object_unref (real_res);
+
+  if (real_result != NULL)
+    {
+      result = polkit_authorization_result_new_for_real (real_result);
+      g_object_unref (real_result);
+    }
+
   return result;
 }
 
@@ -521,9 +528,9 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  *
  * Checks if @subject is authorized to perform the action represented by @action_id.
  *
- * Returns: A #PolkitAuthorizationResult.
+ * Returns: A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  */
-PolkitAuthorizationResult
+PolkitAuthorizationResult *
 polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
                                            PolkitSubject                 *subject,
                                            const gchar                   *action_id,
@@ -534,7 +541,7 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
 {
   guint call_id;
   GAsyncResult *res;
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
 
   call_id = polkit_authority_check_authorization_async (authority,
                                                         subject,

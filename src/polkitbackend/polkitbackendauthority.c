@@ -261,9 +261,9 @@ polkit_backend_authority_check_authorization (PolkitBackendAuthority        *aut
  *
  * Finishes checking if a subject is authorized for an action.
  *
- * Returns: A #PolkitAuthorizationResult.
+ * Returns: A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  **/
-PolkitAuthorizationResult
+PolkitAuthorizationResult *
 polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
                                                      GAsyncResult            *res,
                                                      GError                 **error)
@@ -276,7 +276,7 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *au
     {
       g_warning ("check_authorization_finish is not implemented (it is not optional)");
       g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error);
-      return POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+      return NULL;
     }
   else
     {
@@ -786,7 +786,7 @@ check_auth_cb (GObject      *source_object,
 {
   EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
   const gchar *full_cancellation_id;
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
   GError *error;
 
   error = NULL;
@@ -809,7 +809,10 @@ check_auth_cb (GObject      *source_object,
     }
   else
     {
-      _polkit_authority_handle_check_authorization_finish (method_invocation, result);
+      _PolkitAuthorizationResult *real_result;
+      real_result = polkit_authorization_result_get_real (result);
+      _polkit_authority_handle_check_authorization_finish (method_invocation, real_result);
+      g_object_unref (result);
     }
 }
 

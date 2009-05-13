@@ -50,7 +50,6 @@ POLKIT_AUTHORITY_MANAGER_GET_CLASS
 <FILE>polkitauthority</FILE>
 PolkitAuthority
 PolkitCheckAuthorizationFlags
-PolkitAuthorizationResult
 polkit_authority_get
 polkit_authority_enumerate_actions_sync
 polkit_authority_check_authorization_sync
@@ -76,6 +75,24 @@ polkit_authority_get_type
 POLKIT_AUTHORITY_CLASS
 POLKIT_IS_AUTHORITY_CLASS
 POLKIT_AUTHORITY_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>polkitauthorizationresult</FILE>
+PolkitAuthorizationResult
+polkit_authorization_result_new
+polkit_authorization_result_get_is_authorized
+polkit_authorization_result_get_is_challenge
+polkit_authorization_result_get_details
+<SUBSECTION Standard>
+PolkitAuthorizationResultClass
+POLKIT_AUTHORIZATION_RESULT
+POLKIT_IS_AUTHORIZATION_RESULT
+POLKIT_TYPE_AUTHORIZATION_RESULT
+polkit_authorization_result_get_type
+POLKIT_AUTHORIZATION_RESULT_CLASS
+POLKIT_IS_AUTHORIZATION_RESULT_CLASS
+POLKIT_AUTHORIZATION_RESULT_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -250,13 +267,5 @@ PolkitError
 <SUBSECTION Standard>
 polkit_error_quark
 polkit_error_get_type
-</SECTION>
-
-<SECTION>
-<FILE>polkitauthorizationresult</FILE>
-POLKIT_TYPE_AUTHORIZATION_RESULT
-PolkitAuthorizationResult
-<SUBSECTION Standard>
-polkit_authorization_result_get_type
 </SECTION>
 

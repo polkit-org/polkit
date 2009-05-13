@@ -25,6 +25,7 @@
 #include "polkitimplicitauthorization.h"
 #include "polkitactiondescription.h"
 #include "polkitsubject.h"
+#include "polkitauthorizationresult.h"
 #include "_polkitbindings.h"
 
 /* notes:
@@ -45,5 +46,8 @@ _PolkitIdentity *polkit_identity_get_real     (PolkitIdentity  *identity);
 
 PolkitAuthorization  *polkit_authorization_new_for_real (_PolkitAuthorization *real);
 _PolkitAuthorization *polkit_authorization_get_real     (PolkitAuthorization  *authorization);
+
+PolkitAuthorizationResult  *polkit_authorization_result_new_for_real (_PolkitAuthorizationResult *real);
+_PolkitAuthorizationResult *polkit_authorization_result_get_real (PolkitAuthorizationResult *authorization_result);
 
 #endif /* __POLKIT_PRIVATE_H */

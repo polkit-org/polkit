@@ -129,9 +129,9 @@ struct _PolkitBackendAuthorityClass
                                GAsyncReadyCallback            callback,
                                gpointer                       user_data);
 
-  PolkitAuthorizationResult (*check_authorization_finish) (PolkitBackendAuthority  *authority,
-                                                           GAsyncResult            *res,
-                                                           GError                 **error);
+  PolkitAuthorizationResult * (*check_authorization_finish) (PolkitBackendAuthority  *authority,
+                                                             GAsyncResult            *res,
+                                                             GError                 **error);
 
   gboolean (*register_authentication_agent) (PolkitBackendAuthority   *authority,
                                              PolkitSubject            *caller,
@@ -227,9 +227,9 @@ void     polkit_backend_authority_check_authorization       (PolkitBackendAuthor
                                                              GAsyncReadyCallback            callback,
                                                              gpointer                       user_data);
 
-PolkitAuthorizationResult polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
-                                                                               GAsyncResult            *res,
-                                                                               GError                 **error);
+PolkitAuthorizationResult *polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
+                                                                                GAsyncResult            *res,
+                                                                                GError                 **error);
 
 GList   *polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,

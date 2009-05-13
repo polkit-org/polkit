@@ -27,27 +27,31 @@
 #define __POLKIT_AUTHORIZATION_RESULT_H
 
 #include <glib-object.h>
+#include <polkit/polkittypes.h>
 
 G_BEGIN_DECLS
 
-GType polkit_authorization_result_get_type (void) G_GNUC_CONST;
+#define POLKIT_TYPE_AUTHORIZATION_RESULT          (polkit_authorization_result_get_type())
+#define POLKIT_AUTHORIZATION_RESULT(o)            (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_AUTHORIZATION_RESULT, PolkitAuthorizationResult))
+#define POLKIT_AUTHORIZATION_RESULT_CLASS(k)      (G_TYPE_CHECK_CLASS_CAST((k), POLKIT_TYPE_AUTHORIZATION_RESULT, PolkitAuthorizationResultClass))
+#define POLKIT_AUTHORIZATION_RESULT_GET_CLASS(o)  (G_TYPE_INSTANCE_GET_CLASS ((o), POLKIT_TYPE_AUTHORIZATION_RESULT, PolkitAuthorizationResultClass))
+#define POLKIT_IS_AUTHORIZATION_RESULT(o)         (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_AUTHORIZATION_RESULT))
+#define POLKIT_IS_AUTHORIZATION_RESULT_CLASS(k)   (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_TYPE_AUTHORIZATION_RESULT))
 
-#define POLKIT_TYPE_AUTHORIZATION_RESULT (polkit_authorization_result_get_type ())
+#if 0
+typedef struct _PolkitAuthorizationResult PolkitAuthorizationResult;
+#endif
+typedef struct _PolkitAuthorizationResultClass PolkitAuthorizationResultClass;
 
-/**
- * PolkitAuthorizationResult:
- * @POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED: The subject is not authorized for the specified action
- * @POLKIT_AUTHORIZATION_RESULT_AUTHORIZED: The subject is authorized for the specified action
- * @POLKIT_AUTHORIZATION_RESULT_CHALLENGE: The subject is authorized if more information is provided
- *
- * Result codes for checking whether a subject is authorized for an action.
- */
-typedef enum
-{
-  POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED = 0,
-  POLKIT_AUTHORIZATION_RESULT_AUTHORIZED = 1,
-  POLKIT_AUTHORIZATION_RESULT_CHALLENGE = 2,
-} PolkitAuthorizationResult;
+GType                      polkit_authorization_result_get_type          (void) G_GNUC_CONST;
+PolkitAuthorizationResult *polkit_authorization_result_new               (gboolean                   is_authorized,
+                                                                          gboolean                   is_challenge,
+                                                                          GHashTable                *details);
+gboolean                   polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result);
+gboolean                   polkit_authorization_result_get_is_challenge  (PolkitAuthorizationResult *result);
+GHashTable                *polkit_authorization_result_get_details       (PolkitAuthorizationResult *result);
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 G_END_DECLS
 
