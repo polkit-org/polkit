@@ -4,10 +4,10 @@ NULL =
 AUTOMAKE_OPTIONS = 1.7
 
 # The name of the module.
-DOC_MODULE=polkitagent
+DOC_MODULE=polkitagent-1
 
 # The top-level SGML file.
-DOC_MAIN_SGML_FILE=polkitagent-docs.xml
+DOC_MAIN_SGML_FILE=polkitagent-1-docs.xml
 
 # Extra options to supply to gtkdoc-scan
 SCAN_OPTIONS=--ignore-headers=config.h
@@ -62,11 +62,11 @@ FIXXREF_OPTIONS=
 MAINTAINERCLEANFILES =				\
 	*~					\
 	Makefile.in				\
-	polkitagent-decl-list.txt		\
-	polkitagent-decl.txt			\
-	polkitagent-overrides.txt		\
-	polkitagent-undeclared.txt		\
-	polkitagent-undocumented.txt		\
+	polkitagent-1-decl-list.txt		\
+	polkitagent-1-decl.txt			\
+	polkitagent-1-overrides.txt		\
+	polkitagent-1-undeclared.txt		\
+	polkitagent-1-undocumented.txt		\
 	$(NULL)
 
 if ENABLE_GTK_DOC
@@ -76,18 +76,18 @@ CLEANFILES =
 endif
 
 CLEANFILES +=   *~					\
-		polkitagent-scan.*			\
-		polkitagent.args			\
-		polkitagent.hierarchy			\
-		polkitagent.interfaces			\
-		polkitagent.prerequisites		\
-		polkitagent.signals			\
+		polkitagent-1-scan.*			\
+		polkitagent-1.args			\
+		polkitagent-1.hierarchy			\
+		polkitagent-1.interfaces		\
+		polkitagent-1.prerequisites		\
+		polkitagent-1.signals			\
 		*.bak					\
-		polkitagent-decl-list.txt		\
-		polkitagent-decl.txt			\
-		polkitagent-overrides.txt		\
-		polkitagent-undeclared.txt		\
-		polkitagent-undocumented.txt		\
+		polkitagent-1-decl-list.txt		\
+		polkitagent-1-decl.txt			\
+		polkitagent-1-overrides.txt		\
+		polkitagent-1-undeclared.txt		\
+		polkitagent-1-undocumented.txt		\
 		*.stamp					\
 		-rf html xml				\
 		$(NULL)

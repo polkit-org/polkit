@@ -4,10 +4,10 @@ NULL =
 AUTOMAKE_OPTIONS = 1.7
 
 # The name of the module.
-DOC_MODULE=polkitbackend
+DOC_MODULE=polkitbackend-1
 
 # The top-level SGML file.
-DOC_MAIN_SGML_FILE=polkitbackend-docs.xml
+DOC_MAIN_SGML_FILE=polkitbackend-1-docs.xml
 
 # Extra options to supply to gtkdoc-scan
 SCAN_OPTIONS=--ignore-headers=config.h
@@ -62,11 +62,11 @@ FIXXREF_OPTIONS=
 MAINTAINERCLEANFILES =				\
 	*~					\
 	Makefile.in				\
-	polkitbackend-decl-list.txt		\
-	polkitbackend-decl.txt			\
-	polkitbackend-overrides.txt		\
-	polkitbackend-undeclared.txt		\
-	polkitbackend-undocumented.txt		\
+	polkitbackend-1-decl-list.txt		\
+	polkitbackend-1-decl.txt		\
+	polkitbackend-1-overrides.txt		\
+	polkitbackend-1-undeclared.txt		\
+	polkitbackend-1-undocumented.txt	\
 	$(NULL)
 
 if ENABLE_GTK_DOC
@@ -76,18 +76,18 @@ CLEANFILES =
 endif
 
 CLEANFILES +=   *~					\
-		polkitbackend-scan.*			\
-		polkitbackend.args			\
-		polkitbackend.hierarchy			\
-		polkitbackend.interfaces		\
-		polkitbackend.prerequisites		\
-		polkitbackend.signals			\
+		polkitbackend-1-scan.*			\
+		polkitbackend-1.args			\
+		polkitbackend-1.hierarchy		\
+		polkitbackend-1.interfaces		\
+		polkitbackend-1.prerequisites		\
+		polkitbackend-1.signals			\
 		*.bak					\
-		polkitbackend-decl-list.txt		\
-		polkitbackend-decl.txt			\
-		polkitbackend-overrides.txt		\
-		polkitbackend-undeclared.txt		\
-		polkitbackend-undocumented.txt		\
+		polkitbackend-1-decl-list.txt		\
+		polkitbackend-1-decl.txt		\
+		polkitbackend-1-overrides.txt		\
+		polkitbackend-1-undeclared.txt		\
+		polkitbackend-1-undocumented.txt	\
 		*.stamp					\
 		-rf html xml				\
 		$(NULL)

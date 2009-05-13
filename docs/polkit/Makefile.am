@@ -4,10 +4,10 @@ NULL =
 AUTOMAKE_OPTIONS = 1.7
 
 # The name of the module.
-DOC_MODULE=polkit
+DOC_MODULE=polkit-1
 
 # The top-level SGML file.
-DOC_MAIN_SGML_FILE=polkit-docs.xml
+DOC_MAIN_SGML_FILE=polkit-1-docs.xml
 
 # Extra options to supply to gtkdoc-scan
 SCAN_OPTIONS=--ignore-headers=config.h
@@ -70,18 +70,18 @@ CLEANFILES =
 endif
 
 CLEANFILES +=   *~				\
-		polkit-scan.*			\
-		polkit.args			\
-		polkit.hierarchy		\
-		polkit.interfaces		\
-		polkit.prerequisites		\
-		polkit.signals			\
+		polkit-1-scan.*			\
+		polkit-1.args			\
+		polkit-1.hierarchy		\
+		polkit-1.interfaces		\
+		polkit-1.prerequisites		\
+		polkit-1.signals		\
 		*.bak				\
-		polkit-decl-list.txt		\
-		polkit-decl.txt			\
-		polkit-overrides.txt		\
-		polkit-undeclared.txt		\
-		polkit-undocumented.txt		\
+		polkit-1-decl-list.txt		\
+		polkit-1-decl.txt		\
+		polkit-1-overrides.txt		\
+		polkit-1-undeclared.txt		\
+		polkit-1-undocumented.txt	\
 		*.stamp				\
 		-rf html xml			\
 		$(NULL)
