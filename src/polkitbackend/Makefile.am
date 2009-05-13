@@ -43,6 +43,7 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendactionpool.h					\
 	polkitbackendsessionmonitor.h					\
 	polkitbackendconfigsource.h					\
+	polkitbackendactionlookup.h					\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   	\
@@ -56,6 +57,7 @@ libpolkit_backend_1_la_SOURCES =                                   	\
 	polkitbackendactionpool.h	polkitbackendactionpool.c	\
 	polkitbackendsessionmonitor.h	polkitbackendsessionmonitor.c	\
 	polkitbackendconfigsource.h	polkitbackendconfigsource.c	\
+	polkitbackendactionlookup.h	polkitbackendactionlookup.c	\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\

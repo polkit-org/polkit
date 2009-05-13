@@ -26,6 +26,7 @@
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
 #include "polkitbackendauthority.h"
+#include "polkitbackendactionlookup.h"
 #include "polkitbackendlocalauthority.h"
 
 #include "polkitbackendprivate.h"
@@ -203,6 +204,7 @@ polkit_backend_authority_enumerate_groups (PolkitBackendAuthority   *authority,
  * @caller: The system bus name that initiated the query.
  * @subject: A #PolkitSubject.
  * @action_id: The action to check for.
+ * @details: Details about the action or %NULL.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
  * @cancellable: A #GCancellable.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
@@ -220,6 +222,7 @@ polkit_backend_authority_check_authorization (PolkitBackendAuthority        *aut
                                               PolkitSubject                 *caller,
                                               PolkitSubject                 *subject,
                                               const gchar                   *action_id,
+                                              GHashTable                    *details,
                                               PolkitCheckAuthorizationFlags  flags,
                                               GCancellable                  *cancellable,
                                               GAsyncReadyCallback            callback,
@@ -246,7 +249,7 @@ polkit_backend_authority_check_authorization (PolkitBackendAuthority        *aut
     }
   else
     {
-      klass->check_authorization (authority, caller, subject, action_id, flags, cancellable, callback, user_data);
+      klass->check_authorization (authority, caller, subject, action_id, details, flags, cancellable, callback, user_data);
     }
 }
 
@@ -278,89 +281,6 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *au
   else
     {
       return klass->check_authorization_finish (authority, res, error);
-    }
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-/**
- * polkit_backend_authority_obtain_authorization:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that initiated the query.
- * @subject: A #PolkitSubject.
- * @action_id: The action to obtain.
- * @cancellable: A #GCancellable.
- * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
- * @user_data: The data to pass to @callback.
- *
- * Asynchronously obtains a temporary authorization for @subject to
- * perform the action represented by @action_id. If @subject is already
- * authorized for @action_id, return %TRUE. If @action_id doesn't allow
- * temporary authorizations, return a %POLKIT_ERROR_FAILED error.
- *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_backend_authority_obtain_authorization_finish() to get the result of
- * the operation.
- **/
-void
-polkit_backend_authority_obtain_authorization (PolkitBackendAuthority        *authority,
-                                               PolkitSubject                 *caller,
-                                               PolkitSubject                 *subject,
-                                               const gchar                   *action_id,
-                                               GCancellable                  *cancellable,
-                                               GAsyncReadyCallback            callback,
-                                               gpointer                       user_data)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->obtain_authorization == NULL)
-    {
-      GSimpleAsyncResult *simple;
-
-      simple = g_simple_async_result_new_error (G_OBJECT (authority),
-                                                callback,
-                                                user_data,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_NOT_SUPPORTED,
-                                                "Operation not supported");
-      g_simple_async_result_complete (simple);
-      g_object_unref (simple);
-    }
-  else
-    {
-      klass->obtain_authorization (authority, caller, subject, action_id, cancellable, callback, user_data);
-    }
-}
-
-/**
- * polkit_backend_authority_obtain_authorization_finish:
- * @authority: A #PolkitBackendAuthority.
- * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
- *
- * Finishes obtaining an authorization.
- *
- * Returns: %TRUE if the authorization was obtained, %FALSE if @error is set.
- **/
-gboolean
-polkit_backend_authority_obtain_authorization_finish (PolkitBackendAuthority  *authority,
-                                                      GAsyncResult            *res,
-                                                      GError                 **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->obtain_authorization_finish == NULL)
-    {
-      g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error);
-      return FALSE;
-    }
-  else
-    {
-      return klass->obtain_authorization_finish (authority, res, error);
     }
 }
 
@@ -481,6 +401,7 @@ polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *autho
  * @authority: A #PolkitBackendAuthority.
  * @caller: The system bus name that initiated the query.
  * @session_id: The identifier of the session to register for or %NULL for the session of the caller.
+ * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
  * @error: Return location for error or %NULL.
  *
@@ -492,6 +413,7 @@ gboolean
 polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
                                                         PolkitSubject             *caller,
                                                         const gchar               *session_id,
+                                                        const gchar               *locale,
                                                         const gchar               *object_path,
                                                         GError                   **error)
 {
@@ -509,7 +431,7 @@ polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority  
     }
   else
     {
-      return klass->register_authentication_agent (authority, caller, session_id, object_path, error);
+      return klass->register_authentication_agent (authority, caller, session_id, locale, object_path, error);
     }
 }
 
@@ -895,6 +817,7 @@ static void
 authority_handle_check_authorization (_PolkitAuthority               *instance,
                                       _PolkitSubject                 *real_subject,
                                       const gchar                    *action_id,
+                                      EggDBusHashMap                 *real_details,
                                       _PolkitCheckAuthorizationFlags  flags,
                                       const gchar                    *cancellation_id,
                                       EggDBusMethodInvocation        *method_invocation)
@@ -904,11 +827,14 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
   PolkitSubject *subject;
   PolkitSubject *caller;
   GCancellable *cancellable;
+  GHashTable *details;
 
   caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
   caller = polkit_system_bus_name_new (caller_name);
 
   subject = polkit_subject_new_for_real (real_subject);
+
+  details = real_details->data;
 
   g_object_set_data_full (G_OBJECT (method_invocation), "caller", caller, (GDestroyNotify) g_object_unref);
   g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
@@ -946,6 +872,7 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
                                                 caller,
                                                 subject,
                                                 action_id,
+                                                details,
                                                 flags,
                                                 cancellable,
                                                 check_auth_cb,
@@ -983,136 +910,6 @@ authority_handle_cancel_check_authorization (_PolkitAuthority               *ins
   g_cancellable_cancel (cancellable);
 
   _polkit_authority_handle_cancel_check_authorization_finish (method_invocation);
-
- out:
-  g_free (full_cancellation_id);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-obtain_auth_cb (GObject      *source_object,
-                GAsyncResult *res,
-                gpointer      user_data)
-{
-  EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
-  const gchar *full_cancellation_id;
-  GError *error;
-
-  error = NULL;
-  polkit_backend_authority_obtain_authorization_finish (POLKIT_BACKEND_AUTHORITY (source_object),
-                                                        res,
-                                                        &error);
-
-  full_cancellation_id = g_object_get_data (G_OBJECT (method_invocation), "cancellation-id");
-  if (full_cancellation_id != NULL)
-    {
-      Server *server;
-      server = SERVER (g_object_get_data (G_OBJECT (method_invocation), "server"));
-      g_hash_table_remove (server->cancellation_id_to_cancellable, full_cancellation_id);
-    }
-
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-    }
-  else
-    {
-      _polkit_authority_handle_obtain_authorization_finish (method_invocation);
-    }
-}
-
-static void
-authority_handle_obtain_authorization (_PolkitAuthority               *instance,
-                                       _PolkitSubject                 *real_subject,
-                                       const gchar                    *action_id,
-                                       const gchar                    *cancellation_id,
-                                       EggDBusMethodInvocation        *method_invocation)
-{
-  Server *server = SERVER (instance);
-  const gchar *caller_name;
-  PolkitSubject *subject;
-  PolkitSubject *caller;
-  GCancellable *cancellable;
-
-  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
-  caller = polkit_system_bus_name_new (caller_name);
-
-  subject = polkit_subject_new_for_real (real_subject);
-
-  g_object_set_data_full (G_OBJECT (method_invocation), "caller", caller, (GDestroyNotify) g_object_unref);
-  g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
-
-  cancellable = NULL;
-  if (cancellation_id != NULL && strlen (cancellation_id) > 0)
-    {
-      gchar *full_cancellation_id;
-
-      full_cancellation_id = g_strdup_printf ("%s-%s", caller_name, cancellation_id);
-
-      if (g_hash_table_lookup (server->cancellation_id_to_cancellable, full_cancellation_id) != NULL)
-        {
-          egg_dbus_method_invocation_return_error (method_invocation,
-                                                   _POLKIT_ERROR,
-                                                   _POLKIT_ERROR_CANCELLATION_ID_NOT_UNIQUE,
-                                                   "Given cancellation_id %s is already in use for name %s",
-                                                   cancellation_id,
-                                                   caller_name);
-          g_free (full_cancellation_id);
-          goto out;
-        }
-
-      cancellable = g_cancellable_new ();
-
-      g_hash_table_insert (server->cancellation_id_to_cancellable,
-                           full_cancellation_id,
-                           cancellable);
-
-      g_object_set_data (G_OBJECT (method_invocation), "server", server);
-      g_object_set_data (G_OBJECT (method_invocation), "cancellation-id", full_cancellation_id);
-    }
-
-  polkit_backend_authority_obtain_authorization (server->authority,
-                                                 caller,
-                                                 subject,
-                                                 action_id,
-                                                 cancellable,
-                                                 obtain_auth_cb,
-                                                 method_invocation);
- out:
-  ;
-}
-
-static void
-authority_handle_cancel_obtain_authorization (_PolkitAuthority               *instance,
-                                              const gchar                    *cancellation_id,
-                                              EggDBusMethodInvocation        *method_invocation)
-{
-  Server *server = SERVER (instance);
-  GCancellable *cancellable;
-  const gchar *caller_name;
-  gchar *full_cancellation_id;
-
-  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
-
-  full_cancellation_id = g_strdup_printf ("%s-%s", caller_name, cancellation_id);
-
-  cancellable = g_hash_table_lookup (server->cancellation_id_to_cancellable, full_cancellation_id);
-  if (cancellable == NULL)
-    {
-      egg_dbus_method_invocation_return_error (method_invocation,
-                                               _POLKIT_ERROR,
-                                               _POLKIT_ERROR_FAILED,
-                                               "No such cancellation_id %s for name %s",
-                                               cancellation_id,
-                                               caller_name);
-      goto out;
-    }
-
-  g_cancellable_cancel (cancellable);
-
-  _polkit_authority_handle_cancel_obtain_authorization_finish (method_invocation);
 
  out:
   g_free (full_cancellation_id);
@@ -1266,6 +1063,7 @@ authority_manager_handle_remove_authorization (_PolkitAuthorityManager        *i
 static void
 authority_handle_register_authentication_agent (_PolkitAuthority               *instance,
                                                 const gchar                    *session_id,
+                                                const gchar                    *locale,
                                                 const gchar                    *object_path,
                                                 EggDBusMethodInvocation        *method_invocation)
 {
@@ -1279,6 +1077,7 @@ authority_handle_register_authentication_agent (_PolkitAuthority               *
   if (!polkit_backend_authority_register_authentication_agent (server->authority,
                                                                caller,
                                                                session_id,
+                                                               locale,
                                                                object_path,
                                                                &error))
     {
@@ -1370,8 +1169,6 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
   authority_iface->handle_enumerate_actions               = authority_handle_enumerate_actions;
   authority_iface->handle_check_authorization             = authority_handle_check_authorization;
   authority_iface->handle_cancel_check_authorization      = authority_handle_cancel_check_authorization;
-  authority_iface->handle_obtain_authorization            = authority_handle_obtain_authorization;
-  authority_iface->handle_cancel_obtain_authorization     = authority_handle_cancel_obtain_authorization;
   authority_iface->handle_register_authentication_agent   = authority_handle_register_authentication_agent;
   authority_iface->handle_unregister_authentication_agent = authority_handle_unregister_authentication_agent;
   authority_iface->handle_authentication_agent_response   = authority_handle_authentication_agent_response;
@@ -1497,17 +1294,23 @@ PolkitBackendAuthority *
 polkit_backend_authority_get (void)
 {
   static GIOExtensionPoint *ep = NULL;
+  static GIOExtensionPoint *ep_action_lookup = NULL;
   static volatile GType local_authority_type = G_TYPE_INVALID;
   GList *modules;
   GList *authority_implementations;
   GType authority_type;
   PolkitBackendAuthority *authority;
 
-  /* define the extension point */
+  /* define extension points */
   if (ep == NULL)
     {
       ep = g_io_extension_point_register (POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME);
       g_io_extension_point_set_required_type (ep, POLKIT_BACKEND_TYPE_AUTHORITY);
+    }
+  if (ep_action_lookup == NULL)
+    {
+      ep_action_lookup = g_io_extension_point_register (POLKIT_BACKEND_ACTION_LOOKUP_EXTENSION_POINT_NAME);
+      g_io_extension_point_set_required_type (ep_action_lookup, POLKIT_BACKEND_TYPE_ACTION_LOOKUP);
     }
 
   /* make sure local types are registered */

@@ -70,13 +70,6 @@ struct _PolkitBackendAuthority
  * @check_authorization_finish: Called when finishing an authorization
  * check. See polkit_backend_authority_check_authorization_finish()
  * for details.
- * @obtain_authorization: Called to obtain an authorization or %NULL
- * if the backend doesn't support the operation. See
- * polkit_backend_authority_obtain_authorization() for details.
- * @obtain_authorization_finish: Called when finishing obtaining
- * an authorization or %NULL if the backend doesn't support the
- * operation. See polkit_backend_authority_obtain_authorization_finish()
- * for details.
  * @register_authentication_agent: Called when an authentication agent
  * is attempting to register or %NULL if the backend doesn't support
  * the operation. See
@@ -130,6 +123,7 @@ struct _PolkitBackendAuthorityClass
                                PolkitSubject                 *caller,
                                PolkitSubject                 *subject,
                                const gchar                   *action_id,
+                               GHashTable                    *details,
                                PolkitCheckAuthorizationFlags  flags,
                                GCancellable                  *cancellable,
                                GAsyncReadyCallback            callback,
@@ -139,21 +133,10 @@ struct _PolkitBackendAuthorityClass
                                                            GAsyncResult            *res,
                                                            GError                 **error);
 
-  void (*obtain_authorization) (PolkitBackendAuthority        *authority,
-                                PolkitSubject                 *caller,
-                                PolkitSubject                 *subject,
-                                const gchar                   *action_id,
-                                GCancellable                  *cancellable,
-                                GAsyncReadyCallback            callback,
-                                gpointer                       user_data);
-
-  gboolean (*obtain_authorization_finish) (PolkitBackendAuthority  *authority,
-                                           GAsyncResult            *res,
-                                           GError                 **error);
-
   gboolean (*register_authentication_agent) (PolkitBackendAuthority   *authority,
                                              PolkitSubject            *caller,
                                              const gchar              *session_id,
+                                             const gchar              *locale,
                                              const gchar              *object_path,
                                              GError                  **error);
 
@@ -238,6 +221,7 @@ void     polkit_backend_authority_check_authorization       (PolkitBackendAuthor
                                                              PolkitSubject                 *caller,
                                                              PolkitSubject                 *subject,
                                                              const gchar                   *action_id,
+                                                             GHashTable                    *details,
                                                              PolkitCheckAuthorizationFlags  flags,
                                                              GCancellable                  *cancellable,
                                                              GAsyncReadyCallback            callback,
@@ -246,18 +230,6 @@ void     polkit_backend_authority_check_authorization       (PolkitBackendAuthor
 PolkitAuthorizationResult polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *authority,
                                                                                GAsyncResult            *res,
                                                                                GError                 **error);
-
-void     polkit_backend_authority_obtain_authorization      (PolkitBackendAuthority        *authority,
-                                                             PolkitSubject                 *caller,
-                                                             PolkitSubject                 *subject,
-                                                             const gchar                   *action_id,
-                                                             GCancellable                  *cancellable,
-                                                             GAsyncReadyCallback            callback,
-                                                             gpointer                       user_data);
-
-gboolean polkit_backend_authority_obtain_authorization_finish (PolkitBackendAuthority  *authority,
-                                                               GAsyncResult            *res,
-                                                               GError                 **error);
 
 GList   *polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,
@@ -279,6 +251,7 @@ gboolean polkit_backend_authority_remove_authorization      (PolkitBackendAuthor
 gboolean polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
                                                                  PolkitSubject             *caller,
                                                                  const gchar               *session_id,
+                                                                 const gchar               *locale,
                                                                  const gchar               *object_path,
                                                                  GError                   **error);
 

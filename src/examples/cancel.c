@@ -108,6 +108,7 @@ main (int argc, char *argv[])
   polkit_authority_check_authorization (authority,
                                         calling_process,
                                         "org.freedesktop.policykit.grant",
+                                        NULL,
                                         POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
                                         cancellable,
                                         (GAsyncReadyCallback) check_authorization_cb,

@@ -1,4 +1,5 @@
 polkit_backend_authority_get_type
+polkit_backend_action_lookup_get_type
 polkit_backend_local_authority_get_type
 polkit_backend_action_pool_get_type
 polkit_backend_session_monitor_get_type

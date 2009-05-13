@@ -330,6 +330,7 @@ static guint
 polkit_authority_check_authorization_async (PolkitAuthority               *authority,
                                             PolkitSubject                 *subject,
                                             const gchar                   *action_id,
+                                            GHashTable                    *details,
                                             PolkitCheckAuthorizationFlags  flags,
                                             GCancellable                  *cancellable,
                                             GAsyncReadyCallback            callback,
@@ -339,6 +340,7 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
   guint call_id;
   GSimpleAsyncResult *simple;
   gchar *cancellation_id;
+  EggDBusHashMap *real_details;
 
   real_subject = polkit_subject_get_real (subject);
 
@@ -354,10 +356,24 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
       g_object_set_data_full (G_OBJECT (simple), "polkit-1-cancellation-id", cancellation_id, g_free);
     }
 
+  real_details = egg_dbus_hash_map_new (G_TYPE_STRING, NULL,
+                                        G_TYPE_STRING, NULL);
+  if (details != NULL)
+    {
+      GHashTableIter iter;
+      const gchar *key;
+      const gchar *value;
+
+      g_hash_table_iter_init (&iter, details);
+      while (g_hash_table_iter_next (&iter, (gpointer) &key, (gpointer) &value))
+        egg_dbus_hash_map_insert (real_details, key, value);
+    }
+
   call_id = _polkit_authority_check_authorization (authority->real,
                                                    EGG_DBUS_CALL_FLAGS_TIMEOUT_NONE,
                                                    real_subject,
                                                    action_id,
+                                                   real_details,
                                                    flags,
                                                    cancellation_id,
                                                    cancellable,
@@ -374,6 +390,7 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject.
  * @action_id: The action to check for.
+ * @details: Details about the action or %NULL.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
  * @cancellable: A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
@@ -390,6 +407,7 @@ void
 polkit_authority_check_authorization (PolkitAuthority               *authority,
                                       PolkitSubject                 *subject,
                                       const gchar                   *action_id,
+                                      GHashTable                    *details,
                                       PolkitCheckAuthorizationFlags  flags,
                                       GCancellable                  *cancellable,
                                       GAsyncReadyCallback            callback,
@@ -398,6 +416,7 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
   polkit_authority_check_authorization_async (authority,
                                               subject,
                                               action_id,
+                                              details,
                                               flags,
                                               cancellable,
                                               callback,
@@ -495,6 +514,7 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject.
  * @action_id: The action to check for.
+ * @details: Details about the action or %NULL.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
  * @cancellable: A #GCancellable or %NULL.
  * @error: Return location for error or %NULL.
@@ -507,6 +527,7 @@ PolkitAuthorizationResult
 polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
                                            PolkitSubject                 *subject,
                                            const gchar                   *action_id,
+                                           GHashTable                    *details,
                                            PolkitCheckAuthorizationFlags  flags,
                                            GCancellable                  *cancellable,
                                            GError                       **error)
@@ -518,6 +539,7 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
   call_id = polkit_authority_check_authorization_async (authority,
                                                         subject,
                                                         action_id,
+                                                        details,
                                                         flags,
                                                         cancellable,
                                                         generic_cb,
@@ -535,209 +557,9 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
 /* ---------------------------------------------------------------------------------------------------- */
 
 static guint
-polkit_authority_obtain_authorization_async (PolkitAuthority               *authority,
-                                             PolkitSubject                 *subject,
-                                             const gchar                   *action_id,
-                                             GCancellable                  *cancellable,
-                                             GAsyncReadyCallback            callback,
-                                             gpointer                       user_data)
-{
-  _PolkitSubject *real_subject;
-  guint call_id;
-  GSimpleAsyncResult *simple;
-  gchar *cancellation_id;
-
-  real_subject = polkit_subject_get_real (subject);
-
-  simple = g_simple_async_result_new (G_OBJECT (authority),
-                                      callback,
-                                      user_data,
-                                      polkit_authority_obtain_authorization_async);
-
-  cancellation_id = NULL;
-  if (cancellable != NULL)
-    {
-      cancellation_id = g_strdup_printf ("cancellation-id-%d", authority->cancellation_id_counter++);
-      g_object_set_data_full (G_OBJECT (simple), "polkit-1-cancellation-id", cancellation_id, g_free);
-    }
-
-  call_id = _polkit_authority_obtain_authorization (authority->real,
-                                                    EGG_DBUS_CALL_FLAGS_TIMEOUT_NONE,
-                                                    real_subject,
-                                                    action_id,
-                                                    cancellation_id,
-                                                    cancellable,
-                                                    generic_async_cb,
-                                                    simple);
-
-  g_object_unref (real_subject);
-
-  return call_id;
-}
-
-/**
- * polkit_authority_obtain_authorization:
- * @authority: A #PolkitAuthority.
- * @subject: A #PolkitSubject.
- * @action_id: The action to obtain an authorization for.
- * @cancellable: A #GCancellable or %NULL.
- * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
- * @user_data: The data to pass to @callback.
- *
- * Asynchronously obtains a temporary authorization for @subject to
- * perform the action represented by @action_id.
- *
- * When the operation is finished, @callback will be invoked. You can
- * then call polkit_authority_obtain_authorization_finish() to get the
- * result of the operation.
- **/
-void
-polkit_authority_obtain_authorization (PolkitAuthority               *authority,
-                                       PolkitSubject                 *subject,
-                                       const gchar                   *action_id,
-                                       GCancellable                  *cancellable,
-                                       GAsyncReadyCallback            callback,
-                                       gpointer                       user_data)
-{
-  polkit_authority_obtain_authorization_async (authority,
-                                               subject,
-                                               action_id,
-                                               cancellable,
-                                               callback,
-                                               user_data);
-}
-
-static void
-authorization_obtain_cancelled_cb (GObject      *source_object,
-                                  GAsyncResult *res,
-                                  gpointer      user_data)
-{
-  GError *error;
-
-  error = NULL;
-  if (!_polkit_authority_cancel_obtain_authorization_finish (_POLKIT_AUTHORITY (source_object),
-                                                             res,
-                                                             &error))
-    {
-      g_warning ("Error cancelling obtain authorization call: %s", error->message);
-      g_error_free (error);
-    }
-}
-
-/**
- * polkit_authority_obtain_authorization_finish:
- * @authority: A #PolkitAuthority.
- * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
- *
- * Finishes obtaining an authorization.
- *
- * Returns: %TRUE if the authorization was obtained, %FALSE if @error is set.
- **/
-gboolean
-polkit_authority_obtain_authorization_finish (PolkitAuthority          *authority,
-                                              GAsyncResult             *res,
-                                              GError                  **error)
-{
-  gboolean result;
-  GSimpleAsyncResult *simple;
-  GAsyncResult *real_res;
-  GError *local_error;
-
-  simple = G_SIMPLE_ASYNC_RESULT (res);
-  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
-
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_obtain_authorization_async);
-
-  result = _POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
-
-  local_error = NULL;
-  result = _polkit_authority_obtain_authorization_finish (authority->real,
-                                                          real_res,
-                                                          &local_error);
-
-  if (local_error != NULL)
-    {
-      if (local_error->domain == EGG_DBUS_ERROR && local_error->code == EGG_DBUS_ERROR_CANCELLED)
-        {
-          const gchar *cancellation_id;
-
-          /* if the operation was cancelled locally, make sure to tell the daemon so the authentication
-           * dialog etc. can be removed
-           */
-          cancellation_id = g_object_get_data (G_OBJECT (simple), "polkit-1-cancellation-id");
-          if (cancellation_id != NULL)
-            {
-              _polkit_authority_cancel_obtain_authorization (authority->real,
-                                                             EGG_DBUS_CALL_FLAGS_NONE,
-                                                             cancellation_id,
-                                                             NULL,
-                                                             authorization_obtain_cancelled_cb,
-                                                             NULL);
-            }
-
-          g_set_error (error,
-                       POLKIT_ERROR,
-                       POLKIT_ERROR_CANCELLED,
-                       "The operation was cancelled");
-          g_error_free (local_error);
-        }
-      else
-        {
-          g_propagate_error (error, local_error);
-        }
-    }
-
-  g_object_unref (real_res);
-  return result;
-}
-
-/**
- * polkit_authority_obtain_authorization_sync:
- * @authority: A #PolkitAuthority.
- * @subject: A #PolkitSubject.
- * @action_id: The action to obtain for.
- * @flags: A set of #PolkitObtainAuthorizationFlags.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
- *
- * Obtains a temporary authorization for @subject to perform the
- * action represented by @action_id.
- *
- * Returns: %TRUE if the authorization was obtained, %FALSE if @error is set.
- */
-gboolean
-polkit_authority_obtain_authorization_sync (PolkitAuthority               *authority,
-                                            PolkitSubject                 *subject,
-                                            const gchar                   *action_id,
-                                            GCancellable                  *cancellable,
-                                            GError                       **error)
-{
-  guint call_id;
-  GAsyncResult *res;
-  gboolean result;
-
-  call_id = polkit_authority_obtain_authorization_async (authority,
-                                                         subject,
-                                                         action_id,
-                                                         cancellable,
-                                                         generic_cb,
-                                                         &res);
-
-  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
-
-  result = polkit_authority_obtain_authorization_finish (authority, res, error);
-
-  g_object_unref (res);
-
-  return result;
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static guint
 polkit_authority_register_authentication_agent_async (PolkitAuthority      *authority,
                                                       const gchar          *session_id,
+                                                      const gchar          *locale,
                                                       const gchar          *object_path,
                                                       GCancellable         *cancellable,
                                                       GAsyncReadyCallback   callback,
@@ -754,6 +576,7 @@ polkit_authority_register_authentication_agent_async (PolkitAuthority      *auth
   call_id = _polkit_authority_register_authentication_agent (authority->real,
                                                              EGG_DBUS_CALL_FLAGS_NONE,
                                                              session_id,
+                                                             locale,
                                                              object_path,
                                                              cancellable,
                                                              generic_async_cb,
@@ -766,6 +589,7 @@ polkit_authority_register_authentication_agent_async (PolkitAuthority      *auth
  * polkit_authority_register_authentication_agent:
  * @authority: A #PolkitAuthority.
  * @session_id: The identifier of the session to register for or %NULL for the session of the caller.
+ * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
  * @cancellable: A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
@@ -780,6 +604,7 @@ polkit_authority_register_authentication_agent_async (PolkitAuthority      *auth
 void
 polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
                                                 const gchar          *session_id,
+                                                const gchar          *locale,
                                                 const gchar          *object_path,
                                                 GCancellable         *cancellable,
                                                 GAsyncReadyCallback   callback,
@@ -787,6 +612,7 @@ polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
 {
   polkit_authority_register_authentication_agent_async (authority,
                                                         session_id,
+                                                        locale,
                                                         object_path,
                                                         cancellable,
                                                         callback,
@@ -834,6 +660,7 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
  * polkit_authority_register_authentication_agent_sync:
  * @authority: A #PolkitAuthority.
  * @session_id: The identifier of the session to register for or %NULL for the session of the caller.
+ * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
  * @cancellable: A #GCancellable or %NULL.
  * @error: Return location for error or %NULL.
@@ -845,6 +672,7 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
 gboolean
 polkit_authority_register_authentication_agent_sync (PolkitAuthority     *authority,
                                                      const gchar         *session_id,
+                                                     const gchar         *locale,
                                                      const gchar         *object_path,
                                                      GCancellable        *cancellable,
                                                      GError             **error)
@@ -855,6 +683,7 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
 
   call_id = polkit_authority_register_authentication_agent_async (authority,
                                                                   session_id,
+                                                                  locale,
                                                                   object_path,
                                                                   cancellable,
                                                                   generic_cb,

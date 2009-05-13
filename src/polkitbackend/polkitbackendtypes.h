@@ -36,5 +36,8 @@ typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
 struct _PolkitBackendConfigSource;
 typedef struct _PolkitBackendConfigSource PolkitBackendConfigSource;
 
+struct _PolkitBackendActionLookup;
+typedef struct _PolkitBackendActionLookup PolkitBackendActionLookup; /* Dummy typedef */
+
 #endif /* __POLKIT_BACKEND_TYPES_H */
 

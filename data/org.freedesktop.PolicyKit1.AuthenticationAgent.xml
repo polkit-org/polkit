@@ -14,6 +14,18 @@
         <annotation name="org.gtk.EggDBus.DocString" value="The identifier for the action that the user is authentication for."/>
       </arg>
 
+      <arg name="message" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The message to display to the user. This is translated into the locale passed when registering the authentication agent using org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent()."/>
+      </arg>
+
+      <arg name="icon_name" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The themed icon describing the action or the empty string if no icon is set."/>
+      </arg>
+
+      <arg name="details" direction="in" type="a{ss}">
+        <annotation name="org.gtk.EggDBus.DocString" value="Details about the authentication request. This is a dictionary of key/value pairs where both key and value are strings. These strings are translated into the locale passed when registering the authentication agent using org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent()."/>
+      </arg>
+
       <arg name="cookie" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="A cookie identifying the authentication request."/>
       </arg>

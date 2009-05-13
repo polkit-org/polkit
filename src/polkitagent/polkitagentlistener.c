@@ -104,6 +104,7 @@ server_register (Server   *server,
   local_error = NULL;
   if (!polkit_authority_register_authentication_agent_sync (server->authority,
                                                             server->session_id,
+                                                            g_getenv ("LANG"),
                                                             server->object_path,
                                                             NULL,
                                                             &local_error))
@@ -358,6 +359,9 @@ auth_cb (GObject      *source_object,
 static void
 handle_begin_authentication (_PolkitAuthenticationAgent *instance,
                              const gchar                *action_id,
+                             const gchar                *message,
+                             const gchar                *icon_name,
+                             EggDBusHashMap             *details,
                              const gchar                *cookie,
                              EggDBusArraySeq            *identities,
                              EggDBusMethodInvocation    *method_invocation)
@@ -389,6 +393,9 @@ handle_begin_authentication (_PolkitAuthenticationAgent *instance,
 
   polkit_agent_listener_initiate_authentication (server->listener,
                                                  action_id,
+                                                 message,
+                                                 icon_name,
+                                                 details->data,
                                                  cookie,
                                                  list,
                                                  data->cancellable,
@@ -447,6 +454,9 @@ polkit_agent_listener_class_init (PolkitAgentListenerClass *klass)
  * polkit_agent_listener_initiate_authentication:
  * @listener: A #PolkitAgentListener.
  * @action_id: The action to authenticate for.
+ * @message: The message to present to the user.
+ * @icon_name: A themed icon name representing the action or %NULL.
+ * @details: A set of key/value string pairs describing the action.
  * @cookie: The cookie for the authentication request.
  * @identities: A list of #PolkitIdentity objects that the user can choose to authenticate as.
  * @cancellable: A #GCancellable.
@@ -467,6 +477,9 @@ polkit_agent_listener_class_init (PolkitAgentListenerClass *klass)
 void
 polkit_agent_listener_initiate_authentication (PolkitAgentListener  *listener,
                                                const gchar          *action_id,
+                                               const gchar          *message,
+                                               const gchar          *icon_name,
+                                               GHashTable           *details,
                                                const gchar          *cookie,
                                                GList                *identities,
                                                GCancellable         *cancellable,
@@ -475,6 +488,9 @@ polkit_agent_listener_initiate_authentication (PolkitAgentListener  *listener,
 {
   POLKIT_AGENT_LISTENER_GET_CLASS (listener)->initiate_authentication (listener,
                                                                        action_id,
+                                                                       message,
+                                                                       icon_name,
+                                                                       details,
                                                                        cookie,
                                                                        identities,
                                                                        cancellable,

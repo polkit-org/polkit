@@ -67,6 +67,9 @@ struct _PolkitAgentListenerClass
   /* Vtable */
   void     (*initiate_authentication)        (PolkitAgentListener  *listener,
                                               const gchar          *action_id,
+                                              const gchar          *message,
+                                              const gchar          *icon_name,
+                                              GHashTable           *details,
                                               const gchar          *cookie,
                                               GList                *identities,
                                               GCancellable         *cancellable,
@@ -92,6 +95,9 @@ struct _PolkitAgentListenerClass
 GType     polkit_agent_listener_get_type                        (void) G_GNUC_CONST;
 void      polkit_agent_listener_initiate_authentication         (PolkitAgentListener  *listener,
                                                                  const gchar          *action_id,
+                                                                 const gchar          *message,
+                                                                 const gchar          *icon_name,
+                                                                 GHashTable           *details,
                                                                  const gchar          *cookie,
                                                                  GList                *identities,
                                                                  GCancellable         *cancellable,

@@ -213,6 +213,10 @@
         <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action that @subject is attempting to do."/>
       </arg>
 
+      <arg name="details" direction="in" type="a{ss}">
+        <annotation name="org.gtk.EggDBus.DocString" value="Details describing the action."/>
+      </arg>
+
       <arg name="flags" direction="in" type="u">
         <annotation name="org.gtk.EggDBus.Type" value="CheckAuthorizationFlags"/>
         <annotation name="org.gtk.EggDBus.DocString" value="A set of #CheckAuthorizationFlags."/>
@@ -238,38 +242,15 @@
 
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
-    <method name="ObtainAuthorization">
-      <annotation name="org.gtk.EggDBus.DocString" value="Obtains a temporary authorization for @subject to perform the action identified by @action_id. If @subject is already authorized, this method returns immediately without error. If the authorization could not be obtained or @action_id doesn't allow temporary authorizations, the %org.freedesktop.PolicyKit1.Error.Failed error is returned."/>
-
-      <arg name="subject" direction="in" type="(sa{sv})">
-        <annotation name="org.gtk.EggDBus.DocString" value="A #Subject struct."/>
-        <annotation name="org.gtk.EggDBus.Type" value="Subject"/>
-      </arg>
-
-      <arg name="action_id" direction="in" type="s">
-        <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action that @subject is attempting to do."/>
-      </arg>
-
-      <arg name="cancellation_id" direction="in" type="s">
-        <annotation name="org.gtk.EggDBus.DocString" value="A unique id used to cancel the the authentication check via org.freedesktop.PolicyKit1.Authority.CancelObtainAuthorization() or the empty string if cancellation is not needed."/>
-      </arg>
-    </method>
-
-    <method name="CancelObtainAuthorization">
-      <annotation name="org.gtk.EggDBus.DocString" value="Cancels an attempt to obtain an authorization."/>
-
-      <arg name="cancellation_id" direction="in" type="s">
-        <annotation name="org.gtk.EggDBus.DocString" value="The @cancellation_id passed to org.freedesktop.PolicyKit1.Authority.ObtainAuthorization()."/>
-      </arg>
-    </method>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <method name="RegisterAuthenticationAgent">
       <annotation name="org.gtk.EggDBus.DocString" value="<para>Register an authentication agent.</para><para>Note that current versions of PolicyKit will only work if @session_id is set to the empty string. In the future it might work for non-empty strings if the caller is sufficiently privileged.</para>"/>
 
       <arg name="session_id" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="The session to register the authentication for or blank for the session the caller of the method is in."/>
+      </arg>
+
+      <arg name="locale" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The locale of the authentication agent."/>
       </arg>
 
       <arg name="object_path" direction="in" type="s">
