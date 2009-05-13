@@ -37,7 +37,7 @@ check_authorization_cb (PolkitAuthority *authority,
                         GMainLoop       *loop)
 {
   GError *error;
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
 
   error = NULL;
   result = polkit_authority_check_authorization_finish (authority, res, &error);
@@ -48,27 +48,22 @@ check_authorization_cb (PolkitAuthority *authority,
     }
   else
     {
-      gchar *result_str;
-      switch (result)
+      const gchar *result_str;
+      if (polkit_authorization_result_get_is_authorized (result))
         {
-        case POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED:
-          result_str = g_strdup ("POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED");
-          break;
-
-        case POLKIT_AUTHORIZATION_RESULT_AUTHORIZED:
-          result_str = g_strdup ("POLKIT_AUTHORIZATION_RESULT_AUTHORIZED");
-          break;
-
-        case POLKIT_AUTHORIZATION_RESULT_CHALLENGE:
-          result_str = g_strdup ("POLKIT_AUTHORIZATION_RESULT_CHALLENGE");
-          break;
-
-        default:
-          result_str = g_strdup_printf ("Unknown return code %d", result);
-          break;
+          result_str = "authorized";
         }
+      else if (polkit_authorization_result_get_is_challenge (result))
+        {
+          result_str = "challenge";
+        }
+      else
+        {
+          result_str = "not authorized";
+        }
+
       g_print ("Authorization result: %s\n", result_str);
-      g_free (result_str);
+      /* TODO: print details if authorized */
     }
 
   g_main_loop_quit (loop);

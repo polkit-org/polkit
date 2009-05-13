@@ -48,9 +48,9 @@ static void authority_check_authorization (PolkitBackendAuthority        *author
                                            GAsyncReadyCallback            callback,
                                            gpointer                       user_data);
 
-static PolkitAuthorizationResult authority_check_authorization_finish (PolkitBackendAuthority  *authority,
-                                                                       GAsyncResult            *res,
-                                                                       GError                 **error);
+static PolkitAuthorizationResult *authority_check_authorization_finish (PolkitBackendAuthority  *authority,
+                                                                        GAsyncResult            *res,
+                                                                        GError                 **error);
 
 G_DEFINE_DYNAMIC_TYPE (PolkitBackendNullAuthority, polkit_backend_null_authority,POLKIT_BACKEND_TYPE_AUTHORITY);
 
@@ -154,20 +154,20 @@ authority_check_authorization (PolkitBackendAuthority        *authority,
   g_object_unref (simple);
 }
 
-static PolkitAuthorizationResult
+static PolkitAuthorizationResult *
 authority_check_authorization_finish (PolkitBackendAuthority  *authority,
                                       GAsyncResult            *res,
                                       GError                 **error)
 {
   GSimpleAsyncResult *simple;
-  PolkitAuthorizationResult result;
+  PolkitAuthorizationResult *result;
 
   simple = G_SIMPLE_ASYNC_RESULT (res);
 
   g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == authority_check_authorization);
 
   /* we always return NOT_AUTHORIZED, never an error */
-  result = POLKIT_AUTHORIZATION_RESULT_NOT_AUTHORIZED;
+  result = polkit_authorization_result_new (FALSE, FALSE, NULL);
 
   if (g_simple_async_result_propagate_error (simple, error))
     goto out;

@@ -54,10 +54,10 @@ static gchar *action_id = NULL;
 static gboolean list_actions (void);
 static gboolean list_users (void);
 static gboolean list_groups (void);
-static gboolean list_authorizations (void);
+//static gboolean list_authorizations (void);
 static gboolean list_explicit_authorizations (void);
 
-static gboolean do_check (void);
+//static gboolean do_check (void);
 static gboolean do_add (void);
 static gboolean do_remove (void);
 
@@ -303,7 +303,8 @@ main (int argc, char *argv[])
     }
   else if (opt_list_authorizations)
     {
-      ret = list_authorizations ();
+      g_assert_not_reached ();
+      //ret = list_authorizations ();
     }
   else if (opt_list_explicit_authorizations)
     {
@@ -317,7 +318,8 @@ main (int argc, char *argv[])
           goto out;
         }
 
-      ret = do_check ();
+      //ret = do_check ();
+      g_assert_not_reached ();
     }
   else if (opt_add)
     {
@@ -597,6 +599,7 @@ list_groups (void)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+#if 0
 static gboolean
 do_check (void)
 {
@@ -775,6 +778,7 @@ list_authorizations (void)
   g_main_loop_unref (authz_data_loop);
   return ret;
 }
+#endif
 
 /* ---------------------------------------------------------------------------------------------------- */
 
