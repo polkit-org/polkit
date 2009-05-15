@@ -475,3 +475,7 @@ echo "NOTE: The file ${libexecdir}/polkit-agent-helper-1 must be owned"
 echo "      by root and have mode 4755 (setuid root binary)"
 echo
 
+echo "NOTE: The file ${bindir}/pkexec must be owned by root and"
+echo "      have mode 4755 (setuid root binary)"
+echo
+
