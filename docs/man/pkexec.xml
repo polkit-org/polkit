@@ -1,0 +1,155 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="pkexec.1" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <refentryinfo>
+    <title>pkexec</title>
+    <date>May 2009</date>
+    <productname>PolicyKit-1</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>pkexec</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>pkexec</refname>
+    <refpurpose>Execute a command as another user</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>pkexec</command>
+      <arg><option>--version</option></arg>
+      <arg><option>--help</option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>pkexec</command>
+      <group>
+        <arg choice="plain">
+          <option>--user</option>
+          <replaceable>username</replaceable>
+        </arg>
+      </group>
+      <arg choice="plain"><replaceable>PROGRAM</replaceable></arg>
+      <group rep="repeat">
+        <arg choice="plain"><replaceable>ARGUMENTS</replaceable></arg>
+      </group>
+    </cmdsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1><title>DESCRIPTION</title>
+    <para>
+      <command>pkexec</command> allows an authorized user to
+      execute <replaceable>PROGRAM</replaceable> as another
+      user. If <replaceable>username</replaceable> is not specified,
+      then the program will be executed as the administrative super
+      user, <emphasis>root</emphasis>.
+    </para>
+  </refsect1>
+
+  <refsect1><title>RETURN VALUE</title>
+    <para>
+      Upon successful completion, the return value is the return value
+      of <replaceable>PROGRAM</replaceable>. If the calling process is
+      not authorized or an authorization could not be obtained through
+      authentication or an error occured, <command>pkexec</command>
+      exits with a return value of 127.
+    </para>
+  </refsect1>
+
+  <refsect1><title>SECURITY NOTES</title>
+    <para>
+      Executing a program as another user is a privileged
+      operation. By default the required authorization (See
+      <xref linkend="pkexec-required-authz"/>) requires administrator
+      authentication. In addition, the authentication dialog presented
+      to the user will display the full path to the program to be
+      executed so the user is aware of what will happen.
+    </para>
+    <para>
+      The environment that <replaceable>PROGRAM</replaceable> will run
+      it, will be set to a minimal known and safe environment in order
+      to avoid injecting code
+      through <literal>LD_LIBRARY_PATH</literal> or similar
+      mechanisms. In addition the <literal>PKEXEC_UID</literal>
+      environment variable is set to the user id of the process
+      invoking <command>pkexec</command>. As a
+      result, <command>pkexec</command> will not allow you to run X11
+      applications as another user.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkexec-required-authz"><title>REQUIRED AUTHORIZATIONS</title>
+    <para>
+      By default,
+      the <emphasis>org.freedesktop.policykit.exec</emphasis>
+      authorization is required unless an action definition file is
+      present for the program in question. To require another
+      authorization, it can be specified using the <emphasis>org.freedesktop.policykit.exec.path</emphasis> annotation on an action (See <xref linkend="pkexec-example"/> for details).
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkexec-example"><title>EXAMPLE</title>
+    <para>
+      To specify what kind of authorization is needed to execute the
+      program <filename>/usr/bin/pk-example-frobnicate</filename> as
+      another user, simply write an action definition file like this
+    </para>
+    <programlisting>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" href="../../src/examples/org.freedesktop.policykit.examples.pkexec.policy"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
+    <para>
+      and drop it in
+      the <filename>/usr/share/polkit-1/actions</filename> directory
+      under a suitable name (e.g. matching the namespace of the
+      action).  Note that in addition to specifying the program, the
+      authentication message, description, icon and defaults can be
+      specified.
+    </para>
+    <para>
+      Note that <command>pkexec</command> does no validation of
+      the <replaceable>ARGUMENTS</replaceable> passed
+      to <replaceable>PROGRAM</replaceable>. In the normal case (where
+      administrator authentication is required every
+      time <command>pkexec</command> is used), this is not a
+      problem. However, if an action is used for which the user can
+      retain authorization (or if the user is implicitly authorized),
+      this could be a security hole. Therefore, as a rule of thumb,
+      programs for which the default required authorization is
+      changed, should never implicitly trust user input (e.g. like any
+      other <emphasis>suid</emphasis> program).
+    </para>
+  </refsect1>
+
+  <refsect1><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen <email>davidz@redhat.com</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      on how to subscribe.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

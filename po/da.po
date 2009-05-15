@@ -1,51 +1,93 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Danish translations for PolicyKit.
+# Copyright (C) 2009 Red Hat, Inc.
+# This file is distributed under the same license as the PolicyKit package.
+# David Zeuthen <davidz@redhat.com>, 2009.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: DeviceKit-disks\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-07 16:14-0500\n"
-"PO-Revision-Date: 2008-12-07 16:17-0500\n"
+"POT-Creation-Date: 2009-05-15 13:45-0400\n"
+"PO-Revision-Date: 2009-05-12 17:01-0400\n"
 "Last-Translator: David Zeuthen <davidz@redhat.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:1
 msgid "Authentication is required to grant authorizations to other users"
-msgstr "Autentificering er påkrævet for at autorisere andre brugere"
+msgstr "Autorisering er påkrævet for at autorisere andre brugere"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:2
 msgid ""
 "Authentication is required to modify the defaults for implicit authorizations"
-msgstr "Autentificering er påkrævet for ændre implicit autorisering"
+msgstr "Autorisering er påkrævet for ændre implicit autorisering"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:3
 msgid "Authentication is required to read authorizations of other users"
-msgstr "Autentificering er påkrævet for at læse andre brugers autoriseringer"
+msgstr "Autorisering er påkrævet for at læse andre brugers autoriseringer"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:4
 msgid "Authentication is required to revoke authorizations other users"
-msgstr "Autentificering er påkrævet for at fjerne en autosering fra en anden bruger"
+msgstr ""
+"Autorisering er påkrævet for at fjerne en autosering fra en anden bruger"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:5
+msgid "Authentication is required to run a program as another user"
+msgstr "Autorisering er påkrævet for at afvikle et program som en anden bruger"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:6
 msgid "Grant authorizations to other users"
 msgstr "Autoriser en anden bruger"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:6
+#: ../actions/org.freedesktop.policykit.policy.in.h:7
 msgid "Modify defaults for implicit authorizations"
 msgstr "Konfigurer implicit autorisering"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:7
+#: ../actions/org.freedesktop.policykit.policy.in.h:8
 msgid "Read authorizations of other users"
 msgstr "Læs andre brugers autoriseringer"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:8
+#: ../actions/org.freedesktop.policykit.policy.in.h:9
 msgid "Revoke authorizations from other users"
 msgstr "Fjern autorisering fra en anden bruger"
 
+#: ../actions/org.freedesktop.policykit.policy.in.h:10
+msgid "Run programs as another user"
+msgstr "Kør et program som en anden bruger"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+msgid ""
+"Authentication is required to run the PolicyKit example program Frobnicate"
+msgstr "Autorisering er påkrævet for at afvikle PolicyKit eksemplet Frobnicate"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+msgid "Run the PolicyKit example program Frobnicate"
+msgstr "Kør PolicyKit eksemplet Frobnicate"
+
+#. Translator: %s is a fully qualified path to the executable
+#: ../src/programs/pkexec-action-lookup.c:110
+#, c-format
+msgid "Authentication is needed to run `%s' as the super user"
+msgstr "Autorisering er påkrævet for at afvikle `%s' som super bruger"
+
+#. Translator: %s is a fully qualified path to the executable
+#: ../src/programs/pkexec-action-lookup.c:115
+#, c-format
+msgid "Authentication is needed to run `%s' as another user"
+msgstr "Autorisering er påkrævet for at afvikle `%s' som en anden bruger"
+
+#: ../src/programs/pkexec-action-lookup.c:159
+msgid "Command"
+msgstr "Program"
+
+#: ../src/programs/pkexec-action-lookup.c:168
+msgid "Super User (root)"
+msgstr "Super Bruger (root)"
+
+#: ../src/programs/pkexec-action-lookup.c:170
+msgid "Run As"
+msgstr "Bruger"

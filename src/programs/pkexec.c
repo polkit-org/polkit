@@ -1,0 +1,473 @@
+/*
+ * Copyright (C) 2008 Red Hat, Inc.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General
+ * Public License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA 02111-1307, USA.
+ *
+ * Author: David Zeuthen <davidz@redhat.com>
+ */
+
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <grp.h>
+#include <pwd.h>
+#include <errno.h>
+
+#include <polkit/polkit.h>
+
+static void
+usage (int argc, char *argv[])
+{
+  GError *error;
+
+  error = NULL;
+  if (!g_spawn_command_line_sync ("man pkexec",
+                                  NULL,
+                                  NULL,
+                                  NULL,
+                                  &error))
+    {
+      g_printerr ("Cannot show manual page: %s\n", error->message);
+      g_error_free (error);
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gchar *
+find_action_for_path (PolkitAuthority *authority,
+                      const gchar     *path)
+{
+  GList *l;
+  GList *actions;
+  gchar *action_id;
+  GError *error;
+
+  actions = NULL;
+  action_id = NULL;
+  error = NULL;
+
+  actions = polkit_authority_enumerate_actions_sync (authority,
+                                                     NULL,
+                                                     &error);
+  if (actions == NULL)
+    {
+      g_warning ("Error enumerating actions: %s", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  for (l = actions; l != NULL; l = l->next)
+    {
+      PolkitActionDescription *action_desc = POLKIT_ACTION_DESCRIPTION (l->data);
+      const gchar *path_for_action;
+
+      path_for_action = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.path");
+      if (path_for_action == NULL)
+        continue;
+
+      if (g_strcmp0 (path_for_action, path) == 0)
+        {
+          action_id = g_strdup (polkit_action_description_get_action_id (action_desc));
+          goto out;
+        }
+    }
+
+ out:
+  g_list_foreach (actions, (GFunc) g_object_unref, NULL);
+  g_list_free (actions);
+
+  /* Fall back to org.freedesktop.policykit.exec */
+
+  if (action_id == NULL)
+    action_id = g_strdup ("org.freedesktop.policykit.exec");
+
+  return action_id;
+}
+
+
+int
+main (int argc, char *argv[])
+{
+  guint n;
+  guint ret;
+  gboolean opt_show_help;
+  gboolean opt_show_version;
+  PolkitAuthority *authority;
+  PolkitAuthorizationResult *result;
+  PolkitSubject *subject;
+  GHashTable *details;
+  GError *error;
+  gchar *action_id;
+  gchar *command_line;
+  gchar **exec_argv;
+  gchar *path;
+  struct passwd pwstruct;
+  struct passwd *pw;
+  gchar pwbuf[8192];
+  gchar *s;
+  const gchar *environment_variables_to_save[] = {
+    "LANG"
+    "LANGUAGE",
+    "LC_ALL",
+    "LC_MESSAGES",
+    "SHELL",
+    "TERM",
+
+    /* For now, avoiding pretend that running X11 apps as another user in the same session
+     * will ever work... See
+     *
+     *  https://bugs.freedesktop.org/show_bug.cgi?id=17970#c26
+     *
+     * and surrounding comments for a lot of discussion about this.
+     */
+#if 0
+    "DESKTOP_STARTUP_ID",
+    "DISPLAY",
+    "XAUTHORITY",
+    "DBUS_SESSION_BUS_ADDRESS",
+    "ORBIT_SOCKETDIR",
+#endif
+    NULL
+  };
+  GPtrArray *saved_env;
+  gchar *opt_user;
+  pid_t pid_of_caller;
+  struct stat statbuf;
+  gchar procbuf[32];
+
+  ret = 127;
+  authority = NULL;
+  subject = NULL;
+  details = NULL;
+  result = NULL;
+  action_id = NULL;
+  saved_env = NULL;
+  path = NULL;
+  command_line = NULL;
+  opt_user = NULL;
+
+  /* check for correct invocation */
+  if (geteuid () != 0)
+    {
+      g_print ("pkexec must be setuid root\n");
+      goto out;
+    }
+
+  /* First process options and find the command-line to invoke. Avoid using fancy library routines
+   * that depend on environtment variables since we haven't cleared the environment just yet.
+   */
+  opt_show_help = FALSE;
+  opt_show_version = FALSE;
+  for (n = 1; n < (guint) argc; n++)
+    {
+      if (strcmp (argv[n], "--help") == 0)
+        {
+          opt_show_help = TRUE;
+        }
+      else if (strcmp (argv[n], "--version") == 0)
+        {
+          opt_show_version = TRUE;
+        }
+      else if (strcmp (argv[n], "--user") == 0 || strcmp (argv[n], "-u") == 0)
+        {
+          n++;
+          if (n >= (guint) argc)
+            {
+              usage (argc, argv);
+              goto out;
+            }
+
+          opt_user = g_strdup (argv[n]);
+        }
+      else
+        {
+          break;
+        }
+    }
+
+  if (opt_show_help)
+    {
+      usage (argc, argv);
+      ret = 0;
+      goto out;
+    }
+  else if (opt_show_version)
+    {
+      g_print ("pkexec version %s\n", PACKAGE_VERSION);
+      ret = 0;
+      goto out;
+    }
+
+  if (opt_user == NULL)
+    opt_user = g_strdup ("root");
+
+  /* Now figure out the command-line to run - argv is guaranteed to be NULL-terminated, see
+   *
+   *  http://lkml.indiana.edu/hypermail/linux/kernel/0409.2/0287.html
+   *
+   * but do check this is the case.
+   *
+   * We also try to locate the program in the path if a non-absolute path is given.
+   */
+  g_assert (argv[argc] == NULL);
+  path = g_strdup (argv[n]);
+  if (path == NULL)
+    {
+      usage (argc, argv);
+      goto out;
+    }
+  if (path[0] != '/')
+    {
+      /* g_find_program_in_path() is not suspectible to attacks via the environment */
+      s = g_find_program_in_path (path);
+      if (s == NULL)
+        {
+          g_printerr ("Cannot run program %s: %s\n", path, strerror (ENOENT));
+          goto out;
+        }
+      g_free (path);
+      argv[n] = path = s;
+    }
+  if (stat (path, &statbuf) != 0)
+    {
+      g_printerr ("Error getting information about %s: %m\n", path);
+      goto out;
+    }
+  command_line = g_strjoinv (" ", argv + n);
+  exec_argv = argv + n;
+
+  /* now save the environment variables we care about */
+  saved_env = g_ptr_array_new ();
+  for (n = 0; environment_variables_to_save[n] != NULL; n++)
+    {
+      const gchar *key = environment_variables_to_save[n];
+      const gchar *value;
+
+      value = g_getenv (key);
+      if (value == NULL)
+        continue;
+
+      g_ptr_array_add (saved_env, g_strdup (key));
+      g_ptr_array_add (saved_env, g_strdup (value));
+    }
+
+  /* Nuke the environment to get a well-known and sanitized environment to avoid attacks
+   * via e.g. the DBUS_SYSTEM_BUS_ADDRESS environment variable and similar.
+   */
+  if (clearenv () != 0)
+    {
+      g_printerr ("Error clearing environment: %m\n");
+      goto out;
+    }
+
+  /* Look up information about the user we care about */
+  if (getpwnam_r (opt_user, &pwstruct, pwbuf, sizeof pwbuf, &pw) != 0)
+    {
+      g_printerr ("Error getting information for user %s: %m\n", opt_user);
+      goto out;
+    }
+
+  /* Initialize the GLib type system - this is needed to interact with the
+   * PolicyKit daemon
+   */
+  g_type_init ();
+
+  /* now check if the program that invoked us is authorized */
+  pid_of_caller = getppid ();
+  if (pid_of_caller == 1)
+    {
+      /* getppid() can return 1 if the parent died (meaning that we are reaped
+       * by /sbin/init); get process group leader instead - for example, this
+       * happens when launching via gnome-panel (alt+f2, then 'pkexec gedit').
+       */
+      pid_of_caller = getpgrp ();
+    }
+
+  /* paranoia: check that the uid of pid_of_caller matches getuid() */
+  g_snprintf (procbuf, sizeof procbuf, "/proc/%d", pid_of_caller);
+  if (stat (procbuf, &statbuf) != 0)
+    {
+      g_printerr ("Error determing pid of caller (pid %d): %m\n", (gint) pid_of_caller);
+      goto out;
+    }
+  if (statbuf.st_uid != getuid ())
+    {
+      g_printerr ("User of caller (%d) does not match our uid (%d)\n", statbuf.st_uid, getuid ());
+      goto out;
+    }
+
+  authority = polkit_authority_get ();
+  subject = polkit_unix_process_new (pid_of_caller);
+
+  details = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+
+  g_hash_table_insert (details, "command-line", g_strdup (command_line));
+  s = g_strdup_printf ("%s (%s)", pw->pw_gecos, pw->pw_name);
+  g_hash_table_insert (details, "user", s);
+  s = g_strdup_printf ("%d", (gint) pw->pw_uid);
+  g_hash_table_insert (details, "uid", s);
+  g_hash_table_insert (details, "program", g_strdup (path));
+
+  action_id = find_action_for_path (authority, path);
+  g_assert (action_id != NULL);
+
+  error = NULL;
+  result = polkit_authority_check_authorization_sync (authority,
+                                                      subject,
+                                                      action_id,
+                                                      details,
+                                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
+                                                      NULL,
+                                                      &error);
+  if (result == NULL)
+    {
+      g_printerr ("Error checking for authorization %s: %s\n",
+                  action_id,
+                  error->message);
+      goto out;
+    }
+
+  if (polkit_authorization_result_get_is_authorized (result))
+    {
+      /* do nothing */
+    }
+  else if (polkit_authorization_result_get_is_challenge (result))
+    {
+      g_printerr ("Authorization requires authentication but no authentication was found.\n");
+      goto out;
+    }
+  else
+    {
+      g_printerr ("Not authorized.\n");
+      goto out;
+    }
+
+  /* Set PATH to a safe list */
+  g_ptr_array_add (saved_env, g_strdup ("PATH"));
+  if (pw->pw_uid != 0)
+    s = g_strdup_printf ("/usr/bin:/bin:/usr/sbin:/sbin:%s/bin", pw->pw_dir);
+  else
+    s = g_strdup_printf ("/usr/sbin:/usr/bin:/sbin:/bin:%s/bin", pw->pw_dir);
+  g_ptr_array_add (saved_env, s);
+  g_ptr_array_add (saved_env, g_strdup ("LOGNAME"));
+  g_ptr_array_add (saved_env, g_strdup (pw->pw_name));
+  g_ptr_array_add (saved_env, g_strdup ("USER"));
+  g_ptr_array_add (saved_env, g_strdup (pw->pw_name));
+  g_ptr_array_add (saved_env, g_strdup ("HOME"));
+  g_ptr_array_add (saved_env, g_strdup (pw->pw_dir));
+
+  s = g_strdup_printf ("%d", getuid ());
+  g_ptr_array_add (saved_env, g_strdup ("PKEXEC_UID"));
+  g_ptr_array_add (saved_env, s);
+
+  /* set the environment */
+  for (n = 0; n < saved_env->len - 1; n += 2)
+    {
+      const gchar *key = saved_env->pdata[n];
+      const gchar *value = saved_env->pdata[n + 1];
+
+      if (!g_setenv (key, value, TRUE))
+        {
+          g_printerr ("Error setting environment variable %s to '%s': %m\n",
+                      key,
+                      value);
+          goto out;
+        }
+    }
+
+  /* if not changing to uid 0, become uid 0 before changing to the user */
+  if (pw->pw_uid)
+    {
+      setreuid (0, 0);
+      if ((geteuid () != 0) || (getuid () != 0))
+        {
+          g_printerr ("Error becoming uid 0: %m\n");
+          goto out;
+        }
+    }
+
+  /* become the user */
+  if (setgroups (0, NULL) != 0)
+    {
+      g_printerr ("Error setting groups: %m\n");
+      goto out;
+    }
+  if (initgroups (pw->pw_name, pw->pw_gid) != 0)
+    {
+      g_printerr ("Error initializing groups for %s: %m\n", pw->pw_name);
+      goto out;
+    }
+  setregid (pw->pw_gid, pw->pw_gid);
+  setreuid (pw->pw_uid, pw->pw_uid);
+  if ((geteuid () != pw->pw_uid) || (getuid () != pw->pw_uid) ||
+      (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
+    {
+      g_printerr ("Error becoming real+effective uid %d and gid %d: %m\n", pw->pw_uid, pw->pw_gid);
+      goto out;
+    }
+
+  /* change to home directory */
+  if (chdir (pw->pw_dir) != 0)
+    {
+      g_printerr ("Error changing to home directory %s: %m\n", pw->pw_dir);
+      goto out;
+    }
+
+  /* exec the program */
+  if (execv (path, exec_argv) != 0)
+    {
+      g_printerr ("Error executing %s: %m\n", path);
+      goto out;
+    }
+
+  /* if exec doesn't fail, it never returns... */
+  g_assert_not_reached ();
+
+ out:
+  if (result != NULL)
+    g_object_unref (result);
+
+  g_free (action_id);
+
+  if (details != NULL)
+    g_hash_table_unref (details);
+
+  if (subject != NULL)
+    g_object_unref (subject);
+
+  if (authority != NULL)
+    g_object_unref (authority);
+
+  if (saved_env != NULL)
+    {
+      g_ptr_array_foreach (saved_env, (GFunc) g_free, NULL);
+      g_ptr_array_free (saved_env, TRUE);
+    }
+
+  g_free (path);
+  g_free (command_line);
+  g_free (opt_user);
+
+  return ret;
+}
+

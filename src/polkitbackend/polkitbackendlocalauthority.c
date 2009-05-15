@@ -1457,6 +1457,8 @@ get_admin_auth_identities (PolkitBackendLocalAuthority *authority)
 
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
 
+  ret = NULL;
+
   error = NULL;
   admin_identities = polkit_backend_config_source_get_string_list (priv->config_source,
                                                                    "Configuration",

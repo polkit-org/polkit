@@ -54,6 +54,7 @@ content_files =  			    								\
 	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml		\
 	../man/PolicyKit.xml										\
 	../man/polkit.xml										\
+	../man/pkexec.xml										\
 	$(NULL)
 
 # Images to copy into HTML directory

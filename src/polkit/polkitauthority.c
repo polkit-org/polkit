@@ -467,6 +467,7 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
   g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_check_authorization_async);
 
   result = NULL;
+  real_result = NULL;
 
   local_error = NULL;
   _polkit_authority_check_authorization_finish (authority->real,

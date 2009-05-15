@@ -108,7 +108,7 @@
 
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
-    <!-- An enumeration for results when checking for an authorization -->
+    <!-- An structure containing the results of an authorization check -->
     <annotation name="org.gtk.EggDBus.DeclareStruct" value="AuthorizationResult">
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authorization Results"/>
       <annotation name="org.gtk.EggDBus.DocString" value="Describes the result of calling org.freedesktop.PolicyKit1.Authority.CheckAuthorization()."/>

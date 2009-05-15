@@ -105,6 +105,7 @@
     <title>Manual Pages</title>
     <xi:include href="../man/PolicyKit.xml"/>
     <xi:include href="../man/polkit.xml"/>
+    <xi:include href="../man/pkexec.xml"/>
   </reference>
 
   <index>
