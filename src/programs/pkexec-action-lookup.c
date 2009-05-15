@@ -146,8 +146,9 @@ polkit_exec_action_lookup_get_details   (PolkitBackendActionLookup *lookup,
 
   ret = NULL;
 
-  if (action_desc != NULL &&
-      polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.path") == NULL)
+  if (!(g_strcmp0 (action_id, "org.freedesktop.policykit.exec") == 0 ||
+        (action_desc != NULL &&
+         polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.path") != NULL)))
     goto out;
 
   ret = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
