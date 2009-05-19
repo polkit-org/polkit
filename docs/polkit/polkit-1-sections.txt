@@ -269,3 +269,20 @@ polkit_error_quark
 polkit_error_get_type
 </SECTION>
 
+<SECTION>
+<FILE>polkitdetails</FILE>
+PolkitDetails
+polkit_details_new
+polkit_details_lookup
+polkit_details_insert
+polkit_details_get_keys
+<SUBSECTION Standard>
+PolkitDetailsClass
+POLKIT_DETAILS
+POLKIT_IS_DETAILS
+POLKIT_TYPE_DETAILS
+polkit_details_get_type
+POLKIT_DETAILS_CLASS
+POLKIT_IS_DETAILS_CLASS
+POLKIT_DETAILS_GET_CLASS
+</SECTION>

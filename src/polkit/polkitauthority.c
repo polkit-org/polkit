@@ -330,7 +330,7 @@ static guint
 polkit_authority_check_authorization_async (PolkitAuthority               *authority,
                                             PolkitSubject                 *subject,
                                             const gchar                   *action_id,
-                                            GHashTable                    *details,
+                                            PolkitDetails                 *details,
                                             PolkitCheckAuthorizationFlags  flags,
                                             GCancellable                  *cancellable,
                                             GAsyncReadyCallback            callback,
@@ -360,13 +360,18 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
                                         G_TYPE_STRING, NULL);
   if (details != NULL)
     {
+      GHashTable *hash;
       GHashTableIter iter;
       const gchar *key;
       const gchar *value;
 
-      g_hash_table_iter_init (&iter, details);
-      while (g_hash_table_iter_next (&iter, (gpointer) &key, (gpointer) &value))
-        egg_dbus_hash_map_insert (real_details, key, value);
+      hash = polkit_details_get_hash (details);
+      if (hash != NULL)
+        {
+          g_hash_table_iter_init (&iter, hash);
+          while (g_hash_table_iter_next (&iter, (gpointer) &key, (gpointer) &value))
+            egg_dbus_hash_map_insert (real_details, key, value);
+        }
     }
 
   call_id = _polkit_authority_check_authorization (authority->real,
@@ -407,7 +412,7 @@ void
 polkit_authority_check_authorization (PolkitAuthority               *authority,
                                       PolkitSubject                 *subject,
                                       const gchar                   *action_id,
-                                      GHashTable                    *details,
+                                      PolkitDetails                 *details,
                                       PolkitCheckAuthorizationFlags  flags,
                                       GCancellable                  *cancellable,
                                       GAsyncReadyCallback            callback,
@@ -535,7 +540,7 @@ PolkitAuthorizationResult *
 polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
                                            PolkitSubject                 *subject,
                                            const gchar                   *action_id,
-                                           GHashTable                    *details,
+                                           PolkitDetails                 *details,
                                            PolkitCheckAuthorizationFlags  flags,
                                            GCancellable                  *cancellable,
                                            GError                       **error)

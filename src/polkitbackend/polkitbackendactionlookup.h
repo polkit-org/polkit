@@ -70,35 +70,35 @@ struct _PolkitBackendActionLookupIface
   /*< public >*/
   /* VTable */
 
-  gchar *        (*get_message)   (PolkitBackendActionLookup *lookup,
-                                   const gchar               *action_id,
-                                   GHashTable                *details,
-                                   PolkitActionDescription   *action_description);
+  gchar *           (*get_message)   (PolkitBackendActionLookup *lookup,
+                                      const gchar               *action_id,
+                                      PolkitDetails             *details,
+                                      PolkitActionDescription   *action_description);
 
-  gchar *        (*get_icon_name) (PolkitBackendActionLookup *lookup,
-                                   const gchar               *action_id,
-                                   GHashTable                *details,
-                                   PolkitActionDescription   *action_description);
+  gchar *           (*get_icon_name) (PolkitBackendActionLookup *lookup,
+                                      const gchar               *action_id,
+                                      PolkitDetails             *details,
+                                      PolkitActionDescription   *action_description);
 
-  GHashTable *   (*get_details)   (PolkitBackendActionLookup *lookup,
-                                   const gchar               *action_id,
-                                   GHashTable                *details,
-                                   PolkitActionDescription   *action_description);
+  PolkitDetails *   (*get_details)   (PolkitBackendActionLookup *lookup,
+                                      const gchar               *action_id,
+                                      PolkitDetails             *details,
+                                      PolkitActionDescription   *action_description);
 };
 
-GType       polkit_backend_action_lookup_get_type    (void) G_GNUC_CONST;
-gchar      *polkit_backend_action_lookup_get_message   (PolkitBackendActionLookup *lookup,
-                                                        const gchar               *action_id,
-                                                        GHashTable                *details,
-                                                        PolkitActionDescription   *action_description);
-gchar      *polkit_backend_action_lookup_get_icon_name (PolkitBackendActionLookup *lookup,
-                                                        const gchar               *action_id,
-                                                        GHashTable                *details,
-                                                        PolkitActionDescription   *action_description);
-GHashTable *polkit_backend_action_lookup_get_details   (PolkitBackendActionLookup *lookup,
-                                                        const gchar               *action_id,
-                                                        GHashTable                *details,
-                                                        PolkitActionDescription   *action_description);
+GType          polkit_backend_action_lookup_get_type      (void) G_GNUC_CONST;
+gchar         *polkit_backend_action_lookup_get_message   (PolkitBackendActionLookup *lookup,
+                                                           const gchar               *action_id,
+                                                           PolkitDetails             *details,
+                                                           PolkitActionDescription   *action_description);
+gchar         *polkit_backend_action_lookup_get_icon_name (PolkitBackendActionLookup *lookup,
+                                                           const gchar               *action_id,
+                                                           PolkitDetails             *details,
+                                                           PolkitActionDescription   *action_description);
+PolkitDetails *polkit_backend_action_lookup_get_details   (PolkitBackendActionLookup *lookup,
+                                                           const gchar               *action_id,
+                                                           PolkitDetails             *details,
+                                                           PolkitActionDescription   *action_description);
 
 G_END_DECLS
 

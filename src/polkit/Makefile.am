@@ -45,6 +45,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
         polkitprivate.h									\
         polkittypes.h									\
 	polkitactiondescription.h							\
+	polkitdetails.h									\
 	polkitauthority.h								\
 	polkitauthoritymanager.h							\
 	polkiterror.h									\
@@ -63,9 +64,10 @@ libpolkit_gobject_1include_HEADERS =                        				\
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
 	$(BUILT_SOURCES)								\
-	$(polkit_built_sources)							\
+	$(polkit_built_sources)								\
         polkit.h									\
 	polkitactiondescription.c		polkitactiondescription.h		\
+	polkitdetails.c				polkitdetails.h				\
 	polkitauthority.c			polkitauthority.h			\
 	polkitauthoritymanager.c		polkitauthoritymanager.h		\
 	polkiterror.c				polkiterror.h				\

@@ -3,6 +3,7 @@ polkit_authority_manager_get_type
 
 polkit_authorization_get_type
 polkit_action_description_get_type
+polkit_details_get_type
 
 polkit_check_authorization_flags_get_type
 polkit_implicit_authorization_get_type

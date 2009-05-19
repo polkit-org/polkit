@@ -94,7 +94,7 @@ static void                authentication_agent_initiate_challenge (Authenticati
                                                                     PolkitIdentity              *user_of_subject,
                                                                     PolkitBackendLocalAuthority *authority,
                                                                     const gchar                 *action_id,
-                                                                    GHashTable                  *details,
+                                                                    PolkitDetails               *details,
                                                                     PolkitSubject               *caller,
                                                                     PolkitImplicitAuthorization  implicit_authorization,
                                                                     GCancellable                *cancellable,
@@ -167,7 +167,7 @@ static void polkit_backend_local_authority_check_authorization (PolkitBackendAut
                                                                 PolkitSubject                 *caller,
                                                                 PolkitSubject                 *subject,
                                                                 const gchar                   *action_id,
-                                                                GHashTable                    *details,
+                                                                PolkitDetails                 *details,
                                                                 PolkitCheckAuthorizationFlags  flags,
                                                                 GCancellable                  *cancellable,
                                                                 GAsyncReadyCallback            callback,
@@ -540,7 +540,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
                                                     PolkitSubject                  *caller,
                                                     PolkitSubject                  *subject,
                                                     const gchar                    *action_id,
-                                                    GHashTable                     *details,
+                                                    PolkitDetails                  *details,
                                                     PolkitCheckAuthorizationFlags   flags,
                                                     GCancellable                   *cancellable,
                                                     GAsyncReadyCallback             callback,
@@ -1546,7 +1546,7 @@ get_localized_data_for_challenge (PolkitBackendLocalAuthority *authority,
                                   PolkitSubject               *subject,
                                   PolkitIdentity              *user_of_subject,
                                   const gchar                 *action_id,
-                                  GHashTable                  *details,
+                                  PolkitDetails               *details,
                                   const gchar                 *locale,
                                   gchar                      **out_localized_message,
                                   gchar                      **out_localized_icon_name,
@@ -1554,14 +1554,11 @@ get_localized_data_for_challenge (PolkitBackendLocalAuthority *authority,
 {
   PolkitBackendLocalAuthorityPrivate *priv;
   PolkitActionDescription *action_desc;
-  GHashTableIter iter;
-  const gchar *key;
-  const gchar *value;
   GList *action_lookup_list;
   GList *l;
   gchar *message;
   gchar *icon_name;
-  GHashTable *localized_details;
+  PolkitDetails *localized_details;
 
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
 
@@ -1639,10 +1636,19 @@ get_localized_data_for_challenge (PolkitBackendLocalAuthority *authority,
 
   if (localized_details != NULL)
     {
-      g_hash_table_iter_init (&iter, localized_details);
-      while (g_hash_table_iter_next (&iter, (gpointer) &key, (gpointer) &value))
+      GHashTable *hash;
+      GHashTableIter iter;
+      const gchar *key;
+      const gchar *value;
+
+      hash = polkit_details_get_hash (localized_details);
+      if (hash != NULL)
         {
-          egg_dbus_hash_map_insert (*out_localized_details, key, value);
+          g_hash_table_iter_init (&iter, hash);
+          while (g_hash_table_iter_next (&iter, (gpointer) &key, (gpointer) &value))
+            {
+              egg_dbus_hash_map_insert (*out_localized_details, key, value);
+            }
         }
     }
 
@@ -1663,7 +1669,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          PolkitIdentity              *user_of_subject,
                                          PolkitBackendLocalAuthority *authority,
                                          const gchar                 *action_id,
-                                         GHashTable                  *details,
+                                         PolkitDetails               *details,
                                          PolkitSubject               *caller,
                                          PolkitImplicitAuthorization  implicit_authorization,
                                          GCancellable                *cancellable,

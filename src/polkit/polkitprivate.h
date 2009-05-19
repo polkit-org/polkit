@@ -50,4 +50,8 @@ _PolkitAuthorization *polkit_authorization_get_real     (PolkitAuthorization  *a
 PolkitAuthorizationResult  *polkit_authorization_result_new_for_real (_PolkitAuthorizationResult *real);
 _PolkitAuthorizationResult *polkit_authorization_result_get_real (PolkitAuthorizationResult *authorization_result);
 
+
+PolkitDetails *polkit_details_new_for_hash (GHashTable *hash);
+GHashTable *polkit_details_get_hash (PolkitDetails *details);
+
 #endif /* __POLKIT_PRIVATE_H */

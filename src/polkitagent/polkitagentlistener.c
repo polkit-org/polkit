@@ -371,6 +371,7 @@ handle_begin_authentication (_PolkitAuthenticationAgent *instance,
   GList *list;
   guint n;
   GCancellable *cancellable;
+  PolkitDetails *_details;
 
   list = NULL;
   for (n = 0; n < identities->size; n++)
@@ -391,11 +392,13 @@ handle_begin_authentication (_PolkitAuthenticationAgent *instance,
 
   g_hash_table_insert (server->cookie_to_pending_auth, (gpointer) cookie, data);
 
+  _details = polkit_details_new_for_hash (details->data);
+
   polkit_agent_listener_initiate_authentication (server->listener,
                                                  action_id,
                                                  message,
                                                  icon_name,
-                                                 details->data,
+                                                 _details,
                                                  cookie,
                                                  list,
                                                  data->cancellable,
@@ -403,6 +406,7 @@ handle_begin_authentication (_PolkitAuthenticationAgent *instance,
                                                  data);
 
   g_list_free (list);
+  g_object_unref (_details);
 }
 
 static void
@@ -456,7 +460,7 @@ polkit_agent_listener_class_init (PolkitAgentListenerClass *klass)
  * @action_id: The action to authenticate for.
  * @message: The message to present to the user.
  * @icon_name: A themed icon name representing the action or %NULL.
- * @details: A set of key/value string pairs describing the action.
+ * @details: Details describing the action.
  * @cookie: The cookie for the authentication request.
  * @identities: A list of #PolkitIdentity objects that the user can choose to authenticate as.
  * @cancellable: A #GCancellable.
@@ -479,7 +483,7 @@ polkit_agent_listener_initiate_authentication (PolkitAgentListener  *listener,
                                                const gchar          *action_id,
                                                const gchar          *message,
                                                const gchar          *icon_name,
-                                               GHashTable           *details,
+                                               PolkitDetails        *details,
                                                const gchar          *cookie,
                                                GList                *identities,
                                                GCancellable         *cancellable,

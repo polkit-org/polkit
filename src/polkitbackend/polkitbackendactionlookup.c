@@ -49,10 +49,10 @@
  * e.g. messages that include more information than just the action
  * name.
  *
- * Code implementing this interface <emphasis>cannot</emphasis>
- * block or do any IO when methods are invoked. If information is
- * needed to format the message or details, prepare it in advance and
- * pass it as part of the @details hash table when doing the
+ * Code implementing this interface <emphasis>cannot</emphasis> block
+ * or do any IO when methods are invoked. If information is needed to
+ * format the message or details, prepare it in advance and pass it as
+ * part of the @details object when doing the
  * polkit_authority_check_authorization() call. Then the code in this
  * interface can use that information to return localized data.
  *
@@ -112,7 +112,7 @@ polkit_backend_action_lookup_get_type (void)
 gchar *
 polkit_backend_action_lookup_get_message (PolkitBackendActionLookup *lookup,
                                           const gchar               *action_id,
-                                          GHashTable                *details,
+                                          PolkitDetails             *details,
                                           PolkitActionDescription   *action_description)
 {
   PolkitBackendActionLookupIface *iface = POLKIT_BACKEND_ACTION_LOOKUP_GET_IFACE (lookup);
@@ -138,7 +138,7 @@ polkit_backend_action_lookup_get_message (PolkitBackendActionLookup *lookup,
 gchar *
 polkit_backend_action_lookup_get_icon_name (PolkitBackendActionLookup *lookup,
                                             const gchar               *action_id,
-                                            GHashTable                *details,
+                                            PolkitDetails             *details,
                                             PolkitActionDescription   *action_description)
 {
   PolkitBackendActionLookupIface *iface = POLKIT_BACKEND_ACTION_LOOKUP_GET_IFACE (lookup);
@@ -159,12 +159,12 @@ polkit_backend_action_lookup_get_icon_name (PolkitBackendActionLookup *lookup,
  * Computes localized details to show in an authentication dialog for
  * @action_id and @details.
  *
- * Returns: A #GHashTable with localized details or %NULL. Caller must free the result.
+ * Returns: A #PolkitDetails object with localized details or %NULL. Caller must free the result.
  **/
-GHashTable *
+PolkitDetails *
 polkit_backend_action_lookup_get_details (PolkitBackendActionLookup *lookup,
                                           const gchar               *action_id,
-                                          GHashTable                *details,
+                                          PolkitDetails             *details,
                                           PolkitActionDescription   *action_description)
 {
   PolkitBackendActionLookupIface *iface = POLKIT_BACKEND_ACTION_LOOKUP_GET_IFACE (lookup);

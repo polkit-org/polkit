@@ -58,4 +58,7 @@ typedef struct _PolkitAuthorization PolkitAuthorization;
 struct _PolkitAuthorizationResult;
 typedef struct _PolkitAuthorizationResult PolkitAuthorizationResult;
 
+struct _PolkitDetails;
+typedef struct _PolkitDetails PolkitDetails;
+
 #endif /* __POLKIT_TYPES_H */

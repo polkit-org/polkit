@@ -46,10 +46,10 @@ typedef struct _PolkitAuthorizationResultClass PolkitAuthorizationResultClass;
 GType                      polkit_authorization_result_get_type          (void) G_GNUC_CONST;
 PolkitAuthorizationResult *polkit_authorization_result_new               (gboolean                   is_authorized,
                                                                           gboolean                   is_challenge,
-                                                                          GHashTable                *details);
+                                                                          PolkitDetails             *details);
 gboolean                   polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result);
 gboolean                   polkit_authorization_result_get_is_challenge  (PolkitAuthorizationResult *result);
-GHashTable                *polkit_authorization_result_get_details       (PolkitAuthorizationResult *result);
+PolkitDetails             *polkit_authorization_result_get_details       (PolkitAuthorizationResult *result);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

@@ -84,7 +84,7 @@ polkit_exec_action_lookup_class_init (PolkitExecActionLookupClass *klass)
 static gchar *
 polkit_exec_action_lookup_get_message   (PolkitBackendActionLookup *lookup,
                                          const gchar               *action_id,
-                                         GHashTable                *details,
+                                         PolkitDetails             *details,
                                          PolkitActionDescription   *action_description)
 {
   gchar *ret;
@@ -96,11 +96,11 @@ polkit_exec_action_lookup_get_message   (PolkitBackendActionLookup *lookup,
   if (g_strcmp0 (action_id, "org.freedesktop.policykit.exec") != 0)
     goto out;
 
-  s = g_hash_table_lookup (details, "program");
+  s = polkit_details_lookup (details, "program");
   if (s == NULL)
     goto out;
 
-  s2 = g_hash_table_lookup (details, "uid");
+  s2 = polkit_details_lookup (details, "uid");
   if (s2 == NULL)
     goto out;
 
@@ -122,7 +122,7 @@ polkit_exec_action_lookup_get_message   (PolkitBackendActionLookup *lookup,
 static gchar *
 polkit_exec_action_lookup_get_icon_name (PolkitBackendActionLookup *lookup,
                                          const gchar               *action_id,
-                                         GHashTable                *details,
+                                         PolkitDetails             *details,
                                          PolkitActionDescription   *action_description)
 {
   gchar *ret;
@@ -134,15 +134,15 @@ polkit_exec_action_lookup_get_icon_name (PolkitBackendActionLookup *lookup,
   return ret;
 }
 
-static GHashTable *
+static PolkitDetails *
 polkit_exec_action_lookup_get_details   (PolkitBackendActionLookup *lookup,
-                                          const gchar               *action_id,
-                                          GHashTable                *details,
-                                          PolkitActionDescription   *action_desc)
+                                         const gchar               *action_id,
+                                         PolkitDetails             *details,
+                                         PolkitActionDescription   *action_desc)
 {
   const gchar *s;
   const gchar *s2;
-  GHashTable *ret;
+  PolkitDetails *ret;
 
   ret = NULL;
 
@@ -151,25 +151,21 @@ polkit_exec_action_lookup_get_details   (PolkitBackendActionLookup *lookup,
          polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.path") != NULL)))
     goto out;
 
-  ret = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+  ret = polkit_details_new ();
 
-  s = g_hash_table_lookup (details, "command-line");
+  s = polkit_details_lookup (details, "command-line");
   if (s != NULL)
     {
-      g_hash_table_insert (ret,
-                           _("Command"),
-                           g_strdup (s));
+      polkit_details_insert (ret, _("Command"), s);
     }
 
-  s = g_hash_table_lookup (details, "user");
-  s2 = g_hash_table_lookup (details, "uid");
+  s = polkit_details_lookup (details, "user");
+  s2 = polkit_details_lookup (details, "uid");
   if (s != NULL)
     {
       if (g_strcmp0 (s2, "0") == 0)
         s = _("Super User (root)");
-      g_hash_table_insert (ret,
-                           _("Run As"),
-                           g_strdup (s));
+      polkit_details_insert (ret, _("Run As"), s);
     }
 
  out:

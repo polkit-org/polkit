@@ -115,7 +115,7 @@ main (int argc, char *argv[])
   PolkitAuthority *authority;
   PolkitAuthorizationResult *result;
   PolkitSubject *subject;
-  GHashTable *details;
+  PolkitDetails *details;
   GError *error;
   gchar *action_id;
   gchar *command_line;
@@ -319,14 +319,16 @@ main (int argc, char *argv[])
   authority = polkit_authority_get ();
   subject = polkit_unix_process_new (pid_of_caller);
 
-  details = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_free);
+  details = polkit_details_new ();
 
-  g_hash_table_insert (details, "command-line", g_strdup (command_line));
+  polkit_details_insert (details, "command-line", command_line);
   s = g_strdup_printf ("%s (%s)", pw->pw_gecos, pw->pw_name);
-  g_hash_table_insert (details, "user", s);
+  polkit_details_insert (details, "user", s);
+  g_free (s);
   s = g_strdup_printf ("%d", (gint) pw->pw_uid);
-  g_hash_table_insert (details, "uid", s);
-  g_hash_table_insert (details, "program", g_strdup (path));
+  polkit_details_insert (details, "uid", s);
+  g_free (s);
+  polkit_details_insert (details, "program", path);
 
   action_id = find_action_for_path (authority, path);
   g_assert (action_id != NULL);
@@ -450,7 +452,7 @@ main (int argc, char *argv[])
   g_free (action_id);
 
   if (details != NULL)
-    g_hash_table_unref (details);
+    g_object_unref (details);
 
   if (subject != NULL)
     g_object_unref (subject);

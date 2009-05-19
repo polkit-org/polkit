@@ -222,7 +222,7 @@ polkit_backend_authority_check_authorization (PolkitBackendAuthority        *aut
                                               PolkitSubject                 *caller,
                                               PolkitSubject                 *subject,
                                               const gchar                   *action_id,
-                                              GHashTable                    *details,
+                                              PolkitDetails                 *details,
                                               PolkitCheckAuthorizationFlags  flags,
                                               GCancellable                  *cancellable,
                                               GAsyncReadyCallback            callback,
@@ -830,14 +830,14 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
   PolkitSubject *subject;
   PolkitSubject *caller;
   GCancellable *cancellable;
-  GHashTable *details;
+  PolkitDetails *details;
 
   caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
   caller = polkit_system_bus_name_new (caller_name);
 
   subject = polkit_subject_new_for_real (real_subject);
 
-  details = real_details->data;
+  details = polkit_details_new_for_hash (real_details->data);
 
   g_object_set_data_full (G_OBJECT (method_invocation), "caller", caller, (GDestroyNotify) g_object_unref);
   g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
@@ -881,7 +881,7 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
                                                 check_auth_cb,
                                                 method_invocation);
  out:
-  ;
+  g_object_unref (details);
 }
 
 static void
