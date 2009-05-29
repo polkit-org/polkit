@@ -651,17 +651,7 @@ polkit_backend_local_authority_check_authorization (PolkitBackendAuthority      
       AuthenticationAgent *agent;
 
       agent = get_authentication_agent_for_subject (local_authority, subject);
-      if (agent == NULL)
-        {
-          g_simple_async_result_set_error (simple,
-                                           POLKIT_ERROR,
-                                           POLKIT_ERROR_FAILED,
-                                           "Challenge requested, but no suitable authentication agent is available");
-          g_simple_async_result_complete (simple);
-          g_object_unref (simple);
-          goto out;
-        }
-      else
+      if (agent != NULL)
         {
           g_object_unref (result);
           result = NULL;
