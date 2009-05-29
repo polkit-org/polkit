@@ -63,7 +63,8 @@ polkit_details_finalize (GObject *object)
 
   details = POLKIT_DETAILS (object);
 
-  g_hash_table_unref (details->hash);
+  if (details->hash != NULL)
+    g_hash_table_unref (details->hash);
 
   if (G_OBJECT_CLASS (polkit_details_parent_class)->finalize != NULL)
     G_OBJECT_CLASS (polkit_details_parent_class)->finalize (object);
