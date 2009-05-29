@@ -118,7 +118,7 @@
       </annotation>
 
       <annotation name="org.gtk.EggDBus.Struct.Member"  value="Boolean:is_challenge">
-        <annotation name="org.gtk.EggDBus.DocString" value="#TRUE if the given #Subject could be authorized if more information was provided, and %CheckAuthorizationFlags.AllowUserInteraction wasn't passed."/>
+        <annotation name="org.gtk.EggDBus.DocString" value="#TRUE if the given #Subject could be authorized if more information was provided, and %CheckAuthorizationFlags.AllowUserInteraction wasn't passed or no suitable authentication agent was available."/>
       </annotation>
 
       <annotation name="org.gtk.EggDBus.Struct.Member"  value="Dict<String,String>:details">
