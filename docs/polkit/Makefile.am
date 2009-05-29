@@ -55,6 +55,7 @@ content_files =  			    								\
 	../man/PolicyKit.xml										\
 	../man/polkit.xml										\
 	../man/pkexec.xml										\
+	../man/pkcheck.xml										\
 	$(NULL)
 
 # Images to copy into HTML directory

@@ -107,6 +107,7 @@
     <xi:include href="../man/PolicyKit.xml"/>
     <xi:include href="../man/polkit.xml"/>
     <xi:include href="../man/pkexec.xml"/>
+    <xi:include href="../man/pkcheck.xml"/>
   </reference>
 
   <index>

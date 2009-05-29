@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="pkcheck.1" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <refentryinfo>
+    <title>pkcheck</title>
+    <date>May 2009</date>
+    <productname>PolicyKit-1</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>pkcheck</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>pkcheck</refname>
+    <refpurpose>Check whether a process is authorized</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>pkcheck</command>
+      <arg><option>--version</option></arg>
+      <arg><option>--help</option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>pkcheck</command>
+      <arg choice="plain">
+        <option>--action-id</option>
+        <replaceable>action</replaceable>
+      </arg>
+
+      <group choice="req">
+        <arg choice="plain">
+          <option>--process</option>
+          <group choice="req">
+            <arg choice="plain">
+              <replaceable>pid</replaceable>
+            </arg>
+            <arg choice="plain">
+              <replaceable>pid,pid-start-time</replaceable>
+            </arg>
+          </group>
+        </arg>
+        <arg choice="plain">
+          <option>--system-bus-name</option>
+          <replaceable>busname</replaceable>
+        </arg>
+      </group>
+
+      <group>
+        <arg choice="plain">
+          <option>--allow-user-interaction</option>
+        </arg>
+      </group>
+
+      <group rep="repeat">
+        <arg choice="plain">
+          <option>--detail</option>
+          <replaceable>key</replaceable>
+          <replaceable>value</replaceable>
+        </arg>
+      </group>
+    </cmdsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>pkcheck</command> is used to check whether a process, specified by
+      either <option>--process</option> or <option>--system-bus-name</option>,
+      is authorized for <replaceable>action</replaceable>. The <option>--detail</option>
+      option can be used zero or more times to pass details about <replaceable>action</replaceable>.
+      If <option>--allow-user-interaction</option> is passed, <command>pkcheck</command> blocks
+      while waiting for authentication.
+    </para>
+    <para>
+      This command is a simple wrapper around the PolicyKit D-Bus interface; see the
+      D-Bus interface documentation for details.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>RETURN VALUE</title>
+    <para>
+      If the specified process is
+      authorized, <command>pkcheck</command> exits with a return value
+      of 0. If the authorization result contains any details, these
+      are printed on standard output as key/value pairs using
+      environment style reporting, e.g. first the key followed by a an equal sign, then the
+      value followed by a newline.
+<programlisting>
+KEY1=VALUE1
+KEY2=VALUE2
+KEY3=VALUE3
+...</programlisting>
+      Octects that are not in [a-zA-Z0-9_] are escaped using octal codes prefixed
+      with <emphasis>\</emphasis>.
+      For example, the UTF-8 string <emphasis>føl,你好</emphasis> will be printed
+      as <emphasis>f\303\270l\54\344\275\240\345\245\275</emphasis>.
+    </para>
+    <para>
+      If the specificied process is not
+      authorized, <command>pkcheck</command> exits with a return value
+      of 1 and a diagnostic message is printed on standard error.
+    </para>
+    <para>
+      If the specificied process is not
+      authorized because no suitable authentication agent is available or if the
+      <option>--allow-user-interaction</option> wasn't passed, <command>pkcheck</command>
+      exits with a return value of 2 and a diagnostic message is printed on standard error.
+    </para>
+    <para>
+      If an error occured while checking for authorization, <command>pkcheck</command> exits
+      with a return value of 127 with a diagnostic message printed on standard error.
+    </para>
+    <para>
+      If one or more of the options passed are malformed, <command>pkcheck</command> exits
+      with a return value of 126. If stdin is a tty, then this manual page is also shown.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>NOTES</title>
+    <para>
+      Since process identifiers can be recycled, the caller should always use
+      <replaceable>pid,pid-start-time</replaceable> to specify the process
+      to check for authorization when using the <option>--process</option> option.
+      The value of <replaceable>pid-start-time</replaceable>
+      can be determined by consulting e.g. the
+      <citerefentry>
+        <refentrytitle>proc</refentrytitle><manvolnum>5</manvolnum>
+      </citerefentry>
+      file system depending on the operating system. If only <replaceable>pid</replaceable>
+      is passed to the <option>--process</option> option, then <command>pkcheck</command>
+      will look up the start time itself but note that this may be racy.
+    </para>
+  </refsect1>
+
+  <refsect1><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen <email>davidz@redhat.com</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      on how to subscribe.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

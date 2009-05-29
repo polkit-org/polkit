@@ -17,7 +17,7 @@ INCLUDES =                                              	\
 
 # ----------------------------------------------------------------------------------------------------
 
-bin_PROGRAMS = polkit-1 pkexec
+bin_PROGRAMS = polkit-1 pkexec pkcheck
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -66,6 +66,19 @@ libpolkit_pkexec_action_lookup_la_LDFLAGS =                  		\
 libpolkit_pkexec_action_lookup_la_LIBADD =                 		\
 	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la	\
         $(NULL)
+
+# ----------------------------------------------------------------------------------------------------
+
+pkcheck_SOURCES = pkcheck.c
+
+pkcheck_CFLAGS =                             				\
+	$(GLIB_CFLAGS)							\
+	$(NULL)
+
+pkcheck_LDADD =  	                      				\
+	$(GLIB_LDADD)							\
+	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(NULL)
 
 # ----------------------------------------------------------------------------------------------------
 
