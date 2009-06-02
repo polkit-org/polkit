@@ -50,7 +50,7 @@ const gchar         *polkit_action_description_get_description       (PolkitActi
 const gchar         *polkit_action_description_get_message           (PolkitActionDescription *action_description);
 const gchar         *polkit_action_description_get_vendor_name       (PolkitActionDescription *action_description);
 const gchar         *polkit_action_description_get_vendor_url        (PolkitActionDescription *action_description);
-GIcon               *polkit_action_description_get_icon              (PolkitActionDescription *action_description);
+const gchar         *polkit_action_description_get_icon_name         (PolkitActionDescription *action_description);
 
 PolkitImplicitAuthorization polkit_action_description_get_implicit_any (PolkitActionDescription *action_description);
 PolkitImplicitAuthorization polkit_action_description_get_implicit_inactive (PolkitActionDescription *action_description);

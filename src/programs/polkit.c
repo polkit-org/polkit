@@ -372,13 +372,13 @@ print_action (PolkitActionDescription *action)
 {
   const gchar *vendor;
   const gchar *vendor_url;
-  GIcon *icon;
+  const gchar *icon_name;
   const gchar * const *annotation_keys;
   guint n;
 
   vendor = polkit_action_description_get_vendor_name (action);
   vendor_url = polkit_action_description_get_vendor_url (action);
-  icon = polkit_action_description_get_icon (action);
+  icon_name = polkit_action_description_get_icon_name (action);
 
   g_print ("%s:\n", polkit_action_description_get_action_id (action));
   g_print ("  description:       %s\n", polkit_action_description_get_description (action));
@@ -388,13 +388,8 @@ print_action (PolkitActionDescription *action)
   if (vendor_url != NULL)
     g_print ("  vendor_url:        %s\n", vendor_url);
 
-  if (icon != NULL)
-    {
-      gchar *s;
-      s = g_icon_to_string (icon);
-      g_print ("  icon:              %s\n", s);
-      g_free (s);
-    }
+  if (icon_name != NULL)
+    g_print ("  icon:              %s\n", icon_name);
 
   g_print ("  implicit any:      %s\n", polkit_implicit_authorization_to_string (polkit_action_description_get_implicit_any (action)));
   g_print ("  implicit inactive: %s\n", polkit_implicit_authorization_to_string (polkit_action_description_get_implicit_inactive (action)));

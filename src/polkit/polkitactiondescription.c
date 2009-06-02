@@ -45,8 +45,6 @@ struct _PolkitActionDescription
   _PolkitActionDescription *real;
 
   gchar **annotation_keys;
-
-  GIcon *icon;
 };
 
 struct _PolkitActionDescriptionClass
@@ -71,9 +69,6 @@ polkit_action_description_finalize (GObject *object)
   g_object_unref (action_description->real);
 
   g_strfreev (action_description->annotation_keys);
-
-  if (action_description->icon != NULL)
-    g_object_unref (action_description->icon);
 
   if (G_OBJECT_CLASS (polkit_action_description_parent_class)->finalize != NULL)
     G_OBJECT_CLASS (polkit_action_description_parent_class)->finalize (object);
@@ -153,29 +148,10 @@ polkit_action_description_get_implicit_active (PolkitActionDescription *action_d
 }
 
 
-GIcon *
-polkit_action_description_get_icon (PolkitActionDescription *action_description)
+const gchar *
+polkit_action_description_get_icon_name (PolkitActionDescription *action_description)
 {
-  const gchar *icon_name;
-  GError *error;
-
-  if (action_description->icon != NULL)
-    goto out;
-
-  icon_name = _polkit_action_description_get_icon_name (action_description->real);
-  if (icon_name == NULL || strlen (icon_name) == 0)
-    goto out;
-
-  error = NULL;
-  action_description->icon = g_icon_new_for_string (icon_name, &error);
-  if (action_description->icon == NULL)
-    {
-      g_warning ("polkit_action_description_get_icon: %s", error->message);
-      g_error_free (error);
-    }
-
- out:
-  return action_description->icon;
+  return _polkit_action_description_get_icon_name (action_description->real);
 }
 
 const gchar *

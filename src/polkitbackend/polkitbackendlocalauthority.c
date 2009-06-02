@@ -1614,13 +1614,7 @@ get_localized_data_for_challenge (PolkitBackendLocalAuthority *authority,
     }
   if (icon_name == NULL)
     {
-      GIcon *icon;
-      icon = polkit_action_description_get_icon (action_desc);
-      if (icon != NULL)
-        {
-          icon_name = g_icon_to_string (icon);
-          //g_object_unref (icon);
-        }
+      icon_name = g_strdup (polkit_action_description_get_icon_name (action_desc));
     }
 
 
