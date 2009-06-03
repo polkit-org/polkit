@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="pkaction.1" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <refentryinfo>
+    <title>pkaction</title>
+    <date>May 2009</date>
+    <productname>PolicyKit-1</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>pkaction</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>pkaction</refname>
+    <refpurpose>Get details about a registered action</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>pkaction</command>
+      <arg><option>--version</option></arg>
+      <arg><option>--help</option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>pkaction</command>
+      <group>
+        <arg choice="plain">
+          <option>--verbose</option>
+        </arg>
+      </group>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>pkaction</command>
+      <arg choice="plain">
+        <option>--action-id</option>
+        <replaceable>action</replaceable>
+      </arg>
+      <group>
+        <arg choice="plain">
+          <option>--verbose</option>
+        </arg>
+      </group>
+    </cmdsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>pkaction</command> is used to obtain information about registered
+      PolicyKit actions. If called with <option>--action-id</option> then all
+      actions are displayed. Otherwise the action <replaceable>action</replaceable>.
+      If called without the <option>--verbose</option> option only the name
+      of the action is shown. Otherwise details about the actions are shown.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>RETURN VALUE</title>
+    <para>
+      On success <command>pkaction</command> returns 0. Otherwise a
+      non-zero value is returned and a diagnostic message is printed
+      on standard error.
+    </para>
+  </refsect1>
+
+  <refsect1><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen <email>davidz@redhat.com</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      on how to subscribe.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

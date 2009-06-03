@@ -17,20 +17,7 @@ INCLUDES =                                              	\
 
 # ----------------------------------------------------------------------------------------------------
 
-bin_PROGRAMS = polkit-1 pkexec pkcheck
-
-# ----------------------------------------------------------------------------------------------------
-
-polkit_1_SOURCES = polkit.c
-
-polkit_1_CFLAGS =                             				\
-	$(GLIB_CFLAGS)							\
-	$(NULL)
-
-polkit_1_LDADD =  	                      				\
-	$(GLIB_LDADD)							\
-	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
-	$(NULL)
+bin_PROGRAMS = pkexec pkcheck pkaction
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -76,6 +63,19 @@ pkcheck_CFLAGS =                             				\
 	$(NULL)
 
 pkcheck_LDADD =  	                      				\
+	$(GLIB_LDADD)							\
+	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(NULL)
+
+# ----------------------------------------------------------------------------------------------------
+
+pkaction_SOURCES = pkaction.c
+
+pkaction_CFLAGS =                             				\
+	$(GLIB_CFLAGS)							\
+	$(NULL)
+
+pkaction_LDADD =  	                      				\
 	$(GLIB_LDADD)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(NULL)
