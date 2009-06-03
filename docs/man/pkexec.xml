@@ -149,6 +149,12 @@
     <para>
       <citerefentry>
         <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

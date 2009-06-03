@@ -165,6 +165,12 @@ KEY3=VALUE3
     <para>
       <citerefentry>
         <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

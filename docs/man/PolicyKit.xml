@@ -52,7 +52,13 @@
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>polkit-1</refentrytitle><manvolnum>1</manvolnum>
+        <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>
