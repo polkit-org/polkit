@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="devkit-disks-daemon.8">
+  <refentryinfo>
+    <title>polkitd-1</title>
+    <date>May 2009</date>
+    <productname>PolicyKit-1</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>polkitd-1</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>polkitd-1</refname>
+    <refpurpose>PolicyKit daemon</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>polkitd-1</command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1><title>DESCRIPTION</title>
+    <para>
+      <command>polkitd-1</command> provides
+      the <emphasis>org.freedesktop.PolicyKit1</emphasis> D-Bus
+      service on the system message bus. Users or administrators
+      should never need to start this daemon as it will be
+      automatically started by
+      <citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      whenever an application calls into the service.
+    </para>
+  </refsect1>
+
+  <refsect1><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen <email>davidz@redhat.com</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      on how to subscribe.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>
