@@ -63,6 +63,9 @@ HTML_IMAGES = 						\
 	../polkit-architecture.png			\
 	../polkit-authentication-agent-example.png	\
 	../polkit-authentication-agent-example-wheel.png \
+	../pkexec-bash.png				\
+	../pkexec-frobnicate.png			\
+	../pkexec-frobnicate-da.png			\
 	$(NULL)
 
 # Extra options to supply to gtkdoc-fixref

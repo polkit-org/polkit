@@ -71,8 +71,39 @@
       <xref linkend="pkexec-required-authz"/>) requires administrator
       authentication. In addition, the authentication dialog presented
       to the user will display the full path to the program to be
-      executed so the user is aware of what will happen.
+      executed so the user is aware of what will happen:
     </para>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="pkexec-bash.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+        <programlisting><![CDATA[
++----------------------------------------------------------+
+|                     Authenticate                     [X] |
++----------------------------------------------------------+
+|                                                          |
+|  [Icon]  Authentication is needed to run `/bin/bash'     |
+|          as the super user                               |
+|                                                          |
+|          An application is attempting to perform an      |
+|          action that requires privileges. Authentication |
+|          as the super user is required to perform this   |
+|          action.                                         |
+|                                                          |
+|          Password for root: [_________________________]  |
+|                                                          |
+| [V] Details:                                             |
+|  Command: /bin/bash                                      |
+|  Run As:  Super User (root)                              |
+|  Action:  org.freedesktop.policykit.exec                 |
+|  Vendor:  The PolicyKit Project                          |
+|                                                          |
+|                                  [Cancel] [Authenticate] |
++----------------------------------------------------------+
+]]></programlisting>
+      </textobject>
+    </mediaobject>
     <para>
       The environment that <replaceable>PROGRAM</replaceable> will run
       it, will be set to a minimal known and safe environment in order
@@ -81,8 +112,9 @@
       mechanisms. In addition the <literal>PKEXEC_UID</literal>
       environment variable is set to the user id of the process
       invoking <command>pkexec</command>. As a
-      result, <command>pkexec</command> will not allow you to run X11
-      applications as another user.
+      result, <command>pkexec</command> will not allow you to run
+      e.g. X11 applications as another user since
+      the <literal>$DISPLAY</literal> environment variable is not set.
     </para>
   </refsect1>
 
@@ -110,20 +142,89 @@
       under a suitable name (e.g. matching the namespace of the
       action).  Note that in addition to specifying the program, the
       authentication message, description, icon and defaults can be
-      specified.
+      specified. For example, for the action defined above, the following
+      authentication dialog will be shown:
     </para>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="pkexec-frobnicate.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+        <programlisting><![CDATA[
++----------------------------------------------------------+
+|                     Authenticate                     [X] |
++----------------------------------------------------------+
+|                                                          |
+|  [Icon]  Authentication is required to run the PolicyKit |
+|          example program Frobnicate                      |
+|                                                          |
+|          An application is attempting to perform an      |
+|          action that requires privileges. Authentication |
+|          is required to perform this action.             |
+|                                                          |
+|          Password: [__________________________________]  |
+|                                                          |
+| [V] Details:                                             |
+|  Command: /usr/bin/pk-example-frobnicate                 |
+|  Run As:  Super User (root)                              |
+|  Action:  org.fd.pk.example.pkexec.run-frobnicate        |
+|  Vendor:  Examples for the PolicyKit Project             |
+|                                                          |
+|                                  [Cancel] [Authenticate] |
++----------------------------------------------------------+
+]]></programlisting>
+      </textobject>
+    </mediaobject>
+    <para>
+      If the user is using the <literal>da_DK</literal> locale, the
+      dialog looks like this:
+    </para>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="pkexec-frobnicate-da.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+        <programlisting><![CDATA[
++----------------------------------------------------------+
+|                     Autorisering                     [X] |
++----------------------------------------------------------+
+|                                                          |
+|  [Icon]  Autorisering er påkrævet for at afvikle         |
+|          PolicyKit eksemplet Frobnicate                  |
+|                                                          |
+|          Et program forsøger at udføre en handling der   |
+|          kræver privilegier. Autorisering er påkrævet.   |
+|                                                          |
+|          Kodeord: [___________________________________]  |
+|                                                          |
+| [V] Detaljer:                                            |
+|  Bruger:   Super User (root)                             |
+|  Program:  /usr/bin/pk-example-frobnicate                |
+|  Handling: org.fd.pk.example.pkexec.run-frobnicate       |
+|  Vendor:   Examples for the PolicyKit Project            |
+|                                                          |
+|                                [Annullér] [Autorisering] |
++----------------------------------------------------------+
+]]></programlisting>
+      </textobject>
+    </mediaobject>
     <para>
       Note that <command>pkexec</command> does no validation of
       the <replaceable>ARGUMENTS</replaceable> passed
       to <replaceable>PROGRAM</replaceable>. In the normal case (where
       administrator authentication is required every
-      time <command>pkexec</command> is used), this is not a
-      problem. However, if an action is used for which the user can
-      retain authorization (or if the user is implicitly authorized),
-      this could be a security hole. Therefore, as a rule of thumb,
+      time <command>pkexec</command> is used), this is not a problem
+      since if the user is an administrator he might as well just
+      run <command>pkexec bash</command> to get root.
+    </para>
+    <para>
+      However, if an action is used for which the user can retain
+      authorization (or if the user is implicitly authorized), such as
+      with <filename>pk-example-frobnicate</filename> above, this
+      could be a security hole. Therefore, as a rule of thumb,
       programs for which the default required authorization is
       changed, should never implicitly trust user input (e.g. like any
-      other <emphasis>suid</emphasis> program).
+      other well-written <emphasis>suid</emphasis> program).
     </para>
   </refsect1>
 
