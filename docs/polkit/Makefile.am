@@ -59,7 +59,10 @@ content_files =  			    								\
 	$(NULL)
 
 # Images to copy into HTML directory
-HTML_IMAGES = 				\
+HTML_IMAGES = 						\
+	../polkit-architecture.png			\
+	../polkit-authentication-agent-example.png	\
+	../polkit-authentication-agent-example-wheel.png \
 	$(NULL)
 
 # Extra options to supply to gtkdoc-fixref

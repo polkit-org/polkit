@@ -1,0 +1,834 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg270"
+   sodipodi:version="0.32"
+   inkscape:version="0.46+devel"
+   sodipodi:docname="polkit-1-diagrams.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs272">
+    <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lend"
+       style="overflow:visible;">
+      <path
+         id="path1745"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow2Lstart"
+       style="overflow:visible">
+      <path
+         id="path1742"
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) translate(1,0)" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective278" />
+    <inkscape:perspective
+       id="perspective288"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path17827"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lend"
+       style="overflow:visible">
+      <path
+         id="path17830"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker296"
+       style="overflow:visible">
+      <path
+         id="path298"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker300"
+       style="overflow:visible">
+      <path
+         id="path302"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker304"
+       style="overflow:visible">
+      <path
+         id="path306"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker308"
+       style="overflow:visible">
+      <path
+         id="path310"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker312"
+       style="overflow:visible">
+      <path
+         id="path314"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker316"
+       style="overflow:visible">
+      <path
+         id="path318"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker320"
+       style="overflow:visible">
+      <path
+         id="path322"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker324"
+       style="overflow:visible">
+      <path
+         id="path326"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient22901"
+       id="radialGradient22907"
+       cx="214.15234"
+       cy="161.40764"
+       fx="214.15234"
+       fy="161.40764"
+       r="34.795189"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient22901">
+      <stop
+         style="stop-color:#9da7d7;stop-opacity:1;"
+         offset="0"
+         id="stop22903" />
+      <stop
+         style="stop-color:#9da7d7;stop-opacity:0;"
+         offset="1"
+         id="stop22905" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient14609">
+      <stop
+         id="stop14611"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         id="stop14613"
+         offset="1"
+         style="stop-color:#ff9d9d;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609"
+       id="linearGradient13600"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,193.46355,269.41609)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       id="linearGradient337">
+      <stop
+         id="stop339"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         id="stop341"
+         offset="1"
+         style="stop-color:#ff9d9d;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3144">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop3146" />
+      <stop
+         style="stop-color:#898585;stop-opacity:0;"
+         offset="1"
+         id="stop3148" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient348">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop350" />
+      <stop
+         style="stop-color:#898585;stop-opacity:0;"
+         offset="1"
+         id="stop352" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144"
+       id="linearGradient7620"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,388.73873,41.060701)" />
+    <linearGradient
+       id="linearGradient355">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop357" />
+      <stop
+         style="stop-color:#898585;stop-opacity:0;"
+         offset="1"
+         id="stop359" />
+    </linearGradient>
+    <inkscape:perspective
+       id="perspective575"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966"
+       id="linearGradient28996"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,18.431136,546.16953)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       id="linearGradient28966">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop28968" />
+      <stop
+         style="stop-color:#9dff9d;stop-opacity:0;"
+         offset="1"
+         id="stop28970" />
+    </linearGradient>
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,143.29393,335.75523)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient584"
+       xlink:href="#linearGradient28966"
+       inkscape:collect="always" />
+    <inkscape:perspective
+       id="perspective613"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient28966-4"
+       id="linearGradient28996-9"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,18.431136,546.16953)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       id="linearGradient28966-4">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop28968-5" />
+      <stop
+         style="stop-color:#9dff9d;stop-opacity:0;"
+         offset="1"
+         id="stop28970-9" />
+    </linearGradient>
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(0.73549098,0,0,0.34876094,193.37764,330.54439)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient624"
+       xlink:href="#linearGradient28966-4"
+       inkscape:collect="always" />
+    <inkscape:perspective
+       id="perspective697"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,143.29392,335.28296)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient624-1"
+       xlink:href="#linearGradient28966-4-1"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient28966-4-1">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop28968-5-1" />
+      <stop
+         style="stop-color:#9dff9d;stop-opacity:0;"
+         offset="1"
+         id="stop28970-9-7" />
+    </linearGradient>
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(1.0175579,0,0,0.21611733,362.35506,301.6259)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient709"
+       xlink:href="#linearGradient28966-4-1"
+       inkscape:collect="always" />
+    <inkscape:perspective
+       id="perspective773"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3144-1"
+       id="linearGradient7684-0"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,330.27678,57.284057)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       id="linearGradient3144-1">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop3146-3" />
+      <stop
+         style="stop-color:#898585;stop-opacity:0;"
+         offset="1"
+         id="stop3148-7" />
+    </linearGradient>
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(1.0156707,0,0,0.51700825,362.58942,235.61128)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient782"
+       xlink:href="#linearGradient3144-1"
+       inkscape:collect="always" />
+    <inkscape:perspective
+       id="perspective811"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient14609-7"
+       id="linearGradient13600-3"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,143.46355,269.41609)"
+       x1="52.07793"
+       y1="89.181732"
+       x2="196.4196"
+       y2="89.181732" />
+    <linearGradient
+       id="linearGradient14609-7">
+      <stop
+         id="stop14611-6"
+         offset="0"
+         style="stop-color:#ffffff;stop-opacity:1;" />
+      <stop
+         id="stop14613-8"
+         offset="1"
+         style="stop-color:#ff9d9d;stop-opacity:0;" />
+    </linearGradient>
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(0.7347995,0,0,0.5175383,153.82601,33.197083)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient820"
+       xlink:href="#linearGradient14609-7"
+       inkscape:collect="always" />
+    <inkscape:perspective
+       id="perspective849"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,267.98278,335.0304)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient709-3"
+       xlink:href="#linearGradient28966-4-1-6"
+       inkscape:collect="always" />
+    <linearGradient
+       id="linearGradient28966-4-1-6">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop28968-5-1-4" />
+      <stop
+         style="stop-color:#9dff9d;stop-opacity:0;"
+         offset="1"
+         id="stop28970-9-7-0" />
+    </linearGradient>
+    <linearGradient
+       y2="89.181732"
+       x2="196.4196"
+       y1="89.181732"
+       x1="52.07793"
+       gradientTransform="matrix(0.7361648,0,0,0.2163389,153.65639,99.058497)"
+       gradientUnits="userSpaceOnUse"
+       id="linearGradient860"
+       xlink:href="#linearGradient28966-4-1-6"
+       inkscape:collect="always" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="342.5823"
+     inkscape:cy="812.67628"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1024"
+     inkscape:window-height="724"
+     inkscape:window-x="0"
+     inkscape:window-y="0" />
+  <metadata
+     id="metadata275">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:url(#linearGradient820);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect13584-1"
+       width="105.40086"
+       height="54.89323"
+       x="192.42352"
+       y="51.90543"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <rect
+       style="fill:url(#linearGradient782);fill-opacity:1;stroke:#030000;stroke-width:0.65218031;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect7676-4"
+       width="145.6895"
+       height="54.837009"
+       x="415.94064"
+       y="254.30046"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <rect
+       style="fill:#aaaaaa;fill-opacity:1;stroke:#c9c9c9;stroke-width:0.62696218;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect15862"
+       width="552.82642"
+       height="3.3034956"
+       x="42.631001"
+       y="165.95226"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <rect
+       style="fill:url(#linearGradient7620);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect2160"
+       width="105.40086"
+       height="54.89323"
+       x="427.33624"
+       y="59.769047"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="481.04681"
+       y="90.185196"
+       id="text7646"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="481.04681"
+         y="90.185196"
+         id="tspan7654"
+         style="text-align:center;text-anchor:middle">Client</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="243.28027"
+       y="77.398422"
+       id="text7678"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="243.28027"
+         y="77.398422"
+         style="text-align:center;text-anchor:middle"
+         id="tspan7688">Authentication</tspan><tspan
+         sodipodi:role="line"
+         x="243.28027"
+         y="92.398422"
+         style="text-align:center;text-anchor:middle"
+         id="tspan887">Agent</tspan></text>
+    <rect
+       style="fill:url(#linearGradient13600);fill-opacity:1;stroke:#030000;stroke-width:0.55500662;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect13584"
+       width="105.40086"
+       height="54.89323"
+       x="232.06105"
+       y="288.12442"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="286.21173"
+       y="312.54059"
+       id="text13586"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="286.21173"
+         y="312.54059"
+         style="text-align:center;text-anchor:middle"
+         id="tspan13590">org.freedesktop.</tspan><tspan
+         sodipodi:role="line"
+         x="286.21173"
+         y="327.54059"
+         style="text-align:center;text-anchor:middle"
+         id="tspan13606">PolicyKit1</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="489.5925"
+       y="283.14468"
+       id="text13594"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="489.5925"
+         y="283.14468"
+         style="text-align:center;text-anchor:middle"
+         id="tspan740">Mechanism</tspan></text>
+    <path
+       sodipodi:type="arc"
+       style="fill:url(#radialGradient22907);fill-opacity:1;stroke:#000000;stroke-width:0.89999998;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="path13612"
+       sodipodi:cx="214.15234"
+       sodipodi:cy="161.40764"
+       sodipodi:rx="34.345188"
+       sodipodi:ry="34.345188"
+       d="m 248.49753,161.40764 a 34.345188,34.345188 0 1 1 -68.69037,0 34.345188,34.345188 0 1 1 68.69037,0 z"
+       transform="translate(134.97058,58.198921)"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="349.52975"
+       y="210.38663"
+       id="text16841"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="349.52975"
+         y="210.38663"
+         style="text-align:center;text-anchor:middle"
+         id="tspan16845">System</tspan><tspan
+         sodipodi:role="line"
+         x="349.52975"
+         y="225.38663"
+         style="text-align:center;text-anchor:middle"
+         id="tspan16849">Message</tspan><tspan
+         sodipodi:role="line"
+         x="349.52975"
+         y="240.38663"
+         style="text-align:center;text-anchor:middle"
+         id="tspan16851">Bus</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="93.62104"
+       y="143.63353"
+       id="text22909"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="93.62104"
+         y="143.63353"
+         style="font-size:18px;text-align:center;text-anchor:middle"
+         id="tspan22917">User Session</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="108.55364"
+       y="202.5914"
+       id="text22919"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"><tspan
+         sodipodi:role="line"
+         x="108.55364"
+         y="202.5914"
+         style="font-size:18px;text-align:center;text-anchor:middle"
+         id="tspan22927">System Context</tspan></text>
+    <rect
+       style="fill:url(#linearGradient624);fill-opacity:1;stroke:#030000;stroke-width:0.45582184;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect28982"
+       width="105.50005"
+       height="36.991695"
+       x="232.01146"
+       y="343.1517"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="284.86676"
+       y="358.26434"
+       id="text28990"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="284.86676"
+         y="358.26434"
+         style="font-style:italic;text-align:center;text-anchor:middle"
+         id="tspan28992">Backends +</tspan><tspan
+         sodipodi:role="line"
+         x="284.86676"
+         y="373.26434"
+         style="font-style:italic;text-align:center;text-anchor:middle"
+         id="tspan649">Extensions</tspan></text>
+    <rect
+       style="fill:url(#linearGradient709);fill-opacity:1;stroke:#030000;stroke-width:0.42205292;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect28982-0"
+       width="145.96021"
+       height="22.922712"
+       x="415.80527"
+       y="309.43832"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="487.01651"
+       y="325.36105"
+       id="text28990-4"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="487.01651"
+         y="325.36105"
+         style="text-align:center;text-anchor:middle"
+         id="tspan649-8">libpolkit-gobject-1</tspan></text>
+    <rect
+       style="fill:url(#linearGradient860);fill-opacity:1;stroke:#030000;stroke-width:0.35916778;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:19"
+       id="rect28982-0-3"
+       width="105.5967"
+       height="22.946213"
+       x="192.32559"
+       y="106.87891"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="244.12958"
+       y="122.78507"
+       id="text28990-4-5"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001"><tspan
+         sodipodi:role="line"
+         x="244.12958"
+         y="122.78507"
+         style="text-align:center;text-anchor:middle"
+         id="tspan649-8-8">libpolkit-agent-1</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-opacity:1;marker-start:url(#Arrow2Lstart);marker-mid:none;marker-end:url(#Arrow2Lend)"
+       d="m 411.63462,322.0219 c -73.68449,-1.49124 -6.00174,-74.90542 -67.16623,-76.02779 -24.77688,-7.92418 -44.02981,-7.38813 -43.95096,34.61152"
+       id="path2409"
+       sodipodi:nodetypes="ccc"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-opacity:1;marker-start:url(#Arrow2Lstart);marker-end:url(#Arrow2Lend)"
+       d="m 268.19295,136.15382 c 3.55124,52.7952 56.8059,41.36616 51.73617,77.56075 -5.15994,33.07396 -56.01669,4.80866 -57.79705,67.90122"
+       id="path4701"
+       sodipodi:nodetypes="ccc"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-opacity:1;marker-start:url(#Arrow2Lstart);marker-end:url(#Arrow2Lend)"
+       d="m 463.15239,122.01168 c 0.65982,39.40007 27.62042,24.1776 26.81502,70.68828 1.07889,31.05898 22.63119,1.38255 22.68258,56.59095"
+       id="path5124"
+       sodipodi:nodetypes="ccc"
+       inkscape:export-filename="/home/davidz/Hacking/PolicyKit/docs/polkit-architecture.png"
+       inkscape:export-xdpi="96.720001"
+       inkscape:export-ydpi="96.720001" />
+  </g>
+</svg>

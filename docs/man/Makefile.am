@@ -12,7 +12,7 @@ man_MANS = 				\
 	$(NULL)
 
 %.8 %.1 : %.xml
-	$(XSLTPROC) -nonet --xinclude http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+	$(XSLTPROC) -nonet --stringparam man.base.url.for.relative.links $(datadir)/gtk-doc/html/polkit-1/ --xinclude http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
 endif # MAN_PAGES_ENABLED
 

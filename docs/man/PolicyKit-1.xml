@@ -1,4 +1,9 @@
-<refentry id="PolicyKit-1.8">
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="PolicyKit-1.8" xmlns:xi="http://www.w3.org/2003/XInclude">
   <refentryinfo>
     <title>PolicyKit-1</title>
     <date>January 2009</date>
@@ -16,20 +21,385 @@
     <refpurpose>Authorization API</refpurpose>
   </refnamediv>
 
-  <refsect1><title>DESCRIPTION</title>
+  <refsect1><title>OVERVIEW</title>
     <para>
-      For more information about the big picture refer to the
-      PolicyKit specification which can be normally be found
-      under <filename>/usr/share/doc</filename>.
+      PolicyKit provides an authorization API intended to be used by
+      privileged programs (<quote>MECHANISMS</quote>) offering service
+      to unprivileged programs (<quote>CLIENTS</quote>) through some
+      form of IPC mechanism such as D-Bus or Unix pipes. In this
+      scenario, the mechanism typically treats the client as
+      untrusted. For every request from a client, the mechanism needs
+      to determine if the request is authorized or if it should refuse
+      to service the client. Using the PolicyKit API, a mechanism can
+      offload this decision to a trusted party: The PolicyKit
+      Authority.
     </para>
 
     <para>
-      <emphasis>TODO:</emphasis> This manual page should contain a
-      simple introduction to PolicyKit for a system administrator
-      audience. Remains to be written.
+      In addition to acting as an authority, PolicyKit allows users to
+      obtain temporary authorization through authenticating either an
+      administrative user or the owner of the session the client
+      belongs to. This is useful for scenarios where a mechanism needs
+      to verify that the operator of the system really is the user or
+      really is an administrative user.
+    </para>
+
+  </refsect1>
+
+  <refsect1><title>SYSTEM ARCHITECTURE</title>
+    <para>
+      The system architecture of PolicyKit is comprised of
+      the <emphasis>Authority</emphasis> (implemented as a service on
+      the system message bus) and a
+      <emphasis>Authentication Agent</emphasis> per user session
+      (provided and started by the user session e.g. GNOME or KDE).
+      Additionally, PolicyKit supports a number of extension points –
+      specifically, vendors and/or sites can write extensions to
+      completely control authorization policy. In a block diagram, the
+      architecture looks like this:
+    </para>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="polkit-architecture.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+        <programlisting><![CDATA[
+ +-------------------+
+ |   Authentication  |
+ |       Agent       |
+ +-------------------+
+ | libpolkit-agent-1 |
+ +-------------------+
+        ^                                  +--------+
+        |                                  | Client |
+        +--------------+                   +--------+
+                       |                        ^
+                       |                        |
+User Session           |                        |
+=======================|========================|=============
+System Context         |                        |
+                       |                        |
+                       |                    +---+
+                       V                    |
+                     /------------\         |
+                     | System Bus |         |
+                     \------------/         |
+                       ^        ^           V
+                       |        |      +---------------------+
+        +--------------+        |      |      Mechanism      |
+        |                       |      +---------------------+
+        V                       +----> | libpolkit-gobject-1 |
++------------------+                   +---------------------+
+| org.freedesktop. |
+|    PolicyKit1    |
++------------------+
+|   Backends and   |
+|    Extensions    |
++------------------+
+]]></programlisting>
+      </textobject>
+    </mediaobject>
+    <para>
+      For convenience, the <literal>libpolkit-gobject-1</literal>
+      library wraps the PolicyKit D-Bus API using GObject. However, a
+      mechanism can also use the D-Bus API or the
+      <citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      command to check authorizations.
+    </para>
+
+    <para>
+      The <literal>libpolkit-agent-1</literal> library provides an
+      abstraction of the native authentication system, e.g.
+      <citerefentry><refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      and also facilities registration and communication with the
+      PolicyKit D-Bus service.
+    </para>
+
+    <para>
+      PolicyKit extensions and authority backends are implemented
+      using the
+      <literal>libpolkit-backend-1</literal> library.
+    </para>
+
+    <para>
+      See the
+      <ulink url="file:///usr/share/gtk-doc/html/polkit-1/index.html">developer
+      documentation</ulink> for more information about using and
+      extending PolicyKit.
     </para>
   </refsect1>
 
+  <refsect1><title>AUTHENTICATION AGENTS</title>
+    <para>
+      An authentication agent is used to make the user of a session
+      prove that the user of the session really is the user (by
+      authenticating as the user) or an administrative user (by
+      authenticating as a administrator). In order to integrate well
+      with the rest of the user session (e.g. match the look and
+      feel), authentication agents are meant to provided by the user
+      session that the user uses. For example, an authentication agent
+      may look like this:
+    </para>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="polkit-authentication-agent-example.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+        <programlisting><![CDATA[
++----------------------------------------------------------+
+|                     Authenticate                     [X] |
++----------------------------------------------------------+
+|                                                          |
+|  [Icon]  Authentication is required to run ATA SMART     |
+|          self tests                                      |
+|                                                          |
+|          An application is attempting to perform an      |
+|          action that requires privileges. Authentication |
+|          as the super user is required to perform this   |
+|          action.                                         |
+|                                                          |
+|          Password for root: [_________________________]  |
+|                                                          |
+| [V] Details:                                             |
+|  Drive:  ATA INTEL SSDSA2MH08 (045C)                     |
+|  Device: /dev/sda                                        |
+|  Action: org.fd.devicekit.disks.drive-ata-smart-selftest |
+|  Vendor: The DeviceKit Project                           |
+|                                                          |
+|                                  [Cancel] [Authenticate] |
++----------------------------------------------------------+
+]]></programlisting>
+      </textobject>
+    </mediaobject>
+    <para>
+      If the system is configured without a <emphasis>root</emphasis>
+      account it may allow you to select the administrative user who
+      is authenticating:
+    </para>
+    <mediaobject>
+      <imageobject>
+        <imagedata fileref="polkit-authentication-agent-example-wheel.png" format="PNG"/>
+      </imageobject>
+      <textobject>
+        <programlisting><![CDATA[
++----------------------------------------------------------+
+|                     Authenticate                     [X] |
++----------------------------------------------------------+
+|                                                          |
+|  [Icon]  Authentication is required to run ATA SMART     |
+|          self tests                                      |
+|                                                          |
+|          An application is attempting to perform an      |
+|          action that requires privileges. Authentication |
+|          as one of the users below is required to        |
+|          perform this action.                            |
+|                                                          |
+|          [[Face] Patrick Bateman (bateman)         [V]]  |
+|                                                          |
+|          Password for bateman: [______________________]  |
+|                                                          |
+| [V] Details:                                             |
+|  Drive:  ATA INTEL SSDSA2MH08 (045C)                     |
+|  Device: /dev/sda                                        |
+|  Action: org.fd.devicekit.disks.drive-ata-smart-selftest |
+|  Vendor: The DeviceKit Project                           |
+|                                                          |
+|                                  [Cancel] [Authenticate] |
++----------------------------------------------------------+
+]]></programlisting>
+      </textobject>
+    </mediaobject>
+    <para>
+      See <xref linkend="pkla"/> for how to set up the local authority
+      implemention for systems without a <literal>root</literal>
+      account.
+    </para>
+  </refsect1>
+
+  <refsect1><title>DECLARING ACTIONS</title>
+    <para>
+      A mechanism need to declare a set of <quote>ACTIONS</quote> in
+      order to use PolicyKit. Actions correspond to operations that
+      clients can request the mechanism to carry out and are defined
+      in XML files that the mechanism installs into
+      the <filename>/usr/share/polkit-1/actions</filename> directory.
+    </para>
+
+    <para>
+      PolicyKit actions are namespaced and can only contain the
+      characters <literal>[a-z][0-9].-</literal> e.g. lower-case
+      ASCII, digits, period and hyphen. Each XML file can contain more
+      than one action but all actions need to be in the same namespace
+      and the file needs to be named after the namespace and have the
+      extension <literal>.policy</literal>.
+    </para>
+
+    <para>
+      The XML file must have the following doctype declaration
+    </para>
+    <programlisting><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+]]></programlisting>
+    <para>
+      The <emphasis>policyconfig</emphasis> element must be present
+      exactly once. Elements that can be used
+      inside <emphasis>policyconfig</emphasis> includes:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><emphasis>vendor</emphasis></term>
+        <listitem><para>The name of the project or vendor that is
+            supplying the actions in the XML
+            document. Optional.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>vendor_url</emphasis></term>
+        <listitem><para>A URL to the project or vendor that is
+        supplying the actions in the XML document.
+        Optional.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>icon_name</emphasis></term>
+        <listitem><para>An icon representing the project or vendor
+        that is supplying the actions in the XML document. The icon
+        name must adhere to
+        the <ulink url="http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html">Freedesktop.org
+        Icon Naming Specification</ulink>. Optional.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>action</emphasis></term>
+        <listitem><para>Declares an action. The action name is
+        specified using the <literal>id</literal> attribute and can
+        only contain the characters <literal>[a-z][0-9].-</literal>
+        e.g. lower-case ASCII, digits, period and
+        hyphen.</para></listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      Elements that can be used inside <emphasis>action</emphasis> includes:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><emphasis>description</emphasis></term>
+        <listitem><para>A human readable description of the action, e.g. <quote>Install unsigned software</quote>.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>message</emphasis></term>
+        <listitem><para>A human readable message displayed to the user when asking for credentials when authentication is needed, e.g. <quote>Installing unsigned software requires authentication</quote>.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>defaults</emphasis></term>
+        <listitem><para>This element is used to specify implicit authorizations for clients.</para>
+          <para>
+            Elements that can be used inside <emphasis>defaults</emphasis> includes:
+          </para>
+          <variablelist>
+            <varlistentry>
+              <term><emphasis>allow_any</emphasis></term>
+              <listitem><para>Implicit authorizations that apply to
+              any client. Optional.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><emphasis>allow_inactive</emphasis></term>
+              <listitem><para>Implicit authorizations that apply to
+              clients in inactive sessions on local
+              consoles. Optional.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><emphasis>allow_active</emphasis></term>
+              <listitem><para>Implicit authorizations that apply to
+              clients in active sessions on local
+              consoles. Optional.</para></listitem>
+            </varlistentry>
+          </variablelist>
+          <para>
+            Each of
+            the <emphasis>allow_any</emphasis>, <emphasis>allow_inactive</emphasis>
+            and <emphasis>allow_active</emphasis> elements can contain
+            the following values:
+          </para>
+          <variablelist>
+            <varlistentry>
+              <term><literal>no</literal></term>
+              <listitem><para>Not authorized.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><literal>yes</literal></term>
+              <listitem><para>Authorized.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><literal>auth_self</literal></term>
+              <listitem><para>Authentication by the owner of the
+              session that the client originates from is
+              required.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><literal>auth_admin</literal></term>
+              <listitem><para>Authentication by an administrative user
+              is required.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><literal>auth_self_keep</literal></term>
+              <listitem><para>Like <literal>auth_self</literal> but
+              the authorization is kept for a brief
+              period.</para></listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><literal>auth_admin_keep</literal></term>
+              <listitem><para>Like <literal>auth_admin</literal> but the authorization is kept for a brief period.</para></listitem>
+            </varlistentry>
+          </variablelist>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>annotate</emphasis></term>
+        <listitem><para>Used for annotating an action with a key/value
+        pair. The key is specified using the
+        the <literal>key</literal> attribute and the value is
+        specified using the <literal>value</literal> attribute. This
+        element may appear zero or more times. See
+            <citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+            for an example of how this can be used. </para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>vendor</emphasis></term>
+        <listitem><para>Used for overriding the vendor on a per-action
+        basis. Optional.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>vendor_url</emphasis></term>
+        <listitem><para>Used for overriding the vendor URL on a
+        per-action basis. Optional.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>icon_name</emphasis></term>
+        <listitem><para>Used for overriding the icon name on a
+        per-action basis. Optional.</para></listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      For localization, <emphasis>description</emphasis>
+      and <emphasis>message</emphasis> elements may occur multiple
+      times with different <literal>xml:lang</literal> attributes.
+    </para>
+    <para>
+      To list installed PolicyKit actions, use the
+      <citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      command.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkla"><title>LOCAL AUTHORITY IMPLEMENTATION</title>
+    <para>
+      The default authority implementation in PolicyKit is using the
+      local filesystem to store authorizations. TODO: write some more
+      here including a link to a
+      <citerefentry><refentrytitle>pklamanage</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      command.
+    </para>
+  </refsect1>
 
   <refsect1><title>AUTHOR</title>
     <para>
