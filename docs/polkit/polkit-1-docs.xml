@@ -58,55 +58,51 @@
 
   <xi:include href="overview.xml"/>
 
-  <part id="apis">
-    <title>API Reference</title>
+  <part id="ref-dbus-api">
+    <title>D-Bus API Reference</title>
+    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml"/>
+    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml"/>
+    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
+  </part>
 
-    <chapter id="ref-dbus-api">
-      <title>D-Bus API Reference</title>
-      <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml"/>
-      <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml"/>
-      <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
+  <part id="ref-api">
+    <title>Core API Reference</title>
+    <xi:include href="xml/polkitauthority.xml"/>
+    <xi:include href="xml/polkitauthorizationresult.xml"/>
+    <xi:include href="xml/polkitdetails.xml"/>
+    <xi:include href="xml/polkiterror.xml"/>
+    <xi:include href="xml/polkitactiondescription.xml"/>
+    <xi:include href="xml/polkitauthoritymanager.xml"/>
+    <xi:include href="xml/polkitauthorization.xml"/>
+    <chapter id="subjects">
+      <title>Subjects</title>
+      <xi:include href="xml/polkitsubject.xml"/>
+      <xi:include href="xml/polkitunixprocess.xml"/>
+      <xi:include href="xml/polkitunixsession.xml"/>
+      <xi:include href="xml/polkitsystembusname.xml"/>
     </chapter>
+    <chapter id="Identities">
+      <title>Identities</title>
+      <xi:include href="xml/polkitidentity.xml"/>
+      <xi:include href="xml/polkitunixuser.xml"/>
+      <xi:include href="xml/polkitunixgroup.xml"/>
+    </chapter>
+  </part>
 
-    <chapter id="ref-api">
-      <title>Core API Reference</title>
-      <xi:include href="xml/polkitauthority.xml"/>
-      <xi:include href="xml/polkitauthorizationresult.xml"/>
-      <xi:include href="xml/polkitdetails.xml"/>
-      <xi:include href="xml/polkiterror.xml"/>
-      <xi:include href="xml/polkitactiondescription.xml"/>
-      <xi:include href="xml/polkitauthoritymanager.xml"/>
-      <xi:include href="xml/polkitauthorization.xml"/>
-      <chapter id="subjects">
-        <title>Subjects</title>
-        <xi:include href="xml/polkitsubject.xml"/>
-        <xi:include href="xml/polkitunixprocess.xml"/>
-        <xi:include href="xml/polkitunixsession.xml"/>
-        <xi:include href="xml/polkitsystembusname.xml"/>
-      </chapter>
-      <chapter id="Identities">
-        <title>Identities</title>
-        <xi:include href="xml/polkitidentity.xml"/>
-        <xi:include href="xml/polkitunixuser.xml"/>
-        <xi:include href="xml/polkitunixgroup.xml"/>
-      </chapter>
-    </chapter>
+  <part id="ref-backend-api">
+    <title>Backend API Reference</title>
+    <xi:include href="xml/polkitbackendauthority.xml"/>
+    <xi:include href="xml/polkitbackendlocalauthority.xml"/>
+    <xi:include href="xml/polkitbackendactionpool.xml"/>
+    <xi:include href="xml/polkitbackendsessionmonitor.xml"/>
+    <xi:include href="xml/polkitbackendconfigsource.xml"/>
+    <xi:include href="xml/polkitbackendactionlookup.xml"/>
+  </part>
 
-    <chapter id="ref-backend-api">
-      <title>Backend API Reference</title>
-      <xi:include href="xml/polkitbackendauthority.xml"/>
-      <xi:include href="xml/polkitbackendlocalauthority.xml"/>
-      <xi:include href="xml/polkitbackendactionpool.xml"/>
-      <xi:include href="xml/polkitbackendsessionmonitor.xml"/>
-      <xi:include href="xml/polkitbackendconfigsource.xml"/>
-      <xi:include href="xml/polkitbackendactionlookup.xml"/>
-    </chapter>
-
-    <chapter id="ref-authentication-agent-api">
-      <title>Authentication Agent API Reference</title>
-      <xi:include href="xml/polkitagentlistener.xml"/>
-      <xi:include href="xml/polkitagentsession.xml"/>
-    </chapter>
+  <part id="ref-authentication-agent-api">
+    <title>Authentication Agent API Reference</title>
+    <xi:include href="xml/polkitagentlistener.xml"/>
+    <xi:include href="xml/polkitagentsession.xml"/>
   </part>
 
   <part id="manpages">
