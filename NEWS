@@ -1,0 +1,61 @@
+--------------
+PolicyKit 0.92
+--------------
+
+This is PolicyKit 0.92.
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio >= 2.14
+ eggdbus-1          >= 0.4
+ pam
+
+Changes since PolicyKit 0.91:
+
+ David Zeuthen (35):
+      post-release version bump to 0.92
+      install gtkdoc HTML in the proper location
+      Fix D-Bus policy to work with non-permissive D-Bus
+      Only allow privileged apps to check authz and add ActionLookup interface
+      Change the PolkitAuthorizationResult enumeration into an object
+      Port examples and command-line tools to new API
+      Move docs to proper location
+      Add a pkexec(1) command
+      Mention /usr/bin/pkexec in the configure blurb
+      Fix a bug where details were not shown for normal pkexec usage
+      Use an object, not a GHashTable when passing details around
+      Forgot to add source for PolkitDetails
+      Change the defaults for .run-frobnicate to auth_self_keep
+      Require eggdbus-1 >= 0.4
+      Only free hash table if it's not NULL
+      Avoid returning an error if no authentication agent is available
+      Clarify docs for is_challenge member of the AuthorizationResult struct
+      Add pkcheck(1) command to check for authorizations
+      nullbackend: Catch up with latest API changes
+      Return the icon name instead of a GIcon in PolkitActionDescription
+      Add pkaction(1) and nuke polkit-1(1) commands
+      Update SEE ALSO sections in man pages
+      Add a man page for polkit-1(8)
+      First cut at some high-level docs
+      Improve pkexec(1) man page by adding screenshots of authentication dialogs
+      Add some more API docs
+      Add a "PolicyKit Overview" section to the docs
+      Consolidate all gtk-doc stuff in docs/polkit
+      Expand on the D-Bus docs
+      Use .../extensions instead of ../backends for loading extensions
+      Minor doc fixes
+      Move the doc chapters around a bit
+      Change GNOME to freedesktop.org in the docs
+      Fix make distcheck
+      Update NEWS
+
+ Richard Hughes (2):
+      fix up gtk-doc API markup for a couple of functions
+      add a draft version of the porting guide -- WIP
+
+David Zeuthen,
+June 8, 2009
