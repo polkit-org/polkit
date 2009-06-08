@@ -421,8 +421,6 @@ docs/version.xml
 docs/extensiondir.xml
 docs/Makefile
 docs/polkit/Makefile
-docs/polkitbackend/Makefile
-docs/polkitagent/Makefile
 docs/man/Makefile
 po/Makefile.in
 ])

@@ -13,11 +13,11 @@ DOC_MAIN_SGML_FILE=polkit-1-docs.xml
 SCAN_OPTIONS=--ignore-headers=config.h
 
 # The directory containing the source code. Relative to $(srcdir)
-DOC_SOURCE_DIR=../../src/polkit
+DOC_SOURCE_DIR=../../src
 
 # Used for dependencies
-HFILE_GLOB=$(top_srcdir)/src/polkit/*.h
-CFILE_GLOB=$(top_srcdir)/src/polkit/*.c
+HFILE_GLOB=$(top_srcdir)/src/polkit*/*.h
+CFILE_GLOB=$(top_srcdir)/src/polkit*/*.c
 
 # Headers to ignore
 IGNORE_HFILES= \
@@ -31,6 +31,10 @@ INCLUDES = \
 	$(GIO_CFLAGS)						\
 	-I$(top_srcdir)/src/polkit 				\
 	-I$(top_builddir)/src/polkit				\
+	-I$(top_srcdir)/src/polkitbackend			\
+	-I$(top_builddir)/src/polkitbackend			\
+	-I$(top_srcdir)/src/polkitagent 			\
+	-I$(top_builddir)/src/polkitagent			\
 	$(NULL)
 
 GTKDOC_LIBS = \
@@ -38,10 +42,12 @@ GTKDOC_LIBS = \
 	$(GLIB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
+	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la \
+	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la	\
 	$(NULL)
 
 # Extra options to supply to gtkdoc-mkdb
-MKDB_OPTIONS=--sgml-mode --output-format=xml
+MKDB_OPTIONS=--sgml-mode --output-format=xml --name-space=polkit
 
 # Extra options to supply to gtkdoc-mktmpl
 MKTMPL_OPTIONS=
