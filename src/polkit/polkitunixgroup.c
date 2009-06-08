@@ -35,9 +35,14 @@
  * @title: PolkitUnixGroup
  * @short_description: Unix groups
  *
- * Encapsulates a UNIX group.
+ * An object representing a group identity on a UNIX system.
  */
 
+/**
+ * PolkitUnixGroup:
+ *
+ * The #PolkitUnixGroup struct should not be accessed directly.
+ */
 struct _PolkitUnixGroup
 {
   GObject parent_instance;
@@ -136,12 +141,27 @@ polkit_unix_group_class_init (PolkitUnixGroupClass *klass)
 
 }
 
+/**
+ * polkit_unix_group_get_gid:
+ * @group: A #PolkitUnixGroup.
+ *
+ * Gets the UNIX group id for @group.
+ *
+ * Returns: A UNIX group id.
+ */
 gid_t
 polkit_unix_group_get_gid (PolkitUnixGroup *group)
 {
   return group->gid;
 }
 
+/**
+ * polkit_unix_group_set_gid:
+ * @group: A #PolkitUnixGroup.
+ * @gid: A UNIX group id.
+ *
+ * Sets @gid for @group.
+ */
 void
 polkit_unix_group_set_gid (PolkitUnixGroup *group,
                           gid_t gid)
@@ -149,6 +169,14 @@ polkit_unix_group_set_gid (PolkitUnixGroup *group,
   group->gid = gid;
 }
 
+/**
+ * polkit_unix_group_new:
+ * @gid: A UNIX group id.
+ *
+ * Creates a new #PolkitUnixGroup object for @gid.
+ *
+ * Returns: A #PolkitUnixGroup object. Free with g_object_unref().
+ */
 PolkitIdentity *
 polkit_unix_group_new (gid_t gid)
 {
@@ -157,6 +185,16 @@ polkit_unix_group_new (gid_t gid)
                                        NULL));
 }
 
+/**
+ * polkit_unix_group_new_for_name:
+ * @name: A UNIX group name.
+ * @error: Return location for error.
+ *
+ * Creates a new #PolkitUnixGroup object for a group with the group name
+ * @name.
+ *
+ * Returns: A #PolkitUnixGroup object or %NULL if @error is set.
+ */
 PolkitIdentity *
 polkit_unix_group_new_for_name (const gchar    *name,
                                 GError        **error)

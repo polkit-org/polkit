@@ -38,10 +38,25 @@ G_BEGIN_DECLS
 #define POLKIT_IDENTITY_GET_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE((o), POLKIT_TYPE_IDENTITY, PolkitIdentityIface))
 
 #if 0
+/**
+ * PolkitIdentity:
+ *
+ * Generic type for all objects that can be used as identities.
+ */
 typedef struct _PolkitIdentity PolkitIdentity; /* Dummy typedef */
 #endif
 typedef struct _PolkitIdentityIface PolkitIdentityIface;
 
+/**
+ * PolkitIdentityIface:
+ * @parent_iface: The parent interface.
+ * @hash: Gets a hash value for a #PolkitIdentity.
+ * @equal: Checks if two #PolkitIdentity<!-- -->s are equal.
+ * @to_string: Serializes a #PolkitIdentity to a string that can be
+ * used in polkit_identity_from_string().
+ *
+ * An interface for identities.
+ */
 struct _PolkitIdentityIface
 {
   GTypeInterface parent_iface;

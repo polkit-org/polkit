@@ -34,9 +34,18 @@
  * @title: PolkitUnixProcess
  * @short_description: Unix processs
  *
- * Encapsulates a UNIX process.
+ * An object for representing a UNIX process.
+ *
+ * To uniquely identify processes, both the process id and the start
+ * time of the process (a monotonic increasing value representing the
+ * time since the kernel was started) is used.
  */
 
+/**
+ * PolkitUnixProcess:
+ *
+ * The #PolkitUnixProcess struct should not be accessed directly.
+ */
 struct _PolkitUnixProcess
 {
   GObject parent_instance;
@@ -161,18 +170,41 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
 
 }
 
+/**
+ * polkit_unix_process_get_pid:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Gets the process id for @process.
+ *
+ * Returns: The process id for @process.
+ */
 pid_t
 polkit_unix_process_get_pid (PolkitUnixProcess *process)
 {
   return process->pid;
 }
 
+/**
+ * polkit_unix_process_get_start_time:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Gets the start time of @process.
+ *
+ * Returns: The start time of @process.
+ */
 guint64
 polkit_unix_process_get_start_time (PolkitUnixProcess *process)
 {
   return process->start_time;
 }
 
+/**
+ * polkit_unix_process_set_pid:
+ * @process: A #PolkitUnixProcess.
+ * @pid: A process id.
+ *
+ * Sets @pid for @process.
+ */
 void
 polkit_unix_process_set_pid (PolkitUnixProcess *process,
                              pid_t              pid)
@@ -182,6 +214,17 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
     process->start_time = get_start_time_for_pid (pid);
 }
 
+/**
+ * polkit_unix_process_new:
+ * @pid: The process id.
+ *
+ * Creates a new #PolkitUnixProcess for @pid. The start time of the
+ * process will be looked up in using e.g. the
+ * <filename>/proc</filename> filesystem depending on the platform in
+ * use.
+ *
+ * Returns: A #PolkitSubject. Free with g_object_unref().
+ */
 PolkitSubject *
 polkit_unix_process_new (pid_t pid)
 {
@@ -190,6 +233,15 @@ polkit_unix_process_new (pid_t pid)
                                        NULL));
 }
 
+/**
+ * polkit_unix_process_new_full:
+ * @pid: The process id.
+ * @start_time: The start time for @pid.
+ *
+ * Creates a new #PolkitUnixProcess object for @pid and @start_time.
+ *
+ * Returns: A #PolkitSubject. Free with g_object_unref().
+ */
 PolkitSubject *
 polkit_unix_process_new_full (pid_t pid,
                               guint64 start_time)

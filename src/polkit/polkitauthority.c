@@ -44,7 +44,8 @@
  * User sessions can register an authentication agent with the
  * authority. This is used for requests from untrusted clients where
  * system policy requires that the user needs to acknowledge (through
- * proving he is the user or the administrator) a given action.
+ * proving he is the user or the administrator) a given action. See
+ * #PolkitAgentListener and #PolkitAgentSession for details.
  */
 
 /**

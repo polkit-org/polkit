@@ -38,10 +38,25 @@ G_BEGIN_DECLS
 #define POLKIT_SUBJECT_GET_IFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE((o), POLKIT_TYPE_SUBJECT, PolkitSubjectIface))
 
 #if 0
+/**
+ * PolkitSubject:
+ *
+ * Generic type for all objects that can be used as subjects.
+ */
 typedef struct _PolkitSubject PolkitSubject; /* Dummy typedef */
 #endif
 typedef struct _PolkitSubjectIface PolkitSubjectIface;
 
+/**
+ * PolkitSubjectIface:
+ * @parent_iface: The parent interface.
+ * @hash: Gets a hash value for a #PolkitSubject.
+ * @equal: Checks if two #PolkitSubject<!-- -->s are equal.
+ * @to_string: Serializes a #PolkitSubject to a string that can be
+ * used in polkit_subject_from_string().
+ *
+ * An interface for subjects.
+ */
 struct _PolkitSubjectIface
 {
   GTypeInterface parent_iface;

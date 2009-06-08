@@ -33,9 +33,16 @@
  * @title: PolkitUnixSession
  * @short_description: Unix sessions
  *
- * Encapsulates a login session on UNIX.
+ * An object that represents an user session.
+ *
+ * The session id is an opaque string obtained from ConsoleKit.
  */
 
+/**
+ * PolkitUnixSession:
+ *
+ * The #PolkitUnixSession struct should not be accessed directly.
+ */
 struct _PolkitUnixSession
 {
   GObject parent_instance;
@@ -132,12 +139,28 @@ polkit_unix_session_class_init (PolkitUnixSessionClass *klass)
 
 }
 
+/**
+ * polkit_unix_session_get_session_id:
+ * @session: A #PolkitUnixSession.
+ *
+ * Gets the session id for @session.
+ *
+ * Returns: The session id for @session. Do not free this string, it
+ * is owned by @session.
+ **/
 const gchar *
 polkit_unix_session_get_session_id (PolkitUnixSession *session)
 {
   return session->session_id;
 }
 
+/**
+ * polkit_unix_session_set_session_id:
+ * @session: A #PolkitUnixSession.
+ * @session_id: The session id.
+ *
+ * Sets the session id for @session to @session_id.
+ **/
 void
 polkit_unix_session_set_session_id (PolkitUnixSession *session,
                                     const gchar       *session_id)
@@ -146,6 +169,14 @@ polkit_unix_session_set_session_id (PolkitUnixSession *session,
   session->session_id = g_strdup (session_id);
 }
 
+/**
+ * polkit_unix_session_new:
+ * @session_id: The session id.
+ *
+ * Creates a new #PolkitUnixSession for @session_id.
+ *
+ * Returns: A #PolkitUnixSession. Free with g_object_unref().
+ **/
 PolkitSubject *
 polkit_unix_session_new (const gchar *session_id)
 {

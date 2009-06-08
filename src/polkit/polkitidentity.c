@@ -34,9 +34,10 @@
 /**
  * SECTION:polkitidentity
  * @title: PolkitIdentity
- * @short_description: Identities
+ * @short_description: Type for representing identities
  *
- * Identities.
+ * #PolkitIdentity is an abstract type for representing one or more
+ * identities.
  */
 
 static void
@@ -73,12 +74,31 @@ polkit_identity_get_type (void)
   return iface_type;
 }
 
+/**
+ * polkit_identity_hash:
+ * @identity: A #PolkitIdentity.
+ *
+ * Gets a hash code for @identity that can be used with e.g. g_hash_table_new().
+ *
+ * Returns: A hash code.
+ */
 guint
 polkit_identity_hash (PolkitIdentity *identity)
 {
   return POLKIT_IDENTITY_GET_IFACE (identity)->hash (identity);
 }
 
+/**
+ * polkit_identity_equal:
+ * @a: A #PolkitIdentity.
+ * @b: A #PolkitIdentity.
+ *
+ * Checks if @a and @b are equal, ie. represent the same identity.
+ *
+ * This function can be used in e.g. g_hash_table_new().
+ *
+ * Returns: %TRUE if @a and @b are equal, %FALSE otherwise.
+ */
 gboolean
 polkit_identity_equal (PolkitIdentity *a,
                       PolkitIdentity *b)
@@ -89,12 +109,32 @@ polkit_identity_equal (PolkitIdentity *a,
   return POLKIT_IDENTITY_GET_IFACE (a)->equal (a, b);
 }
 
+/**
+ * polkit_identity_to_string:
+ * @identity: A #PolkitIdentity.
+ *
+ * Serializes @identity to a string that can be used in
+ * polkit_identity_from_string().
+ *
+ * Returns: A string representing @identity. Free with g_free().
+ */
 gchar *
 polkit_identity_to_string (PolkitIdentity *identity)
 {
   return POLKIT_IDENTITY_GET_IFACE (identity)->to_string (identity);
 }
 
+/**
+ * polkit_identity_from_string:
+ * @str: A string obtained from polkit_identity_to_string().
+ * @error: Return location for error.
+ *
+ * Creates an object from @str that implements the #PolkitIdentity
+ * interface.
+ *
+ * Returns: A #PolkitIdentity or %NULL if @error is set. Free with
+ * g_object_unref().
+ */
 PolkitIdentity *
 polkit_identity_from_string  (const gchar   *str,
                              GError       **error)

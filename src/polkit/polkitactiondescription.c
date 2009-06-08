@@ -35,9 +35,14 @@
  * @title: PolkitActionDescription
  * @short_description: Actions
  *
- * Encapsulates an action.
+ * Object used to encapsulate a registered action.
  */
 
+/**
+ * PolkitActionDescription:
+ *
+ * The #PolkitActionDescription struct should not be accessed directly.
+ */
 struct _PolkitActionDescription
 {
   GObject parent_instance;
@@ -99,48 +104,117 @@ polkit_action_description_get_real (PolkitActionDescription *action_description)
   return g_object_ref (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_action_id:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the action id for @action_description.
+ *
+ * Returns: A string owned by @action_description. Do not free.
+ */
 const gchar  *
 polkit_action_description_get_action_id (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_action_id (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_description:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the description used for @action_description.
+ *
+ * Returns: A string owned by @action_description. Do not free.
+ */
 const gchar  *
 polkit_action_description_get_description (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_description (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_message:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the message used for @action_description.
+ *
+ * Returns: A string owned by @action_description. Do not free.
+ */
 const gchar  *
 polkit_action_description_get_message (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_message (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_vendor_name:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the vendor name for @action_description, if any.
+ *
+ * Returns: %NULL if there is no vendor, otherwise a string owned by
+ * @action_description. Do not free.
+ */
 const gchar  *
 polkit_action_description_get_vendor_name (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_vendor_name (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_vendor_url:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the vendor URL for @action_description, if any.
+ *
+ * Returns: %NULL if there is no vendor URL, otherwise a string owned
+ * by @action_description. Do not free.
+ */
 const gchar  *
 polkit_action_description_get_vendor_url (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_vendor_url (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_implicit_any:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the implicit authorization for @action_description used for
+ * any subject.
+ *
+ * Returns: A value from the #PolkitImplicitAuthorization enumeration.
+ */
 PolkitImplicitAuthorization
 polkit_action_description_get_implicit_any (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_implicit_any (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_implicit_inactive:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the implicit authorization for @action_description used for
+ * subjects in inactive sessions on a local console.
+ *
+ * Returns: A value from the #PolkitImplicitAuthorization enumeration.
+ */
 PolkitImplicitAuthorization
 polkit_action_description_get_implicit_inactive (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_implicit_inactive (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_implicit_active:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the implicit authorization for @action_description used for
+ * subjects in active sessions on a local console.
+ *
+ * Returns: A value from the #PolkitImplicitAuthorization enumeration.
+ */
 PolkitImplicitAuthorization
 polkit_action_description_get_implicit_active (PolkitActionDescription *action_description)
 {
@@ -148,12 +222,31 @@ polkit_action_description_get_implicit_active (PolkitActionDescription *action_d
 }
 
 
+/**
+ * polkit_action_description_get_icon_name:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the icon name for @action_description, if any.
+ *
+ * Returns: %NULL if there is no icon for @action, otherwise the icon
+ * name owned by @action_description. Do not free.
+ */
 const gchar *
 polkit_action_description_get_icon_name (PolkitActionDescription *action_description)
 {
   return _polkit_action_description_get_icon_name (action_description->real);
 }
 
+/**
+ * polkit_action_description_get_annotation:
+ * @action_description: A #PolkitActionDescription.
+ * @key: An annotation key.
+ *
+ * Get the value of the annotation with @key.
+ *
+ * Returns: %NULL if there is no annoation with @key, otherwise the
+ * annotation value owned by @action_description. Do not free.
+ */
 const gchar *
 polkit_action_description_get_annotation (PolkitActionDescription *action_description,
                                           const gchar             *key)
@@ -179,6 +272,14 @@ collect_keys (EggDBusHashMap *hash_map,
 }
 
 
+/**
+ * polkit_action_description_get_annotation_keys:
+ * @action_description: A #PolkitActionDescription.
+ *
+ * Gets the keys of annotations defined in @action_description.
+ *
+ * Returns: The annotation keys owned by @action_description. Do not free.
+ */
 const gchar * const *
 polkit_action_description_get_annotation_keys (PolkitActionDescription *action_description)
 {
@@ -201,4 +302,3 @@ polkit_action_description_get_annotation_keys (PolkitActionDescription *action_d
  out:
   return (const gchar * const *) action_description->annotation_keys;
 }
-

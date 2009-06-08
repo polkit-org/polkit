@@ -35,9 +35,14 @@
  * @title: PolkitUnixUser
  * @short_description: Unix users
  *
- * Encapsulates a UNIX user.
+ * An object representing a user identity on a UNIX system.
  */
 
+/**
+ * PolkitUnixUser:
+ *
+ * The #PolkitUnixUser struct should not be accessed directly.
+ */
 struct _PolkitUnixUser
 {
   GObject parent_instance;
@@ -136,12 +141,27 @@ polkit_unix_user_class_init (PolkitUnixUserClass *klass)
 
 }
 
+/**
+ * polkit_unix_user_get_uid:
+ * @user: A #PolkitUnixUser.
+ *
+ * Gets the UNIX user id for @user.
+ *
+ * Returns: A UNIX user id.
+ */
 uid_t
 polkit_unix_user_get_uid (PolkitUnixUser *user)
 {
   return user->uid;
 }
 
+/**
+ * polkit_unix_user_set_uid:
+ * @user: A #PolkitUnixUser.
+ * @uid: A UNIX user id.
+ *
+ * Sets @uid for @user.
+ */
 void
 polkit_unix_user_set_uid (PolkitUnixUser *user,
                           uid_t uid)
@@ -149,6 +169,14 @@ polkit_unix_user_set_uid (PolkitUnixUser *user,
   user->uid = uid;
 }
 
+/**
+ * polkit_unix_user_new:
+ * @uid: A UNIX user id.
+ *
+ * Creates a new #PolkitUnixUser object for @uid.
+ *
+ * Returns: A #PolkitUnixUser object. Free with g_object_unref().
+ */
 PolkitIdentity *
 polkit_unix_user_new (uid_t uid)
 {
@@ -157,6 +185,16 @@ polkit_unix_user_new (uid_t uid)
                                         NULL));
 }
 
+/**
+ * polkit_unix_user_new_for_name:
+ * @name: A UNIX user name.
+ * @error: Return location for error.
+ *
+ * Creates a new #PolkitUnixUser object for a user with the user name
+ * @name.
+ *
+ * Returns: A #PolkitUnixUser object or %NULL if @error is set.
+ */
 PolkitIdentity *
 polkit_unix_user_new_for_name (const gchar    *name,
                                GError        **error)

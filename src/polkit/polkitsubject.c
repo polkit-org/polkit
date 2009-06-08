@@ -35,9 +35,10 @@
 /**
  * SECTION:polkitsubject
  * @title: PolkitSubject
- * @short_description: Subjects
+ * @short_description: Type for representing subjects
  *
- * Subjects.
+ * #PolkitSubject is an abstract type for representing one or more
+ * processes.
  */
 
 static void
@@ -74,12 +75,31 @@ polkit_subject_get_type (void)
   return iface_type;
 }
 
+/**
+ * polkit_subject_hash:
+ * @subject: A #PolkitSubject.
+ *
+ * Gets a hash code for @subject that can be used with e.g. g_hash_table_new().
+ *
+ * Returns: A hash code.
+ */
 guint
 polkit_subject_hash (PolkitSubject *subject)
 {
   return POLKIT_SUBJECT_GET_IFACE (subject)->hash (subject);
 }
 
+/**
+ * polkit_subject_equal:
+ * @a: A #PolkitSubject.
+ * @b: A #PolkitSubject.
+ *
+ * Checks if @a and @b are equal, ie. represent the same subject.
+ *
+ * This function can be used in e.g. g_hash_table_new().
+ *
+ * Returns: %TRUE if @a and @b are equal, %FALSE otherwise.
+ */
 gboolean
 polkit_subject_equal (PolkitSubject *a,
                       PolkitSubject *b)
@@ -90,12 +110,32 @@ polkit_subject_equal (PolkitSubject *a,
   return POLKIT_SUBJECT_GET_IFACE (a)->equal (a, b);
 }
 
+/**
+ * polkit_subject_to_string:
+ * @subject: A #PolkitSubject.
+ *
+ * Serializes @subject to a string that can be used in
+ * polkit_subject_from_string().
+ *
+ * Returns: A string representing @subject. Free with g_free().
+ */
 gchar *
 polkit_subject_to_string (PolkitSubject *subject)
 {
   return POLKIT_SUBJECT_GET_IFACE (subject)->to_string (subject);
 }
 
+/**
+ * polkit_subject_from_string:
+ * @str: A string obtained from polkit_subject_to_string().
+ * @error: Return location for error.
+ *
+ * Creates an object from @str that implements the #PolkitSubject
+ * interface.
+ *
+ * Returns: A #PolkitSubject or %NULL if @error is set. Free with
+ * g_object_unref().
+ */
 PolkitSubject *
 polkit_subject_from_string  (const gchar   *str,
                              GError       **error)
@@ -249,4 +289,3 @@ polkit_subject_get_real (PolkitSubject *subject)
 
   return real;
 }
-

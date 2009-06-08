@@ -35,6 +35,11 @@
  * This class represents the result you get when checking for an authorization.
  */
 
+/**
+ * PolkitAuthorizationResult:
+ *
+ * The #PolkitAuthorizationResult struct should not be accessed directly.
+ */
 struct _PolkitAuthorizationResult
 {
   GObject parent_instance;
@@ -101,14 +106,16 @@ polkit_authorization_result_get_real (PolkitAuthorizationResult  *authorization_
 
 /**
  * polkit_authorization_result_new:
- * @is_authorized:
- * @is_challenge:
- * @details:
+ * @is_authorized: Whether the subject is authorized.
+ * @is_challenge: Whether the subject is authorized if more
+ * information is provided. Must be %FALSE unless @is_authorized is
+ * %TRUE.
+ * @details: Must be %NULL unless @is_authorized is %TRUE
  *
+ * Creates a new #PolkitAuthorizationResult object.
  *
- *
- * Returns:
- **/
+ * Returns: A #PolkitAuthorizationResult object. Free with g_object_unref().
+ */
 PolkitAuthorizationResult *
 polkit_authorization_result_new (gboolean                   is_authorized,
                                  gboolean                   is_challenge,
@@ -148,12 +155,12 @@ polkit_authorization_result_new (gboolean                   is_authorized,
 
 /**
  * polkit_authorization_result_get_is_authorized:
- * @result:
+ * @result: A #PolkitAuthorizationResult.
  *
+ * Gets whether the subject is authorized.
  *
- *
- * Returns:
- **/
+ * Returns: Whether the subject is authorized.
+ */
 gboolean
 polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result)
 {
@@ -162,12 +169,12 @@ polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result
 
 /**
  * polkit_authorization_result_get_is_challenge:
- * @result:
+ * @result: A #PolkitAuthorizationResult.
  *
+ * Gets whether the subject is authorized if more information is provided.
  *
- *
- * Returns:
- **/
+ * Returns: Whether the subject is authorized if more information is provided.
+ */
 gboolean
 polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
 {
@@ -176,12 +183,13 @@ polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
 
 /**
  * polkit_authorization_result_get_details:
- * @result:
+ * @result: A #PolkitAuthorizationResult.
  *
+ * Gets the details about the result.
  *
- *
- * Returns:
- **/
+ * Returns: A #PolkitDetails object. This object is owned by @result
+ * and should not be freed by the caller.
+ */
 PolkitDetails *
 polkit_authorization_result_get_details (PolkitAuthorizationResult *result)
 {

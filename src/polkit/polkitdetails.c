@@ -32,11 +32,17 @@
 /**
  * SECTION:polkitdetails
  * @title: PolkitDetails
- * @short_description: Details
+ * @short_description: Object used for passing details
+ * @stability: Stable
  *
  * An object used for passing details around.
  */
 
+/**
+ * PolkitDetails:
+ *
+ * The #PolkitDetails struct should not be accessed directly.
+ */
 struct _PolkitDetails
 {
   GObject parent_instance;
@@ -78,6 +84,13 @@ polkit_details_class_init (PolkitDetailsClass *klass)
   gobject_class->finalize = polkit_details_finalize;
 }
 
+/**
+ * polkit_details_new:
+ *
+ * Creates a new #PolkitDetails object.
+ *
+ * Returns: A #PolkitDetails object. Free with g_object_unref().
+ */
 PolkitDetails *
 polkit_details_new (void)
 {
@@ -88,6 +101,7 @@ polkit_details_new (void)
   return details;
 }
 
+/* private */
 PolkitDetails *
 polkit_details_new_for_hash (GHashTable *hash)
 {
@@ -100,12 +114,22 @@ polkit_details_new_for_hash (GHashTable *hash)
   return details;
 }
 
+/* private */
 GHashTable *
 polkit_details_get_hash (PolkitDetails *details)
 {
   return details->hash;
 }
 
+/**
+ * polkit_details_lookup:
+ * @details: A #PolkitDetails.
+ * @key: A key.
+ *
+ * Gets the value for @key on @details.
+ *
+ * Returns: %NULL if there is no value for @key, otherwise a string owned by @details.
+ */
 const gchar *
 polkit_details_lookup (PolkitDetails *details,
                        const gchar   *key)
@@ -116,6 +140,14 @@ polkit_details_lookup (PolkitDetails *details,
     return g_hash_table_lookup (details->hash, key);
 }
 
+/**
+ * polkit_details_insert:
+ * @details: A #PolkitDetails.
+ * @key: A key.
+ * @value: A value.
+ *
+ * Inserts a copy of @key and @value on @details.
+ */
 void
 polkit_details_insert (PolkitDetails *details,
                        const gchar   *key,
@@ -129,6 +161,14 @@ polkit_details_insert (PolkitDetails *details,
   g_hash_table_insert (details->hash, g_strdup (key), g_strdup (value));
 }
 
+/**
+ * polkit_details_get_keys:
+ * @details: A #PolkitDetails.
+ *
+ * Gets a list of all keys on @details.
+ *
+ * Returns: An array of strings that should be freed with g_strfreev().
+ */
 gchar **
 polkit_details_get_keys (PolkitDetails *details)
 {

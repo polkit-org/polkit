@@ -31,11 +31,16 @@
 /**
  * SECTION:polkitsystembusname
  * @title: PolkitSystemBusName
- * @short_description: Unique system bus name
+ * @short_description: Unique system bus names
  *
- * Encapsulates a process with a unique name on the system bus.
+ * An object that represents a process owning a unique name on the system bus.
  */
 
+/**
+ * PolkitUnixSystemBusName:
+ *
+ * The #PolkitSystemBusName struct should not be accessed directly.
+ */
 struct _PolkitSystemBusName
 {
   GObject parent_instance;
@@ -144,12 +149,28 @@ polkit_system_bus_name_class_init (PolkitSystemBusNameClass *klass)
 
 }
 
+/**
+ * polkit_system_bus_name_get_name:
+ * @system_bus_name: A #PolkitSystemBusName.
+ *
+ * Gets the unique system bus name for @system_bus_name.
+ *
+ * Returns: The unique system bus name for @system_bus_name. Do not
+ * free, this string is owned by @system_bus_name.
+ */
 const gchar *
 polkit_system_bus_name_get_name (PolkitSystemBusName *system_bus_name)
 {
   return system_bus_name->name;
 }
 
+/**
+ * polkit_system_bus_name_set_name:
+ * @system_bus_name: A #PolkitSystemBusName.
+ * @name: A unique system bus name.
+ *
+ * Sets the unique system bus name for @system_bus_name.
+ */
 void
 polkit_system_bus_name_set_name (PolkitSystemBusName *system_bus_name,
                                  const gchar         *name)
@@ -158,6 +179,14 @@ polkit_system_bus_name_set_name (PolkitSystemBusName *system_bus_name,
   system_bus_name->name = g_strdup (name);
 }
 
+/**
+ * polkit_system_bus_name_new:
+ * @name: A unique system bus name.
+ *
+ * Creates a new #PolkitSystemBusName for @name.
+ *
+ * Returns: A #PolkitSystemBusName. Free with g_object_unref().
+ */
 PolkitSubject *
 polkit_system_bus_name_new (const gchar *name)
 {
