@@ -1287,7 +1287,7 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
 /**
  * polkit_backend_authority_get:
  *
- * Loads all #GIOModule<!-- -->s from <literal>$(libdir)/polkit-1/backends</literal> to determine
+ * Loads all #GIOModule<!-- -->s from <filename>$(libdir)/polkit-1/extensions</filename> to determine
  * what implementation of #PolkitBackendAuthority to use. Then instantiates an object of the
  * implementation with the highest priority and unloads all other modules.
  *
@@ -1323,7 +1323,7 @@ polkit_backend_authority_get (void)
     }
 
   /* load all modules */
-  modules = g_io_modules_load_all_in_directory (PACKAGE_LIB_DIR "/polkit-1/backends");
+  modules = g_io_modules_load_all_in_directory (PACKAGE_LIB_DIR "/polkit-1/extensions");
 
   /* find all extensions; we have at least one here since we've registered the local backend */
   authority_implementations = g_io_extension_point_get_extensions (ep);
