@@ -21,7 +21,7 @@
     </authorgroup>
 
     <copyright>
-      <year>2008</year>
+      <year>2008-2009</year>
       <holder>The PolicyKit Authors</holder>
     </copyright>
 
@@ -49,9 +49,10 @@
       <para>
         Many of the names used by companies to distinguish their
         products and services are claimed as trademarks. Where those
-        names appear in any GNOME documentation, and those trademarks
-        are made aware to the members of the GNOME Documentation
-        Project, the names have been printed in caps or initial caps.
+        names appear in any freedesktop.org documentation, and those
+        trademarks are made aware to the members of the
+        freedesktop.org Documentation Project, the names have been
+        printed in caps or initial caps.
       </para>
     </legalnotice>
   </bookinfo>
