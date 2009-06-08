@@ -29,8 +29,9 @@
  * @title: PolkitBackendConfigSource
  * @short_description: Access configuration files
  *
- * The #PolkitBackendConfigSource is a utility class to read configuration data
- * from a set of prioritized key-value files in a given directory.
+ * The #PolkitBackendConfigSource class is a utility class to read
+ * configuration data from a set of prioritized key-value files in a
+ * given directory.
  */
 
 struct _PolkitBackendConfigSourcePrivate

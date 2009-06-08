@@ -30,6 +30,14 @@
 
 #include "polkitbackendactionpool.h"
 
+/**
+ * SECTION:polkitbackendactionpool
+ * @title: PolkitBackendActionPool
+ * @short_description: Registered actions
+ *
+ * The #PolkitBackendActionPool class is a utility class to look up registered PolicyKit actions.
+ */
+
 typedef struct
 {
   gchar *action_id;

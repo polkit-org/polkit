@@ -11,9 +11,9 @@
     <para>
       PolicyKit provides an authorization API intended to be used by
       privileged programs (<quote>MECHANISMS</quote>) offering service
-      to unprivileged programs (<quote>CLIENTS</quote>). See
-      <link linkend="PolicyKit-1.8">this page</link> for the system
-      architecture and big picture.
+      to unprivileged programs (<quote>CLIENTS</quote>). See the
+      <link linkend="PolicyKit-1.8">PolicyKit-1</link> manual page for
+      the system architecture and big picture.
     </para>
   </chapter>
 
@@ -25,8 +25,8 @@
       <emphasis>mechanism</emphasis> use either
       the <link linkend="ref-api">GObject API</link>,
       the <link linkend="ref-dbus-api">D-Bus API</link> or
-      the <link linkend="pkcheck.1">pkcheck</link> command to speak
-      to the PolicyKit Authority.
+      the <link linkend="pkcheck.1">pkcheck</link> command to
+      communicate with the PolicyKit Authority.
     </para>
     <para>
       Note that <emphasis>clients</emphasis> never use the PolicyKit
@@ -44,6 +44,30 @@
     <example id="cancel-example"><title>Querying the Authority</title>
       <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" href="../../src/examples/cancel.c"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
     </example>
+  </chapter>
+
+  <chapter>
+    <title>Writing PolicyKit Authentication Agents</title>
+    <para>
+      Authentication agents are provided by desktop environments. When
+      an user session starts, the agent registers with the PolicyKit
+      Authority using
+      the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>
+      method. When services are needed, the authority will invoke
+      methods on
+      the <link linkend="eggdbus-interface-org.freedesktop.PolicyKit1.AuthenticationAgent">org.freedesktop.PolicyKit1.AuthenticationAgent</link>
+      D-Bus interface. Once the user is authenticated, (a privileged
+      part of) the agent invokes
+      the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
+      method.  Note that the PolicyKit Authority itself does not care
+      how the agent authenticates the user.
+    </para>
+    <para>
+      The <link linkend="ref-authentication-agent-api">libpolkit-agent-1</link>
+      library provides helpers to make it easy to build authentication
+      agents that use the native authentication system
+      e.g. pam<literal>(8)</literal>.
+    </para>
   </chapter>
 
   <chapter>

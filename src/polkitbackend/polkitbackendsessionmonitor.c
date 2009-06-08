@@ -35,7 +35,7 @@
  * @title: PolkitBackendSessionMonitor
  * @short_description: Monitor sessions
  *
- * The #PolkitBackendSessionMonitor is a utility class to track and monitor sessions.
+ * The #PolkitBackendSessionMonitor class is a utility class to track and monitor sessions.
  */
 
 struct _PolkitBackendSessionMonitor

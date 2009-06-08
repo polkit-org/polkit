@@ -136,9 +136,9 @@ System Context         |                        |
       authenticating as the user) or an administrative user (by
       authenticating as a administrator). In order to integrate well
       with the rest of the user session (e.g. match the look and
-      feel), authentication agents are meant to provided by the user
-      session that the user uses. For example, an authentication agent
-      may look like this:
+      feel), authentication agents are meant to be provided by the
+      user session that the user uses. For example, an authentication
+      agent may look like this:
     </para>
     <mediaobject>
       <imageobject>
