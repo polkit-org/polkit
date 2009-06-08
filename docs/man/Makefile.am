@@ -21,6 +21,7 @@ EXTRA_DIST = 				\
 	pkexec.xml			\
 	pkcheck.xml			\
 	pkaction.xml			\
+	polkitd-1.xml			\
 	$(NULL)
 
 clean-local:

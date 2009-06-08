@@ -16,7 +16,7 @@ Build requirements
 
 Changes since PolicyKit 0.91:
 
- David Zeuthen (35):
+ David Zeuthen (36):
       post-release version bump to 0.92
       install gtkdoc HTML in the proper location
       Fix D-Bus policy to work with non-permissive D-Bus
@@ -52,6 +52,7 @@ Changes since PolicyKit 0.91:
       Change GNOME to freedesktop.org in the docs
       Fix make distcheck
       Update NEWS
+      Also dist polkitd-1.xml
 
  Richard Hughes (2):
       fix up gtk-doc API markup for a couple of functions
