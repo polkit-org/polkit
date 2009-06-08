@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
+<!ENTITY extensiondir SYSTEM "../extensiondir.xml">
 ]>
 <book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
   <bookinfo>
@@ -54,6 +55,8 @@
       </para>
     </legalnotice>
   </bookinfo>
+
+  <xi:include href="overview.xml"/>
 
   <reference id="ref-dbus-api">
     <title>D-Bus API Reference</title>

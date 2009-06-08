@@ -19,14 +19,17 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-/* Simple example that shows how to check for an authorization including
- * cancelling the check.
+/* Simple example that shows how to check for an authorization
+ * including cancelling the check.
  *
- * Cancelling an authorization check is desirable in situations where the
- * object/action to check for vanishes. One concrete example of this is
- * a disks daemon in which the user needs to authenticate to mount a file
- * system. If the disk is removed while the user is busy with the authentication
- * dialog, the disks daemon should cancel the authorization check.
+ * Cancelling an authorization check is desirable in situations where
+ * the object/action to check for vanishes.
+ *
+ * One concrete example of this is a disks service in which the user
+ * needs to authenticate to modify a disk. If the disk is removed
+ * while the authentication dialog is shown, the disks service should
+ * cancel the authorization check. A side effect of this, is that the
+ * authentication dialog is removed.
  */
 
 #include <polkit/polkit.h>
@@ -63,7 +66,6 @@ check_authorization_cb (PolkitAuthority *authority,
         }
 
       g_print ("Authorization result: %s\n", result_str);
-      /* TODO: print details if authorized */
     }
 
   g_main_loop_quit (loop);
@@ -80,30 +82,54 @@ do_cancel (GCancellable *cancellable)
 int
 main (int argc, char *argv[])
 {
+  pid_t parent_pid;
+  const gchar *action_id;
   GMainLoop *loop;
-  PolkitSubject *calling_process;
+  PolkitSubject *subject;
   PolkitAuthority *authority;
   GCancellable *cancellable;
 
   g_type_init ();
 
+  if (argc != 2)
+    {
+      g_printerr ("usage: %s <action_id>\n", argv[0]);
+      return 1;
+    }
+  action_id = argv[1];
+
   loop = g_main_loop_new (NULL, FALSE);
 
   authority = polkit_authority_get ();
 
-  calling_process = polkit_unix_process_new (getppid ());
+  /* Typically mechanisms will use a PolkitSystemBusName since most
+   * clients communicate with the mechanism via D-Bus. However for
+   * this simple example we use the process id of the calling process.
+   *
+   * Note that if the parent was reaped we have to be careful not to
+   * check if init(1) is authorized (it always is).
+   */
+  parent_pid = getppid ();
+  if (parent_pid == 1)
+    {
+      g_printerr ("Parent process was reaped by init(1)\n");
+      return 1;
+    }
+  subject = polkit_unix_process_new (parent_pid);
 
   cancellable = g_cancellable_new ();
 
   g_print ("Will cancel authorization check in 10 seconds\n");
+
+  /* Set up a 10 second timer to cancel the check */
   g_timeout_add (10 * 1000,
                  (GSourceFunc) do_cancel,
                  cancellable);
 
   polkit_authority_check_authorization (authority,
-                                        calling_process,
-                                        "org.freedesktop.policykit.grant",
-                                        NULL,
+                                        subject,
+                                        action_id,
+                                        NULL, /* PolkitDetails */
                                         POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION,
                                         cancellable,
                                         (GAsyncReadyCallback) check_authorization_cb,
@@ -112,7 +138,7 @@ main (int argc, char *argv[])
   g_main_loop_run (loop);
 
   g_object_unref (authority);
-  g_object_unref (calling_process);
+  g_object_unref (subject);
   g_object_unref (cancellable);
   g_main_loop_unref (loop);
 

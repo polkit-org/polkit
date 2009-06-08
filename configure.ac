@@ -418,6 +418,7 @@ src/programs/Makefile
 src/examples/Makefile
 src/nullbackend/Makefile
 docs/version.xml
+docs/extensiondir.xml
 docs/Makefile
 docs/polkit/Makefile
 docs/polkitbackend/Makefile

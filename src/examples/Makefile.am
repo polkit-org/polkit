@@ -33,7 +33,6 @@ cancel_LDADD =  	                      			\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
 	$(NULL)
 
-
 # ----------------------------------------------------------------------------------------------------
 
 bin_PROGRAMS += pk-example-frobnicate

@@ -3,7 +3,7 @@
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
 ]>
-<refentry id="devkit-disks-daemon.8">
+<refentry id="polkitd-1.8">
   <refentryinfo>
     <title>polkitd-1</title>
     <date>May 2009</date>

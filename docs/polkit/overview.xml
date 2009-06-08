@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+<!ENTITY extensiondir SYSTEM "../extensiondir.xml">
+]>
+<part id="overview">
+  <title>PolicyKit Overview</title>
+  <chapter>
+    <title>Introduction</title>
+    <para>
+      PolicyKit provides an authorization API intended to be used by
+      privileged programs (<quote>MECHANISMS</quote>) offering service
+      to unprivileged programs (<quote>CLIENTS</quote>). See
+      <link linkend="PolicyKit-1.8">this page</link> for the system
+      architecture and big picture.
+    </para>
+  </chapter>
+
+  <chapter>
+    <title>Writing PolicyKit applications</title>
+    <para>
+      PolicyKit applications are privileged mechanisms using the
+      PolicyKit authority as a decider component. To do this, a
+      <emphasis>mechanism</emphasis> use either
+      the <link linkend="ref-api">GObject API</link>,
+      the <link linkend="ref-dbus-api">D-Bus API</link> or
+      the <link linkend="pkcheck.1">pkcheck</link> command to speak
+      to the PolicyKit Authority.
+    </para>
+    <para>
+      Note that <emphasis>clients</emphasis> never use the PolicyKit
+      API directly – it is intended solely for privileged
+      <emphasis>mechanisms</emphasis>. If a client needs to disable,
+      modify or remove UI elements to e.g. convey to the user that a
+      certain action cannot be carried out (because e.g. the user is
+      not authorized) or authentication is needed (by
+      e.g. displaying a padlock icon in the UI), the mechanism will
+      need to provide API for this.
+    </para>
+    <para>
+      As an example of code using the GObject API, see <xref linkend="cancel-example"/>.
+    </para>
+    <example id="cancel-example"><title>Querying the Authority</title>
+      <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" href="../../src/examples/cancel.c"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
+    </example>
+  </chapter>
+
+  <chapter>
+    <title>Extending PolicyKit</title>
+    <para>
+      PolicyKit exports a number of extension points to
+      replace/customize behavior of the PolicyKit daemon. Note that
+      all extensions run with super user privileges in the same
+      process as the PolicyKit daemon.
+    </para>
+    <para>
+      The PolicyKit daemons loads extensions
+      from the <filename>&extensiondir;</filename> directory. See
+      the <link linkend="gio-Extension-Points">GIO Extension Point
+        documentation</link> for more information about the extension
+      system used by PolicyKit.
+    </para>
+    <para>
+      The following extension points are currently defined by
+      PolicyKit:
+    </para>
+
+    <formalpara>
+      <title>POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME</title>
+      <para>
+        Allows replacing the Authority – the entity responsible for
+        making authorization decisions. Implementations of this
+        extension point must be derived from the
+        PolkitBackendAuthority class. See
+        the <filename>src/nullbackend/</filename> directory in the
+        PolicyKit sources for an example.
+      </para>
+    </formalpara>
+
+    <formalpara>
+      <title>POLKIT_BACKEND_ACTION_LOOKUP_EXTENSION_POINT_NAME</title>
+      <para>
+        Allows a mechanism to customize the contents of authentication
+        dialogs. Implementations of this extension point must
+        implement the #PolkitBackendActionLookup interface.
+      </para>
+    </formalpara>
+
+  </chapter>
+</part>
