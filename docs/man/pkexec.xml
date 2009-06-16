@@ -44,7 +44,7 @@
 
   </refsynopsisdiv>
 
-  <refsect1><title>DESCRIPTION</title>
+  <refsect1 id="pkexec-description"><title>DESCRIPTION</title>
     <para>
       <command>pkexec</command> allows an authorized user to
       execute <replaceable>PROGRAM</replaceable> as another
@@ -54,7 +54,7 @@
     </para>
   </refsect1>
 
-  <refsect1><title>RETURN VALUE</title>
+  <refsect1 id="pkexec-return-value"><title>RETURN VALUE</title>
     <para>
       Upon successful completion, the return value is the return value
       of <replaceable>PROGRAM</replaceable>. If the calling process is
@@ -64,7 +64,7 @@
     </para>
   </refsect1>
 
-  <refsect1><title>SECURITY NOTES</title>
+  <refsect1 id="pkexec-security-notes"><title>SECURITY NOTES</title>
     <para>
       Executing a program as another user is a privileged
       operation. By default the required authorization (See
@@ -228,14 +228,14 @@
     </para>
   </refsect1>
 
-  <refsect1><title>AUTHOR</title>
+  <refsect1 id="pkexec-author"><title>AUTHOR</title>
     <para>
       Written by David Zeuthen <email>davidz@redhat.com</email> with
       a lot of help from many others.
     </para>
   </refsect1>
 
-  <refsect1>
+  <refsect1 id="pkexec-bugs">
     <title>BUGS</title>
     <para>
       Please send bug reports to either the distribution or the
@@ -245,7 +245,7 @@
     </para>
   </refsect1>
 
-  <refsect1>
+  <refsect1 id="pkexec-see-also">
     <title>SEE ALSO</title>
     <para>
       <citerefentry>

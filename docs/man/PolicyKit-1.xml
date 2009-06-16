@@ -21,7 +21,7 @@
     <refpurpose>Authorization API</refpurpose>
   </refnamediv>
 
-  <refsect1><title>OVERVIEW</title>
+  <refsect1 id="PolicyKit-1-overview"><title>OVERVIEW</title>
     <para>
       PolicyKit provides an authorization API intended to be used by
       privileged programs (<quote>MECHANISMS</quote>) offering service
@@ -46,7 +46,7 @@
 
   </refsect1>
 
-  <refsect1><title>SYSTEM ARCHITECTURE</title>
+  <refsect1 id="PolicyKit-1-system-architecture"><title>SYSTEM ARCHITECTURE</title>
     <para>
       The system architecture of PolicyKit is comprised of
       the <emphasis>Authority</emphasis> (implemented as a service on
@@ -129,7 +129,7 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1><title>AUTHENTICATION AGENTS</title>
+  <refsect1 id="PolicyKit-1-authentication-agents"><title>AUTHENTICATION AGENTS</title>
     <para>
       An authentication agent is used to make the user of a session
       prove that the user of the session really is the user (by
@@ -216,7 +216,7 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1><title>DECLARING ACTIONS</title>
+  <refsect1 id="PolicyKit-1-declaring-actions"><title>DECLARING ACTIONS</title>
     <para>
       A mechanism need to declare a set of <quote>ACTIONS</quote> in
       order to use PolicyKit. Actions correspond to operations that
@@ -401,14 +401,14 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1><title>AUTHOR</title>
+  <refsect1 id="PolicyKit-1-author"><title>AUTHOR</title>
     <para>
       Written by David Zeuthen <email>davidz@redhat.com</email> with
       a lot of help from many others.
     </para>
   </refsect1>
 
-  <refsect1>
+  <refsect1 id="PolicyKit-1-bugs">
     <title>BUGS</title>
     <para>
       Please send bug reports to either the distribution or the
@@ -418,7 +418,7 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1>
+  <refsect1 id="PolicyKit-1-see-also">
     <title>SEE ALSO</title>
     <para>
       <citerefentry>

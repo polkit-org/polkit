@@ -6,7 +6,7 @@
 ]>
 <part id="overview">
   <title>PolicyKit Overview</title>
-  <chapter>
+  <chapter id="polkit-intro">
     <title>Introduction</title>
     <para>
       PolicyKit provides an authorization API intended to be used by
@@ -17,7 +17,7 @@
     </para>
   </chapter>
 
-  <chapter>
+  <chapter id="polkit-apps">
     <title>Writing PolicyKit applications</title>
     <para>
       PolicyKit applications are privileged mechanisms using the
@@ -46,7 +46,7 @@
     </example>
   </chapter>
 
-  <chapter>
+  <chapter id="polkit-agents">
     <title>Writing PolicyKit Authentication Agents</title>
     <para>
       Authentication agents are provided by desktop environments. When
@@ -70,7 +70,7 @@
     </para>
   </chapter>
 
-  <chapter>
+  <chapter id="polkit-extending">
     <title>Extending PolicyKit</title>
     <para>
       PolicyKit exports a number of extension points to
