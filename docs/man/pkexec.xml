@@ -73,7 +73,7 @@
       to the user will display the full path to the program to be
       executed so the user is aware of what will happen:
     </para>
-    <mediaobject>
+    <mediaobject id="pkexec-bash">
       <imageobject>
         <imagedata fileref="pkexec-bash.png" format="PNG"/>
       </imageobject>
@@ -145,7 +145,7 @@
       specified. For example, for the action defined above, the following
       authentication dialog will be shown:
     </para>
-    <mediaobject>
+    <mediaobject id="pkexec-frobnicate">
       <imageobject>
         <imagedata fileref="pkexec-frobnicate.png" format="PNG"/>
       </imageobject>
@@ -179,7 +179,7 @@
       If the user is using the <literal>da_DK</literal> locale, the
       dialog looks like this:
     </para>
-    <mediaobject>
+    <mediaobject id="pkexec-frobnicate-da">
       <imageobject>
         <imagedata fileref="pkexec-frobnicate-da.png" format="PNG"/>
       </imageobject>

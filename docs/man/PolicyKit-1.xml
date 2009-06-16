@@ -58,7 +58,7 @@
       completely control authorization policy. In a block diagram, the
       architecture looks like this:
     </para>
-    <mediaobject>
+    <mediaobject id="polkit-architecture">
       <imageobject>
         <imagedata fileref="polkit-architecture.png" format="PNG"/>
       </imageobject>
@@ -140,7 +140,7 @@ System Context         |                        |
       user session that the user uses. For example, an authentication
       agent may look like this:
     </para>
-    <mediaobject>
+    <mediaobject id="polkit-authentication-agent-example">
       <imageobject>
         <imagedata fileref="polkit-authentication-agent-example.png" format="PNG"/>
       </imageobject>
@@ -176,7 +176,7 @@ System Context         |                        |
       account it may allow you to select the administrative user who
       is authenticating:
     </para>
-    <mediaobject>
+    <mediaobject id="polkit-authentication-agent-example-wheel">
       <imageobject>
         <imagedata fileref="polkit-authentication-agent-example-wheel.png" format="PNG"/>
       </imageobject>
