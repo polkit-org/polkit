@@ -18,26 +18,26 @@ INCLUDES =                                              	\
 	$(NULL)
 
 polkitmodulesdir = $(libdir)/polkit-1/extensions
-polkitmodules_LTLIBRARIES = nullbackend.la
+polkitmodules_LTLIBRARIES = libnullbackend.la
 
-nullbackend_la_SOURCES = 						\
+libnullbackend_la_SOURCES = 						\
 	nullbackend.c							\
 	polkitbackendnullauthority.c	polkitbackendnullauthority.h	\
 	$(NULL)
 
-nullbackend_la_CFLAGS =                             			\
+libnullbackend_la_CFLAGS =                             			\
 	-DPOLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
 	-DG_LOG_DOMAIN=\"PolkitNullBackend\"				\
 	$(GLIB_CFLAGS)							\
 	$(NULL)
 
-nullbackend_la_LDFLAGS =  	                      			\
+libnullbackend_la_LDFLAGS =  	                      			\
 	$(module_flags)               					\
 	$(GLIB_LDADD)							\
 	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la	\
 	$(NULL)
 
-nullbackend_la_LIBADD =  	                      			\
+libnullbackend_la_LIBADD =  	                      			\
 	$(NULL)
 
 nullconfigdir = $(sysconfdir)/polkit-1/nullbackend.conf.d
