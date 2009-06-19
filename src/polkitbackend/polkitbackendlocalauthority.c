@@ -1372,6 +1372,42 @@ get_authentication_sessions_initiated_by_system_bus_unique_name (PolkitBackendLo
    return result;
 }
 
+static GList *
+get_authentication_sessions_for_system_bus_unique_name_subject (PolkitBackendLocalAuthority *authority,
+                                                                const gchar *system_bus_unique_name)
+{
+  PolkitBackendLocalAuthorityPrivate *priv;
+  GHashTableIter hash_iter;
+  AuthenticationAgent *agent;
+  GList *result;
+
+  result = NULL;
+
+  /* TODO: perhaps use a hash on the cookie to speed this up */
+
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
+
+  g_hash_table_iter_init (&hash_iter, priv->hash_session_to_authentication_agent);
+  while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
+    {
+      GList *l;
+
+      for (l = agent->active_sessions; l != NULL; l = l->next)
+        {
+          AuthenticationSession *session = l->data;
+
+          if (POLKIT_IS_SYSTEM_BUS_NAME (session->subject) &&
+              strcmp (polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (session->subject)),
+                      system_bus_unique_name) == 0)
+            {
+              result = g_list_prepend (result, session);
+            }
+        }
+    }
+
+   return result;
+}
+
 
 static AuthenticationAgent *
 get_authentication_agent_by_unique_system_bus_name (PolkitBackendLocalAuthority *authority,
@@ -2064,6 +2100,7 @@ polkit_backend_local_authority_system_bus_name_owner_changed (PolkitBackendAutho
           g_hash_table_remove (priv->hash_session_to_authentication_agent, agent->session);
         }
 
+      /* cancel all authentication sessions initiated by the process owning the vanished name */
       sessions = get_authentication_sessions_initiated_by_system_bus_unique_name (local_authority, name);
       for (l = sessions; l != NULL; l = l->next)
         {
@@ -2072,6 +2109,17 @@ polkit_backend_local_authority_system_bus_name_owner_changed (PolkitBackendAutho
           authentication_session_cancel (session);
         }
       g_list_free (sessions);
+
+      /* cancel all authentication sessions that is about the vanished name */
+      sessions = get_authentication_sessions_for_system_bus_unique_name_subject (local_authority, name);
+      for (l = sessions; l != NULL; l = l->next)
+        {
+          AuthenticationSession *session = l->data;
+
+          authentication_session_cancel (session);
+        }
+      g_list_free (sessions);
+
     }
 
 }
