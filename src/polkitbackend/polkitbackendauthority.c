@@ -812,6 +812,7 @@ check_auth_cb (GObject      *source_object,
       _PolkitAuthorizationResult *real_result;
       real_result = polkit_authorization_result_get_real (result);
       _polkit_authority_handle_check_authorization_finish (method_invocation, real_result);
+      g_object_unref (real_result);
       g_object_unref (result);
     }
 }

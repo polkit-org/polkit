@@ -73,10 +73,21 @@ polkit_unix_session_init (PolkitUnixSession *unix_session)
 }
 
 static void
+polkit_unix_session_finalize (GObject *object)
+{
+  PolkitUnixSession *session = POLKIT_UNIX_SESSION (object);
+
+  g_free (session->session_id);
+
+  if (G_OBJECT_CLASS (polkit_unix_session_parent_class)->finalize != NULL)
+    G_OBJECT_CLASS (polkit_unix_session_parent_class)->finalize (object);
+}
+
+static void
 polkit_unix_session_get_property (GObject    *object,
-                               guint       prop_id,
-                               GValue     *value,
-                               GParamSpec *pspec)
+                                  guint       prop_id,
+                                  GValue     *value,
+                                  GParamSpec *pspec)
 {
   PolkitUnixSession *session = POLKIT_UNIX_SESSION (object);
 
@@ -94,9 +105,9 @@ polkit_unix_session_get_property (GObject    *object,
 
 static void
 polkit_unix_session_set_property (GObject      *object,
-                               guint         prop_id,
-                               const GValue *value,
-                               GParamSpec   *pspec)
+                                  guint         prop_id,
+                                  const GValue *value,
+                                  GParamSpec   *pspec)
 {
   PolkitUnixSession *session = POLKIT_UNIX_SESSION (object);
 
@@ -117,6 +128,7 @@ polkit_unix_session_class_init (PolkitUnixSessionClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
+  gobject_class->finalize     = polkit_unix_session_finalize;
   gobject_class->get_property = polkit_unix_session_get_property;
   gobject_class->set_property = polkit_unix_session_set_property;
 

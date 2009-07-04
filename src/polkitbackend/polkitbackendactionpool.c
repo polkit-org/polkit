@@ -367,8 +367,8 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
   PolkitActionDescription *ret;
   _PolkitActionDescription *real;
   ParsedAction *parsed_action;
-  gchar *description;
-  gchar *message;
+  const gchar *description;
+  const gchar *message;
 
   g_return_val_if_fail (POLKIT_BACKEND_IS_ACTION_POOL (pool), NULL);
 
@@ -386,12 +386,12 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
       goto out;
     }
 
-  description = g_strdup (_localize (parsed_action->localized_description,
-                                     parsed_action->description,
-                                     locale));
-  message = g_strdup (_localize (parsed_action->localized_message,
-                                 parsed_action->message,
-                                 locale));
+  description = _localize (parsed_action->localized_description,
+                           parsed_action->description,
+                           locale);
+  message = _localize (parsed_action->localized_message,
+                       parsed_action->message,
+                       locale);
 
   real = _polkit_action_description_new (action_id,
                                          description,
