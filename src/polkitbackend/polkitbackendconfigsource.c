@@ -213,7 +213,7 @@ polkit_backend_config_source_class_init (PolkitBackendConfigSourceClass *klass)
 
   gobject_class->get_property = polkit_backend_config_source_get_property;
   gobject_class->set_property = polkit_backend_config_source_set_property;
-  gobject_class->finalize     = polkit_backend_config_source_constructed;
+  gobject_class->constructed  = polkit_backend_config_source_constructed;
   gobject_class->finalize     = polkit_backend_config_source_finalize;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendConfigSourcePrivate));

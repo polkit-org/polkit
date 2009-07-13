@@ -135,12 +135,12 @@ static GList *get_authorizations_for_identity (PolkitBackendLocalAuthority *auth
 
 static gboolean add_authorization_for_identity (PolkitBackendLocalAuthority *authority,
                                                 PolkitIdentity              *identity,
-                                                PolkitAuthorization         *authorization,
+                                                PolkitLocalAuthorization    *authorization,
                                                 GError                     **error);
 
 static gboolean remove_authorization_for_identity (PolkitBackendLocalAuthority *authority,
                                                    PolkitIdentity              *identity,
-                                                   PolkitAuthorization         *authorization,
+                                                   PolkitLocalAuthorization    *authorization,
                                                    GError                     **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -190,17 +190,17 @@ static GList *polkit_backend_local_authority_enumerate_authorizations (PolkitBac
                                                                        PolkitIdentity           *identity,
                                                                        GError                  **error);
 
-static gboolean polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
-                                                                  PolkitSubject            *caller,
-                                                                  PolkitIdentity           *identity,
-                                                                  PolkitAuthorization      *authorization,
-                                                                  GError                  **error);
+static gboolean polkit_backend_local_authority_add_authorization (PolkitBackendAuthority    *authority,
+                                                                  PolkitSubject             *caller,
+                                                                  PolkitIdentity            *identity,
+                                                                  PolkitLocalAuthorization  *authorization,
+                                                                  GError                   **error);
 
-static gboolean polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
-                                                                     PolkitSubject            *caller,
-                                                                     PolkitIdentity           *identity,
-                                                                     PolkitAuthorization      *authorization,
-                                                                     GError                  **error);
+static gboolean polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority    *authority,
+                                                                     PolkitSubject             *caller,
+                                                                     PolkitIdentity            *identity,
+                                                                     PolkitLocalAuthorization  *authorization,
+                                                                     GError                   **error);
 
 static gboolean polkit_backend_local_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
                                                                               PolkitSubject            *caller,
@@ -477,11 +477,11 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
           implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
         {
           GError *error;
-          PolkitAuthorization *authorization;
+          PolkitLocalAuthorization *authorization;
 
-          authorization = polkit_authorization_new (action_id,
-                                                    subject,
-                                                    FALSE);
+          authorization = polkit_local_authorization_new (action_id,
+                                                          subject,
+                                                          FALSE);
 
           if (!add_authorization_for_identity (authority,
                                                user_of_subject,
@@ -932,7 +932,7 @@ static gboolean
 polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *authority,
                                                   PolkitSubject            *caller,
                                                   PolkitIdentity           *identity,
-                                                  PolkitAuthorization      *authorization,
+                                                  PolkitLocalAuthorization      *authorization,
                                                   GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -952,9 +952,9 @@ polkit_backend_local_authority_add_authorization (PolkitBackendAuthority   *auth
   subject_str = NULL;
   user_of_caller = NULL;
 
-  subject = polkit_authorization_get_subject (authorization);
-  action_id = polkit_authorization_get_action_id (authorization);
-  is_negative = polkit_authorization_get_is_negative (authorization);
+  subject = polkit_local_authorization_get_subject (authorization);
+  action_id = polkit_local_authorization_get_action_id (authorization);
+  is_negative = polkit_local_authorization_get_is_negative (authorization);
 
   if (subject != NULL)
     subject_str = polkit_subject_to_string (subject);
@@ -1015,7 +1015,7 @@ static gboolean
 polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *authority,
                                                      PolkitSubject            *caller,
                                                      PolkitIdentity           *identity,
-                                                     PolkitAuthorization      *authorization,
+                                                     PolkitLocalAuthorization      *authorization,
                                                      GError                  **error)
 {
   PolkitBackendLocalAuthority *local_authority;
@@ -1035,9 +1035,9 @@ polkit_backend_local_authority_remove_authorization (PolkitBackendAuthority   *a
   subject_str = NULL;
   user_of_caller = NULL;
 
-  subject = polkit_authorization_get_subject (authorization);
-  action_id = polkit_authorization_get_action_id (authorization);
-  is_negative = polkit_authorization_get_is_negative (authorization);
+  subject = polkit_local_authorization_get_subject (authorization);
+  action_id = polkit_local_authorization_get_action_id (authorization);
+  is_negative = polkit_local_authorization_get_is_negative (authorization);
 
   if (subject != NULL)
     subject_str = polkit_subject_to_string (subject);
@@ -2141,19 +2141,19 @@ struct AuthorizationStore
 static AuthorizationStore  *authorization_store_new (PolkitIdentity *identity);
 static GList               *authorization_store_get_all_authorizations (AuthorizationStore *store);
 
-static PolkitAuthorization *authorization_store_find_permanent_authorization (AuthorizationStore *store,
+static PolkitLocalAuthorization *authorization_store_find_permanent_authorization (AuthorizationStore *store,
                                                                               const gchar *action_id);
 
-static PolkitAuthorization *authorization_store_find_temporary_authorization (AuthorizationStore *store,
+static PolkitLocalAuthorization *authorization_store_find_temporary_authorization (AuthorizationStore *store,
                                                                               PolkitSubject *subject,
                                                                               const gchar *action_id);
 
 static gboolean             authorization_store_add_authorization (AuthorizationStore   *store,
-                                                                   PolkitAuthorization  *authorization,
+                                                                   PolkitLocalAuthorization  *authorization,
                                                                    GError              **error);
 
 static gboolean             authorization_store_remove_authorization (AuthorizationStore   *store,
-                                                                      PolkitAuthorization  *authorization,
+                                                                      PolkitLocalAuthorization  *authorization,
                                                                       GError              **error);
 
 /* private */
@@ -2253,7 +2253,7 @@ authorization_store_reload_permanent_authorizations (AuthorizationStore *store)
       guint num_tokens;
       const gchar *action_id;
       gboolean is_negative;
-      PolkitAuthorization *authorization;
+      PolkitLocalAuthorization *authorization;
 
       /* skip blank lines and comments */
       if (strlen (line) == 0 || line[0] == '#')
@@ -2272,7 +2272,7 @@ authorization_store_reload_permanent_authorizations (AuthorizationStore *store)
       action_id = tokens[0];
       is_negative = (strcmp (tokens[1], "1") == 0);
 
-      authorization = polkit_authorization_new (action_id, NULL, is_negative);
+      authorization = polkit_local_authorization_new (action_id, NULL, is_negative);
 
       store->authorizations = g_list_prepend (store->authorizations, authorization);
     }
@@ -2321,12 +2321,12 @@ authorization_store_save_permanent_authorizations (AuthorizationStore  *store,
 
   for (l = store->authorizations; l != NULL; l = l->next)
     {
-      PolkitAuthorization *authorization = POLKIT_AUTHORIZATION (l->data);
+      PolkitLocalAuthorization *authorization = POLKIT_LOCAL_AUTHORIZATION (l->data);
       const gchar *action_id;
       gboolean is_negative;
 
-      action_id = polkit_authorization_get_action_id (authorization);
-      is_negative = polkit_authorization_get_is_negative (authorization);
+      action_id = polkit_local_authorization_get_action_id (authorization);
+      is_negative = polkit_local_authorization_get_is_negative (authorization);
 
       g_string_append_printf (s, "%s %d\n", action_id, is_negative);
     }
@@ -2363,21 +2363,21 @@ authorization_store_get_all_authorizations (AuthorizationStore *store)
   return result;
 }
 
-static PolkitAuthorization *
+static PolkitLocalAuthorization *
 authorization_store_find_permanent_authorization (AuthorizationStore *store,
                                                   const gchar *action_id)
 {
   GList *l;
-  PolkitAuthorization *ret;
+  PolkitLocalAuthorization *ret;
 
   ret = NULL;
 
   for (l = store->authorizations; l != NULL; l = l->next)
     {
-      PolkitAuthorization *authorization = POLKIT_AUTHORIZATION (l->data);
+      PolkitLocalAuthorization *authorization = POLKIT_LOCAL_AUTHORIZATION (l->data);
       const gchar *authorization_action_id;
 
-      authorization_action_id = polkit_authorization_get_action_id (authorization);
+      authorization_action_id = polkit_local_authorization_get_action_id (authorization);
       if (strcmp (authorization_action_id, action_id) == 0)
         {
           ret = authorization;
@@ -2389,24 +2389,24 @@ authorization_store_find_permanent_authorization (AuthorizationStore *store,
   return ret;
 }
 
-static PolkitAuthorization *
+static PolkitLocalAuthorization *
 authorization_store_find_temporary_authorization (AuthorizationStore *store,
                                                   PolkitSubject *subject,
                                                   const gchar *action_id)
 {
   GList *l;
-  PolkitAuthorization *ret;
+  PolkitLocalAuthorization *ret;
 
   ret = NULL;
 
   for (l = store->temporary_authorizations; l != NULL; l = l->next)
     {
-      PolkitAuthorization *authorization = POLKIT_AUTHORIZATION (l->data);
+      PolkitLocalAuthorization *authorization = POLKIT_LOCAL_AUTHORIZATION (l->data);
       const gchar *authorization_action_id;
       PolkitSubject *authorization_subject;
 
-      authorization_action_id = polkit_authorization_get_action_id (authorization);
-      authorization_subject = polkit_authorization_get_subject (authorization);
+      authorization_action_id = polkit_local_authorization_get_action_id (authorization);
+      authorization_subject = polkit_local_authorization_get_subject (authorization);
 
       if (strcmp (authorization_action_id, action_id) == 0 &&
           polkit_subject_equal (authorization_subject, subject))
@@ -2422,7 +2422,7 @@ authorization_store_find_temporary_authorization (AuthorizationStore *store,
 
 static gboolean
 authorization_store_add_authorization (AuthorizationStore   *store,
-                                       PolkitAuthorization  *authorization,
+                                       PolkitLocalAuthorization  *authorization,
                                        GError              **error)
 {
   gboolean ret;
@@ -2431,8 +2431,8 @@ authorization_store_add_authorization (AuthorizationStore   *store,
 
   ret = FALSE;
 
-  action_id = polkit_authorization_get_action_id (authorization);
-  subject = polkit_authorization_get_subject (authorization);
+  action_id = polkit_local_authorization_get_action_id (authorization);
+  subject = polkit_local_authorization_get_subject (authorization);
 
   if (subject != NULL)
     {
@@ -2489,18 +2489,18 @@ authorization_store_add_authorization (AuthorizationStore   *store,
 
 static gboolean
 authorization_store_remove_authorization (AuthorizationStore   *store,
-                                          PolkitAuthorization  *authorization,
+                                          PolkitLocalAuthorization  *authorization,
                                           GError              **error)
 {
   gboolean ret;
   PolkitSubject *subject;
   const gchar *action_id;
-  PolkitAuthorization *target;
+  PolkitLocalAuthorization *target;
 
   ret = FALSE;
 
-  action_id = polkit_authorization_get_action_id (authorization);
-  subject = polkit_authorization_get_subject (authorization);
+  action_id = polkit_local_authorization_get_action_id (authorization);
+  subject = polkit_local_authorization_get_subject (authorization);
 
   if (subject != NULL)
     {
@@ -2745,7 +2745,7 @@ get_authorizations_for_identity (PolkitBackendLocalAuthority *authority,
 static gboolean
 add_authorization_for_identity (PolkitBackendLocalAuthority *authority,
                                 PolkitIdentity              *identity,
-                                PolkitAuthorization         *authorization,
+                                PolkitLocalAuthorization         *authorization,
                                 GError                     **error)
 {
   AuthorizationStore *store;
@@ -2777,7 +2777,7 @@ add_authorization_for_identity (PolkitBackendLocalAuthority *authority,
 static gboolean
 remove_authorization_for_identity (PolkitBackendLocalAuthority *authority,
                                    PolkitIdentity              *identity,
-                                   PolkitAuthorization         *authorization,
+                                   PolkitLocalAuthorization         *authorization,
                                    GError                     **error)
 {
   AuthorizationStore *store;

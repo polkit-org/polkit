@@ -27,6 +27,8 @@
 #define __POLKIT_BACKEND_AUTHORITY_H
 
 #include <glib-object.h>
+#include <polkitlocal/polkitlocal.h>
+
 #include "polkitbackendtypes.h"
 
 G_BEGIN_DECLS
@@ -165,17 +167,17 @@ struct _PolkitBackendAuthorityClass
                                       PolkitIdentity           *identity,
                                       GError                  **error);
 
-  gboolean (*add_authorization) (PolkitBackendAuthority   *authority,
-                                 PolkitSubject            *caller,
-                                 PolkitIdentity           *identity,
-                                 PolkitAuthorization      *authorization,
-                                 GError                  **error);
+  gboolean (*add_authorization) (PolkitBackendAuthority    *authority,
+                                 PolkitSubject             *caller,
+                                 PolkitIdentity            *identity,
+                                 PolkitLocalAuthorization  *authorization,
+                                 GError                   **error);
 
-  gboolean (*remove_authorization) (PolkitBackendAuthority   *authority,
-                                    PolkitSubject            *caller,
-                                    PolkitIdentity           *identity,
-                                    PolkitAuthorization      *authorization,
-                                    GError                  **error);
+  gboolean (*remove_authorization) (PolkitBackendAuthority    *authority,
+                                    PolkitSubject             *caller,
+                                    PolkitIdentity            *identity,
+                                    PolkitLocalAuthorization  *authorization,
+                                    GError                   **error);
 
   /* TODO: need something more efficient such that we don't watch all name changes */
   void (*system_bus_name_owner_changed)  (PolkitBackendAuthority   *authority,
@@ -239,13 +241,13 @@ GList   *polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthor
 gboolean polkit_backend_authority_add_authorization         (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,
                                                              PolkitIdentity            *identity,
-                                                             PolkitAuthorization       *authorization,
+                                                             PolkitLocalAuthorization  *authorization,
                                                              GError                   **error);
 
 gboolean polkit_backend_authority_remove_authorization      (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,
                                                              PolkitIdentity            *identity,
-                                                             PolkitAuthorization       *authorization,
+                                                             PolkitLocalAuthorization  *authorization,
                                                              GError                   **error);
 
 gboolean polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,

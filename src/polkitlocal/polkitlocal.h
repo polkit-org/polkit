@@ -19,25 +19,17 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_TYPES_H
-#define __POLKIT_BACKEND_TYPES_H
+#ifndef __POLKIT_LOCAL_H
+#define __POLKIT_LOCAL_H
 
-#include <glib-object.h>
+#if !defined (POLKIT_LOCAL_I_KNOW_API_IS_SUBJECT_TO_CHANGE) && !defined (_POLKIT_LOCAL_COMPILATION)
+#error "libpolkitlocal is unstable API and subject to change. You must define POLKIT_LOCAL_I_KNOW_API_IS_SUBJECT_TO_CHANGE to acknowledge this."
+#endif
 
-struct _PolkitBackendAuthority;
-typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
+#define _POLKIT_LOCAL_INSIDE_POLKIT_LOCAL_H 1
+#include <polkitlocal/polkitlocaltypes.h>
+#include <polkitlocal/polkitlocalauthority.h>
+#include <polkitlocal/polkitlocalauthorization.h>
+#undef _POLKIT_LOCAL_INSIDE_POLKIT_LOCAL_H
 
-struct _PolkitBackendSessionMonitor;
-typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
-
-struct _PolkitBackendConfigSource;
-typedef struct _PolkitBackendConfigSource PolkitBackendConfigSource;
-
-struct _PolkitBackendActionLookup;
-typedef struct _PolkitBackendActionLookup PolkitBackendActionLookup; /* Dummy typedef */
-
-struct _PolkitBackendLocalAuthority;
-typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
-
-#endif /* __POLKIT_BACKEND_TYPES_H */
-
+#endif /* __POLKIT_LOCAL_H */

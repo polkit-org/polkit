@@ -23,8 +23,13 @@
 #include <errno.h>
 #include <pwd.h>
 #include <string.h>
+
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
+
+#include <polkitlocal/polkitlocal.h>
+#include <polkitlocal/polkitlocalprivate.h>
+
 #include "polkitbackendauthority.h"
 #include "polkitbackendactionlookup.h"
 #include "polkitbackendlocalauthority.h"
@@ -295,7 +300,7 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *au
  *
  * Retrieves all authorizations for @identity.
  *
- * Returns: A list of #PolkitAuthorization objects or %NULL if @error is set. The returned list
+ * Returns: A list of #PolkitLocalAuthorization objects or %NULL if @error is set. The returned list
  * should be freed with g_list_free() after each element have been freed with g_object_unref().
  **/
 GList *
@@ -338,7 +343,7 @@ gboolean
 polkit_backend_authority_add_authorization  (PolkitBackendAuthority    *authority,
                                              PolkitSubject             *caller,
                                              PolkitIdentity            *identity,
-                                             PolkitAuthorization       *authorization,
+                                             PolkitLocalAuthorization       *authorization,
                                              GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
@@ -375,7 +380,7 @@ gboolean
 polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *authority,
                                                 PolkitSubject             *caller,
                                                 PolkitIdentity            *identity,
-                                                PolkitAuthorization       *authorization,
+                                                PolkitLocalAuthorization       *authorization,
                                                 GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
@@ -551,11 +556,11 @@ struct _ServerClass
 };
 
 static void authority_iface_init         (_PolkitAuthorityIface        *authority_iface);
-static void authority_manager_iface_init (_PolkitAuthorityManagerIface *authority_manager_iface);
+static void local_authority_iface_init (_PolkitLocalAuthorityIface *local_authority_iface);
 
 G_DEFINE_TYPE_WITH_CODE (Server, server, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_AUTHORITY, authority_iface_init)
-                         G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_AUTHORITY_MANAGER, authority_manager_iface_init)
+                         G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_LOCAL_AUTHORITY, local_authority_iface_init)
                          );
 
 static void
@@ -674,7 +679,7 @@ authority_handle_enumerate_actions (_PolkitAuthority        *instance,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_manager_handle_enumerate_users (_PolkitAuthorityManager *instance,
+local_authority_handle_enumerate_users (_PolkitLocalAuthority *instance,
                                           EggDBusMethodInvocation *method_invocation)
 {
   Server *server = SERVER (instance);
@@ -712,7 +717,7 @@ authority_manager_handle_enumerate_users (_PolkitAuthorityManager *instance,
       egg_dbus_array_seq_add (array, real);
     }
 
-  _polkit_authority_manager_handle_enumerate_users_finish (method_invocation, array);
+  _polkit_local_authority_handle_enumerate_users_finish (method_invocation, array);
 
   g_object_unref (array);
 
@@ -727,7 +732,7 @@ authority_manager_handle_enumerate_users (_PolkitAuthorityManager *instance,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_manager_handle_enumerate_groups (_PolkitAuthorityManager *instance,
+local_authority_handle_enumerate_groups (_PolkitLocalAuthority *instance,
                                            EggDBusMethodInvocation *method_invocation)
 {
   Server *server = SERVER (instance);
@@ -765,7 +770,7 @@ authority_manager_handle_enumerate_groups (_PolkitAuthorityManager *instance,
       egg_dbus_array_seq_add (array, real);
     }
 
-  _polkit_authority_manager_handle_enumerate_groups_finish (method_invocation, array);
+  _polkit_local_authority_handle_enumerate_groups_finish (method_invocation, array);
 
   g_object_unref (array);
 
@@ -922,7 +927,7 @@ authority_handle_cancel_check_authorization (_PolkitAuthority               *ins
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_manager_handle_enumerate_authorizations (_PolkitAuthorityManager        *instance,
+local_authority_handle_enumerate_authorizations (_PolkitLocalAuthority        *instance,
                                                    _PolkitIdentity                *real_identity,
                                                    EggDBusMethodInvocation        *method_invocation)
 {
@@ -959,14 +964,14 @@ authority_manager_handle_enumerate_authorizations (_PolkitAuthorityManager      
 
   for (l = authorizations; l != NULL; l = l->next)
     {
-      PolkitAuthorization *authorization = POLKIT_AUTHORIZATION (l->data);
-      _PolkitAuthorization *real;
+      PolkitLocalAuthorization *authorization = POLKIT_LOCAL_AUTHORIZATION (l->data);
+      _PolkitLocalAuthorization *real;
 
-      real = polkit_authorization_get_real (authorization);
+      real = polkit_local_authorization_get_real (authorization);
       egg_dbus_array_seq_add (array, real);
     }
 
-  _polkit_authority_manager_handle_enumerate_authorizations_finish (method_invocation, array);
+  _polkit_local_authority_handle_enumerate_authorizations_finish (method_invocation, array);
 
   g_object_unref (array);
 
@@ -983,15 +988,15 @@ authority_manager_handle_enumerate_authorizations (_PolkitAuthorityManager      
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_manager_handle_add_authorization (_PolkitAuthorityManager        *instance,
+local_authority_handle_add_authorization (_PolkitLocalAuthority        *instance,
                                             _PolkitIdentity                *real_identity,
-                                            _PolkitAuthorization           *real_authorization,
+                                            _PolkitLocalAuthorization           *real_authorization,
                                             EggDBusMethodInvocation        *method_invocation)
 {
   Server *server = SERVER (instance);
   PolkitSubject *caller;
   PolkitIdentity *identity;
-  PolkitAuthorization *authorization;
+  PolkitLocalAuthorization *authorization;
   GError *error;
 
 
@@ -999,7 +1004,7 @@ authority_manager_handle_add_authorization (_PolkitAuthorityManager        *inst
 
   identity = polkit_identity_new_for_real (real_identity);
 
-  authorization = polkit_authorization_new_for_real (real_authorization);
+  authorization = polkit_local_authorization_new_for_real (real_authorization);
 
   error = NULL;
   if (!polkit_backend_authority_add_authorization (server->authority,
@@ -1013,7 +1018,7 @@ authority_manager_handle_add_authorization (_PolkitAuthorityManager        *inst
       goto out;
     }
 
-  _polkit_authority_manager_handle_add_authorization_finish (method_invocation);
+  _polkit_local_authority_handle_add_authorization_finish (method_invocation);
 
  out:
   g_object_unref (authorization);
@@ -1024,15 +1029,15 @@ authority_manager_handle_add_authorization (_PolkitAuthorityManager        *inst
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_manager_handle_remove_authorization (_PolkitAuthorityManager        *instance,
+local_authority_handle_remove_authorization (_PolkitLocalAuthority        *instance,
                                                _PolkitIdentity                *real_identity,
-                                               _PolkitAuthorization           *real_authorization,
+                                               _PolkitLocalAuthorization           *real_authorization,
                                                EggDBusMethodInvocation        *method_invocation)
 {
   Server *server = SERVER (instance);
   PolkitSubject *caller;
   PolkitIdentity *identity;
-  PolkitAuthorization *authorization;
+  PolkitLocalAuthorization *authorization;
   GError *error;
 
 
@@ -1040,7 +1045,7 @@ authority_manager_handle_remove_authorization (_PolkitAuthorityManager        *i
 
   identity = polkit_identity_new_for_real (real_identity);
 
-  authorization = polkit_authorization_new_for_real (real_authorization);
+  authorization = polkit_local_authorization_new_for_real (real_authorization);
 
   error = NULL;
   if (!polkit_backend_authority_remove_authorization (server->authority,
@@ -1054,7 +1059,7 @@ authority_manager_handle_remove_authorization (_PolkitAuthorityManager        *i
       goto out;
     }
 
-  _polkit_authority_manager_handle_remove_authorization_finish (method_invocation);
+  _polkit_local_authority_handle_remove_authorization_finish (method_invocation);
 
  out:
   g_object_unref (authorization);
@@ -1179,13 +1184,13 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
 }
 
 static void
-authority_manager_iface_init (_PolkitAuthorityManagerIface *authority_manager_iface)
+local_authority_iface_init (_PolkitLocalAuthorityIface *local_authority_iface)
 {
-  authority_manager_iface->handle_enumerate_users                 = authority_manager_handle_enumerate_users;
-  authority_manager_iface->handle_enumerate_groups                = authority_manager_handle_enumerate_groups;
-  authority_manager_iface->handle_enumerate_authorizations        = authority_manager_handle_enumerate_authorizations;
-  authority_manager_iface->handle_add_authorization               = authority_manager_handle_add_authorization;
-  authority_manager_iface->handle_remove_authorization            = authority_manager_handle_remove_authorization;
+  local_authority_iface->handle_enumerate_users                 = local_authority_handle_enumerate_users;
+  local_authority_iface->handle_enumerate_groups                = local_authority_handle_enumerate_groups;
+  local_authority_iface->handle_enumerate_authorizations        = local_authority_handle_enumerate_authorizations;
+  local_authority_iface->handle_add_authorization               = local_authority_handle_add_authorization;
+  local_authority_iface->handle_remove_authorization            = local_authority_handle_remove_authorization;
 }
 
 static void
@@ -1270,7 +1275,7 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
                                           object_path,
                                           _POLKIT_TYPE_AUTHORITY,
                                           G_OBJECT (server),
-                                          _POLKIT_TYPE_AUTHORITY_MANAGER,
+                                          _POLKIT_TYPE_LOCAL_AUTHORITY,
                                           G_OBJECT (server),
                                           G_TYPE_INVALID);
 

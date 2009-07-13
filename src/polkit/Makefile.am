@@ -22,19 +22,19 @@ BUILT_SOURCES = 						\
 # Build all the PolicyKit D-Bus code here, even the code we
 # only in the daemon for agent interaction
 #
-polkit-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml
+polkit-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.LocalAuthority.xml
 	eggdbus-binding-tool											\
 		--namespace "_Polkit"										\
 		--dbus-namespace "org.freedesktop.PolicyKit1"							\
 		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml 		\
-		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthorityManager.xml		\
+		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.LocalAuthority.xml		\
 		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
-		--stamp-file polkit-built-sources.stamp							\
+		--stamp-file polkit-built-sources.stamp								\
 	$(NULL)
 
 # keep in sync with contents of polkit-built-sources.stamp (Thanks autotools)
 #
-polkit_built_sources = _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingsmarshal.list _polkitbindings.c _polkitbindings.h _polkitbindingstypes.h _polkitauthenticationagent.c _polkitauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitauthoritymanager.c _polkitauthoritymanager.h docbook-interface-org.freedesktop.PolicyKit1.AuthorityManager.xml _polkitauthority.c _polkitauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkiterror.c _polkiterror.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkitauthorization.c _polkitauthorization.h _polkitactiondescription.c _polkitactiondescription.h _polkitidentity.c _polkitidentity.h _polkitsubject.c _polkitsubject.h
+polkit_built_sources = _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingsmarshal.list _polkitbindings.c _polkitbindings.h _polkitbindingstypes.h _polkitauthenticationagent.c _polkitauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitlocalauthority.c _polkitlocalauthority.h docbook-interface-org.freedesktop.PolicyKit1.LocalAuthority.xml _polkitauthority.c _polkitauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkiterror.c _polkiterror.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkitlocalauthorization.c _polkitlocalauthorization.h _polkitactiondescription.c _polkitactiondescription.h _polkitidentity.c _polkitidentity.h _polkitsubject.c _polkitsubject.h
 
 lib_LTLIBRARIES=libpolkit-gobject-1.la
 
@@ -47,7 +47,6 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitactiondescription.h							\
 	polkitdetails.h									\
 	polkitauthority.h								\
-	polkitauthoritymanager.h							\
 	polkiterror.h									\
 	polkitsubject.h									\
 	polkitunixprocess.h								\
@@ -58,7 +57,6 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitunixgroup.h								\
 	polkitauthorizationresult.h							\
 	polkitcheckauthorizationflags.h							\
-	polkitauthorization.h								\
 	polkitimplicitauthorization.h							\
         $(NULL)
 
@@ -69,7 +67,6 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitactiondescription.c		polkitactiondescription.h		\
 	polkitdetails.c				polkitdetails.h				\
 	polkitauthority.c			polkitauthority.h			\
-	polkitauthoritymanager.c		polkitauthoritymanager.h		\
 	polkiterror.c				polkiterror.h				\
 	polkitsubject.c				polkitsubject.h				\
 	polkitunixprocess.c			polkitunixprocess.h			\
@@ -80,7 +77,6 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitunixgroup.c			polkitunixgroup.h			\
 	polkitauthorizationresult.c		polkitauthorizationresult.h		\
 	polkitcheckauthorizationflags.c		polkitcheckauthorizationflags.h		\
-	polkitauthorization.c			polkitauthorization.h			\
 	polkitimplicitauthorization.c		polkitimplicitauthorization.h		\
         $(NULL)
 

@@ -22,13 +22,13 @@ pam_DATA = polkit-1
 endif
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = polkit-gobject-1.pc polkit-backend-1.pc polkit-agent-1.pc
+pkgconfig_DATA = polkit-gobject-1.pc polkit-backend-1.pc polkit-agent-1.pc polkit-local-1.pc
 
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = 							\
 	org.freedesktop.PolicyKit1.Authority.xml 		\
-	org.freedesktop.PolicyKit1.AuthorityManager.xml 	\
+	org.freedesktop.PolicyKit1.LocalAuthority.xml 		\
 	org.freedesktop.PolicyKit1.AuthenticationAgent.xml 	\
 	$(service_in_files) 					\
 	$(dbusconf_in_files) 					\
@@ -36,6 +36,7 @@ EXTRA_DIST = 							\
 	polkit-gobject-1.pc.in 					\
 	polkit-backend-1.pc.in 					\
 	polkit-agent-1.pc.in					\
+	polkit-local-1.pc.in					\
 	$(NULL)
 
 

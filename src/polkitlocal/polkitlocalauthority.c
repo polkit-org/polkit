@@ -23,33 +23,34 @@
 #  include "config.h"
 #endif
 
-#include "polkitauthoritymanager.h"
+#include "polkitlocalauthority.h"
 
 #include "polkitprivate.h"
+#include "polkitlocalprivate.h"
 
 /**
- * SECTION:polkitauthoritymanager
- * @title: PolkitAuthorityManager
- * @short_description: Authority Manager
+ * SECTION:polkitlocalauthority
+ * @title: PolkitLocalAuthority
+ * @short_description: Manage the Local Authority
  * @stability: Unstable
  *
  * Manage authorizations.
  *
  * To use this unstable API you need to define the symbol
- * <literal>POLKIT_I_KNOW_AUTHORITY_MANAGER_API_IS_SUBJECT_TO_CHANGE</literal>.
+ * <literal>POLKIT_LOCAL_I_KNOW_API_IS_SUBJECT_TO_CHANGE</literal>.
  */
 
-struct _PolkitAuthorityManager
+struct _PolkitLocalAuthority
 {
   GObject parent_instance;
 
   EggDBusConnection *system_bus;
-  EggDBusObjectProxy *authority_manager_object_proxy;
+  EggDBusObjectProxy *local_authority_object_proxy;
 
-  _PolkitAuthorityManager *real;
+  _PolkitLocalAuthority *real;
 };
 
-struct _PolkitAuthorityManagerClass
+struct _PolkitLocalAuthorityClass
 {
   GObjectClass parent_class;
 
@@ -57,58 +58,58 @@ struct _PolkitAuthorityManagerClass
 
 /* TODO: locking */
 
-static PolkitAuthorityManager *the_authority_manager = NULL;
+static PolkitLocalAuthority *the_local_authority = NULL;
 
-G_DEFINE_TYPE (PolkitAuthorityManager, polkit_authority_manager, G_TYPE_OBJECT);
+G_DEFINE_TYPE (PolkitLocalAuthority, polkit_local_authority, G_TYPE_OBJECT);
 
 
 static void
-polkit_authority_manager_init (PolkitAuthorityManager *authority_manager)
+polkit_local_authority_init (PolkitLocalAuthority *local_authority)
 {
-  authority_manager->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+  local_authority->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
 
-  authority_manager->authority_manager_object_proxy = egg_dbus_connection_get_object_proxy (authority_manager->system_bus,
+  local_authority->local_authority_object_proxy = egg_dbus_connection_get_object_proxy (local_authority->system_bus,
                                                                             "org.freedesktop.PolicyKit1",
                                                                             "/org/freedesktop/PolicyKit1/Authority");
 
-  authority_manager->real = _POLKIT_QUERY_INTERFACE_AUTHORITY_MANAGER (authority_manager->authority_manager_object_proxy);
+  local_authority->real = _POLKIT_QUERY_INTERFACE_LOCAL_AUTHORITY (local_authority->local_authority_object_proxy);
 }
 
 static void
-polkit_authority_manager_finalize (GObject *object)
+polkit_local_authority_finalize (GObject *object)
 {
-  PolkitAuthorityManager *authority_manager;
+  PolkitLocalAuthority *local_authority;
 
-  authority_manager = POLKIT_AUTHORITY_MANAGER (object);
+  local_authority = POLKIT_LOCAL_AUTHORITY (object);
 
-  g_object_unref (authority_manager->authority_manager_object_proxy);
-  g_object_unref (authority_manager->system_bus);
+  g_object_unref (local_authority->local_authority_object_proxy);
+  g_object_unref (local_authority->system_bus);
 
-  the_authority_manager = NULL;
+  the_local_authority = NULL;
 
-  if (G_OBJECT_CLASS (polkit_authority_manager_parent_class)->finalize != NULL)
-    G_OBJECT_CLASS (polkit_authority_manager_parent_class)->finalize (object);
+  if (G_OBJECT_CLASS (polkit_local_authority_parent_class)->finalize != NULL)
+    G_OBJECT_CLASS (polkit_local_authority_parent_class)->finalize (object);
 }
 
 static void
-polkit_authority_manager_class_init (PolkitAuthorityManagerClass *klass)
+polkit_local_authority_class_init (PolkitLocalAuthorityClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->finalize = polkit_authority_manager_finalize;
+  gobject_class->finalize = polkit_local_authority_finalize;
 
 }
 
-PolkitAuthorityManager *
-polkit_authority_manager_get (void)
+PolkitLocalAuthority *
+polkit_local_authority_get (void)
 {
-  if (the_authority_manager != NULL)
+  if (the_local_authority != NULL)
     goto out;
 
-  the_authority_manager = POLKIT_AUTHORITY_MANAGER (g_object_new (POLKIT_TYPE_AUTHORITY_MANAGER, NULL));
+  the_local_authority = POLKIT_LOCAL_AUTHORITY (g_object_new (POLKIT_TYPE_LOCAL_AUTHORITY, NULL));
 
  out:
-  return the_authority_manager;
+  return the_local_authority;
 }
 
 static void
@@ -135,7 +136,7 @@ generic_async_cb (GObject      *source_obj,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static guint
-polkit_authority_manager_enumerate_users_async (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_users_async (PolkitLocalAuthority *local_authority,
                                                 GCancellable           *cancellable,
                                                 GAsyncReadyCallback     callback,
                                                 gpointer                user_data)
@@ -143,12 +144,12 @@ polkit_authority_manager_enumerate_users_async (PolkitAuthorityManager *authorit
   guint call_id;
   GSimpleAsyncResult *simple;
 
-  simple = g_simple_async_result_new (G_OBJECT (authority_manager),
+  simple = g_simple_async_result_new (G_OBJECT (local_authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_manager_enumerate_users_async);
+                                      polkit_local_authority_enumerate_users_async);
 
-  call_id = _polkit_authority_manager_enumerate_users (authority_manager->real,
+  call_id = _polkit_local_authority_enumerate_users (local_authority->real,
                                                        EGG_DBUS_CALL_FLAGS_NONE,
                                                        cancellable,
                                                        generic_async_cb,
@@ -158,16 +159,16 @@ polkit_authority_manager_enumerate_users_async (PolkitAuthorityManager *authorit
 }
 
 void
-polkit_authority_manager_enumerate_users (PolkitAuthorityManager     *authority_manager,
+polkit_local_authority_enumerate_users (PolkitLocalAuthority     *local_authority,
                                           GCancellable        *cancellable,
                                           GAsyncReadyCallback  callback,
                                           gpointer             user_data)
 {
-  polkit_authority_manager_enumerate_users_async (authority_manager, cancellable, callback, user_data);
+  polkit_local_authority_enumerate_users_async (local_authority, cancellable, callback, user_data);
 }
 
 GList *
-polkit_authority_manager_enumerate_users_finish (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_users_finish (PolkitLocalAuthority *local_authority,
                                                  GAsyncResult           *res,
                                                  GError               **error)
 {
@@ -180,11 +181,11 @@ polkit_authority_manager_enumerate_users_finish (PolkitAuthorityManager *authori
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_manager_enumerate_users_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_local_authority_enumerate_users_async);
 
   result = NULL;
 
-  if (!_polkit_authority_manager_enumerate_users_finish (authority_manager->real,
+  if (!_polkit_local_authority_enumerate_users_finish (local_authority->real,
                                                          &array_seq,
                                                          real_res,
                                                          error))
@@ -209,7 +210,7 @@ polkit_authority_manager_enumerate_users_finish (PolkitAuthorityManager *authori
 }
 
 GList *
-polkit_authority_manager_enumerate_users_sync (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_users_sync (PolkitLocalAuthority *local_authority,
                                                GCancellable           *cancellable,
                                                GError                **error)
 {
@@ -217,11 +218,11 @@ polkit_authority_manager_enumerate_users_sync (PolkitAuthorityManager *authority
   GAsyncResult *res;
   GList *result;
 
-  call_id = polkit_authority_manager_enumerate_users_async (authority_manager, cancellable, generic_cb, &res);
+  call_id = polkit_local_authority_enumerate_users_async (local_authority, cancellable, generic_cb, &res);
 
-  egg_dbus_connection_pending_call_block (authority_manager->system_bus, call_id);
+  egg_dbus_connection_pending_call_block (local_authority->system_bus, call_id);
 
-  result = polkit_authority_manager_enumerate_users_finish (authority_manager, res, error);
+  result = polkit_local_authority_enumerate_users_finish (local_authority, res, error);
 
   g_object_unref (res);
 
@@ -231,7 +232,7 @@ polkit_authority_manager_enumerate_users_sync (PolkitAuthorityManager *authority
 /* ---------------------------------------------------------------------------------------------------- */
 
 static guint
-polkit_authority_manager_enumerate_groups_async (PolkitAuthorityManager     *authority_manager,
+polkit_local_authority_enumerate_groups_async (PolkitLocalAuthority     *local_authority,
                                                  GCancellable               *cancellable,
                                                  GAsyncReadyCallback         callback,
                                                  gpointer                    user_data)
@@ -239,12 +240,12 @@ polkit_authority_manager_enumerate_groups_async (PolkitAuthorityManager     *aut
   guint call_id;
   GSimpleAsyncResult *simple;
 
-  simple = g_simple_async_result_new (G_OBJECT (authority_manager),
+  simple = g_simple_async_result_new (G_OBJECT (local_authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_manager_enumerate_groups_async);
+                                      polkit_local_authority_enumerate_groups_async);
 
-  call_id = _polkit_authority_manager_enumerate_groups (authority_manager->real,
+  call_id = _polkit_local_authority_enumerate_groups (local_authority->real,
                                                         EGG_DBUS_CALL_FLAGS_NONE,
                                                         cancellable,
                                                         generic_async_cb,
@@ -254,16 +255,16 @@ polkit_authority_manager_enumerate_groups_async (PolkitAuthorityManager     *aut
 }
 
 void
-polkit_authority_manager_enumerate_groups (PolkitAuthorityManager     *authority_manager,
+polkit_local_authority_enumerate_groups (PolkitLocalAuthority     *local_authority,
                                            GCancellable               *cancellable,
                                            GAsyncReadyCallback         callback,
                                            gpointer                    user_data)
 {
-  polkit_authority_manager_enumerate_groups_async (authority_manager, cancellable, callback, user_data);
+  polkit_local_authority_enumerate_groups_async (local_authority, cancellable, callback, user_data);
 }
 
 GList *
-polkit_authority_manager_enumerate_groups_finish (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_groups_finish (PolkitLocalAuthority *local_authority,
                                                   GAsyncResult            *res,
                                                   GError         **error)
 {
@@ -276,11 +277,11 @@ polkit_authority_manager_enumerate_groups_finish (PolkitAuthorityManager *author
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_manager_enumerate_groups_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_local_authority_enumerate_groups_async);
 
   result = NULL;
 
-  if (!_polkit_authority_manager_enumerate_groups_finish (authority_manager->real,
+  if (!_polkit_local_authority_enumerate_groups_finish (local_authority->real,
                                                   &array_seq,
                                                   real_res,
                                                   error))
@@ -305,7 +306,7 @@ polkit_authority_manager_enumerate_groups_finish (PolkitAuthorityManager *author
 }
 
 GList *
-polkit_authority_manager_enumerate_groups_sync (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_groups_sync (PolkitLocalAuthority *local_authority,
                                                 GCancellable           *cancellable,
                                                 GError                **error)
 {
@@ -313,11 +314,11 @@ polkit_authority_manager_enumerate_groups_sync (PolkitAuthorityManager *authorit
   GAsyncResult *res;
   GList *result;
 
-  call_id = polkit_authority_manager_enumerate_groups_async (authority_manager, cancellable, generic_cb, &res);
+  call_id = polkit_local_authority_enumerate_groups_async (local_authority, cancellable, generic_cb, &res);
 
-  egg_dbus_connection_pending_call_block (authority_manager->system_bus, call_id);
+  egg_dbus_connection_pending_call_block (local_authority->system_bus, call_id);
 
-  result = polkit_authority_manager_enumerate_groups_finish (authority_manager, res, error);
+  result = polkit_local_authority_enumerate_groups_finish (local_authority, res, error);
 
   g_object_unref (res);
 
@@ -327,7 +328,7 @@ polkit_authority_manager_enumerate_groups_sync (PolkitAuthorityManager *authorit
 /* ---------------------------------------------------------------------------------------------------- */
 
 static guint
-polkit_authority_manager_enumerate_authorizations_async (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_authorizations_async (PolkitLocalAuthority *local_authority,
                                                          PolkitIdentity         *identity,
                                                          GCancellable           *cancellable,
                                                          GAsyncReadyCallback     callback,
@@ -337,14 +338,14 @@ polkit_authority_manager_enumerate_authorizations_async (PolkitAuthorityManager 
   GSimpleAsyncResult *simple;
   _PolkitIdentity *real_identity;
 
-  simple = g_simple_async_result_new (G_OBJECT (authority_manager),
+  simple = g_simple_async_result_new (G_OBJECT (local_authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_manager_enumerate_authorizations_async);
+                                      polkit_local_authority_enumerate_authorizations_async);
 
   real_identity = polkit_identity_get_real (identity);
 
-  call_id = _polkit_authority_manager_enumerate_authorizations (authority_manager->real,
+  call_id = _polkit_local_authority_enumerate_authorizations (local_authority->real,
                                                                 EGG_DBUS_CALL_FLAGS_NONE,
                                                                 real_identity,
                                                                 cancellable,
@@ -357,13 +358,13 @@ polkit_authority_manager_enumerate_authorizations_async (PolkitAuthorityManager 
 }
 
 void
-polkit_authority_manager_enumerate_authorizations (PolkitAuthorityManager  *authority_manager,
+polkit_local_authority_enumerate_authorizations (PolkitLocalAuthority  *local_authority,
                                                    PolkitIdentity          *identity,
                                                    GCancellable            *cancellable,
                                                    GAsyncReadyCallback      callback,
                                                    gpointer                 user_data)
 {
-  polkit_authority_manager_enumerate_authorizations_async (authority_manager,
+  polkit_local_authority_enumerate_authorizations_async (local_authority,
                                                            identity,
                                                            cancellable,
                                                            callback,
@@ -371,7 +372,7 @@ polkit_authority_manager_enumerate_authorizations (PolkitAuthorityManager  *auth
 }
 
 GList *
-polkit_authority_manager_enumerate_authorizations_finish (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_authorizations_finish (PolkitLocalAuthority *local_authority,
                                                           GAsyncResult           *res,
                                                           GError                **error)
 {
@@ -384,11 +385,11 @@ polkit_authority_manager_enumerate_authorizations_finish (PolkitAuthorityManager
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_manager_enumerate_authorizations_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_local_authority_enumerate_authorizations_async);
 
   result = NULL;
 
-  if (!_polkit_authority_manager_enumerate_authorizations_finish (authority_manager->real,
+  if (!_polkit_local_authority_enumerate_authorizations_finish (local_authority->real,
                                                                   &array_seq,
                                                                   real_res,
                                                                   error))
@@ -396,11 +397,11 @@ polkit_authority_manager_enumerate_authorizations_finish (PolkitAuthorityManager
 
   for (n = 0; n < array_seq->size; n++)
     {
-      _PolkitAuthorization *real_authorization;
+      _PolkitLocalAuthorization *real_authorization;
 
       real_authorization = array_seq->data.v_ptr[n];
 
-      result = g_list_prepend (result, polkit_authorization_new_for_real (real_authorization));
+      result = g_list_prepend (result, polkit_local_authorization_new_for_real (real_authorization));
     }
 
   result = g_list_reverse (result);
@@ -414,7 +415,7 @@ polkit_authority_manager_enumerate_authorizations_finish (PolkitAuthorityManager
 
 
 GList *
-polkit_authority_manager_enumerate_authorizations_sync (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_enumerate_authorizations_sync (PolkitLocalAuthority *local_authority,
                                                         PolkitIdentity         *identity,
                                                         GCancellable           *cancellable,
                                                         GError                **error)
@@ -423,15 +424,15 @@ polkit_authority_manager_enumerate_authorizations_sync (PolkitAuthorityManager *
   GAsyncResult *res;
   GList *result;
 
-  call_id = polkit_authority_manager_enumerate_authorizations_async (authority_manager,
+  call_id = polkit_local_authority_enumerate_authorizations_async (local_authority,
                                                                      identity,
                                                                      cancellable,
                                                                      generic_cb,
                                                                      &res);
 
-  egg_dbus_connection_pending_call_block (authority_manager->system_bus, call_id);
+  egg_dbus_connection_pending_call_block (local_authority->system_bus, call_id);
 
-  result = polkit_authority_manager_enumerate_authorizations_finish (authority_manager, res, error);
+  result = polkit_local_authority_enumerate_authorizations_finish (local_authority, res, error);
 
   g_object_unref (res);
 
@@ -441,27 +442,27 @@ polkit_authority_manager_enumerate_authorizations_sync (PolkitAuthorityManager *
 /* ---------------------------------------------------------------------------------------------------- */
 
 static guint
-polkit_authority_manager_add_authorization_async (PolkitAuthorityManager  *authority_manager,
+polkit_local_authority_add_authorization_async (PolkitLocalAuthority  *local_authority,
                                                   PolkitIdentity          *identity,
-                                                  PolkitAuthorization     *authorization,
+                                                  PolkitLocalAuthorization     *authorization,
                                                   GCancellable            *cancellable,
                                                   GAsyncReadyCallback      callback,
                                                   gpointer                 user_data)
 {
   guint call_id;
   GSimpleAsyncResult *simple;
-  _PolkitAuthorization *real_authorization;
+  _PolkitLocalAuthorization *real_authorization;
   _PolkitIdentity *real_identity;
 
-  simple = g_simple_async_result_new (G_OBJECT (authority_manager),
+  simple = g_simple_async_result_new (G_OBJECT (local_authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_manager_add_authorization_async);
+                                      polkit_local_authority_add_authorization_async);
 
   real_identity = polkit_identity_get_real (identity);
-  real_authorization = polkit_authorization_get_real (authorization);
+  real_authorization = polkit_local_authorization_get_real (authorization);
 
-  call_id = _polkit_authority_manager_add_authorization (authority_manager->real,
+  call_id = _polkit_local_authority_add_authorization (local_authority->real,
                                                          EGG_DBUS_CALL_FLAGS_NONE,
                                                          real_identity,
                                                          real_authorization,
@@ -476,14 +477,14 @@ polkit_authority_manager_add_authorization_async (PolkitAuthorityManager  *autho
 }
 
 void
-polkit_authority_manager_add_authorization (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_add_authorization (PolkitLocalAuthority *local_authority,
                                             PolkitIdentity         *identity,
-                                            PolkitAuthorization    *authorization,
+                                            PolkitLocalAuthorization    *authorization,
                                             GCancellable           *cancellable,
                                             GAsyncReadyCallback     callback,
                                             gpointer                user_data)
 {
-  polkit_authority_manager_add_authorization_async (authority_manager,
+  polkit_local_authority_add_authorization_async (local_authority,
                                                     identity,
                                                     authorization,
                                                     cancellable,
@@ -492,7 +493,7 @@ polkit_authority_manager_add_authorization (PolkitAuthorityManager *authority_ma
 }
 
 gboolean
-polkit_authority_manager_add_authorization_finish (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_add_authorization_finish (PolkitLocalAuthority *local_authority,
                                                    GAsyncResult           *res,
                                                    GError                **error)
 {
@@ -503,9 +504,9 @@ polkit_authority_manager_add_authorization_finish (PolkitAuthorityManager *autho
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_manager_add_authorization_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_local_authority_add_authorization_async);
 
-  ret = _polkit_authority_manager_add_authorization_finish (authority_manager->real,
+  ret = _polkit_local_authority_add_authorization_finish (local_authority->real,
                                                             real_res,
                                                             error);
 
@@ -519,9 +520,9 @@ polkit_authority_manager_add_authorization_finish (PolkitAuthorityManager *autho
 
 
 gboolean
-polkit_authority_manager_add_authorization_sync (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_add_authorization_sync (PolkitLocalAuthority *local_authority,
                                                  PolkitIdentity         *identity,
-                                                 PolkitAuthorization    *authorization,
+                                                 PolkitLocalAuthorization    *authorization,
                                                  GCancellable           *cancellable,
                                                  GError                **error)
 {
@@ -529,16 +530,16 @@ polkit_authority_manager_add_authorization_sync (PolkitAuthorityManager *authori
   GAsyncResult *res;
   gboolean ret;
 
-  call_id = polkit_authority_manager_add_authorization_async (authority_manager,
+  call_id = polkit_local_authority_add_authorization_async (local_authority,
                                                               identity,
                                                               authorization,
                                                               cancellable,
                                                               generic_cb,
                                                               &res);
 
-  egg_dbus_connection_pending_call_block (authority_manager->system_bus, call_id);
+  egg_dbus_connection_pending_call_block (local_authority->system_bus, call_id);
 
-  ret = polkit_authority_manager_add_authorization_finish (authority_manager, res, error);
+  ret = polkit_local_authority_add_authorization_finish (local_authority, res, error);
 
   g_object_unref (res);
 
@@ -548,27 +549,27 @@ polkit_authority_manager_add_authorization_sync (PolkitAuthorityManager *authori
 /* ---------------------------------------------------------------------------------------------------- */
 
 static guint
-polkit_authority_manager_remove_authorization_async (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_remove_authorization_async (PolkitLocalAuthority *local_authority,
                                                      PolkitIdentity         *identity,
-                                                     PolkitAuthorization    *authorization,
+                                                     PolkitLocalAuthorization    *authorization,
                                                      GCancellable           *cancellable,
                                                      GAsyncReadyCallback     callback,
                                                      gpointer                user_data)
 {
   guint call_id;
   GSimpleAsyncResult *simple;
-  _PolkitAuthorization *real_authorization;
+  _PolkitLocalAuthorization *real_authorization;
   _PolkitIdentity *real_identity;
 
-  simple = g_simple_async_result_new (G_OBJECT (authority_manager),
+  simple = g_simple_async_result_new (G_OBJECT (local_authority),
                                       callback,
                                       user_data,
-                                      polkit_authority_manager_remove_authorization_async);
+                                      polkit_local_authority_remove_authorization_async);
 
   real_identity = polkit_identity_get_real (identity);
-  real_authorization = polkit_authorization_get_real (authorization);
+  real_authorization = polkit_local_authorization_get_real (authorization);
 
-  call_id = _polkit_authority_manager_remove_authorization (authority_manager->real,
+  call_id = _polkit_local_authority_remove_authorization (local_authority->real,
                                                             EGG_DBUS_CALL_FLAGS_NONE,
                                                             real_identity,
                                                             real_authorization,
@@ -583,14 +584,14 @@ polkit_authority_manager_remove_authorization_async (PolkitAuthorityManager *aut
 }
 
 void
-polkit_authority_manager_remove_authorization (PolkitAuthorityManager  *authority_manager,
+polkit_local_authority_remove_authorization (PolkitLocalAuthority  *local_authority,
                                                PolkitIdentity          *identity,
-                                               PolkitAuthorization     *authorization,
+                                               PolkitLocalAuthorization     *authorization,
                                                GCancellable            *cancellable,
                                                GAsyncReadyCallback      callback,
                                                gpointer                 user_data)
 {
-  polkit_authority_manager_remove_authorization_async (authority_manager,
+  polkit_local_authority_remove_authorization_async (local_authority,
                                                        identity,
                                                        authorization,
                                                        cancellable,
@@ -599,7 +600,7 @@ polkit_authority_manager_remove_authorization (PolkitAuthorityManager  *authorit
 }
 
 gboolean
-polkit_authority_manager_remove_authorization_finish (PolkitAuthorityManager  *authority_manager,
+polkit_local_authority_remove_authorization_finish (PolkitLocalAuthority  *local_authority,
                                                       GAsyncResult            *res,
                                                       GError                 **error)
 {
@@ -610,9 +611,9 @@ polkit_authority_manager_remove_authorization_finish (PolkitAuthorityManager  *a
   simple = G_SIMPLE_ASYNC_RESULT (res);
   real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
 
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_manager_remove_authorization_async);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_local_authority_remove_authorization_async);
 
-  ret = _polkit_authority_manager_remove_authorization_finish (authority_manager->real,
+  ret = _polkit_local_authority_remove_authorization_finish (local_authority->real,
                                                                real_res,
                                                                error);
 
@@ -626,9 +627,9 @@ polkit_authority_manager_remove_authorization_finish (PolkitAuthorityManager  *a
 
 
 gboolean
-polkit_authority_manager_remove_authorization_sync (PolkitAuthorityManager *authority_manager,
+polkit_local_authority_remove_authorization_sync (PolkitLocalAuthority *local_authority,
                                                     PolkitIdentity         *identity,
-                                                    PolkitAuthorization    *authorization,
+                                                    PolkitLocalAuthorization    *authorization,
                                                     GCancellable           *cancellable,
                                                     GError                **error)
 {
@@ -636,16 +637,16 @@ polkit_authority_manager_remove_authorization_sync (PolkitAuthorityManager *auth
   GAsyncResult *res;
   gboolean ret;
 
-  call_id = polkit_authority_manager_remove_authorization_async (authority_manager,
+  call_id = polkit_local_authority_remove_authorization_async (local_authority,
                                                                  identity,
                                                                  authorization,
                                                                  cancellable,
                                                                  generic_cb,
                                                                  &res);
 
-  egg_dbus_connection_pending_call_block (authority_manager->system_bus, call_id);
+  egg_dbus_connection_pending_call_block (local_authority->system_bus, call_id);
 
-  ret = polkit_authority_manager_remove_authorization_finish (authority_manager, res, error);
+  ret = polkit_local_authority_remove_authorization_finish (local_authority, res, error);
 
   g_object_unref (res);
 

@@ -409,8 +409,10 @@ data/polkit-1
 data/polkit-gobject-1.pc
 data/polkit-backend-1.pc
 data/polkit-agent-1.pc
+data/polkit-local-1.pc
 src/Makefile
 src/polkit/Makefile
+src/polkitlocal/Makefile
 src/polkitbackend/Makefile
 src/polkitagent/Makefile
 src/polkitd/Makefile

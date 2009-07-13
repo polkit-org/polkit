@@ -5,6 +5,8 @@ INCLUDES =                                                      \
         -I$(top_srcdir)/src                                     \
         -I$(top_builddir)/src/polkit                            \
         -I$(top_srcdir)/src/polkit                              \
+        -I$(top_builddir)/src/polkitlocal                       \
+        -I$(top_srcdir)/src/polkitlocal                         \
         -DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"               \
         -DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"               \
         -DPACKAGE_DATA_DIR=\""$(datadir)"\"                     \
@@ -15,6 +17,7 @@ INCLUDES =                                                      \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
+	-DPOLKIT_LOCAL_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
 BUILT_SOURCES = 						\
@@ -48,18 +51,18 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendactionlookup.h					\
         $(NULL)
 
-libpolkit_backend_1_la_SOURCES =                                   	\
-	$(ck_built_sources)						\
-	$(BUILT_SOURCES)						\
-        polkitbackend.h							\
-	polkitbackendtypes.h						\
-	polkitbackendprivate.h						\
-	polkitbackendauthority.h	polkitbackendauthority.c	\
-	polkitbackendlocalauthority.h	polkitbackendlocalauthority.c	\
-	polkitbackendactionpool.h	polkitbackendactionpool.c	\
-	polkitbackendsessionmonitor.h	polkitbackendsessionmonitor.c	\
-	polkitbackendconfigsource.h	polkitbackendconfigsource.c	\
-	polkitbackendactionlookup.h	polkitbackendactionlookup.c	\
+libpolkit_backend_1_la_SOURCES =                                   			\
+	$(ck_built_sources)								\
+	$(BUILT_SOURCES)								\
+        polkitbackend.h									\
+	polkitbackendtypes.h								\
+	polkitbackendprivate.h								\
+	polkitbackendauthority.h		polkitbackendauthority.c		\
+	polkitbackendlocalauthority.h		polkitbackendlocalauthority.c		\
+	polkitbackendactionpool.h		polkitbackendactionpool.c		\
+	polkitbackendsessionmonitor.h		polkitbackendsessionmonitor.c		\
+	polkitbackendconfigsource.h		polkitbackendconfigsource.c		\
+	polkitbackendactionlookup.h		polkitbackendactionlookup.c		\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\
@@ -73,6 +76,7 @@ libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
         $(EGG_DBUS_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(top_builddir)/src/polkitlocal/libpolkit-local-1.la		\
 	$(EXPAT_LIBS)							\
         $(NULL)
 

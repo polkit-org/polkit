@@ -27,9 +27,6 @@
 struct _PolkitAuthority;
 typedef struct _PolkitAuthority PolkitAuthority;
 
-struct _PolkitAuthorityManager;
-typedef struct _PolkitAuthorityManager PolkitAuthorityManager;
-
 struct _PolkitActionDescription;
 typedef struct _PolkitActionDescription PolkitActionDescription;
 
@@ -51,9 +48,6 @@ typedef struct _PolkitUnixUser PolkitUnixUser;
 
 struct _PolkitUnixGroup;
 typedef struct _PolkitUnixGroup PolkitUnixGroup;
-
-struct _PolkitAuthorization;
-typedef struct _PolkitAuthorization PolkitAuthorization;
 
 struct _PolkitAuthorizationResult;
 typedef struct _PolkitAuthorizationResult PolkitAuthorizationResult;

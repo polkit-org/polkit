@@ -19,25 +19,23 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_TYPES_H
-#define __POLKIT_BACKEND_TYPES_H
+#if !defined(_POLKIT_LOCAL_INSIDE_POLKIT_LOCAL_H) && !defined (_POLKIT_LOCAL_COMPILATION)
+#error "Only <polkitlocal/polkitlocal.h> can be included directly, this file may disappear or change contents"
+#endif
 
-#include <glib-object.h>
+#ifndef __POLKIT_LOCAL_TYPES_H
+#define __POLKIT_LOCAL_TYPES_H
 
-struct _PolkitBackendAuthority;
-typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
+#include <polkit/polkit.h>
 
-struct _PolkitBackendSessionMonitor;
-typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
+G_BEGIN_DECLS
 
-struct _PolkitBackendConfigSource;
-typedef struct _PolkitBackendConfigSource PolkitBackendConfigSource;
+struct _PolkitLocalAuthority;
+typedef struct _PolkitLocalAuthority PolkitLocalAuthority;
 
-struct _PolkitBackendActionLookup;
-typedef struct _PolkitBackendActionLookup PolkitBackendActionLookup; /* Dummy typedef */
+struct _PolkitLocalAuthorization;
+typedef struct _PolkitLocalAuthorization PolkitLocalAuthorization;
 
-struct _PolkitBackendLocalAuthority;
-typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
+G_END_DECLS
 
-#endif /* __POLKIT_BACKEND_TYPES_H */
-
+#endif /* __POLKIT_LOCAL_TYPES_H */

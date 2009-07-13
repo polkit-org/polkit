@@ -19,114 +19,112 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#if !defined (_POLKIT_COMPILATION) && !defined(_POLKIT_INSIDE_POLKIT_H)
-#error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
+#if !defined (_POLKIT_LOCAL_COMPILATION) && !defined(_POLKIT_LOCAL_INSIDE_POLKIT_LOCAL_H)
+#error "Only <polkitlocal/polkitlocal.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef __POLKIT_AUTHORITY_MANAGER_H
-#define __POLKIT_AUTHORITY_MANAGER_H
+#ifndef __POLKIT_LOCAL_AUTHORITY_H
+#define __POLKIT_LOCAL_AUTHORITY_H
 
 #include <glib-object.h>
 #include <gio/gio.h>
-#include <polkit/polkittypes.h>
-
-#if defined (POLKIT_I_KNOW_AUTHORITY_MANAGER_API_IS_SUBJECT_TO_CHANGE) || defined (_POLKIT_COMPILATION)
+#include <polkitlocal/polkitlocaltypes.h>
 
 G_BEGIN_DECLS
 
-#define POLKIT_TYPE_AUTHORITY_MANAGER          (polkit_authority_manager_get_type())
-#define POLKIT_AUTHORITY_MANAGER(o)            (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_AUTHORITY_MANAGER, PolkitAuthorityManager))
-#define POLKIT_AUTHORITY_MANAGER_CLASS(k)      (G_TYPE_CHECK_CLASS_CAST((k), POLKIT_TYPE_AUTHORITY_MANAGER, PolkitAuthorityManagerClass))
-#define POLKIT_AUTHORITY_MANAGER_GET_CLASS(o)  (G_TYPE_INSTANCE_GET_CLASS ((o), POLKIT_TYPE_AUTHORITY_MANAGER, PolkitAuthorityManagerClass))
-#define POLKIT_IS_AUTHORITY_MANAGER(o)         (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_AUTHORITY_MANAGER))
-#define POLKIT_IS_AUTHORITY_MANAGER_CLASS(k)   (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_TYPE_AUTHORITY_MANAGER))
+#define POLKIT_TYPE_LOCAL_AUTHORITY          (polkit_local_authority_get_type())
+#define POLKIT_LOCAL_AUTHORITY(o)            (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_TYPE_LOCAL_AUTHORITY, PolkitLocalAuthority))
+#define POLKIT_LOCAL_AUTHORITY_CLASS(k)      (G_TYPE_CHECK_CLASS_CAST((k), POLKIT_TYPE_LOCAL_AUTHORITY, PolkitLocalAuthorityClass))
+#define POLKIT_LOCAL_AUTHORITY_GET_CLASS(o)  (G_TYPE_INSTANCE_GET_CLASS ((o), POLKIT_TYPE_LOCAL_AUTHORITY, PolkitLocalAuthorityClass))
+#define POLKIT_IS_LOCAL_AUTHORITY(o)         (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_TYPE_LOCAL_AUTHORITY))
+#define POLKIT_IS_LOCAL_AUTHORITY_CLASS(k)   (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_TYPE_LOCAL_AUTHORITY))
 
 #if 0
-typedef struct _PolkitAuthorityManager PolkitAuthorityManager;
+typedef struct _PolkitLocalAuthority PolkitLocalAuthority;
 #endif
-typedef struct _PolkitAuthorityManagerClass PolkitAuthorityManagerClass;
+typedef struct _PolkitLocalAuthorityClass PolkitLocalAuthorityClass;
 
-GType         polkit_authority_manager_get_type         (void) G_GNUC_CONST;
+GType         polkit_local_authority_get_type         (void) G_GNUC_CONST;
 
-PolkitAuthorityManager *polkit_authority_manager_get (void);
+PolkitLocalAuthority *polkit_local_authority_get (void);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-GList  *polkit_authority_manager_enumerate_users_sync (PolkitAuthorityManager *authority_manager,
+GList  *polkit_local_authority_enumerate_users_sync (PolkitLocalAuthority *local_authority,
                                                                           GCancellable    *cancellable,
                                                                           GError         **error);
 
-GList  *polkit_authority_manager_enumerate_groups_sync (PolkitAuthorityManager *authority_manager,
+GList  *polkit_local_authority_enumerate_groups_sync (PolkitLocalAuthority *local_authority,
                                                         GCancellable           *cancellable,
                                                         GError               **error);
 
-GList  *polkit_authority_manager_enumerate_authorizations_sync (PolkitAuthorityManager  *authority_manager,
+GList  *polkit_local_authority_enumerate_authorizations_sync (PolkitLocalAuthority  *local_authority,
                                                                 PolkitIdentity          *identity,
                                                                 GCancellable            *cancellable,
                                                                 GError                 **error);
 
-gboolean  polkit_authority_manager_add_authorization_sync (PolkitAuthorityManager     *authority_manager,
+gboolean  polkit_local_authority_add_authorization_sync (PolkitLocalAuthority     *local_authority,
                                                            PolkitIdentity      *identity,
-                                                           PolkitAuthorization *authorization,
+                                                           PolkitLocalAuthorization *authorization,
                                                            GCancellable        *cancellable,
                                                            GError             **error);
 
-gboolean  polkit_authority_manager_remove_authorization_sync (PolkitAuthorityManager     *authority_manager,
+gboolean  polkit_local_authority_remove_authorization_sync (PolkitLocalAuthority     *local_authority,
                                                               PolkitIdentity      *identity,
-                                                              PolkitAuthorization *authorization,
+                                                              PolkitLocalAuthorization *authorization,
                                                               GCancellable        *cancellable,
                                                               GError             **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 
-void                       polkit_authority_manager_enumerate_users (PolkitAuthorityManager     *authority_manager,
+void                       polkit_local_authority_enumerate_users (PolkitLocalAuthority     *local_authority,
                                                              GCancellable        *cancellable,
                                                              GAsyncReadyCallback  callback,
                                                              gpointer             user_data);
 
-GList *                    polkit_authority_manager_enumerate_users_finish (PolkitAuthorityManager *authority_manager,
+GList *                    polkit_local_authority_enumerate_users_finish (PolkitLocalAuthority *local_authority,
                                                                     GAsyncResult    *res,
                                                                     GError         **error);
 
-void                       polkit_authority_manager_enumerate_groups (PolkitAuthorityManager     *authority_manager,
+void                       polkit_local_authority_enumerate_groups (PolkitLocalAuthority     *local_authority,
                                                               GCancellable        *cancellable,
                                                               GAsyncReadyCallback  callback,
                                                               gpointer             user_data);
 
-GList *                    polkit_authority_manager_enumerate_groups_finish (PolkitAuthorityManager *authority_manager,
+GList *                    polkit_local_authority_enumerate_groups_finish (PolkitLocalAuthority *local_authority,
                                                                      GAsyncResult    *res,
                                                                      GError         **error);
 
-void                       polkit_authority_manager_enumerate_authorizations (PolkitAuthorityManager     *authority_manager,
+void                       polkit_local_authority_enumerate_authorizations (PolkitLocalAuthority     *local_authority,
                                                                       PolkitIdentity      *identity,
                                                                       GCancellable        *cancellable,
                                                                       GAsyncReadyCallback  callback,
                                                                       gpointer             user_data);
 
-GList *                    polkit_authority_manager_enumerate_authorizations_finish (PolkitAuthorityManager *authority_manager,
+GList *                    polkit_local_authority_enumerate_authorizations_finish (PolkitLocalAuthority *local_authority,
                                                                              GAsyncResult    *res,
                                                                              GError         **error);
 
-void                       polkit_authority_manager_add_authorization (PolkitAuthorityManager     *authority_manager,
+void                       polkit_local_authority_add_authorization (PolkitLocalAuthority     *local_authority,
                                                                PolkitIdentity      *identity,
-                                                               PolkitAuthorization *authorization,
+                                                               PolkitLocalAuthorization *authorization,
                                                                GCancellable        *cancellable,
                                                                GAsyncReadyCallback  callback,
                                                                gpointer             user_data);
 
-gboolean                   polkit_authority_manager_add_authorization_finish (PolkitAuthorityManager *authority_manager,
+gboolean                   polkit_local_authority_add_authorization_finish (PolkitLocalAuthority *local_authority,
                                                                       GAsyncResult    *res,
                                                                       GError         **error);
 
-void                       polkit_authority_manager_remove_authorization (PolkitAuthorityManager     *authority_manager,
+void                       polkit_local_authority_remove_authorization (PolkitLocalAuthority     *local_authority,
                                                                   PolkitIdentity      *identity,
-                                                                  PolkitAuthorization *authorization,
+                                                                  PolkitLocalAuthorization *authorization,
                                                                   GCancellable        *cancellable,
                                                                   GAsyncReadyCallback  callback,
                                                                   gpointer             user_data);
 
-gboolean                   polkit_authority_manager_remove_authorization_finish (PolkitAuthorityManager *authority_manager,
+gboolean                   polkit_local_authority_remove_authorization_finish (PolkitLocalAuthority *local_authority,
                                                                          GAsyncResult    *res,
                                                                          GError         **error);
 
@@ -134,6 +132,4 @@ gboolean                   polkit_authority_manager_remove_authorization_finish 
 
 G_END_DECLS
 
-#endif /* API hiding */
-
-#endif /* __POLKIT_AUTHORITY_MANAGER_H */
+#endif /* __POLKIT_LOCAL_AUTHORITY_H */

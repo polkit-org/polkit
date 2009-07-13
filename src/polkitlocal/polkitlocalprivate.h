@@ -19,25 +19,19 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_TYPES_H
-#define __POLKIT_BACKEND_TYPES_H
+#ifndef __POLKIT_LOCAL_PRIVATE_H
+#define __POLKIT_LOCAL_PRIVATE_H
 
-#include <glib-object.h>
+#include "_polkitbindings.h"
 
-struct _PolkitBackendAuthority;
-typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
+/* notes:
+ *
+ * - the _new_for_real() functions will ref the passed arg (you will still own the ref)
+ * - the _get_real() functions will return a ref (you will own the ref)
+ *
+ */
 
-struct _PolkitBackendSessionMonitor;
-typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
+PolkitLocalAuthorization  *polkit_local_authorization_new_for_real (_PolkitLocalAuthorization *real);
+_PolkitLocalAuthorization *polkit_local_authorization_get_real     (PolkitLocalAuthorization  *authorization);
 
-struct _PolkitBackendConfigSource;
-typedef struct _PolkitBackendConfigSource PolkitBackendConfigSource;
-
-struct _PolkitBackendActionLookup;
-typedef struct _PolkitBackendActionLookup PolkitBackendActionLookup; /* Dummy typedef */
-
-struct _PolkitBackendLocalAuthority;
-typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
-
-#endif /* __POLKIT_BACKEND_TYPES_H */
-
+#endif /* __POLKIT_LOCAL_PRIVATE_H */
