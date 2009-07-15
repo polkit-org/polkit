@@ -14,19 +14,19 @@ INCLUDES =                                              		\
 	-D_REENTRANT	                                		\
 	$(NULL)
 
-libexec_PROGRAMS = polkitd-1
+libexec_PROGRAMS = polkitd
 
-polkitd_1_SOURCES = 							\
+polkitd_SOURCES = 							\
 	main.c								\
 	$(NULL)
 
-polkitd_1_CFLAGS = 							\
+polkitd_CFLAGS = 							\
 	-DPOLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
 	-DG_LOG_DOMAIN=\"polkitd-1\"					\
 	$(GLIB_CFLAGS)							\
 	$(NULL)
 
-polkitd_1_LDADD = 				        		\
+polkitd_LDADD = 				        		\
 	$(DBUS_GLIB_LIBS)						\
 	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\

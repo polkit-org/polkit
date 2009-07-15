@@ -3,25 +3,25 @@
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
 ]>
-<refentry id="PolicyKit-1.8" xmlns:xi="http://www.w3.org/2003/XInclude">
+<refentry id="polkit.8" xmlns:xi="http://www.w3.org/2003/XInclude">
   <refentryinfo>
-    <title>PolicyKit-1</title>
+    <title>polkit</title>
     <date>January 2009</date>
-    <productname>PolicyKit-1</productname>
+    <productname>polkit</productname>
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>PolicyKit-1</refentrytitle>
+    <refentrytitle>polkit</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class="version"></refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>PolicyKit-1</refname>
-    <refpurpose>Authorization API</refpurpose>
+    <refname>polkit</refname>
+    <refpurpose>Authorization Framework</refpurpose>
   </refnamediv>
 
-  <refsect1 id="PolicyKit-1-overview"><title>OVERVIEW</title>
+  <refsect1 id="polkit-overview"><title>OVERVIEW</title>
     <para>
       PolicyKit provides an authorization API intended to be used by
       privileged programs (<quote>MECHANISMS</quote>) offering service
@@ -46,7 +46,7 @@
 
   </refsect1>
 
-  <refsect1 id="PolicyKit-1-system-architecture"><title>SYSTEM ARCHITECTURE</title>
+  <refsect1 id="polkit-system-architecture"><title>SYSTEM ARCHITECTURE</title>
     <para>
       The system architecture of PolicyKit is comprised of
       the <emphasis>Authority</emphasis> (implemented as a service on
@@ -129,7 +129,7 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1 id="PolicyKit-1-authentication-agents"><title>AUTHENTICATION AGENTS</title>
+  <refsect1 id="polkit-authentication-agents"><title>AUTHENTICATION AGENTS</title>
     <para>
       An authentication agent is used to make the user of a session
       prove that the user of the session really is the user (by
@@ -216,7 +216,7 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1 id="PolicyKit-1-declaring-actions"><title>DECLARING ACTIONS</title>
+  <refsect1 id="polkit-declaring-actions"><title>DECLARING ACTIONS</title>
     <para>
       A mechanism need to declare a set of <quote>ACTIONS</quote> in
       order to use PolicyKit. Actions correspond to operations that
@@ -401,14 +401,14 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1 id="PolicyKit-1-author"><title>AUTHOR</title>
+  <refsect1 id="polkit-author"><title>AUTHOR</title>
     <para>
       Written by David Zeuthen <email>davidz@redhat.com</email> with
       a lot of help from many others.
     </para>
   </refsect1>
 
-  <refsect1 id="PolicyKit-1-bugs">
+  <refsect1 id="polkit-bugs">
     <title>BUGS</title>
     <para>
       Please send bug reports to either the distribution or the
@@ -418,7 +418,7 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1 id="PolicyKit-1-see-also">
+  <refsect1 id="polkit-see-also">
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
@@ -431,7 +431,7 @@ System Context         |                        |
         <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
       <citerefentry>
-        <refentrytitle>polkitd-1</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

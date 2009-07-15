@@ -7,7 +7,7 @@
   <refentryinfo>
     <title>pkcheck</title>
     <date>May 2009</date>
-    <productname>PolicyKit-1</productname>
+    <productname>polkit</productname>
   </refentryinfo>
 
   <refmeta>
@@ -164,7 +164,7 @@ KEY3=VALUE3
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
-        <refentrytitle>PolicyKit-1</refentrytitle><manvolnum>8</manvolnum>
+        <refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>

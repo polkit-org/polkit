@@ -4,8 +4,8 @@ NULL =
 if MAN_PAGES_ENABLED
 
 man_MANS = 				\
-	PolicyKit-1.8			\
-	polkitd-1.8			\
+	polkit.8			\
+	polkitd.8			\
 	pkexec.1			\
 	pkcheck.1			\
 	pkaction.1			\
@@ -17,11 +17,11 @@ man_MANS = 				\
 endif # MAN_PAGES_ENABLED
 
 EXTRA_DIST = 				\
-	PolicyKit-1.xml                 \
+	polkit.xml                 	\
+	polkitd.xml			\
 	pkexec.xml			\
 	pkcheck.xml			\
 	pkaction.xml			\
-	polkitd-1.xml			\
 	$(NULL)
 
 clean-local:
