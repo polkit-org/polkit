@@ -71,12 +71,14 @@ struct _PolkitBackendInteractiveAuthorityClass
   GList *                     (*get_admin_identities)          (PolkitBackendInteractiveAuthority *authority,
                                                                 PolkitSubject                     *caller,
                                                                 PolkitSubject                     *subject,
+                                                                PolkitIdentity                    *user_for_subject,
                                                                 const gchar                       *action_id,
                                                                 PolkitDetails                     *details);
 
   PolkitImplicitAuthorization (*check_authorization_sync) (PolkitBackendInteractiveAuthority *authority,
                                                            PolkitSubject                     *caller,
                                                            PolkitSubject                     *subject,
+                                                           PolkitIdentity                    *user_for_subject,
                                                            const gchar                       *action_id,
                                                            PolkitDetails                     *details,
                                                            PolkitImplicitAuthorization        implicit);
@@ -121,6 +123,7 @@ GType   polkit_backend_interactive_authority_get_type            (void) G_GNUC_C
 GList  *polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteractiveAuthority *authority,
                                                                    PolkitSubject                     *caller,
                                                                    PolkitSubject                     *subject,
+                                                                   PolkitIdentity                    *user_for_subject,
                                                                    const gchar                       *action_id,
                                                                    PolkitDetails                     *details);
 
@@ -128,6 +131,7 @@ PolkitImplicitAuthorization polkit_backend_interactive_authority_check_authoriza
                                                           PolkitBackendInteractiveAuthority *authority,
                                                           PolkitSubject                     *caller,
                                                           PolkitSubject                     *subject,
+                                                          PolkitIdentity                    *user_for_subject,
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details,
                                                           PolkitImplicitAuthorization        implicit);

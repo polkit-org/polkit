@@ -632,6 +632,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   implicit_authorization = polkit_backend_interactive_authority_check_authorization_sync (interactive_authority,
                                                                                           caller,
                                                                                           subject,
+                                                                                          user_of_subject,
                                                                                           action_id,
                                                                                           details,
                                                                                           implicit_authorization);
@@ -723,6 +724,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
  * @authority: A #PolkitBackendInteractiveAuthority.
  * @caller: The subject that is inquiring whether @subject is authorized.
  * @subject: The subject we are about to authenticate for.
+ * @user_for_subject: The user of the subject we are about to authenticate for.
  * @action_id: The action we are about to authenticate for.
  * @details: Details about the action.
  *
@@ -737,6 +739,7 @@ GList *
 polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteractiveAuthority *authority,
                                                            PolkitSubject                     *caller,
                                                            PolkitSubject                     *subject,
+                                                           PolkitIdentity                    *user_for_subject,
                                                            const gchar                       *action_id,
                                                            PolkitDetails                     *details)
 {
@@ -754,6 +757,7 @@ polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteract
       ret = klass->get_admin_identities (authority,
                                          caller,
                                          subject,
+                                         user_for_subject,
                                          action_id,
                                          details);
     }
@@ -766,6 +770,7 @@ polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteract
  * @authority: A #PolkitBackendInteractiveAuthority.
  * @caller: The subject that is inquiring whether @subject is authorized.
  * @subject: The subject we are checking an authorization for.
+ * @user_for_subject: The user of the subject we are checking an authorization for.
  * @action_id: The action we are checking an authorization for.
  * @details: Details about the action.
  * @implicit: A #PolkitImplicitAuthorization value computed from the policy file and @subject.
@@ -782,6 +787,7 @@ PolkitImplicitAuthorization
 polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInteractiveAuthority *authority,
                                                                PolkitSubject                     *caller,
                                                                PolkitSubject                     *subject,
+                                                               PolkitIdentity                    *user_for_subject,
                                                                const gchar                       *action_id,
                                                                PolkitDetails                     *details,
                                                                PolkitImplicitAuthorization        implicit)
@@ -800,6 +806,7 @@ polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInte
       ret = klass->check_authorization_sync (authority,
                                              caller,
                                              subject,
+                                             user_for_subject,
                                              action_id,
                                              details,
                                              implicit);
@@ -1381,6 +1388,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
       identities = polkit_backend_interactive_authority_get_admin_identities (authority,
                                                                               caller,
                                                                               subject,
+                                                                              user_of_subject,
                                                                               action_id,
                                                                               details);
     }

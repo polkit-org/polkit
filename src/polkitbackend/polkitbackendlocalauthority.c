@@ -67,8 +67,19 @@ typedef struct
 static GList *polkit_backend_local_authority_get_admin_auth_identities (PolkitBackendInteractiveAuthority *authority,
                                                                         PolkitSubject                     *caller,
                                                                         PolkitSubject                     *subject,
+                                                                        PolkitIdentity                    *user_for_subject,
                                                                         const gchar                       *action_id,
                                                                         PolkitDetails                     *details);
+
+static PolkitImplicitAuthorization polkit_backend_local_authority_check_authorization_sync (
+                                                          PolkitBackendInteractiveAuthority *authority,
+                                                          PolkitSubject                     *caller,
+                                                          PolkitSubject                     *subject,
+                                                          PolkitIdentity                    *user_for_subject,
+                                                          const gchar                       *action_id,
+                                                          PolkitDetails                     *details,
+                                                          PolkitImplicitAuthorization        implicit);
+
 
 G_DEFINE_TYPE_WITH_CODE (PolkitBackendLocalAuthority,
                          polkit_backend_local_authority,
@@ -119,8 +130,9 @@ polkit_backend_local_authority_class_init (PolkitBackendLocalAuthorityClass *kla
   gobject_class = G_OBJECT_CLASS (klass);
   interactive_authority_class = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_CLASS (klass);
 
-  gobject_class->finalize                           = polkit_backend_local_authority_finalize;
-  interactive_authority_class->get_admin_identities = polkit_backend_local_authority_get_admin_auth_identities;
+  gobject_class->finalize                               = polkit_backend_local_authority_finalize;
+  interactive_authority_class->get_admin_identities     = polkit_backend_local_authority_get_admin_auth_identities;
+  interactive_authority_class->check_authorization_sync = polkit_backend_local_authority_check_authorization_sync;
 
   g_type_class_add_private (klass, sizeof (PolkitBackendLocalAuthorityPrivate));
 }
@@ -129,6 +141,7 @@ static GList *
 polkit_backend_local_authority_get_admin_auth_identities (PolkitBackendInteractiveAuthority *authority,
                                                           PolkitSubject                     *caller,
                                                           PolkitSubject                     *subject,
+                                                          PolkitIdentity                    *user_for_subject,
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details)
 {
@@ -192,6 +205,25 @@ polkit_backend_local_authority_get_admin_auth_identities (PolkitBackendInteracti
     ret = g_list_prepend (ret, polkit_unix_user_new (0));
 
   return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static PolkitImplicitAuthorization
+polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiveAuthority *authority,
+                                                         PolkitSubject                     *caller,
+                                                         PolkitSubject                     *subject,
+                                                         PolkitIdentity                    *user_for_subject,
+                                                         const gchar                       *action_id,
+                                                         PolkitDetails                     *details,
+                                                         PolkitImplicitAuthorization        implicit)
+{
+  g_debug ("local: checking `%s' for subject `%s' (user `%s')",
+           action_id,
+           polkit_subject_to_string (subject),
+           polkit_identity_to_string (user_for_subject));
+
+  return implicit;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
