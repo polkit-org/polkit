@@ -41,6 +41,7 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackend.h							\
 	polkitbackendtypes.h						\
 	polkitbackendauthority.h					\
+	polkitbackendinteractiveauthority.h				\
 	polkitbackendlocalauthority.h					\
 	polkitbackendactionpool.h					\
 	polkitbackendsessionmonitor.h					\
@@ -55,6 +56,7 @@ libpolkit_backend_1_la_SOURCES =                                   			\
 	polkitbackendtypes.h								\
 	polkitbackendprivate.h								\
 	polkitbackendauthority.h		polkitbackendauthority.c		\
+	polkitbackendinteractiveauthority.h	polkitbackendinteractiveauthority.c	\
 	polkitbackendlocalauthority.h		polkitbackendlocalauthority.c		\
 	polkitbackendactionpool.h		polkitbackendactionpool.c		\
 	polkitbackendsessionmonitor.h		polkitbackendsessionmonitor.c		\

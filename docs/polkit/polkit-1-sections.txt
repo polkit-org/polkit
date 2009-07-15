@@ -291,7 +291,6 @@ POLKIT_BACKEND_ACTION_LOOKUP_GET_IFACE
 <TITLE>PolkitBackendLocalAuthority</TITLE>
 PolkitBackendLocalAuthority
 PolkitBackendLocalAuthorityClass
-polkit_backend_local_authority_new
 <SUBSECTION Standard>
 POLKIT_BACKEND_LOCAL_AUTHORITY
 POLKIT_BACKEND_IS_LOCAL_AUTHORITY
@@ -300,6 +299,23 @@ polkit_backend_local_authority_get_type
 POLKIT_BACKEND_LOCAL_AUTHORITY_CLASS
 POLKIT_BACKEND_IS_LOCAL_AUTHORITY_CLASS
 POLKIT_BACKEND_LOCAL_AUTHORITY_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>polkitbackendinteractiveauthority</FILE>
+<TITLE>PolkitBackendInteractiveAuthority</TITLE>
+PolkitBackendInteractiveAuthority
+PolkitBackendInteractiveAuthorityClass
+polkit_backend_interactive_authority_get_admin_identities
+polkit_backend_interactive_authority_check_authorization_sync
+<SUBSECTION Standard>
+POLKIT_BACKEND_INTERACTIVE_AUTHORITY
+POLKIT_BACKEND_IS_INTERACTIVE_AUTHORITY
+POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY
+polkit_backend_interactive_authority_get_type
+POLKIT_BACKEND_INTERACTIVE_AUTHORITY_CLASS
+POLKIT_BACKEND_IS_INTERACTIVE_AUTHORITY_CLASS
+POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_CLASS
 </SECTION>
 
 <SECTION>

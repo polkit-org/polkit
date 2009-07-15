@@ -28,7 +28,7 @@
 
 #include <glib-object.h>
 #include <polkitbackend/polkitbackendtypes.h>
-#include <polkitbackend/polkitbackendauthority.h>
+#include <polkitbackend/polkitbackendinteractiveauthority.h>
 
 G_BEGIN_DECLS
 
@@ -49,7 +49,7 @@ typedef struct _PolkitBackendLocalAuthorityClass    PolkitBackendLocalAuthorityC
 struct _PolkitBackendLocalAuthority
 {
   /*< private >*/
-  PolkitBackendAuthority parent_instance;
+  PolkitBackendInteractiveAuthority parent_instance;
 };
 
 /**
@@ -61,7 +61,7 @@ struct _PolkitBackendLocalAuthority
 struct _PolkitBackendLocalAuthorityClass
 {
   /*< public >*/
-  PolkitBackendAuthorityClass parent_class;
+  PolkitBackendInteractiveAuthorityClass parent_class;
 
   /*< private >*/
   /* Padding for future expansion */
@@ -73,10 +73,33 @@ struct _PolkitBackendLocalAuthorityClass
   void (*_polkit_reserved6) (void);
   void (*_polkit_reserved7) (void);
   void (*_polkit_reserved8) (void);
+  void (*_polkit_reserved9) (void);
+  void (*_polkit_reserved10) (void);
+  void (*_polkit_reserved11) (void);
+  void (*_polkit_reserved12) (void);
+  void (*_polkit_reserved13) (void);
+  void (*_polkit_reserved14) (void);
+  void (*_polkit_reserved15) (void);
+  void (*_polkit_reserved16) (void);
+  void (*_polkit_reserved17) (void);
+  void (*_polkit_reserved18) (void);
+  void (*_polkit_reserved19) (void);
+  void (*_polkit_reserved20) (void);
+  void (*_polkit_reserved21) (void);
+  void (*_polkit_reserved22) (void);
+  void (*_polkit_reserved23) (void);
+  void (*_polkit_reserved24) (void);
+  void (*_polkit_reserved25) (void);
+  void (*_polkit_reserved26) (void);
+  void (*_polkit_reserved27) (void);
+  void (*_polkit_reserved28) (void);
+  void (*_polkit_reserved29) (void);
+  void (*_polkit_reserved30) (void);
+  void (*_polkit_reserved31) (void);
+  void (*_polkit_reserved32) (void);
 };
 
 GType                   polkit_backend_local_authority_get_type (void) G_GNUC_CONST;
-PolkitBackendAuthority *polkit_backend_local_authority_new      (void);
 
 G_END_DECLS
 
