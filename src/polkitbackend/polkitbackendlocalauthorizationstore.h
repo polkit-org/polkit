@@ -71,11 +71,13 @@ struct _PolkitBackendLocalAuthorizationStoreClass
 GType                                 polkit_backend_local_authorization_store_get_type (void) G_GNUC_CONST;
 PolkitBackendLocalAuthorizationStore *polkit_backend_local_authorization_store_new      (GFile       *directory,
                                                                                          const gchar *extension);
-gboolean                              polkit_backend_local_authorization_store_lookup   (PolkitBackendLocalAuthorizationStore *store,
-                                                                                         PolkitIdentity *identity,
-                                                                                         const gchar    *action_id,
-                                                                                         PolkitDetails  *details,
-                                                                                         PolkitImplicitAuthorization *out_result);
+gboolean  polkit_backend_local_authorization_store_lookup   (PolkitBackendLocalAuthorizationStore *store,
+                                                             PolkitIdentity                       *identity,
+                                                             const gchar                          *action_id,
+                                                             PolkitDetails                        *details,
+                                                             PolkitImplicitAuthorization          *out_result_any,
+                                                             PolkitImplicitAuthorization          *out_result_inactive,
+                                                             PolkitImplicitAuthorization          *out_result_active);
 
 G_END_DECLS
 

@@ -36,6 +36,7 @@ GType polkit_implicit_authorization_get_type (void) G_GNUC_CONST;
 
 /**
  * PolkitImplicitAuthorization:
+ * @POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN: Unknown whether the subject is authorized, never returned in any public API.
  * @POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED: Subject is not authorized.
  * @POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED: Authentication is required.
  * @POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED: Authentication as an administrator is required.
@@ -47,6 +48,7 @@ GType polkit_implicit_authorization_get_type (void) G_GNUC_CONST;
  */
 typedef enum
 {
+  POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN = -1,
   POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED = 0,
   POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED = 1,
   POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED = 2,

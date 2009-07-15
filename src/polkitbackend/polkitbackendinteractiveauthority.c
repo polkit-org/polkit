@@ -633,6 +633,8 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
                                                                                           caller,
                                                                                           subject,
                                                                                           user_of_subject,
+                                                                                          session_is_local,
+                                                                                          session_is_active,
                                                                                           action_id,
                                                                                           details,
                                                                                           implicit_authorization);
@@ -771,6 +773,8 @@ polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteract
  * @caller: The subject that is inquiring whether @subject is authorized.
  * @subject: The subject we are checking an authorization for.
  * @user_for_subject: The user of the subject we are checking an authorization for.
+ * @subject_is_local: %TRUE if the session for @subject is local.
+ * @subject_is_active: %TRUE if the session for @subject is active.
  * @action_id: The action we are checking an authorization for.
  * @details: Details about the action.
  * @implicit: A #PolkitImplicitAuthorization value computed from the policy file and @subject.
@@ -788,6 +792,8 @@ polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInte
                                                                PolkitSubject                     *caller,
                                                                PolkitSubject                     *subject,
                                                                PolkitIdentity                    *user_for_subject,
+                                                               gboolean                           subject_is_local,
+                                                               gboolean                           subject_is_active,
                                                                const gchar                       *action_id,
                                                                PolkitDetails                     *details,
                                                                PolkitImplicitAuthorization        implicit)
@@ -807,6 +813,8 @@ polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInte
                                              caller,
                                              subject,
                                              user_for_subject,
+                                             subject_is_local,
+                                             subject_is_active,
                                              action_id,
                                              details,
                                              implicit);

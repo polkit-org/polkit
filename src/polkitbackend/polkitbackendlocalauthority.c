@@ -75,6 +75,8 @@ static PolkitImplicitAuthorization polkit_backend_local_authority_check_authoriz
                                                           PolkitSubject                     *caller,
                                                           PolkitSubject                     *subject,
                                                           PolkitIdentity                    *user_for_subject,
+                                                          gboolean                           subject_is_local,
+                                                          gboolean                           subject_is_active,
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details,
                                                           PolkitImplicitAuthorization        implicit);
@@ -237,6 +239,8 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
                                                          PolkitSubject                     *caller,
                                                          PolkitSubject                     *subject,
                                                          PolkitIdentity                    *user_for_subject,
+                                                         gboolean                           subject_is_local,
+                                                         gboolean                           subject_is_active,
                                                          const gchar                       *action_id,
                                                          PolkitDetails                     *details,
                                                          PolkitImplicitAuthorization        implicit)
@@ -244,6 +248,9 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
   PolkitImplicitAuthorization ret;
+  PolkitImplicitAuthorization ret_any;
+  PolkitImplicitAuthorization ret_inactive;
+  PolkitImplicitAuthorization ret_active;
   GList *groups;
   GList *l, *ll;
 
@@ -273,9 +280,25 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
                                                                group,
                                                                action_id,
                                                                details,
-                                                               &ret))
+                                                               &ret_any,
+                                                               &ret_inactive,
+                                                               &ret_active))
             {
-              ; /* do nothing */
+              if (subject_is_local && subject_is_active)
+                {
+                  if (ret_active != POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN)
+                    ret = ret_active;
+                }
+              else if (subject_is_local)
+                {
+                  if (ret_inactive != POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN)
+                    ret = ret_inactive;
+                }
+              else
+                {
+                  if (ret_any != POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN)
+                    ret = ret_any;
+                }
             }
         }
     }
@@ -291,9 +314,25 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
                                                            user_for_subject,
                                                            action_id,
                                                            details,
-                                                           &ret))
+                                                           &ret_any,
+                                                           &ret_inactive,
+                                                           &ret_active))
         {
-          ; /* do nothing */
+          if (subject_is_local && subject_is_active)
+            {
+              if (ret_active != POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN)
+                ret = ret_active;
+            }
+          else if (subject_is_local)
+            {
+              if (ret_inactive != POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN)
+                ret = ret_inactive;
+            }
+          else
+            {
+              if (ret_any != POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN)
+                ret = ret_any;
+            }
         }
     }
 

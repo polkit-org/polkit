@@ -80,6 +80,7 @@ polkit_implicit_authorization_from_string (const gchar *string,
     {
       g_warning ("Unknown PolkitImplicitAuthorization string '%s'", string);
       ret = FALSE;
+      result = POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN;
     }
 
   if (out_implicit_authorization != NULL)
@@ -97,6 +98,10 @@ polkit_implicit_authorization_to_string (PolkitImplicitAuthorization implicit_au
 
   switch (implicit_authorization)
     {
+    case POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN:
+      s = "unknown";
+      break;
+
     case POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED:
       s = "no";
       break;

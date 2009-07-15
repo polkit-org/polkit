@@ -76,7 +76,9 @@ typedef struct
   GList *identity_specs;
   GList *action_specs;
 
-  PolkitImplicitAuthorization result;
+  PolkitImplicitAuthorization result_any;
+  PolkitImplicitAuthorization result_inactive;
+  PolkitImplicitAuthorization result_active;
 } LocalAuthorization;
 
 static void
@@ -100,12 +102,16 @@ local_authorization_new (GKeyFile      *key_file,
   LocalAuthorization *authorization;
   gchar **identity_strings;
   gchar **action_strings;
-  gchar *result_string;
+  gchar *result_any_string;
+  gchar *result_inactive_string;
+  gchar *result_active_string;
   guint n;
 
   identity_strings = NULL;
   action_strings = NULL;
-  result_string = NULL;
+  result_any_string = NULL;
+  result_inactive_string = NULL;
+  result_active_string = NULL;
 
   authorization = g_new0 (LocalAuthorization, 1);
 
@@ -143,27 +149,76 @@ local_authorization_new (GKeyFile      *key_file,
                                                     g_pattern_spec_new (action_strings[n]));
     }
 
-  result_string = g_key_file_get_string (key_file,
-                                         group,
-                                         "Result",
-                                         error);
-  if (result_string == NULL)
+  authorization->result_any = POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN;
+  authorization->result_inactive = POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN;
+  authorization->result_active = POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN;
+
+  result_any_string = g_key_file_get_string (key_file,
+                                             group,
+                                             "ResultAny",
+                                             NULL);
+  if (result_any_string != NULL)
     {
-      local_authorization_free (authorization);
-      authorization = NULL;
-      goto out;
+      if (!polkit_implicit_authorization_from_string (result_any_string,
+                                                      &authorization->result_any))
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot parse ResultAny string `%s'", result_any_string);
+          local_authorization_free (authorization);
+          authorization = NULL;
+          goto out;
+        }
     }
 
-  if (!polkit_implicit_authorization_from_string (result_string,
-                                                  &authorization->result))
+  result_inactive_string = g_key_file_get_string (key_file,
+                                                  group,
+                                                  "ResultInactive",
+                                                  NULL);
+  if (result_inactive_string != NULL)
     {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_FAILED,
-                   "Cannot parse Result string `%s'", result_string);
-      local_authorization_free (authorization);
-      authorization = NULL;
-      goto out;
+      if (!polkit_implicit_authorization_from_string (result_inactive_string,
+                                                      &authorization->result_inactive))
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot parse ResultInactive string `%s'", result_inactive_string);
+          local_authorization_free (authorization);
+          authorization = NULL;
+          goto out;
+        }
+    }
+
+  result_active_string = g_key_file_get_string (key_file,
+                                                group,
+                                                "ResultActive",
+                                                NULL);
+  if (result_active_string != NULL)
+    {
+      if (!polkit_implicit_authorization_from_string (result_active_string,
+                                                      &authorization->result_active))
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot parse ResultActive string `%s'", result_active_string);
+          local_authorization_free (authorization);
+          authorization = NULL;
+          goto out;
+        }
+    }
+
+  if (result_any_string == NULL && result_inactive_string == NULL && result_active_string == NULL)
+    {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Must have at least one of ResultAny, ResultInactive and ResultActive");
+          local_authorization_free (authorization);
+          authorization = NULL;
+          goto out;
     }
 
   authorization->id = g_strdup_printf ("%s::%s", filename, group);
@@ -171,7 +226,9 @@ local_authorization_new (GKeyFile      *key_file,
  out:
   g_strfreev (identity_strings);
   g_free (action_strings);
-  g_free (result_string);
+  g_free (result_any_string);
+  g_free (result_inactive_string);
+  g_free (result_active_string);
   return authorization;
 }
 
@@ -545,7 +602,9 @@ polkit_backend_local_authorization_store_ensure (PolkitBackendLocalAuthorization
  * @identity: The identity to check for.
  * @action_id: The action id to check for.
  * @details: Details for @action.
- * @out_result: Return location for the result if the look up matched.
+ * @out_result_any: Return location for the result for any subjects if the look up matched.
+ * @out_result_inactive: Return location for the result for subjects in local inactive sessions if the look up matched.
+ * @out_result_active: Return location for the result for subjects in local active sessions if the look up matched.
  *
  * Checks if an authorization entry from @store matches @identity, @action_id and @details.
  *
@@ -557,7 +616,9 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
                                                  PolkitIdentity                       *identity,
                                                  const gchar                          *action_id,
                                                  PolkitDetails                        *details,
-                                                 PolkitImplicitAuthorization          *out_result)
+                                                 PolkitImplicitAuthorization          *out_result_any,
+                                                 PolkitImplicitAuthorization          *out_result_inactive,
+                                                 PolkitImplicitAuthorization          *out_result_active)
 {
   GList *l, *ll;
   gboolean ret;
@@ -567,7 +628,9 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
   g_return_val_if_fail (POLKIT_IS_IDENTITY (identity), FALSE);
   g_return_val_if_fail (action_id != NULL, FALSE);
   g_return_val_if_fail (POLKIT_IS_DETAILS (details), FALSE);
-  g_return_val_if_fail (out_result != NULL, FALSE);
+  g_return_val_if_fail (out_result_any != NULL, FALSE);
+  g_return_val_if_fail (out_result_inactive != NULL, FALSE);
+  g_return_val_if_fail (out_result_active != NULL, FALSE);
 
   ret = FALSE;
   identity_string = NULL;
@@ -599,7 +662,9 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
         continue;
 
       /* Yay, a match! However, keep going since subsequent authorization entries may modify the result */
-      *out_result = authorization->result;
+      *out_result_any = authorization->result_any;
+      *out_result_inactive = authorization->result_inactive;
+      *out_result_active = authorization->result_active;
       ret = TRUE;
 
 #if 0

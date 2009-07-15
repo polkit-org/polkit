@@ -79,6 +79,8 @@ struct _PolkitBackendInteractiveAuthorityClass
                                                            PolkitSubject                     *caller,
                                                            PolkitSubject                     *subject,
                                                            PolkitIdentity                    *user_for_subject,
+                                                           gboolean                           subject_is_local,
+                                                           gboolean                           subject_is_active,
                                                            const gchar                       *action_id,
                                                            PolkitDetails                     *details,
                                                            PolkitImplicitAuthorization        implicit);
@@ -132,6 +134,8 @@ PolkitImplicitAuthorization polkit_backend_interactive_authority_check_authoriza
                                                           PolkitSubject                     *caller,
                                                           PolkitSubject                     *subject,
                                                           PolkitIdentity                    *user_for_subject,
+                                                          gboolean                           subject_is_local,
+                                                          gboolean                           subject_is_active,
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details,
                                                           PolkitImplicitAuthorization        implicit);
