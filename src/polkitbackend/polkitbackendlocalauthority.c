@@ -30,6 +30,7 @@
 #include <polkit/polkit.h>
 #include "polkitbackendconfigsource.h"
 #include "polkitbackendlocalauthority.h"
+#include "polkitbackendlocalauthorizationstore.h"
 
 #include <polkit/polkitprivate.h>
 
@@ -45,20 +46,18 @@
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static GList *get_users_in_group (PolkitBackendInteractiveAuthority *authority,
-                                  PolkitIdentity              *group,
+static GList *get_users_in_group (PolkitIdentity              *group,
                                   gboolean                     include_root);
 
-#if 0
-static GList *get_groups_for_user (PolkitBackendInteractiveAuthority *authority,
-                                   PolkitIdentity              *user);
-#endif
+static GList *get_groups_for_user (PolkitIdentity              *user);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 typedef struct
 {
   PolkitBackendConfigSource *config_source;
+
+  GList *authorization_stores;
 
 } PolkitBackendLocalAuthorityPrivate;
 
@@ -98,12 +97,33 @@ polkit_backend_local_authority_init (PolkitBackendLocalAuthority *authority)
 {
   PolkitBackendLocalAuthorityPrivate *priv;
   GFile *directory;
+  guint n;
+  const gchar *store_locations[] =
+    {
+      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/10-vendor.d",
+      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/20-org.d",
+      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/30-site.d",
+      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/50-local.d",
+      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/90-mandatory.d",
+      NULL
+    };
 
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
 
   directory = g_file_new_for_path (PACKAGE_SYSCONF_DIR "/polkit-1/localauthority.conf.d");
   priv->config_source = polkit_backend_config_source_new (directory);
   g_object_unref (directory);
+
+  for (n = 0; store_locations[n] != NULL; n++)
+    {
+      PolkitBackendLocalAuthorizationStore *store;
+
+      directory = g_file_new_for_path (store_locations[n]);
+      store = polkit_backend_local_authorization_store_new (directory, ".pkla");
+      priv->authorization_stores = g_list_prepend (priv->authorization_stores, store);
+      g_object_unref (directory);
+    }
+  priv->authorization_stores = g_list_reverse (priv->authorization_stores);
 }
 
 static void
@@ -117,6 +137,9 @@ polkit_backend_local_authority_finalize (GObject *object)
 
   if (priv->config_source != NULL)
     g_object_unref (priv->config_source);
+
+  g_list_foreach (priv->authorization_stores, (GFunc) g_object_unref, NULL);
+  g_list_free (priv->authorization_stores);
 
   G_OBJECT_CLASS (polkit_backend_local_authority_parent_class)->finalize (object);
 }
@@ -188,7 +211,7 @@ polkit_backend_local_authority_get_admin_auth_identities (PolkitBackendInteracti
         }
       else if (POLKIT_IS_UNIX_GROUP (identity))
         {
-          ret = g_list_concat (ret, get_users_in_group (authority, identity, FALSE));
+          ret = g_list_concat (ret, get_users_in_group (identity, FALSE));
         }
       else
         {
@@ -218,20 +241,70 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
                                                          PolkitDetails                     *details,
                                                          PolkitImplicitAuthorization        implicit)
 {
+  PolkitBackendLocalAuthority *local_authority;
+  PolkitBackendLocalAuthorityPrivate *priv;
+  PolkitImplicitAuthorization ret;
+  GList *groups;
+  GList *l, *ll;
+
+  ret = implicit;
+
+  local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
+
+#if 0
   g_debug ("local: checking `%s' for subject `%s' (user `%s')",
            action_id,
            polkit_subject_to_string (subject),
            polkit_identity_to_string (user_for_subject));
+#endif
 
-  return implicit;
+  /* First lookup for all groups the user belong to */
+  groups = get_groups_for_user (user_for_subject);
+  for (ll = groups; ll != NULL; ll = ll->next)
+    {
+      PolkitIdentity *group = POLKIT_IDENTITY (ll->data);
+
+      for (l = priv->authorization_stores; l != NULL; l = l->next)
+        {
+          PolkitBackendLocalAuthorizationStore *store = POLKIT_BACKEND_LOCAL_AUTHORIZATION_STORE (l->data);
+
+          if (polkit_backend_local_authorization_store_lookup (store,
+                                                               group,
+                                                               action_id,
+                                                               details,
+                                                               &ret))
+            {
+              ; /* do nothing */
+            }
+        }
+    }
+  g_list_foreach (groups, (GFunc) g_object_unref, NULL);
+  g_list_free (groups);
+
+  /* Then do it for the user */
+  for (l = priv->authorization_stores; l != NULL; l = l->next)
+    {
+      PolkitBackendLocalAuthorizationStore *store = POLKIT_BACKEND_LOCAL_AUTHORIZATION_STORE (l->data);
+
+      if (polkit_backend_local_authorization_store_lookup (store,
+                                                           user_for_subject,
+                                                           action_id,
+                                                           details,
+                                                           &ret))
+        {
+          ; /* do nothing */
+        }
+    }
+
+  return ret;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static GList *
-get_users_in_group (PolkitBackendInteractiveAuthority *authority,
-                    PolkitIdentity              *group,
-                    gboolean                     include_root)
+get_users_in_group (PolkitIdentity                    *group,
+                    gboolean                           include_root)
 {
   gid_t gid;
   struct group *grp;
@@ -275,10 +348,8 @@ get_users_in_group (PolkitBackendInteractiveAuthority *authority,
   return ret;
 }
 
-#if 0
 static GList *
-get_groups_for_user (PolkitBackendInteractiveAuthority *authority,
-                     PolkitIdentity              *user)
+get_groups_for_user (PolkitIdentity *user)
 {
   uid_t uid;
   struct passwd *passwd;
@@ -317,6 +388,5 @@ get_groups_for_user (PolkitBackendInteractiveAuthority *authority,
 
   return result;
 }
-#endif
 
 /* ---------------------------------------------------------------------------------------------------- */

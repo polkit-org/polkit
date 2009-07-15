@@ -37,6 +37,7 @@
 #include <polkitbackend/polkitbackendsessionmonitor.h>
 #include <polkitbackend/polkitbackendconfigsource.h>
 #include <polkitbackend/polkitbackendactionlookup.h>
+#include <polkitbackend/polkitbackendlocalauthorizationstore.h>
 #undef _POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H
 
 #endif /* __POLKIT_BACKEND_H */

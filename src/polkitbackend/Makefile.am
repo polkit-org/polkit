@@ -47,6 +47,7 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendsessionmonitor.h					\
 	polkitbackendconfigsource.h					\
 	polkitbackendactionlookup.h					\
+	polkitbackendlocalauthorizationstore.h				\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   			\
@@ -62,6 +63,7 @@ libpolkit_backend_1_la_SOURCES =                                   			\
 	polkitbackendsessionmonitor.h		polkitbackendsessionmonitor.c		\
 	polkitbackendconfigsource.h		polkitbackendconfigsource.c		\
 	polkitbackendactionlookup.h		polkitbackendactionlookup.c		\
+	polkitbackendlocalauthorizationstore.h	polkitbackendlocalauthorizationstore.c	\
         $(NULL)
 
 libpolkit_backend_1_la_CFLAGS =                                        	\
@@ -97,4 +99,5 @@ clean-local :
 install-exec-hook:
 	mkdir -p $(DESTDIR)$(localstatedir)/lib/polkit-1
 	-chmod 600 $(DESTDIR)$(localstatedir)/lib/polkit-1
+	mkdir -p $(DESTDIR)$(localstatedir)/lib/polkit-1/localauthority/{10-vendor.d,20-org.d,30-site.d,50-local.d,90-mandatory.d}
 	mkdir -p $(DESTDIR)$(libdir)/polkit-1/extensions
