@@ -127,6 +127,13 @@ System Context         |                        |
       documentation</ulink> for more information about using and
       extending PolicyKit.
     </para>
+
+    <para>
+      See
+      <citerefentry><refentrytitle>pklocalauthority</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      for information about the Local Authority - the default
+      authority implementation shipped with PolicyKit.
+    </para>
   </refsect1>
 
   <refsect1 id="polkit-authentication-agents"><title>AUTHENTICATION AGENTS</title>
@@ -210,7 +217,9 @@ System Context         |                        |
       </textobject>
     </mediaobject>
     <para>
-      See <xref linkend="pkla"/> for how to set up the local authority
+      See
+      <citerefentry><refentrytitle>pklocalauthority</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      on how to set up the local authority
       implemention for systems without a <literal>root</literal>
       account.
     </para>
@@ -391,16 +400,6 @@ System Context         |                        |
     </para>
   </refsect1>
 
-  <refsect1 id="pkla"><title>LOCAL AUTHORITY IMPLEMENTATION</title>
-    <para>
-      The default authority implementation in PolicyKit is using the
-      local filesystem to store authorizations. TODO: write some more
-      here including a link to a
-      <citerefentry><refentrytitle>pklamanage</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-      command.
-    </para>
-  </refsect1>
-
   <refsect1 id="polkit-author"><title>AUTHOR</title>
     <para>
       Written by David Zeuthen <email>davidz@redhat.com</email> with
@@ -422,6 +421,12 @@ System Context         |                        |
     <title>SEE ALSO</title>
     <para>
       <citerefentry>
+        <refentrytitle>pklocalauthority</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+      <citerefentry>
+        <refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+      <citerefentry>
         <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
       <citerefentry>
@@ -430,9 +435,6 @@ System Context         |                        |
       <citerefentry>
         <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
-      <citerefentry>
-        <refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>
     </para>
   </refsect1>
 </refentry>

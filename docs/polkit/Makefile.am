@@ -61,6 +61,7 @@ content_files =  			    								\
 	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml		\
 	../man/polkit.xml										\
 	../man/polkitd.xml										\
+	../man/pklocalauthority.xml									\
 	../man/pkcheck.xml										\
 	../man/pkaction.xml										\
 	../man/pkexec.xml										\

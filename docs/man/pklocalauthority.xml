@@ -1,0 +1,317 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="pklocalauthority.8">
+  <refentryinfo>
+    <title>pklocalauthority</title>
+    <date>May 2009</date>
+    <productname>polkit</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>pklocalauthority</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>pklocalauthority</refname>
+    <refpurpose>PolicyKit Local Authority</refpurpose>
+  </refnamediv>
+
+  <refsect1 id="pklocalauthority-description">
+    <title>DESCRIPTION</title>
+    <para>
+      The Local Authority is the default PolicyKit authority
+      implementation. Configuration for the Local Authority and
+      information pertaining to authorization decisions are read from
+      local files on the disk. One design goal of the Local Authority
+      is to split configuration items into separate files such that
+      3rd party packages and users won't conflict trying to edit the
+      same files. This policy also ensures smooth upgrades when
+      distributing PolicyKit using a package management system.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-admin-authentication">
+    <title>ADMINISTRATOR AUTHENTICATION</title>
+    <para>
+      PolicyKit makes a distinction between <emphasis>user
+      authentication</emphasis> (to make the user in front of the
+      system prove he really is the user) and <emphasis>administrator
+      authentication</emphasis> (to make the user in front of the
+      system prove he really is an administrator). Since various
+      operating systems (or even flavors of the same operating system)
+      has different ways of defining "administrator", the Local
+      Authority provides a way to specify what "administrator
+      authentication" means.
+    </para>
+    <para>
+      By default, "administrator authentication" is defined as asking
+      for the root password. Since some systems, for usability
+      reasons, don't have a root password and instead rely on a group
+      of users being member of an administrative group that gives them
+      super-user privileges, the Local Authority can be configured to
+      support this use-case as well.
+    </para>
+    <para>
+      Configuration for the Local Authority are read from files in
+      the <filename>/etc/polkit-1/localauthority.conf.d</filename>
+      directory. The file <filename>50-localauthority.conf</filename>
+      contains the settings provided by the OS vendor. Users and 3rd
+      party packages can drop configuration files with a priority
+      higher than 60 to change the defaults. The configuration file
+      format is simple. Each configuration file is a <emphasis>key
+      file</emphasis> with a single <literal>Configuration</literal>
+      group.  Only a single key, <literal>AdminIdentities</literal> is
+      read.  The value of this key is a semi-colon separated list of
+      identities that can be used when administrator authentication is
+      required. Users are specified by prefixing the user name with
+      <literal>unix-user:</literal> and groups of users are specified
+      by prefixing with <literal>unix-group:</literal>.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-directory-structure">
+    <title>DIRECTORY STRUCTURE</title>
+    <para>
+      The Local Authority reads files with <filename>.pkla</filename>
+      from the following directories
+    </para>
+    <programlisting>
+/var/lib/polkit-1/
+`-- localauthority
+    |-- 10-vendor.d
+    |-- 20-org.d
+    |-- 30-site.d
+    |-- 50-local.d
+    `-- 90-mandatory.d
+    </programlisting>
+    <para>
+      Each <filename>.pkla</filename> contains one or more
+      authorization entries. If the underlying filesystem supports
+      file monitoring, the Local Authority will reload information
+      whenever changes occur.
+    </para>
+    <para>
+      Each directory is intended for a specific audience
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><emphasis>10-vendor.d</emphasis></term>
+        <listitem>
+          <para>
+            Reserved for the Operating System vendor.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>20-org.d</emphasis></term>
+        <listitem>
+          <para>
+            Reserved for the organization deploying the system.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>30-site.d</emphasis></term>
+        <listitem>
+          <para>
+            Reserved for site deploying the system.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>50-local.d</emphasis></term>
+        <listitem>
+          <para>
+            Reserved for local usage.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>90-mandatory.d</emphasis></term>
+        <listitem>
+          <para>
+            Reserved for the organization deploying the system.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      Each <filename>.pkla</filename> file is a standard <emphasis>key
+      file</emphasis> and contains key/value pairs in one or more
+      groups with each group representing an authorization entry.
+      A <filename>.pkla</filename> file MUST be named by using a
+      scheme to ensure that the name is unique, e.g. reverse DNS
+      notation or similar.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-authorization-entry">
+    <title>AUTHORIZATION ENTRY</title>
+    <para>
+      Each group in a <filename>.pkla</filename> must have a name that
+      is unique within the file it belongs to. The following keys are
+      required in each group
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><emphasis>Identity</emphasis></term>
+        <listitem>
+          <para>
+            A semi-colon separated list of globs to match identities. Each glob
+            should start with <literal>unix-user:</literal> or
+            <literal>unix-group:</literal> to specify whether to match on a
+            UNIX user name or a UNIX group name.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>Action</emphasis></term>
+        <listitem>
+          <para>
+            A semi-colon separated list of globs to match action identifiers.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>ResultActive</emphasis></term>
+        <listitem>
+          <para>
+            The result to return for subjects in an active local
+            session that matches one or more of the given identities.
+            Allowed values are similar to what can be used in
+            the <emphasis>defaults</emphasis> section
+            of <filename>.policy</filename> files used to define
+            actions, e.g.
+            <literal>yes</literal>,
+            <literal>no</literal>,
+            <literal>auth_self</literal>,
+            <literal>auth_self_keep</literal>,
+            <literal>auth_admin</literal> and
+            <literal>auth_admin_keep</literal>.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>ResultInactive</emphasis></term>
+        <listitem>
+          <para>
+            Like <emphasis>ResultActive</emphasis> but instead applies
+            to subjects in inactive local sessions.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>ResultAny</emphasis></term>
+        <listitem>
+          <para>
+            Like <emphasis>ResultActive</emphasis> but instead applies
+            to any subject.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      All keys specified above are required except that only at least
+      one
+      of <emphasis>RequireAny</emphasis>, <emphasis>RequireInactive</emphasis>
+      and <emphasis>RequireActive</emphasis> is present.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-evaluation-order">
+    <title>EVALUATION ORDER</title>
+    <para>
+      Whenever a Mechanism does an authorization check to check if a
+      given Subject is authorized for a given action, the
+      authorization entries discussed above are consulted in the
+      following order. First, the user of the Subject is determined
+      and the groups that the user belongs are looked up.
+    </para>
+    <para>
+      For each group identity, the authorization entries are consulted
+      in the standard lexigraphical order (using standard
+      lexicographical sorting (using the standard C locale) of file
+      names and appearance of each group in each file). If the
+      authorization check matches the data from the authorization
+      check, then the authorization result
+      from <emphasis>RequireAny</emphasis>, <emphasis>RequireInactive</emphasis>
+      or <emphasis>RequireActive</emphasis> is used. Finally, the
+      authorization entries are consulted using the user identity.
+    </para>
+    <para>
+      Note that processing continues even after a match. This allows
+      for socalled <quote>negative authorizations</quote>, see
+      <xref linkend="pklocalauthority-examples"/> for further
+      discussion.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-examples">
+    <title>EXAMPLES</title>
+    <para>
+      The following <filename>.pkla</filename> file grants
+      authorization to all users in the <literal>staff</literal> group
+      for actions matching the
+      glob <literal>com.example.awesomeproduct.*</literal> provided
+      they are in an active session on the local console:
+    </para>
+    <programlisting>
+[Normal Staff Permissions]
+Identity=unix-group:staff
+Action=com.example.awesomeproduct.*
+ResultAny=no
+ResultInactive=no
+ResultActive=yes
+    </programlisting>
+    <para>
+      If the users <literal>homer</literal> and <literal>grimes</literal> are member of
+      the <literal>staff</literal> group but policy requires that an
+      administrator needs to authenticate every time authorization for
+      any action
+      matching <literal>com.example.awesomeproduct.*</literal> is
+      required, one would add
+    </para>
+    <programlisting>
+[Exclude Some Problematic Users]
+Identity=unix-user:homer;unix-user:grimes
+Action=com.example.awesomeproduct.*
+ResultAny=no
+ResultInactive=no
+ResultActive=auth_admin
+    </programlisting>
+    <para>
+      and make sure this authorization entry is after the first one.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-author"><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen <email>davidz@redhat.com</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-bugs">
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      on how to subscribe.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pklocalauthority-see-also">
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>
