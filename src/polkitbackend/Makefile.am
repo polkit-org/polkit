@@ -5,8 +5,6 @@ INCLUDES =                                                      \
         -I$(top_srcdir)/src                                     \
         -I$(top_builddir)/src/polkit                            \
         -I$(top_srcdir)/src/polkit                              \
-        -I$(top_builddir)/src/polkitlocal                       \
-        -I$(top_srcdir)/src/polkitlocal                         \
         -DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"               \
         -DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"               \
         -DPACKAGE_DATA_DIR=\""$(datadir)"\"                     \
@@ -17,7 +15,6 @@ INCLUDES =                                                      \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
 	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
-	-DPOLKIT_LOCAL_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
 BUILT_SOURCES = 						\
@@ -76,7 +73,6 @@ libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
         $(EGG_DBUS_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
-	$(top_builddir)/src/polkitlocal/libpolkit-local-1.la		\
 	$(EXPAT_LIBS)							\
         $(NULL)
 

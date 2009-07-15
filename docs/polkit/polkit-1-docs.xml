@@ -62,7 +62,6 @@
   <part id="ref-dbus-api">
     <title>D-Bus API Reference</title>
     <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml"/>
-    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.LocalAuthority.xml"/>
     <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
   </part>
 
@@ -86,12 +85,6 @@
       <xi:include href="xml/polkitunixuser.xml"/>
       <xi:include href="xml/polkitunixgroup.xml"/>
     </chapter>
-  </part>
-
-  <part id="ref-local-api">
-    <title>Local Authority Client API Reference</title>
-    <xi:include href="xml/polkitlocalauthority.xml"/>
-    <xi:include href="xml/polkitlocalauthorization.xml"/>
   </part>
 
   <part id="ref-backend-api">

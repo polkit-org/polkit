@@ -27,7 +27,6 @@ libnullbackend_la_SOURCES = 						\
 
 libnullbackend_la_CFLAGS =                             			\
 	-DPOLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
-	-DPOLKIT_LOCAL_I_KNOW_API_IS_SUBJECT_TO_CHANGE			\
 	-DG_LOG_DOMAIN=\"PolkitNullBackend\"				\
 	$(GLIB_CFLAGS)							\
 	$(NULL)

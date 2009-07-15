@@ -13,9 +13,6 @@ polkit_system_bus_name_get_type
 polkit_error_get_type
 polkit_authorization_result_get_type
 
-polkit_local_authority_get_type
-polkit_local_authorization_get_type
-
 polkit_backend_authority_get_type
 polkit_backend_action_lookup_get_type
 polkit_backend_local_authority_get_type

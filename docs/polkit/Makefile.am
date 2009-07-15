@@ -35,8 +35,6 @@ INCLUDES = \
 	-I$(top_builddir)/src/polkitbackend			\
 	-I$(top_srcdir)/src/polkitagent 			\
 	-I$(top_builddir)/src/polkitagent			\
-	-I$(top_srcdir)/src/polkitlocal 			\
-	-I$(top_builddir)/src/polkitlocal			\
 	$(NULL)
 
 GTKDOC_LIBS = \
@@ -46,7 +44,6 @@ GTKDOC_LIBS = \
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
 	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la \
 	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la	\
-	$(top_builddir)/src/polkitlocal/libpolkit-local-1.la	\
 	$(NULL)
 
 # Extra options to supply to gtkdoc-mkdb
@@ -61,7 +58,6 @@ content_files =  			    								\
 	../extensiondir.xml			    							\
 	../version.xml			    								\
 	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml			\
-	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.LocalAuthority.xml		\
 	../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml		\
 	../man/PolicyKit-1.xml										\
 	../man/pkcheck.xml										\

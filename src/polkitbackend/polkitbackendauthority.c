@@ -27,9 +27,6 @@
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
 
-#include <polkitlocal/polkitlocal.h>
-#include <polkitlocal/polkitlocalprivate.h>
-
 #include "polkitbackendauthority.h"
 #include "polkitbackendactionlookup.h"
 #include "polkitbackendlocalauthority.h"
@@ -133,74 +130,6 @@ polkit_backend_authority_enumerate_actions (PolkitBackendAuthority   *authority,
     }
 }
 
-/**
- * polkit_backend_authority_enumerate_users:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that initiated the query.
- * @error: Return location for error or %NULL.
- *
- * Enumerates all users known by @authority.
- *
- * Returns: A list of #PolkitIdentity objects or %NULL if @error is set. The returned list
- * should be freed with g_list_free() after each element have been freed with g_object_unref().
- **/
-GList *
-polkit_backend_authority_enumerate_users (PolkitBackendAuthority   *authority,
-                                          PolkitSubject            *caller,
-                                          GError                  **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->enumerate_users == NULL)
-    {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_NOT_SUPPORTED,
-                   "Operation not supported");
-      return NULL;
-    }
-  else
-    {
-      return klass->enumerate_users (authority, caller, error);
-    }
-}
-
-/**
- * polkit_backend_authority_enumerate_groups:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that initiated the query.
- * @error: Return location for error or %NULL.
- *
- * Enumerates all groups known by @authority.
- *
- * Returns: A list of #PolkitIdentity objects or %NULL if @error is set. The returned list
- * should be freed with g_list_free() after each element have been freed with g_object_unref().
- **/
-GList *
-polkit_backend_authority_enumerate_groups (PolkitBackendAuthority   *authority,
-                                           PolkitSubject            *caller,
-                                           GError                  **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->enumerate_groups == NULL)
-    {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_NOT_SUPPORTED,
-                   "Operation not supported");
-      return NULL;
-    }
-  else
-    {
-      return klass->enumerate_groups (authority, caller, error);
-    }
-}
-
 /* ---------------------------------------------------------------------------------------------------- */
 
 /**
@@ -290,116 +219,6 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *au
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
-
-/**
- * polkit_backend_authority_enumerate_authorizations:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that initiated the query.
- * @identity: The identity to retrieve authorizations from.
- * @error: Return location for error or %NULL.
- *
- * Retrieves all authorizations for @identity.
- *
- * Returns: A list of #PolkitLocalAuthorization objects or %NULL if @error is set. The returned list
- * should be freed with g_list_free() after each element have been freed with g_object_unref().
- **/
-GList *
-polkit_backend_authority_enumerate_authorizations  (PolkitBackendAuthority    *authority,
-                                                    PolkitSubject             *caller,
-                                                    PolkitIdentity            *identity,
-                                                    GError                   **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->enumerate_authorizations == NULL)
-    {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_NOT_SUPPORTED,
-                   "Operation not supported");
-      return NULL;
-    }
-  else
-    {
-      return klass->enumerate_authorizations (authority, caller, identity, error);
-    }
-}
-
-/**
- * polkit_backend_authority_add_authorization:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that initiated the query.
- * @identity: The identity to add @authorization to.
- * @authorization: The authorization to add.
- * @error: Return location for error or %NULL.
- *
- * Adds @authorization to @identity.
- *
- * Returns: %TRUE if the operation succeeded or %FALSE if @error is set.
- **/
-gboolean
-polkit_backend_authority_add_authorization  (PolkitBackendAuthority    *authority,
-                                             PolkitSubject             *caller,
-                                             PolkitIdentity            *identity,
-                                             PolkitLocalAuthorization       *authorization,
-                                             GError                   **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->add_authorization == NULL)
-    {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_NOT_SUPPORTED,
-                   "Operation not supported");
-      return FALSE;
-    }
-  else
-    {
-      return klass->add_authorization (authority, caller, identity, authorization, error);
-    }
-}
-
-/**
- * polkit_backend_authority_remove_authorization:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that initiated the query.
- * @identity: The identity to remove @authorization from.
- * @authorization: The authorization to remove.
- * @error: Return location for error or %NULL.
- *
- * Removes @authorization from @identity.
- *
- * Returns: %TRUE if the operation succeeded or %FALSE if @error is set.
- **/
-gboolean
-polkit_backend_authority_remove_authorization  (PolkitBackendAuthority    *authority,
-                                                PolkitSubject             *caller,
-                                                PolkitIdentity            *identity,
-                                                PolkitLocalAuthorization       *authorization,
-                                                GError                   **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->remove_authorization == NULL)
-    {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_NOT_SUPPORTED,
-                   "Operation not supported");
-      return FALSE;
-    }
-  else
-    {
-      return klass->remove_authorization (authority, caller, identity, authorization, error);
-    }
-}
 
 /**
  * polkit_backend_authority_register_authentication_agent:
@@ -556,11 +375,9 @@ struct _ServerClass
 };
 
 static void authority_iface_init         (_PolkitAuthorityIface        *authority_iface);
-static void local_authority_iface_init (_PolkitLocalAuthorityIface *local_authority_iface);
 
 G_DEFINE_TYPE_WITH_CODE (Server, server, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_AUTHORITY, authority_iface_init)
-                         G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_LOCAL_AUTHORITY, local_authority_iface_init)
                          );
 
 static void
@@ -673,112 +490,6 @@ authority_handle_enumerate_actions (_PolkitAuthority        *instance,
  out:
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
-  g_object_unref (caller);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-local_authority_handle_enumerate_users (_PolkitLocalAuthority *instance,
-                                          EggDBusMethodInvocation *method_invocation)
-{
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  EggDBusArraySeq *array;
-  GError *error;
-  GList *identities;
-  GList *l;
-
-  error = NULL;
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  identities = polkit_backend_authority_enumerate_users (server->authority,
-                                                         caller,
-                                                         &error);
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
-
-  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_IDENTITY,
-                                  (GDestroyNotify) g_object_unref,
-                                  NULL,
-                                  NULL);
-
-  for (l = identities; l != NULL; l = l->next)
-    {
-      PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
-      _PolkitIdentity *real;
-
-      real = polkit_identity_get_real (identity);
-      egg_dbus_array_seq_add (array, real);
-    }
-
-  _polkit_local_authority_handle_enumerate_users_finish (method_invocation, array);
-
-  g_object_unref (array);
-
- out:
-
-  g_list_foreach (identities, (GFunc) g_object_unref, NULL);
-  g_list_free (identities);
-
-  g_object_unref (caller);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-local_authority_handle_enumerate_groups (_PolkitLocalAuthority *instance,
-                                           EggDBusMethodInvocation *method_invocation)
-{
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  EggDBusArraySeq *array;
-  GError *error;
-  GList *identities;
-  GList *l;
-
-  error = NULL;
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  identities = polkit_backend_authority_enumerate_groups (server->authority,
-                                                          caller,
-                                                          &error);
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
-
-  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_IDENTITY,
-                                  (GDestroyNotify) g_object_unref,
-                                  NULL,
-                                  NULL);
-
-  for (l = identities; l != NULL; l = l->next)
-    {
-      PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
-      _PolkitIdentity *real;
-
-      real = polkit_identity_get_real (identity);
-      egg_dbus_array_seq_add (array, real);
-    }
-
-  _polkit_local_authority_handle_enumerate_groups_finish (method_invocation, array);
-
-  g_object_unref (array);
-
- out:
-
-  g_list_foreach (identities, (GFunc) g_object_unref, NULL);
-  g_list_free (identities);
-
   g_object_unref (caller);
 }
 
@@ -927,149 +638,6 @@ authority_handle_cancel_check_authorization (_PolkitAuthority               *ins
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-local_authority_handle_enumerate_authorizations (_PolkitLocalAuthority        *instance,
-                                                   _PolkitIdentity                *real_identity,
-                                                   EggDBusMethodInvocation        *method_invocation)
-{
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  PolkitIdentity *identity;
-  EggDBusArraySeq *array;
-  GError *error;
-  GList *authorizations;
-  GList *l;
-
-  error = NULL;
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  identity = polkit_identity_new_for_real (real_identity);
-
-  authorizations = polkit_backend_authority_enumerate_authorizations (server->authority,
-                                                                      caller,
-                                                                      identity,
-                                                                      &error);
-
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
-
-  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_IDENTITY,
-                                  (GDestroyNotify) g_object_unref,
-                                  NULL,
-                                  NULL);
-
-  for (l = authorizations; l != NULL; l = l->next)
-    {
-      PolkitLocalAuthorization *authorization = POLKIT_LOCAL_AUTHORIZATION (l->data);
-      _PolkitLocalAuthorization *real;
-
-      real = polkit_local_authorization_get_real (authorization);
-      egg_dbus_array_seq_add (array, real);
-    }
-
-  _polkit_local_authority_handle_enumerate_authorizations_finish (method_invocation, array);
-
-  g_object_unref (array);
-
- out:
-
-  g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
-  g_list_free (authorizations);
-
-  g_object_unref (caller);
-
-  g_object_unref (identity);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-local_authority_handle_add_authorization (_PolkitLocalAuthority        *instance,
-                                            _PolkitIdentity                *real_identity,
-                                            _PolkitLocalAuthorization           *real_authorization,
-                                            EggDBusMethodInvocation        *method_invocation)
-{
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  PolkitIdentity *identity;
-  PolkitLocalAuthorization *authorization;
-  GError *error;
-
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  identity = polkit_identity_new_for_real (real_identity);
-
-  authorization = polkit_local_authorization_new_for_real (real_authorization);
-
-  error = NULL;
-  if (!polkit_backend_authority_add_authorization (server->authority,
-                                                   caller,
-                                                   identity,
-                                                   authorization,
-                                                   &error))
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
-
-  _polkit_local_authority_handle_add_authorization_finish (method_invocation);
-
- out:
-  g_object_unref (authorization);
-  g_object_unref (identity);
-  g_object_unref (caller);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-local_authority_handle_remove_authorization (_PolkitLocalAuthority        *instance,
-                                               _PolkitIdentity                *real_identity,
-                                               _PolkitLocalAuthorization           *real_authorization,
-                                               EggDBusMethodInvocation        *method_invocation)
-{
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  PolkitIdentity *identity;
-  PolkitLocalAuthorization *authorization;
-  GError *error;
-
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  identity = polkit_identity_new_for_real (real_identity);
-
-  authorization = polkit_local_authorization_new_for_real (real_authorization);
-
-  error = NULL;
-  if (!polkit_backend_authority_remove_authorization (server->authority,
-                                                      caller,
-                                                      identity,
-                                                      authorization,
-                                                      &error))
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-      goto out;
-    }
-
-  _polkit_local_authority_handle_remove_authorization_finish (method_invocation);
-
- out:
-  g_object_unref (authorization);
-  g_object_unref (identity);
-  g_object_unref (caller);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
 authority_handle_register_authentication_agent (_PolkitAuthority               *instance,
                                                 const gchar                    *session_id,
                                                 const gchar                    *locale,
@@ -1184,16 +752,6 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
 }
 
 static void
-local_authority_iface_init (_PolkitLocalAuthorityIface *local_authority_iface)
-{
-  local_authority_iface->handle_enumerate_users                 = local_authority_handle_enumerate_users;
-  local_authority_iface->handle_enumerate_groups                = local_authority_handle_enumerate_groups;
-  local_authority_iface->handle_enumerate_authorizations        = local_authority_handle_enumerate_authorizations;
-  local_authority_iface->handle_add_authorization               = local_authority_handle_add_authorization;
-  local_authority_iface->handle_remove_authorization            = local_authority_handle_remove_authorization;
-}
-
-static void
 authority_died (gpointer user_data,
                 GObject *where_the_object_was)
 {
@@ -1274,8 +832,6 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
   egg_dbus_connection_register_interface (server->system_bus,
                                           object_path,
                                           _POLKIT_TYPE_AUTHORITY,
-                                          G_OBJECT (server),
-                                          _POLKIT_TYPE_LOCAL_AUTHORITY,
                                           G_OBJECT (server),
                                           G_TYPE_INVALID);
 

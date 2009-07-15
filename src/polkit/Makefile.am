@@ -22,19 +22,18 @@ BUILT_SOURCES = 						\
 # Build all the PolicyKit D-Bus code here, even the code we
 # only in the daemon for agent interaction
 #
-polkit-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.LocalAuthority.xml
+polkit-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml
 	eggdbus-binding-tool											\
 		--namespace "_Polkit"										\
 		--dbus-namespace "org.freedesktop.PolicyKit1"							\
 		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.Authority.xml 		\
-		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.LocalAuthority.xml		\
 		--introspection-xml $(top_srcdir)/data/org.freedesktop.PolicyKit1.AuthenticationAgent.xml	\
 		--stamp-file polkit-built-sources.stamp								\
 	$(NULL)
 
 # keep in sync with contents of polkit-built-sources.stamp (Thanks autotools)
 #
-polkit_built_sources = _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingsmarshal.list _polkitbindings.c _polkitbindings.h _polkitbindingstypes.h _polkitauthenticationagent.c _polkitauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitlocalauthority.c _polkitlocalauthority.h docbook-interface-org.freedesktop.PolicyKit1.LocalAuthority.xml _polkitauthority.c _polkitauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkiterror.c _polkiterror.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkitlocalauthorization.c _polkitlocalauthorization.h _polkitactiondescription.c _polkitactiondescription.h _polkitidentity.c _polkitidentity.h _polkitsubject.c _polkitsubject.h
+polkit_built_sources = _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingsmarshal.list _polkitbindings.c _polkitbindings.h _polkitbindingstypes.h _polkitauthenticationagent.c _polkitauthenticationagent.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml _polkitauthority.c _polkitauthority.h docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkiterror.c _polkiterror.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkitactiondescription.c _polkitactiondescription.h _polkitidentity.c _polkitidentity.h _polkitsubject.c _polkitsubject.h
 
 lib_LTLIBRARIES=libpolkit-gobject-1.la
 
