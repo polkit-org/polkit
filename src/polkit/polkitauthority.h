@@ -71,14 +71,14 @@ PolkitAuthorizationResult *polkit_authority_check_authorization_sync (PolkitAuth
                                                                       GError                       **error);
 
 gboolean                   polkit_authority_register_authentication_agent_sync (PolkitAuthority     *authority,
-                                                                                const gchar         *session_id,
+                                                                                PolkitSubject       *subject,
                                                                                 const gchar         *locale,
                                                                                 const gchar         *object_path,
                                                                                 GCancellable        *cancellable,
                                                                                 GError             **error);
 
 gboolean                   polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *authority,
-                                                                                  const gchar         *session_id,
+                                                                                  PolkitSubject       *subject,
                                                                                   const gchar         *object_path,
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
@@ -88,6 +88,16 @@ gboolean                   polkit_authority_authentication_agent_response_sync (
                                                                                 PolkitIdentity      *identity,
                                                                                 GCancellable        *cancellable,
                                                                                 GError             **error);
+
+GList                     *polkit_authority_enumerate_temporary_authorizations_sync (PolkitAuthority     *authority,
+                                                                                     PolkitSubject       *subject,
+                                                                                     GCancellable        *cancellable,
+                                                                                     GError             **error);
+
+gboolean                   polkit_authority_revoke_temporary_authorizations_sync (PolkitAuthority     *authority,
+                                                                                  PolkitSubject       *subject,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GError             **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -114,7 +124,7 @@ PolkitAuthorizationResult *polkit_authority_check_authorization_finish (PolkitAu
                                                                         GError                  **error);
 
 void                       polkit_authority_register_authentication_agent (PolkitAuthority     *authority,
-                                                                           const gchar         *session_id,
+                                                                           PolkitSubject       *subject,
                                                                            const gchar         *locale,
                                                                            const gchar         *object_path,
                                                                            GCancellable        *cancellable,
@@ -126,7 +136,7 @@ gboolean                   polkit_authority_register_authentication_agent_finish
                                                                                   GError         **error);
 
 void                       polkit_authority_unregister_authentication_agent (PolkitAuthority     *authority,
-                                                                             const gchar         *session_id,
+                                                                             PolkitSubject       *subject,
                                                                              const gchar         *object_path,
                                                                              GCancellable        *cancellable,
                                                                              GAsyncReadyCallback  callback,
@@ -146,6 +156,26 @@ void                       polkit_authority_authentication_agent_response (Polki
 gboolean                   polkit_authority_authentication_agent_response_finish (PolkitAuthority *authority,
                                                                                   GAsyncResult    *res,
                                                                                   GError         **error);
+
+void                       polkit_authority_enumerate_temporary_authorizations (PolkitAuthority     *authority,
+                                                                                PolkitSubject       *subject,
+                                                                                GCancellable        *cancellable,
+                                                                                GAsyncReadyCallback  callback,
+                                                                                gpointer             user_data);
+
+GList                     *polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *authority,
+                                                                                       GAsyncResult    *res,
+                                                                                       GError         **error);
+
+void                       polkit_authority_revoke_temporary_authorizations (PolkitAuthority     *authority,
+                                                                             PolkitSubject       *subject,
+                                                                             GCancellable        *cancellable,
+                                                                             GAsyncReadyCallback  callback,
+                                                                             gpointer             user_data);
+
+gboolean                   polkit_authority_revoke_temporary_authorizations_finish (PolkitAuthority *authority,
+                                                                                    GAsyncResult    *res,
+                                                                                    GError         **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

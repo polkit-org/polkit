@@ -54,6 +54,9 @@ typedef struct _PolkitSubjectIface PolkitSubjectIface;
  * @equal: Checks if two #PolkitSubject<!-- -->s are equal.
  * @to_string: Serializes a #PolkitSubject to a string that can be
  * used in polkit_subject_from_string().
+ * @exists: Asynchronously check if a #PolkitSubject exists.
+ * @exists_finish: Finishes checking if a #PolkitSubject exists.
+ * @exists_sync: Synchronously check if a #PolkitSubject exists.
  *
  * An interface for subjects.
  */
@@ -61,21 +64,44 @@ struct _PolkitSubjectIface
 {
   GTypeInterface parent_iface;
 
-  guint    (*hash)      (PolkitSubject *subject);
+  guint    (*hash)          (PolkitSubject       *subject);
 
-  gboolean (*equal)     (PolkitSubject *a,
-                         PolkitSubject *b);
+  gboolean (*equal)         (PolkitSubject       *a,
+                             PolkitSubject       *b);
 
-  gchar *  (*to_string) (PolkitSubject *subject);
+  gchar *  (*to_string)     (PolkitSubject       *subject);
+
+  void     (*exists)        (PolkitSubject       *subject,
+                             GCancellable        *cancellable,
+                             GAsyncReadyCallback  callback,
+                             gpointer             user_data);
+
+  gboolean (*exists_finish) (PolkitSubject       *subject,
+                             GAsyncResult        *res,
+                             GError             **error);
+
+  gboolean (*exists_sync)   (PolkitSubject       *subject,
+                             GCancellable        *cancellable,
+                             GError             **error);
 };
 
-GType          polkit_subject_get_type     (void) G_GNUC_CONST;
-guint          polkit_subject_hash         (PolkitSubject *subject);
-gboolean       polkit_subject_equal        (PolkitSubject *a,
-                                            PolkitSubject *b);
-gchar         *polkit_subject_to_string    (PolkitSubject *subject);
-PolkitSubject *polkit_subject_from_string  (const gchar   *str,
-                                            GError       **error);
+GType          polkit_subject_get_type      (void) G_GNUC_CONST;
+guint          polkit_subject_hash          (PolkitSubject       *subject);
+gboolean       polkit_subject_equal         (PolkitSubject       *a,
+                                             PolkitSubject       *b);
+gchar         *polkit_subject_to_string     (PolkitSubject       *subject);
+PolkitSubject *polkit_subject_from_string   (const gchar         *str,
+                                             GError             **error);
+void           polkit_subject_exists        (PolkitSubject       *subject,
+                                             GCancellable        *cancellable,
+                                             GAsyncReadyCallback  callback,
+                                             gpointer             user_data);
+gboolean       polkit_subject_exists_finish (PolkitSubject       *subject,
+                                             GAsyncResult        *res,
+                                             GError             **error);
+gboolean       polkit_subject_exists_sync   (PolkitSubject       *subject,
+                                             GCancellable        *cancellable,
+                                             GError             **error);
 
 G_END_DECLS
 

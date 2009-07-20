@@ -224,10 +224,158 @@ polkit_system_bus_name_to_string (PolkitSubject *subject)
   return g_strdup_printf ("system-bus-name:%s", system_bus_name->name);
 }
 
+
+static void
+name_exists_cb (GObject      *source_object,
+                GAsyncResult *res,
+                gpointer      user_data)
+{
+  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
+  EggDBusMessage *reply;
+  GError *error;
+
+  error = NULL;
+  reply = egg_dbus_connection_send_message_with_reply_finish (EGG_DBUS_CONNECTION (source_object),
+                                                              res,
+                                                              &error);
+  if (reply != NULL)
+    {
+      gboolean has_owner;
+      if (egg_dbus_message_extract_boolean (reply, &has_owner, &error))
+        {
+          g_simple_async_result_set_op_res_gboolean (simple, has_owner);
+        }
+      g_object_unref (reply);
+    }
+
+  if (error != NULL)
+    {
+      g_simple_async_result_set_from_error (simple, error);
+      g_error_free (error);
+    }
+
+  g_simple_async_result_complete (simple);
+  g_object_unref (simple);
+}
+
+static void
+polkit_system_bus_name_exists (PolkitSubject       *subject,
+                               GCancellable        *cancellable,
+                               GAsyncReadyCallback  callback,
+                               gpointer             user_data)
+{
+  PolkitSystemBusName *name = POLKIT_SYSTEM_BUS_NAME (subject);
+  EggDBusMessage *message;
+  EggDBusConnection *connection;
+  GSimpleAsyncResult *simple;
+
+  message = NULL;
+  connection = NULL;
+
+  connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+
+  message = egg_dbus_connection_new_message_for_method_call (connection,
+                                                             NULL,
+                                                             "org.freedesktop.DBus",
+                                                             "/org/freedesktop/DBus",
+                                                             "org.freedesktop.DBus",
+                                                             "NameHasOwner");
+  egg_dbus_message_append_string (message, name->name, NULL);
+
+  simple = g_simple_async_result_new (G_OBJECT (name),
+                                      callback,
+                                      user_data,
+                                      polkit_system_bus_name_exists);
+
+  egg_dbus_connection_send_message_with_reply (connection,
+                                               EGG_DBUS_CALL_FLAGS_NONE,
+                                               message,
+                                               NULL,
+                                               cancellable,
+                                               name_exists_cb,
+                                               simple);
+
+  g_object_unref (message);
+  g_object_unref (connection);
+}
+
+static gboolean
+polkit_system_bus_name_exists_sync (PolkitSubject   *subject,
+                                    GCancellable    *cancellable,
+                                    GError         **error)
+{
+  PolkitSystemBusName *name = POLKIT_SYSTEM_BUS_NAME (subject);
+  EggDBusMessage *message;
+  EggDBusMessage *reply;
+  EggDBusConnection *connection;
+  gboolean ret;
+
+  message = NULL;
+  reply = NULL;
+  connection = NULL;
+  ret = FALSE;
+
+  connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+
+  message = egg_dbus_connection_new_message_for_method_call (connection,
+                                                             NULL,
+                                                             "org.freedesktop.DBus",
+                                                             "/org/freedesktop/DBus",
+                                                             "org.freedesktop.DBus",
+                                                             "NameHasOwner");
+  egg_dbus_message_append_string (message, name->name, NULL);
+
+  reply = egg_dbus_connection_send_message_with_reply_sync (connection,
+                                                            EGG_DBUS_CALL_FLAGS_NONE,
+                                                            message,
+                                                            NULL,
+                                                            cancellable,
+                                                            error);
+  if (reply == NULL)
+    goto out;
+
+  if (!egg_dbus_message_extract_boolean (reply, &ret, error))
+    goto out;
+
+ out:
+  if (message != NULL)
+    g_object_unref (message);
+  if (reply != NULL)
+    g_object_unref (reply);
+  if (connection != NULL)
+    g_object_unref (connection);
+
+  return ret;
+}
+
+static gboolean
+polkit_system_bus_name_exists_finish (PolkitSubject  *subject,
+                                      GAsyncResult   *res,
+                                      GError        **error)
+{
+  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
+  gboolean ret;
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_system_bus_name_exists);
+
+  ret = FALSE;
+
+  if (g_simple_async_result_propagate_error (simple, error))
+    goto out;
+
+  ret = g_simple_async_result_get_op_res_gboolean (simple);
+
+ out:
+  return ret;
+}
+
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
-  subject_iface->hash      = polkit_system_bus_name_hash;
-  subject_iface->equal     = polkit_system_bus_name_equal;
-  subject_iface->to_string = polkit_system_bus_name_to_string;
+  subject_iface->hash          = polkit_system_bus_name_hash;
+  subject_iface->equal         = polkit_system_bus_name_equal;
+  subject_iface->to_string     = polkit_system_bus_name_to_string;
+  subject_iface->exists        = polkit_system_bus_name_exists;
+  subject_iface->exists_finish = polkit_system_bus_name_exists_finish;
+  subject_iface->exists_sync   = polkit_system_bus_name_exists_sync;
 }

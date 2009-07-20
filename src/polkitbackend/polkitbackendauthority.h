@@ -86,6 +86,14 @@ struct _PolkitBackendAuthority
  * doesn't support the operation. See
  * polkit_backend_authority_authentication_agent_response() for
  * details.
+ * @enumerate_temporary_authorizations: Called to enumerate temporary
+ * authorizations or %NULL if the backend doesn't support the operation.
+ * See polkit_backend_authority_enumerate_temporary_authorizations()
+ * for details.
+ * @revoke_temporary_authorizations: Called to revoke temporary
+ * authorizations or %NULL if the backend doesn't support the operation.
+ * See polkit_backend_authority_revoke_temporary_authorizations()
+ * for details.
  * @system_bus_name_owner_changed: temporary VFunc, to be removed before 1.0.
  *
  * VFuncs that authority backends need to implement.
@@ -121,14 +129,14 @@ struct _PolkitBackendAuthorityClass
 
   gboolean (*register_authentication_agent) (PolkitBackendAuthority   *authority,
                                              PolkitSubject            *caller,
-                                             const gchar              *session_id,
+                                             PolkitSubject            *subject,
                                              const gchar              *locale,
                                              const gchar              *object_path,
                                              GError                  **error);
 
   gboolean (*unregister_authentication_agent) (PolkitBackendAuthority   *authority,
                                                PolkitSubject            *caller,
-                                               const gchar              *session_id,
+                                               PolkitSubject            *subject,
                                                const gchar              *object_path,
                                                GError                  **error);
 
@@ -137,6 +145,16 @@ struct _PolkitBackendAuthorityClass
                                              const gchar              *cookie,
                                              PolkitIdentity           *identity,
                                              GError                  **error);
+
+  GList *(*enumerate_temporary_authorizations) (PolkitBackendAuthority   *authority,
+                                                PolkitSubject            *caller,
+                                                PolkitSubject            *subject,
+                                                GError                  **error);
+
+  gboolean (*revoke_temporary_authorizations) (PolkitBackendAuthority   *authority,
+                                               PolkitSubject            *caller,
+                                               PolkitSubject            *subject,
+                                               GError                  **error);
 
   /* TODO: need something more efficient such that we don't watch all name changes */
   void (*system_bus_name_owner_changed)  (PolkitBackendAuthority   *authority,
@@ -210,14 +228,14 @@ PolkitAuthorizationResult *polkit_backend_authority_check_authorization_finish (
 
 gboolean polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority    *authority,
                                                                  PolkitSubject             *caller,
-                                                                 const gchar               *session_id,
+                                                                 PolkitSubject             *subject,
                                                                  const gchar               *locale,
                                                                  const gchar               *object_path,
                                                                  GError                   **error);
 
 gboolean polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,
                                                                    PolkitSubject             *caller,
-                                                                   const gchar               *session_id,
+                                                                   PolkitSubject             *subject,
                                                                    const gchar               *object_path,
                                                                    GError                   **error);
 
@@ -226,6 +244,16 @@ gboolean polkit_backend_authority_authentication_agent_response (PolkitBackendAu
                                                                  const gchar               *cookie,
                                                                  PolkitIdentity            *identity,
                                                                  GError                   **error);
+
+GList *polkit_backend_authority_enumerate_temporary_authorizations (PolkitBackendAuthority   *authority,
+                                                                    PolkitSubject            *caller,
+                                                                    PolkitSubject            *subject,
+                                                                    GError                  **error);
+
+gboolean polkit_backend_authority_revoke_temporary_authorizations (PolkitBackendAuthority   *authority,
+                                                                   PolkitSubject            *caller,
+                                                                   PolkitSubject            *subject,
+                                                                   GError                  **error);
 
 /* --- */
 

@@ -50,7 +50,7 @@
 
 typedef struct TemporaryAuthorizationStore TemporaryAuthorizationStore;
 
-static TemporaryAuthorizationStore *temporary_authorization_store_new (void);
+static TemporaryAuthorizationStore *temporary_authorization_store_new (PolkitBackendInteractiveAuthority *authority);
 static void                         temporary_authorization_store_free (TemporaryAuthorizationStore *store);
 
 static gboolean temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *store,
@@ -59,6 +59,7 @@ static gboolean temporary_authorization_store_has_authorization (TemporaryAuthor
 
 static void     temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *store,
                                                                  PolkitSubject               *subject,
+                                                                 PolkitSubject               *session,
                                                                  const gchar                 *action_id);
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -92,8 +93,11 @@ static void                authentication_agent_initiate_challenge (Authenticati
                                                                     AuthenticationAgentCallback  callback,
                                                                     gpointer                     user_data);
 
+static PolkitSubject *authentication_agent_get_session (AuthenticationAgent *agent);
+
 static AuthenticationAgent *get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authority,
                                                                   PolkitSubject *subject);
+
 
 static AuthenticationSession *get_authentication_session_for_cookie (PolkitBackendInteractiveAuthority *authority,
                                                                      const gchar *cookie);
@@ -140,23 +144,34 @@ static PolkitAuthorizationResult *check_authorization_sync (PolkitBackendAuthori
                                                             GError                        **error);
 
 static gboolean polkit_backend_interactive_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
-                                                                              PolkitSubject            *caller,
-                                                                              const gchar              *session_id,
-                                                                              const gchar              *locale,
-                                                                              const gchar              *object_path,
-                                                                              GError                  **error);
+                                                                                    PolkitSubject            *caller,
+                                                                                    PolkitSubject            *subject,
+                                                                                    const gchar              *locale,
+                                                                                    const gchar              *object_path,
+                                                                                    GError                  **error);
 
 static gboolean polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
-                                                                                PolkitSubject            *caller,
-                                                                                const gchar              *session_id,
-                                                                                const gchar              *object_path,
-                                                                                GError                  **error);
+                                                                                      PolkitSubject            *caller,
+                                                                                      PolkitSubject            *subject,
+                                                                                      const gchar              *object_path,
+                                                                                      GError                  **error);
 
 static gboolean polkit_backend_interactive_authority_authentication_agent_response (PolkitBackendAuthority   *authority,
                                                                               PolkitSubject            *caller,
                                                                               const gchar              *cookie,
                                                                               PolkitIdentity           *identity,
                                                                               GError                  **error);
+
+static GList *polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitBackendAuthority   *authority,
+                                                                                       PolkitSubject            *caller,
+                                                                                       PolkitSubject            *subject,
+                                                                                       GError                  **error);
+
+
+static gboolean polkit_backend_interactive_authority_revoke_temporary_authorizations (PolkitBackendAuthority   *authority,
+                                                                                      PolkitSubject            *caller,
+                                                                                      PolkitSubject            *subject,
+                                                                                      GError                  **error);
 
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -208,7 +223,7 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
                     (GCallback) action_pool_changed,
                     authority);
 
-  priv->temporary_authorization_store = temporary_authorization_store_new ();
+  priv->temporary_authorization_store = temporary_authorization_store_new (authority);
 
   priv->hash_session_to_authentication_agent = g_hash_table_new_full ((GHashFunc) polkit_subject_hash,
                                                                       (GEqualFunc) polkit_subject_equal,
@@ -258,6 +273,9 @@ polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthori
   authority_class->register_authentication_agent   = polkit_backend_interactive_authority_register_authentication_agent;
   authority_class->unregister_authentication_agent = polkit_backend_interactive_authority_unregister_authentication_agent;
   authority_class->authentication_agent_response   = polkit_backend_interactive_authority_authentication_agent_response;
+  authority_class->enumerate_temporary_authorizations = polkit_backend_interactive_authority_enumerate_temporary_authorizations;
+  authority_class->revoke_temporary_authorizations = polkit_backend_interactive_authority_revoke_temporary_authorizations;
+
 
 
   g_type_class_add_private (klass, sizeof (PolkitBackendInteractiveAuthorityPrivate));
@@ -323,7 +341,10 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
         {
           temporary_authorization_store_add_authorization (priv->temporary_authorization_store,
                                                            subject,
+                                                           authentication_agent_get_session (agent),
                                                            action_id);
+          /* we've added a temporary authorization, let the user know */
+          g_signal_emit_by_name (authority, "changed");
         }
     }
   else
@@ -948,6 +969,12 @@ authentication_agent_new_cookie (AuthenticationAgent *agent)
   return g_strdup_printf ("cookie%d", counter++);
 }
 
+static PolkitSubject *
+authentication_agent_get_session (AuthenticationAgent *agent)
+{
+  return agent->session;
+}
+
 static void
 authentication_agent_free (AuthenticationAgent *agent)
 {
@@ -1489,11 +1516,11 @@ authentication_session_cancel (AuthenticationSession *session)
 
 static gboolean
 polkit_backend_interactive_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
-                                                              PolkitSubject            *caller,
-                                                              const gchar              *session_id,
-                                                              const gchar              *locale,
-                                                              const gchar              *object_path,
-                                                              GError                  **error)
+                                                                    PolkitSubject            *caller,
+                                                                    PolkitSubject            *subject,
+                                                                    const gchar              *locale,
+                                                                    const gchar              *object_path,
+                                                                    GError                  **error)
 {
   PolkitBackendInteractiveAuthority *interactive_authority;
   PolkitBackendInteractiveAuthorityPrivate *priv;
@@ -1507,12 +1534,12 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
 
-  if (session_id != NULL && strlen (session_id) > 0)
+  if (!POLKIT_IS_UNIX_SESSION (subject))
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "The session_id parameter must be blank for now.");
+                   "Can only register PolkitUnixSession objects for now.");
       goto out;
     }
 
@@ -1524,7 +1551,16 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Cannot determine session");
+                   "Cannot determine session the caller is in");
+      goto out;
+    }
+
+  if (!polkit_subject_equal (session_for_caller, subject))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Passed session and the session the caller is in differs. They must be equal for now.");
       goto out;
     }
 
@@ -1566,10 +1602,10 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
 
 static gboolean
 polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
-                                                                PolkitSubject            *caller,
-                                                                const gchar              *session_id,
-                                                                const gchar              *object_path,
-                                                                GError                  **error)
+                                                                      PolkitSubject            *caller,
+                                                                      PolkitSubject            *subject,
+                                                                      const gchar              *object_path,
+                                                                      GError                  **error)
 {
   PolkitBackendInteractiveAuthority *interactive_authority;
   PolkitBackendInteractiveAuthorityPrivate *priv;
@@ -1583,12 +1619,12 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
   ret = FALSE;
   session_for_caller = NULL;
 
-  if (session_id != NULL && strlen (session_id) > 0)
+  if (!POLKIT_IS_UNIX_SESSION (subject))
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "The session_id parameter must be blank for now.");
+                   "Can only unregister PolkitUnixSession objects for now.");
       goto out;
     }
 
@@ -1600,7 +1636,16 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Cannot determine session");
+                   "Cannot determine session the caller is in");
+      goto out;
+    }
+
+  if (!polkit_subject_equal (session_for_caller, subject))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Passed session and the session the caller is in differs. They must be equal for now.");
       goto out;
     }
 
@@ -1804,43 +1849,41 @@ typedef struct TemporaryAuthorization TemporaryAuthorization;
 struct TemporaryAuthorizationStore
 {
   GList *authorizations;
+  PolkitBackendInteractiveAuthority *authority;
+  guint64 serial;
 };
 
 struct TemporaryAuthorization
 {
+  TemporaryAuthorizationStore *store;
   PolkitSubject *subject;
+  PolkitSubject *session;
+  gchar *id;
   gchar *action_id;
   guint64 time_granted;
+  guint64 time_expires;
+  guint expiration_timeout_id;
 };
 
 static void
 temporary_authorization_free (TemporaryAuthorization *authorization)
 {
+  g_free (authorization->id);
   g_object_unref (authorization->subject);
+  g_object_unref (authorization->session);
   g_free (authorization->action_id);
+  if (authorization->expiration_timeout_id > 0)
+    g_source_remove (authorization->expiration_timeout_id);
   g_free (authorization);
 }
 
-static TemporaryAuthorization *
-temporary_authorization_new (PolkitSubject *subject,
-                             const gchar   *action_id)
-{
-  TemporaryAuthorization *authorization;
-
-  authorization = g_new0 (TemporaryAuthorization, 1);
-  authorization->subject = g_object_ref (subject);
-  authorization->action_id = g_strdup (action_id);
-  authorization->time_granted = time (NULL);
-
-  return authorization;
-}
-
 static TemporaryAuthorizationStore *
-temporary_authorization_store_new (void)
+temporary_authorization_store_new (PolkitBackendInteractiveAuthority *authority)
 {
   TemporaryAuthorizationStore *store;
 
   store = g_new0 (TemporaryAuthorizationStore, 1);
+  store->authority = authority;
   store->authorizations = NULL;
 
   return store;
@@ -1883,16 +1926,208 @@ temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *st
   return ret;
 }
 
+static gboolean
+on_expiration_timeout (gpointer user_data)
+{
+  TemporaryAuthorization *authorization = user_data;
+
+  authorization->store->authorizations = g_list_remove (authorization->store->authorizations,
+                                                        authorization);
+  authorization->expiration_timeout_id = 0;
+  g_signal_emit_by_name (authorization->store->authority, "changed");
+  temporary_authorization_free (authorization);
+
+  /* remove source */
+  return FALSE;
+}
+
 static void
 temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *store,
                                                  PolkitSubject               *subject,
+                                                 PolkitSubject               *session,
                                                  const gchar                 *action_id)
 {
+  TemporaryAuthorization *authorization;
+  guint expiration_seconds;
+
   g_return_if_fail (store != NULL);
   g_return_if_fail (POLKIT_IS_SUBJECT (subject));
   g_return_if_fail (action_id != NULL);
   g_return_if_fail (!temporary_authorization_store_has_authorization (store, subject, action_id));
 
-  store->authorizations = g_list_prepend (store->authorizations,
-                                          temporary_authorization_new (subject, action_id));
+  /* TODO: right now this is hard-coded - we could make it a propery on the
+   *       PolkitBackendInteractiveAuthority class. Or we could even read
+   *       it per action from an annotation.
+   */
+  expiration_seconds = 5 * 60;
+
+  authorization = g_new0 (TemporaryAuthorization, 1);
+  authorization->id = g_strdup_printf ("tmpauthz%" G_GUINT64_FORMAT, store->serial++);
+  authorization->store = store;
+  authorization->subject = g_object_ref (subject);
+  authorization->session = g_object_ref (session);
+  authorization->action_id = g_strdup (action_id);
+  authorization->time_granted = time (NULL);
+  authorization->time_expires = authorization->time_granted + expiration_seconds;
+  authorization->expiration_timeout_id = g_timeout_add (expiration_seconds * 1000,
+                                                        on_expiration_timeout,
+                                                        authorization);
+
+  store->authorizations = g_list_prepend (store->authorizations, authorization);
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static GList *
+polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitBackendAuthority   *authority,
+                                                                         PolkitSubject            *caller,
+                                                                         PolkitSubject            *subject,
+                                                                         GError                  **error)
+{
+  PolkitBackendInteractiveAuthority *interactive_authority;
+  PolkitBackendInteractiveAuthorityPrivate *priv;
+  PolkitSubject *session_for_caller;
+  GList *ret;
+  GList *l;
+
+  interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+
+  ret = NULL;
+  session_for_caller = NULL;
+
+  if (!POLKIT_IS_UNIX_SESSION (subject))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Can only handle PolkitUnixSession objects for now.");
+      goto out;
+    }
+
+  session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                               caller,
+                                                                               NULL);
+  if (session_for_caller == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Cannot determine session the caller is in");
+      goto out;
+    }
+
+  if (!polkit_subject_equal (session_for_caller, subject))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Passed session and the session the caller is in differs. They must be equal for now.");
+      goto out;
+    }
+
+  for (l = priv->temporary_authorization_store->authorizations; l != NULL; l = l->next)
+    {
+      TemporaryAuthorization *ta = l->data;
+      PolkitTemporaryAuthorization *tmp_authz;
+
+      if (!polkit_subject_equal (ta->session, subject))
+        continue;
+
+      tmp_authz = polkit_temporary_authorization_new (ta->id,
+                                                      ta->action_id,
+                                                      ta->subject,
+                                                      ta->time_granted,
+                                                      ta->time_expires);
+
+      ret = g_list_prepend (ret, tmp_authz);
+    }
+
+ out:
+  if (session_for_caller != NULL)
+    g_object_unref (session_for_caller);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gboolean
+polkit_backend_interactive_authority_revoke_temporary_authorizations (PolkitBackendAuthority   *authority,
+                                                                      PolkitSubject            *caller,
+                                                                      PolkitSubject            *subject,
+                                                                      GError                  **error)
+{
+  PolkitBackendInteractiveAuthority *interactive_authority;
+  PolkitBackendInteractiveAuthorityPrivate *priv;
+  PolkitSubject *session_for_caller;
+  gboolean ret;
+  GList *l;
+  GList *ll;
+  guint num_removed;
+
+  interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
+  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+
+  ret = FALSE;
+  session_for_caller = NULL;
+
+  if (!POLKIT_IS_UNIX_SESSION (subject))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Can only handle PolkitUnixSession objects for now.");
+      goto out;
+    }
+
+  session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                               caller,
+                                                                               NULL);
+  if (session_for_caller == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Cannot determine session the caller is in");
+      goto out;
+    }
+
+  if (!polkit_subject_equal (session_for_caller, subject))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Passed session and the session the caller is in differs. They must be equal for now.");
+      goto out;
+    }
+
+  num_removed = 0;
+  for (l = priv->temporary_authorization_store->authorizations; l != NULL; l = ll)
+    {
+      TemporaryAuthorization *ta = l->data;
+
+      ll = l->next;
+
+      if (!polkit_subject_equal (ta->session, subject))
+        continue;
+
+      priv->temporary_authorization_store->authorizations = g_list_remove (priv->temporary_authorization_store->authorizations, ta);
+      temporary_authorization_free (ta);
+
+      num_removed++;
+    }
+
+  if (num_removed > 0)
+    g_signal_emit_by_name (authority, "changed");
+
+  ret = TRUE;
+
+ out:
+  if (session_for_caller != NULL)
+    g_object_unref (session_for_caller);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */

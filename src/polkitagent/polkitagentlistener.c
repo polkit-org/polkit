@@ -70,7 +70,7 @@ struct _Server
 
   PolkitAgentListener *listener;
 
-  gchar *session_id;
+  PolkitSubject *subject;
   gchar *object_path;
 
   GHashTable *cookie_to_pending_auth;
@@ -103,7 +103,7 @@ server_register (Server   *server,
 
   local_error = NULL;
   if (!polkit_authority_register_authentication_agent_sync (server->authority,
-                                                            server->session_id,
+                                                            server->subject,
                                                             g_getenv ("LANG"),
                                                             server->object_path,
                                                             NULL,
@@ -199,7 +199,7 @@ server_finalize (GObject *object)
 
       error = NULL;
       if (!polkit_authority_unregister_authentication_agent_sync (server->authority,
-                                                                  server->session_id,
+                                                                  server->subject,
                                                                   server->object_path,
                                                                   NULL,
                                                                   &error))
@@ -209,7 +209,7 @@ server_finalize (GObject *object)
         }
     }
 
-  g_free (server->session_id);
+  g_object_unref (server->subject);
   g_free (server->object_path);
 
   g_object_unref (server->authority);
@@ -244,15 +244,15 @@ listener_died (gpointer user_data,
 /**
  * polkit_agent_register_listener:
  * @listener: An instance of a class that is derived from #PolkitAgentListener.
- * @session_id: The session id to become an authentication agent for or %NULL for the current session.
+ * @subject: The subject to become an authentication agent for, typically a #PolkitUnixSession object.
  * @object_path: The D-Bus object path to use for the authentication agent or %NULL for the default object path.
  * @error: Return location for error.
  *
- * Registers @listener with the PolicyKit daemon as an authentication agent for @session_id. This
+ * Registers @listener with the PolicyKit daemon as an authentication agent for @subject. This
  * is implemented by registering a D-Bus object at @object_path on the unique name assigned by the
  * system message bus.
  *
- * Whenever the PolicyKit daemon needs to authenticate the user of @session_id for an action, the methods
+ * Whenever the PolicyKit daemon needs to authenticate a processes that is related @subject, the methods
  * polkit_agent_listener_initiate_authentication() and polkit_agent_listener_initiate_authentication_finish()
  * will be invoked on @listener.
  *
@@ -265,14 +265,14 @@ listener_died (gpointer user_data,
  **/
 gboolean
 polkit_agent_register_listener (PolkitAgentListener  *listener,
-                                const gchar          *session_id,
+                                PolkitSubject        *subject,
                                 const gchar          *object_path,
                                 GError              **error)
 {
   Server *server;
 
   server = SERVER (g_object_new (TYPE_SERVER, NULL));
-  server->session_id = g_strdup (session_id);
+  server->subject = g_object_ref (subject);
   server->object_path = object_path != NULL ? g_strdup (object_path) :
                                               g_strdup ("/org/freedesktop/PolicyKit1/AuthenticationAgent");
   server->listener = listener;

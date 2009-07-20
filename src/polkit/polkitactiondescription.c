@@ -33,7 +33,7 @@
 /**
  * SECTION:polkitactiondescription
  * @title: PolkitActionDescription
- * @short_description: Actions
+ * @short_description: Description of Actions
  *
  * Object used to encapsulate a registered action.
  */

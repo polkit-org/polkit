@@ -38,6 +38,7 @@
 #include <polkit/polkitcheckauthorizationflags.h>
 #include <polkit/polkitauthority.h>
 #include <polkit/polkitdetails.h>
+#include <polkit/polkittemporaryauthorization.h>
 
 #undef _POLKIT_INSIDE_POLKIT_H
 

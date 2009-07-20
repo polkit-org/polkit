@@ -126,6 +126,74 @@ polkit_subject_to_string (PolkitSubject *subject)
 }
 
 /**
+ * polkit_subject_exists:
+ * @subject: A #PolkitSubject.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously checks if @subject exists.
+ *
+ * When the operation is finished, @callback will be invoked. You can
+ * then call polkit_subject_exists_finish() to get the result of the
+ * operation.
+ **/
+void
+polkit_subject_exists (PolkitSubject       *subject,
+                       GCancellable        *cancellable,
+                       GAsyncReadyCallback  callback,
+                       gpointer             user_data)
+{
+  POLKIT_SUBJECT_GET_IFACE (subject)->exists (subject,
+                                              cancellable,
+                                              callback,
+                                              user_data);
+}
+
+/**
+ * polkit_subject_exists_finish:
+ * @subject: A #PolkitSubject.
+ * @res: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to polkit_subject_exists().
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes checking whether a subject exists.
+ *
+ * Returns: %TRUE if the subject exists, %FALSE if not or @error is set.
+ */
+gboolean
+polkit_subject_exists_finish (PolkitSubject   *subject,
+                              GAsyncResult    *res,
+                              GError         **error)
+{
+  return POLKIT_SUBJECT_GET_IFACE (subject)->exists_finish (subject,
+                                                            res,
+                                                            error);
+}
+
+/**
+ * polkit_subject_exists_sync:
+ * @subject: A #PolkitSubject.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Checks if @subject exists.
+ *
+ * This is a synchronous blocking call, see polkit_subject_exists()
+ * for the asynchronous version.
+ *
+ * Returns: %TRUE if the subject exists, %FALSE if not or @error is set.
+ */
+gboolean
+polkit_subject_exists_sync   (PolkitSubject  *subject,
+                              GCancellable   *cancellable,
+                              GError        **error)
+{
+  return POLKIT_SUBJECT_GET_IFACE (subject)->exists_sync (subject,
+                                                          cancellable,
+                                                          error);
+}
+
+/**
  * polkit_subject_from_string:
  * @str: A string obtained from polkit_subject_to_string().
  * @error: Return location for error.

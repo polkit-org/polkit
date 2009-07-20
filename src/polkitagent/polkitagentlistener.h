@@ -93,6 +93,7 @@ struct _PolkitAgentListenerClass
 };
 
 GType     polkit_agent_listener_get_type                        (void) G_GNUC_CONST;
+
 void      polkit_agent_listener_initiate_authentication         (PolkitAgentListener  *listener,
                                                                  const gchar          *action_id,
                                                                  const gchar          *message,
@@ -103,14 +104,15 @@ void      polkit_agent_listener_initiate_authentication         (PolkitAgentList
                                                                  GCancellable         *cancellable,
                                                                  GAsyncReadyCallback   callback,
                                                                  gpointer              user_data);
+
 gboolean  polkit_agent_listener_initiate_authentication_finish  (PolkitAgentListener  *listener,
                                                                  GAsyncResult         *res,
                                                                  GError              **error);
 
-gboolean  polkit_agent_register_listener                          (PolkitAgentListener  *listener,
-                                                                   const gchar          *session_id,
-                                                                   const gchar          *object_path,
-                                                                   GError              **error);
+gboolean  polkit_agent_register_listener                        (PolkitAgentListener  *listener,
+                                                                 PolkitSubject        *subject,
+                                                                 const gchar          *object_path,
+                                                                 GError              **error);
 
 G_END_DECLS
 

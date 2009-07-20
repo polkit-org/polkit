@@ -28,6 +28,7 @@
 #include "polkitunixprocess.h"
 #include "polkitsubject.h"
 #include "polkitprivate.h"
+#include "polkiterror.h"
 
 /**
  * SECTION:polkitunixprocess
@@ -68,7 +69,8 @@ enum
 
 static void subject_iface_init (PolkitSubjectIface *subject_iface);
 
-static guint64 get_start_time_for_pid (pid_t pid);
+static guint64 get_start_time_for_pid (pid_t    pid,
+                                       GError **error);
 
 G_DEFINE_TYPE_WITH_CODE (PolkitUnixProcess, polkit_unix_process, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (POLKIT_TYPE_SUBJECT, subject_iface_init)
@@ -211,7 +213,7 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
 {
   process->pid = pid;
   if (pid != (pid_t) -1)
-    process->start_time = get_start_time_for_pid (pid);
+    process->start_time = get_start_time_for_pid (pid, NULL);
 }
 
 /**
@@ -286,12 +288,81 @@ polkit_unix_process_to_string (PolkitSubject *subject)
   return g_strdup_printf ("unix-process:%d:%" G_GUINT64_FORMAT, process->pid, process->start_time);
 }
 
+static gboolean
+polkit_unix_process_exists_sync (PolkitSubject   *subject,
+                                 GCancellable    *cancellable,
+                                 GError         **error)
+{
+  PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
+  GError *local_error;
+  guint64 start_time;
+  gboolean ret;
+
+  ret = TRUE;
+
+  local_error = NULL;
+  start_time = get_start_time_for_pid (process->pid, &local_error);
+  if (local_error != NULL)
+    {
+      g_propagate_error (error, local_error);
+      g_error_free (local_error);
+      ret = FALSE;
+    }
+  else
+    {
+      if (start_time != process->start_time)
+        {
+          ret = FALSE;
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Start times for pid %d do not match",
+                       (gint) process->pid);
+        }
+    }
+
+  return ret;
+}
+
+static void
+polkit_unix_process_exists (PolkitSubject       *subject,
+                            GCancellable        *cancellable,
+                            GAsyncReadyCallback  callback,
+                            gpointer             user_data)
+{
+  GSimpleAsyncResult *simple;
+  simple = g_simple_async_result_new (G_OBJECT (subject),
+                                      callback,
+                                      user_data,
+                                      polkit_unix_process_exists);
+  g_simple_async_result_complete (simple);
+  g_object_unref (simple);
+}
+
+static gboolean
+polkit_unix_process_exists_finish (PolkitSubject  *subject,
+                                   GAsyncResult   *res,
+                                   GError        **error)
+{
+  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_unix_process_exists);
+
+  return polkit_unix_process_exists_sync (subject,
+                                          NULL,
+                                          error);
+}
+
+
 static void
 subject_iface_init (PolkitSubjectIface *subject_iface)
 {
-  subject_iface->hash      = polkit_unix_process_hash;
-  subject_iface->equal     = polkit_unix_process_equal;
-  subject_iface->to_string = polkit_unix_process_to_string;
+  subject_iface->hash          = polkit_unix_process_hash;
+  subject_iface->equal         = polkit_unix_process_equal;
+  subject_iface->to_string     = polkit_unix_process_to_string;
+  subject_iface->exists        = polkit_unix_process_exists;
+  subject_iface->exists_finish = polkit_unix_process_exists_finish;
+  subject_iface->exists_sync   = polkit_unix_process_exists_sync;
 }
 
 #ifdef HAVE_SOLARIS
@@ -317,126 +388,78 @@ get_pid_psinfo (pid_t pid, struct psinfo *ps)
 #endif
 
 static guint64
-get_start_time_for_pid (pid_t pid)
+get_start_time_for_pid (pid_t    pid,
+                        GError **error)
 {
   gchar *filename;
   gchar *contents;
   size_t length;
   guint64 start_time;
-  GError *error;
-#ifdef HAVE_SOLARIS
-  struct psinfo info;
-#else
   gchar **tokens;
   guint num_tokens;
   gchar *p;
   gchar *endp;
-#endif
 
   start_time = 0;
   contents = NULL;
 
-#ifdef HAVE_SOLARIS
-  if (polkit_sysdeps_pid_psinfo (pid, &info))
-    {
-      goto out;
-    }
-  start_time = (unsigned long long) (info.pr_start.tv_sec);
-#else
-#ifdef __FreeBSD__
-  filename = g_strdup_printf ("/proc/%d/status", pid);
-#else
   filename = g_strdup_printf ("/proc/%d/stat", pid);
-#endif
 
-  error = NULL;
-  if (!g_file_get_contents (filename, &contents, &length, &error))
-    {
-      g_warning ("Cannot get contents of '%s': %s\n", filename, error->message);
-      goto out;
-    }
-
-#ifdef __FreeBSD__
-  tokens = kit_strsplit (contents, " ", &num_tokens);
-  if (tokens == NULL)
+  if (!g_file_get_contents (filename, &contents, &length, error))
     goto out;
 
-  if (num_tokens < 8)
-    {
-      g_strfreev (tokens);
-      goto out;
-    }
-
-  p = g_strdup (tokens[7]);
-  g_strfreev (tokens);
-
-  tokens = g_strsplit (p, ",", 0);
-  g_free (p);
-
-  if (tokens == NULL)
-    goto out;
-
-  num_tokens = g_strv_length (tokens);
-
-  if (num_tokens >= 1)
-    {
-      start_time = strtoll (tokens[0], &endp, 10);
-      if (endp == tokens[0])
-        {
-          g_strfreev (tokens);
-          goto out;
-        }
-    }
-  else
-    {
-      g_strfreev (tokens);
-      goto out;
-    }
-
-  g_strfreev (tokens);
-
-#else
-
-    /* start time is the 19th token after the '(process name)' entry */
+  /* start time is the 19th token after the '(process name)' entry */
   p = strchr (contents, ')');
   if (p == NULL)
     {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
       goto out;
     }
   p += 2; /* skip ') ' */
   if (p - contents >= (int) length)
     {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
       goto out;
     }
 
   tokens = g_strsplit (p, " ", 0);
 
-  if (tokens == NULL)
-    goto out;
-
   num_tokens = g_strv_length (tokens);
 
   if (num_tokens < 20)
-    goto out;
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
 
   start_time = strtoll (tokens[19], &endp, 10);
   if (endp == tokens[19])
-    goto out;
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
 
   g_strfreev (tokens);
-#endif
-#endif
 
  out:
-#ifndef HAVE_SOLARIS
   g_free (filename);
   g_free (contents);
-#endif
-
-  if (start_time == 0)
-    {
-      g_warning ("Cannot lookup start-time for pid %d", pid);
-    }
 
   return start_time;
 }

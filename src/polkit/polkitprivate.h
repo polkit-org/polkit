@@ -26,6 +26,7 @@
 #include "polkitactiondescription.h"
 #include "polkitsubject.h"
 #include "polkitauthorizationresult.h"
+#include "polkittemporaryauthorization.h"
 #include "_polkitbindings.h"
 
 /* notes:
@@ -47,6 +48,8 @@ _PolkitIdentity *polkit_identity_get_real     (PolkitIdentity  *identity);
 PolkitAuthorizationResult  *polkit_authorization_result_new_for_real (_PolkitAuthorizationResult *real);
 _PolkitAuthorizationResult *polkit_authorization_result_get_real (PolkitAuthorizationResult *authorization_result);
 
+_PolkitTemporaryAuthorization *polkit_temporary_authorization_get_real (PolkitTemporaryAuthorization *authorization);
+PolkitTemporaryAuthorization *polkit_temporary_authorization_new_for_real (_PolkitTemporaryAuthorization *real);
 
 PolkitDetails *polkit_details_new_for_hash (GHashTable *hash);
 GHashTable *polkit_details_get_hash (PolkitDetails *details);
