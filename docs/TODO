@@ -1,76 +1,32 @@
-Core TODO items
----------------
 
- - maybe rename .policy to .action for policy XML files
+Needed for 1.0
+--------------
 
- - provide a polkit-validate-action-file-1 tool to check/validate
-   .policy/.action XML files
-
- - write a couple of introductory sections detailing the system architecture for
-   - a developer-audience; and
-   - a system administrator audience
-
- - write a PolicyKit 0.9.x -> polkit 1.0 porting guide
-
- - guard off backend API with I_KNOW_THIS_API_IS_SUBJECT_TO_CHANGE_ETC
-
- - provide a way to tweak the defaults for actions (or maybe not)
-
- - do we need negative authorizations? If so, implement code for it, otherwise
-   remove it from the PolkitAuthorization class
-
- - make sure simple operations work when no system bus is present
-   - e.g. %post RPM scripts adding/removing authorizations to identities
-
- - maybe use file monitors on /var/lib/polkit-1 directories and
-   emit the Changed() signal
-
- - PolkitAuthority probably needs locking around its singleton for
-   multithreaded backends.
+ - check that all public but unstable API is properly guard off with
+   I_KNOW_THIS_API_IS_SUBJECT_TO_CHANGE_ETC
 
  - rethink actions shipped with PolicyKit; we probably just want something
-   simple like
-   - org.freedesktop.policykit1.read
-   - org.freedesktop.policykit1.localauthority.manage
+   very simple that only applies to the local authority backend
+   - some mechanisms don't run as root - how should they convey that
+     they are authorized to check authorizations?
 
- - restrict symbol visibility in shared libraries
+ - man page review / section review
 
-Backend TODO items
-------------------
+ - review/restrict symbol visibility in shared libraries
 
  - check / validate all incoming arguments
-   - and other security/paranoia stuff
+   - includes all D-Bus interfaces and public library API
+   - validate D-Bus object paths everywhere
+   - ...and other security/paranoia stuff
 
- - local files authority backend
-   - split out AuthorizationStore into separate class
-   - split out AuthenticationAgent and AuthenticationSession to separate classes
-   - check if callers are authorized to enumerate, add or remove authorizations
-   - use random cookies
-   - speed up lookups using a hash on the cookie
-   - cache Unix group information
-   - handle root/wheel for implicit authorizations
-
- - validate object paths when registering authentication agents
-
- - allow backends to extend the syntax for subjects and identities, e.g.
-   have something like ipa-user:...
+ - make sure library API is reasonably MT-safe
 
  - avoid watching all name owner changes in PolkitBackendAuthority and
-   PolkitBackendServer
+   PolkitBackendServer; remove the name-owner-changed vfunc
 
- - cache user information for dbus connections
+GNOME Authentication Agent
+--------------------------
 
-polkit-gnome TODO items
------------------------
-
- - show a notification icon when the session/user has temporary authorizations
-   - along with an option to give these up
-
- - maybe make the AuthenticationAgent process (which runs for the lifetime of
-   the session) spawn a process to display the authentication dialog
-   - to make it lighter on resource usage
-   - to work around Metacity focus stealing prevention bugs
-
- - port libpolkit-gnome to new API
-
- - port polkit-gnome-authorization to new API
+ - maybe expand on the notification icon so it is more detailed
+   what temporary authorizations the session has - and maybe a way
+   to only drop some of them
