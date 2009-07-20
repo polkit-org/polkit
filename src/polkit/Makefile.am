@@ -33,7 +33,7 @@ polkit-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.Poli
 
 # keep in sync with contents of polkit-built-sources.stamp (Thanks autotools)
 #
-polkit_built_sources = _polkitactiondescription.c _polkitactiondescription.h _polkitauthenticationagent.c _polkitauthenticationagent.h _polkitauthority.c _polkitauthority.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitbindings.c _polkitbindings.h _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingstypes.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkiterror.c _polkiterror.h _polkitidentity.c _polkitidentity.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitsubject.c _polkitsubject.h _polkittemporaryauthorization.c _polkittemporaryauthorization.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml docbook-interface-org.freedesktop.PolicyKit1.Authority.xml
+polkit_built_sources = _polkitactiondescription.c _polkitactiondescription.h _polkitauthenticationagent.c _polkitauthenticationagent.h _polkitauthority.c _polkitauthority.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitbindings.c _polkitbindings.h _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingstypes.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkiterror.c _polkiterror.h _polkitidentity.c _polkitidentity.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitsubject.c _polkitsubject.h _polkittemporaryauthorization.c _polkittemporaryauthorization.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkitbindingsmarshal.list
 
 lib_LTLIBRARIES=libpolkit-gobject-1.la
 
