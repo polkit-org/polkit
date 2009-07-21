@@ -118,11 +118,11 @@ if test "x$GCC" = "xyes"; then
   changequote([,])dnl
 fi
 
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.14.0 gio-2.0 >= 2.14.0])
+PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.21.4 gio-2.0 >= 2.21.4])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(EGG_DBUS, [eggdbus-1 >= 0.4])
+PKG_CHECK_MODULES(EGG_DBUS, [eggdbus-1 >= 0.5])
 AC_SUBST(EGG_DBUS_CFLAGS)
 AC_SUBST(EGG_DBUS_LIBS)
 
