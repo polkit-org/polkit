@@ -520,7 +520,7 @@ polkit_backend_local_authorization_store_ensure (PolkitBackendLocalAuthorization
       name = g_file_info_get_name (file_info);
 
       /* only consider files with the appropriate extension */
-      if (g_str_has_suffix (name, store->priv->extension))
+      if (g_str_has_suffix (name, store->priv->extension) && name[0] != '.')
         files = g_list_prepend (files, g_file_get_child (store->priv->directory, name));
 
       g_object_unref (file_info);
@@ -548,7 +548,7 @@ polkit_backend_local_authorization_store_ensure (PolkitBackendLocalAuthorization
       if (!g_key_file_load_from_file (key_file,
                                       filename,
                                       G_KEY_FILE_NONE,
-                                      NULL))
+                                      &error))
         {
           g_warning ("Error loading key-file %s: %s", filename, error->message);
           g_error_free (error);
