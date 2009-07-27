@@ -99,6 +99,11 @@ gboolean                   polkit_authority_revoke_temporary_authorizations_sync
                                                                                   GCancellable        *cancellable,
                                                                                   GError             **error);
 
+gboolean                   polkit_authority_revoke_temporary_authorization_by_id_sync (PolkitAuthority     *authority,
+                                                                                       const gchar         *id,
+                                                                                       GCancellable        *cancellable,
+                                                                                       GError             **error);
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 void                       polkit_authority_enumerate_actions (PolkitAuthority     *authority,
@@ -176,6 +181,16 @@ void                       polkit_authority_revoke_temporary_authorizations (Pol
 gboolean                   polkit_authority_revoke_temporary_authorizations_finish (PolkitAuthority *authority,
                                                                                     GAsyncResult    *res,
                                                                                     GError         **error);
+
+void                       polkit_authority_revoke_temporary_authorization_by_id (PolkitAuthority     *authority,
+                                                                                  const gchar         *id,
+                                                                                  GCancellable        *cancellable,
+                                                                                  GAsyncReadyCallback  callback,
+                                                                                  gpointer             user_data);
+
+gboolean                   polkit_authority_revoke_temporary_authorization_by_id_finish (PolkitAuthority *authority,
+                                                                                         GAsyncResult    *res,
+                                                                                         GError         **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

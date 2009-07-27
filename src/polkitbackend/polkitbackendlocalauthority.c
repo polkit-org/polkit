@@ -95,6 +95,15 @@ G_DEFINE_TYPE_WITH_CODE (PolkitBackendLocalAuthority,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+on_store_changed (PolkitBackendLocalAuthorizationStore *store,
+                  gpointer                              user_data)
+{
+  PolkitBackendLocalAuthority *authority = POLKIT_BACKEND_LOCAL_AUTHORITY (user_data);
+
+  g_signal_emit_by_name (authority, "changed");
+}
+
+static void
 polkit_backend_local_authority_init (PolkitBackendLocalAuthority *authority)
 {
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -124,6 +133,11 @@ polkit_backend_local_authority_init (PolkitBackendLocalAuthority *authority)
       store = polkit_backend_local_authorization_store_new (directory, ".pkla");
       priv->authorization_stores = g_list_prepend (priv->authorization_stores, store);
       g_object_unref (directory);
+
+      g_signal_connect (store,
+                        "changed",
+                        G_CALLBACK (on_store_changed),
+                        authority);
     }
   priv->authorization_stores = g_list_reverse (priv->authorization_stores);
 }

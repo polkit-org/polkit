@@ -94,6 +94,10 @@ struct _PolkitBackendAuthority
  * authorizations or %NULL if the backend doesn't support the operation.
  * See polkit_backend_authority_revoke_temporary_authorizations()
  * for details.
+ * @revoke_temporary_authorization_by_id: Called to revoke a temporary
+ * authorization identified by id or %NULL if the backend doesn't support
+ * the operation. See polkit_backend_authority_revoke_temporary_authorization_by_id()
+ * for details.
  * @system_bus_name_owner_changed: temporary VFunc, to be removed before 1.0.
  *
  * VFuncs that authority backends need to implement.
@@ -155,6 +159,11 @@ struct _PolkitBackendAuthorityClass
                                                PolkitSubject            *caller,
                                                PolkitSubject            *subject,
                                                GError                  **error);
+
+  gboolean (*revoke_temporary_authorization_by_id) (PolkitBackendAuthority   *authority,
+                                                    PolkitSubject            *caller,
+                                                    const gchar              *id,
+                                                    GError                  **error);
 
   /* TODO: need something more efficient such that we don't watch all name changes */
   void (*system_bus_name_owner_changed)  (PolkitBackendAuthority   *authority,
@@ -254,6 +263,11 @@ gboolean polkit_backend_authority_revoke_temporary_authorizations (PolkitBackend
                                                                    PolkitSubject            *caller,
                                                                    PolkitSubject            *subject,
                                                                    GError                  **error);
+
+gboolean polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuthority   *authority,
+                                                                        PolkitSubject            *caller,
+                                                                        const gchar              *id,
+                                                                        GError                  **error);
 
 /* --- */
 

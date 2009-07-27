@@ -187,6 +187,12 @@ polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
  *
  * Gets the details about the result.
  *
+ * If the authorization is temporary the opaque identifier for the
+ * temporary authorization
+ * (cf. polkit_temporary_authorization_get_id()) is set available as
+ * the value for the
+ * <literal>polkit.temporary_authorization_id</literal> key.
+ *
  * Returns: A #PolkitDetails object. This object is owned by @result
  * and should not be freed by the caller.
  */

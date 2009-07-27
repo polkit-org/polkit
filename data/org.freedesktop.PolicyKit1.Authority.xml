@@ -129,7 +129,7 @@
       </annotation>
 
       <annotation name="org.gtk.EggDBus.Struct.Member"  value="Dict<String,String>:details">
-        <annotation name="org.gtk.EggDBus.DocString" value="Details for the result or empty if not authorized."/>
+        <annotation name="org.gtk.EggDBus.DocString" value="Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id)."/>
       </annotation>
     </annotation>
 
@@ -223,7 +223,7 @@
       </arg>
 
       <arg name="details" direction="in" type="a{ss}">
-        <annotation name="org.gtk.EggDBus.DocString" value="Details describing the action."/>
+        <annotation name="org.gtk.EggDBus.DocString" value="Details describing the action. Keys starting with <literal>polkit.</literal> are reserved for internal use and cannot be used."/>
       </arg>
 
       <arg name="flags" direction="in" type="u">
@@ -345,6 +345,14 @@
       <arg name="subject" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.Type" value="Subject"/>
         <annotation name="org.gtk.EggDBus.DocString" value="The subject to revoke temporary authorizations from."/>
+      </arg>
+    </method>
+
+    <method name="RevokeTemporaryAuthorizationById">
+      <annotation name="org.gtk.EggDBus.DocString" value="Revokes all temporary authorizations that applies to @subject."/>
+
+      <arg name="id" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The opaque identifier of the temporary authorization."/>
       </arg>
     </method>
 

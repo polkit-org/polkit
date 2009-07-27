@@ -381,7 +381,7 @@ polkit_backend_authority_enumerate_temporary_authorizations (PolkitBackendAuthor
  *
  * Revokes temporary authorizations for @subject.
  *
- * Returns: %TRUE if the operatoin succeeded, %FALSE if @error is set.
+ * Returns: %TRUE if the operation succeeded, %FALSE if @error is set.
  **/
 gboolean
 polkit_backend_authority_revoke_temporary_authorizations (PolkitBackendAuthority   *authority,
@@ -404,6 +404,41 @@ polkit_backend_authority_revoke_temporary_authorizations (PolkitBackendAuthority
   else
     {
       return klass->revoke_temporary_authorizations (authority, caller, subject, error);
+    }
+}
+
+/**
+ * polkit_backend_authority_revoke_temporary_authorization_by_id:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that initiated the query.
+ * @id: The opaque identifier of the temporary authorization.
+ * @error: Return location for error.
+ *
+ * Revokes a temporary authorizations with opaque identifier @id.
+ *
+ * Returns: %TRUE if the operatoin succeeded, %FALSE if @error is set.
+ **/
+gboolean
+polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuthority   *authority,
+                                                               PolkitSubject            *caller,
+                                                               const gchar              *id,
+                                                               GError                  **error)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  if (klass->revoke_temporary_authorization_by_id == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Operation not supported");
+      return FALSE;
+    }
+  else
+    {
+      return klass->revoke_temporary_authorization_by_id (authority, caller, id, error);
     }
 }
 
@@ -917,16 +952,49 @@ authority_handle_revoke_temporary_authorizations (_PolkitAuthority        *insta
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+authority_handle_revoke_temporary_authorization_by_id (_PolkitAuthority        *instance,
+                                                       const gchar             *id,
+                                                       EggDBusMethodInvocation *method_invocation)
+{
+  Server *server = SERVER (instance);
+  GError *error;
+  PolkitSubject *caller;
+
+  error = NULL;
+
+  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
+
+  polkit_backend_authority_revoke_temporary_authorization_by_id (server->authority,
+                                                                 caller,
+                                                                 id,
+                                                                 &error);
+  if (error != NULL)
+    {
+      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  _polkit_authority_handle_revoke_temporary_authorization_by_id_finish (method_invocation);
+
+ out:
+  g_object_unref (caller);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
 authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
-  authority_iface->handle_enumerate_actions                  = authority_handle_enumerate_actions;
-  authority_iface->handle_check_authorization                = authority_handle_check_authorization;
-  authority_iface->handle_cancel_check_authorization         = authority_handle_cancel_check_authorization;
-  authority_iface->handle_register_authentication_agent      = authority_handle_register_authentication_agent;
-  authority_iface->handle_unregister_authentication_agent    = authority_handle_unregister_authentication_agent;
-  authority_iface->handle_authentication_agent_response      = authority_handle_authentication_agent_response;
-  authority_iface->handle_enumerate_temporary_authorizations = authority_handle_enumerate_temporary_authorizations;
-  authority_iface->handle_revoke_temporary_authorizations    = authority_handle_revoke_temporary_authorizations;
+  authority_iface->handle_enumerate_actions                    = authority_handle_enumerate_actions;
+  authority_iface->handle_check_authorization                  = authority_handle_check_authorization;
+  authority_iface->handle_cancel_check_authorization           = authority_handle_cancel_check_authorization;
+  authority_iface->handle_register_authentication_agent        = authority_handle_register_authentication_agent;
+  authority_iface->handle_unregister_authentication_agent      = authority_handle_unregister_authentication_agent;
+  authority_iface->handle_authentication_agent_response        = authority_handle_authentication_agent_response;
+  authority_iface->handle_enumerate_temporary_authorizations   = authority_handle_enumerate_temporary_authorizations;
+  authority_iface->handle_revoke_temporary_authorizations      = authority_handle_revoke_temporary_authorizations;
+  authority_iface->handle_revoke_temporary_authorization_by_id = authority_handle_revoke_temporary_authorization_by_id;
 }
 
 static void
