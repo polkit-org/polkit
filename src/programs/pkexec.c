@@ -37,18 +37,11 @@
 static void
 usage (int argc, char *argv[])
 {
-  GError *error;
-
-  error = NULL;
-  if (!g_spawn_command_line_sync ("man pkexec",
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  &error))
-    {
-      g_printerr ("Cannot show manual page: %s\n", error->message);
-      g_error_free (error);
-    }
+  g_printerr ("pkexec --version |\n"
+              "       --help |\n"
+              "       [--user username] PROGRAM [ARGUMENTS...]\n"
+              "\n"
+              "See the pkexec manual page for more details.\n");
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
