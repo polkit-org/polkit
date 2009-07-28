@@ -108,13 +108,15 @@ KEY3=VALUE3
     <para>
       If the specificied process is not
       authorized, <command>pkcheck</command> exits with a return value
-      of 1 and a diagnostic message is printed on standard error.
+      of 1 and a diagnostic message is printed on standard error. Details
+      are printed on standard output.
     </para>
     <para>
       If the specificied process is not
       authorized because no suitable authentication agent is available or if the
       <option>--allow-user-interaction</option> wasn't passed, <command>pkcheck</command>
       exits with a return value of 2 and a diagnostic message is printed on standard error.
+      Details are printed on standard output.
     </para>
     <para>
       If an error occured while checking for authorization, <command>pkcheck</command> exits

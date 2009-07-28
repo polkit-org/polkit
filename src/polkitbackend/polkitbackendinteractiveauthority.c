@@ -609,6 +609,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   gboolean session_is_active;
   PolkitImplicitAuthorization implicit_authorization;
   const gchar *tmp_authz_id;
+  PolkitDetails *result_details;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
@@ -619,6 +620,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   groups_of_user = NULL;
   subject_str = NULL;
   session_for_subject = NULL;
+  result_details = NULL;
 
   session_is_local = FALSE;
   session_is_active = FALSE;
@@ -687,6 +689,8 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       implicit_authorization = polkit_action_description_get_implicit_any (action_desc);
     }
 
+  result_details = polkit_details_new ();
+
   /* allow subclasses to rewrite implicit_authorization */
   implicit_authorization = polkit_backend_interactive_authority_check_authorization_sync (interactive_authority,
                                                                                           caller,
@@ -704,7 +708,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       g_debug (" is authorized (has implicit authorization local=%d active=%d)",
                session_is_local,
                session_is_active);
-      result = polkit_authorization_result_new (TRUE, FALSE, NULL);
+      result = polkit_authorization_result_new (TRUE, FALSE, result_details);
       goto out;
     }
 
@@ -714,19 +718,22 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
                                                        action_id,
                                                        &tmp_authz_id))
     {
-      PolkitDetails *details;
 
       g_debug (" is authorized (has temporary authorization)");
-      details = polkit_details_new ();
-      polkit_details_insert (details, "polkit.temporary_authorization_id", tmp_authz_id);
-      result = polkit_authorization_result_new (TRUE, FALSE, details);
-      g_object_unref (details);
+      polkit_details_insert (result_details, "polkit.temporary_authorization_id", tmp_authz_id);
+      result = polkit_authorization_result_new (TRUE, FALSE, result_details);
       goto out;
     }
 
   if (implicit_authorization != POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED)
     {
-      result = polkit_authorization_result_new (FALSE, TRUE, NULL);
+      if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED_RETAINED ||
+          implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
+        {
+          polkit_details_insert (result_details, "polkit.retains_authorization_after_challenge", "1");
+        }
+
+      result = polkit_authorization_result_new (FALSE, TRUE, result_details);
 
       /* return implicit_authorization so the caller can use an authentication agent if applicable */
       if (out_implicit_authorization != NULL)
@@ -737,7 +744,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
     }
   else
     {
-      result = polkit_authorization_result_new (FALSE, FALSE, NULL);
+      result = polkit_authorization_result_new (FALSE, FALSE, result_details);
       g_debug (" not authorized");
     }
  out:
@@ -754,6 +761,9 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
 
   if (action_desc != NULL)
     g_object_unref (action_desc);
+
+  if (result_details != NULL)
+    g_object_unref (result_details);
 
   g_debug (" ");
 

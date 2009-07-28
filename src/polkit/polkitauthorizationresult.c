@@ -24,6 +24,7 @@
 #endif
 
 #include "polkitauthorizationresult.h"
+#include "polkitdetails.h"
 #include "polkitprivate.h"
 
 /**
@@ -159,6 +160,9 @@ polkit_authorization_result_new (gboolean                   is_authorized,
  *
  * Gets whether the subject is authorized.
  *
+ * If the authorization is temporary, use polkit_authorization_result_get_temporary_authorization_id()
+ * to get the opaque identifier for the temporary authorization.
+ *
  * Returns: Whether the subject is authorized.
  */
 gboolean
@@ -187,12 +191,6 @@ polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
  *
  * Gets the details about the result.
  *
- * If the authorization is temporary the opaque identifier for the
- * temporary authorization
- * (cf. polkit_temporary_authorization_get_id()) is set available as
- * the value for the
- * <literal>polkit.temporary_authorization_id</literal> key.
- *
  * Returns: A #PolkitDetails object. This object is owned by @result
  * and should not be freed by the caller.
  */
@@ -210,4 +208,71 @@ polkit_authorization_result_get_details (PolkitAuthorizationResult *result)
 
  out:
   return result->details;
+}
+
+/**
+ * polkit_authorization_result_get_retains_authorization:
+ * @result: A #PolkitAuthorizationResult.
+ *
+ * Gets whether authorization is retained if obtained via authentication. This can only be the case
+ * if @result indicates that the subject can obtain authorization after challenge (cf.
+ * polkit_authorization_result_get_is_challenge()), e.g. when the subject is not already authorized (cf.
+ * polkit_authorization_result_get_is_authorized()).
+ *
+ * If the subject is already authorized, use polkit_authorization_result_get_temporary_authorization_id()
+ * to check if the authorization is temporary.
+ *
+ * This method simply reads the value of the key/value pair in @details with the
+ * key <literal>polkit.retains_authorization_after_challenge</literal>.
+ *
+ * Returns: %TRUE if the authorization is or will be temporary.
+ */
+gboolean
+polkit_authorization_result_get_retains_authorization (PolkitAuthorizationResult *result)
+{
+  gboolean ret;
+  PolkitDetails *details;
+
+  ret = FALSE;
+  details = polkit_authorization_result_get_details (result);
+  if (details != NULL && polkit_details_lookup (details, "polkit.retains_authorization_after_challenge") != NULL)
+    ret = TRUE;
+
+  return ret;
+}
+
+/**
+ * polkit_authorization_result_get_temporary_authorization_id:
+ * @result: A #PolkitAuthorizationResult.
+ *
+ * Gets the opaque temporary authorization id for @result if @result indicates the
+ * subject is authorized and the authorization is temporary rather than one-shot or
+ * permanent.
+ *
+ * You can use this string together with the result from
+ * polkit_authority_enumerate_temporary_authorizations() to get more details
+ * about the temporary authorization or polkit_authority_revoke_temporary_authorization_by_id()
+ * to revoke the temporary authorization.
+ *
+ * If the subject is not authorized, use polkit_authorization_result_get_retains_authorization()
+ * to check if the authorization will be retained if obtained via authentication.
+ *
+ * This method simply reads the value of the key/value pair in @details with the
+ * key <literal>polkit.temporary_authorization_id</literal>.
+ *
+ * Returns: The opaque temporary authorization id for @result or %NULL if not
+ *    available. Do not free this string, it is owned by @result.
+ */
+const gchar *
+polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationResult *result)
+{
+  const gchar *ret;
+  PolkitDetails *details;
+
+  ret = NULL;
+  details = polkit_authorization_result_get_details (result);
+  if (details != NULL)
+    ret = polkit_details_lookup (details, "polkit.temporary_authorization_id");
+
+  return ret;
 }

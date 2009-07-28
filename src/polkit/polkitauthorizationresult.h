@@ -43,13 +43,15 @@ typedef struct _PolkitAuthorizationResult PolkitAuthorizationResult;
 #endif
 typedef struct _PolkitAuthorizationResultClass PolkitAuthorizationResultClass;
 
-GType                      polkit_authorization_result_get_type          (void) G_GNUC_CONST;
-PolkitAuthorizationResult *polkit_authorization_result_new               (gboolean                   is_authorized,
-                                                                          gboolean                   is_challenge,
-                                                                          PolkitDetails             *details);
-gboolean                   polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result);
-gboolean                   polkit_authorization_result_get_is_challenge  (PolkitAuthorizationResult *result);
-PolkitDetails             *polkit_authorization_result_get_details       (PolkitAuthorizationResult *result);
+GType              polkit_authorization_result_get_type                       (void) G_GNUC_CONST;
+PolkitAuthorizationResult *polkit_authorization_result_new                    (gboolean                   is_authorized,
+                                                                               gboolean                   is_challenge,
+                                                                               PolkitDetails             *details);
+PolkitDetails     *polkit_authorization_result_get_details                    (PolkitAuthorizationResult *result);
+gboolean           polkit_authorization_result_get_is_authorized              (PolkitAuthorizationResult *result);
+gboolean           polkit_authorization_result_get_is_challenge               (PolkitAuthorizationResult *result);
+gboolean           polkit_authorization_result_get_retains_authorization      (PolkitAuthorizationResult *result);
+const gchar       *polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationResult *result);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

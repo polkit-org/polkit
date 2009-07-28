@@ -82,6 +82,7 @@ main (int argc, char *argv[])
   PolkitSubject *subject;
   PolkitDetails *details;
   PolkitCheckAuthorizationFlags flags;
+  PolkitDetails *result_details;
   GError *error;
 
   subject = NULL;
@@ -230,38 +231,36 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  if (polkit_authorization_result_get_is_authorized (result))
+  result_details = polkit_authorization_result_get_details (result);
+  if (result_details != NULL)
     {
-      PolkitDetails *result_details;
+      gchar **keys;
 
-      result_details = polkit_authorization_result_get_details (result);
-      if (result_details != NULL)
+      keys = polkit_details_get_keys (result_details);
+      for (n = 0; keys != NULL && keys[n] != NULL; n++)
         {
-          gchar **keys;
+          const gchar *key;
+          const gchar *value;
+          gchar *s;
 
-          keys = polkit_details_get_keys (result_details);
-          for (n = 0; keys != NULL && keys[n] != NULL; n++)
-            {
-              const gchar *key;
-              const gchar *value;
-              gchar *s;
+          key = keys[n];
+          value = polkit_details_lookup (result_details, key);
 
-              key = keys[n];
-              value = polkit_details_lookup (result_details, key);
-
-              s = escape_str (key);
-              g_print ("%s", s);
-              g_free (s);
-              g_print ("=");
-              s = escape_str (value);
-              g_print ("%s", s);
-              g_free (s);
-              g_print ("\n");
-            }
-
-          g_strfreev (keys);
+          s = escape_str (key);
+          g_print ("%s", s);
+          g_free (s);
+          g_print ("=");
+          s = escape_str (value);
+          g_print ("%s", s);
+          g_free (s);
+          g_print ("\n");
         }
 
+      g_strfreev (keys);
+    }
+
+  if (polkit_authorization_result_get_is_authorized (result))
+    {
       ret = 0;
     }
   else if (polkit_authorization_result_get_is_challenge (result))
