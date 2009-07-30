@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
 #include <errno.h>
@@ -42,6 +43,48 @@ usage (int argc, char *argv[])
               "       [--user username] PROGRAM [ARGUMENTS...]\n"
               "\n"
               "See the pkexec manual page for more details.\n");
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+typedef gboolean (*FdCallback) (gint fd, gpointer user_data);
+
+static gboolean
+set_close_on_exec (gint     fd,
+                   gpointer user_data)
+{
+  gint fd_bottom;
+
+  fd_bottom = GPOINTER_TO_INT (user_data);
+
+  if (fd >= fd_bottom)
+    {
+      if (fcntl (fd, F_SETFD, FD_CLOEXEC) != 0 && errno != EBADF)
+        {
+          return FALSE;
+        }
+    }
+
+  return TRUE;
+}
+
+static gboolean
+fdwalk (FdCallback callback,
+        gpointer   user_data)
+{
+  gint fd;
+  gint max_fd;
+
+  g_return_val_if_fail (callback != NULL, FALSE);
+
+  max_fd = sysconf (_SC_OPEN_MAX);
+  for (fd = 0; fd < max_fd; fd++)
+    {
+      if (!callback (fd, user_data))
+        return FALSE;
+    }
+
+  return TRUE;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -388,6 +431,13 @@ main (int argc, char *argv[])
                       value);
           goto out;
         }
+    }
+
+  /* set close_on_exec on all file descriptors except stdin, stdout, stderr */
+  if (!fdwalk (set_close_on_exec, GINT_TO_POINTER (3)))
+    {
+      g_printerr ("Error setting close-on-exec for file desriptors\n");
+      goto out;
     }
 
   /* if not changing to uid 0, become uid 0 before changing to the user */
