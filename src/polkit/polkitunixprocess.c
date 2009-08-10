@@ -408,8 +408,11 @@ get_start_time_for_pid (pid_t    pid,
   if (!g_file_get_contents (filename, &contents, &length, error))
     goto out;
 
-  /* start time is the 19th token after the '(process name)' entry */
-  p = strchr (contents, ')');
+  /* start time is the 19th token after the '(process name)' entry - since only this
+   * field can contain the ')' character, search backwards for this to avoid malicious
+   * processes trying to fool us
+   */
+  p = strrchr (contents, ')');
   if (p == NULL)
     {
       g_set_error (error,
