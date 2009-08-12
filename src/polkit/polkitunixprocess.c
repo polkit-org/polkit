@@ -354,7 +354,7 @@ polkit_unix_process_exists_sync (PolkitSubject   *subject,
   start_time = get_start_time_for_pid (process->pid, &local_error);
   if (local_error != NULL)
     {
-      g_propagate_error (error, local_error);
+      /* Don't propagate the error - it just means there is no process with this pid */
       g_error_free (local_error);
       ret = FALSE;
     }
@@ -363,11 +363,6 @@ polkit_unix_process_exists_sync (PolkitSubject   *subject,
       if (start_time != process->start_time)
         {
           ret = FALSE;
-          g_set_error (error,
-                       POLKIT_ERROR,
-                       POLKIT_ERROR_FAILED,
-                       "Start times for pid %d do not match",
-                       (gint) process->pid);
         }
     }
 
