@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <pwd.h>
+#include <errno.h>
 #include "polkitunixuser.h"
 #include "polkitidentity.h"
 #include "polkiterror.h"
@@ -210,8 +211,9 @@ polkit_unix_user_new_for_name (const gchar    *name,
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "No UNIX user with name %s: %m",
-                   name);
+                   "No UNIX user with name %s: %s",
+                   name,
+                   g_strerror (errno));
       goto out;
     }
 

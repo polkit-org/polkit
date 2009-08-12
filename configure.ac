@@ -140,6 +140,8 @@ AC_CHECK_LIB(expat,XML_ParserCreate,[EXPAT_LIBS="-lexpat"],
 	     [AC_MSG_ERROR([Can't find expat library. Please install expat.])])
 AC_SUBST(EXPAT_LIBS)
 
+AC_CHECK_FUNCS(clearenv)
+
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
 fi
@@ -323,6 +325,8 @@ if test x$with_os_type = x; then
         with_os_type=pardus
     elif test x$operating_system = xsolaris ; then
 	with_os_type=solaris
+    elif test x$operating_system = xfreebsd ; then
+	with_os_type=freebsd
     else
         with_os_type=unknown
     fi

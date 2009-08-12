@@ -23,6 +23,14 @@
 #  include "config.h"
 #endif
 
+#include <sys/types.h>
+#ifndef HAVE_FREEBSD
+#include <sys/stat.h>
+#else
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/user.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include "polkitunixprocess.h"
@@ -71,6 +79,10 @@ static void subject_iface_init (PolkitSubjectIface *subject_iface);
 
 static guint64 get_start_time_for_pid (pid_t    pid,
                                        GError **error);
+
+#ifdef HAVE_FREEBSD
+static gboolean get_kinfo_proc (pid_t pid, struct kinfo_proc *p);
+#endif
 
 G_DEFINE_TYPE_WITH_CODE (PolkitUnixProcess, polkit_unix_process, G_TYPE_OBJECT,
                          G_IMPLEMENT_INTERFACE (POLKIT_TYPE_SUBJECT, subject_iface_init)
@@ -187,6 +199,44 @@ polkit_unix_process_get_pid (PolkitUnixProcess *process)
 }
 
 /**
+ * polkit_unix_pid_get_uid:
+ * @pid: A process ID.
+ * @uid: A pointer to a uid_t.
+ *
+ * Gets the uid for a given @pid.
+ *
+ * Returns: 0 on success, -1 on failure.
+ */
+int
+polkit_unix_pid_get_uid (pid_t pid, uid_t *uid)
+{
+#ifndef HAVE_FREEBSD
+  struct stat statbuf;
+  char procbuf[32];
+#else
+  struct kinfo_proc p;
+#endif
+
+  g_return_val_if_fail (uid != NULL, -1);
+  g_return_val_if_fail (pid > 0, -1);
+
+#ifndef HAVE_FREEBSD
+  g_snprintf (procbuf, sizeof procbuf, "/proc/%d", pid);
+  if (stat (procbuf, &statbuf) != 0)
+    return -1;
+
+  *uid = statbuf.st_uid;
+#else
+  if (! get_kinfo_proc (pid, &p))
+    return -1;
+
+  *uid = p.ki_uid;
+#endif
+
+  return 0;
+}
+
+/**
  * polkit_unix_process_get_start_time:
  * @process: A #PolkitUnixProcess.
  *
@@ -262,7 +312,7 @@ polkit_unix_process_hash (PolkitSubject *subject)
 {
   PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
 
-  return g_direct_hash (GINT_TO_POINTER ((process->pid + process->start_time))) ;
+  return g_direct_hash (GSIZE_TO_POINTER ((process->pid + process->start_time))) ;
 }
 
 static gboolean
@@ -387,14 +437,35 @@ get_pid_psinfo (pid_t pid, struct psinfo *ps)
 }
 #endif
 
+#ifdef HAVE_FREEBSD
+static gboolean
+get_kinfo_proc (pid_t pid, struct kinfo_proc *p)
+{
+  int mib[4];
+  size_t len;
+
+  len = 4;
+  sysctlnametomib ("kern.proc.pid", mib, &len);
+
+  len = sizeof (struct kinfo_proc);
+  mib[3] = pid;
+
+  if (sysctl (mib, 4, p, &len, NULL, 0) == -1)
+    return FALSE;
+
+  return TRUE;
+}
+#endif
+
 static guint64
 get_start_time_for_pid (pid_t    pid,
                         GError **error)
 {
+  guint64 start_time;
+#ifndef HAVE_FREEBSD
   gchar *filename;
   gchar *contents;
   size_t length;
-  guint64 start_time;
   gchar **tokens;
   guint num_tokens;
   gchar *p;
@@ -463,6 +534,26 @@ get_start_time_for_pid (pid_t    pid,
  out:
   g_free (filename);
   g_free (contents);
+#else
+  struct kinfo_proc p;
+
+  start_time = 0;
+
+  if (! get_kinfo_proc (pid, &p))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error obtaining start time for %d (%s)",
+                   (gint) pid,
+                   g_strerror (errno));
+      goto out;
+    }
+
+  start_time = (guint64) p.ki_start.tv_sec;
+
+out:
+#endif
 
   return start_time;
 }

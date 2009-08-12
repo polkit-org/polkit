@@ -35,6 +35,18 @@
 #  define LOG_AUTHPRIV    (10<<3)
 #endif
 
+#ifndef HAVE_CLEARENV
+extern char **environ;
+
+static int
+clearenv (void)
+{
+	if (environ != NULL)
+		environ[0] = NULL;
+	return 0;
+}
+#endif
+
 /* Development aid: define PAH_DEBUG to get debugging output. Do _NOT_
  * enable this in production builds; it may leak passwords and other
  * sensitive information.

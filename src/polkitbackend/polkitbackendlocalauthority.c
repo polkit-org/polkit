@@ -370,7 +370,7 @@ get_users_in_group (PolkitIdentity                    *group,
   grp = getgrgid (gid);
   if (grp == NULL)
     {
-      g_warning ("Error looking up group with gid %d: %m", gid);
+      g_warning ("Error looking up group with gid %d: %s", gid, g_strerror (errno));
       goto out;
     }
 
@@ -430,7 +430,7 @@ get_groups_for_user (PolkitIdentity *user)
                     groups,
                     &num_groups) < 0)
     {
-      g_warning ("Error looking up groups for uid %d: %m", uid);
+      g_warning ("Error looking up groups for uid %d: %s", uid, g_strerror (errno));
       goto out;
     }
 

@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/types.h>
 
 int
@@ -38,7 +39,7 @@ main (int argc, char *argv[])
 
   if (getcwd (cwd, sizeof cwd) == NULL)
     {
-      g_printerr ("Error getting cwd: %m");
+      g_printerr ("Error getting cwd: %s", g_strerror (errno));
       goto out;
     }
 

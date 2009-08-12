@@ -382,13 +382,10 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
       pid_t pid;
-      gchar *proc_path;
-      struct stat statbuf;
 
       pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject));
 
-      proc_path = g_strdup_printf ("/proc/%d", pid);
-      if (g_stat (proc_path, &statbuf) != 0)
+      if (polkit_unix_pid_get_uid (pid, &uid) != 0)
         {
           g_set_error (error,
                        POLKIT_ERROR,
@@ -397,7 +394,7 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
                        pid);
           goto out;
         }
-      user = polkit_unix_user_new (statbuf.st_uid);
+      user = polkit_unix_user_new (uid);
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {

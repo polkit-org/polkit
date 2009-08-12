@@ -35,6 +35,18 @@
 
 #include <polkit/polkit.h>
 
+#ifndef HAVE_CLEARENV
+extern char **environ;
+
+static int
+clearenv (void)
+{
+        if (environ != NULL)
+                environ[0] = NULL;
+        return 0;
+}
+#endif
+
 static void
 usage (int argc, char *argv[])
 {
@@ -188,8 +200,8 @@ main (int argc, char *argv[])
   GPtrArray *saved_env;
   gchar *opt_user;
   pid_t pid_of_caller;
+  uid_t uid_of_caller;
   struct stat statbuf;
-  gchar procbuf[32];
 
   ret = 127;
   authority = NULL;
@@ -286,7 +298,7 @@ main (int argc, char *argv[])
     }
   if (stat (path, &statbuf) != 0)
     {
-      g_printerr ("Error getting information about %s: %m\n", path);
+      g_printerr ("Error getting information about %s: %s\n", path, g_strerror (errno));
       goto out;
     }
   command_line = g_strjoinv (" ", argv + n);
@@ -312,14 +324,14 @@ main (int argc, char *argv[])
    */
   if (clearenv () != 0)
     {
-      g_printerr ("Error clearing environment: %m\n");
+      g_printerr ("Error clearing environment: %s\n", g_strerror (errno));
       goto out;
     }
 
   /* Look up information about the user we care about */
   if (getpwnam_r (opt_user, &pwstruct, pwbuf, sizeof pwbuf, &pw) != 0)
     {
-      g_printerr ("Error getting information for user %s: %m\n", opt_user);
+      g_printerr ("Error getting information for user %s: %s\n", opt_user, g_strerror (errno));
       goto out;
     }
 
@@ -340,15 +352,14 @@ main (int argc, char *argv[])
     }
 
   /* paranoia: check that the uid of pid_of_caller matches getuid() */
-  g_snprintf (procbuf, sizeof procbuf, "/proc/%d", pid_of_caller);
-  if (stat (procbuf, &statbuf) != 0)
+  if (polkit_unix_pid_get_uid (pid_of_caller, &uid_of_caller) != 0)
     {
-      g_printerr ("Error determing pid of caller (pid %d): %m\n", (gint) pid_of_caller);
+      g_printerr ("Error determing pid of caller (pid %d): %s\n", (gint) pid_of_caller, g_strerror (errno));
       goto out;
     }
-  if (statbuf.st_uid != getuid ())
+  if (uid_of_caller != getuid ())
     {
-      g_printerr ("User of caller (%d) does not match our uid (%d)\n", statbuf.st_uid, getuid ());
+      g_printerr ("User of caller (%d) does not match our uid (%d)\n", uid_of_caller, getuid ());
       goto out;
     }
 
@@ -426,9 +437,10 @@ main (int argc, char *argv[])
 
       if (!g_setenv (key, value, TRUE))
         {
-          g_printerr ("Error setting environment variable %s to '%s': %m\n",
+          g_printerr ("Error setting environment variable %s to '%s': %s\n",
                       key,
-                      value);
+                      value,
+                      g_strerror (errno));
           goto out;
         }
     }
@@ -446,7 +458,7 @@ main (int argc, char *argv[])
       setreuid (0, 0);
       if ((geteuid () != 0) || (getuid () != 0))
         {
-          g_printerr ("Error becoming uid 0: %m\n");
+          g_printerr ("Error becoming uid 0: %s\n", g_strerror (errno));
           goto out;
         }
     }
@@ -454,12 +466,12 @@ main (int argc, char *argv[])
   /* become the user */
   if (setgroups (0, NULL) != 0)
     {
-      g_printerr ("Error setting groups: %m\n");
+      g_printerr ("Error setting groups: %s\n", g_strerror (errno));
       goto out;
     }
   if (initgroups (pw->pw_name, pw->pw_gid) != 0)
     {
-      g_printerr ("Error initializing groups for %s: %m\n", pw->pw_name);
+      g_printerr ("Error initializing groups for %s: %s\n", pw->pw_name, g_strerror (errno));
       goto out;
     }
   setregid (pw->pw_gid, pw->pw_gid);
@@ -467,21 +479,21 @@ main (int argc, char *argv[])
   if ((geteuid () != pw->pw_uid) || (getuid () != pw->pw_uid) ||
       (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
     {
-      g_printerr ("Error becoming real+effective uid %d and gid %d: %m\n", pw->pw_uid, pw->pw_gid);
+      g_printerr ("Error becoming real+effective uid %d and gid %d: %s\n", pw->pw_uid, pw->pw_gid, g_strerror (errno));
       goto out;
     }
 
   /* change to home directory */
   if (chdir (pw->pw_dir) != 0)
     {
-      g_printerr ("Error changing to home directory %s: %m\n", pw->pw_dir);
+      g_printerr ("Error changing to home directory %s: %s\n", pw->pw_dir, g_strerror (errno));
       goto out;
     }
 
   /* exec the program */
   if (execv (path, exec_argv) != 0)
     {
-      g_printerr ("Error executing %s: %m\n", path);
+      g_printerr ("Error executing %s: %s\n", path, g_strerror (errno));
       goto out;
     }
 

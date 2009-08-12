@@ -52,6 +52,7 @@ PolkitSubject  *polkit_unix_process_new_full       (pid_t pid,
                                                     guint64 start_time);
 
 pid_t           polkit_unix_process_get_pid        (PolkitUnixProcess *process);
+int             polkit_unix_pid_get_uid            (pid_t pid, uid_t *uid);
 guint64         polkit_unix_process_get_start_time (PolkitUnixProcess *process);
 
 void            polkit_unix_process_set_pid        (PolkitUnixProcess *process,

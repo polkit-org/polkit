@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include <grp.h>
+#include <errno.h>
 #include "polkitunixgroup.h"
 #include "polkitidentity.h"
 #include "polkiterror.h"
@@ -210,8 +211,9 @@ polkit_unix_group_new_for_name (const gchar    *name,
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "No UNIX group with name %s: %m",
-                   name);
+                   "No UNIX group with name %s: %s",
+                   name,
+                   g_strerror (errno));
       goto out;
     }
 
