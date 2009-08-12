@@ -71,7 +71,7 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
   signals[CHANGED_SIGNAL] = g_signal_new ("changed",
                                           POLKIT_BACKEND_TYPE_AUTHORITY,
                                           G_SIGNAL_RUN_LAST,
-                                          0,                      /* class offset     */
+                                          G_STRUCT_OFFSET (PolkitBackendAuthorityClass, changed),
                                           NULL,                   /* accumulator      */
                                           NULL,                   /* accumulator data */
                                           g_cclosure_marshal_VOID__VOID,
