@@ -55,7 +55,17 @@ struct _PolkitBackendSessionMonitorClass
 {
   GObjectClass parent_class;
 
+  void (*changed) (PolkitBackendSessionMonitor *monitor);
 };
+
+
+enum
+{
+  CHANGED_SIGNAL,
+  LAST_SIGNAL,
+};
+
+static guint signals[LAST_SIGNAL] = {0};
 
 static void seat_session_added (CkSeat      *seat,
                                 const gchar *object_path,
@@ -154,6 +164,8 @@ manager_seat_added (CkManager   *manager,
   //g_debug ("seat %s added", object_path);
 
   add_seat (monitor, object_path);
+
+  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
 }
 
 static void
@@ -166,6 +178,8 @@ manager_seat_removed (CkManager   *manager,
   //g_debug ("seat %s removed", object_path);
 
   remove_seat (monitor, object_path);
+
+  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
 }
 
 static void
@@ -178,6 +192,8 @@ seat_session_added (CkSeat      *seat,
   //g_debug ("session %s added", object_path);
 
   add_session (monitor, object_path);
+
+  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
 }
 
 static void
@@ -190,6 +206,8 @@ seat_session_removed (CkSeat      *seat,
   //g_debug ("session %s removed", object_path);
 
   remove_session (monitor, object_path);
+
+  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
 }
 
 static void
@@ -197,6 +215,7 @@ session_active_changed (CkSession   *session,
                         gboolean     is_active,
                         gpointer     user_data)
 {
+  PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
   EggDBusObjectProxy *object_proxy;
 
   object_proxy = egg_dbus_interface_proxy_get_object_proxy (EGG_DBUS_INTERFACE_PROXY (session));
@@ -204,6 +223,8 @@ session_active_changed (CkSession   *session,
   //g_debug ("session %s active changed to %d", egg_dbus_object_proxy_get_object_path (object_proxy), is_active);
 
   egg_dbus_object_proxy_invalidate_properties (object_proxy);
+
+  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -307,6 +328,22 @@ polkit_backend_session_monitor_class_init (PolkitBackendSessionMonitorClass *kla
   gobject_class = G_OBJECT_CLASS (klass);
 
   gobject_class->finalize = polkit_backend_session_monitor_finalize;
+
+  /**
+   * PolkitBackendSessionMonitor::changed:
+   * @monitor: A #PolkitBackendSessionMonitor
+   *
+   * Emitted when something changes.
+   */
+  signals[CHANGED_SIGNAL] = g_signal_new ("changed",
+                                          POLKIT_BACKEND_TYPE_SESSION_MONITOR,
+                                          G_SIGNAL_RUN_LAST,
+                                          G_STRUCT_OFFSET (PolkitBackendSessionMonitorClass, changed),
+                                          NULL,                   /* accumulator      */
+                                          NULL,                   /* accumulator data */
+                                          g_cclosure_marshal_VOID__VOID,
+                                          G_TYPE_NONE,
+                                          0);
 }
 
 PolkitBackendSessionMonitor *

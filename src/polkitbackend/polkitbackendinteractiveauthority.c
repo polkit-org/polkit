@@ -63,6 +63,9 @@ static const gchar *temporary_authorization_store_add_authorization (TemporaryAu
                                                                      PolkitSubject               *session,
                                                                      const gchar                 *action_id);
 
+static void temporary_authorization_store_remove_authorizations_for_system_bus_name (TemporaryAuthorizationStore *store,
+                                                                                     const gchar *name);
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 struct AuthenticationAgent;
@@ -214,6 +217,14 @@ action_pool_changed (PolkitBackendActionPool *action_pool,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+on_session_monitor_changed (PolkitBackendSessionMonitor *monitor,
+                            gpointer                     user_data)
+{
+  PolkitBackendInteractiveAuthority *authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (user_data);
+  g_signal_emit_by_name (authority, "changed");
+}
+
+static void
 polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *authority)
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
@@ -237,6 +248,10 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
                                                                       (GDestroyNotify) authentication_agent_free);
 
   priv->session_monitor = polkit_backend_session_monitor_new ();
+  g_signal_connect (priv->session_monitor,
+                    "changed",
+                    G_CALLBACK (on_session_monitor_changed),
+                    authority);
 }
 
 static void
@@ -1868,6 +1883,12 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
         }
       g_list_free (sessions);
 
+      /* remove all temporary authorizations that applies to the vanished name
+       * (temporary_authorization_store_add_authorization for the code path for handling processes)
+       */
+      temporary_authorization_store_remove_authorizations_for_system_bus_name (priv->temporary_authorization_store,
+                                                                               name);
+
     }
 
 }
@@ -1893,6 +1914,7 @@ struct TemporaryAuthorization
   guint64 time_granted;
   guint64 time_expires;
   guint expiration_timeout_id;
+  guint check_vanished_timeout_id;
 };
 
 static void
@@ -1904,6 +1926,8 @@ temporary_authorization_free (TemporaryAuthorization *authorization)
   g_free (authorization->action_id);
   if (authorization->expiration_timeout_id > 0)
     g_source_remove (authorization->expiration_timeout_id);
+  if (authorization->check_vanished_timeout_id > 0)
+    g_source_remove (authorization->check_vanished_timeout_id);
   g_free (authorization);
 }
 
@@ -1963,6 +1987,15 @@ static gboolean
 on_expiration_timeout (gpointer user_data)
 {
   TemporaryAuthorization *authorization = user_data;
+  gchar *s;
+
+  s = polkit_subject_to_string (authorization->subject);
+  g_debug ("Removing tempoary authorization with id `%s' for action-id `%s' for subject `%s': "
+           "authorization has expired",
+           authorization->id,
+           authorization->action_id,
+           s);
+  g_free (s);
 
   authorization->store->authorizations = g_list_remove (authorization->store->authorizations,
                                                         authorization);
@@ -1972,6 +2005,86 @@ on_expiration_timeout (gpointer user_data)
 
   /* remove source */
   return FALSE;
+}
+
+static gboolean
+on_unix_process_check_vanished_timeout (gpointer user_data)
+{
+  TemporaryAuthorization *authorization = user_data;
+  GError *error;
+
+  /* we know that this is a PolkitUnixProcess so the check is fast (no IPC involved) */
+  error = NULL;
+  if (!polkit_subject_exists_sync (authorization->subject,
+                                   NULL,
+                                   &error))
+    {
+      if (error != NULL)
+        {
+          g_warning ("Error checking if process exists: %s", error->message);
+          g_error_free (error);
+        }
+      else
+        {
+          gchar *s;
+
+          s = polkit_subject_to_string (authorization->subject);
+          g_debug ("Removing tempoary authorization with id `%s' for action-id `%s' for subject `%s': "
+                   "subject has vanished",
+                   authorization->id,
+                   authorization->action_id,
+                   s);
+          g_free (s);
+
+          authorization->store->authorizations = g_list_remove (authorization->store->authorizations,
+                                                                authorization);
+          g_signal_emit_by_name (authorization->store->authority, "changed");
+          temporary_authorization_free (authorization);
+        }
+    }
+
+  /* keep source around */
+  return TRUE;
+}
+
+static void
+temporary_authorization_store_remove_authorizations_for_system_bus_name (TemporaryAuthorizationStore *store,
+                                                                         const gchar *name)
+{
+  guint num_removed;
+  GList *l, *ll;
+
+  num_removed = 0;
+  for (l = store->authorizations; l != NULL; l = ll)
+    {
+      TemporaryAuthorization *ta = l->data;
+      gchar *s;
+
+      ll = l->next;
+
+      if (!POLKIT_IS_SYSTEM_BUS_NAME (ta->subject))
+        continue;
+
+      if (g_strcmp0 (name, polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (ta->subject))) != 0)
+        continue;
+
+
+      s = polkit_subject_to_string (ta->subject);
+      g_debug ("Removing tempoary authorization with id `%s' for action-id `%s' for subject `%s': "
+               "subject has vanished",
+               ta->id,
+               ta->action_id,
+               s);
+      g_free (s);
+
+      store->authorizations = g_list_remove (store->authorizations, ta);
+      temporary_authorization_free (ta);
+
+      num_removed++;
+    }
+
+  if (num_removed > 0)
+    g_signal_emit_by_name (store->authority, "changed");
 }
 
 static const gchar *
@@ -1988,9 +2101,10 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   g_return_val_if_fail (action_id != NULL, NULL);
   g_return_val_if_fail (!temporary_authorization_store_has_authorization (store, subject, action_id, NULL), NULL);
 
-  /* TODO: right now this is hard-coded - we could make it a propery on the
-   *       PolkitBackendInteractiveAuthority class. Or we could even read
-   *       it per action from an annotation.
+  /* TODO: right now the time the temporary authorization is kept is hard-coded - we
+   *       could make it a propery on the PolkitBackendInteractiveAuthority class (so
+   *       the local authority could read it from a config file) or a vfunc
+   *       (so the local authority could read it from an annotation on the action).
    */
   expiration_seconds = 5 * 60;
 
@@ -2005,6 +2119,36 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   authorization->expiration_timeout_id = g_timeout_add (expiration_seconds * 1000,
                                                         on_expiration_timeout,
                                                         authorization);
+
+  if (POLKIT_IS_UNIX_PROCESS (authorization->subject))
+    {
+      /* For now, set up a timer to poll every two seconds - this is used to determine
+       * when the process vanishes. We want to do this so we can remove the temporary
+       * authorization - this is because we want agents to update e.g. a notification
+       * area icon saying the user has temporary authorizations (e.g. remove the icon).
+       *
+       * Ideally we'd just do
+       *
+       *   g_signal_connect (kernel, "process-exited", G_CALLBACK (on_process_exited), user_data);
+       *
+       * but that is not how things work right now (and, hey, it's not like the kernel
+       * is a GObject either!) - so we poll.
+       *
+       * TODO: On Linux, it might be possible to obtain notifications by connecting
+       *       to the netlink socket. Needs looking into.
+       */
+
+      authorization->check_vanished_timeout_id = g_timeout_add_seconds (2,
+                                                                        on_unix_process_check_vanished_timeout,
+                                                                        authorization);
+    }
+#if 0
+  else if (POLKIT_IS_SYSTEM_BUS_NAME (authorization->subject))
+    {
+      /* This is currently handled in polkit_backend_interactive_authority_system_bus_name_owner_changed()  */
+    }
+#endif
+
 
   store->authorizations = g_list_prepend (store->authorizations, authorization);
 
