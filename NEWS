@@ -1,4 +1,44 @@
 --------------
+PolicyKit 0.94
+--------------
+
+This is PolicyKit 0.94.
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.21.4
+ eggdbus-1             >= 0.5
+ gobject-introspection >= 0.6.2 (optional)
+ pam
+
+Changes since PolicyKit 0.93:
+
+ David Zeuthen (13):
+       Post-release version bump to 0.94
+       Require correct versions of glib and eggdbus
+       Ignore .pkla files starting with dot and don't segfault on error path
+       Allow unprivileged callers to check authorizations
+       Don't spawn man(1) from a setuid program
+       Add polkit.retains_authorization_after_challenge to authz result
+       Ensure all fds except stdin/stdout/stderr are closed after exec(2)
+       Be more careful when determining process start time
+       Pass the right struct offset for the ::changed class signal handler
+       Don't set the GError if the process doesn't exist
+       Remove temporary authorization when the subject it applies to vanishes
+       Generate GI gir and typelibs for libpolkit-gobject-1
+       Update NEWS for release
+
+ Joe Marcus Clarke (1):
+       Bug 23093 – FreeBSD portability fixes
+
+David Zeuthen,
+August 12, 2009
+
+--------------
 PolicyKit 0.93
 --------------
 
@@ -14,7 +54,7 @@ Build requirements
  eggdbus-1          >= 0.5
  pam
 
-Changes since PolicyKit 0.93:
+Changes since PolicyKit 0.92:
 
 David Zeuthen (16):
       Post-release version bump to 0.93
