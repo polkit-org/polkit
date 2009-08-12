@@ -351,10 +351,22 @@ main (int argc, char *argv[])
       pid_of_caller = getpgrp ();
     }
 
-  /* paranoia: check that the uid of pid_of_caller matches getuid() */
-  if (polkit_unix_pid_get_uid (pid_of_caller, &uid_of_caller) != 0)
+  subject = polkit_unix_process_new (pid_of_caller);
+  if (subject == NULL)
     {
-      g_printerr ("Error determing pid of caller (pid %d): %s\n", (gint) pid_of_caller, g_strerror (errno));
+      g_printerr ("No such process for pid %d: %s\n", (gint) pid_of_caller, error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  /* paranoia: check that the uid of pid_of_caller matches getuid() */
+  error = NULL;
+  uid_of_caller = polkit_unix_process_get_owner (POLKIT_UNIX_PROCESS (subject),
+                                                 &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error determing pid of caller (pid %d): %s\n", (gint) pid_of_caller, error->message);
+      g_error_free (error);
       goto out;
     }
   if (uid_of_caller != getuid ())
@@ -364,7 +376,6 @@ main (int argc, char *argv[])
     }
 
   authority = polkit_authority_get ();
-  subject = polkit_unix_process_new (pid_of_caller);
 
   details = polkit_details_new ();
 

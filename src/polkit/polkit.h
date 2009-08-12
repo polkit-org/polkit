@@ -24,6 +24,8 @@
 
 #define _POLKIT_INSIDE_POLKIT_H 1
 
+#include <polkit/polkittypes.h>
+#include <polkit/polkitenumtypes.h>
 #include <polkit/polkitimplicitauthorization.h>
 #include <polkit/polkitactiondescription.h>
 #include <polkit/polkiterror.h>

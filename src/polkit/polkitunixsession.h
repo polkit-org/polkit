@@ -46,13 +46,13 @@ typedef struct _PolkitUnixSessionClass PolkitUnixSessionClass;
 
 GType           polkit_unix_session_get_type               (void) G_GNUC_CONST;
 PolkitSubject  *polkit_unix_session_new                    (const gchar        *session_id);
-void            polkit_unix_session_new_for_process        (pid_t               pid,
+void            polkit_unix_session_new_for_process        (gint                pid,
                                                             GCancellable       *cancellable,
                                                             GAsyncReadyCallback callback,
                                                             gpointer            user_data);
 PolkitSubject  *polkit_unix_session_new_for_process_finish (GAsyncResult       *res,
                                                             GError            **error);
-PolkitSubject  *polkit_unix_session_new_for_process_sync   (pid_t               pid,
+PolkitSubject  *polkit_unix_session_new_for_process_sync   (gint                pid,
                                                             GCancellable       *cancellable,
                                                             GError            **error);
 const gchar    *polkit_unix_session_get_session_id         (PolkitUnixSession  *session);

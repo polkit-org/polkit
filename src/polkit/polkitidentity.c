@@ -155,7 +155,7 @@ polkit_identity_from_string  (const gchar   *str,
                               &endptr,
                               10);
       if (*endptr == '\0')
-        identity = polkit_unix_user_new ((uid_t) val);
+        identity = polkit_unix_user_new ((gint) val);
       else
         identity = polkit_unix_user_new_for_name (str + sizeof "unix-user:" - 1,
                                                  error);
@@ -166,7 +166,7 @@ polkit_identity_from_string  (const gchar   *str,
                               &endptr,
                               10);
       if (*endptr == '\0')
-        identity = polkit_unix_group_new ((gid_t) val);
+        identity = polkit_unix_group_new ((gint) val);
       else
         identity = polkit_unix_group_new_for_name (str + sizeof "unix-group:" - 1,
                                                   error);

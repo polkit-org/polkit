@@ -225,7 +225,7 @@ polkit_subject_from_string  (const gchar   *str,
                               10);
       if (*endptr == '\0')
         {
-          subject = polkit_unix_process_new ((pid_t) val);
+          subject = polkit_unix_process_new ((gint) val);
           if (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) == 0)
             {
               g_object_unref (subject);

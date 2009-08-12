@@ -48,7 +48,7 @@ struct _PolkitUnixGroup
 {
   GObject parent_instance;
 
-  gid_t gid;
+  gint gid;
 };
 
 struct _PolkitUnixGroupClass
@@ -75,16 +75,16 @@ polkit_unix_group_init (PolkitUnixGroup *unix_group)
 
 static void
 polkit_unix_group_get_property (GObject    *object,
-                               guint       prop_id,
-                               GValue     *value,
-                               GParamSpec *pspec)
+                                guint       prop_id,
+                                GValue     *value,
+                                GParamSpec *pspec)
 {
   PolkitUnixGroup *unix_group = POLKIT_UNIX_GROUP (object);
 
   switch (prop_id)
     {
     case PROP_GID:
-      g_value_set_uint (value, unix_group->gid);
+      g_value_set_int (value, unix_group->gid);
       break;
 
     default:
@@ -104,7 +104,7 @@ polkit_unix_group_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_GID:
-      unix_group->gid = g_value_get_uint (value);
+      unix_group->gid = g_value_get_int (value);
       break;
 
     default:
@@ -128,17 +128,17 @@ polkit_unix_group_class_init (PolkitUnixGroupClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_GID,
-                                   g_param_spec_uint ("gid",
-                                                      "Group ID",
-                                                      "The UNIX group ID",
-                                                      0,
-                                                      G_MAXUINT,
-                                                      0,
-                                                      G_PARAM_CONSTRUCT |
-                                                      G_PARAM_READWRITE |
-                                                      G_PARAM_STATIC_NAME |
-                                                      G_PARAM_STATIC_BLURB |
-                                                      G_PARAM_STATIC_NICK));
+                                   g_param_spec_int ("gid",
+                                                     "Group ID",
+                                                     "The UNIX group ID",
+                                                     0,
+                                                     G_MAXINT,
+                                                     0,
+                                                     G_PARAM_CONSTRUCT |
+                                                     G_PARAM_READWRITE |
+                                                     G_PARAM_STATIC_NAME |
+                                                     G_PARAM_STATIC_BLURB |
+                                                     G_PARAM_STATIC_NICK));
 
 }
 
@@ -150,7 +150,7 @@ polkit_unix_group_class_init (PolkitUnixGroupClass *klass)
  *
  * Returns: A UNIX group id.
  */
-gid_t
+gint
 polkit_unix_group_get_gid (PolkitUnixGroup *group)
 {
   return group->gid;
@@ -165,7 +165,7 @@ polkit_unix_group_get_gid (PolkitUnixGroup *group)
  */
 void
 polkit_unix_group_set_gid (PolkitUnixGroup *group,
-                          gid_t gid)
+                          gint gid)
 {
   group->gid = gid;
 }
@@ -179,7 +179,7 @@ polkit_unix_group_set_gid (PolkitUnixGroup *group,
  * Returns: A #PolkitUnixGroup object. Free with g_object_unref().
  */
 PolkitIdentity *
-polkit_unix_group_new (gid_t gid)
+polkit_unix_group_new (gint gid)
 {
   return POLKIT_IDENTITY (g_object_new (POLKIT_TYPE_UNIX_GROUP,
                                        "gid", gid,

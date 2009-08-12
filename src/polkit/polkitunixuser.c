@@ -48,7 +48,7 @@ struct _PolkitUnixUser
 {
   GObject parent_instance;
 
-  uid_t uid;
+  gint uid;
 };
 
 struct _PolkitUnixUserClass
@@ -84,7 +84,7 @@ polkit_unix_user_get_property (GObject    *object,
   switch (prop_id)
     {
     case PROP_UID:
-      g_value_set_uint (value, unix_user->uid);
+      g_value_set_int (value, unix_user->uid);
       break;
 
     default:
@@ -104,7 +104,7 @@ polkit_unix_user_set_property (GObject      *object,
   switch (prop_id)
     {
     case PROP_UID:
-      unix_user->uid = g_value_get_uint (value);
+      unix_user->uid = g_value_get_int (value);
       break;
 
     default:
@@ -128,17 +128,17 @@ polkit_unix_user_class_init (PolkitUnixUserClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_UID,
-                                   g_param_spec_uint ("uid",
-                                                      "User ID",
-                                                      "The UNIX user ID",
-                                                      0,
-                                                      G_MAXUINT,
-                                                      0,
-                                                      G_PARAM_CONSTRUCT |
-                                                      G_PARAM_READWRITE |
-                                                      G_PARAM_STATIC_NAME |
-                                                      G_PARAM_STATIC_BLURB |
-                                                      G_PARAM_STATIC_NICK));
+                                   g_param_spec_int ("uid",
+                                                     "User ID",
+                                                     "The UNIX user ID",
+                                                     0,
+                                                     G_MAXINT,
+                                                     0,
+                                                     G_PARAM_CONSTRUCT |
+                                                     G_PARAM_READWRITE |
+                                                     G_PARAM_STATIC_NAME |
+                                                     G_PARAM_STATIC_BLURB |
+                                                     G_PARAM_STATIC_NICK));
 
 }
 
@@ -150,7 +150,7 @@ polkit_unix_user_class_init (PolkitUnixUserClass *klass)
  *
  * Returns: A UNIX user id.
  */
-uid_t
+gint
 polkit_unix_user_get_uid (PolkitUnixUser *user)
 {
   return user->uid;
@@ -165,7 +165,7 @@ polkit_unix_user_get_uid (PolkitUnixUser *user)
  */
 void
 polkit_unix_user_set_uid (PolkitUnixUser *user,
-                          uid_t uid)
+                          gint uid)
 {
   user->uid = uid;
 }
@@ -179,7 +179,7 @@ polkit_unix_user_set_uid (PolkitUnixUser *user,
  * Returns: A #PolkitUnixUser object. Free with g_object_unref().
  */
 PolkitIdentity *
-polkit_unix_user_new (uid_t uid)
+polkit_unix_user_new (gint uid)
 {
   return POLKIT_IDENTITY (g_object_new (POLKIT_TYPE_UNIX_USER,
                                         "uid", uid,

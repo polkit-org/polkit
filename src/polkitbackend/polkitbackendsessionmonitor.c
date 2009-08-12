@@ -418,17 +418,14 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
-      pid_t pid;
+      GError *local_error;
 
-      pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject));
-
-      if (polkit_unix_pid_get_uid (pid, &uid) != 0)
+      local_error = NULL;
+      uid = polkit_unix_process_get_owner (POLKIT_UNIX_PROCESS (subject), &local_error);
+      if (local_error != NULL)
         {
-          g_set_error (error,
-                       POLKIT_ERROR,
-                       POLKIT_ERROR_FAILED,
-                       "Cannot get user for pid %d",
-                       pid);
+          g_propagate_error (error, local_error);
+          g_error_free (local_error);
           goto out;
         }
       user = polkit_unix_user_new (uid);

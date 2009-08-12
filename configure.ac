@@ -381,7 +381,7 @@ AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_PASSWORD, "$PAM_FILE_INCLUDE_PASSWORD", [pam
 AC_DEFINE_UNQUOTED(PAM_FILE_INCLUDE_SESSION, "$PAM_FILE_INCLUDE_SESSION", [pam file session])
 
 dnl ---------------------------------------------------------------------------
-dnl - check OS 
+dnl - check OS
 dnl ---------------------------------------------------------------------------
 case "$host_os" in
   *linux*)
@@ -394,9 +394,29 @@ case "$host_os" in
 	;;
 esac
 
+# GObject introspection
+#
+AC_ARG_ENABLE([introspection],
+	AS_HELP_STRING([--enable-introspection], [enable GObject introspection]),
+	[], [enable_introspection=yes])
+if test "x$enable_introspection" = xyes; then
+	PKG_CHECK_MODULES([INTROSPECTION], [gobject-introspection-1.0 >= 0.6.2])
+	AC_DEFINE([ENABLE_INTROSPECTION], [1], [enable GObject introspection support])
+	AC_SUBST([G_IR_SCANNER], [$($PKG_CONFIG --variable=g_ir_scanner gobject-introspection-1.0)])
+	AC_SUBST([G_IR_COMPILER], [$($PKG_CONFIG --variable=g_ir_compiler gobject-introspection-1.0)])
+	AC_SUBST([G_IR_GENERATE], [$($PKG_CONFIG --variable=g_ir_generate gobject-introspection-1.0)])
+	#AC_SUBST([GIRDIR], [$($PKG_CONFIG --variable=girdir gobject-introspection-1.0)])
+	#AC_SUBST([GIRTYPELIBDIR], [$($PKG_CONFIG --variable=typelibdir gobject-introspection-1.0)])
+        GIRDIR=${datadir}/gir-1.0
+        GIRTYPELIBDIR=${libdir}/girepository-1.0
+        AC_SUBST(GIRDIR)
+        AC_SUBST(GIRTYPELIBDIR)
+fi
+AM_CONDITIONAL([ENABLE_INTROSPECTION], [test "x$enable_introspection" = xyes])
+
 
 # ********************
-# Internationalisation
+# Internationalization
 # ********************
 
 IT_PROG_INTLTOOL([0.40.0])
@@ -448,6 +468,7 @@ echo "
         cflags:                     ${CFLAGS}
         cppflags:                   ${CPPFLAGS}
         xsltproc:                   ${XSLTPROC}
+	introspection:		    ${enable_introspection}
 
         Distribution/OS:            ${with_os_type}
         user for PolicyKit:         ${POLKIT_USER}

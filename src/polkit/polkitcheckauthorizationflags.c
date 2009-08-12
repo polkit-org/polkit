@@ -26,10 +26,4 @@
 #include "polkitcheckauthorizationflags.h"
 #include "polkitprivate.h"
 
-GType
-polkit_check_authorization_flags_get_type (void)
-{
-  return _polkit_check_authorization_flags_get_type ();
-}
-
 

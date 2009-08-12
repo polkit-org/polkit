@@ -36,12 +36,6 @@
  * Possible implicit authorizations.
  */
 
-GType
-polkit_implicit_authorization_get_type (void)
-{
-  return _polkit_implicit_authorization_get_type ();
-}
-
 gboolean
 polkit_implicit_authorization_from_string (const gchar *string,
                                            PolkitImplicitAuthorization *out_implicit_authorization)

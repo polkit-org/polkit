@@ -50,7 +50,7 @@ struct _PolkitUnixSession
 
   gchar *session_id;
 
-  pid_t pid;
+  gint pid;
 };
 
 struct _PolkitUnixSessionClass
@@ -126,7 +126,7 @@ polkit_unix_session_set_property (GObject      *object,
       break;
 
     case PROP_PID:
-      session->pid = g_value_get_uint (value);
+      session->pid = g_value_get_int (value);
       break;
 
     default:
@@ -169,17 +169,17 @@ polkit_unix_session_class_init (PolkitUnixSessionClass *klass)
    */
   g_object_class_install_property (gobject_class,
                                    PROP_PID,
-                                   g_param_spec_uint ("pid",
-                                                      "Process ID",
-                                                      "Process ID to use for looking up the session",
-                                                      0,
-                                                      G_MAXUINT,
-                                                      0,
-                                                      G_PARAM_CONSTRUCT_ONLY |
-                                                      G_PARAM_WRITABLE |
-                                                      G_PARAM_STATIC_NAME |
-                                                      G_PARAM_STATIC_BLURB |
-                                                      G_PARAM_STATIC_NICK));
+                                   g_param_spec_int ("pid",
+                                                     "Process ID",
+                                                     "Process ID to use for looking up the session",
+                                                     0,
+                                                     G_MAXINT,
+                                                     0,
+                                                     G_PARAM_CONSTRUCT_ONLY |
+                                                     G_PARAM_WRITABLE |
+                                                     G_PARAM_STATIC_NAME |
+                                                     G_PARAM_STATIC_BLURB |
+                                                     G_PARAM_STATIC_NICK));
 
 }
 
@@ -247,7 +247,7 @@ polkit_unix_session_new (const gchar *session_id)
  * use polkit_unix_session_new_for_process_sync().
  **/
 void
-polkit_unix_session_new_for_process (pid_t               pid,
+polkit_unix_session_new_for_process (gint                pid,
                                      GCancellable       *cancellable,
                                      GAsyncReadyCallback callback,
                                      gpointer            user_data)
@@ -307,7 +307,7 @@ polkit_unix_session_new_for_process_finish (GAsyncResult   *res,
  * Returns: A #PolkitUnixSession for @pid or %NULL if @error is set. Free with g_object_unref().
  **/
 PolkitSubject *
-polkit_unix_session_new_for_process_sync (pid_t          pid,
+polkit_unix_session_new_for_process_sync (gint           pid,
                                           GCancellable  *cancellable,
                                           GError       **error)
 {

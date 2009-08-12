@@ -40,9 +40,3 @@ polkit_error_quark (void)
   return _polkit_error_quark ();
 }
 
-GType
-polkit_error_get_type (void)
-{
-  return _polkit_error_get_type ();
-}
-
