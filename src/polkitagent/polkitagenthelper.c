@@ -81,7 +81,7 @@ main (int argc, char *argv[])
   /* check that we are setuid root */
   if (geteuid () != 0)
     {
-      fprintf (stderr, "polkit-grant-helper-pam: needs to be setuid root\n");
+      fprintf (stderr, "polkit-agent-helper-1: needs to be setuid root\n");
       goto error;
     }
 
