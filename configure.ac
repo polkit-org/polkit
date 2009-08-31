@@ -414,6 +414,11 @@ if test "x$enable_introspection" = xyes; then
 fi
 AM_CONDITIONAL([ENABLE_INTROSPECTION], [test "x$enable_introspection" = xyes])
 
+AC_ARG_ENABLE([examples],
+              AS_HELP_STRING([--enable-examples], [Build the example programs]),,
+              [enable_examples=no])
+
+AM_CONDITIONAL(BUILD_EXAMPLES, test "x$enable_examples" = "xyes")
 
 # ********************
 # Internationalization
