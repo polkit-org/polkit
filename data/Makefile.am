@@ -10,11 +10,7 @@ $(service_DATA): $(service_in_files) Makefile
 	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
 
 dbusconfdir = $(sysconfdir)/dbus-1/system.d
-dbusconf_in_files = org.freedesktop.PolicyKit1.conf.in
-dbusconf_DATA = $(dbusconf_in_files:.conf.in=.conf)
-
-$(dbusconf_DATA): $(dbusconf_in_files) Makefile
-	@sed -e "s|\@polkituser\@|$(POLKIT_USER)|" $< > $@
+dbusconf_DATA = org.freedesktop.PolicyKit1.conf
 
 if POLKIT_AUTHFW_PAM
 pamdir = $(sysconfdir)/pam.d
@@ -30,13 +26,9 @@ EXTRA_DIST = 							\
 	org.freedesktop.PolicyKit1.Authority.xml 		\
 	org.freedesktop.PolicyKit1.AuthenticationAgent.xml 	\
 	$(service_in_files) 					\
-	$(dbusconf_in_files) 					\
-	polkit-1.in						\
-	polkit-gobject-1.pc.in 					\
-	polkit-backend-1.pc.in 					\
-	polkit-agent-1.pc.in					\
+	$(dbusconf_DATA) 					\
 	$(NULL)
 
 
 clean-local :
-	rm -f *~ $(service_DATA) $(dbusconf_DATA)
+	rm -f *~ $(service_DATA)

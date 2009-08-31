@@ -149,19 +149,6 @@ if test "x$GCC" = "xyes"; then
 fi
 
 dnl ---------------------------------------------------------------------------
-dnl - User
-dnl ---------------------------------------------------------------------------
-
-AC_ARG_WITH(polkit_user,[  --with-polkit-user=<user>  user for PolicyKit])
-if test -z "$with_polkit_user" ; then
-    POLKIT_USER=polkituser
-else
-    POLKIT_USER=$with_polkit_user
-fi
-AC_SUBST(POLKIT_USER)
-AC_DEFINE_UNQUOTED(POLKIT_USER, "$POLKIT_USER", [User for PolicyKit])
-
-dnl ---------------------------------------------------------------------------
 dnl - Select which authentication framework to use
 dnl ---------------------------------------------------------------------------
 
