@@ -169,7 +169,7 @@ Polkit-1.0.typelib: Polkit-1.0.gir $(G_IR_COMPILER)
 
 endif # ENABLE_INTROSPECTION
 
-EXTRA_DIST = Polkit-1.0.gir polkitenumtypes.h.template polkitenumtypes.c.template
+EXTRA_DIST = polkitenumtypes.h.template polkitenumtypes.c.template
 CLEANFILES = $(gir_DATA) $(typelibs_DATA)
 
 dist-hook :
