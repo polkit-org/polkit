@@ -48,6 +48,21 @@ polkit-built-sources.stamp : Makefile.am $(top_srcdir)/data/org.freedesktop.Poli
 #
 polkit_built_sources = _polkitactiondescription.c _polkitactiondescription.h _polkitauthenticationagent.c _polkitauthenticationagent.h _polkitauthority.c _polkitauthority.h _polkitauthorizationresult.c _polkitauthorizationresult.h _polkitbindings.c _polkitbindings.h _polkitbindingsmarshal.c _polkitbindingsmarshal.h _polkitbindingstypes.h _polkitcheckauthorizationflags.c _polkitcheckauthorizationflags.h _polkiterror.c _polkiterror.h _polkitidentity.c _polkitidentity.h _polkitimplicitauthorization.c _polkitimplicitauthorization.h _polkitsubject.c _polkitsubject.h _polkittemporaryauthorization.c _polkittemporaryauthorization.h docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml docbook-interface-org.freedesktop.PolicyKit1.Authority.xml _polkitbindingsmarshal.list
 
+noinst_LTLIBRARIES = libpolkit-private.la
+
+libpolkit_private_la_SOURCES = $(polkit_built_sources)
+
+libpolkit_private_la_CFLAGS =						\
+	-D_POLKIT_COMPILATION						\
+	$(GLIB_CFLAGS)							\
+	$(EGG_DBUS_CFLAGS)						\
+	$(NULL)
+
+libpolkit_private_la_LIBADD =						\
+	$(GLIB_LIBS)							\
+	$(EGG_DBUS_LIBS)						\
+	$(NULL)
+
 lib_LTLIBRARIES=libpolkit-gobject-1.la
 
 libpolkit_gobject_1includedir=$(includedir)/polkit-1/polkit
@@ -76,7 +91,6 @@ libpolkit_gobject_1include_HEADERS =                        				\
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
 	$(BUILT_SOURCES)								\
-	$(polkit_built_sources)								\
         polkit.h									\
 	polkitactiondescription.c		polkitactiondescription.h		\
 	polkitdetails.c				polkitdetails.h				\
@@ -104,6 +118,7 @@ libpolkit_gobject_1_la_CFLAGS =                                        	\
 libpolkit_gobject_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
         $(EGG_DBUS_LIBS)						\
+	libpolkit-private.la						\
         $(NULL)
 
 libpolkit_gobject_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
