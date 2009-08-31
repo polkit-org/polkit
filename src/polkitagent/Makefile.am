@@ -22,8 +22,8 @@ BUILT_SOURCES = 						\
 	$(NULL)
 
 marshal.stamp : Makefile.am $(srcdir)/polkitagentmarshal.list
-	glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --header > polkitagentmarshal.h.tmp && mv polkitagentmarshal.h.tmp polkitagentmarshal.h
-	(echo "#include \"polkitagentmarshal.h\""; glib-genmarshal --prefix=polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --body) > polkitagentmarshal.c.tmp && mv polkitagentmarshal.c.tmp polkitagentmarshal.c
+	glib-genmarshal --prefix=_polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --header > polkitagentmarshal.h.tmp && mv polkitagentmarshal.h.tmp polkitagentmarshal.h
+	(echo "#include \"polkitagentmarshal.h\""; glib-genmarshal --prefix=_polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --body) > polkitagentmarshal.c.tmp && mv polkitagentmarshal.c.tmp polkitagentmarshal.c
 	touch marshal.stamp
 
 marshal_built_sources = polkitagentmarshal.h polkitagentmarshal.c

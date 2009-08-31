@@ -156,7 +156,7 @@ polkit_agent_session_class_init (PolkitAgentSessionClass *klass)
                                           0,                      /* class offset     */
                                           NULL,                   /* accumulator      */
                                           NULL,                   /* accumulator data */
-                                          polkit_agent_marshal_VOID__STRING_BOOLEAN,
+                                          _polkit_agent_marshal_VOID__STRING_BOOLEAN,
                                           G_TYPE_NONE,
                                           2,
                                           G_TYPE_STRING,
