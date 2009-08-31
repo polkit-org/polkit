@@ -106,6 +106,8 @@ libpolkit_gobject_1_la_LIBADD =                               		\
         $(EGG_DBUS_LIBS)						\
         $(NULL)
 
+libpolkit_gobject_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
+
 if ENABLE_INTROSPECTION
 girdir = $(GIRDIR)
 gir_DATA = Polkit-1.0.gir

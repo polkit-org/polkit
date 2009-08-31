@@ -62,6 +62,8 @@ libpolkit_agent_1_la_LIBADD =                               		\
 	$(EXPAT_LIBS)							\
         $(NULL)
 
+libpolkit_agent_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
+
 libexec_PROGRAMS = polkit-agent-helper-1
 
 polkit_agent_helper_1_SOURCES = 					\

@@ -80,6 +80,8 @@ libpolkit_backend_1_la_LIBADD =                               		\
 	$(EXPAT_LIBS)							\
         $(NULL)
 
+libpolkit_backend_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
+
 CLEANFILES = $(BUILT_SOURCES)
 
 localauthorityconfigdir = $(sysconfdir)/polkit-1/localauthority.conf.d
