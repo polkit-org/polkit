@@ -93,6 +93,14 @@ print_action (PolkitActionDescription *action,
     }
 }
 
+static gint
+action_desc_compare_by_action_id_func (PolkitActionDescription *a,
+                                       PolkitActionDescription *b)
+{
+  return g_strcmp0 (polkit_action_description_get_action_id (a),
+                    polkit_action_description_get_action_id (b));
+}
+
 int
 main (int argc, char *argv[])
 {
@@ -196,6 +204,9 @@ main (int argc, char *argv[])
     }
   else
     {
+      actions = g_list_sort (actions,
+                             (GCompareFunc) action_desc_compare_by_action_id_func);
+
       for (l = actions; l != NULL; l = l->next)
         {
           PolkitActionDescription *action = POLKIT_ACTION_DESCRIPTION (l->data);
