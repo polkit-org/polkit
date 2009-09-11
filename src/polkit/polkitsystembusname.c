@@ -28,6 +28,8 @@
 #include "polkitsubject.h"
 #include "polkitprivate.h"
 
+#include "polkitunixprocess.h"
+
 /**
  * SECTION:polkitsystembusname
  * @title: PolkitSystemBusName
@@ -379,3 +381,45 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
   subject_iface->exists_finish = polkit_system_bus_name_exists_finish;
   subject_iface->exists_sync   = polkit_system_bus_name_exists_sync;
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+/**
+ * polkit_system_bus_name_get_process_sync:
+ * @system_bus_name: A #PolkitSystemBusName.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Synchronously gets a #PolkitUnixProcess object for @system_bus_name.
+ *
+ * Returns: A #PolkitUnixProcess object or %NULL if @error is set.
+ **/
+PolkitSubject *
+polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,
+                                         GCancellable         *cancellable,
+                                         GError              **error)
+{
+  EggDBusConnection *connection;
+  PolkitSubject *ret;
+  pid_t pid;
+
+  ret = NULL;
+
+  connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+  if (!egg_dbus_bus_get_connection_unix_process_id_sync (egg_dbus_connection_get_bus (connection),
+                                                         EGG_DBUS_CALL_FLAGS_NONE,
+                                                         system_bus_name->name,
+                                                         &pid,
+                                                         cancellable,
+                                                         error))
+    {
+      goto out;
+    }
+
+  ret = polkit_unix_process_new (pid);
+
+ out:
+  g_object_unref (connection);
+  return ret;
+}
+

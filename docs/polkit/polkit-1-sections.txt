@@ -82,6 +82,7 @@ PolkitSystemBusName
 polkit_system_bus_name_new
 polkit_system_bus_name_get_name
 polkit_system_bus_name_set_name
+polkit_system_bus_name_get_process_sync
 <SUBSECTION Standard>
 PolkitSystemBusNameClass
 POLKIT_SYSTEM_BUS_NAME

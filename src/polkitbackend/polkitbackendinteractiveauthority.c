@@ -1959,10 +1959,33 @@ temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *st
 {
   GList *l;
   gboolean ret;
+  PolkitSubject *subject_to_use;
 
   g_return_val_if_fail (store != NULL, FALSE);
   g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
   g_return_val_if_fail (action_id != NULL, FALSE);
+
+  /* XXX: for now, prefer to store the process */
+  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      GError *error;
+      error = NULL;
+      subject_to_use = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
+                                                                NULL,
+                                                                &error);
+      if (subject_to_use == NULL)
+        {
+          g_warning ("Error getting process for system bus name `%s': %s",
+                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                     error->message);
+          g_error_free (error);
+          subject_to_use = g_object_ref (subject);
+        }
+    }
+  else
+    {
+      subject_to_use = g_object_ref (subject);
+    }
 
   ret = FALSE;
 
@@ -1970,7 +1993,7 @@ temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *st
     TemporaryAuthorization *authorization = l->data;
 
     if (strcmp (action_id, authorization->action_id) == 0 &&
-        polkit_subject_equal (subject, authorization->subject))
+        polkit_subject_equal (subject_to_use, authorization->subject))
       {
         ret = TRUE;
         if (out_tmp_authz_id != NULL)
@@ -1980,6 +2003,7 @@ temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *st
   }
 
  out:
+  g_object_unref (subject_to_use);
   return ret;
 }
 
@@ -2095,11 +2119,34 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
 {
   TemporaryAuthorization *authorization;
   guint expiration_seconds;
+  PolkitSubject *subject_to_use;
 
   g_return_val_if_fail (store != NULL, NULL);
   g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), NULL);
   g_return_val_if_fail (action_id != NULL, NULL);
   g_return_val_if_fail (!temporary_authorization_store_has_authorization (store, subject, action_id, NULL), NULL);
+
+  /* XXX: for now, prefer to store the process */
+  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      GError *error;
+      error = NULL;
+      subject_to_use = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
+                                                                NULL,
+                                                                &error);
+      if (subject_to_use == NULL)
+        {
+          g_warning ("Error getting process for system bus name `%s': %s",
+                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                     error->message);
+          g_error_free (error);
+          subject_to_use = g_object_ref (subject);
+        }
+    }
+  else
+    {
+      subject_to_use = g_object_ref (subject);
+    }
 
   /* TODO: right now the time the temporary authorization is kept is hard-coded - we
    *       could make it a propery on the PolkitBackendInteractiveAuthority class (so
@@ -2111,7 +2158,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   authorization = g_new0 (TemporaryAuthorization, 1);
   authorization->id = g_strdup_printf ("tmpauthz%" G_GUINT64_FORMAT, store->serial++);
   authorization->store = store;
-  authorization->subject = g_object_ref (subject);
+  authorization->subject = g_object_ref (subject_to_use);
   authorization->session = g_object_ref (session);
   authorization->action_id = g_strdup (action_id);
   authorization->time_granted = time (NULL);
@@ -2151,6 +2198,8 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
 
 
   store->authorizations = g_list_prepend (store->authorizations, authorization);
+
+  g_object_unref (subject_to_use);
 
   return authorization->id;
 }

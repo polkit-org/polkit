@@ -46,11 +46,15 @@ typedef struct _PolkitSystemBusName PolkitSystemBusName;
 #endif
 typedef struct _PolkitSystemBusNameClass PolkitSystemBusNameClass;
 
-GType           polkit_system_bus_name_get_type (void) G_GNUC_CONST;
-PolkitSubject  *polkit_system_bus_name_new      (const gchar         *name);
-const gchar    *polkit_system_bus_name_get_name (PolkitSystemBusName *system_bus_name);
-void            polkit_system_bus_name_set_name (PolkitSystemBusName *system_bus_name,
-                                                 const gchar         *name);
+GType           polkit_system_bus_name_get_type           (void) G_GNUC_CONST;
+PolkitSubject  *polkit_system_bus_name_new                (const gchar          *name);
+const gchar    *polkit_system_bus_name_get_name           (PolkitSystemBusName  *system_bus_name);
+void            polkit_system_bus_name_set_name           (PolkitSystemBusName  *system_bus_name,
+                                                           const gchar          *name);
+/* TODO: add async version of get_process() method */
+PolkitSubject  *polkit_system_bus_name_get_process_sync   (PolkitSystemBusName  *system_bus_name,
+                                                           GCancellable         *cancellable,
+                                                           GError              **error);
 
 G_END_DECLS
 
