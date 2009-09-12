@@ -83,7 +83,8 @@ struct _PolkitBackendInteractiveAuthorityClass
                                                            gboolean                           subject_is_active,
                                                            const gchar                       *action_id,
                                                            PolkitDetails                     *details,
-                                                           PolkitImplicitAuthorization        implicit);
+                                                           PolkitImplicitAuthorization        implicit,
+                                                           PolkitDetails                     *out_details);
 
   /*< private >*/
   /* Padding for future expansion */
@@ -138,7 +139,8 @@ PolkitImplicitAuthorization polkit_backend_interactive_authority_check_authoriza
                                                           gboolean                           subject_is_active,
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details,
-                                                          PolkitImplicitAuthorization        implicit);
+                                                          PolkitImplicitAuthorization        implicit,
+                                                          PolkitDetails                     *out_details);
 
 G_END_DECLS
 

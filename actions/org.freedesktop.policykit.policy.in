@@ -58,4 +58,15 @@
       <allow_active>auth_admin</allow_active>
     </defaults>
   </action>
+
+  <action id="org.freedesktop.policykit.localauthority.lockdown">
+    <_description>Configure lockdown on the Local Authority</_description>
+    <_message>Authentication is required to configure lock down policy</_message>
+    <defaults>
+      <allow_any>no</allow_any>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>auth_admin</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/pklalockdown</annotate>
+  </action>
 </policyconfig>

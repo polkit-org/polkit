@@ -21,6 +21,7 @@
 
 #include "config.h"
 
+#include <string.h>
 #include <polkit/polkit.h>
 #include "polkitbackendlocalauthorizationstore.h"
 
@@ -79,6 +80,8 @@ typedef struct
   PolkitImplicitAuthorization result_any;
   PolkitImplicitAuthorization result_inactive;
   PolkitImplicitAuthorization result_active;
+
+  GHashTable *return_value;
 } LocalAuthorization;
 
 static void
@@ -89,6 +92,8 @@ local_authorization_free (LocalAuthorization *authorization)
   g_list_free (authorization->identity_specs);
   g_list_foreach (authorization->action_specs, (GFunc) g_pattern_spec_free, NULL);
   g_list_free (authorization->action_specs);
+  if (authorization->return_value != NULL)
+    g_hash_table_unref (authorization->return_value);
   g_free (authorization);
 }
 
@@ -105,6 +110,7 @@ local_authorization_new (GKeyFile      *key_file,
   gchar *result_any_string;
   gchar *result_inactive_string;
   gchar *result_active_string;
+  gchar **return_value_strings;
   guint n;
 
   identity_strings = NULL;
@@ -112,6 +118,7 @@ local_authorization_new (GKeyFile      *key_file,
   result_any_string = NULL;
   result_inactive_string = NULL;
   result_active_string = NULL;
+  return_value_strings = NULL;
 
   authorization = g_new0 (LocalAuthorization, 1);
 
@@ -221,6 +228,42 @@ local_authorization_new (GKeyFile      *key_file,
           goto out;
     }
 
+  return_value_strings = g_key_file_get_string_list (key_file,
+                                                     group,
+                                                     "ReturnValue",
+                                                     NULL,
+                                                     error);
+  if (return_value_strings != NULL)
+    {
+      for (n = 0; return_value_strings[n] != NULL; n++)
+        {
+          gchar *p;
+          const gchar *key;
+          const gchar *value;
+
+          p = strchr (return_value_strings[n], '=');
+          if (p == NULL)
+            {
+              g_warning ("Item `%s' in ReturnValue is malformed. Ignoring.",
+                         return_value_strings[n]);
+              continue;
+            }
+
+          *p = '\0';
+          key = return_value_strings[n];
+          value = p + 1;
+
+          if (authorization->return_value == NULL)
+            {
+              authorization->return_value = g_hash_table_new_full (g_str_hash,
+                                                                   g_str_equal,
+                                                                   g_free,
+                                                                   g_free);
+            }
+          g_hash_table_insert (authorization->return_value, g_strdup (key), g_strdup (value));
+        }
+    }
+
   authorization->id = g_strdup_printf ("%s::%s", filename, group);
 
  out:
@@ -229,6 +272,7 @@ local_authorization_new (GKeyFile      *key_file,
   g_free (result_any_string);
   g_free (result_inactive_string);
   g_free (result_active_string);
+  g_strfreev (return_value_strings);
   return authorization;
 }
 
@@ -605,6 +649,7 @@ polkit_backend_local_authorization_store_ensure (PolkitBackendLocalAuthorization
  * @out_result_any: Return location for the result for any subjects if the look up matched.
  * @out_result_inactive: Return location for the result for subjects in local inactive sessions if the look up matched.
  * @out_result_active: Return location for the result for subjects in local active sessions if the look up matched.
+ * @out_details: %NULL or a #PolkitDetails object to append key/value pairs to on a positive match.
  *
  * Checks if an authorization entry from @store matches @identity, @action_id and @details.
  *
@@ -618,7 +663,8 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
                                                  PolkitDetails                        *details,
                                                  PolkitImplicitAuthorization          *out_result_any,
                                                  PolkitImplicitAuthorization          *out_result_inactive,
-                                                 PolkitImplicitAuthorization          *out_result_active)
+                                                 PolkitImplicitAuthorization          *out_result_active,
+                                                 PolkitDetails                        *out_details)
 {
   GList *l, *ll;
   gboolean ret;
@@ -666,6 +712,19 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
       *out_result_inactive = authorization->result_inactive;
       *out_result_active = authorization->result_active;
       ret = TRUE;
+
+      if (out_details != NULL && authorization->return_value != NULL)
+        {
+          GHashTableIter iter;
+          const gchar *key;
+          const gchar *value;
+
+          g_hash_table_iter_init (&iter, authorization->return_value);
+          while (g_hash_table_iter_next (&iter, (gpointer *) &key, (gpointer *) &value))
+            {
+              polkit_details_insert (out_details, key, value);
+            }
+        }
 
 #if 0
       g_debug ("authorization with id `%s' matched action_id `%s' for identity `%s'",

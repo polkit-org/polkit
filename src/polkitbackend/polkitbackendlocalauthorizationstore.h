@@ -77,7 +77,8 @@ gboolean  polkit_backend_local_authorization_store_lookup   (PolkitBackendLocalA
                                                              PolkitDetails                        *details,
                                                              PolkitImplicitAuthorization          *out_result_any,
                                                              PolkitImplicitAuthorization          *out_result_inactive,
-                                                             PolkitImplicitAuthorization          *out_result_active);
+                                                             PolkitImplicitAuthorization          *out_result_active,
+                                                             PolkitDetails                        *out_details);
 
 G_END_DECLS
 

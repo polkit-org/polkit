@@ -129,7 +129,7 @@
       </annotation>
 
       <annotation name="org.gtk.EggDBus.Struct.Member"  value="Dict<String,String>:details">
-        <annotation name="org.gtk.EggDBus.DocString" value="Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id) and <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE))."/>
+        <annotation name="org.gtk.EggDBus.DocString" value="Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id), <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE)) and <literal>polkit.localauthority.lockdown</literal> (set to a non-empty string if the action is locked down via pklalockdown(1))."/>
       </annotation>
     </annotation>
 

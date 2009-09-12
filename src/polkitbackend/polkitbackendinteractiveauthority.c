@@ -715,7 +715,8 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
                                                                                           session_is_active,
                                                                                           action_id,
                                                                                           details,
-                                                                                          implicit_authorization);
+                                                                                          implicit_authorization,
+                                                                                          result_details);
 
   /* first see if there's an implicit authorization for subject available */
   if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED)
@@ -844,9 +845,12 @@ polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteract
  * @action_id: The action we are checking an authorization for.
  * @details: Details about the action.
  * @implicit: A #PolkitImplicitAuthorization value computed from the policy file and @subject.
+ * @out_details: A #PolkitDetails object that will be return to @caller.
  *
  * Checks whether @subject is authorized to perform the action
- * specified by @action_id and @details.
+ * specified by @action_id and @details. The implementation may
+ * append key/value pairs to @out_details to return extra information
+ * to @caller.
  *
  * The default implementation of this method simply returns @implicit.
  *
@@ -862,7 +866,8 @@ polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInte
                                                                gboolean                           subject_is_active,
                                                                const gchar                       *action_id,
                                                                PolkitDetails                     *details,
-                                                               PolkitImplicitAuthorization        implicit)
+                                                               PolkitImplicitAuthorization        implicit,
+                                                               PolkitDetails                     *out_details)
 {
   PolkitBackendInteractiveAuthorityClass *klass;
   PolkitImplicitAuthorization ret;
@@ -883,7 +888,8 @@ polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInte
                                              subject_is_active,
                                              action_id,
                                              details,
-                                             implicit);
+                                             implicit,
+                                             out_details);
     }
 
   return ret;

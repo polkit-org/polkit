@@ -110,10 +110,11 @@
     <title>Manual Pages</title>
     <xi:include href="../man/polkit.xml"/>
     <xi:include href="../man/polkitd.xml"/>
-    <xi:include href="../man/pklocalauthority.xml"/>
     <xi:include href="../man/pkcheck.xml"/>
     <xi:include href="../man/pkaction.xml"/>
     <xi:include href="../man/pkexec.xml"/>
+    <xi:include href="../man/pklocalauthority.xml"/>
+    <xi:include href="../man/pklalockdown.xml"/>
   </part>
 
   <chapter id="polkit-hierarchy">

@@ -155,7 +155,7 @@
     <para>
       Each group in a <filename>.pkla</filename> must have a name that
       is unique within the file it belongs to. The following keys are
-      required in each group
+      are processed.
     </para>
     <variablelist>
       <varlistentry>
@@ -214,12 +214,23 @@
           </para>
         </listitem>
       </varlistentry>
+      <varlistentry>
+        <term><emphasis>ReturnValue</emphasis></term>
+        <listitem>
+          <para>
+            A semi-colon separated list of key/value pairs (of the
+            form key=value) that are add to the details of
+            authorization result on positive matches.
+          </para>
+        </listitem>
+      </varlistentry>
     </variablelist>
     <para>
       All keys specified above are required except that only at least
       one
       of <emphasis>RequireAny</emphasis>, <emphasis>RequireInactive</emphasis>
-      and <emphasis>RequireActive</emphasis> is present.
+      and <emphasis>RequireActive</emphasis> is
+      present. The <emphasis>ReturnValue</emphasis> key is optional.
     </para>
   </refsect1>
 
@@ -240,8 +251,10 @@
       authorization check matches the data from the authorization
       check, then the authorization result
       from <emphasis>RequireAny</emphasis>, <emphasis>RequireInactive</emphasis>
-      or <emphasis>RequireActive</emphasis> is used. Finally, the
-      authorization entries are consulted using the user identity.
+      or <emphasis>RequireActive</emphasis> is used
+      and <emphasis>ReturnValue</emphasis> is added to the
+      authorization result. Finally, the authorization entries are
+      consulted using the user identity in the same manner.
     </para>
     <para>
       Note that processing continues even after a match. This allows

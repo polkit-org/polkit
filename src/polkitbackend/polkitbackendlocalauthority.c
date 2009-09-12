@@ -79,7 +79,8 @@ static PolkitImplicitAuthorization polkit_backend_local_authority_check_authoriz
                                                           gboolean                           subject_is_active,
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details,
-                                                          PolkitImplicitAuthorization        implicit);
+                                                          PolkitImplicitAuthorization        implicit,
+                                                          PolkitDetails                     *out_details);
 
 
 G_DEFINE_TYPE_WITH_CODE (PolkitBackendLocalAuthority,
@@ -257,7 +258,8 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
                                                          gboolean                           subject_is_active,
                                                          const gchar                       *action_id,
                                                          PolkitDetails                     *details,
-                                                         PolkitImplicitAuthorization        implicit)
+                                                         PolkitImplicitAuthorization        implicit,
+                                                         PolkitDetails                     *out_details)
 {
   PolkitBackendLocalAuthority *local_authority;
   PolkitBackendLocalAuthorityPrivate *priv;
@@ -296,7 +298,8 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
                                                                details,
                                                                &ret_any,
                                                                &ret_inactive,
-                                                               &ret_active))
+                                                               &ret_active,
+                                                               out_details))
             {
               if (subject_is_local && subject_is_active)
                 {
@@ -330,7 +333,8 @@ polkit_backend_local_authority_check_authorization_sync (PolkitBackendInteractiv
                                                            details,
                                                            &ret_any,
                                                            &ret_inactive,
-                                                           &ret_active))
+                                                           &ret_active,
+                                                           out_details))
         {
           if (subject_is_local && subject_is_active)
             {
