@@ -465,7 +465,6 @@ echo "
 	introspection:		    ${enable_introspection}
 
         Distribution/OS:            ${with_os_type}
-        user for PolicyKit:         ${POLKIT_USER}
         authentication framework:   ${POLKIT_AUTHFW}
         PAM support:                ${have_pam}"
 
