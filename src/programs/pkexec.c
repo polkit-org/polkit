@@ -174,7 +174,7 @@ main (int argc, char *argv[])
   gchar pwbuf[8192];
   gchar *s;
   const gchar *environment_variables_to_save[] = {
-    "LANG"
+    "LANG",
     "LANGUAGE",
     "LC_ALL",
     "LC_MESSAGES",
