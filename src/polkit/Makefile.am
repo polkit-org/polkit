@@ -140,6 +140,7 @@ Polkit-1.0.gir: libpolkit-gobject-1.la $(G_IR_SCANNER) Makefile.am
 		--pkg=glib-2.0 					\
 		--pkg=gobject-2.0 				\
 		--pkg=gio-2.0 					\
+		--libtool=$(top_builddir)/libtool		\
 	        $(EGG_DBUS_CFLAGS)				\
                 -I$(top_srcdir)/src	 			\
 	        -D_POLKIT_COMPILATION                   	\
