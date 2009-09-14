@@ -157,7 +157,7 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
                                    g_param_spec_int ("pid",
                                                      "Process ID",
                                                      "The UNIX process ID",
-                                                     0,
+                                                     -1,
                                                      G_MAXINT,
                                                      0,
                                                      G_PARAM_CONSTRUCT |
@@ -323,7 +323,10 @@ polkit_unix_process_new_full (gint pid,
 
   process = POLKIT_UNIX_PROCESS (polkit_unix_process_new ((gint) -1));
   process->pid = pid;
-  process->start_time = start_time;
+  if (start_time != 0)
+    process->start_time = start_time;
+  else
+    process->start_time = get_start_time_for_pid (pid, NULL);
 
   return POLKIT_SUBJECT (process);
 }
