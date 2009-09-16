@@ -276,6 +276,24 @@ polkit_backend_interactive_authority_finalize (GObject *object)
   G_OBJECT_CLASS (polkit_backend_interactive_authority_parent_class)->finalize (object);
 }
 
+static const gchar *
+polkit_backend_interactive_authority_get_name (PolkitBackendAuthority *authority)
+{
+  return "interactive";
+}
+
+static const gchar *
+polkit_backend_interactive_authority_get_version (PolkitBackendAuthority *authority)
+{
+  return PACKAGE_VERSION;
+}
+
+static PolkitAuthorityFeatures
+polkit_backend_interactive_authority_get_features (PolkitBackendAuthority *authority)
+{
+  return POLKIT_AUTHORITY_FEATURES_TEMPORARY_AUTHORIZATION;
+}
+
 static void
 polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthorityClass *klass)
 {
@@ -287,6 +305,9 @@ polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthori
 
   gobject_class->finalize = polkit_backend_interactive_authority_finalize;
 
+  authority_class->get_name                        = polkit_backend_interactive_authority_get_name;
+  authority_class->get_version                     = polkit_backend_interactive_authority_get_version;
+  authority_class->get_features                    = polkit_backend_interactive_authority_get_features;
   authority_class->system_bus_name_owner_changed   = polkit_backend_interactive_authority_system_bus_name_owner_changed;
   authority_class->enumerate_actions               = polkit_backend_interactive_authority_enumerate_actions;
   authority_class->check_authorization             = polkit_backend_interactive_authority_check_authorization;

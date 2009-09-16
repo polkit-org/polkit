@@ -112,6 +112,10 @@ struct _PolkitBackendAuthorityClass
 
   /* VTable */
 
+  const gchar             *(*get_name)     (PolkitBackendAuthority *authority);
+  const gchar             *(*get_version)  (PolkitBackendAuthority *authority);
+  PolkitAuthorityFeatures  (*get_features) (PolkitBackendAuthority *authority);
+
   GList *(*enumerate_actions)  (PolkitBackendAuthority   *authority,
                                 PolkitSubject            *caller,
                                 const gchar              *locale,
@@ -210,6 +214,10 @@ struct _PolkitBackendAuthorityClass
 GType    polkit_backend_authority_get_type (void) G_GNUC_CONST;
 
 /* --- */
+
+const gchar             *polkit_backend_authority_get_name     (PolkitBackendAuthority *authority);
+const gchar             *polkit_backend_authority_get_version  (PolkitBackendAuthority *authority);
+PolkitAuthorityFeatures  polkit_backend_authority_get_features (PolkitBackendAuthority *authority);
 
 void     polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
                                                                  const gchar              *name,

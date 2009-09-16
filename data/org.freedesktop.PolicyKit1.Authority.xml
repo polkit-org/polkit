@@ -195,6 +195,37 @@
 
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
+    <!-- Flags describing what features the Authority implementation supports -->
+    <annotation name="org.gtk.EggDBus.DeclareFlags" value="AuthorityFeatures">
+      <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authority Features"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Flags describing features supported by the Authority implementation."/>
+
+      <annotation name="org.gtk.EggDBus.Flags.Member" value="TemporaryAuthorization">
+        <annotation name="org.gtk.EggDBus.DocString" value="The authority supports temporary authorizations that can be obtained through authentication."/>
+      </annotation>
+
+      <annotation name="org.gtk.EggDBus.Flags.Member" value="Lockdown">
+        <annotation name="org.gtk.EggDBus.DocString" value="The authority supports the XXX method."/>
+      </annotation>
+    </annotation>
+
+    <!-- ---------------------------------------------------------------------------------------------------- -->
+
+    <property name="BackendName" type="s" access="read">
+      <annotation name="org.gtk.EggDBus.DocString" value="The name of the currently used Authority backend."/>
+    </property>
+
+    <property name="BackendVersion" type="s" access="read">
+      <annotation name="org.gtk.EggDBus.DocString" value="The version of the currently used Authority backend."/>
+    </property>
+
+    <property name="BackendFeatures" type="u" access="read">
+      <annotation name="org.gtk.EggDBus.Type" value="AuthorityFeatures"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="The features supported by the currently used Authority backend."/>
+    </property>
+
+    <!-- ---------------------------------------------------------------------------------------------------- -->
+
     <method name="EnumerateActions">
       <annotation name="org.gtk.EggDBus.DocString" value="Enumerates all registered PolicyKit actions."/>
 

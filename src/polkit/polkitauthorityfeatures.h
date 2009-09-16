@@ -23,32 +23,29 @@
 #error "Only <polkit/polkit.h> can be included directly, this file may disappear or change contents."
 #endif
 
-#ifndef __POLKIT_CHECK_AUTHORIZATION_FLAGS_H
-#define __POLKIT_CHECK_AUTHORIZATION_FLAGS_H
+#ifndef __POLKIT_AUTHORITY_FEATURES_H
+#define __POLKIT_AUTHORITY_FEATURES_H
 
 #include <glib-object.h>
 
 G_BEGIN_DECLS
 
-GType polkit_check_authorization_flags_get_type (void) G_GNUC_CONST;
-
-#define POLKIT_TYPE_CHECK_AUTHORIZATION_FLAGS (polkit_check_authorization_flags_get_type ())
-
 /**
- * PolkitCheckAuthorizationFlags:
- * @POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE: No flags set.
- * @POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION: If the subject can obtain the authorization
- * through authentication, and an authentication agent is available, then attempt to do so. Note, this
- * means that the method used for checking authorization is likely to block for a long time.
+ * PolkitAuthorityFeatures:
+ * @POLKIT_AUTHORITY_FEATURES_NONE: No flags set.
+ * @POLKIT_AUTHORITY_FEATURES_TEMPORARY_AUTHORIZATION: The authority supports temporary authorizations
+ * that can be obtained through authentication.
+ * @POLKIT_AUTHORITY_FEATURES_LOCKDOWN: The authority supports the XXX method.
  *
- * Possible flags when checking authorizations.
+ * Flags describing features supported by the Authority implementation.
  */
 typedef enum
 {
-  POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE = 0,
-  POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION = (1<<0),
-} PolkitCheckAuthorizationFlags;
+  POLKIT_AUTHORITY_FEATURES_NONE                    = 0,
+  POLKIT_AUTHORITY_FEATURES_TEMPORARY_AUTHORIZATION = (1<<0),
+  POLKIT_AUTHORITY_FEATURES_LOCKDOWN                = (1<<1)
+} PolkitAuthorityFeatures;
 
 G_END_DECLS
 
-#endif /* __POLKIT_CHECK_AUTHORIZATION_FLAGS_H */
+#endif /* __POLKIT_AUTHORITY_FEATURES_H */

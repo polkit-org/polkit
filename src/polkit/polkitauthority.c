@@ -27,6 +27,7 @@
 #include "polkitcheckauthorizationflags.h"
 #include "polkitauthority.h"
 #include "polkiterror.h"
+#include "polkitenumtypes.h"
 
 #include "polkitprivate.h"
 
@@ -62,6 +63,8 @@ struct _PolkitAuthority
   EggDBusObjectProxy *authority_object_proxy;
 
   _PolkitAuthority *real;
+  gchar *name;
+  gchar *version;
 
   guint cancellation_id_counter;
 };
@@ -80,6 +83,14 @@ enum
 {
   CHANGED_SIGNAL,
   LAST_SIGNAL,
+};
+
+enum
+{
+  PROP_0,
+  PROP_BACKEND_NAME,
+  PROP_BACKEND_VERSION,
+  PROP_BACKEND_FEATURES
 };
 
 static guint signals[LAST_SIGNAL] = {0};
@@ -121,6 +132,8 @@ polkit_authority_finalize (GObject *object)
 
   g_object_unref (authority->authority_object_proxy);
   g_object_unref (authority->system_bus);
+  g_free (authority->name);
+  g_free (authority->version);
 
   the_authority = NULL;
 
@@ -129,11 +142,89 @@ polkit_authority_finalize (GObject *object)
 }
 
 static void
+polkit_authority_get_property (GObject    *object,
+                               guint       prop_id,
+                               GValue     *value,
+                               GParamSpec *pspec)
+{
+  PolkitAuthority *authority = POLKIT_AUTHORITY (object);
+
+  switch (prop_id)
+    {
+    case PROP_BACKEND_NAME:
+      g_value_set_string (value, polkit_authority_get_backend_name (authority));
+      break;
+
+    case PROP_BACKEND_VERSION:
+      g_value_set_string (value, polkit_authority_get_backend_version (authority));
+      break;
+
+    case PROP_BACKEND_FEATURES:
+      g_value_set_flags (value, polkit_authority_get_backend_features (authority));
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
 polkit_authority_class_init (PolkitAuthorityClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->finalize = polkit_authority_finalize;
+  gobject_class->finalize     = polkit_authority_finalize;
+  gobject_class->get_property = polkit_authority_get_property;
+
+  /**
+   * PolkitAuthority:backend-name:
+   *
+   * The name of the currently used Authority backend.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_BACKEND_NAME,
+                                   g_param_spec_string ("backend-name",
+                                                        "Backend name",
+                                                        "The name of the currently used Authority backend.",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
+
+  /**
+   * PolkitAuthority:version:
+   *
+   * The version of the currently used Authority backend.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_BACKEND_VERSION,
+                                   g_param_spec_string ("backend-version",
+                                                        "Backend version",
+                                                        "The version of the currently used Authority backend.",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
+
+  /**
+   * PolkitAuthority:backend-features:
+   *
+   * The features of the currently used Authority backend.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_BACKEND_FEATURES,
+                                   g_param_spec_flags ("backend-features",
+                                                       "Backend features",
+                                                       "The features of the currently used Authority backend.",
+                                                       POLKIT_TYPE_AUTHORITY_FEATURES,
+                                                       POLKIT_AUTHORITY_FEATURES_NONE,
+                                                       G_PARAM_READABLE |
+                                                       G_PARAM_STATIC_NAME |
+                                                       G_PARAM_STATIC_NICK |
+                                                       G_PARAM_STATIC_BLURB));
 
   /**
    * PolkitAuthority::changed:
@@ -1391,3 +1482,49 @@ polkit_authority_revoke_temporary_authorization_by_id_sync (PolkitAuthority     
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+/**
+ * polkit_authority_get_backend_name:
+ * @authority: A #PolkitAuthority.
+ *
+ * Gets the name of the authority backend.
+ *
+ * Returns: The name of the backend.
+ */
+const gchar *
+polkit_authority_get_backend_name (PolkitAuthority *authority)
+{
+  if (authority->name == NULL)
+    authority->name = _polkit_authority_get_backend_name (authority->real);
+  return authority->name;
+}
+
+/**
+ * polkit_authority_get_backend_version:
+ * @authority: A #PolkitAuthority.
+ *
+ * Gets the version of the authority backend.
+ *
+ * Returns: The name of the backend.
+ */
+const gchar *
+polkit_authority_get_backend_version (PolkitAuthority *authority)
+{
+  if (authority->version == NULL)
+    authority->version = _polkit_authority_get_backend_version (authority->real);
+  return authority->version;
+}
+
+/**
+ * polkit_authority_get_backend_features:
+ * @authority: A #PolkitAuthority.
+ *
+ * Gets the features supported by the authority backend.
+ *
+ * Returns: Flags from #PolkitAuthorityFeatures.
+ */
+PolkitAuthorityFeatures
+polkit_authority_get_backend_features (PolkitAuthority *authority)
+{
+  return _polkit_authority_get_backend_features (authority->real);
+}

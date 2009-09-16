@@ -19,30 +19,11 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_H
-#define __POLKIT_H
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
 
-#define _POLKIT_INSIDE_POLKIT_H 1
+#include "polkitcheckauthorizationflags.h"
+#include "polkitprivate.h"
 
-#include <polkit/polkittypes.h>
-#include <polkit/polkitenumtypes.h>
-#include <polkit/polkitimplicitauthorization.h>
-#include <polkit/polkitactiondescription.h>
-#include <polkit/polkitauthorityfeatures.h>
-#include <polkit/polkiterror.h>
-#include <polkit/polkitidentity.h>
-#include <polkit/polkitunixuser.h>
-#include <polkit/polkitunixgroup.h>
-#include <polkit/polkitsubject.h>
-#include <polkit/polkitunixprocess.h>
-#include <polkit/polkitunixsession.h>
-#include <polkit/polkitsystembusname.h>
-#include <polkit/polkitauthorizationresult.h>
-#include <polkit/polkitcheckauthorizationflags.h>
-#include <polkit/polkitauthority.h>
-#include <polkit/polkitdetails.h>
-#include <polkit/polkittemporaryauthorization.h>
 
-#undef _POLKIT_INSIDE_POLKIT_H
-
-#endif /* __POLKIT_H */

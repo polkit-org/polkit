@@ -72,6 +72,24 @@ polkit_backend_null_authority_finalize (GObject *object)
   G_OBJECT_CLASS (polkit_backend_null_authority_parent_class)->finalize (object);
 }
 
+static const gchar *
+authority_get_name (PolkitBackendAuthority *authority)
+{
+  return "null";
+}
+
+static const gchar *
+authority_get_version (PolkitBackendAuthority *authority)
+{
+  return PACKAGE_VERSION;
+}
+
+static PolkitAuthorityFeatures
+authority_get_features (PolkitBackendAuthority *authority)
+{
+  return POLKIT_AUTHORITY_FEATURES_NONE;
+}
+
 static void
 polkit_backend_null_authority_class_init (PolkitBackendNullAuthorityClass *klass)
 {
@@ -83,6 +101,9 @@ polkit_backend_null_authority_class_init (PolkitBackendNullAuthorityClass *klass
 
   gobject_class->finalize = polkit_backend_null_authority_finalize;
 
+  authority_class->get_name                        = authority_get_name;
+  authority_class->get_version                     = authority_get_version;
+  authority_class->get_features                    = authority_get_features;
   authority_class->enumerate_actions               = authority_enumerate_actions;
   authority_class->check_authorization             = authority_check_authorization;
   authority_class->check_authorization_finish      = authority_check_authorization_finish;

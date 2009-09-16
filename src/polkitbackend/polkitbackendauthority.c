@@ -94,6 +94,60 @@ polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority  
 }
 
 /**
+ * polkit_backend_authority_get_name:
+ * @authority: A #PolkitBackendAuthority.
+ *
+ * Gets the name of the authority backend.
+ *
+ * Returns: The name of the backend.
+ */
+const gchar *
+polkit_backend_authority_get_name (PolkitBackendAuthority *authority)
+{
+  PolkitBackendAuthorityClass *klass;
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+  if (klass->get_name == NULL)
+    return "(not set)";
+  return klass->get_name (authority);
+}
+
+/**
+ * polkit_backend_authority_get_version:
+ * @authority: A #PolkitBackendAuthority.
+ *
+ * Gets the version of the authority backend.
+ *
+ * Returns: The name of the backend.
+ */
+const gchar *
+polkit_backend_authority_get_version (PolkitBackendAuthority *authority)
+{
+  PolkitBackendAuthorityClass *klass;
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+  if (klass->get_version == NULL)
+    return "(not set)";
+  return klass->get_version (authority);
+}
+
+/**
+ * polkit_backend_authority_get_features:
+ * @authority: A #PolkitBackendAuthority.
+ *
+ * Gets the features supported by the authority backend.
+ *
+ * Returns: Flags from #PolkitAuthorityFeatures.
+ */
+PolkitAuthorityFeatures
+polkit_backend_authority_get_features (PolkitBackendAuthority *authority)
+{
+  PolkitBackendAuthorityClass *klass;
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+  if (klass->get_features == NULL)
+    return POLKIT_AUTHORITY_FEATURES_NONE;
+  return klass->get_features (authority);
+}
+
+/**
  * polkit_backend_authority_enumerate_actions:
  * @authority: A #PolkitBackendAuthority.
  * @caller: The system bus name that initiated the query.
@@ -483,6 +537,14 @@ struct _ServerClass
   GObjectClass parent_class;
 };
 
+enum
+{
+  PROP_0,
+  PROP_BACKEND_NAME,
+  PROP_BACKEND_VERSION,
+  PROP_BACKEND_FEATURES
+};
+
 static void authority_iface_init         (_PolkitAuthorityIface        *authority_iface);
 
 G_DEFINE_TYPE_WITH_CODE (Server, server, G_TYPE_OBJECT,
@@ -521,6 +583,35 @@ server_finalize (GObject *object)
 }
 
 static void
+server_get_property (GObject    *object,
+                     guint       prop_id,
+                     GValue     *value,
+                     GParamSpec *pspec)
+{
+  Server *server = SERVER (object);
+
+  switch (prop_id)
+    {
+    case PROP_BACKEND_NAME:
+      g_value_set_string (value, polkit_backend_authority_get_name (server->authority));
+      break;
+
+    case PROP_BACKEND_VERSION:
+      g_value_set_string (value, polkit_backend_authority_get_version (server->authority));
+      break;
+
+    case PROP_BACKEND_FEATURES:
+      g_value_set_flags (value, polkit_backend_authority_get_features (server->authority));
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+
+static void
 server_class_init (ServerClass *klass)
 {
   GObjectClass *gobject_class;
@@ -528,6 +619,9 @@ server_class_init (ServerClass *klass)
   gobject_class = G_OBJECT_CLASS (klass);
 
   gobject_class->finalize = server_finalize;
+  gobject_class->get_property = server_get_property;
+
+  g_assert (_polkit_authority_override_properties (gobject_class, PROP_BACKEND_NAME) == PROP_BACKEND_FEATURES);
 }
 
 static void
