@@ -497,6 +497,11 @@ polkit_authority_check_authorization_async (PolkitAuthority               *autho
  * Asynchronously checks if @subject is authorized to perform the action represented
  * by @action_id.
  *
+ * Note that #POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION
+ * SHOULD be passed ONLY if the event that triggered the authorization
+ * check is stemming from an user action, e.g. the user pressing a
+ * button or attaching a device.
+ *
  * When the operation is finished, @callback will be invoked. You can then
  * call polkit_authority_check_authorization_finish() to get the result of
  * the operation.
@@ -627,6 +632,11 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * @error: Return location for error or %NULL.
  *
  * Checks if @subject is authorized to perform the action represented by @action_id.
+ *
+ * Note that #POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION
+ * SHOULD be passed ONLY if the event that triggered the authorization
+ * check is stemming from an user action, e.g. the user pressing a
+ * button or attaching a device.
  *
  * Returns: A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  */

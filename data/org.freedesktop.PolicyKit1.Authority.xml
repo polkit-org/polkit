@@ -242,7 +242,7 @@
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <method name="CheckAuthorization">
-      <annotation name="org.gtk.EggDBus.DocString" value="<para>Checks if @subject is authorized to perform the action with identifier @action_id.</para><para>If @cancellation_id is non-empty and already in use for the caller, the %org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique error is returned.</para>"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="<para>Checks if @subject is authorized to perform the action with identifier @action_id.</para><para>If @cancellation_id is non-empty and already in use for the caller, the %org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique error is returned.</para><para>Note that %CheckAuthorizationFlags.AllowUserInteraction SHOULD be passed ONLY if the event that triggered the authorization check is stemming from an user action, e.g. the user pressing a button or attaching a device.</para>"/>
 
       <arg name="subject" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.DocString" value="A #Subject struct."/>
