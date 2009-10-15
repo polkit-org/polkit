@@ -19,8 +19,10 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#define _GNU_SOURCE
 #include <glib.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
 
@@ -31,13 +33,21 @@ main (int argc, char *argv[])
   gchar **env;
   guint n;
   int ret;
+#ifdef __GLIBC__
+  gchar *cwd = NULL;
+#else
   gchar cwd[PATH_MAX];
+#endif
 
   ret = 1;
   args = NULL;
   env = NULL;
 
+#ifdef __GLIBC__
+  if ((cwd = get_current_dir_name ()))
+#else
   if (getcwd (cwd, sizeof cwd) == NULL)
+#endif
     {
       g_printerr ("Error getting cwd: %s", g_strerror (errno));
       goto out;
@@ -62,6 +72,9 @@ main (int argc, char *argv[])
 
  out:
 
+#ifdef __GLIBC__
+  free (cwd);
+#endif
   g_free (args);
   g_strfreev (env);
 
