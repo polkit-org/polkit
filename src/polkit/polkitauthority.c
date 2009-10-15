@@ -253,8 +253,10 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
 PolkitAuthority *
 polkit_authority_get (void)
 {
-  if (the_authority != NULL)
+  if (the_authority != NULL) {
+    g_object_ref (the_authority);
     goto out;
+  }
 
   the_authority = POLKIT_AUTHORITY (g_object_new (POLKIT_TYPE_AUTHORITY, NULL));
 
