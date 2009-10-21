@@ -228,8 +228,8 @@
     <para>
       All keys specified above are required except that only at least
       one
-      of <emphasis>RequireAny</emphasis>, <emphasis>RequireInactive</emphasis>
-      and <emphasis>RequireActive</emphasis> is
+      of <emphasis>ResultAny</emphasis>, <emphasis>ResultInactive</emphasis>
+      and <emphasis>ResultActive</emphasis> is
       present. The <emphasis>ReturnValue</emphasis> key is optional.
     </para>
   </refsect1>
