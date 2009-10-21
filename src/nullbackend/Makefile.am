@@ -33,7 +33,7 @@ libnullbackend_la_CFLAGS =                             			\
 
 libnullbackend_la_LDFLAGS =  	                      			\
 	$(module_flags)               					\
-	$(GLIB_LDADD)							\
+	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la	\
 	$(NULL)
 
