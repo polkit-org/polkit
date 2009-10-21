@@ -171,6 +171,7 @@ main (int argc, char *argv[])
 #endif /* PAH_DEBUG */
 
   pam_end (pam_h, rc);
+  pam_h = NULL;
 
 #ifdef PAH_DEBUG
   fprintf (stderr, "polkit-agent-helper-1: sending D-Bus message to PolicyKit daemon\n");
