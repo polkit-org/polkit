@@ -59,8 +59,8 @@
     </defaults>
   </action>
 
-  <action id="org.freedesktop.policykit.localauthority.lockdown">
-    <_description>Configure lockdown on the Local Authority</_description>
+  <action id="org.freedesktop.policykit.lockdown">
+    <_description>Configure lock down for an action</_description>
     <_message>Authentication is required to configure lock down policy</_message>
     <defaults>
       <allow_any>no</allow_any>

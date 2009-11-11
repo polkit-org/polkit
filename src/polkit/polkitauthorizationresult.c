@@ -278,25 +278,26 @@ polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationR
 }
 
 /**
- * polkit_authorization_result_get_local_authority_lock_down:
+ * polkit_authorization_result_get_locked_down:
  * @result: A #PolkitAuthorizationResult.
  *
- * Gets whether the action is locked down in the Local Authority via pklalockdown(1).
+ * Gets whether the action is locked down via
+ * e.g. polkit_authority_add_lockdown_for_action().
  *
  * This method simply reads the value of the key/value pair in @details with the
- * key <literal>polkit.localauthority.lockdown</literal>.
+ * key <literal>polkit.lockdown</literal>.
  *
- * Returns: %TRUE if the authorization is or will be temporary.
+ * Returns: %TRUE if the action for the authorization is locked down.
  */
 gboolean
-polkit_authorization_result_get_local_authority_lock_down (PolkitAuthorizationResult *result)
+polkit_authorization_result_get_locked_down (PolkitAuthorizationResult *result)
 {
   gboolean ret;
   PolkitDetails *details;
 
   ret = FALSE;
   details = polkit_authorization_result_get_details (result);
-  if (details != NULL && polkit_details_lookup (details, "polkit.localauthority.lockdown") != NULL)
+  if (details != NULL && polkit_details_lookup (details, "polkit.lockdown") != NULL)
     ret = TRUE;
 
   return ret;

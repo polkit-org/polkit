@@ -17,7 +17,7 @@ INCLUDES =                                              	\
 
 # ----------------------------------------------------------------------------------------------------
 
-bin_PROGRAMS = pkexec pkcheck pkaction pklalockdown
+bin_PROGRAMS = pkexec pkcheck pkaction
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -76,19 +76,6 @@ pkaction_CFLAGS =                             				\
 	$(NULL)
 
 pkaction_LDADD =  	                      				\
-	$(GLIB_LIBS)							\
-	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
-	$(NULL)
-
-# ----------------------------------------------------------------------------------------------------
-
-pklalockdown_SOURCES = pklalockdown.c
-
-pklalockdown_CFLAGS =                             			\
-	$(GLIB_CFLAGS)							\
-	$(NULL)
-
-pklalockdown_LDADD =  	                      				\
 	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(NULL)

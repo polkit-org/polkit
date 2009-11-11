@@ -481,6 +481,15 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
                                       user_data,
                                       polkit_backend_interactive_authority_check_authorization);
 
+  /* handle being called from ourselves */
+  if (caller == NULL)
+    {
+      EggDBusConnection *system_bus;
+      system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+      caller = polkit_system_bus_name_new (egg_dbus_connection_get_unique_name (system_bus));
+      g_object_unref (system_bus);
+    }
+
   caller_str = polkit_subject_to_string (caller);
   subject_str = polkit_subject_to_string (subject);
 

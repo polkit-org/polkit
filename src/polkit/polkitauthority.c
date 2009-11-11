@@ -1312,7 +1312,7 @@ polkit_authority_revoke_temporary_authorizations (PolkitAuthority     *authority
  * @res: A #GAsyncResult obtained from the callback.
  * @error: Return location for error or %NULL.
  *
- * Finished revoking temporary authorizations.
+ * Finishes revoking temporary authorizations.
  *
  * Returns: %TRUE if all the temporary authorizations was revoked, %FALSE if error is set.
  **/
@@ -1431,7 +1431,7 @@ polkit_authority_revoke_temporary_authorization_by_id (PolkitAuthority     *auth
  * @res: A #GAsyncResult obtained from the callback.
  * @error: Return location for error or %NULL.
  *
- * Finished revoking a temporary authorization by id.
+ * Finishes revoking a temporary authorization by id.
  *
  * Returns: %TRUE if the temporary authorization was revoked, %FALSE if error is set.
  **/
@@ -1550,7 +1550,7 @@ polkit_authority_add_lockdown_for_action (PolkitAuthority     *authority,
  * @res: A #GAsyncResult obtained from the callback.
  * @error: Return location for error or %NULL.
  *
- * Finished locking down an action.
+ * Finishes locking down an action.
  *
  * Returns: %TRUE if the action was locked down, %FALSE if error is set.
  **/
