@@ -109,6 +109,16 @@ gboolean                   polkit_authority_revoke_temporary_authorization_by_id
                                                                                        GCancellable        *cancellable,
                                                                                        GError             **error);
 
+gboolean                   polkit_authority_add_lockdown_for_action_sync (PolkitAuthority     *authority,
+                                                                          const gchar         *action_id,
+                                                                          GCancellable        *cancellable,
+                                                                          GError             **error);
+
+gboolean                   polkit_authority_remove_lockdown_for_action_sync (PolkitAuthority     *authority,
+                                                                             const gchar         *action_id,
+                                                                             GCancellable        *cancellable,
+                                                                             GError             **error);
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 void                       polkit_authority_enumerate_actions (PolkitAuthority     *authority,
@@ -196,6 +206,26 @@ void                       polkit_authority_revoke_temporary_authorization_by_id
 gboolean                   polkit_authority_revoke_temporary_authorization_by_id_finish (PolkitAuthority *authority,
                                                                                          GAsyncResult    *res,
                                                                                          GError         **error);
+
+void                       polkit_authority_add_lockdown_for_action (PolkitAuthority     *authority,
+                                                                     const gchar         *action_id,
+                                                                     GCancellable        *cancellable,
+                                                                     GAsyncReadyCallback  callback,
+                                                                     gpointer             user_data);
+
+gboolean                   polkit_authority_add_lockdown_for_action_finish (PolkitAuthority *authority,
+                                                                            GAsyncResult    *res,
+                                                                            GError         **error);
+
+void                       polkit_authority_remove_lockdown_for_action (PolkitAuthority     *authority,
+                                                                        const gchar         *action_id,
+                                                                        GCancellable        *cancellable,
+                                                                        GAsyncReadyCallback  callback,
+                                                                        gpointer             user_data);
+
+gboolean                   polkit_authority_remove_lockdown_for_action_finish (PolkitAuthority *authority,
+                                                                               GAsyncResult    *res,
+                                                                               GError         **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

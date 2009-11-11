@@ -1495,6 +1495,244 @@ polkit_authority_revoke_temporary_authorization_by_id_sync (PolkitAuthority     
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static guint
+polkit_authority_add_lockdown_for_action_async (PolkitAuthority     *authority,
+                                                const gchar         *action_id,
+                                                GCancellable        *cancellable,
+                                                GAsyncReadyCallback  callback,
+                                                gpointer             user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_add_lockdown_for_action_async);
+
+  call_id = _polkit_authority_add_lockdown_for_action (authority->real,
+                                                       EGG_DBUS_CALL_FLAGS_NONE,
+                                                       action_id,
+                                                       cancellable,
+                                                       generic_async_cb,
+                                                       simple);
+
+  return call_id;
+}
+
+/**
+ * polkit_authority_add_lockdown_for_action:
+ * @authority: A #PolkitAuthority.
+ * @action_id: The identifier for the action.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Locks down the action identified by @action_id.
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_authority_add_lockdown_for_action_finish() to get the result of
+ * the operation.
+ */
+void
+polkit_authority_add_lockdown_for_action (PolkitAuthority     *authority,
+                                          const gchar         *action_id,
+                                          GCancellable        *cancellable,
+                                          GAsyncReadyCallback  callback,
+                                          gpointer             user_data)
+{
+  polkit_authority_add_lockdown_for_action_async (authority, action_id, cancellable, callback, user_data);
+}
+
+/**
+ * polkit_authority_add_lockdown_for_action_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finished locking down an action.
+ *
+ * Returns: %TRUE if the action was locked down, %FALSE if error is set.
+ **/
+gboolean
+polkit_authority_add_lockdown_for_action_finish (PolkitAuthority *authority,
+                                                 GAsyncResult    *res,
+                                                 GError         **error)
+{
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+  gboolean ret;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_add_lockdown_for_action_async);
+
+  ret = _polkit_authority_add_lockdown_for_action_finish (authority->real,
+                                                          real_res,
+                                                          error);
+
+  if (!ret)
+    goto out;
+
+ out:
+  g_object_unref (real_res);
+  return ret;
+}
+
+/**
+ * polkit_authority_add_lockdown_for_action_sync:
+ * @authority: A #PolkitAuthority.
+ * @action_id: The identifier for the action.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Synchronously locks down an action.
+ *
+ * Returns: %TRUE if the action was locked down, %FALSE if error is set.
+ **/
+gboolean
+polkit_authority_add_lockdown_for_action_sync (PolkitAuthority     *authority,
+                                               const gchar         *action_id,
+                                               GCancellable        *cancellable,
+                                               GError             **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  gboolean result;
+
+  call_id = polkit_authority_add_lockdown_for_action_async (authority, action_id, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  result = polkit_authority_add_lockdown_for_action_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static guint
+polkit_authority_remove_lockdown_for_action_async (PolkitAuthority     *authority,
+                                                   const gchar         *action_id,
+                                                   GCancellable        *cancellable,
+                                                   GAsyncReadyCallback  callback,
+                                                   gpointer             user_data)
+{
+  guint call_id;
+  GSimpleAsyncResult *simple;
+
+  simple = g_simple_async_result_new (G_OBJECT (authority),
+                                      callback,
+                                      user_data,
+                                      polkit_authority_remove_lockdown_for_action_async);
+
+  call_id = _polkit_authority_remove_lockdown_for_action (authority->real,
+                                                       EGG_DBUS_CALL_FLAGS_NONE,
+                                                       action_id,
+                                                       cancellable,
+                                                       generic_async_cb,
+                                                       simple);
+
+  return call_id;
+}
+
+/**
+ * polkit_authority_remove_lockdown_for_action:
+ * @authority: A #PolkitAuthority.
+ * @action_id: The identifier for the action.
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Removes locks down the action identified by @action_id.
+ *
+ * When the operation is finished, @callback will be invoked. You can then
+ * call polkit_authority_remove_lockdown_for_action_finish() to get the result of
+ * the operation.
+ */
+void
+polkit_authority_remove_lockdown_for_action (PolkitAuthority     *authority,
+                                             const gchar         *action_id,
+                                             GCancellable        *cancellable,
+                                             GAsyncReadyCallback  callback,
+                                             gpointer             user_data)
+{
+  polkit_authority_remove_lockdown_for_action_async (authority, action_id, cancellable, callback, user_data);
+}
+
+/**
+ * polkit_authority_remove_lockdown_for_action_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes removing lock down for an action.
+ *
+ * Returns: %TRUE if the action was locked down, %FALSE if error is set.
+ **/
+gboolean
+polkit_authority_remove_lockdown_for_action_finish (PolkitAuthority *authority,
+                                                    GAsyncResult    *res,
+                                                    GError         **error)
+{
+  GSimpleAsyncResult *simple;
+  GAsyncResult *real_res;
+  gboolean ret;
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
+  real_res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (simple));
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_remove_lockdown_for_action_async);
+
+  ret = _polkit_authority_remove_lockdown_for_action_finish (authority->real,
+                                                             real_res,
+                                                             error);
+
+  if (!ret)
+    goto out;
+
+ out:
+  g_object_unref (real_res);
+  return ret;
+}
+
+/**
+ * polkit_authority_remove_lockdown_for_action_sync:
+ * @authority: A #PolkitAuthority.
+ * @action_id: The identifier for the action.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Synchronously removes lock down for an action.
+ *
+ * Returns: %TRUE if the action was locked down, %FALSE if error is set.
+ **/
+gboolean
+polkit_authority_remove_lockdown_for_action_sync (PolkitAuthority     *authority,
+                                                  const gchar         *action_id,
+                                                  GCancellable        *cancellable,
+                                                  GError             **error)
+{
+  guint call_id;
+  GAsyncResult *res;
+  gboolean result;
+
+  call_id = polkit_authority_remove_lockdown_for_action_async (authority, action_id, cancellable, generic_cb, &res);
+
+  egg_dbus_connection_pending_call_block (authority->system_bus, call_id);
+
+  result = polkit_authority_remove_lockdown_for_action_finish (authority, res, error);
+
+  g_object_unref (res);
+
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 /**
  * polkit_authority_get_backend_name:
  * @authority: A #PolkitAuthority.

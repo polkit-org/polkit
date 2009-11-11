@@ -470,7 +470,7 @@ polkit_backend_authority_revoke_temporary_authorizations (PolkitBackendAuthority
  *
  * Revokes a temporary authorizations with opaque identifier @id.
  *
- * Returns: %TRUE if the operatoin succeeded, %FALSE if @error is set.
+ * Returns: %TRUE if the operation succeeded, %FALSE if @error is set.
  **/
 gboolean
 polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuthority   *authority,
@@ -496,6 +496,153 @@ polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuth
     }
 }
 
+/**
+ * polkit_backend_authority_add_lockdown_for_action:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that called the method.
+ * @action_id: The action id.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously add locks down for @action_id.
+ *
+ * When the operation is finished, @callback will be invoked. You can
+ * then call polkit_backend_authority_add_lockdown_for_action_finish()
+ * to get the result of the operation.
+ */
+void
+polkit_backend_authority_add_lockdown_for_action (PolkitBackendAuthority  *authority,
+                                                  PolkitSubject           *caller,
+                                                  const gchar             *action_id,
+                                                  GAsyncReadyCallback      callback,
+                                                  gpointer                 user_data)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  if (klass->add_lockdown_for_action == NULL)
+    {
+      GSimpleAsyncResult *simple;
+
+      simple = g_simple_async_result_new_error (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_NOT_SUPPORTED,
+                                                "Operation not supported");
+      g_simple_async_result_complete (simple);
+      g_object_unref (simple);
+    }
+  else
+    {
+      klass->add_lockdown_for_action (authority, caller, action_id, callback, user_data);
+    }
+}
+
+/**
+ * polkit_backend_authority_add_lockdown_for_action_finish:
+ * @authority: A #PolkitBackendAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes adding lock down for an action.
+ *
+ * Returns: %TRUE if the operation succeeded or, %FALE if @error is set.
+ */
+gboolean
+polkit_backend_authority_add_lockdown_for_action_finish (PolkitBackendAuthority  *authority,
+                                                         GAsyncResult            *res,
+                                                         GError                 **error)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  if (klass->add_lockdown_for_action_finish == NULL)
+    {
+      g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error);
+      return FALSE;
+    }
+  else
+    {
+      return klass->add_lockdown_for_action_finish (authority, res, error);
+    }
+}
+
+/**
+ * polkit_backend_authority_remove_lockdown_for_action:
+ * @authority: A #PolkitBackendAuthority.
+ * @caller: The system bus name that called the method.
+ * @action_id: The action id.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously remove locks down for @action_id.
+ *
+ * When the operation is finished, @callback will be invoked. You can
+ * then call polkit_backend_authority_remove_lockdown_for_action_finish()
+ * to get the result of the operation.
+ */
+void
+polkit_backend_authority_remove_lockdown_for_action (PolkitBackendAuthority  *authority,
+                                                     PolkitSubject           *caller,
+                                                     const gchar             *action_id,
+                                                     GAsyncReadyCallback      callback,
+                                                     gpointer                 user_data)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  if (klass->remove_lockdown_for_action == NULL)
+    {
+      GSimpleAsyncResult *simple;
+
+      simple = g_simple_async_result_new_error (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                POLKIT_ERROR,
+                                                POLKIT_ERROR_NOT_SUPPORTED,
+                                                "Operation not supported");
+      g_simple_async_result_complete (simple);
+      g_object_unref (simple);
+    }
+  else
+    {
+      klass->remove_lockdown_for_action (authority, caller, action_id, callback, user_data);
+    }
+}
+
+/**
+ * polkit_backend_authority_remove_lockdown_for_action_finish:
+ * @authority: A #PolkitBackendAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes removing lock down for an action.
+ *
+ * Returns: %TRUE if the operation succeeded or, %FALE if @error is set.
+ */
+gboolean
+polkit_backend_authority_remove_lockdown_for_action_finish (PolkitBackendAuthority  *authority,
+                                                            GAsyncResult            *res,
+                                                            GError                 **error)
+{
+  PolkitBackendAuthorityClass *klass;
+
+  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
+
+  if (klass->remove_lockdown_for_action_finish == NULL)
+    {
+      g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error);
+      return FALSE;
+    }
+  else
+    {
+      return klass->remove_lockdown_for_action_finish (authority, res, error);
+    }
+}
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -1078,6 +1225,96 @@ authority_handle_revoke_temporary_authorization_by_id (_PolkitAuthority        *
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
+add_lockdown_cb (GObject      *source_object,
+                 GAsyncResult *res,
+                 gpointer      user_data)
+{
+  EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
+  GError *error;
+
+  error = NULL;
+  polkit_backend_authority_add_lockdown_for_action_finish (POLKIT_BACKEND_AUTHORITY (source_object),
+                                                           res,
+                                                           &error);
+
+  if (error != NULL)
+    {
+      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_error_free (error);
+    }
+  else
+    {
+      _polkit_authority_handle_add_lockdown_for_action_finish (method_invocation);
+    }
+}
+
+static void
+authority_handle_add_lockdown_for_action (_PolkitAuthority               *instance,
+                                          const gchar                    *action_id,
+                                          EggDBusMethodInvocation        *method_invocation)
+{
+  Server *server = SERVER (instance);
+  const gchar *caller_name;
+  PolkitSubject *caller;
+
+  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
+  caller = polkit_system_bus_name_new (caller_name);
+
+  polkit_backend_authority_add_lockdown_for_action (server->authority,
+                                                    caller,
+                                                    action_id,
+                                                    add_lockdown_cb,
+                                                    method_invocation);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+remove_lockdown_cb (GObject      *source_object,
+                    GAsyncResult *res,
+                    gpointer      user_data)
+{
+  EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
+  GError *error;
+
+  error = NULL;
+  polkit_backend_authority_remove_lockdown_for_action_finish (POLKIT_BACKEND_AUTHORITY (source_object),
+                                                              res,
+                                                              &error);
+
+  if (error != NULL)
+    {
+      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_error_free (error);
+    }
+  else
+    {
+      _polkit_authority_handle_remove_lockdown_for_action_finish (method_invocation);
+    }
+}
+
+static void
+authority_handle_remove_lockdown_for_action (_PolkitAuthority               *instance,
+                                             const gchar                    *action_id,
+                                             EggDBusMethodInvocation        *method_invocation)
+{
+  Server *server = SERVER (instance);
+  const gchar *caller_name;
+  PolkitSubject *caller;
+
+  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
+  caller = polkit_system_bus_name_new (caller_name);
+
+  polkit_backend_authority_remove_lockdown_for_action (server->authority,
+                                                       caller,
+                                                       action_id,
+                                                       remove_lockdown_cb,
+                                                       method_invocation);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
 authority_iface_init (_PolkitAuthorityIface *authority_iface)
 {
   authority_iface->handle_enumerate_actions                    = authority_handle_enumerate_actions;
@@ -1089,6 +1326,8 @@ authority_iface_init (_PolkitAuthorityIface *authority_iface)
   authority_iface->handle_enumerate_temporary_authorizations   = authority_handle_enumerate_temporary_authorizations;
   authority_iface->handle_revoke_temporary_authorizations      = authority_handle_revoke_temporary_authorizations;
   authority_iface->handle_revoke_temporary_authorization_by_id = authority_handle_revoke_temporary_authorization_by_id;
+  authority_iface->handle_add_lockdown_for_action              = authority_handle_add_lockdown_for_action;
+  authority_iface->handle_remove_lockdown_for_action              = authority_handle_remove_lockdown_for_action;
 }
 
 static void
