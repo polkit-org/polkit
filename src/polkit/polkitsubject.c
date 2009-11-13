@@ -282,18 +282,21 @@ polkit_subject_new_for_real (_PolkitSubject *real)
     {
       variant = egg_dbus_hash_map_lookup (details, "pid");
       variant2 = egg_dbus_hash_map_lookup (details, "start-time");
-      s = polkit_unix_process_new_full (egg_dbus_variant_get_uint (variant),
-                                        egg_dbus_variant_get_uint64 (variant2));
+      if (variant != NULL && variant2 != NULL)
+        s = polkit_unix_process_new_full (egg_dbus_variant_get_uint (variant),
+                                          egg_dbus_variant_get_uint64 (variant2));
     }
   else if (strcmp (kind, "unix-session") == 0)
     {
       variant = egg_dbus_hash_map_lookup (details, "session-id");
-      s = polkit_unix_session_new (egg_dbus_variant_get_string (variant));
+      if (variant != NULL)
+        s = polkit_unix_session_new (egg_dbus_variant_get_string (variant));
     }
   else if (strcmp (kind, "system-bus-name") == 0)
     {
       variant = egg_dbus_hash_map_lookup (details, "name");
-      s = polkit_system_bus_name_new (egg_dbus_variant_get_string (variant));
+      if (variant != NULL)
+        s = polkit_system_bus_name_new (egg_dbus_variant_get_string (variant));
     }
   else
     {

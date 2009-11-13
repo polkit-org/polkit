@@ -899,10 +899,20 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
   GCancellable *cancellable;
   PolkitDetails *details;
 
-  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
-  caller = polkit_system_bus_name_new (caller_name);
+  details = NULL;
 
   subject = polkit_subject_new_for_real (real_subject);
+  if (subject == NULL)
+    {
+      egg_dbus_method_invocation_return_error_literal (method_invocation,
+                                                       _POLKIT_ERROR,
+                                                       _POLKIT_ERROR_FAILED,
+                                                       "Error parsing subject struct");
+      goto out;
+    }
+
+  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
+  caller = polkit_system_bus_name_new (caller_name);
 
   details = polkit_details_new_for_hash (real_details->data);
 
@@ -948,7 +958,8 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
                                                 check_auth_cb,
                                                 method_invocation);
  out:
-  g_object_unref (details);
+  if (details != NULL)
+    g_object_unref (details);
 }
 
 static void
@@ -999,9 +1010,20 @@ authority_handle_register_authentication_agent (_PolkitAuthority               *
   PolkitSubject *subject;
   GError *error;
 
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
+  caller = NULL;
+
   subject = polkit_subject_new_for_real (real_subject);
+  if (subject == NULL)
+    {
+      egg_dbus_method_invocation_return_error_literal (method_invocation,
+                                                       _POLKIT_ERROR,
+                                                       _POLKIT_ERROR_FAILED,
+                                                       "Error parsing subject struct");
+      goto out;
+    }
   g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
+
+  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
   error = NULL;
   if (!polkit_backend_authority_register_authentication_agent (server->authority,
@@ -1019,7 +1041,8 @@ authority_handle_register_authentication_agent (_PolkitAuthority               *
   _polkit_authority_handle_register_authentication_agent_finish (method_invocation);
 
  out:
-  g_object_unref (caller);
+  if (caller != NULL)
+    g_object_unref (caller);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1035,9 +1058,20 @@ authority_handle_unregister_authentication_agent (_PolkitAuthority              
   PolkitSubject *subject;
   GError *error;
 
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
+  caller = NULL;
+
   subject = polkit_subject_new_for_real (real_subject);
+  if (subject == NULL)
+    {
+      egg_dbus_method_invocation_return_error_literal (method_invocation,
+                                                       _POLKIT_ERROR,
+                                                       _POLKIT_ERROR_FAILED,
+                                                       "Error parsing subject struct");
+      goto out;
+    }
   g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
+
+  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
   error = NULL;
   if (!polkit_backend_authority_unregister_authentication_agent (server->authority,
@@ -1054,7 +1088,8 @@ authority_handle_unregister_authentication_agent (_PolkitAuthority              
   _polkit_authority_handle_unregister_authentication_agent_finish (method_invocation);
 
  out:
-  g_object_unref (caller);
+  if (caller != NULL)
+    g_object_unref (caller);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1070,7 +1105,18 @@ authority_handle_authentication_agent_response (_PolkitAuthority               *
   PolkitIdentity *identity;
   GError *error;
 
+  caller = NULL;
+  identity = NULL;
+
   identity = polkit_identity_new_for_real (real_identity);
+  if (identity == NULL)
+    {
+      egg_dbus_method_invocation_return_error_literal (method_invocation,
+                                                       _POLKIT_ERROR,
+                                                       _POLKIT_ERROR_FAILED,
+                                                       "Error parsing identity struct");
+      goto out;
+    }
 
   caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
@@ -1089,9 +1135,11 @@ authority_handle_authentication_agent_response (_PolkitAuthority               *
   _polkit_authority_handle_authentication_agent_response_finish (method_invocation);
 
  out:
-  g_object_unref (caller);
+  if (caller != NULL)
+    g_object_unref (caller);
 
-  g_object_unref (identity);
+  if (identity != NULL)
+    g_object_unref (identity);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1113,10 +1161,18 @@ authority_handle_enumerate_temporary_authorizations (_PolkitAuthority        *in
   caller = NULL;
   temporary_authorizations = NULL;
 
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
   subject = polkit_subject_new_for_real (real_subject);
+  if (subject == NULL)
+    {
+      egg_dbus_method_invocation_return_error_literal (method_invocation,
+                                                       _POLKIT_ERROR,
+                                                       _POLKIT_ERROR_FAILED,
+                                                       "Error parsing subject struct");
+      goto out;
+    }
   g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
+
+  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
   temporary_authorizations = polkit_backend_authority_enumerate_temporary_authorizations (server->authority,
                                                                                           caller,
@@ -1150,7 +1206,8 @@ authority_handle_enumerate_temporary_authorizations (_PolkitAuthority        *in
  out:
   g_list_foreach (temporary_authorizations, (GFunc) g_object_unref, NULL);
   g_list_free (temporary_authorizations);
-  g_object_unref (caller);
+  if (caller != NULL)
+    g_object_unref (caller);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1168,10 +1225,18 @@ authority_handle_revoke_temporary_authorizations (_PolkitAuthority        *insta
   error = NULL;
   caller = NULL;
 
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
   subject = polkit_subject_new_for_real (real_subject);
+  if (subject == NULL)
+    {
+      egg_dbus_method_invocation_return_error_literal (method_invocation,
+                                                       _POLKIT_ERROR,
+                                                       _POLKIT_ERROR_FAILED,
+                                                       "Error parsing subject struct");
+      goto out;
+    }
   g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
+
+  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
   polkit_backend_authority_revoke_temporary_authorizations (server->authority,
                                                             caller,
@@ -1187,7 +1252,8 @@ authority_handle_revoke_temporary_authorizations (_PolkitAuthority        *insta
   _polkit_authority_handle_revoke_temporary_authorizations_finish (method_invocation);
 
  out:
-  g_object_unref (caller);
+  if (caller != NULL)
+    g_object_unref (caller);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

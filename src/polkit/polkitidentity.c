@@ -201,12 +201,14 @@ polkit_identity_new_for_real (_PolkitIdentity *real)
   if (strcmp (kind, "unix-user") == 0)
     {
       variant = egg_dbus_hash_map_lookup (details, "uid");
-      s = polkit_unix_user_new (egg_dbus_variant_get_uint (variant));
+      if (variant != NULL)
+        s = polkit_unix_user_new (egg_dbus_variant_get_uint (variant));
     }
   else if (strcmp (kind, "unix-group") == 0)
     {
       variant = egg_dbus_hash_map_lookup (details, "gid");
-      s = polkit_unix_group_new (egg_dbus_variant_get_uint (variant));
+      if (variant != NULL)
+        s = polkit_unix_group_new (egg_dbus_variant_get_uint (variant));
     }
   else
     {

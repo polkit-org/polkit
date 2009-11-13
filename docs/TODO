@@ -7,11 +7,6 @@ Needed for 1.0
 
  - man page review / section review
 
- - check / validate all incoming arguments
-   - includes all D-Bus interfaces and public library API
-   - validate D-Bus object paths everywhere
-   - ...and other security/paranoia stuff
-
  - make sure library API is reasonably MT-safe
 
  - avoid watching all name owner changes in PolkitBackendAuthority and
