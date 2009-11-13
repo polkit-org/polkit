@@ -3,4 +3,5 @@
 [encoding: UTF-8]
 actions/org.freedesktop.policykit.policy.in
 src/examples/org.freedesktop.policykit.examples.pkexec.policy.in
+src/polkitbackend/polkitbackendlocalauthority.c
 src/programs/pkexec-action-lookup.c
