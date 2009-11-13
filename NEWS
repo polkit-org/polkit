@@ -1,4 +1,73 @@
 --------------
+PolicyKit 0.95
+--------------
+
+This is PolicyKit 0.95. This is supposed to be the last release until 1.0.
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.21.4
+ eggdbus-1             >= 0.6
+ gobject-introspection >= 0.6.2 (optional)
+ pam
+
+Changes since PolicyKit 0.94:
+
+Alexander Sack (1):
+      Bug 24566 – Properly _ref authority in singleton constructor
+
+Andreas Sandberg (1):
+      Bug 24235 – polkit-agent-helper may call pam_end with a stale pam handle
+
+Bastien Nocera (1):
+      Fix process start time when using polkit_unix_process_new_full()
+
+David Zeuthen (20):
+      Post-release version bump to 0.95
+      Use correct program name when complaining about not being setuid root
+      Sort by action id in pkaction(1) output
+      Bug 23867 – UnixProcess vs. SystemBusName aliasing
+      Implement lockdown for the Local Authority implementation
+      Remove POLKIT_USER from configuration summary
+      Add missing comma so we're save both LANG and LANGUAGE, not only LANGLANGUAGE
+      Pass --libtool to g-ir-scanner
+      Clarify comment on where to find process start-time on Linux
+      Add properties with information about the currently used authority
+      Clarify when AllowUserInteraction should and shouldn't be used
+      Add methods AddLockdownForAction() and RemoveLockdownForAction()
+      Port lockdown from pklalockdown(1) to D-Bus methods
+      Drop ununsed policykit actions
+      Remove TODO about symbol visibility as this has been fixed for a while
+      Clarify pklocalauthority(8) man page
+      Properly validate all arguments passed via D-Bus
+      Add Python example
+      Fix make distcheck
+      Update NEWS for release
+
+Matthias Clasen (1):
+      Bug 24640 – Typos in pklocalauthority(8)
+
+Michael Biebl (8):
+      Trim the list of exported symbols
+      Use _polkit_agent_marshal prefix
+      Make private symbols accessible to libpolkitagent and libpolkitbackend
+      Make examples optional
+      Enable silent rules
+      Remove POLKIT_USER option
+      Don't include Polkit-1.0.gir in the dist tarball
+      Bug 24176 – Current git master fails to build, GLIB_LDADD -> GLIB_LIBS
+
+Samuel Thibault (1):
+      Bug 24495 – Fails to build on platforms without PATH_MAX (like hurd)
+
+David Zeuthen,
+November 13, 2009
+
+--------------
 PolicyKit 0.94
 --------------
 
