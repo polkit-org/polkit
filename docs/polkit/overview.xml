@@ -40,9 +40,13 @@
     </para>
     <para>
       As an example of code using the GObject API, see <xref linkend="cancel-example"/>.
+      For an example using the D-Bus API, see <xref linkend="polkit-raw-dbus-py"/>.
     </para>
     <example id="cancel-example"><title>Querying the Authority</title>
       <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" href="../../src/examples/cancel.c"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
+    </example>
+    <example id="polkit-raw-dbus-py"><title>Accessing the Authority via D-Bus</title>
+      <programlisting><xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" href="../../src/examples/polkit-raw-dbus.py"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
     </example>
   </chapter>
 

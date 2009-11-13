@@ -114,7 +114,6 @@
     <xi:include href="../man/pkaction.xml"/>
     <xi:include href="../man/pkexec.xml"/>
     <xi:include href="../man/pklocalauthority.xml"/>
-    <xi:include href="../man/pklalockdown.xml"/>
   </part>
 
   <chapter id="polkit-hierarchy">
