@@ -66,6 +66,9 @@ typedef struct
 
   GList *authorization_stores;
 
+  GFileMonitor *sysconf_dir_monitor;
+  GFileMonitor *localstate_dir_monitor;
+
 } PolkitBackendLocalAuthorityPrivate;
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -131,43 +134,226 @@ on_store_changed (PolkitBackendLocalAuthorizationStore *store,
   g_signal_emit_by_name (authority, "changed");
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+purge_all_authorization_stores (PolkitBackendLocalAuthority *authority)
+{
+  PolkitBackendLocalAuthorityPrivate *priv;
+  GList *l;
+
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
+
+  for (l = priv->authorization_stores; l != NULL; l = l->next)
+    {
+      PolkitBackendLocalAuthorizationStore *store = POLKIT_BACKEND_LOCAL_AUTHORIZATION_STORE (l->data);
+      g_signal_handlers_disconnect_by_func (store,
+                                            G_CALLBACK (on_store_changed),
+                                            authority);
+      g_object_unref (store);
+    }
+  g_list_free (priv->authorization_stores);
+  priv->authorization_stores = NULL;
+
+  g_debug ("Purged all local authorization stores");
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+add_one_authorization_store (PolkitBackendLocalAuthority *authority,
+                             GFile                       *directory)
+{
+  PolkitBackendLocalAuthorizationStore *store;
+  PolkitBackendLocalAuthorityPrivate *priv;
+
+  priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
+
+  store = polkit_backend_local_authorization_store_new (directory, ".pkla");
+  priv->authorization_stores = g_list_append (priv->authorization_stores, store);
+
+  g_signal_connect (store,
+                    "changed",
+                    G_CALLBACK (on_store_changed),
+                    authority);
+}
+
+static gint
+authorization_store_path_compare_func (GFile *file_a,
+                                       GFile *file_b)
+{
+  const gchar *a;
+  const gchar *b;
+
+  a = g_object_get_data (G_OBJECT (file_a), "sort-key");
+  b = g_object_get_data (G_OBJECT (file_b), "sort-key");
+
+  return g_strcmp0 (a, b);
+}
+
+static void
+add_all_authorization_stores (PolkitBackendLocalAuthority *authority)
+{
+  guint n;
+  GList *directories;
+  GList *l;
+
+  directories = NULL;
+
+  for (n = 0; n < 2; n++)
+    {
+      const gchar *toplevel_path;
+      GFile *toplevel_directory;
+      GFileEnumerator *directory_enumerator;
+      GFileInfo *file_info;
+      GError *error;
+
+      error = NULL;
+
+      if (n == 0)
+        toplevel_path = PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority";
+      else
+        toplevel_path = PACKAGE_SYSCONF_DIR "/polkit-1/localauthority";
+
+      toplevel_directory = g_file_new_for_path (toplevel_path);
+      directory_enumerator = g_file_enumerate_children (toplevel_directory,
+                                                        "standard::*",
+                                                        G_FILE_QUERY_INFO_NONE,
+                                                        NULL,
+                                                        &error);
+      if (directory_enumerator == NULL)
+        {
+          g_warning ("Error getting enumerator for %s: %s", toplevel_path, error->message);
+          g_error_free (error);
+          g_object_unref (toplevel_directory);
+          continue;
+        }
+
+      while ((file_info = g_file_enumerator_next_file (directory_enumerator, NULL, &error)) != NULL)
+        {
+          /* only consider directories */
+          if (g_file_info_get_file_type (file_info) == G_FILE_TYPE_DIRECTORY)
+            {
+              const gchar *name;
+              GFile *directory;
+              gchar *sort_key;
+
+              name = g_file_info_get_name (file_info);
+
+              /* This makes entries in directories in /etc take precedence to entries in directories in /var */
+              sort_key = g_strdup_printf ("%s-%d", name, n);
+
+              directory = g_file_get_child (toplevel_directory, name);
+              g_object_set_data_full (G_OBJECT (directory), "sort-key", sort_key, g_free);
+
+              directories = g_list_prepend (directories, directory);
+            }
+          g_object_unref (file_info);
+        }
+      if (error != NULL)
+        {
+          g_warning ("Error enumerating files in %s: %s", toplevel_path, error->message);
+          g_error_free (error);
+          g_object_unref (toplevel_directory);
+          g_object_unref (directory_enumerator);
+          continue;
+        }
+      g_object_unref (directory_enumerator);
+      g_object_unref (toplevel_directory);
+    }
+
+  /* Sort directories */
+  directories = g_list_sort (directories, (GCompareFunc) authorization_store_path_compare_func);
+
+  /* And now add an authorization store for each one */
+  for (l = directories; l != NULL; l = l->next)
+    {
+      GFile *directory = G_FILE (l->data);
+      gchar *name;
+
+      name = g_file_get_path (directory);
+      g_debug ("Added `%s' as a local authorization store", name);
+      g_free (name);
+
+      add_one_authorization_store (authority, directory);
+    }
+
+  g_list_foreach (directories, (GFunc) g_object_unref, NULL);
+  g_list_free (directories);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+on_toplevel_authority_store_monitor_changed (GFileMonitor     *monitor,
+                                             GFile            *file,
+                                             GFile            *other_file,
+                                             GFileMonitorEvent event_type,
+                                             gpointer          user_data)
+{
+  PolkitBackendLocalAuthority *authority = POLKIT_BACKEND_LOCAL_AUTHORITY (user_data);
+
+  purge_all_authorization_stores (authority);
+  add_all_authorization_stores (authority);
+}
+
 static void
 polkit_backend_local_authority_init (PolkitBackendLocalAuthority *authority)
 {
   PolkitBackendLocalAuthorityPrivate *priv;
-  GFile *directory;
+  GFile *config_directory;
   guint n;
-  const gchar *store_locations[] =
-    {
-      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/10-vendor.d",
-      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/20-org.d",
-      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/30-site.d",
-      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/50-local.d",
-      PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority/90-mandatory.d",
-      NULL
-    };
 
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (authority);
 
-  directory = g_file_new_for_path (PACKAGE_SYSCONF_DIR "/polkit-1/localauthority.conf.d");
-  priv->config_source = polkit_backend_config_source_new (directory);
-  g_object_unref (directory);
+  config_directory = g_file_new_for_path (PACKAGE_SYSCONF_DIR "/polkit-1/localauthority.conf.d");
+  priv->config_source = polkit_backend_config_source_new (config_directory);
+  g_object_unref (config_directory);
 
-  for (n = 0; store_locations[n] != NULL; n++)
+  add_all_authorization_stores (authority);
+
+  /* Monitor the toplevels */
+  for (n = 0; n < 2; n++)
     {
-      PolkitBackendLocalAuthorizationStore *store;
+      const gchar *toplevel_path;
+      GFile *toplevel_directory;
+      GFileMonitor *monitor;
+      GError *error;
 
-      directory = g_file_new_for_path (store_locations[n]);
-      store = polkit_backend_local_authorization_store_new (directory, ".pkla");
-      priv->authorization_stores = g_list_prepend (priv->authorization_stores, store);
-      g_object_unref (directory);
+      if (n == 0)
+        toplevel_path = PACKAGE_LOCALSTATE_DIR "/lib/polkit-1/localauthority";
+      else
+        toplevel_path = PACKAGE_SYSCONF_DIR "/polkit-1/localauthority";
 
-      g_signal_connect (store,
+      toplevel_directory = g_file_new_for_path (toplevel_path);
+
+      error = NULL;
+      monitor = g_file_monitor_directory (toplevel_directory,
+                                          G_FILE_MONITOR_NONE,
+                                          NULL,
+                                          &error);
+      if (monitor == NULL)
+        {
+          g_warning ("Error creating file monitor for %s: %s", toplevel_path, error->message);
+          g_error_free (error);
+          g_object_unref (toplevel_directory);
+          continue;
+        }
+
+      g_debug ("Monitoring `%s' for changes", toplevel_path);
+
+      g_signal_connect (monitor,
                         "changed",
-                        G_CALLBACK (on_store_changed),
+                        G_CALLBACK (on_toplevel_authority_store_monitor_changed),
                         authority);
+
+      if (n == 0)
+        priv->sysconf_dir_monitor = monitor;
+      else
+        priv->localstate_dir_monitor = monitor;
+
+      g_object_unref (toplevel_directory);
     }
-  priv->authorization_stores = g_list_reverse (priv->authorization_stores);
 }
 
 static void
@@ -179,11 +365,15 @@ polkit_backend_local_authority_finalize (GObject *object)
   local_authority = POLKIT_BACKEND_LOCAL_AUTHORITY (object);
   priv = POLKIT_BACKEND_LOCAL_AUTHORITY_GET_PRIVATE (local_authority);
 
+  purge_all_authorization_stores (local_authority);
+
+  if (priv->sysconf_dir_monitor != NULL)
+    g_object_unref (priv->sysconf_dir_monitor);
+  if (priv->localstate_dir_monitor != NULL)
+    g_object_unref (priv->localstate_dir_monitor);
+
   if (priv->config_source != NULL)
     g_object_unref (priv->config_source);
-
-  g_list_foreach (priv->authorization_stores, (GFunc) g_object_unref, NULL);
-  g_list_free (priv->authorization_stores);
 
   G_OBJECT_CLASS (polkit_backend_local_authority_parent_class)->finalize (object);
 }

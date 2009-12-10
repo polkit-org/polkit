@@ -518,6 +518,12 @@ polkit_backend_local_authorization_store_new (GFile       *directory,
 static void
 polkit_backend_local_authorization_store_purge (PolkitBackendLocalAuthorizationStore *store)
 {
+  gchar *path;
+
+  path = g_file_get_path (store->priv->directory);
+  g_debug ("Dropping all .pkla caches for directory `%s'", path);
+  g_free (path);
+
   g_list_foreach (store->priv->authorizations, (GFunc) local_authorization_free, NULL);
   g_list_free (store->priv->authorizations);
   store->priv->authorizations = NULL;

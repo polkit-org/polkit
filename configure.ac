@@ -484,6 +484,10 @@ echo "
 
 "
 
+echo "NOTE: The directory ${sysconfdir}/polkit-1/localauthority must be owned"
+echo "      by root and have mode 700"
+echo
+
 echo "NOTE: The directory ${localstatedir}/lib/polkit-1 must be owned"
 echo "      by root and have mode 700"
 echo
