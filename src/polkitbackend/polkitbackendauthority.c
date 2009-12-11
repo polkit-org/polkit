@@ -23,6 +23,8 @@
 #include <errno.h>
 #include <pwd.h>
 #include <string.h>
+#include <syslog.h>
+#include <stdarg.h>
 
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
@@ -1510,6 +1512,7 @@ polkit_backend_authority_get (void)
   GList *authority_implementations;
   GType authority_type;
   PolkitBackendAuthority *authority;
+  gchar *s;
 
   /* define extension points */
   if (ep == NULL)
@@ -1545,5 +1548,39 @@ polkit_backend_authority_get (void)
   g_list_foreach (modules, (GFunc) g_type_module_unuse, NULL);
   g_list_free (modules);
 
+  /* First announce that we've started in the generic log */
+  openlog ("polkitd",
+           LOG_PID,
+           LOG_DAEMON);  /* system daemons without separate facility value */
+  syslog (LOG_INFO,
+          "started daemon version %s using authority implementation `%s' version `%s'",
+          VERSION,
+          polkit_backend_authority_get_name (authority),
+          polkit_backend_authority_get_version (authority));
+  closelog ();
+
+  /* and then log to the secure log */
+  s = g_strdup_printf ("polkitd(authority=%s)", polkit_backend_authority_get_name (authority));
+  openlog (s,
+           0,
+           LOG_AUTHPRIV); /* security/authorization messages (private) */
+  /* Ugh, can't free the string - gah, thanks openlog(3) */
+  /*g_free (s);*/
+
   return authority;
+}
+
+void
+polkit_backend_authority_log (PolkitBackendAuthority *authority,
+                              const gchar *format,
+                              ...)
+{
+  va_list var_args;
+
+  g_return_if_fail (POLKIT_BACKEND_IS_AUTHORITY (authority));
+
+  va_start (var_args, format);
+  vsyslog (LOG_NOTICE, format, var_args);
+
+  va_end (var_args);
 }

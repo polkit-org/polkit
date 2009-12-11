@@ -243,6 +243,10 @@ const gchar             *polkit_backend_authority_get_name     (PolkitBackendAut
 const gchar             *polkit_backend_authority_get_version  (PolkitBackendAuthority *authority);
 PolkitAuthorityFeatures  polkit_backend_authority_get_features (PolkitBackendAuthority *authority);
 
+void     polkit_backend_authority_log (PolkitBackendAuthority *authority,
+                                       const gchar *format,
+                                       ...);
+
 void     polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
                                                                  const gchar              *name,
                                                                  const gchar              *old_owner,
