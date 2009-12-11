@@ -32,6 +32,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <errno.h>
+#include <security/pam_appl.h>
 
 #include <polkit/polkit.h>
 
@@ -55,6 +56,61 @@ usage (int argc, char *argv[])
               "       [--user username] PROGRAM [ARGUMENTS...]\n"
               "\n"
               "See the pkexec manual page for more details.\n");
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static int
+pam_conversation_function (int n,
+                           const struct pam_message **msg,
+                           struct pam_response **resp,
+                           void *data)
+{
+  g_assert_not_reached ();
+  return PAM_CONV_ERR;
+}
+
+static gboolean
+open_session (const gchar *user_to_auth)
+{
+  gboolean ret;
+  gint rc;
+  pam_handle_t *pam_h;
+  struct pam_conv conversation;
+
+  ret = FALSE;
+
+  pam_h = NULL;
+
+  conversation.conv        = pam_conversation_function;
+  conversation.appdata_ptr = NULL;
+
+  /* start the pam stack */
+  rc = pam_start ("polkit-1",
+                  user_to_auth,
+                  &conversation,
+                  &pam_h);
+  if (rc != PAM_SUCCESS)
+    {
+      g_printerr ("pam_start() failed: %s\n", pam_strerror (pam_h, rc));
+      goto out;
+    }
+
+  /* open a session */
+  rc = pam_open_session (pam_h,
+                         0); /* flags */
+  if (rc != PAM_SUCCESS)
+    {
+      g_printerr ("pam_open_session() failed: %s\n", pam_strerror (pam_h, rc));
+      goto out;
+    }
+
+  ret = TRUE;
+
+out:
+  if (pam_h != NULL)
+    pam_end (pam_h, rc);
+  return ret;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -464,7 +520,7 @@ main (int argc, char *argv[])
     }
 
   /* if not changing to uid 0, become uid 0 before changing to the user */
-  if (pw->pw_uid)
+  if (pw->pw_uid != 0)
     {
       setreuid (0, 0);
       if ((geteuid () != 0) || (getuid () != 0))
@@ -472,6 +528,37 @@ main (int argc, char *argv[])
           g_printerr ("Error becoming uid 0: %s\n", g_strerror (errno));
           goto out;
         }
+    }
+
+  /* open session - with PAM enabled, this runs the open_session() part of the PAM
+   * stack - this includes applying limits via pam_limits.so but also other things
+   * requested via the current PAM configuration.
+   *
+   * NOTE NOTE NOTE: pam_limits.so doesn't seem to clear existing limits - e.g.
+   *
+   *  $ ulimit -t
+   *  unlimited
+   *
+   *  $ su -
+   *  Password:
+   *  # ulimit -t
+   *  1000
+   *  # logout
+   *
+   *  $ ulimit -t 1000
+   *  $ ulimit -t
+   *  1000
+   *  $ su -
+   *  Password:
+   *  # ulimit -t
+   *  1000
+   *
+   * TODO: The question here is whether we should clear the limits before applying them?
+   * As evident above, neither su(1) (and, for that matter, nor sudo(8)) does this.
+   */
+  if (!open_session (pw->pw_name))
+    {
+      goto out;
     }
 
   /* become the user */

@@ -25,6 +25,7 @@ pkexec_SOURCES = pkexec.c
 
 pkexec_CFLAGS =                             				\
 	$(GLIB_CFLAGS)							\
+	$(AUTH_LIBS)							\
 	$(NULL)
 
 pkexec_LDADD =  	                      				\
