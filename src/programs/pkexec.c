@@ -542,7 +542,7 @@ main (int argc, char *argv[])
    *  $ su -
    *  Password:
    *  # ulimit -t
-   *  1000
+   *  unlimited
    *  # logout
    *
    *  $ ulimit -t 1000
