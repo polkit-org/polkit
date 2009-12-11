@@ -44,12 +44,12 @@ main (int argc, char *argv[])
   env = NULL;
 
 #ifdef __GLIBC__
-  if ((cwd = get_current_dir_name ()))
+  if ((cwd = get_current_dir_name ()) == NULL)
 #else
   if (getcwd (cwd, sizeof cwd) == NULL)
 #endif
     {
-      g_printerr ("Error getting cwd: %s", g_strerror (errno));
+      g_printerr ("Error getting cwd: %s\n", g_strerror (errno));
       goto out;
     }
 
