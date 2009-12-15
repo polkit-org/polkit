@@ -478,7 +478,7 @@ main (int argc, char *argv[])
     }
   else if (polkit_authorization_result_get_is_challenge (result))
     {
-      g_printerr ("Authorization requires authentication but no authentication was found.\n");
+      g_printerr ("Authorization requires authentication but no authentication agent was found.\n");
       goto out;
     }
   else
