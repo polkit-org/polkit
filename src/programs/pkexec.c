@@ -208,6 +208,97 @@ find_action_for_path (PolkitAuthority *authority,
   return action_id;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gboolean
+is_valid_shell (const gchar *shell)
+{
+  gboolean ret;
+  gchar *contents;
+  gchar **shells;
+  GError *error;
+  guint n;
+
+  ret = FALSE;
+
+  contents = NULL;
+  shells = NULL;
+
+  error = NULL;
+  if (!g_file_get_contents ("/etc/shells",
+                            &contents,
+                            NULL, /* gsize *length */
+                            &error))
+    {
+      g_printerr ("Error getting contents of /etc/shells: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  shells = g_strsplit (contents, "\n", 0);
+  for (n = 0; shells != NULL && shells[n] != NULL; n++)
+    {
+      if (g_strcmp0 (shell, shells[n]) == 0)
+        {
+          ret = TRUE;
+          goto out;
+        }
+    }
+
+ out:
+  g_free (contents);
+  g_strfreev (shells);
+  return ret;
+}
+
+static gboolean
+validate_environment_variable (const gchar *key,
+                               const gchar *value)
+{
+  gboolean ret;
+
+  /* Generally we bail if any environment variable value contains
+   *
+   *   - '/' characters
+   *   - '%' characters
+   *   - '..' substrings
+   */
+
+  g_return_val_if_fail (key != NULL, FALSE);
+  g_return_val_if_fail (value != NULL, FALSE);
+
+  ret = FALSE;
+
+  /* special case $SHELL */
+  if (g_strcmp0 (key, "SHELL") == 0)
+    {
+      /* check if it's in /etc/shells */
+      if (!is_valid_shell (value))
+        {
+          g_printerr ("The value for environment variable SHELL is not included in the\n"
+                      "/etc/shells file. This incident will be reported. Bailing out.\n");
+          /* TODO: syslog */
+          goto out;
+        }
+    }
+  else if (strstr (value, "/") != NULL ||
+           strstr (value, "%") != NULL ||
+           strstr (value, "..") != NULL)
+    {
+      g_printerr ("The value for environment variable %s contains suscipious content\n"
+                  "indicating an exploit. This incident will be reported. Bailing out.\n",
+                  key);
+      /* TODO: syslog */
+      goto out;
+    }
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 int
 main (int argc, char *argv[])
@@ -231,12 +322,19 @@ main (int argc, char *argv[])
   gchar pwbuf[8192];
   gchar *s;
   const gchar *environment_variables_to_save[] = {
-    "LANG",
-    "LANGUAGE",
-    "LC_ALL",
-    "LC_MESSAGES",
     "SHELL",
+    "LANG",
+    "LINGUAS",
+    "LANGUAGE",
+    "LC_COLLATE",
+    "LC_CTYPE",
+    "LC_MESSAGES",
+    "LC_MONETARY",
+    "LC_NUMERIC",
+    "LC_TIME",
+    "LC_ALL",
     "TERM",
+    "COLORTERM",
 
     /* For now, avoiding pretend that running X11 apps as another user in the same session
      * will ever work... See
@@ -372,6 +470,13 @@ main (int argc, char *argv[])
       if (value == NULL)
         continue;
 
+      /* To qualify for the paranoia goldstar - we validate the value of each
+       * environment variable passed through - this is to attempt to avoid
+       * exploits in (potentially broken) programs launched via pkexec(1).
+       */
+      if (!validate_environment_variable (key, value))
+        goto out;
+
       g_ptr_array_add (saved_env, g_strdup (key));
       g_ptr_array_add (saved_env, g_strdup (value));
     }
@@ -479,11 +584,13 @@ main (int argc, char *argv[])
   else if (polkit_authorization_result_get_is_challenge (result))
     {
       g_printerr ("Authorization requires authentication but no authentication agent was found.\n");
+      /* TODO: syslog */
       goto out;
     }
   else
     {
       g_printerr ("Not authorized.\n");
+      /* TODO: syslog */
       goto out;
     }
 
@@ -596,6 +703,8 @@ main (int argc, char *argv[])
       g_printerr ("Error changing to home directory %s: %s\n", pw->pw_dir, g_strerror (errno));
       goto out;
     }
+
+  /* TODO: syslog */
 
   /* exec the program */
   if (execv (path, exec_argv) != 0)
