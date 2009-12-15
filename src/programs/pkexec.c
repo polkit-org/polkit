@@ -41,6 +41,7 @@
 #include <polkit/polkit.h>
 
 static gchar *original_user_name = NULL;
+static gchar *original_cwd = NULL;
 static gchar *command_line = NULL;
 static struct passwd *pw;
 
@@ -77,7 +78,6 @@ log_message (gint     level,
   static gboolean is_log_open = FALSE;
   va_list var_args;
   gchar *s;
-  const gchar *cwd;
   const gchar *tty;
 
   if (!is_log_open)
@@ -92,7 +92,6 @@ log_message (gint     level,
   s = g_strdup_vprintf (format, var_args);
   va_end (var_args);
 
-  cwd = get_current_dir_name ();
   tty = ttyname (0);
   if (tty == NULL)
     tty = "unknown";
@@ -104,7 +103,7 @@ log_message (gint     level,
           s,
           pw->pw_name,
           tty,
-          cwd,
+          original_cwd,
           command_line);
 
   /* and then on stderr */
@@ -332,7 +331,7 @@ validate_environment_variable (const gchar *key,
       if (!is_valid_shell (value))
         {
           log_message (LOG_CRIT, TRUE,
-                       "The value for the SHELL variable was not found the /etc/shells file.");
+                       "The value for the SHELL variable was not found the /etc/shells file");
           g_printerr ("\n"
                       "This incident has been reported.\n");
           goto out;
@@ -343,7 +342,7 @@ validate_environment_variable (const gchar *key,
            strstr (value, "..") != NULL)
     {
       log_message (LOG_CRIT, TRUE,
-                   "The value for environment variable %s contains suscipious content.",
+                   "The value for environment variable %s contains suscipious content",
                    key);
       g_printerr ("\n"
                   "This incident has been reported.\n");
@@ -433,6 +432,18 @@ main (int argc, char *argv[])
     }
 
   original_user_name = g_strdup (g_get_user_name ());
+  if (original_user_name == NULL)
+    {
+      g_print ("Error getting user name.\n");
+      goto out;
+    }
+
+  original_cwd = g_strdup (get_current_dir_name ());
+  if (original_cwd == NULL)
+    {
+      g_print ("Error getting cwd.\n");
+      goto out;
+    }
 
   /* First process options and find the command-line to invoke. Avoid using fancy library routines
    * that depend on environtment variables since we haven't cleared the environment just yet.
@@ -801,6 +812,7 @@ main (int argc, char *argv[])
   g_free (command_line);
   g_free (opt_user);
   g_free (original_user_name);
+  g_free (original_cwd);
 
   return ret;
 }
