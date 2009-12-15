@@ -427,21 +427,21 @@ main (int argc, char *argv[])
   /* check for correct invocation */
   if (geteuid () != 0)
     {
-      g_print ("pkexec must be setuid root\n");
+      g_printerr ("pkexec must be setuid root\n");
       goto out;
     }
 
   original_user_name = g_strdup (g_get_user_name ());
   if (original_user_name == NULL)
     {
-      g_print ("Error getting user name.\n");
+      g_printerr ("Error getting user name.\n");
       goto out;
     }
 
   original_cwd = g_strdup (get_current_dir_name ());
   if (original_cwd == NULL)
     {
-      g_print ("Error getting cwd.\n");
+      g_printerr ("Error getting cwd.\n");
       goto out;
     }
 
