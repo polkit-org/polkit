@@ -586,7 +586,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Operator of %s successfully authenticated as %s to gain "
-                                        "TEMPORARY authorization for action %s for %s [%s] (owned by %s) ",
+                                        "TEMPORARY authorization for action %s for %s [%s] (owned by %s)",
                                         session_str,
                                         authenticated_identity_str,
                                         action_id,
@@ -598,7 +598,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Operator of %s successfully authenticated as %s to gain "
-                                        "ONE-SHOT authorization for action %s for %s [%s] (owned by %s) ",
+                                        "ONE-SHOT authorization for action %s for %s [%s] (owned by %s)",
                                         session_str,
                                         authenticated_identity_str,
                                         action_id,
@@ -611,7 +611,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Operator of %s FAILED to authenticate to gain "
-                                    "authorization for action %s for %s [%s] (owned by %s) ",
+                                    "authorization for action %s for %s [%s] (owned by %s)",
                                     session_str,
                                     action_id,
                                     subject_str,
