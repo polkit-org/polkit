@@ -214,6 +214,7 @@ main (int argc, char *argv[])
 {
   guint n;
   guint ret;
+  gint rc;
   gboolean opt_show_help;
   gboolean opt_show_version;
   PolkitAuthority *authority;
@@ -384,10 +385,18 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  /* Look up information about the user we care about */
-  if (getpwnam_r (opt_user, &pwstruct, pwbuf, sizeof pwbuf, &pw) != 0)
+  /* Look up information about the user we care about - yes, the return
+   * value of this function is a bit funky
+   */
+  rc = getpwnam_r (opt_user, &pwstruct, pwbuf, sizeof pwbuf, &pw);
+  if (rc == 0 && pw == NULL)
     {
-      g_printerr ("Error getting information for user %s: %s\n", opt_user, g_strerror (errno));
+      g_printerr ("User `%s' does not exist.\n", opt_user);
+      goto out;
+    }
+  else if (pw == NULL)
+    {
+      g_printerr ("Error getting information for user `%s': %s\n", opt_user, g_strerror (rc));
       goto out;
     }
 
