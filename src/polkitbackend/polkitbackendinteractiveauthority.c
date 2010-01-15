@@ -444,7 +444,8 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
   return ret;
 }
 
-static void
+/* TODO: possibly remove this function altogether */
+G_GNUC_UNUSED static void
 log_result (PolkitBackendInteractiveAuthority    *authority,
             const gchar                          *action_id,
             PolkitSubject                        *subject,
@@ -619,7 +620,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
                                     user_of_subject_str);
     }
 
-  log_result (authority, action_id, subject, caller, result);
+  /* log_result (authority, action_id, subject, caller, result); */
 
   g_simple_async_result_set_op_res_gpointer (simple,
                                              result,
@@ -828,7 +829,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
         }
     }
 
-  log_result (interactive_authority, action_id, subject, caller, result);
+  /* log_result (interactive_authority, action_id, subject, caller, result); */
 
   /* Otherwise just return the result */
   g_simple_async_result_set_op_res_gpointer (simple,
