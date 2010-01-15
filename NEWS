@@ -1,4 +1,43 @@
 --------------
+PolicyKit 0.96
+--------------
+
+This is PolicyKit 0.96. This is supposed to be the last release until 1.0.
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.21.4
+ eggdbus-1             >= 0.6
+ gobject-introspection >= 0.6.2 (optional)
+ pam
+
+Changes since PolicyKit 0.95:
+
+David Zeuthen (15):
+      Bug 25367 — Also read local authority configuration data from /etc
+      Fix logic error in pk-example-frobnicate
+      Run the open_session part of the PAM stack in pkexec(1)
+      Fix up last comment
+      Bug 25594 – System logging
+      Remove trailing whitespace from log messages
+      Properly handle return value from getpwnam_r()
+      Fix error message when no authentication agent is available
+      Make pkexec(1) validate environment variables
+      Make pkexec(1) use the syslogging facilities
+      Save original cwd in pkexec(1) since it will change during the life-time
+      Complain on stderr, not stdout
+      Post-release version bump to 0.96
+      Don't log authorization checks
+      Update NEWS for release
+
+David Zeuthen,
+January 15, 2010
+
+--------------
 PolicyKit 0.95
 --------------
 
