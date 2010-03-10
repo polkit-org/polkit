@@ -411,7 +411,6 @@ main (int argc, char *argv[])
   gchar *opt_user;
   pid_t pid_of_caller;
   uid_t uid_of_caller;
-  struct stat statbuf;
 
   ret = 127;
   authority = NULL;
@@ -520,9 +519,9 @@ main (int argc, char *argv[])
       g_free (path);
       argv[n] = path = s;
     }
-  if (stat (path, &statbuf) != 0)
+  if (access (path, F_OK) != 0)
     {
-      g_printerr ("Error getting information about %s: %s\n", path, g_strerror (errno));
+      g_printerr ("Error accessing %s: %s\n", path, g_strerror (errno));
       goto out;
     }
   command_line = g_strjoinv (" ", argv + n);
