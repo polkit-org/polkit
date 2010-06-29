@@ -34,7 +34,11 @@
 #include <grp.h>
 #include <pwd.h>
 #include <errno.h>
+
+#ifdef POLKIT_AUTHFW_PAM
 #include <security/pam_appl.h>
+#endif /* POLKIT_AUTHFW_PAM */
+
 #include <syslog.h>
 #include <stdarg.h>
 
@@ -115,6 +119,7 @@ log_message (gint     level,
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+#ifdef POLKIT_AUTHFW_PAM
 static int
 pam_conversation_function (int n,
                            const struct pam_message **msg,
@@ -167,6 +172,7 @@ out:
     pam_end (pam_h, rc);
   return ret;
 }
+#endif /* POLKIT_AUTHFW_PAM */
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -741,10 +747,12 @@ main (int argc, char *argv[])
    * TODO: The question here is whether we should clear the limits before applying them?
    * As evident above, neither su(1) (and, for that matter, nor sudo(8)) does this.
    */
+#ifdef POLKIT_AUTHFW_PAM
   if (!open_session (pw->pw_name))
     {
       goto out;
     }
+#endif /* POLKIT_AUTHFW_PAM */
 
   /* become the user */
   if (setgroups (0, NULL) != 0)

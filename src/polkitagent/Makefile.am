@@ -68,8 +68,15 @@ libpolkit_agent_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
 libexec_PROGRAMS = polkit-agent-helper-1
 
 polkit_agent_helper_1_SOURCES = 					\
-	polkitagenthelper.c						\
+	polkitagenthelperprivate.c polkitagenthelperprivate.h		\
 	$(NULL)
+
+if POLKIT_AUTHFW_PAM
+polkit_agent_helper_1_SOURCES += polkitagenthelper-pam.c
+endif
+if POLKIT_AUTHFW_SHADOW
+polkit_agent_helper_1_SOURCES += polkitagenthelper-shadow.c
+endif
 
 polkit_agent_helper_1_CFLAGS  = 					\
         -D_POLKIT_COMPILATION                                  		\
