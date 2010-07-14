@@ -641,6 +641,8 @@ polkit_backend_local_authorization_store_ensure (PolkitBackendLocalAuthorization
       g_free (filename);
     }
 
+  store->priv->has_data = TRUE;
+
  out:
   g_list_foreach (files, (GFunc) g_object_unref, NULL);
   g_list_free (files);
