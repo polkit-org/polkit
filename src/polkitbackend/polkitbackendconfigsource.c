@@ -386,6 +386,7 @@ polkit_backend_config_source_ensure (PolkitBackendConfigSource *source)
     }
 
   source->priv->key_files = g_list_reverse (source->priv->key_files);
+  source->priv->has_data = TRUE;
 
  out:
   g_list_foreach (files, (GFunc) g_object_unref, NULL);
