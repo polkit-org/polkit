@@ -71,7 +71,8 @@ polkit_action_description_finalize (GObject *object)
 
   action_description = POLKIT_ACTION_DESCRIPTION (object);
 
-  g_object_unref (action_description->real);
+  if (action_description->real != NULL)
+    g_object_unref (action_description->real);
 
   g_strfreev (action_description->annotation_keys);
 
@@ -301,4 +302,89 @@ polkit_action_description_get_annotation_keys (PolkitActionDescription *action_d
 
  out:
   return (const gchar * const *) action_description->annotation_keys;
+}
+
+PolkitActionDescription *
+polkit_action_description_new_for_gvariant (GVariant *value)
+{
+  PolkitActionDescription *action_description;
+  GVariantIter iter;
+  const gchar *action_id;
+  const gchar *description;
+  const gchar *message;
+  const gchar *vendor_name;
+  const gchar *vendor_url;
+  const gchar *icon_name;
+  PolkitImplicitAuthorization implicit_any;
+  PolkitImplicitAuthorization implicit_inactive;
+  PolkitImplicitAuthorization implicit_active;
+  GVariant *annotations_dict;
+  gchar *a_key;
+  gchar *a_value;
+  EggDBusHashMap *hm;
+
+  action_description = POLKIT_ACTION_DESCRIPTION (g_object_new (POLKIT_TYPE_ACTION_DESCRIPTION, NULL));
+  g_variant_get (value,
+                 "(&s&s&s&s&s&suuu@a{ss})",
+                 &action_id,
+                 &description,
+                 &message,
+                 &vendor_name,
+                 &vendor_url,
+                 &icon_name,
+                 &implicit_any,
+                 &implicit_inactive,
+                 &implicit_active,
+                 &annotations_dict);
+  hm = egg_dbus_hash_map_new (G_TYPE_STRING, g_free, G_TYPE_STRING, g_free);
+  g_variant_iter_init (&iter, annotations_dict);
+  while (g_variant_iter_next (&iter, "{ss}", &a_key, &a_value))
+    egg_dbus_hash_map_insert (hm, a_key, a_value);
+  g_variant_unref (annotations_dict);
+
+  action_description->real = _polkit_action_description_new (action_id, description, message, vendor_name, vendor_url, icon_name, implicit_any, implicit_inactive, implicit_active, hm);
+  g_object_unref (hm);
+
+  return action_description;
+}
+
+static gboolean
+add_annotation (EggDBusHashMap *hash_map,
+                gpointer        key,
+                gpointer        value,
+                gpointer        user_data)
+{
+  GVariantBuilder *builder = user_data;
+
+  g_variant_builder_add (builder, "{ss}", key, value);
+
+  return FALSE;
+}
+
+GVariant *
+polkit_action_description_to_gvariant (PolkitActionDescription *action_description)
+{
+  GVariant *value;
+  GVariantBuilder builder;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{ss}"));
+
+  egg_dbus_hash_map_foreach (_polkit_action_description_get_annotations (action_description->real),
+                             add_annotation,
+                             &builder);
+
+  /* TODO: note 'foo ? : ""' is a gcc specific extension (it's a short-hand for 'foo ? foo : ""') */
+  value = g_variant_new ("(ssssssuuua{ss})",
+                         _polkit_action_description_get_action_id (action_description->real) ? : "",
+                         _polkit_action_description_get_description (action_description->real) ? : "",
+                         _polkit_action_description_get_message (action_description->real) ? : "",
+                         _polkit_action_description_get_vendor_name (action_description->real) ? : "",
+                         _polkit_action_description_get_vendor_url (action_description->real) ? : "",
+                         _polkit_action_description_get_icon_name (action_description->real) ? : "",
+                         _polkit_action_description_get_implicit_any (action_description->real),
+                         _polkit_action_description_get_implicit_inactive (action_description->real),
+                         _polkit_action_description_get_implicit_active (action_description->real),
+                         &builder);
+
+  return value;
 }

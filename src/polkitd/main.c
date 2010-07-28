@@ -51,7 +51,7 @@ main (int argc, char **argv)
                                           "/org/freedesktop/PolicyKit1/Authority",
                                           &error))
     {
-      g_printerr ("Error registering authority: %s", error->message);
+      g_printerr ("Error registering authority: %s\n", error->message);
       g_error_free (error);
       goto out;
     }

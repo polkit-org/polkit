@@ -38,6 +38,14 @@
 
 PolkitActionDescription  *polkit_action_description_new_for_real (_PolkitActionDescription *real);
 _PolkitActionDescription *polkit_action_description_get_real     (PolkitActionDescription  *action_description);
+PolkitActionDescription  *polkit_action_description_new_for_gvariant (GVariant *value);
+GVariant *polkit_action_description_to_gvariant (PolkitActionDescription *action_description);
+
+GVariant *polkit_subject_to_gvariant (PolkitSubject *subject);
+GVariant *polkit_identity_to_gvariant (PolkitIdentity *identity);
+
+PolkitSubject  *polkit_subject_new_for_gvariant (GVariant *variant, GError **error);
+PolkitIdentity *polkit_identity_new_for_gvariant (GVariant *variant, GError **error);
 
 PolkitSubject  *polkit_subject_new_for_real (_PolkitSubject *real);
 _PolkitSubject *polkit_subject_get_real     (PolkitSubject  *subject);
@@ -47,11 +55,17 @@ _PolkitIdentity *polkit_identity_get_real     (PolkitIdentity  *identity);
 
 PolkitAuthorizationResult  *polkit_authorization_result_new_for_real (_PolkitAuthorizationResult *real);
 _PolkitAuthorizationResult *polkit_authorization_result_get_real (PolkitAuthorizationResult *authorization_result);
+PolkitAuthorizationResult  *polkit_authorization_result_new_for_gvariant (GVariant *value);
+GVariant *polkit_authorization_result_to_gvariant (PolkitAuthorizationResult *authorization_result);
 
 _PolkitTemporaryAuthorization *polkit_temporary_authorization_get_real (PolkitTemporaryAuthorization *authorization);
 PolkitTemporaryAuthorization *polkit_temporary_authorization_new_for_real (_PolkitTemporaryAuthorization *real);
+PolkitTemporaryAuthorization *polkit_temporary_authorization_new_for_gvariant (GVariant *value);
+GVariant *polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization);
 
 PolkitDetails *polkit_details_new_for_hash (GHashTable *hash);
 GHashTable *polkit_details_get_hash (PolkitDetails *details);
+GVariant *polkit_details_to_gvariant (PolkitDetails *details);
+PolkitDetails *polkit_details_new_for_gvariant (GVariant *value);
 
 #endif /* __POLKIT_PRIVATE_H */

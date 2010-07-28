@@ -259,3 +259,125 @@ polkit_identity_get_real (PolkitIdentity *identity)
   return real;
 }
 
+GVariant *
+polkit_identity_to_gvariant (PolkitIdentity *identity)
+{
+  g_assert_not_reached ();
+  return NULL;
+}
+
+static GVariant *
+lookup_asv (GVariant            *dict,
+            const gchar         *given_key,
+            const GVariantType  *given_type,
+            GError             **error)
+{
+  GVariantIter iter;
+  const gchar *key;
+  GVariant *value;
+  GVariant *ret;
+
+  ret = NULL;
+
+  g_variant_iter_init (&iter, dict);
+  while (g_variant_iter_next (&iter, "{&sv}", &key, &value))
+    {
+      if (g_strcmp0 (key, given_key) == 0)
+        {
+          if (!g_variant_is_of_type (value, given_type))
+            {
+              gchar *type_string;
+              type_string = g_variant_type_dup_string (given_type);
+              g_set_error (error,
+                           POLKIT_ERROR,
+                           POLKIT_ERROR_FAILED,
+                           "Value for key `%s' found but is of type %s and type %s was expected",
+                           given_key,
+                           g_variant_get_type_string (value),
+                           type_string);
+              g_free (type_string);
+              goto out;
+            }
+          ret = value;
+          goto out;
+        }
+      g_variant_unref (value);
+    }
+
+ out:
+  if (ret == NULL)
+    {
+      gchar *type_string;
+      type_string = g_variant_type_dup_string (given_type);
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Didn't find value for key `%s' of type %s",
+                   given_key,
+                   type_string);
+      g_free (type_string);
+    }
+
+  return ret;
+}
+
+PolkitIdentity *
+polkit_identity_new_for_gvariant (GVariant  *variant,
+                                  GError    **error)
+{
+  PolkitIdentity *ret;
+  const gchar *kind;
+  GVariant *details_gvariant;
+
+  ret = NULL;
+
+  g_variant_get (variant,
+                 "(&s@a{sv})",
+                 &kind,
+                 &details_gvariant);
+
+  if (g_strcmp0 (kind, "unix-user") == 0)
+    {
+      GVariant *v;
+      guint32 uid;
+
+      v = lookup_asv (details_gvariant, "uid", G_VARIANT_TYPE_UINT32, error);
+      if (v == NULL)
+        {
+          g_prefix_error (error, "Error parsing unix-user identity: ");
+          goto out;
+        }
+      uid = g_variant_get_uint32 (v);
+      g_variant_unref (v);
+
+      ret = polkit_unix_user_new (uid);
+    }
+  else if (g_strcmp0 (kind, "unix-group") == 0)
+    {
+      GVariant *v;
+      guint32 gid;
+
+      v = lookup_asv (details_gvariant, "gid", G_VARIANT_TYPE_UINT32, error);
+      if (v == NULL)
+        {
+          g_prefix_error (error, "Error parsing unix-user identity: ");
+          goto out;
+        }
+      gid = g_variant_get_uint32 (v);
+      g_variant_unref (v);
+
+      ret = polkit_unix_group_new (gid);
+    }
+  else
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Unknown identity of kind `%s'",
+                   kind);
+    }
+
+ out:
+  g_variant_unref (details_gvariant);
+  return ret;
+}

@@ -209,3 +209,43 @@ polkit_temporary_authorization_get_time_expires (PolkitTemporaryAuthorization *a
 {
   return _polkit_temporary_authorization_get_time_expires (authorization->real);
 }
+
+PolkitTemporaryAuthorization *
+polkit_temporary_authorization_new_for_gvariant (GVariant *value)
+{
+  g_assert_not_reached ();
+  return NULL;
+}
+
+GVariant *
+polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization)
+{
+  const gchar *id;
+  const gchar *action_id;
+  PolkitSubject *subject;
+  guint64 time_obtained;
+  guint64 time_expires;
+  GVariant *ret;
+  GVariant *subject_gvariant;
+
+  id = polkit_temporary_authorization_get_id (authorization);
+  action_id = polkit_temporary_authorization_get_action_id (authorization);
+  subject = polkit_temporary_authorization_get_subject (authorization);
+  time_obtained = polkit_temporary_authorization_get_time_obtained (authorization);
+  time_expires = polkit_temporary_authorization_get_time_expires (authorization);
+
+  subject_gvariant = polkit_subject_to_gvariant (subject);
+  g_variant_ref_sink (subject_gvariant);
+  ret = g_variant_new ("(ss@(sa{sv})tt)",
+                       id,
+                       action_id,
+                       subject_gvariant,
+                       time_obtained,
+                       time_expires);
+
+  g_variant_unref (subject_gvariant);
+  g_object_unref (subject);
+
+  return ret;
+}
+

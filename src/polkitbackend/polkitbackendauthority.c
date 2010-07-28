@@ -648,212 +648,219 @@ polkit_backend_authority_remove_lockdown_for_action_finish (PolkitBackendAuthori
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-#define TYPE_SERVER         (server_get_type ())
-#define SERVER(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), TYPE_SERVER, Server))
-#define SERVER_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), TYPE_SERVER, ServerClass))
-#define SERVER_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), TYPE_SERVER,ServerClass))
-#define IS_SERVER(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), TYPE_SERVER))
-#define IS_SERVER_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), TYPE_SERVER))
-
-typedef struct _Server Server;
-typedef struct _ServerClass ServerClass;
-
-GType server_get_type (void) G_GNUC_CONST;
-
-struct _Server
+typedef struct
 {
-  GObject parent_instance;
+  guint authority_registration_id;
+  guint name_owner_changed_signal_id;
+
+  GDBusNodeInfo *introspection_info;
 
   PolkitBackendAuthority *authority;
 
-  EggDBusConnection *system_bus;
-
-  EggDBusObjectProxy *bus_proxy;
-
-  EggDBusBus *bus;
-
-  gulong name_owner_changed_id;
+  GDBusConnection *system_bus;
 
   gulong authority_changed_id;
 
   gchar *well_known_name;
+  gchar *object_path;
 
-  GHashTable *cancellation_id_to_cancellable;
-};
-
-struct _ServerClass
-{
-  GObjectClass parent_class;
-};
-
-enum
-{
-  PROP_0,
-  PROP_BACKEND_NAME,
-  PROP_BACKEND_VERSION,
-  PROP_BACKEND_FEATURES
-};
-
-static void authority_iface_init         (_PolkitAuthorityIface        *authority_iface);
-
-G_DEFINE_TYPE_WITH_CODE (Server, server, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_AUTHORITY, authority_iface_init)
-                         );
+  GHashTable *cancellation_id_to_check_auth_data;
+} Server;
 
 static void
-server_init (Server *server)
+server_free (Server *server)
 {
-  server->cancellation_id_to_cancellable = g_hash_table_new_full (g_str_hash,
-                                                                  g_str_equal,
-                                                                  g_free,
-                                                                  g_object_unref);
-}
-
-static void
-server_finalize (GObject *object)
-{
-  Server *server;
-
-  server = SERVER (object);
-
   g_free (server->well_known_name);
+  g_free (server->object_path);
 
   /* TODO: release well_known_name if not NULL */
 
-  g_signal_handler_disconnect (server->bus, server->name_owner_changed_id);
+  //g_signal_handler_disconnect (server->bus, server->name_owner_changed_id);
 
-  g_object_unref (server->bus_proxy);
+  if (server->authority_registration_id > 0)
+    g_dbus_connection_unregister_object (server->system_bus, server->authority_registration_id);
 
-  g_object_unref (server->system_bus);
+  if (server->name_owner_changed_signal_id > 0)
+    g_dbus_connection_signal_unsubscribe (server->system_bus, server->name_owner_changed_signal_id);
 
-  g_signal_handler_disconnect (server->authority, server->authority_changed_id);
+  if (server->system_bus != NULL)
+    g_object_unref (server->system_bus);
 
-  g_hash_table_unref (server->cancellation_id_to_cancellable);
+  if (server->introspection_info != NULL)
+    g_dbus_node_info_unref (server->introspection_info);
+
+  if (server->authority != NULL && server->authority_changed_id > 0)
+    g_signal_handler_disconnect (server->authority, server->authority_changed_id);
+
+  if (server->cancellation_id_to_check_auth_data != NULL)
+    g_hash_table_unref (server->cancellation_id_to_check_auth_data);
+
+  g_free (server);
 }
 
 static void
-server_get_property (GObject    *object,
-                     guint       prop_id,
-                     GValue     *value,
-                     GParamSpec *pspec)
+on_authority_changed (PolkitBackendAuthority *authority,
+                      gpointer                user_data)
 {
-  Server *server = SERVER (object);
+  Server *server = user_data;
+  GError *error;
 
-  switch (prop_id)
+  error = NULL;
+  if (!g_dbus_connection_emit_signal (server->system_bus,
+                                      NULL, /* destination bus name */
+                                      server->object_path,
+                                      "org.freedesktop.PolicyKit1.Authority",
+                                      "Changed",
+                                      NULL,
+                                      &error))
     {
-    case PROP_BACKEND_NAME:
-      g_value_set_string (value, polkit_backend_authority_get_name (server->authority));
-      break;
-
-    case PROP_BACKEND_VERSION:
-      g_value_set_string (value, polkit_backend_authority_get_version (server->authority));
-      break;
-
-    case PROP_BACKEND_FEATURES:
-      g_value_set_flags (value, polkit_backend_authority_get_features (server->authority));
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+      g_warning ("Error emitting Changed() signal: %s", error->message);
+      g_error_free (error);
     }
 }
 
-
 static void
-server_class_init (ServerClass *klass)
+authority_died (gpointer user_data,
+                GObject *where_the_object_was)
 {
-  GObjectClass *gobject_class;
-
-  gobject_class = G_OBJECT_CLASS (klass);
-
-  gobject_class->finalize = server_finalize;
-  gobject_class->get_property = server_get_property;
-
-  g_assert (_polkit_authority_override_properties (gobject_class, PROP_BACKEND_NAME) == PROP_BACKEND_FEATURES);
+  Server *server = user_data;
+  server_free (server);
 }
 
-static void
-name_owner_changed (EggDBusBus *instance,
-                    gchar      *name,
-                    gchar      *old_owner,
-                    gchar      *new_owner,
-                    Server     *server)
-{
-  polkit_backend_authority_system_bus_name_owner_changed (server->authority, name, old_owner, new_owner);
-}
-
-static void
-authority_changed (PolkitBackendAuthority *authority,
-                   Server                 *server)
-{
-  _polkit_authority_emit_signal_changed (_POLKIT_AUTHORITY (server), NULL);
-}
+static const gchar *server_introspection_data =
+  "<node>"
+  "  <interface name='org.freedesktop.PolicyKit1.Authority'>"
+  "    <method name='EnumerateActions'>"
+  "      <arg type='s' name='locale' direction='in'/>"
+  "      <arg type='a(ssssssuuua{ss})' name='action_descriptions' direction='out'/>"
+  "    </method>"
+  "    <method name='CheckAuthorization'>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "      <arg type='s' name='action_id' direction='in'/>"
+  "      <arg type='a{ss}' name='details' direction='in'/>"
+  "      <arg type='u' name='flags' direction='in'/>"
+  "      <arg type='s' name='cancellation_id' direction='in'/>"
+  "      <arg type='(bba{ss})' name='result' direction='out'/>"
+  "    </method>"
+  "    <method name='CancelCheckAuthorization'>"
+  "      <arg type='s' name='cancellation_id' direction='in'/>"
+  "    </method>"
+  "    <method name='RegisterAuthenticationAgent'>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "      <arg type='s' name='locale' direction='in'/>"
+  "      <arg type='s' name='object_path' direction='in'/>"
+  "    </method>"
+  "    <method name='UnregisterAuthenticationAgent'>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "      <arg type='s' name='object_path' direction='in'/>"
+  "    </method>"
+  "    <method name='AuthenticationAgentResponse'>"
+  "      <arg type='s' name='cookie' direction='in'/>"
+  "      <arg type='(sa{sv})' name='identity' direction='in'/>"
+  "    </method>"
+  "    <method name='EnumerateTemporaryAuthorizations'>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "      <arg type='a(ss(sa{sv})tt)' name='temporary_authorizations' direction='out'/>"
+  "    </method>"
+  "    <method name='RevokeTemporaryAuthorizations'>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "    </method>"
+  "    <method name='RevokeTemporaryAuthorizationById'>"
+  "      <arg type='s' name='id' direction='in'/>"
+  "    </method>"
+  "    <method name='AddLockdownForAction'>"
+  "      <arg type='s' name='action_id' direction='in'/>"
+  "    </method>"
+  "    <method name='RemoveLockdownForAction'>"
+  "      <arg type='s' name='action_id' direction='in'/>"
+  "    </method>"
+  "    <signal name='Changed'/>"
+  "    <property type='s' name='BackendName' access='read'/>"
+  "    <property type='s' name='BackendVersion' access='read'/>"
+  "    <property type='u' name='BackendFeatures' access='read'/>"
+  "  </interface>"
+  "</node>";
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_handle_enumerate_actions (_PolkitAuthority        *instance,
-                                    const gchar             *locale,
-                                    EggDBusMethodInvocation *method_invocation)
+server_handle_enumerate_actions (Server                 *server,
+                                 GVariant               *parameters,
+                                 PolkitSubject          *caller,
+                                 GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  EggDBusArraySeq *array;
+  GVariantBuilder builder;
   GError *error;
   GList *actions;
   GList *l;
+  const gchar *locale;
 
-  error = NULL;
-  caller = NULL;
   actions = NULL;
 
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
+  g_variant_get (parameters, "(&s)", &locale);
 
+  error = NULL;
   actions = polkit_backend_authority_enumerate_actions (server->authority,
                                                         caller,
                                                         locale,
                                                         &error);
   if (error != NULL)
     {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
       goto out;
     }
 
-  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_ACTION_DESCRIPTION,
-                                  (GDestroyNotify) g_object_unref,
-                                  NULL,
-                                  NULL);
-
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ssssssuuua{ss})"));
   for (l = actions; l != NULL; l = l->next)
     {
       PolkitActionDescription *ad = POLKIT_ACTION_DESCRIPTION (l->data);
-      _PolkitActionDescription *real;
-
-      real = polkit_action_description_get_real (ad);
-      egg_dbus_array_seq_add (array, real);
+      GVariant *value;
+      value = polkit_action_description_to_gvariant (ad);
+      g_variant_ref_sink (value);
+      g_variant_builder_add_value (&builder, value);
+      g_variant_unref (value);
     }
-
-  _polkit_authority_handle_enumerate_actions_finish (method_invocation, array);
-
-  g_object_unref (array);
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a(ssssssuuua{ss}))", &builder));
 
  out:
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
-  g_object_unref (caller);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+typedef struct
+{
+  GDBusMethodInvocation *invocation;
+  Server *server;
+  PolkitSubject *caller;
+  PolkitSubject *subject;
+  GCancellable *cancellable;
+  gchar *cancellation_id;
+} CheckAuthData;
+
+static void
+check_auth_data_free (CheckAuthData *data)
+{
+  if (data->invocation != NULL)
+    g_object_unref (data->invocation);
+  if (data->caller != NULL)
+    g_object_unref (data->caller);
+  if (data->subject != NULL)
+    g_object_unref (data->subject);
+  if (data->cancellable != NULL)
+    g_object_unref (data->cancellable);
+  g_free (data->cancellation_id);
+  g_free (data);
+}
 
 static void
 check_auth_cb (GObject      *source_object,
                GAsyncResult *res,
                gpointer      user_data)
 {
-  EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
-  const gchar *full_cancellation_id;
+  CheckAuthData *data = user_data;
   PolkitAuthorizationResult *result;
   GError *error;
 
@@ -862,92 +869,96 @@ check_auth_cb (GObject      *source_object,
                                                                 res,
                                                                 &error);
 
-  full_cancellation_id = g_object_get_data (G_OBJECT (method_invocation), "cancellation-id");
-  if (full_cancellation_id != NULL)
-    {
-      Server *server;
-      server = SERVER (g_object_get_data (G_OBJECT (method_invocation), "server"));
-      g_hash_table_remove (server->cancellation_id_to_cancellable, full_cancellation_id);
-    }
+  if (data->cancellation_id != NULL)
+    g_hash_table_remove (data->server->cancellation_id_to_check_auth_data, data->cancellation_id);
 
   if (error != NULL)
     {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_dbus_method_invocation_return_gerror (data->invocation, error);
       g_error_free (error);
     }
   else
     {
-      _PolkitAuthorizationResult *real_result;
-      real_result = polkit_authorization_result_get_real (result);
-      _polkit_authority_handle_check_authorization_finish (method_invocation, real_result);
-      g_object_unref (real_result);
-      g_object_unref (result);
+      GVariant *value;
+      value = polkit_authorization_result_to_gvariant (result);
+      g_variant_ref_sink (value);
+      g_dbus_method_invocation_return_value (data->invocation, g_variant_new ("(@(bba{ss}))", value));
+      g_variant_unref (value);
     }
+
+  check_auth_data_free (data);
 }
 
 static void
-authority_handle_check_authorization (_PolkitAuthority               *instance,
-                                      _PolkitSubject                 *real_subject,
-                                      const gchar                    *action_id,
-                                      EggDBusHashMap                 *real_details,
-                                      _PolkitCheckAuthorizationFlags  flags,
-                                      const gchar                    *cancellation_id,
-                                      EggDBusMethodInvocation        *method_invocation)
+server_handle_check_authorization (Server                 *server,
+                                   GVariant               *parameters,
+                                   PolkitSubject          *caller,
+                                   GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  const gchar *caller_name;
+  GVariant *subject_gvariant;
+  const gchar *action_id;
+  GVariant *details_gvariant;
+  guint32 flags;
+  const gchar *cancellation_id;
+  GError *error;
   PolkitSubject *subject;
-  PolkitSubject *caller;
-  GCancellable *cancellable;
   PolkitDetails *details;
 
+  subject = NULL;
   details = NULL;
 
-  subject = polkit_subject_new_for_real (real_subject);
+  g_variant_get (parameters,
+                 "(@(sa{sv})&s@a{ss}u&s)",
+                 &subject_gvariant,
+                 &action_id,
+                 &details_gvariant,
+                 &flags,
+                 &cancellation_id);
+
+  error = NULL;
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
   if (subject == NULL)
     {
-      egg_dbus_method_invocation_return_error_literal (method_invocation,
-                                                       _POLKIT_ERROR,
-                                                       _POLKIT_ERROR_FAILED,
-                                                       "Error parsing subject struct");
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
       goto out;
     }
 
-  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
-  caller = polkit_system_bus_name_new (caller_name);
+  details = polkit_details_new_for_gvariant (details_gvariant);
 
-  details = polkit_details_new_for_hash (real_details->data);
+  CheckAuthData *data;
+  data = g_new0 (CheckAuthData, 1);
 
-  g_object_set_data_full (G_OBJECT (method_invocation), "caller", caller, (GDestroyNotify) g_object_unref);
-  g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
+  data->server = server;
+  data->caller = g_object_ref (caller);
+  data->subject = g_object_ref (subject);
+  data->invocation = g_object_ref (invocation);
 
-  cancellable = NULL;
-  if (cancellation_id != NULL && strlen (cancellation_id) > 0)
+  if (strlen (cancellation_id) > 0)
     {
-      gchar *full_cancellation_id;
-
-      full_cancellation_id = g_strdup_printf ("%s-%s", caller_name, cancellation_id);
-
-      if (g_hash_table_lookup (server->cancellation_id_to_cancellable, full_cancellation_id) != NULL)
+      data->cancellation_id = g_strdup_printf ("%s-%s",
+                                               g_dbus_method_invocation_get_sender (invocation),
+                                               cancellation_id);
+      if (g_hash_table_lookup (server->cancellation_id_to_check_auth_data, data->cancellation_id) != NULL)
         {
-          egg_dbus_method_invocation_return_error (method_invocation,
-                                                   _POLKIT_ERROR,
-                                                   _POLKIT_ERROR_CANCELLATION_ID_NOT_UNIQUE,
-                                                   "Given cancellation_id %s is already in use for name %s",
-                                                   cancellation_id,
-                                                   caller_name);
-          g_free (full_cancellation_id);
+          gchar *message;
+          message = g_strdup_printf ("Given cancellation_id %s is already in use for name %s",
+                                     cancellation_id,
+                                     g_dbus_method_invocation_get_sender (invocation));
+          /* Don't want this error in our GError enum since libpolkit-gobject-1 users will never see it */
+          g_dbus_method_invocation_return_dbus_error (invocation,
+                                                      "org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique",
+                                                      message);
+          g_free (message);
+          check_auth_data_free (data);
           goto out;
         }
 
-      cancellable = g_cancellable_new ();
-
-      g_hash_table_insert (server->cancellation_id_to_cancellable,
-                           full_cancellation_id,
-                           cancellable);
-
-      g_object_set_data (G_OBJECT (method_invocation), "server", server);
-      g_object_set_data (G_OBJECT (method_invocation), "cancellation-id", full_cancellation_id);
+      data->cancellable = g_cancellable_new ();
+      g_hash_table_insert (server->cancellation_id_to_check_auth_data,
+                           data->cancellation_id,
+                           data);
     }
 
   polkit_backend_authority_check_authorization (server->authority,
@@ -956,43 +967,54 @@ authority_handle_check_authorization (_PolkitAuthority               *instance,
                                                 action_id,
                                                 details,
                                                 flags,
-                                                cancellable,
+                                                data->cancellable,
                                                 check_auth_cb,
-                                                method_invocation);
+                                                data);
+
  out:
+
+  g_variant_unref (subject_gvariant);
+  g_variant_unref (details_gvariant);
+
   if (details != NULL)
     g_object_unref (details);
+  if (subject != NULL)
+    g_object_unref (subject);
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
-authority_handle_cancel_check_authorization (_PolkitAuthority               *instance,
-                                             const gchar                    *cancellation_id,
-                                             EggDBusMethodInvocation        *method_invocation)
+server_handle_cancel_check_authorization (Server                 *server,
+                                          GVariant               *parameters,
+                                          PolkitSubject          *caller,
+                                          GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  GCancellable *cancellable;
-  const gchar *caller_name;
+  CheckAuthData *data;
+  const gchar *cancellation_id;
   gchar *full_cancellation_id;
 
-  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
+  g_variant_get (parameters, "(&s)", &cancellation_id);
 
-  full_cancellation_id = g_strdup_printf ("%s-%s", caller_name, cancellation_id);
+  full_cancellation_id = g_strdup_printf ("%s-%s",
+                                          g_dbus_method_invocation_get_sender (invocation),
+                                          cancellation_id);
 
-  cancellable = g_hash_table_lookup (server->cancellation_id_to_cancellable, full_cancellation_id);
-  if (cancellable == NULL)
+  data = g_hash_table_lookup (server->cancellation_id_to_check_auth_data, full_cancellation_id);
+  if (data == NULL)
     {
-      egg_dbus_method_invocation_return_error (method_invocation,
-                                               _POLKIT_ERROR,
-                                               _POLKIT_ERROR_FAILED,
-                                               "No such cancellation_id %s for name %s",
-                                               cancellation_id,
-                                               caller_name);
+      g_dbus_method_invocation_return_error (invocation,
+                                             POLKIT_ERROR,
+                                             POLKIT_ERROR_FAILED,
+                                             "No such cancellation_id `%s' for name %s",
+                                             cancellation_id,
+                                             g_dbus_method_invocation_get_sender (invocation));
       goto out;
     }
 
-  g_cancellable_cancel (cancellable);
+  g_cancellable_cancel (data->cancellable);
 
-  _polkit_authority_handle_cancel_check_authorization_finish (method_invocation);
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
   g_free (full_cancellation_id);
@@ -1001,31 +1023,34 @@ authority_handle_cancel_check_authorization (_PolkitAuthority               *ins
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_handle_register_authentication_agent (_PolkitAuthority               *instance,
-                                                _PolkitSubject                 *real_subject,
-                                                const gchar                    *locale,
-                                                const gchar                    *object_path,
-                                                EggDBusMethodInvocation        *method_invocation)
+server_handle_register_authentication_agent (Server                 *server,
+                                             GVariant               *parameters,
+                                             PolkitSubject          *caller,
+                                             GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  PolkitSubject *subject;
+  GVariant *subject_gvariant;
   GError *error;
+  PolkitSubject *subject;
+  const gchar *locale;
+  const gchar *object_path;
 
-  caller = NULL;
+  subject = NULL;
 
-  subject = polkit_subject_new_for_real (real_subject);
+  g_variant_get (parameters,
+                 "(@(sa{sv})&s&s)",
+                 &subject_gvariant,
+                 &locale,
+                 &object_path);
+
+  error = NULL;
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
   if (subject == NULL)
     {
-      egg_dbus_method_invocation_return_error_literal (method_invocation,
-                                                       _POLKIT_ERROR,
-                                                       _POLKIT_ERROR_FAILED,
-                                                       "Error parsing subject struct");
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
       goto out;
     }
-  g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
   error = NULL;
   if (!polkit_backend_authority_register_authentication_agent (server->authority,
@@ -1035,45 +1060,47 @@ authority_handle_register_authentication_agent (_PolkitAuthority               *
                                                                object_path,
                                                                &error))
     {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
       goto out;
     }
 
-  _polkit_authority_handle_register_authentication_agent_finish (method_invocation);
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
-  if (caller != NULL)
-    g_object_unref (caller);
+  if (subject != NULL)
+    g_object_unref (subject);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_handle_unregister_authentication_agent (_PolkitAuthority               *instance,
-                                                  _PolkitSubject                 *real_subject,
-                                                  const gchar                    *object_path,
-                                                  EggDBusMethodInvocation        *method_invocation)
+server_handle_unregister_authentication_agent (Server                 *server,
+                                               GVariant               *parameters,
+                                               PolkitSubject          *caller,
+                                               GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  PolkitSubject *subject;
+  GVariant *subject_gvariant;
   GError *error;
+  PolkitSubject *subject;
+  const gchar *object_path;
 
-  caller = NULL;
+  subject = NULL;
 
-  subject = polkit_subject_new_for_real (real_subject);
+  g_variant_get (parameters,
+                 "(@(sa{sv})&s)",
+                 &subject_gvariant,
+                 &object_path);
+
+  error = NULL;
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
   if (subject == NULL)
     {
-      egg_dbus_method_invocation_return_error_literal (method_invocation,
-                                                       _POLKIT_ERROR,
-                                                       _POLKIT_ERROR_FAILED,
-                                                       "Error parsing subject struct");
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
       goto out;
     }
-  g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
   error = NULL;
   if (!polkit_backend_authority_unregister_authentication_agent (server->authority,
@@ -1082,45 +1109,47 @@ authority_handle_unregister_authentication_agent (_PolkitAuthority              
                                                                  object_path,
                                                                  &error))
     {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
       goto out;
     }
 
-  _polkit_authority_handle_unregister_authentication_agent_finish (method_invocation);
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
-  if (caller != NULL)
-    g_object_unref (caller);
+  if (subject != NULL)
+    g_object_unref (subject);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_handle_authentication_agent_response (_PolkitAuthority               *instance,
-                                                const gchar                    *cookie,
-                                                _PolkitIdentity                *real_identity,
-                                                EggDBusMethodInvocation        *method_invocation)
+server_handle_authentication_agent_response (Server                 *server,
+                                             GVariant               *parameters,
+                                             PolkitSubject          *caller,
+                                             GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
+  const gchar *cookie;
+  GVariant *identity_gvariant;
   PolkitIdentity *identity;
   GError *error;
 
-  caller = NULL;
   identity = NULL;
 
-  identity = polkit_identity_new_for_real (real_identity);
+  g_variant_get (parameters,
+                 "(&s@(sa{sv}))",
+                 &cookie,
+                 &identity_gvariant);
+
+  error = NULL;
+  identity = polkit_identity_new_for_gvariant (identity_gvariant, &error);
   if (identity == NULL)
     {
-      egg_dbus_method_invocation_return_error_literal (method_invocation,
-                                                       _POLKIT_ERROR,
-                                                       _POLKIT_ERROR_FAILED,
-                                                       "Error parsing identity struct");
+      g_prefix_error (&error, "Error getting identity: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
       goto out;
     }
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
 
   error = NULL;
   if (!polkit_backend_authority_authentication_agent_response (server->authority,
@@ -1129,17 +1158,14 @@ authority_handle_authentication_agent_response (_PolkitAuthority               *
                                                                identity,
                                                                &error))
     {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
       goto out;
     }
 
-  _polkit_authority_handle_authentication_agent_response_finish (method_invocation);
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
-  if (caller != NULL)
-    g_object_unref (caller);
-
   if (identity != NULL)
     g_object_unref (identity);
 }
@@ -1147,265 +1173,286 @@ authority_handle_authentication_agent_response (_PolkitAuthority               *
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_handle_enumerate_temporary_authorizations (_PolkitAuthority        *instance,
-                                                     _PolkitSubject          *real_subject,
-                                                     EggDBusMethodInvocation *method_invocation)
+server_handle_enumerate_temporary_authorizations (Server                 *server,
+                                                  GVariant               *parameters,
+                                                  PolkitSubject          *caller,
+                                                  GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
-  EggDBusArraySeq *array;
+  GVariant *subject_gvariant;
   GError *error;
-  GList *temporary_authorizations;
+  PolkitSubject *subject;
+  GList *authorizations;
   GList *l;
-  PolkitSubject *subject;
+  GVariantBuilder builder;
+
+  subject = NULL;
+
+  g_variant_get (parameters,
+                 "(@(sa{sv}))",
+                 &subject_gvariant);
 
   error = NULL;
-  caller = NULL;
-  temporary_authorizations = NULL;
-
-  subject = polkit_subject_new_for_real (real_subject);
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
   if (subject == NULL)
     {
-      egg_dbus_method_invocation_return_error_literal (method_invocation,
-                                                       _POLKIT_ERROR,
-                                                       _POLKIT_ERROR_FAILED,
-                                                       "Error parsing subject struct");
-      goto out;
-    }
-  g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  temporary_authorizations = polkit_backend_authority_enumerate_temporary_authorizations (server->authority,
-                                                                                          caller,
-                                                                                          subject,
-                                                                                          &error);
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
       goto out;
     }
 
-  array = egg_dbus_array_seq_new (G_TYPE_OBJECT, //_POLKIT_TYPE_TEMPORARY_AUTHORIZATION,
-                                  (GDestroyNotify) g_object_unref,
-                                  NULL,
-                                  NULL);
-
-  for (l = temporary_authorizations; l != NULL; l = l->next)
+  error = NULL;
+  authorizations = polkit_backend_authority_enumerate_temporary_authorizations (server->authority,
+                                                                                caller,
+                                                                                subject,
+                                                                                &error);
+  if (error != NULL)
     {
-      PolkitTemporaryAuthorization *ta = POLKIT_TEMPORARY_AUTHORIZATION (l->data);
-      _PolkitTemporaryAuthorization *real;
-
-      real = polkit_temporary_authorization_get_real (ta);
-      egg_dbus_array_seq_add (array, real);
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
     }
 
-  _polkit_authority_handle_enumerate_temporary_authorizations_finish (method_invocation, array);
-
-  g_object_unref (array);
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ss(sa{sv})tt)"));
+  for (l = authorizations; l != NULL; l = l->next)
+    {
+      PolkitTemporaryAuthorization *a = POLKIT_TEMPORARY_AUTHORIZATION (l->data);
+      GVariant *value;
+      value = polkit_temporary_authorization_to_gvariant (a);
+      g_variant_ref_sink (value);
+      g_variant_builder_add_value (&builder, value);
+      g_variant_unref (value);
+    }
+  g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
+  g_list_free (authorizations);
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a(ss(sa{sv})tt))", &builder));
 
  out:
-  g_list_foreach (temporary_authorizations, (GFunc) g_object_unref, NULL);
-  g_list_free (temporary_authorizations);
-  if (caller != NULL)
-    g_object_unref (caller);
+  if (subject != NULL)
+    g_object_unref (subject);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-authority_handle_revoke_temporary_authorizations (_PolkitAuthority        *instance,
-                                                  _PolkitSubject          *real_subject,
-                                                  EggDBusMethodInvocation *method_invocation)
+server_handle_revoke_temporary_authorizations (Server                 *server,
+                                               GVariant               *parameters,
+                                               PolkitSubject          *caller,
+                                               GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  PolkitSubject *caller;
+  GVariant *subject_gvariant;
   GError *error;
   PolkitSubject *subject;
 
-  error = NULL;
-  caller = NULL;
+  subject = NULL;
 
-  subject = polkit_subject_new_for_real (real_subject);
+  g_variant_get (parameters,
+                 "(@(sa{sv}))",
+                 &subject_gvariant);
+
+  error = NULL;
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
   if (subject == NULL)
     {
-      egg_dbus_method_invocation_return_error_literal (method_invocation,
-                                                       _POLKIT_ERROR,
-                                                       _POLKIT_ERROR_FAILED,
-                                                       "Error parsing subject struct");
-      goto out;
-    }
-  g_object_set_data_full (G_OBJECT (method_invocation), "subject", subject, (GDestroyNotify) g_object_unref);
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  polkit_backend_authority_revoke_temporary_authorizations (server->authority,
-                                                            caller,
-                                                            subject,
-                                                            &error);
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
       goto out;
     }
 
-  _polkit_authority_handle_revoke_temporary_authorizations_finish (method_invocation);
-
- out:
-  if (caller != NULL)
-    g_object_unref (caller);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-authority_handle_revoke_temporary_authorization_by_id (_PolkitAuthority        *instance,
-                                                       const gchar             *id,
-                                                       EggDBusMethodInvocation *method_invocation)
-{
-  Server *server = SERVER (instance);
-  GError *error;
-  PolkitSubject *caller;
-
   error = NULL;
-
-  caller = polkit_system_bus_name_new (egg_dbus_method_invocation_get_caller (method_invocation));
-
-  polkit_backend_authority_revoke_temporary_authorization_by_id (server->authority,
+  if (!polkit_backend_authority_revoke_temporary_authorizations (server->authority,
                                                                  caller,
-                                                                 id,
-                                                                 &error);
-  if (error != NULL)
+                                                                 subject,
+                                                                 &error))
     {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
+      g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
       goto out;
     }
 
-  _polkit_authority_handle_revoke_temporary_authorization_by_id_finish (method_invocation);
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
+  if (subject != NULL)
+    g_object_unref (subject);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+server_handle_revoke_temporary_authorization_by_id (Server                 *server,
+                                                    GVariant               *parameters,
+                                                    PolkitSubject          *caller,
+                                                    GDBusMethodInvocation  *invocation)
+{
+  GError *error;
+  const gchar *id;
+
+  g_variant_get (parameters,
+                 "(@s)",
+                 &id);
+
+  error = NULL;
+  if (!polkit_backend_authority_revoke_temporary_authorization_by_id (server->authority,
+                                                                      caller,
+                                                                      id,
+                                                                      &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
+
+ out:
+  ;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+server_handle_add_lockdown_for_action (Server                 *server,
+                                       GVariant               *parameters,
+                                       PolkitSubject          *caller,
+                                       GDBusMethodInvocation  *invocation)
+{
+  /* TODO: probably want to nuke this method so don't implement now */
+  g_dbus_method_invocation_return_error (invocation,
+                                         POLKIT_ERROR,
+                                         POLKIT_ERROR_NOT_SUPPORTED,
+                                         "Operation is not supported");
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+server_handle_remove_lockdown_for_action (Server                 *server,
+                                          GVariant               *parameters,
+                                          PolkitSubject          *caller,
+                                          GDBusMethodInvocation  *invocation)
+{
+  /* TODO: probably want to nuke this method so don't implement now */
+  g_dbus_method_invocation_return_error (invocation,
+                                         POLKIT_ERROR,
+                                         POLKIT_ERROR_NOT_SUPPORTED,
+                                         "Operation is not supported");
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+server_handle_method_call (GDBusConnection        *connection,
+                           const gchar            *sender,
+                           const gchar            *object_path,
+                           const gchar            *interface_name,
+                           const gchar            *method_name,
+                           GVariant               *parameters,
+                           GDBusMethodInvocation  *invocation,
+                           gpointer                user_data)
+{
+  Server *server = user_data;
+  PolkitSubject *caller;
+
+  caller = polkit_system_bus_name_new (g_dbus_method_invocation_get_sender (invocation));
+
+  if (g_strcmp0 (method_name, "EnumerateActions") == 0)
+    server_handle_enumerate_actions (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "CheckAuthorization") == 0)
+    server_handle_check_authorization (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "CancelCheckAuthorization") == 0)
+    server_handle_cancel_check_authorization (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "RegisterAuthenticationAgent") == 0)
+    server_handle_register_authentication_agent (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "UnregisterAuthenticationAgent") == 0)
+    server_handle_unregister_authentication_agent (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "AuthenticationAgentResponse") == 0)
+    server_handle_authentication_agent_response (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "EnumerateTemporaryAuthorizations") == 0)
+    server_handle_enumerate_temporary_authorizations (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "RevokeTemporaryAuthorizations") == 0)
+    server_handle_revoke_temporary_authorizations (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "RevokeTemporaryAuthorizationById") == 0)
+    server_handle_revoke_temporary_authorization_by_id (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "AddLockdownForAction") == 0)
+    server_handle_add_lockdown_for_action (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "RemoveLockdownForAction") == 0)
+    server_handle_remove_lockdown_for_action (server, parameters, caller, invocation);
+  else
+    g_assert_not_reached ();
+
   g_object_unref (caller);
 }
 
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-add_lockdown_cb (GObject      *source_object,
-                 GAsyncResult *res,
-                 gpointer      user_data)
+static GVariant *
+server_handle_get_property (GDBusConnection  *connection,
+                            const gchar      *sender,
+                            const gchar      *object_path,
+                            const gchar      *interface_name,
+                            const gchar      *property_name,
+                            GError          **error,
+                            gpointer          user_data)
 {
-  EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
-  GError *error;
+  Server *server = user_data;
+  GVariant *result;
 
-  error = NULL;
-  polkit_backend_authority_add_lockdown_for_action_finish (POLKIT_BACKEND_AUTHORITY (source_object),
-                                                           res,
-                                                           &error);
+  result = NULL;
 
-  if (error != NULL)
+  if (g_strcmp0 (property_name, "BackendName") == 0)
     {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
+      result = g_variant_new_string (polkit_backend_authority_get_name (server->authority));
+    }
+  else if (g_strcmp0 (property_name, "BackendVersion") == 0)
+    {
+      result = g_variant_new_string (polkit_backend_authority_get_version (server->authority));
+    }
+  else if (g_strcmp0 (property_name, "BackendFeatures") == 0)
+    {
+      result = g_variant_new_uint32 (polkit_backend_authority_get_features (server->authority));
     }
   else
-    {
-      _polkit_authority_handle_add_lockdown_for_action_finish (method_invocation);
-    }
-}
+    g_assert_not_reached ();
 
-static void
-authority_handle_add_lockdown_for_action (_PolkitAuthority               *instance,
-                                          const gchar                    *action_id,
-                                          EggDBusMethodInvocation        *method_invocation)
-{
-  Server *server = SERVER (instance);
-  const gchar *caller_name;
-  PolkitSubject *caller;
-
-  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
-  caller = polkit_system_bus_name_new (caller_name);
-
-  polkit_backend_authority_add_lockdown_for_action (server->authority,
-                                                    caller,
-                                                    action_id,
-                                                    add_lockdown_cb,
-                                                    method_invocation);
+  return result;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-remove_lockdown_cb (GObject      *source_object,
-                    GAsyncResult *res,
-                    gpointer      user_data)
+server_on_name_owner_changed_signal (GDBusConnection *connection,
+                                     const gchar     *sender_name,
+                                     const gchar     *object_path,
+                                     const gchar     *interface_name,
+                                     const gchar     *signal_name,
+                                     GVariant        *parameters,
+                                     gpointer         user_data)
 {
-  EggDBusMethodInvocation *method_invocation = EGG_DBUS_METHOD_INVOCATION (user_data);
-  GError *error;
+  Server *server = user_data;
+  const gchar *name;
+  const gchar *old_owner;
+  const gchar *new_owner;
 
-  error = NULL;
-  polkit_backend_authority_remove_lockdown_for_action_finish (POLKIT_BACKEND_AUTHORITY (source_object),
-                                                              res,
-                                                              &error);
+  g_variant_get (parameters,
+                 "(&s&s&s)",
+                 &name,
+                 &old_owner,
+                 &new_owner);
 
-  if (error != NULL)
-    {
-      egg_dbus_method_invocation_return_gerror (method_invocation, error);
-      g_error_free (error);
-    }
-  else
-    {
-      _polkit_authority_handle_remove_lockdown_for_action_finish (method_invocation);
-    }
-}
-
-static void
-authority_handle_remove_lockdown_for_action (_PolkitAuthority               *instance,
-                                             const gchar                    *action_id,
-                                             EggDBusMethodInvocation        *method_invocation)
-{
-  Server *server = SERVER (instance);
-  const gchar *caller_name;
-  PolkitSubject *caller;
-
-  caller_name = egg_dbus_method_invocation_get_caller (method_invocation);
-  caller = polkit_system_bus_name_new (caller_name);
-
-  polkit_backend_authority_remove_lockdown_for_action (server->authority,
-                                                       caller,
-                                                       action_id,
-                                                       remove_lockdown_cb,
-                                                       method_invocation);
+  polkit_backend_authority_system_bus_name_owner_changed (server->authority,
+                                                          name,
+                                                          old_owner,
+                                                          new_owner);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
-authority_iface_init (_PolkitAuthorityIface *authority_iface)
+static const GDBusInterfaceVTable server_vtable =
 {
-  authority_iface->handle_enumerate_actions                    = authority_handle_enumerate_actions;
-  authority_iface->handle_check_authorization                  = authority_handle_check_authorization;
-  authority_iface->handle_cancel_check_authorization           = authority_handle_cancel_check_authorization;
-  authority_iface->handle_register_authentication_agent        = authority_handle_register_authentication_agent;
-  authority_iface->handle_unregister_authentication_agent      = authority_handle_unregister_authentication_agent;
-  authority_iface->handle_authentication_agent_response        = authority_handle_authentication_agent_response;
-  authority_iface->handle_enumerate_temporary_authorizations   = authority_handle_enumerate_temporary_authorizations;
-  authority_iface->handle_revoke_temporary_authorizations      = authority_handle_revoke_temporary_authorizations;
-  authority_iface->handle_revoke_temporary_authorization_by_id = authority_handle_revoke_temporary_authorization_by_id;
-  authority_iface->handle_add_lockdown_for_action              = authority_handle_add_lockdown_for_action;
-  authority_iface->handle_remove_lockdown_for_action              = authority_handle_remove_lockdown_for_action;
-}
-
-static void
-authority_died (gpointer user_data,
-                GObject *where_the_object_was)
-{
-  Server *server = SERVER (user_data);
-
-  g_object_unref (server);
-}
+  server_handle_method_call,
+  server_handle_get_property,
+  NULL, /* server_handle_set_property */
+};
 
 /**
  * polkit_backend_register_authority:
@@ -1425,62 +1472,90 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
                                    GError                  **error)
 {
   Server *server;
-  EggDBusRequestNameReply rn_ret;
 
-  server = SERVER (g_object_new (TYPE_SERVER, NULL));
+  server = g_new0 (Server, 1);
 
-  server->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+  server->cancellation_id_to_check_auth_data = g_hash_table_new (g_str_hash, g_str_equal);
+
+  server->system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, error);
+  if (server->system_bus == NULL)
+    goto error;
 
   server->well_known_name = g_strdup (well_known_name);
+  server->object_path = g_strdup (object_path);
+
+  server->introspection_info = g_dbus_node_info_new_for_xml (server_introspection_data, error);
+  if (server->introspection_info == NULL)
+      goto error;
+
+  server->authority_registration_id = g_dbus_connection_register_object (server->system_bus,
+                                                                         object_path,
+                                                                         g_dbus_node_info_lookup_interface (server->introspection_info, "org.freedesktop.PolicyKit1.Authority"),
+                                                                         &server_vtable,
+                                                                         server,
+                                                                         NULL,
+                                                                         error);
+  if (server->authority_registration_id == 0)
+    {
+      goto error;
+    }
 
   if (well_known_name != NULL)
     {
-      if (!egg_dbus_bus_request_name_sync (egg_dbus_connection_get_bus (server->system_bus),
-                                           EGG_DBUS_CALL_FLAGS_NONE,
-                                           well_known_name,
-                                           EGG_DBUS_REQUEST_NAME_FLAGS_NONE,
-                                           &rn_ret,
-                                           NULL,
-                                           error))
+      GVariant *result;
+      guint32 request_name_result;
+
+      /* TODO: use g_bus_own_name() instead */
+      result = g_dbus_connection_call_sync (server->system_bus,
+                                            "org.freedesktop.DBus",  /* name */
+                                            "/org/freedesktop/DBus", /* path */
+                                            "org.freedesktop.DBus",  /* interface */
+                                            "RequestName",
+                                            g_variant_new ("(su)", well_known_name, 0),
+                                            G_VARIANT_TYPE ("(u)"),
+                                            G_DBUS_CALL_FLAGS_NONE,
+                                            -1,
+                                            NULL, /* GCancellable */
+                                            error);
+      if (result == NULL)
         {
+          g_prefix_error (error,
+                          "Could not become primary name owner for `%s'. RequestName() failed with: ",
+                          well_known_name);
           goto error;
         }
-
-      if (rn_ret != EGG_DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER)
+      g_variant_get (result, "(u)", &request_name_result);
+      g_variant_unref (result);
+      if (request_name_result != 1)
         {
           g_set_error (error,
                        POLKIT_ERROR,
                        POLKIT_ERROR_FAILED,
-                       "Could not become primary name owner for %s",
-                       well_known_name);
+                       "Could not become primary name owner for `%s'. RequestName returned %d",
+                       well_known_name,
+                       request_name_result);
           goto error;
         }
     }
 
+  server->name_owner_changed_signal_id =
+    g_dbus_connection_signal_subscribe (server->system_bus,
+                                        "org.freedesktop.DBus",   /* sender */
+                                        "org.freedesktop.DBus",   /* interface */
+                                        "NameOwnerChanged",       /* member */
+                                        "/org/freedesktop/DBus",  /* path */
+                                        NULL,                     /* arg0 */
+                                        G_DBUS_SIGNAL_FLAGS_NONE,
+                                        server_on_name_owner_changed_signal,
+                                        server,
+                                        NULL); /* GDestroyNotify */
+
   server->authority = authority;
-
-  /* TODO: it's a bit wasteful listening to all name-owner-changed signals... needs to be optimized */
-  server->bus_proxy = egg_dbus_connection_get_object_proxy (server->system_bus,
-                                                            "org.freedesktop.DBus",
-                                                            "/org/freedesktop/DBus");
-
-  server->bus = EGG_DBUS_QUERY_INTERFACE_BUS (server->bus_proxy);
-
-  server->name_owner_changed_id = g_signal_connect (server->bus,
-                                                    "name-owner-changed",
-                                                    (GCallback) name_owner_changed,
-                                                    server);
 
   server->authority_changed_id = g_signal_connect (server->authority,
                                                    "changed",
-                                                   (GCallback) authority_changed,
+                                                   G_CALLBACK (on_authority_changed),
                                                    server);
-
-  egg_dbus_connection_register_interface (server->system_bus,
-                                          object_path,
-                                          _POLKIT_TYPE_AUTHORITY,
-                                          G_OBJECT (server),
-                                          G_TYPE_INVALID);
 
   /* take a weak ref and kill server when listener dies */
   g_object_weak_ref (G_OBJECT (server->authority), authority_died, server);
@@ -1488,7 +1563,7 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
   return TRUE;
 
  error:
-  g_object_unref (server);
+  server_free (server);
   return FALSE;
 }
 
