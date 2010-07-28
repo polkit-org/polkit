@@ -28,7 +28,8 @@
 
 #include <polkit/polkit.h>
 #include "polkitbackendsessionmonitor.h"
-#include "ckbindings.h"
+
+#define CKDB_PATH "/var/run/ConsoleKit/database"
 
 /**
  * SECTION:polkitbackendsessionmonitor
@@ -42,13 +43,10 @@ struct _PolkitBackendSessionMonitor
 {
   GObject parent_instance;
 
-  EggDBusConnection *system_bus;
+  GDBusConnection *system_bus;
 
-  EggDBusObjectProxy *ck_manager_object_proxy;
-
-  CkManager *ck_manager;
-  EggDBusHashMap *seat_object_path_to_object_proxy;
-  EggDBusHashMap *session_object_path_to_object_proxy;
+  GKeyFile *database;
+  GFileMonitor *database_monitor;
 };
 
 struct _PolkitBackendSessionMonitorClass
@@ -67,243 +65,111 @@ enum
 
 static guint signals[LAST_SIGNAL] = {0};
 
-static void seat_session_added (CkSeat      *seat,
-                                const gchar *object_path,
-                                gpointer     user_data);
-
-static void seat_session_removed (CkSeat      *seat,
-                                  const gchar *object_path,
-                                  gpointer     user_data);
-
-static void session_active_changed (CkSession   *session,
-                                    gboolean     is_active,
-                                    gpointer     user_data);
-
 G_DEFINE_TYPE (PolkitBackendSessionMonitor, polkit_backend_session_monitor, G_TYPE_OBJECT);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
-add_seat (PolkitBackendSessionMonitor *monitor,
-          const gchar                 *object_path)
+static gboolean
+reload_database (PolkitBackendSessionMonitor  *monitor,
+                 GError                      **error)
 {
-  CkSeat *seat;
-  EggDBusObjectProxy *object_proxy;
+  gboolean ret;
 
-  object_proxy = egg_dbus_connection_get_object_proxy (monitor->system_bus,
-                                                       "org.freedesktop.ConsoleKit",
-                                                       object_path);
+  ret = FALSE;
 
-  egg_dbus_hash_map_insert (monitor->seat_object_path_to_object_proxy,
-                            g_strdup (object_path),
-                            object_proxy);
+  monitor->database = g_key_file_new ();
+  if (!g_key_file_load_from_file (monitor->database,
+                                  CKDB_PATH,
+                                  G_KEY_FILE_NONE,
+                                  error))
+    {
+      g_key_file_free (monitor->database);
+      monitor->database = NULL;
+      goto out;
+    }
 
-  seat = CK_QUERY_INTERFACE_SEAT (object_proxy);
+  ret = TRUE;
 
-  g_signal_connect (seat,
-                    "session-added",
-                    G_CALLBACK (seat_session_added),
-                    monitor);
+ out:
+  return ret;
+}
 
-  g_signal_connect (seat,
-                    "session-removed",
-                    G_CALLBACK (seat_session_removed),
-                    monitor);
+static gboolean
+ensure_database (PolkitBackendSessionMonitor  *monitor,
+                 GError                      **error)
+{
+  gboolean ret;
+
+  if (monitor->database != NULL)
+    {
+      ret = TRUE;
+      goto out;
+    }
+
+  ret = reload_database (monitor, error);
+
+ out:
+  return ret;
 }
 
 static void
-add_session (PolkitBackendSessionMonitor *monitor,
-             const gchar                 *object_path)
-{
-  CkSession *session;
-  EggDBusObjectProxy *object_proxy;
-
-  object_proxy = egg_dbus_connection_get_object_proxy (monitor->system_bus,
-                                                       "org.freedesktop.ConsoleKit",
-                                                       object_path);
-
-  egg_dbus_hash_map_insert (monitor->session_object_path_to_object_proxy,
-                            g_strdup (object_path),
-                            object_proxy);
-
-  session = CK_QUERY_INTERFACE_SESSION (object_proxy);
-
-  g_signal_connect (session,
-                    "active-changed",
-                    G_CALLBACK (session_active_changed),
-                    monitor);
-}
-
-static void
-remove_seat (PolkitBackendSessionMonitor *monitor,
-             const gchar                 *object_path)
-{
-  egg_dbus_hash_map_remove (monitor->seat_object_path_to_object_proxy,
-                            object_path);
-}
-
-static void
-remove_session (PolkitBackendSessionMonitor *monitor,
-                const gchar                 *object_path)
-{
-  egg_dbus_hash_map_remove (monitor->session_object_path_to_object_proxy,
-                            object_path);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-/* D-Bus signal handlers */
-
-static void
-manager_seat_added (CkManager   *manager,
-                    const gchar *object_path,
-                    gpointer     user_data)
+on_file_monitor_changed (GFileMonitor     *file_monitor,
+                         GFile            *file,
+                         GFile            *other_file,
+                         GFileMonitorEvent event_type,
+                         gpointer          user_data)
 {
   PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
 
-  //g_debug ("seat %s added", object_path);
-
-  add_seat (monitor, object_path);
-
+  /* throw away cache */
+  if (monitor->database != NULL)
+    {
+      g_key_file_free (monitor->database);
+      monitor->database = NULL;
+    }
   g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
 }
-
-static void
-manager_seat_removed (CkManager   *manager,
-                      const gchar *object_path,
-                      gpointer     user_data)
-{
-  PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
-
-  //g_debug ("seat %s removed", object_path);
-
-  remove_seat (monitor, object_path);
-
-  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
-}
-
-static void
-seat_session_added (CkSeat      *seat,
-                    const gchar *object_path,
-                    gpointer     user_data)
-{
-  PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
-
-  //g_debug ("session %s added", object_path);
-
-  add_session (monitor, object_path);
-
-  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
-}
-
-static void
-seat_session_removed (CkSeat      *seat,
-                      const gchar *object_path,
-                      gpointer     user_data)
-{
-  PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
-
-  //g_debug ("session %s removed", object_path);
-
-  remove_session (monitor, object_path);
-
-  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
-}
-
-static void
-session_active_changed (CkSession   *session,
-                        gboolean     is_active,
-                        gpointer     user_data)
-{
-  PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (user_data);
-  EggDBusObjectProxy *object_proxy;
-
-  object_proxy = egg_dbus_interface_proxy_get_object_proxy (EGG_DBUS_INTERFACE_PROXY (session));
-
-  //g_debug ("session %s active changed to %d", egg_dbus_object_proxy_get_object_path (object_proxy), is_active);
-
-  egg_dbus_object_proxy_invalidate_properties (object_proxy);
-
-  g_signal_emit (monitor, signals[CHANGED_SIGNAL], 0);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
 
 static void
 polkit_backend_session_monitor_init (PolkitBackendSessionMonitor *monitor)
 {
   GError *error;
-  gchar **seats_object_paths;
-  gchar **sessions_object_paths;
-  guint n;
+  GFile *file;
 
   error = NULL;
-  seats_object_paths = NULL;
-  sessions_object_paths = NULL;
-
-  monitor->seat_object_path_to_object_proxy = egg_dbus_hash_map_new (G_TYPE_STRING,
-                                                                     g_free,
-                                                                     EGG_DBUS_TYPE_OBJECT_PROXY,
-                                                                     g_object_unref);
-
-  monitor->session_object_path_to_object_proxy = egg_dbus_hash_map_new (G_TYPE_STRING,
-                                                                        g_free,
-                                                                        EGG_DBUS_TYPE_OBJECT_PROXY,
-                                                                        g_object_unref);
-
-  monitor->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-
-  monitor->ck_manager_object_proxy = egg_dbus_connection_get_object_proxy (monitor->system_bus,
-                                                                           "org.freedesktop.ConsoleKit",
-                                                                           "/org/freedesktop/ConsoleKit/Manager");
-
-  monitor->ck_manager = CK_QUERY_INTERFACE_MANAGER (monitor->ck_manager_object_proxy);
-
-  g_signal_connect (monitor->ck_manager,
-                    "seat-added",
-                    G_CALLBACK (manager_seat_added),
-                    monitor);
-
-  g_signal_connect (monitor->ck_manager,
-                    "seat-removed",
-                    G_CALLBACK (manager_seat_removed),
-                    monitor);
-
-  /* TODO: it would be a lot nicer to do all of this async; once we have
-   *       GFiber (bgo #565501) it will be a lot easier...
-   */
-  if (!ck_manager_get_seats_sync (monitor->ck_manager,
-                                  EGG_DBUS_CALL_FLAGS_NONE,
-                                  &seats_object_paths,
-                                  NULL,
-                                  &error))
+  monitor->system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &error);
+  if (monitor->system_bus == NULL)
     {
-      g_warning ("Error getting seats: %s", error->message);
+      g_printerr ("Error getting system bus: %s", error->message);
       g_error_free (error);
-      goto out;
     }
 
-  for (n = 0; seats_object_paths[n] != NULL; n++)
-    add_seat (monitor, seats_object_paths[n]);
-
-  if (!ck_manager_get_sessions_sync (monitor->ck_manager,
-                                     EGG_DBUS_CALL_FLAGS_NONE,
-                                     &sessions_object_paths,
-                                     NULL,
-                                     &error))
+  error = NULL;
+  if (!ensure_database (monitor, &error))
     {
-      g_warning ("Error getting sessions: %s", error->message);
+      g_printerr ("Error loading " CKDB_PATH ": %s", error->message);
       g_error_free (error);
-      goto out;
     }
 
-  for (n = 0; sessions_object_paths[n] != NULL; n++)
-    add_session (monitor, sessions_object_paths[n]);
-
- out:
-
-  g_strfreev (seats_object_paths);
-  g_strfreev (sessions_object_paths);
+  error = NULL;
+  file = g_file_new_for_path (CKDB_PATH);
+  monitor->database_monitor = g_file_monitor_file (file,
+                                                   G_FILE_MONITOR_NONE,
+                                                   NULL,
+                                                   &error);
+  g_object_unref (file);
+  if (monitor->database_monitor == NULL)
+    {
+      g_printerr ("Error monitoring " CKDB_PATH ": %s", error->message);
+      g_error_free (error);
+    }
+  else
+    {
+      g_signal_connect (monitor->database_monitor,
+                        "changed",
+                        G_CALLBACK (on_file_monitor_changed),
+                        monitor);
+    }
 }
 
 static void
@@ -311,10 +177,14 @@ polkit_backend_session_monitor_finalize (GObject *object)
 {
   PolkitBackendSessionMonitor *monitor = POLKIT_BACKEND_SESSION_MONITOR (object);
 
-  g_object_unref (monitor->seat_object_path_to_object_proxy);
-  g_object_unref (monitor->session_object_path_to_object_proxy);
-  g_object_unref (monitor->ck_manager_object_proxy);
-  g_object_unref (monitor->system_bus);
+  if (monitor->system_bus != NULL)
+    g_object_unref (monitor->system_bus);
+
+  if (monitor->database_monitor != NULL)
+    g_object_unref (monitor->database_monitor);
+
+  if (monitor->database != NULL)
+    g_key_file_free (monitor->database);
 
   if (G_OBJECT_CLASS (polkit_backend_session_monitor_parent_class)->finalize != NULL)
     G_OBJECT_CLASS (polkit_backend_session_monitor_parent_class)->finalize (object);
@@ -356,42 +226,13 @@ polkit_backend_session_monitor_new (void)
   return monitor;
 }
 
-static gboolean
-get_sessions_foreach_cb (EggDBusHashMap *map,
-                         gpointer        key,
-                         gpointer        value,
-                         gpointer        user_data)
-{
-  GList **l;
-  const gchar *session_object_path;
-  PolkitSubject *session;
-
-  l = user_data;
-  session_object_path = key;
-
-  session = polkit_unix_session_new (session_object_path);
-
-  *l = g_list_prepend (*l, session);
-
-  return FALSE;
-}
-
 /* ---------------------------------------------------------------------------------------------------- */
 
 GList *
 polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monitor)
 {
-  GList *l;
-
-  l = NULL;
-
-  egg_dbus_hash_map_foreach (monitor->session_object_path_to_object_proxy,
-                             get_sessions_foreach_cb,
-                             &l);
-
-  l = g_list_reverse (l);
-
-  return l;
+  /* TODO */
+  return NULL;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -411,76 +252,72 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
                                                      PolkitSubject                *subject,
                                                      GError                      **error)
 {
-  PolkitIdentity *user;
-  uid_t uid;
+  PolkitIdentity *ret;
+  GError *local_error;
+  gchar *group;
+  guint32 uid;
 
-  user = NULL;
+  ret = NULL;
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
-      GError *local_error;
-
       local_error = NULL;
       uid = polkit_unix_process_get_owner (POLKIT_UNIX_PROCESS (subject), &local_error);
       if (local_error != NULL)
         {
-          g_propagate_error (error, local_error);
+          g_propagate_prefixed_error (error, local_error, "Error getting user for process: ");
           g_error_free (local_error);
           goto out;
         }
-      user = polkit_unix_user_new (uid);
-    }
-  else if (POLKIT_IS_UNIX_SESSION (subject))
-    {
-      const gchar *session_id;
-      EggDBusObjectProxy *session_object_proxy;
-      CkSession *session;
 
-      session_id = polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject));
-
-      session_object_proxy = egg_dbus_hash_map_lookup (monitor->session_object_path_to_object_proxy,
-                                                       session_id);
-      if (session_object_proxy == NULL)
-        {
-          g_set_error (error,
-                       POLKIT_ERROR,
-                       POLKIT_ERROR_FAILED,
-                       "No ConsoleKit session with id %s",
-                       session_id);
-          goto out;
-        }
-
-      session = CK_QUERY_INTERFACE_SESSION (session_object_proxy);
-
-      uid = (uid_t) ck_session_get_user (session);
-
-      user = polkit_unix_user_new (uid);
+      ret = polkit_unix_user_new (uid);
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
-      /* TODO: cache this stuff */
-      if (!egg_dbus_bus_get_connection_unix_user_sync (egg_dbus_connection_get_bus (monitor->system_bus),
-                                                       EGG_DBUS_CALL_FLAGS_NONE,
-                                                       polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
-                                                       &uid,
-                                                       NULL,
-                                                       error))
-        goto out;
+      GVariant *result;
 
-      user = polkit_unix_user_new (uid);
+      result = g_dbus_connection_call_sync (monitor->system_bus,
+                                            "org.freedesktop.DBus",
+                                            "/org/freedesktop/DBus",
+                                            "org.freedesktop.DBus",
+                                            "GetConnectionUnixUser",
+                                            g_variant_new ("(s)", polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject))),
+                                            G_VARIANT_TYPE ("(u)"),
+                                            G_DBUS_CALL_FLAGS_NONE,
+                                            -1, /* timeout_msec */
+                                            NULL, /* GCancellable */
+                                            error);
+      if (result == NULL)
+        goto out;
+      g_variant_get (result, "(u)", &uid);
+      g_variant_unref (result);
+
+      ret = polkit_unix_user_new (uid);
     }
-  else
+  else if (POLKIT_IS_UNIX_SESSION (subject))
     {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_NOT_SUPPORTED,
-                   "Cannot get user for subject of type %s",
-                   g_type_name (G_TYPE_FROM_INSTANCE (subject)));
+      if (!ensure_database (monitor, error))
+        {
+          g_prefix_error (error, "Error getting user for session: Error ensuring CK database at " CKDB_PATH ": ");
+          goto out;
+        }
+
+      group = g_strdup_printf ("Session %s", polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject)));
+      local_error = NULL;
+      uid = g_key_file_get_integer (monitor->database, group, "uid", &local_error);
+      if (local_error != NULL)
+        {
+          g_propagate_prefixed_error (error, local_error, "Error getting uid using " CKDB_PATH ": ");
+          g_free (group);
+          goto out;
+        }
+      g_free (group);
+
+      ret = polkit_unix_user_new (uid);
     }
 
  out:
-
-  return user;
+  return ret;
 }
 
 /**
@@ -504,45 +341,63 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
-      gchar *session_id;
-
-      if (!ck_manager_get_session_for_unix_process_sync (monitor->ck_manager,
-                                                         EGG_DBUS_CALL_FLAGS_NONE,
-                                                         polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)),
-                                                         &session_id,
-                                                         NULL,
-                                                         error))
+      const gchar *session_id;
+      GVariant *result;
+      result = g_dbus_connection_call_sync (monitor->system_bus,
+                                            "org.freedesktop.ConsoleKit",
+                                            "/org/freedesktop/ConsoleKit/Manager",
+                                            "org.freedesktop.ConsoleKit.Manager",
+                                            "GetSessionForUnixProcess",
+                                            g_variant_new ("(u)", polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject))),
+                                            G_VARIANT_TYPE ("(o)"),
+                                            G_DBUS_CALL_FLAGS_NONE,
+                                            -1, /* timeout_msec */
+                                            NULL, /* GCancellable */
+                                            error);
+      if (result == NULL)
         goto out;
-
+      g_variant_get (result, "(&o)", &session_id);
       session = polkit_unix_session_new (session_id);
-
-      g_free (session_id);
+      g_variant_unref (result);
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
-      pid_t pid;
-      gchar *session_id;
+      guint32 pid;
+      const gchar *session_id;
+      GVariant *result;
 
-      /* TODO: cache this stuff */
-      if (!egg_dbus_bus_get_connection_unix_process_id_sync (egg_dbus_connection_get_bus (monitor->system_bus),
-                                                             EGG_DBUS_CALL_FLAGS_NONE,
-                                                             polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
-                                                             &pid,
-                                                             NULL,
-                                                             error))
+      result = g_dbus_connection_call_sync (monitor->system_bus,
+                                            "org.freedesktop.DBus",
+                                            "/org/freedesktop/DBus",
+                                            "org.freedesktop.DBus",
+                                            "GetConnectionUnixProcessID",
+                                            g_variant_new ("(s)", polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject))),
+                                            G_VARIANT_TYPE ("(u)"),
+                                            G_DBUS_CALL_FLAGS_NONE,
+                                            -1, /* timeout_msec */
+                                            NULL, /* GCancellable */
+                                            error);
+      if (result == NULL)
         goto out;
+      g_variant_get (result, "(u)", &pid);
+      g_variant_unref (result);
 
-      if (!ck_manager_get_session_for_unix_process_sync (monitor->ck_manager,
-                                                         EGG_DBUS_CALL_FLAGS_NONE,
-                                                         pid,
-                                                         &session_id,
-                                                         NULL,
-                                                         error))
+      result = g_dbus_connection_call_sync (monitor->system_bus,
+                                            "org.freedesktop.ConsoleKit",
+                                            "/org/freedesktop/ConsoleKit/Manager",
+                                            "org.freedesktop.ConsoleKit.Manager",
+                                            "GetSessionForUnixProcess",
+                                            g_variant_new ("(u)", pid),
+                                            G_VARIANT_TYPE ("(o)"),
+                                            G_DBUS_CALL_FLAGS_NONE,
+                                            -1, /* timeout_msec */
+                                            NULL, /* GCancellable */
+                                            error);
+      if (result == NULL)
         goto out;
-
+      g_variant_get (result, "(&o)", &session_id);
       session = polkit_unix_session_new (session_id);
-
-      g_free (session_id);
+      g_variant_unref (result);
     }
   else
     {
@@ -558,31 +413,41 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
   return session;
 }
 
+static gboolean
+get_boolean (PolkitBackendSessionMonitor *monitor,
+             PolkitSubject               *session,
+             const gchar                 *key_name)
+{
+  gboolean ret;
+  gchar *group;
+  GError *error;
+
+  ret = FALSE;
+
+  group = g_strdup_printf ("Session %s", polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session)));
+
+  error = NULL;
+  ret = g_key_file_get_boolean (monitor->database, group, key_name, &error);
+  if (error != NULL)
+    {
+      g_printerr ("Error looking %s using " CKDB_PATH " for %s: %s\n",
+                  key_name,
+                  group,
+                  error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+ out:
+  g_free (group);
+  return ret;
+}
+
 gboolean
 polkit_backend_session_monitor_is_session_local  (PolkitBackendSessionMonitor *monitor,
                                                   PolkitSubject               *session)
 {
-  EggDBusObjectProxy *object_proxy;
-  const gchar *session_id;
-  CkSession *ck_session;
-  gboolean ret;
-
-  g_return_val_if_fail (POLKIT_IS_UNIX_SESSION (session), FALSE);
-
-  ret = FALSE;
-
-  session_id = polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session));
-
-  object_proxy = egg_dbus_hash_map_lookup (monitor->session_object_path_to_object_proxy, session_id);
-  if (object_proxy == NULL)
-    goto out;
-
-  ck_session = CK_QUERY_INTERFACE_SESSION (object_proxy);
-
-  ret = ck_session_get_is_local (ck_session);
-
- out:
-  return ret;
+  return get_boolean (monitor, session, "is_local");
 }
 
 
@@ -590,26 +455,6 @@ gboolean
 polkit_backend_session_monitor_is_session_active (PolkitBackendSessionMonitor *monitor,
                                                   PolkitSubject               *session)
 {
-  EggDBusObjectProxy *object_proxy;
-  const gchar *session_id;
-  CkSession *ck_session;
-  gboolean ret;
-
-  g_return_val_if_fail (POLKIT_IS_UNIX_SESSION (session), FALSE);
-
-  ret = FALSE;
-
-  session_id = polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session));
-
-  object_proxy = egg_dbus_hash_map_lookup (monitor->session_object_path_to_object_proxy, session_id);
-  if (object_proxy == NULL)
-    goto out;
-
-  ck_session = CK_QUERY_INTERFACE_SESSION (object_proxy);
-
-  ret = ck_session_get_active (ck_session);
-
- out:
-  return ret;
+  return get_boolean (monitor, session, "is_active");
 }
 

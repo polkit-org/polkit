@@ -769,11 +769,22 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
       if (!POLKIT_IS_UNIX_USER (user_of_caller) ||
           polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
         {
-          g_simple_async_result_set_error (simple,
-                                           POLKIT_ERROR,
-                                           POLKIT_ERROR_NOT_AUTHORIZED,
-                                           "Only trusted callers can use CheckAuthorization() for subjects "
-                                           "belonging to other identities and/or pass details");
+          if (has_details)
+            {
+              g_simple_async_result_set_error (simple,
+                                               POLKIT_ERROR,
+                                               POLKIT_ERROR_NOT_AUTHORIZED,
+                                               "Only trusted callers (e.g. uid 0) can use CheckAuthorization() and "
+                                               "pass details");
+            }
+          else
+            {
+              g_simple_async_result_set_error (simple,
+                                               POLKIT_ERROR,
+                                               POLKIT_ERROR_NOT_AUTHORIZED,
+                                               "Only trusted callers (e.g. uid 0) can use CheckAuthorization() for "
+                                               "subjects belonging to other identities");
+            }
           g_simple_async_result_complete (simple);
           g_object_unref (simple);
           goto out;

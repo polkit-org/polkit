@@ -262,6 +262,14 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
 PolkitAuthority *
 polkit_authority_get (void)
 {
+  static volatile GQuark error_quark = 0;
+
+  if (error_quark == 0)
+    {
+      error_quark = POLKIT_ERROR;
+    }
+
+
   if (the_authority != NULL)
     {
       g_object_ref (the_authority);
