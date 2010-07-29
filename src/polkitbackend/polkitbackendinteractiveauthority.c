@@ -356,7 +356,7 @@ struct AuthenticationAgent
   gchar *object_path;
   gchar *unique_system_bus_name;
 
-  EggDBusObjectProxy *object_proxy;
+  GDBusProxy *proxy;
 
   GList *active_sessions;
 };
@@ -704,9 +704,10 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
   /* handle being called from ourselves */
   if (caller == NULL)
     {
-      EggDBusConnection *system_bus;
-      system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-      caller = polkit_system_bus_name_new (egg_dbus_connection_get_unique_name (system_bus));
+      /* TODO: this is kind of a hack */
+      GDBusConnection *system_bus;
+      system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, NULL);
+      caller = polkit_system_bus_name_new (g_dbus_connection_get_unique_name (system_bus));
       g_object_unref (system_bus);
     }
 
@@ -1305,7 +1306,8 @@ authentication_agent_free (AuthenticationAgent *agent)
       g_list_free (active_sessions);
     }
 
-  g_object_unref (agent->object_proxy);
+  if (agent->proxy != NULL)
+    g_object_unref (agent->proxy);
 
   g_object_unref (agent->session);
   g_free (agent->locale);
@@ -1321,7 +1323,7 @@ authentication_agent_new (PolkitSubject *session,
                           const gchar *object_path)
 {
   AuthenticationAgent *agent;
-  EggDBusConnection *system_bus;
+  GError *error;
 
   agent = g_new0 (AuthenticationAgent, 1);
 
@@ -1330,13 +1332,22 @@ authentication_agent_new (PolkitSubject *session,
   agent->unique_system_bus_name = g_strdup (unique_system_bus_name);
   agent->locale = g_strdup (locale);
 
-  system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-
-  agent->object_proxy = egg_dbus_connection_get_object_proxy (system_bus,
-                                                              agent->unique_system_bus_name,
-                                                              agent->object_path);
-
-  g_object_unref (system_bus);
+  error = NULL;
+  agent->proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
+                                                G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                                NULL, /* GDBusInterfaceInfo* */
+                                                agent->unique_system_bus_name,
+                                                agent->object_path,
+                                                "org.freedesktop.PolicyKit1.AuthenticationAgent",
+                                                NULL, /* GCancellable* */
+                                                &error);
+  if (agent->proxy == NULL)
+    {
+      g_warning ("Error constructing proxy for agent: %s", error->message);
+      g_error_free (error);
+      /* TODO: Make authentication_agent_new() return NULL and set a GError */
+    }
 
   return agent;
 }
@@ -1500,19 +1511,18 @@ get_authentication_agent_by_unique_system_bus_name (PolkitBackendInteractiveAuth
 }
 
 static void
-authentication_agent_begin_callback (GObject *source_object,
-                                     GAsyncResult *res,
-                                     gpointer user_data)
+authentication_agent_begin_cb (GDBusProxy   *proxy,
+                               GAsyncResult *res,
+                               gpointer      user_data)
 {
-  _PolkitAuthenticationAgent *agent_dbus = _POLKIT_AUTHENTICATION_AGENT (source_object);
   AuthenticationSession *session = user_data;
-  GError *error;
   gboolean gained_authorization;
+  GError *error;
 
   error = NULL;
-  if (!_polkit_authentication_agent_begin_authentication_finish (agent_dbus,
-                                                                 res,
-                                                                 &error))
+  if (!g_dbus_proxy_call_finish (proxy,
+                                 res,
+                                 &error))
     {
       g_warning ("Error performing authentication: %s", error->message);
       g_error_free (error);
@@ -1521,7 +1531,6 @@ authentication_agent_begin_callback (GObject *source_object,
   else
     {
       gained_authorization = session->is_authenticated;
-
       g_debug ("Authentication complete, is_authenticated = %d", session->is_authenticated);
     }
 
@@ -1582,7 +1591,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
                                   const gchar                 *locale,
                                   gchar                      **out_localized_message,
                                   gchar                      **out_localized_icon_name,
-                                  EggDBusHashMap             **out_localized_details)
+                                  PolkitDetails              **out_localized_details)
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
   PolkitActionDescription *action_desc;
@@ -1601,8 +1610,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
 
   *out_localized_message = NULL;
   *out_localized_icon_name = NULL;
-  *out_localized_details = egg_dbus_hash_map_new (G_TYPE_STRING, NULL,
-                                                  G_TYPE_STRING, NULL);
+  *out_localized_details = NULL;
 
   action_desc = polkit_backend_action_pool_get_action (priv->action_pool,
                                                        action_id,
@@ -1659,25 +1667,6 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
       icon_name = g_strdup (polkit_action_description_get_icon_name (action_desc));
     }
 
-
-  if (localized_details != NULL)
-    {
-      GHashTable *hash;
-      GHashTableIter iter;
-      const gchar *key;
-      const gchar *value;
-
-      hash = polkit_details_get_hash (localized_details);
-      if (hash != NULL)
-        {
-          g_hash_table_iter_init (&iter, hash);
-          while (g_hash_table_iter_next (&iter, (gpointer) &key, (gpointer) &value))
-            {
-              egg_dbus_hash_map_insert (*out_localized_details, key, value);
-            }
-        }
-    }
-
  out:
   if (message == NULL)
     message = g_strdup ("");
@@ -1685,6 +1674,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
     icon_name = g_strdup ("");
   *out_localized_message = message;
   *out_localized_icon_name = icon_name;
+  *out_localized_details = localized_details;
   if (action_desc != NULL)
     g_object_unref (action_desc);
 }
@@ -1703,14 +1693,15 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          gpointer                     user_data)
 {
   AuthenticationSession *session;
-  _PolkitAuthenticationAgent *agent_dbus;
   gchar *cookie;
   GList *l;
   GList *identities;
-  EggDBusArraySeq *real_identities;
   gchar *localized_message;
   gchar *localized_icon_name;
-  EggDBusHashMap *localized_details;
+  PolkitDetails *localized_details;
+  GVariant *details_gvariant;
+  GVariantBuilder identities_builder;
+  GVariant *parameters;
 
   get_localized_data_for_challenge (authority,
                                     caller,
@@ -1759,69 +1750,73 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
 
   agent->active_sessions = g_list_prepend (agent->active_sessions, session);
 
-  agent_dbus = _POLKIT_QUERY_INTERFACE_AUTHENTICATION_AGENT (agent->object_proxy);
+  details_gvariant = polkit_details_to_gvariant (localized_details);
+  g_variant_ref_sink (details_gvariant);
 
-  real_identities = egg_dbus_array_seq_new (EGG_DBUS_TYPE_STRUCTURE, g_object_unref, NULL, NULL);
+  g_variant_builder_init (&identities_builder, G_VARIANT_TYPE ("a(sa{sv})"));
   for (l = identities; l != NULL; l = l->next)
     {
       PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
-      egg_dbus_array_seq_add (real_identities, polkit_identity_get_real (identity));
+      GVariant *value;
+      value = polkit_identity_to_gvariant (identity);
+      g_variant_ref_sink (value);
+      g_variant_builder_add_value (&identities_builder, value);
+      g_variant_unref (value);
     }
 
-  session->call_id = _polkit_authentication_agent_begin_authentication (agent_dbus,
-                                                                        EGG_DBUS_CALL_FLAGS_TIMEOUT_NONE,
-                                                                        action_id,
-                                                                        localized_message,
-                                                                        localized_icon_name,
-                                                                        localized_details,
-                                                                        session->cookie,
-                                                                        real_identities,
-                                                                        NULL,
-                                                                        authentication_agent_begin_callback,
-                                                                        session);
+  parameters = g_variant_new ("(sss@a{ss}sa(sa{sv}))",
+                              action_id,
+                              localized_message,
+                              localized_icon_name,
+                              details_gvariant,
+                              session->cookie,
+                              &identities_builder);
+  g_variant_unref (details_gvariant);
+
+  g_dbus_proxy_call (agent->proxy,
+                     "BeginAuthentication",
+                     parameters, /* consumes the floating GVariant */
+                     G_DBUS_CALL_FLAGS_NONE,
+                     G_MAXINT, /* timeout_msec - no timeout */
+                     session->cancellable,
+                     (GAsyncReadyCallback) authentication_agent_begin_cb,
+                     session);
 
   g_list_foreach (identities, (GFunc) g_object_unref, NULL);
   g_list_free (identities);
-  g_object_unref (real_identities);
   g_free (cookie);
 
   g_free (localized_message);
   g_free (localized_icon_name);
-  g_object_unref (localized_details);
+  if (localized_details != NULL)
+    g_object_unref (localized_details);
 }
 
 static void
-authentication_agent_cancel_callback (GObject *source_object,
-                                      GAsyncResult *res,
-                                      gpointer user_data)
+authentication_agent_cancel_cb (GDBusProxy   *proxy,
+                                GAsyncResult *res,
+                                gpointer      user_data)
 {
-  _PolkitAuthenticationAgent *agent_dbus = _POLKIT_AUTHENTICATION_AGENT (source_object);
-
-  _polkit_authentication_agent_cancel_authentication_finish (agent_dbus,
-                                                             res,
-                                                             NULL);
+  GError *error;
+  error = NULL;
+  if (!g_dbus_proxy_call_finish (proxy, res, &error))
+    {
+      g_warning ("Error cancelling authentication: %s", error->message);
+      g_error_free (error);
+    }
 }
 
 static void
 authentication_session_cancel (AuthenticationSession *session)
 {
-  EggDBusConnection *system_bus;
-  _PolkitAuthenticationAgent *agent_dbus;
-
-  system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-
-  agent_dbus = _POLKIT_QUERY_INTERFACE_AUTHENTICATION_AGENT (session->agent->object_proxy);
-
-  _polkit_authentication_agent_cancel_authentication (agent_dbus,
-                                                      EGG_DBUS_CALL_FLAGS_NONE,
-                                                      session->cookie,
-                                                      NULL,
-                                                      authentication_agent_cancel_callback,
-                                                      NULL);
-
-  egg_dbus_connection_pending_call_cancel (system_bus, session->call_id);
-
-  g_object_unref (system_bus);
+  g_dbus_proxy_call (session->agent->proxy,
+                     "CancelAuthentication",
+                     g_variant_new ("(s)", session->cookie),
+                     G_DBUS_CALL_FLAGS_NONE,
+                     -1, /* timeout_msec */
+                     NULL, /* GCancellable* */
+                     (GAsyncReadyCallback) authentication_agent_cancel_cb,
+                     NULL);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

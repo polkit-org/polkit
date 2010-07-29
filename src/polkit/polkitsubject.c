@@ -382,7 +382,7 @@ polkit_subject_to_gvariant (PolkitSubject *subject)
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
-      kind = "unix-process";
+      kind = "unix-session";
       g_variant_builder_add (&builder, "{sv}", "session-id",
                              g_variant_new_string (polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject))));
     }

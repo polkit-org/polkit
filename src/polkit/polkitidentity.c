@@ -262,8 +262,34 @@ polkit_identity_get_real (PolkitIdentity *identity)
 GVariant *
 polkit_identity_to_gvariant (PolkitIdentity *identity)
 {
-  g_assert_not_reached ();
-  return NULL;
+  GVariantBuilder builder;
+  GVariant *dict;
+  GVariant *ret;
+  const gchar *kind;
+
+  kind = "";
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  if (POLKIT_IS_UNIX_USER (identity))
+    {
+      kind = "unix-user";
+      g_variant_builder_add (&builder, "{sv}", "uid",
+                             g_variant_new_uint32 (polkit_unix_user_get_uid (POLKIT_UNIX_USER (identity))));
+    }
+  else if (POLKIT_IS_UNIX_GROUP (identity))
+    {
+      kind = "unix-group";
+      g_variant_builder_add (&builder, "{sv}", "gid",
+                             g_variant_new_uint32 (polkit_unix_group_get_gid (POLKIT_UNIX_GROUP (identity))));
+    }
+  else
+    {
+      g_warning ("Unknown class %s implementing PolkitIdentity", g_type_name (G_TYPE_FROM_INSTANCE (identity)));
+    }
+
+  dict = g_variant_builder_end (&builder);
+  ret = g_variant_new ("(s@a{sv})", kind, dict);
+  return ret;
 }
 
 static GVariant *
