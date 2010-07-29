@@ -22,6 +22,7 @@ PolkitAuthority
 PolkitAuthorityFeatures
 PolkitCheckAuthorizationFlags
 polkit_authority_get
+polkit_authority_get_owner
 polkit_authority_get_backend_name
 polkit_authority_get_backend_version
 polkit_authority_get_backend_features

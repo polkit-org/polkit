@@ -85,6 +85,7 @@ enum
 enum
 {
   PROP_0,
+  PROP_OWNER,
   PROP_BACKEND_NAME,
   PROP_BACKEND_VERSION,
   PROP_BACKEND_FEATURES
@@ -106,6 +107,15 @@ on_proxy_signal (GDBusProxy   *proxy,
     {
       g_signal_emit_by_name (authority, "changed");
     }
+}
+
+static void
+on_notify_g_name_owner (GObject    *object,
+                        GParamSpec *ppsec,
+                        gpointer    user_data)
+{
+  PolkitAuthority *authority = POLKIT_AUTHORITY (user_data);
+  g_object_notify (G_OBJECT (authority), "owner");
 }
 
 static void
@@ -131,6 +141,10 @@ polkit_authority_init (PolkitAuthority *authority)
   g_signal_connect (authority->proxy,
                     "g-signal",
                     G_CALLBACK (on_proxy_signal),
+                    authority);
+  g_signal_connect (authority->proxy,
+                    "notify::g-name-owner",
+                    G_CALLBACK (on_notify_g_name_owner),
                     authority);
 }
 
@@ -160,6 +174,10 @@ polkit_authority_get_property (GObject    *object,
 
   switch (prop_id)
     {
+    case PROP_OWNER:
+      g_value_take_string (value, polkit_authority_get_owner (authority));
+      break;
+
     case PROP_BACKEND_NAME:
       g_value_set_string (value, polkit_authority_get_backend_name (authority));
       break;
@@ -185,6 +203,24 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
 
   gobject_class->finalize     = polkit_authority_finalize;
   gobject_class->get_property = polkit_authority_get_property;
+
+  /**
+   * PolkitAuthority:owner:
+   *
+   * The unique name of the owner of the org.freedesktop.PolicyKit1
+   * D-Bus service or %NULL if there is no owner. Connect to the
+   * #GObject::notify signal to track changes to this property.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_OWNER,
+                                   g_param_spec_string ("owner",
+                                                        "Owner",
+                                                        "Owner.",
+                                                        NULL,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_NICK |
+                                                        G_PARAM_STATIC_BLURB));
 
   /**
    * PolkitAuthority:backend-name:
@@ -330,6 +366,19 @@ call_sync_free (CallSyncData *data)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static void
+generic_async_cb (GObject      *source_obj,
+                  GAsyncResult *res,
+                  gpointer      user_data)
+{
+  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
+  g_simple_async_result_set_op_res_gpointer (simple, g_object_ref (res), g_object_unref);
+  g_simple_async_result_complete (simple);
+  g_object_unref (simple);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 /**
  * polkit_authority_enumerate_actions:
  * @authority: A #PolkitAuthority.
@@ -356,8 +405,11 @@ polkit_authority_enumerate_actions (PolkitAuthority     *authority,
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_enumerate_actions));
 }
 
 /**
@@ -381,10 +433,14 @@ polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
   GVariantIter iter;
   GVariant *child;
   GVariant *array;
+  GAsyncResult *_res;
 
   ret = NULL;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_enumerate_actions);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
 
@@ -689,8 +745,11 @@ polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_register_authentication_agent));
   g_variant_unref (subject_value);
 }
 
@@ -711,10 +770,14 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
 {
   gboolean ret;
   GVariant *value;
+  GAsyncResult *_res;
 
   ret = FALSE;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_register_authentication_agent);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
   ret = TRUE;
@@ -795,8 +858,11 @@ polkit_authority_unregister_authentication_agent (PolkitAuthority      *authorit
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_unregister_authentication_agent));
   g_variant_unref (subject_value);
 }
 
@@ -817,10 +883,14 @@ polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *author
 {
   gboolean ret;
   GVariant *value;
+  GAsyncResult *_res;
 
   ret = FALSE;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_unregister_authentication_agent);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
   ret = TRUE;
@@ -903,8 +973,11 @@ polkit_authority_authentication_agent_response (PolkitAuthority      *authority,
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_authentication_agent_response));
   g_variant_unref (identity_value);
 }
 
@@ -925,10 +998,14 @@ polkit_authority_authentication_agent_response_finish (PolkitAuthority *authorit
 {
   gboolean ret;
   GVariant *value;
+  GAsyncResult *_res;
 
   ret = FALSE;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_authentication_agent_response);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
   ret = TRUE;
@@ -1005,8 +1082,11 @@ polkit_authority_enumerate_temporary_authorizations (PolkitAuthority     *author
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_enumerate_temporary_authorizations));
   g_variant_unref (subject_value);
 }
 
@@ -1031,10 +1111,14 @@ polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *aut
   GVariantIter iter;
   GVariant *child;
   GVariant *array;
+  GAsyncResult *_res;
 
   ret = NULL;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_enumerate_temporary_authorizations);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
 
@@ -1116,8 +1200,11 @@ polkit_authority_revoke_temporary_authorizations (PolkitAuthority     *authority
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_revoke_temporary_authorizations));
   g_variant_unref (subject_value);
 }
 
@@ -1138,10 +1225,14 @@ polkit_authority_revoke_temporary_authorizations_finish (PolkitAuthority *author
 {
   gboolean ret;
   GVariant *value;
+  GAsyncResult *_res;
 
   ret = FALSE;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_revoke_temporary_authorizations);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
   ret = TRUE;
@@ -1210,8 +1301,11 @@ polkit_authority_revoke_temporary_authorization_by_id (PolkitAuthority     *auth
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_revoke_temporary_authorization_by_id));
 }
 
 /**
@@ -1231,10 +1325,14 @@ polkit_authority_revoke_temporary_authorization_by_id_finish (PolkitAuthority *a
 {
   gboolean ret;
   GVariant *value;
+  GAsyncResult *_res;
 
   ret = FALSE;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_revoke_temporary_authorization_by_id);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
   ret = TRUE;
@@ -1303,8 +1401,11 @@ polkit_authority_add_lockdown_for_action (PolkitAuthority     *authority,
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_add_lockdown_for_action));
 }
 
 /**
@@ -1324,10 +1425,14 @@ polkit_authority_add_lockdown_for_action_finish (PolkitAuthority *authority,
 {
   gboolean ret;
   GVariant *value;
+  GAsyncResult *_res;
 
   ret = FALSE;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_add_lockdown_for_action);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
   ret = TRUE;
@@ -1396,8 +1501,11 @@ polkit_authority_remove_lockdown_for_action (PolkitAuthority     *authority,
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
-                     callback,
-                     user_data);
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_remove_lockdown_for_action));
 }
 
 /**
@@ -1417,10 +1525,14 @@ polkit_authority_remove_lockdown_for_action_finish (PolkitAuthority *authority,
 {
   gboolean ret;
   GVariant *value;
+  GAsyncResult *_res;
 
   ret = FALSE;
 
-  value = g_dbus_proxy_call_finish (authority->proxy, res, error);
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_remove_lockdown_for_action);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
   if (value == NULL)
     goto out;
   ret = TRUE;
@@ -1460,6 +1572,23 @@ polkit_authority_remove_lockdown_for_action_sync (PolkitAuthority     *authority
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+/**
+ * polkit_authority_get_owner:
+ * @authority: A #PolkitAuthority.
+ *
+ * The unique name on the system message bus of the owner of the name
+ * <literal>org.freedesktop.PolicyKit1</literal> or %NULL if no-one
+ * currently owns the name. You may connect to the #GObject::notify
+ * signal to track changes to the #PolkitAuthority::owner property.
+ *
+ * Returns: %NULL or a string that should be freed with g_free().
+ **/
+gchar *
+polkit_authority_get_owner (PolkitAuthority *authority)
+{
+  return g_dbus_proxy_get_name_owner (authority->proxy);
+}
 
 /**
  * polkit_authority_get_backend_name:
