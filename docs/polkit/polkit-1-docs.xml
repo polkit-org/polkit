@@ -61,8 +61,8 @@
 
   <part id="ref-dbus-api">
     <title>D-Bus API Reference</title>
-    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.Authority.xml"/>
-    <xi:include href="../../src/polkit/docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
+    <xi:include href="docbook-interface-org.freedesktop.PolicyKit1.Authority.xml"/>
+    <xi:include href="docbook-interface-org.freedesktop.PolicyKit1.AuthenticationAgent.xml"/>
   </part>
 
   <part id="ref-api">

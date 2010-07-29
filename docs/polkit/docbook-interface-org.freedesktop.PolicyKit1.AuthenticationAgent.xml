@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2 //EN"
+"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="eggdbus-interface-org.freedesktop.PolicyKit1.AuthenticationAgent">
+  <refmeta>
+    <refentrytitle role="top_of_page">org.freedesktop.PolicyKit1.AuthenticationAgent Interface</refentrytitle>
+  </refmeta>
+  <refnamediv>
+    <refname>org.freedesktop.PolicyKit1.AuthenticationAgent Interface</refname>
+    <refpurpose>Authentication Agent Interface</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv role="synopsis">
+    <title role="synopsis.title">Methods</title>
+    <synopsis>
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.AuthenticationAgent.BeginAuthentication">BeginAuthentication</link>  (IN  String               action_id,
+                      IN  String               message,
+                      IN  String               icon_name,
+                      IN  Dict&lt;String,String&gt;  details,
+                      IN  String               cookie,
+                      IN  Array&lt;<link linkend="eggdbus-struct-Identity">Identity</link>&gt;      identities)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.AuthenticationAgent.CancelAuthentication">CancelAuthentication</link> (IN  String               cookie)
+    </synopsis>
+  </refsynopsisdiv>
+  <refsect1 role="desc" id="eggdbus-if-description-org.freedesktop.PolicyKit1.AuthenticationAgent">
+    <title role="desc.title">Description</title>
+      <para>
+<para>This D-Bus interface is used for communication between the system-wide PolicyKit daemon and one or more authentication agents each running in a user session.</para><para>An authentication agent must implement this interface and register (passing the object path of the object implementing the interface) using the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link> and <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent">UnregisterAuthenticationAgent()</link> methods on the <link linkend="eggdbus-interface-org.freedesktop.PolicyKit1.Authority">org.freedesktop.PolicyKit1.Authority</link> interface of the PolicyKit daemon.</para>
+      </para>
+  </refsect1>
+  <refsect1 role="details" id="eggdbus-if-method-details-org.freedesktop.PolicyKit1.AuthenticationAgent">
+    <title role="details.title">Method Details</title>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.AuthenticationAgent.BeginAuthentication">
+      <title>BeginAuthentication ()</title>
+    <programlisting>
+BeginAuthentication (IN  String               action_id,
+                     IN  String               message,
+                     IN  String               icon_name,
+                     IN  Dict&lt;String,String&gt;  details,
+                     IN  String               cookie,
+                     IN  Array&lt;<link linkend="eggdbus-struct-Identity">Identity</link>&gt;      identities)
+    </programlisting>
+    <para>
+<para>Called by the PolicyKit daemon when the authentication agent needs the user to authenticate as one of the identities in <parameter>identities</parameter> for the action with the identifier <parameter>action_id</parameter>.</para><para>Upon succesful authentication, the authentication agent must invoke the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link> method on the <link linkend="eggdbus-interface-org.freedesktop.PolicyKit1.Authority">org.freedesktop.PolicyKit1.Authority</link> interface of the PolicyKit daemon before returning.</para><para>If the user dismisses the authentication dialog, the authentication agent should return an error.</para>
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>action_id</parameter></literal>:</term>
+    <listitem>
+      <para>
+The identifier for the action that the user is authentication for.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>message</parameter></literal>:</term>
+    <listitem>
+      <para>
+The message to display to the user. This is translated into the locale passed when registering the authentication agent using <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>icon_name</parameter></literal>:</term>
+    <listitem>
+      <para>
+The themed icon describing the action or the empty string if no icon is set.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  Dict&lt;String,String&gt; <parameter>details</parameter></literal>:</term>
+    <listitem>
+      <para>
+Details about the authentication request. This is a dictionary of key/value pairs where both key and value are strings. These strings are translated into the locale passed when registering the authentication agent using <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>cookie</parameter></literal>:</term>
+    <listitem>
+      <para>
+A cookie identifying the authentication request.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  Array&lt;<link linkend="eggdbus-struct-Identity">Identity</link>&gt; <parameter>identities</parameter></literal>:</term>
+    <listitem>
+      <para>
+An array of <link linkend="eggdbus-struct-Identity">Identity</link> structs that the user can use for authentication.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.AuthenticationAgent.CancelAuthentication">
+      <title>CancelAuthentication ()</title>
+    <programlisting>
+CancelAuthentication (IN  String  cookie)
+    </programlisting>
+    <para>
+Called by the PolicyKit daemon if the authentication agent needs to cancel an authentication dialog.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>cookie</parameter></literal>:</term>
+    <listitem>
+      <para>
+The cookie identifying the authentication request.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+  </refsect1>
+</refentry>

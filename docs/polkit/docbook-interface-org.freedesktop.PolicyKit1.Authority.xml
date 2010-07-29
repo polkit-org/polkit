@@ -1,0 +1,897 @@
+<?xml version="1.0"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2 //EN"
+"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="eggdbus-interface-org.freedesktop.PolicyKit1.Authority">
+  <refmeta>
+    <refentrytitle role="top_of_page">org.freedesktop.PolicyKit1.Authority Interface</refentrytitle>
+  </refmeta>
+  <refnamediv>
+    <refname>org.freedesktop.PolicyKit1.Authority Interface</refname>
+    <refpurpose>Authority Interface</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv role="synopsis">
+    <title role="synopsis.title">Methods</title>
+    <synopsis>
+Flags        <link linkend="eggdbus-enum-CheckAuthorizationFlags">CheckAuthorizationFlags</link>
+Enumeration  <link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link>
+ErrorDomain  <link linkend="eggdbus-errordomain-org.freedesktop.PolicyKit1.Error.">org.freedesktop.PolicyKit1.Error.*</link>
+Flags        <link linkend="eggdbus-enum-AuthorityFeatures">AuthorityFeatures</link>
+Structure    <link linkend="eggdbus-struct-Subject">Subject</link>
+Structure    <link linkend="eggdbus-struct-Identity">Identity</link>
+Structure    <link linkend="eggdbus-struct-ActionDescription">ActionDescription</link>
+Structure    <link linkend="eggdbus-struct-AuthorizationResult">AuthorizationResult</link>
+Structure    <link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link>
+
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.EnumerateActions">EnumerateActions</link>                 (IN  String                         locale,
+                                  OUT Array&lt;<link linkend="eggdbus-struct-ActionDescription">ActionDescription</link>&gt;       action_descriptions)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization</link>               (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
+                                  IN  String                         action_id,
+                                  IN  Dict&lt;String,String&gt;            details,
+                                  IN  <link linkend="eggdbus-enum-CheckAuthorizationFlags">CheckAuthorizationFlags</link>        flags,
+                                  IN  String                         cancellation_id,
+                                  OUT <link linkend="eggdbus-struct-AuthorizationResult">AuthorizationResult</link>            result)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CancelCheckAuthorization">CancelCheckAuthorization</link>         (IN  String                         cancellation_id)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent</link>      (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
+                                  IN  String                         locale,
+                                  IN  String                         object_path)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent">UnregisterAuthenticationAgent</link>    (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
+                                  IN  String                         object_path)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse</link>      (IN  String                         cookie,
+                                  IN  <link linkend="eggdbus-struct-Identity">Identity</link>                       identity)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.EnumerateTemporaryAuthorizations">EnumerateTemporaryAuthorizations</link> (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
+                                  OUT Array&lt;<link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link>&gt;  temporary_authorizations)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RevokeTemporaryAuthorizations">RevokeTemporaryAuthorizations</link>    (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RevokeTemporaryAuthorizationById">RevokeTemporaryAuthorizationById</link> (IN  String                         id)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">AddLockdownForAction</link>             (IN  String                         action_id)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RemoveLockdownForAction">RemoveLockdownForAction</link>          (IN  String                         action_id)
+    </synopsis>
+  </refsynopsisdiv>
+  <refsect1 role="signal_proto" id="eggdbus-if-signals-org.freedesktop.PolicyKit1.Authority">
+    <title role="signal_proto.title">Signals</title>
+    <synopsis>
+<link linkend="eggdbus-signal-org.freedesktop.PolicyKit1.Authority::Changed">Changed</link> ()
+    </synopsis>
+  </refsect1>
+  <refsect1 role="properties" id="eggdbus-if-properties-org.freedesktop.PolicyKit1.Authority">
+    <title role="properties.title">Properties</title>
+    <synopsis>
+<link linkend="eggdbus-property-org.freedesktop.PolicyKit1.Authority:BackendName">BackendName</link>         readable     String
+<link linkend="eggdbus-property-org.freedesktop.PolicyKit1.Authority:BackendVersion">BackendVersion</link>      readable     String
+<link linkend="eggdbus-property-org.freedesktop.PolicyKit1.Authority:BackendFeatures">BackendFeatures</link>     readable     <link linkend="eggdbus-enum-AuthorityFeatures">AuthorityFeatures</link>
+    </synopsis>
+  </refsect1>
+  <refsect1 role="desc" id="eggdbus-if-description-org.freedesktop.PolicyKit1.Authority">
+    <title role="desc.title">Description</title>
+      <para>
+This D-Bus interface is implemented by the <literal>/org/freedesktop/PoliycKit1/Authority</literal> object on the well-known name <literal>org.freedesktop.PolicyKit1</literal> on the system message bus.
+      </para>
+  </refsect1>
+  <refsect1 role="desc" id="eggdbus-if-enumerations-org.freedesktop.PolicyKit1.Authority">
+    <title role="desc.title">Enumerations</title>
+    <refsect2 role="enum" id="eggdbus-enum-CheckAuthorizationFlags">
+      <title>The CheckAuthorizationFlags Flags</title>
+        <para>
+          <programlisting>
+{
+  None                 = 0x00000000,
+  AllowUserInteraction = 0x00000001
+}
+          </programlisting>
+          <para>
+Flags used in the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link> method.
+          </para>
+          <variablelist role="constant">
+  <varlistentry id="eggdbus-constant-CheckAuthorizationFlags.None" role="constant">
+    <term><literal>None</literal></term>
+    <listitem>
+      <para>
+No flags set.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-CheckAuthorizationFlags.AllowUserInteraction" role="constant">
+    <term><literal>AllowUserInteraction</literal></term>
+    <listitem>
+      <para>
+If the <link linkend="eggdbus-struct-Subject">Subject</link> can obtain the authorization through authentication, and an authentication agent is available, then attempt to do so. Note, this means that the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link> method will block while the user is being asked to authenticate.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+    <refsect2 role="enum" id="eggdbus-enum-ImplicitAuthorization">
+      <title>The ImplicitAuthorization Enumeration</title>
+        <para>
+          <programlisting>
+{
+  NotAuthorized                               = 0,
+  AuthenticationRequired                      = 1,
+  AdministratorAuthenticationRequired         = 2,
+  AuthenticationRequiredRetained              = 3,
+  AdministratorAuthenticationRequiredRetained = 4,
+  Authorized                                  = 5
+}
+          </programlisting>
+          <para>
+An enumeration for granting implicit authorizations.
+          </para>
+          <variablelist role="constant">
+  <varlistentry id="eggdbus-constant-ImplicitAuthorization.NotAuthorized" role="constant">
+    <term><literal>NotAuthorized</literal></term>
+    <listitem>
+      <para>
+The <link linkend="eggdbus-struct-Subject">Subject</link> is not authorized.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-ImplicitAuthorization.AuthenticationRequired" role="constant">
+    <term><literal>AuthenticationRequired</literal></term>
+    <listitem>
+      <para>
+Authentication is required.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-ImplicitAuthorization.AdministratorAuthenticationRequired" role="constant">
+    <term><literal>AdministratorAuthenticationRequired</literal></term>
+    <listitem>
+      <para>
+Authentication as an administrator is required.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-ImplicitAuthorization.AuthenticationRequiredRetained" role="constant">
+    <term><literal>AuthenticationRequiredRetained</literal></term>
+    <listitem>
+      <para>
+Authentication is required. If the authorization is obtained, it is retained.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-ImplicitAuthorization.AdministratorAuthenticationRequiredRetained" role="constant">
+    <term><literal>AdministratorAuthenticationRequiredRetained</literal></term>
+    <listitem>
+      <para>
+Authentication as an administrator is required. If the authorization is obtained, it is retained.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-ImplicitAuthorization.Authorized" role="constant">
+    <term><literal>Authorized</literal></term>
+    <listitem>
+      <para>
+The subject is authorized.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+    <refsect2 role="enum" id="eggdbus-errordomain-org.freedesktop.PolicyKit1.Error.">      <title>The org.freedesktop.PolicyKit1.Error.* Error Domain</title>
+        <para>
+          <programlisting>
+{
+  org.freedesktop.PolicyKit1.Error.Failed,
+  org.freedesktop.PolicyKit1.Error.Cancelled,
+  org.freedesktop.PolicyKit1.Error.NotSupported,
+  org.freedesktop.PolicyKit1.Error.NotAuthorized,
+  org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique
+}
+          </programlisting>
+          <para>
+Errors that can be returned by various method calls.
+          </para>
+          <variablelist role="constant">
+  <varlistentry id="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.Failed" role="constant">
+    <term><literal>org.freedesktop.PolicyKit1.Error.Failed</literal></term>
+    <listitem>
+      <para>
+The operation failed.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.Cancelled" role="constant">
+    <term><literal>org.freedesktop.PolicyKit1.Error.Cancelled</literal></term>
+    <listitem>
+      <para>
+The operation was cancelled.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.NotSupported" role="constant">
+    <term><literal>org.freedesktop.PolicyKit1.Error.NotSupported</literal></term>
+    <listitem>
+      <para>
+The operation is not supported.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.NotAuthorized" role="constant">
+    <term><literal>org.freedesktop.PolicyKit1.Error.NotAuthorized</literal></term>
+    <listitem>
+      <para>
+You are not authorized to perform the requested operation.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique" role="constant">
+    <term><literal>org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique</literal></term>
+    <listitem>
+      <para>
+The passed <parameter>cancellation_id</parameter> is already in use.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+    <refsect2 role="enum" id="eggdbus-enum-AuthorityFeatures">
+      <title>The AuthorityFeatures Flags</title>
+        <para>
+          <programlisting>
+{
+  None                   = 0x00000000,
+  TemporaryAuthorization = 0x00000001,
+  Lockdown               = 0x00000002
+}
+          </programlisting>
+          <para>
+Flags describing features supported by the Authority implementation.
+          </para>
+          <variablelist role="constant">
+  <varlistentry id="eggdbus-constant-AuthorityFeatures.None" role="constant">
+    <term><literal>None</literal></term>
+    <listitem>
+      <para>
+No flags set.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-AuthorityFeatures.TemporaryAuthorization" role="constant">
+    <term><literal>TemporaryAuthorization</literal></term>
+    <listitem>
+      <para>
+The authority supports temporary authorizations that can be obtained through authentication.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-AuthorityFeatures.Lockdown" role="constant">
+    <term><literal>Lockdown</literal></term>
+    <listitem>
+      <para>
+The authority supports the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">AddLockdownForAction()</link> and <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RemoveLockdownForAction">RemoveLockdownForAction()</link> methods.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+  </refsect1>
+  <refsect1 role="desc" id="eggdbus-if-structures-org.freedesktop.PolicyKit1.Authority">
+    <title role="desc.title">Structures</title>
+    <refsect2 role="struct" id="eggdbus-struct-Subject">
+      <title>The Subject Structure</title>
+        <para>
+          <programlisting>
+{
+  String               subject_kind,
+  Dict&lt;String,Variant&gt; subject_details
+}
+          </programlisting>
+          <para>
+<para>This struct describes subjects such as UNIX processes. It is typically used to check if a given process is authorized for an action.</para><para>The following kinds of subjects are known:</para>                   <formalpara><title>Unix Process</title><para><literal>subject_kind</literal> should be set to <literal>unix-process</literal> with keys <literal>pid</literal> (of type <literal>uint32</literal>) and <literal>start-time</literal> (of type <literal>uint64</literal>).</para></formalpara>                   <formalpara><title>Unix Session</title><para><literal>subject_kind</literal> should be set to <literal>unix-session</literal> with the key <literal>session-id</literal> (of type <literal>string</literal>).</para></formalpara>                   <formalpara><title>System Bus Name</title><para><literal>subject_kind</literal> should be set to <literal>system-bus-name</literal> with the key <literal>name</literal> (of type <literal>string</literal>).</para></formalpara>
+          </para>
+          <variablelist role="struct">
+  <varlistentry>
+    <term><literal>String <structfield>subject_kind</structfield></literal></term>
+    <listitem>
+      <para>
+The type of the subject.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>Dict&lt;String,Variant&gt; <structfield>subject_details</structfield></literal></term>
+    <listitem>
+      <para>
+Details about the subject. Depending of the value of <parameter>subject_kind</parameter>, a set of well-defined key/value pairs are guaranteed to be available.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+    <refsect2 role="struct" id="eggdbus-struct-Identity">
+      <title>The Identity Structure</title>
+        <para>
+          <programlisting>
+{
+  String               identity_kind,
+  Dict&lt;String,Variant&gt; identity_details
+}
+          </programlisting>
+          <para>
+<para>This struct describes identities such as UNIX users and UNIX groups. It is typically used to check if a given process is authorized for an action.</para><para>The following kinds of identities are known:</para>                   <formalpara><title>Unix User</title><para><literal>identity_kind</literal> should be set to <literal>unix-user</literal> with key <literal>uid</literal> (of type <literal>uint32</literal>).</para></formalpara>                   <formalpara><title>Unix Group</title><para><literal>identity_kind</literal> should be set to <literal>unix-group</literal> with key <literal>gid</literal> (of type <literal>uint32</literal>).</para></formalpara>  
+          </para>
+          <variablelist role="struct">
+  <varlistentry>
+    <term><literal>String <structfield>identity_kind</structfield></literal></term>
+    <listitem>
+      <para>
+Type of identity.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>Dict&lt;String,Variant&gt; <structfield>identity_details</structfield></literal></term>
+    <listitem>
+      <para>
+Details about the identity. Depending of the value of <parameter>identity_kind</parameter>, a set of well-defined key/value pairs are guaranteed to be available.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+    <refsect2 role="struct" id="eggdbus-struct-ActionDescription">
+      <title>The ActionDescription Structure</title>
+        <para>
+          <programlisting>
+{
+  String                action_id,
+  String                description,
+  String                message,
+  String                vendor_name,
+  String                vendor_url,
+  String                icon_name,
+  <link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link> implicit_any,
+  <link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link> implicit_inactive,
+  <link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link> implicit_active,
+  Dict&lt;String,String&gt;   annotations
+}
+          </programlisting>
+          <para>
+This struct describes actions registered with the PolicyKit daemon.
+          </para>
+          <variablelist role="struct">
+  <varlistentry>
+    <term><literal>String <structfield>action_id</structfield></literal></term>
+    <listitem>
+      <para>
+Action Identifier.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>String <structfield>description</structfield></literal></term>
+    <listitem>
+      <para>
+Localized description of the action.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>String <structfield>message</structfield></literal></term>
+    <listitem>
+      <para>
+Localized message to be displayed when making the user authenticate for an action.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>String <structfield>vendor_name</structfield></literal></term>
+    <listitem>
+      <para>
+Name of the provider of the action or the empty string.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>String <structfield>vendor_url</structfield></literal></term>
+    <listitem>
+      <para>
+A URL pointing to a place with more information about the action or the empty string.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>String <structfield>icon_name</structfield></literal></term>
+    <listitem>
+      <para>
+The themed icon describing the action or the empty string if no icon is set.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal><link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link> <structfield>implicit_any</structfield></literal></term>
+    <listitem>
+      <para>
+A value from the <link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link>. enumeration for implicit authorizations that apply to any <link linkend="eggdbus-struct-Subject">Subject</link>.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal><link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link> <structfield>implicit_inactive</structfield></literal></term>
+    <listitem>
+      <para>
+A value from the <link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link>. enumeration for implicit authorizations that apply any <link linkend="eggdbus-struct-Subject">Subject</link> in an inactive user session on the local console.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal><link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link> <structfield>implicit_active</structfield></literal></term>
+    <listitem>
+      <para>
+A value from the <link linkend="eggdbus-enum-ImplicitAuthorization">ImplicitAuthorization</link>. enumeration for implicit authorizations that apply any <link linkend="eggdbus-struct-Subject">Subject</link> in an active user session on the local console.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>Dict&lt;String,String&gt; <structfield>annotations</structfield></literal></term>
+    <listitem>
+      <para>
+Annotations for the action.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+    <refsect2 role="struct" id="eggdbus-struct-AuthorizationResult">
+      <title>The AuthorizationResult Structure</title>
+        <para>
+          <programlisting>
+{
+  Boolean             is_authorized,
+  Boolean             is_challenge,
+  Dict&lt;String,String&gt; details
+}
+          </programlisting>
+          <para>
+Describes the result of calling <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>.
+          </para>
+          <variablelist role="struct">
+  <varlistentry>
+    <term><literal>Boolean <structfield>is_authorized</structfield></literal></term>
+    <listitem>
+      <para>
+TRUE if the given <link linkend="eggdbus-struct-Subject">Subject</link> is authorized for the given action.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>Boolean <structfield>is_challenge</structfield></literal></term>
+    <listitem>
+      <para>
+TRUE if the given <link linkend="eggdbus-struct-Subject">Subject</link> could be authorized if more information was provided, and <link linkend="eggdbus-constant-CheckAuthorizationFlags.AllowUserInteraction">CheckAuthorizationFlags.AllowUserInteraction</link> wasn't passed or no suitable authentication agent was available.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>Dict&lt;String,String&gt; <structfield>details</structfield></literal></term>
+    <listitem>
+      <para>
+Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id), <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE)) and <literal>polkit.lockdown</literal> (set to a non-empty string if the action is locked down).
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+    <refsect2 role="struct" id="eggdbus-struct-TemporaryAuthorization">
+      <title>The TemporaryAuthorization Structure</title>
+        <para>
+          <programlisting>
+{
+  String  id,
+  String  action_id,
+  <link linkend="eggdbus-struct-Subject">Subject</link> subject,
+  UInt64  time_obtained,
+  UInt64  time_expires
+}
+          </programlisting>
+          <para>
+This struct describes a temporary authorization.
+          </para>
+          <variablelist role="struct">
+  <varlistentry>
+    <term><literal>String <structfield>id</structfield></literal></term>
+    <listitem>
+      <para>
+An opaque identifier for the temporary authorization.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>String <structfield>action_id</structfield></literal></term>
+    <listitem>
+      <para>
+The action the temporary authorization is for.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal><link linkend="eggdbus-struct-Subject">Subject</link> <structfield>subject</structfield></literal></term>
+    <listitem>
+      <para>
+The subject the temporary authorization is for.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>UInt64 <structfield>time_obtained</structfield></literal></term>
+    <listitem>
+      <para>
+When the temporary authorization was obtained, in seconds since the Epoch Jan 1, 1970 0:00 UTC.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>UInt64 <structfield>time_expires</structfield></literal></term>
+    <listitem>
+      <para>
+When the temporary authorization is set to expire, in seconds since the Epoch Jan 1, 1970 0:00 UTC.
+      </para>
+    </listitem>
+  </varlistentry>
+          </variablelist>
+        </para>
+    </refsect2>
+  </refsect1>
+  <refsect1 role="details" id="eggdbus-if-method-details-org.freedesktop.PolicyKit1.Authority">
+    <title role="details.title">Method Details</title>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.EnumerateActions">
+      <title>EnumerateActions ()</title>
+    <programlisting>
+EnumerateActions (IN  String                    locale,
+                  OUT Array&lt;<link linkend="eggdbus-struct-ActionDescription">ActionDescription</link>&gt;  action_descriptions)
+    </programlisting>
+    <para>
+Enumerates all registered PolicyKit actions.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>locale</parameter></literal>:</term>
+    <listitem>
+      <para>
+The locale to get descriptions in or the blank string to use the system locale.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>OUT Array&lt;<link linkend="eggdbus-struct-ActionDescription">ActionDescription</link>&gt; <parameter>action_descriptions</parameter></literal>:</term>
+    <listitem>
+      <para>
+An array of <link linkend="eggdbus-struct-ActionDescription">ActionDescription</link> structs.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">
+      <title>CheckAuthorization ()</title>
+    <programlisting>
+CheckAuthorization (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                  subject,
+                    IN  String                   action_id,
+                    IN  Dict&lt;String,String&gt;      details,
+                    IN  <link linkend="eggdbus-enum-CheckAuthorizationFlags">CheckAuthorizationFlags</link>  flags,
+                    IN  String                   cancellation_id,
+                    OUT <link linkend="eggdbus-struct-AuthorizationResult">AuthorizationResult</link>      result)
+    </programlisting>
+    <para>
+<para>Checks if <parameter>subject</parameter> is authorized to perform the action with identifier <parameter>action_id</parameter>.</para><para>If <parameter>cancellation_id</parameter> is non-empty and already in use for the caller, the <link linkend="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique">org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique</link> error is returned.</para><para>Note that <link linkend="eggdbus-constant-CheckAuthorizationFlags.AllowUserInteraction">CheckAuthorizationFlags.AllowUserInteraction</link> SHOULD be passed ONLY if the event that triggered the authorization check is stemming from an user action, e.g. the user pressing a button or attaching a device.</para>
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-struct-Subject">Subject</link> <parameter>subject</parameter></literal>:</term>
+    <listitem>
+      <para>
+A <link linkend="eggdbus-struct-Subject">Subject</link> struct.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>action_id</parameter></literal>:</term>
+    <listitem>
+      <para>
+Identifier for the action that <parameter>subject</parameter> is attempting to do.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  Dict&lt;String,String&gt; <parameter>details</parameter></literal>:</term>
+    <listitem>
+      <para>
+Details describing the action. Keys starting with <literal>polkit.</literal> are reserved for internal use and cannot be used.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-enum-CheckAuthorizationFlags">CheckAuthorizationFlags</link> <parameter>flags</parameter></literal>:</term>
+    <listitem>
+      <para>
+A set of <link linkend="eggdbus-enum-CheckAuthorizationFlags">CheckAuthorizationFlags</link>.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>cancellation_id</parameter></literal>:</term>
+    <listitem>
+      <para>
+A unique id used to cancel the the authentication check via <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CancelCheckAuthorization">CancelCheckAuthorization()</link> or the empty string if cancellation is not needed.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>OUT <link linkend="eggdbus-struct-AuthorizationResult">AuthorizationResult</link> <parameter>result</parameter></literal>:</term>
+    <listitem>
+      <para>
+An <link linkend="eggdbus-struct-AuthorizationResult">AuthorizationResult</link> structure.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CancelCheckAuthorization">
+      <title>CancelCheckAuthorization ()</title>
+    <programlisting>
+CancelCheckAuthorization (IN  String  cancellation_id)
+    </programlisting>
+    <para>
+Cancels an authorization check.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>cancellation_id</parameter></literal>:</term>
+    <listitem>
+      <para>
+The <parameter>cancellation_id</parameter> passed to <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">
+      <title>RegisterAuthenticationAgent ()</title>
+    <programlisting>
+RegisterAuthenticationAgent (IN  <link linkend="eggdbus-struct-Subject">Subject</link>  subject,
+                             IN  String   locale,
+                             IN  String   object_path)
+    </programlisting>
+    <para>
+<para>Register an authentication agent.</para><para>Note that current versions of PolicyKit will only work if <parameter>session_id</parameter> is set to the empty string. In the future it might work for non-empty strings if the caller is sufficiently privileged.</para>
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-struct-Subject">Subject</link> <parameter>subject</parameter></literal>:</term>
+    <listitem>
+      <para>
+The subject to register the authentication agent for, typically a session subject.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>locale</parameter></literal>:</term>
+    <listitem>
+      <para>
+The locale of the authentication agent.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>object_path</parameter></literal>:</term>
+    <listitem>
+      <para>
+The object path of authentication agent object on the unique name of the caller.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent">
+      <title>UnregisterAuthenticationAgent ()</title>
+    <programlisting>
+UnregisterAuthenticationAgent (IN  <link linkend="eggdbus-struct-Subject">Subject</link>  subject,
+                               IN  String   object_path)
+    </programlisting>
+    <para>
+Unregister an authentication agent.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-struct-Subject">Subject</link> <parameter>subject</parameter></literal>:</term>
+    <listitem>
+      <para>
+The <parameter>subject</parameter> passed to <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  String <parameter>object_path</parameter></literal>:</term>
+    <listitem>
+      <para>
+The <parameter>object_path</parameter> passed to <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">
+      <title>AuthenticationAgentResponse ()</title>
+    <programlisting>
+AuthenticationAgentResponse (IN  String    cookie,
+                             IN  <link linkend="eggdbus-struct-Identity">Identity</link>  identity)
+    </programlisting>
+    <para>
+Method for authentication agents to invoke on successful authentication. This method will fail unless a sufficiently privileged caller invokes it.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>cookie</parameter></literal>:</term>
+    <listitem>
+      <para>
+The cookie identifying the authentication request that was passed to the authentication agent.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-struct-Identity">Identity</link> <parameter>identity</parameter></literal>:</term>
+    <listitem>
+      <para>
+A <link linkend="eggdbus-struct-Identity">Identity</link> struct describing what identity was authenticated.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.EnumerateTemporaryAuthorizations">
+      <title>EnumerateTemporaryAuthorizations ()</title>
+    <programlisting>
+EnumerateTemporaryAuthorizations (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
+                                  OUT Array&lt;<link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link>&gt;  temporary_authorizations)
+    </programlisting>
+    <para>
+Retrieves all temporary authorizations that applies to <parameter>subject</parameter>.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-struct-Subject">Subject</link> <parameter>subject</parameter></literal>:</term>
+    <listitem>
+      <para>
+The subject to get temporary authorizations for.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>OUT Array&lt;<link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link>&gt; <parameter>temporary_authorizations</parameter></literal>:</term>
+    <listitem>
+      <para>
+An array of <link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link> structs.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RevokeTemporaryAuthorizations">
+      <title>RevokeTemporaryAuthorizations ()</title>
+    <programlisting>
+RevokeTemporaryAuthorizations (IN  <link linkend="eggdbus-struct-Subject">Subject</link>  subject)
+    </programlisting>
+    <para>
+Revokes all temporary authorizations that applies to <parameter>subject</parameter>.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-struct-Subject">Subject</link> <parameter>subject</parameter></literal>:</term>
+    <listitem>
+      <para>
+The subject to revoke temporary authorizations from.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RevokeTemporaryAuthorizationById">
+      <title>RevokeTemporaryAuthorizationById ()</title>
+    <programlisting>
+RevokeTemporaryAuthorizationById (IN  String  id)
+    </programlisting>
+    <para>
+Revokes all temporary authorizations that applies to <parameter>subject</parameter>.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>id</parameter></literal>:</term>
+    <listitem>
+      <para>
+The opaque identifier of the temporary authorization.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">
+      <title>AddLockdownForAction ()</title>
+    <programlisting>
+AddLockdownForAction (IN  String  action_id)
+    </programlisting>
+    <para>
+Locks down an action so administrator authentication is always needed to obtain a temporary authorization for the action.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>action_id</parameter></literal>:</term>
+    <listitem>
+      <para>
+Identifier for the action.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RemoveLockdownForAction">
+      <title>RemoveLockdownForAction ()</title>
+    <programlisting>
+RemoveLockdownForAction (IN  String  action_id)
+    </programlisting>
+    <para>
+Removes the effect of a previous <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">AddLockdownForAction()</link> call.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>action_id</parameter></literal>:</term>
+    <listitem>
+      <para>
+Identifier for the action.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+  </refsect1>
+  <refsect1 role="signals" id="eggdbus-if-signal-details-org.freedesktop.PolicyKit1.Authority">
+    <title role="signals.title">Signal Details</title>
+    <refsect2 role="signal" id="eggdbus-signal-org.freedesktop.PolicyKit1.Authority::Changed">
+      <title>The "Changed" signal</title>
+    <programlisting>
+Changed ()
+    </programlisting>
+    <para>
+This signal is emitted when actions and/or authorizations change
+    </para>
+<variablelist role="params">
+</variablelist>
+    </refsect2>
+  </refsect1>
+  <refsect1 role="property_details" id="eggdbus-if-property-details-org.freedesktop.PolicyKit1.Authority">
+    <title role="property_details.title">Property Details</title>
+    <refsect2 role="property" id="eggdbus-property-org.freedesktop.PolicyKit1.Authority:BackendName">
+      <title>The "BackendName" property</title>
+    <programlisting>
+BackendName     readable     String
+    </programlisting>
+    <para>
+The name of the currently used Authority backend.
+    </para>
+    </refsect2>
+    <refsect2 role="property" id="eggdbus-property-org.freedesktop.PolicyKit1.Authority:BackendVersion">
+      <title>The "BackendVersion" property</title>
+    <programlisting>
+BackendVersion     readable     String
+    </programlisting>
+    <para>
+The version of the currently used Authority backend.
+    </para>
+    </refsect2>
+    <refsect2 role="property" id="eggdbus-property-org.freedesktop.PolicyKit1.Authority:BackendFeatures">
+      <title>The "BackendFeatures" property</title>
+    <programlisting>
+BackendFeatures     readable     <link linkend="eggdbus-enum-AuthorityFeatures">AuthorityFeatures</link>
+    </programlisting>
+    <para>
+The features supported by the currently used Authority backend.
+    </para>
+    </refsect2>
+  </refsect1>
+</refentry>
