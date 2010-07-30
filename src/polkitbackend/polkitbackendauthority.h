@@ -329,10 +329,12 @@ gboolean polkit_backend_authority_remove_lockdown_for_action_finish (PolkitBacke
 
 PolkitBackendAuthority *polkit_backend_authority_get (void);
 
-gboolean polkit_backend_register_authority (PolkitBackendAuthority   *authority,
-                                            const gchar              *well_known_name,
+gpointer polkit_backend_authority_register (PolkitBackendAuthority   *authority,
+                                            GDBusConnection          *connection,
                                             const gchar              *object_path,
                                             GError                  **error);
+
+void polkit_backend_authority_unregister (gpointer registration_id);
 
 G_END_DECLS
 

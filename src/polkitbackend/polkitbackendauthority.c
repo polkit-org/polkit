@@ -657,11 +657,10 @@ typedef struct
 
   PolkitBackendAuthority *authority;
 
-  GDBusConnection *system_bus;
+  GDBusConnection *connection;
 
   gulong authority_changed_id;
 
-  gchar *well_known_name;
   gchar *object_path;
 
   GHashTable *cancellation_id_to_check_auth_data;
@@ -670,21 +669,18 @@ typedef struct
 static void
 server_free (Server *server)
 {
-  g_free (server->well_known_name);
   g_free (server->object_path);
-
-  /* TODO: release well_known_name if not NULL */
 
   //g_signal_handler_disconnect (server->bus, server->name_owner_changed_id);
 
   if (server->authority_registration_id > 0)
-    g_dbus_connection_unregister_object (server->system_bus, server->authority_registration_id);
+    g_dbus_connection_unregister_object (server->connection, server->authority_registration_id);
 
   if (server->name_owner_changed_signal_id > 0)
-    g_dbus_connection_signal_unsubscribe (server->system_bus, server->name_owner_changed_signal_id);
+    g_dbus_connection_signal_unsubscribe (server->connection, server->name_owner_changed_signal_id);
 
-  if (server->system_bus != NULL)
-    g_object_unref (server->system_bus);
+  if (server->connection != NULL)
+    g_object_unref (server->connection);
 
   if (server->introspection_info != NULL)
     g_dbus_node_info_unref (server->introspection_info);
@@ -694,6 +690,8 @@ server_free (Server *server)
 
   if (server->cancellation_id_to_check_auth_data != NULL)
     g_hash_table_unref (server->cancellation_id_to_check_auth_data);
+
+  g_object_unref (server->authority);
 
   g_free (server);
 }
@@ -706,7 +704,7 @@ on_authority_changed (PolkitBackendAuthority *authority,
   GError *error;
 
   error = NULL;
-  if (!g_dbus_connection_emit_signal (server->system_bus,
+  if (!g_dbus_connection_emit_signal (server->connection,
                                       NULL, /* destination bus name */
                                       server->object_path,
                                       "org.freedesktop.PolicyKit1.Authority",
@@ -717,14 +715,6 @@ on_authority_changed (PolkitBackendAuthority *authority,
       g_warning ("Error emitting Changed() signal: %s", error->message);
       g_error_free (error);
     }
-}
-
-static void
-authority_died (gpointer user_data,
-                GObject *where_the_object_was)
-{
-  Server *server = user_data;
-  server_free (server);
 }
 
 static const gchar *server_introspection_data =
@@ -1455,19 +1445,32 @@ static const GDBusInterfaceVTable server_vtable =
 };
 
 /**
- * polkit_backend_register_authority:
+ * polkit_backend_authority_unregister:
+ * @registration_id: A #gpointer obtained from polkit_backend_authority_register().
+ *
+ * Unregisters a #PolkitBackendAuthority registered with polkit_backend_authority_register().
+ */
+void
+polkit_backend_authority_unregister (gpointer registration_id)
+{
+  Server *server = registration_id;
+  server_free (server);
+}
+
+/**
+ * polkit_backend_authority_register:
+ * @connection: The #GDBusConnection to register the authority on.
  * @authority: A #PolkitBackendAuthority.
- * @well_known_name: Well-known name to claim on the system bus or %NULL to not claim a well-known name.
  * @object_path: Object path of the authority.
  * @error: Return location for error.
  *
- * Registers @authority on the system message bus.
+ * Registers @authority on a #GDBusConnection.
  *
- * Returns: %TRUE if @authority was registered, %FALSE if @error is set.
- **/
-gboolean
-polkit_backend_register_authority (PolkitBackendAuthority   *authority,
-                                   const gchar              *well_known_name,
+ * Returns: A #gpointer that can be used with polkit_backend_authority_unregister() or %NULL if @error is set.
+ */
+gpointer
+polkit_backend_authority_register (PolkitBackendAuthority   *authority,
+                                   GDBusConnection          *connection,
                                    const gchar              *object_path,
                                    GError                  **error)
 {
@@ -1477,18 +1480,14 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
 
   server->cancellation_id_to_check_auth_data = g_hash_table_new (g_str_hash, g_str_equal);
 
-  server->system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, error);
-  if (server->system_bus == NULL)
-    goto error;
-
-  server->well_known_name = g_strdup (well_known_name);
+  server->connection = g_object_ref (connection);
   server->object_path = g_strdup (object_path);
 
   server->introspection_info = g_dbus_node_info_new_for_xml (server_introspection_data, error);
   if (server->introspection_info == NULL)
       goto error;
 
-  server->authority_registration_id = g_dbus_connection_register_object (server->system_bus,
+  server->authority_registration_id = g_dbus_connection_register_object (server->connection,
                                                                          object_path,
                                                                          g_dbus_node_info_lookup_interface (server->introspection_info, "org.freedesktop.PolicyKit1.Authority"),
                                                                          &server_vtable,
@@ -1500,46 +1499,8 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
       goto error;
     }
 
-  if (well_known_name != NULL)
-    {
-      GVariant *result;
-      guint32 request_name_result;
-
-      /* TODO: use g_bus_own_name() instead */
-      result = g_dbus_connection_call_sync (server->system_bus,
-                                            "org.freedesktop.DBus",  /* name */
-                                            "/org/freedesktop/DBus", /* path */
-                                            "org.freedesktop.DBus",  /* interface */
-                                            "RequestName",
-                                            g_variant_new ("(su)", well_known_name, 0),
-                                            G_VARIANT_TYPE ("(u)"),
-                                            G_DBUS_CALL_FLAGS_NONE,
-                                            -1,
-                                            NULL, /* GCancellable */
-                                            error);
-      if (result == NULL)
-        {
-          g_prefix_error (error,
-                          "Could not become primary name owner for `%s'. RequestName() failed with: ",
-                          well_known_name);
-          goto error;
-        }
-      g_variant_get (result, "(u)", &request_name_result);
-      g_variant_unref (result);
-      if (request_name_result != 1)
-        {
-          g_set_error (error,
-                       POLKIT_ERROR,
-                       POLKIT_ERROR_FAILED,
-                       "Could not become primary name owner for `%s'. RequestName returned %d",
-                       well_known_name,
-                       request_name_result);
-          goto error;
-        }
-    }
-
   server->name_owner_changed_signal_id =
-    g_dbus_connection_signal_subscribe (server->system_bus,
+    g_dbus_connection_signal_subscribe (server->connection,
                                         "org.freedesktop.DBus",   /* sender */
                                         "org.freedesktop.DBus",   /* interface */
                                         "NameOwnerChanged",       /* member */
@@ -1550,21 +1511,18 @@ polkit_backend_register_authority (PolkitBackendAuthority   *authority,
                                         server,
                                         NULL); /* GDestroyNotify */
 
-  server->authority = authority;
+  server->authority = g_object_ref (authority);
 
   server->authority_changed_id = g_signal_connect (server->authority,
                                                    "changed",
                                                    G_CALLBACK (on_authority_changed),
                                                    server);
 
-  /* take a weak ref and kill server when listener dies */
-  g_object_weak_ref (G_OBJECT (server->authority), authority_died, server);
-
-  return TRUE;
+  return server;
 
  error:
   server_free (server);
-  return FALSE;
+  return NULL;
 }
 
 

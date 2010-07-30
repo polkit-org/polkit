@@ -109,7 +109,7 @@ polkit_authorization_result_new (gboolean                   is_authorized,
   authorization_result = POLKIT_AUTHORIZATION_RESULT (g_object_new (POLKIT_TYPE_AUTHORIZATION_RESULT, NULL));
   authorization_result->is_authorized = is_authorized;
   authorization_result->is_challenge = is_challenge;
-  authorization_result->details = g_object_ref (details);
+  authorization_result->details = details != NULL ? g_object_ref (details) : NULL;
 
   return authorization_result;
 }
