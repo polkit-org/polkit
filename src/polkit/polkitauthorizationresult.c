@@ -45,7 +45,8 @@ struct _PolkitAuthorizationResult
 {
   GObject parent_instance;
 
-  _PolkitAuthorizationResult *real;
+  gboolean is_authorized;
+  gboolean is_challenge;
 
   PolkitDetails *details;
 };
@@ -69,7 +70,6 @@ polkit_authorization_result_finalize (GObject *object)
 
   authorization_result = POLKIT_AUTHORIZATION_RESULT (object);
 
-  g_object_unref (authorization_result->real);
   if (authorization_result->details != NULL)
     g_object_unref (authorization_result->details);
 
@@ -83,24 +83,6 @@ polkit_authorization_result_class_init (PolkitAuthorizationResultClass *klass)
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
   gobject_class->finalize = polkit_authorization_result_finalize;
-}
-
-PolkitAuthorizationResult  *
-polkit_authorization_result_new_for_real (_PolkitAuthorizationResult *real)
-{
-  PolkitAuthorizationResult *authorization_result;
-
-  authorization_result = POLKIT_AUTHORIZATION_RESULT (g_object_new (POLKIT_TYPE_AUTHORIZATION_RESULT, NULL));
-
-  authorization_result->real = g_object_ref (real);
-
-  return authorization_result;
-}
-
-_PolkitAuthorizationResult *
-polkit_authorization_result_get_real (PolkitAuthorizationResult  *authorization_result)
-{
-  return g_object_ref (authorization_result->real);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -123,33 +105,11 @@ polkit_authorization_result_new (gboolean                   is_authorized,
                                  PolkitDetails             *details)
 {
   PolkitAuthorizationResult *authorization_result;
-  _PolkitAuthorizationResult *real;
-  EggDBusHashMap *real_details;
 
-  real_details = egg_dbus_hash_map_new (G_TYPE_STRING, g_free, G_TYPE_STRING, g_free);
-  if (details != NULL)
-    {
-      GHashTable *hash;
-      GHashTableIter iter;
-      gpointer key, value;
-
-      hash = polkit_details_get_hash (details);
-      if (hash != NULL)
-        {
-          g_hash_table_iter_init (&iter, hash);
-          while (g_hash_table_iter_next (&iter, &key, &value))
-            {
-              egg_dbus_hash_map_insert (real_details, g_strdup (key), g_strdup (value));
-            }
-        }
-    }
-
-  real = _polkit_authorization_result_new (is_authorized, is_challenge, real_details);
-  g_object_unref (real_details);
-
-  authorization_result = polkit_authorization_result_new_for_real (real);
-
-  g_object_unref (real);
+  authorization_result = POLKIT_AUTHORIZATION_RESULT (g_object_new (POLKIT_TYPE_AUTHORIZATION_RESULT, NULL));
+  authorization_result->is_authorized = is_authorized;
+  authorization_result->is_challenge = is_challenge;
+  authorization_result->details = g_object_ref (details);
 
   return authorization_result;
 }
@@ -168,7 +128,7 @@ polkit_authorization_result_new (gboolean                   is_authorized,
 gboolean
 polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result)
 {
-  return _polkit_authorization_result_get_is_authorized (result->real);
+  return result->is_authorized;
 }
 
 /**
@@ -182,7 +142,7 @@ polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result
 gboolean
 polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
 {
-  return _polkit_authorization_result_get_is_challenge (result->real);
+  return result->is_challenge;
 }
 
 /**
@@ -197,16 +157,6 @@ polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
 PolkitDetails *
 polkit_authorization_result_get_details (PolkitAuthorizationResult *result)
 {
-  EggDBusHashMap *real_details;
-
-  if (result->details != NULL)
-    goto out;
-
-  real_details = _polkit_authorization_result_get_details (result->real);
-  if (real_details != NULL)
-    result->details = result->details = polkit_details_new_for_hash (real_details->data);
-
- out:
   return result->details;
 }
 

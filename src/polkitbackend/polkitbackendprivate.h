@@ -22,6 +22,4 @@
 #ifndef __POLKIT_BACKEND_PRIVATE_H
 #define __POLKIT_BACKEND_PRIVATE_H
 
-#include <polkit/_polkitbindings.h>
-
 #endif /* __POLKIT_BACKEND_PRIVATE_H */

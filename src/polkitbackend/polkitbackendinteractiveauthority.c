@@ -419,7 +419,7 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
                             &contents_len,
                             &error))
     {
-      g_warning ("Error openeing `%s': %s",
+      g_warning ("Error opening `%s': %s",
                  filename,
                  error->message);
       g_error_free (error);

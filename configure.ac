@@ -120,13 +120,9 @@ if test "x$GCC" = "xyes"; then
   changequote([,])dnl
 fi
 
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.21.4 gio-2.0 >= 2.21.4])
+PKG_CHECK_MODULES(GLIB, [gio-2.0 >= 2.25.11])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
-
-PKG_CHECK_MODULES(EGG_DBUS, [eggdbus-1 >= 0.6])
-AC_SUBST(EGG_DBUS_CFLAGS)
-AC_SUBST(EGG_DBUS_LIBS)
 
 EXPAT_LIB=""
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],

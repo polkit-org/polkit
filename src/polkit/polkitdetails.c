@@ -102,7 +102,7 @@ polkit_details_new (void)
 }
 
 /* private */
-PolkitDetails *
+static PolkitDetails *
 polkit_details_new_for_hash (GHashTable *hash)
 {
   PolkitDetails *details;
@@ -112,13 +112,6 @@ polkit_details_new_for_hash (GHashTable *hash)
     details->hash = g_hash_table_ref (hash);
 
   return details;
-}
-
-/* private */
-GHashTable *
-polkit_details_get_hash (PolkitDetails *details)
-{
-  return details->hash;
 }
 
 /**
