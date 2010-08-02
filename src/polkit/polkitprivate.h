@@ -40,7 +40,8 @@ PolkitIdentity *polkit_identity_new_for_gvariant (GVariant *variant, GError **er
 PolkitAuthorizationResult  *polkit_authorization_result_new_for_gvariant (GVariant *value);
 GVariant *polkit_authorization_result_to_gvariant (PolkitAuthorizationResult *authorization_result);
 
-PolkitTemporaryAuthorization *polkit_temporary_authorization_new_for_gvariant (GVariant *value);
+PolkitTemporaryAuthorization *polkit_temporary_authorization_new_for_gvariant (GVariant *value,
+                                                                               GError   **error);
 GVariant *polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization);
 
 GVariant *polkit_details_to_gvariant (PolkitDetails *details);

@@ -186,10 +186,31 @@ polkit_temporary_authorization_get_time_expires (PolkitTemporaryAuthorization *a
 }
 
 PolkitTemporaryAuthorization *
-polkit_temporary_authorization_new_for_gvariant (GVariant *value)
+polkit_temporary_authorization_new_for_gvariant (GVariant  *value,
+                                                 GError   **error)
 {
-  g_assert_not_reached ();
-  return NULL;
+  PolkitTemporaryAuthorization *authorization;
+  GVariant *subject_gvariant;
+
+  authorization = POLKIT_TEMPORARY_AUTHORIZATION (g_object_new (POLKIT_TYPE_TEMPORARY_AUTHORIZATION, NULL));
+  g_variant_get (value,
+                 "(ss@(sa{sv})tt)",
+                 &authorization->id,
+                 &authorization->action_id,
+                 &subject_gvariant,
+                 &authorization->time_obtained,
+                 &authorization->time_expires);
+  authorization->subject = polkit_subject_new_for_gvariant (subject_gvariant, error);
+  if (authorization->subject == NULL)
+    {
+      g_object_unref (authorization);
+      authorization = NULL;
+      goto out;
+    }
+
+ out:
+  g_variant_unref (subject_gvariant);
+  return authorization;
 }
 
 GVariant *
