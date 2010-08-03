@@ -98,10 +98,6 @@ struct _PolkitBackendAuthority
  * authorization identified by id or %NULL if the backend doesn't support
  * the operation. See polkit_backend_authority_revoke_temporary_authorization_by_id()
  * for details.
- * @add_lockdown_for_action: Called to add lock down for an action. See polkit_backend_authority_add_lockdown_for_action() for details. Can be %NULL if not supported by the backend.
- * @add_lockdown_for_action_finish: Called to finish adding lock down for an an action. See polkit_backend_authority_add_lockdown_for_action_finish() for details. Can be %NULL if not supported by the backend.
- * @remove_lockdown_for_action: Called when removing lock down for an action. See polkit_backend_authority_remove_lockdown_for_action() for details. Can be %NULL if not supported by the backend.
- * @remove_lockdown_for_action_finish: Called to finish removing lock down for an action. See polkit_backend_authority_remove_lockdown_for_action_finish() for details. Can be %NULL if not supported by the backend.
  * @system_bus_name_owner_changed: temporary VFunc, to be removed before API is declared stable.
  *
  * VFuncs that authority backends need to implement.
@@ -172,26 +168,6 @@ struct _PolkitBackendAuthorityClass
                                                     PolkitSubject            *caller,
                                                     const gchar              *id,
                                                     GError                  **error);
-
-  void (*add_lockdown_for_action) (PolkitBackendAuthority  *authority,
-                                   PolkitSubject           *caller,
-                                   const gchar             *action_id,
-                                   GAsyncReadyCallback      callback,
-                                   gpointer                 user_data);
-
-  gboolean (*add_lockdown_for_action_finish) (PolkitBackendAuthority  *authority,
-                                              GAsyncResult            *res,
-                                              GError                 **error);
-
-  void (*remove_lockdown_for_action) (PolkitBackendAuthority  *authority,
-                                      PolkitSubject           *caller,
-                                      const gchar             *action_id,
-                                      GAsyncReadyCallback      callback,
-                                      gpointer                 user_data);
-
-  gboolean (*remove_lockdown_for_action_finish) (PolkitBackendAuthority  *authority,
-                                                 GAsyncResult            *res,
-                                                 GError                 **error);
 
   /* TODO: need something more efficient such that we don't watch all name changes */
   void (*system_bus_name_owner_changed)  (PolkitBackendAuthority   *authority,
@@ -304,26 +280,6 @@ gboolean polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBa
                                                                         PolkitSubject            *caller,
                                                                         const gchar              *id,
                                                                         GError                  **error);
-
-void polkit_backend_authority_add_lockdown_for_action (PolkitBackendAuthority  *authority,
-                                                       PolkitSubject           *caller,
-                                                       const gchar             *action_id,
-                                                       GAsyncReadyCallback      callback,
-                                                       gpointer                 user_data);
-
-gboolean polkit_backend_authority_add_lockdown_for_action_finish (PolkitBackendAuthority  *authority,
-                                                                  GAsyncResult            *res,
-                                                                  GError                 **error);
-
-void polkit_backend_authority_remove_lockdown_for_action (PolkitBackendAuthority  *authority,
-                                                          PolkitSubject           *caller,
-                                                          const gchar             *action_id,
-                                                          GAsyncReadyCallback      callback,
-                                                          gpointer                 user_data);
-
-gboolean polkit_backend_authority_remove_lockdown_for_action_finish (PolkitBackendAuthority  *authority,
-                                                                     GAsyncResult            *res,
-                                                                     GError                 **error);
 
 /* --- */
 

@@ -42,8 +42,6 @@ Structure    <link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuth
                                   OUT Array&lt;<link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link>&gt;  temporary_authorizations)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RevokeTemporaryAuthorizations">RevokeTemporaryAuthorizations</link>    (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RevokeTemporaryAuthorizationById">RevokeTemporaryAuthorizationById</link> (IN  String                         id)
-<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">AddLockdownForAction</link>             (IN  String                         action_id)
-<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RemoveLockdownForAction">RemoveLockdownForAction</link>          (IN  String                         action_id)
     </synopsis>
   </refsynopsisdiv>
   <refsect1 role="signal_proto" id="eggdbus-if-signals-org.freedesktop.PolicyKit1.Authority">
@@ -232,8 +230,7 @@ The passed <parameter>cancellation_id</parameter> is already in use.
           <programlisting>
 {
   None                   = 0x00000000,
-  TemporaryAuthorization = 0x00000001,
-  Lockdown               = 0x00000002
+  TemporaryAuthorization = 0x00000001
 }
           </programlisting>
           <para>
@@ -253,14 +250,6 @@ No flags set.
     <listitem>
       <para>
 The authority supports temporary authorizations that can be obtained through authentication.
-      </para>
-    </listitem>
-  </varlistentry>
-  <varlistentry id="eggdbus-constant-AuthorityFeatures.Lockdown" role="constant">
-    <term><literal>Lockdown</literal></term>
-    <listitem>
-      <para>
-The authority supports the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">AddLockdownForAction()</link> and <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RemoveLockdownForAction">RemoveLockdownForAction()</link> methods.
       </para>
     </listitem>
   </varlistentry>
@@ -472,7 +461,7 @@ TRUE if the given <link linkend="eggdbus-struct-Subject">Subject</link> could be
     <term><literal>Dict&lt;String,String&gt; <structfield>details</structfield></literal></term>
     <listitem>
       <para>
-Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id), <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE)) and <literal>polkit.lockdown</literal> (set to a non-empty string if the action is locked down).
+Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id), <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE)).
       </para>
     </listitem>
   </varlistentry>
@@ -806,44 +795,6 @@ Revokes all temporary authorizations that applies to <parameter>subject</paramet
     <listitem>
       <para>
 The opaque identifier of the temporary authorization.
-      </para>
-    </listitem>
-  </varlistentry>
-</variablelist>
-    </refsect2>
-    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">
-      <title>AddLockdownForAction ()</title>
-    <programlisting>
-AddLockdownForAction (IN  String  action_id)
-    </programlisting>
-    <para>
-Locks down an action so administrator authentication is always needed to obtain a temporary authorization for the action.
-    </para>
-<variablelist role="params">
-  <varlistentry>
-    <term><literal>IN  String <parameter>action_id</parameter></literal>:</term>
-    <listitem>
-      <para>
-Identifier for the action.
-      </para>
-    </listitem>
-  </varlistentry>
-</variablelist>
-    </refsect2>
-    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RemoveLockdownForAction">
-      <title>RemoveLockdownForAction ()</title>
-    <programlisting>
-RemoveLockdownForAction (IN  String  action_id)
-    </programlisting>
-    <para>
-Removes the effect of a previous <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AddLockdownForAction">AddLockdownForAction()</link> call.
-    </para>
-<variablelist role="params">
-  <varlistentry>
-    <term><literal>IN  String <parameter>action_id</parameter></literal>:</term>
-    <listitem>
-      <para>
-Identifier for the action.
       </para>
     </listitem>
   </varlistentry>

@@ -498,154 +498,6 @@ polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuth
     }
 }
 
-/**
- * polkit_backend_authority_add_lockdown_for_action:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that called the method.
- * @action_id: The action id.
- * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
- * @user_data: The data to pass to @callback.
- *
- * Asynchronously add locks down for @action_id.
- *
- * When the operation is finished, @callback will be invoked. You can
- * then call polkit_backend_authority_add_lockdown_for_action_finish()
- * to get the result of the operation.
- */
-void
-polkit_backend_authority_add_lockdown_for_action (PolkitBackendAuthority  *authority,
-                                                  PolkitSubject           *caller,
-                                                  const gchar             *action_id,
-                                                  GAsyncReadyCallback      callback,
-                                                  gpointer                 user_data)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->add_lockdown_for_action == NULL)
-    {
-      GSimpleAsyncResult *simple;
-
-      simple = g_simple_async_result_new_error (G_OBJECT (authority),
-                                                callback,
-                                                user_data,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_NOT_SUPPORTED,
-                                                "Operation not supported");
-      g_simple_async_result_complete (simple);
-      g_object_unref (simple);
-    }
-  else
-    {
-      klass->add_lockdown_for_action (authority, caller, action_id, callback, user_data);
-    }
-}
-
-/**
- * polkit_backend_authority_add_lockdown_for_action_finish:
- * @authority: A #PolkitBackendAuthority.
- * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
- *
- * Finishes adding lock down for an action.
- *
- * Returns: %TRUE if the operation succeeded or, %FALE if @error is set.
- */
-gboolean
-polkit_backend_authority_add_lockdown_for_action_finish (PolkitBackendAuthority  *authority,
-                                                         GAsyncResult            *res,
-                                                         GError                 **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->add_lockdown_for_action_finish == NULL)
-    {
-      g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error);
-      return FALSE;
-    }
-  else
-    {
-      return klass->add_lockdown_for_action_finish (authority, res, error);
-    }
-}
-
-/**
- * polkit_backend_authority_remove_lockdown_for_action:
- * @authority: A #PolkitBackendAuthority.
- * @caller: The system bus name that called the method.
- * @action_id: The action id.
- * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
- * @user_data: The data to pass to @callback.
- *
- * Asynchronously remove locks down for @action_id.
- *
- * When the operation is finished, @callback will be invoked. You can
- * then call polkit_backend_authority_remove_lockdown_for_action_finish()
- * to get the result of the operation.
- */
-void
-polkit_backend_authority_remove_lockdown_for_action (PolkitBackendAuthority  *authority,
-                                                     PolkitSubject           *caller,
-                                                     const gchar             *action_id,
-                                                     GAsyncReadyCallback      callback,
-                                                     gpointer                 user_data)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->remove_lockdown_for_action == NULL)
-    {
-      GSimpleAsyncResult *simple;
-
-      simple = g_simple_async_result_new_error (G_OBJECT (authority),
-                                                callback,
-                                                user_data,
-                                                POLKIT_ERROR,
-                                                POLKIT_ERROR_NOT_SUPPORTED,
-                                                "Operation not supported");
-      g_simple_async_result_complete (simple);
-      g_object_unref (simple);
-    }
-  else
-    {
-      klass->remove_lockdown_for_action (authority, caller, action_id, callback, user_data);
-    }
-}
-
-/**
- * polkit_backend_authority_remove_lockdown_for_action_finish:
- * @authority: A #PolkitBackendAuthority.
- * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
- *
- * Finishes removing lock down for an action.
- *
- * Returns: %TRUE if the operation succeeded or, %FALE if @error is set.
- */
-gboolean
-polkit_backend_authority_remove_lockdown_for_action_finish (PolkitBackendAuthority  *authority,
-                                                            GAsyncResult            *res,
-                                                            GError                 **error)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->remove_lockdown_for_action_finish == NULL)
-    {
-      g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error);
-      return FALSE;
-    }
-  else
-    {
-      return klass->remove_lockdown_for_action_finish (authority, res, error);
-    }
-}
-
 /* ---------------------------------------------------------------------------------------------------- */
 
 typedef struct
@@ -757,12 +609,6 @@ static const gchar *server_introspection_data =
   "    </method>"
   "    <method name='RevokeTemporaryAuthorizationById'>"
   "      <arg type='s' name='id' direction='in'/>"
-  "    </method>"
-  "    <method name='AddLockdownForAction'>"
-  "      <arg type='s' name='action_id' direction='in'/>"
-  "    </method>"
-  "    <method name='RemoveLockdownForAction'>"
-  "      <arg type='s' name='action_id' direction='in'/>"
   "    </method>"
   "    <signal name='Changed'/>"
   "    <property type='s' name='BackendName' access='read'/>"
@@ -1280,7 +1126,7 @@ server_handle_revoke_temporary_authorization_by_id (Server                 *serv
   const gchar *id;
 
   g_variant_get (parameters,
-                 "(@s)",
+                 "(&s)",
                  &id);
 
   error = NULL;
@@ -1298,36 +1144,6 @@ server_handle_revoke_temporary_authorization_by_id (Server                 *serv
 
  out:
   ;
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-server_handle_add_lockdown_for_action (Server                 *server,
-                                       GVariant               *parameters,
-                                       PolkitSubject          *caller,
-                                       GDBusMethodInvocation  *invocation)
-{
-  /* TODO: probably want to nuke this method so don't implement now */
-  g_dbus_method_invocation_return_error (invocation,
-                                         POLKIT_ERROR,
-                                         POLKIT_ERROR_NOT_SUPPORTED,
-                                         "Operation is not supported");
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
-static void
-server_handle_remove_lockdown_for_action (Server                 *server,
-                                          GVariant               *parameters,
-                                          PolkitSubject          *caller,
-                                          GDBusMethodInvocation  *invocation)
-{
-  /* TODO: probably want to nuke this method so don't implement now */
-  g_dbus_method_invocation_return_error (invocation,
-                                         POLKIT_ERROR,
-                                         POLKIT_ERROR_NOT_SUPPORTED,
-                                         "Operation is not supported");
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1365,10 +1181,6 @@ server_handle_method_call (GDBusConnection        *connection,
     server_handle_revoke_temporary_authorizations (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "RevokeTemporaryAuthorizationById") == 0)
     server_handle_revoke_temporary_authorization_by_id (server, parameters, caller, invocation);
-  else if (g_strcmp0 (method_name, "AddLockdownForAction") == 0)
-    server_handle_add_lockdown_for_action (server, parameters, caller, invocation);
-  else if (g_strcmp0 (method_name, "RemoveLockdownForAction") == 0)
-    server_handle_remove_lockdown_for_action (server, parameters, caller, invocation);
   else
     g_assert_not_reached ();
 

@@ -227,32 +227,6 @@ polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationR
   return ret;
 }
 
-/**
- * polkit_authorization_result_get_locked_down:
- * @result: A #PolkitAuthorizationResult.
- *
- * Gets whether the action is locked down via
- * e.g. polkit_authority_add_lockdown_for_action().
- *
- * This method simply reads the value of the key/value pair in @details with the
- * key <literal>polkit.lockdown</literal>.
- *
- * Returns: %TRUE if the action for the authorization is locked down.
- */
-gboolean
-polkit_authorization_result_get_locked_down (PolkitAuthorizationResult *result)
-{
-  gboolean ret;
-  PolkitDetails *details;
-
-  ret = FALSE;
-  details = polkit_authorization_result_get_details (result);
-  if (details != NULL && polkit_details_lookup (details, "polkit.lockdown") != NULL)
-    ret = TRUE;
-
-  return ret;
-}
-
 PolkitAuthorizationResult *
 polkit_authorization_result_new_for_gvariant (GVariant *value)
 {
