@@ -115,10 +115,10 @@ static void authentication_session_cancel (AuthenticationSession *session);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
-                                                                          const gchar              *name,
-                                                                          const gchar              *old_owner,
-                                                                          const gchar              *new_owner);
+static void polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBackendInteractiveAuthority   *authority,
+                                                                                const gchar              *name,
+                                                                                const gchar              *old_owner,
+                                                                                const gchar              *new_owner);
 
 static GList *polkit_backend_interactive_authority_enumerate_actions  (PolkitBackendAuthority   *authority,
                                                                  PolkitSubject            *caller,
@@ -197,6 +197,8 @@ typedef struct
 
   GHashTable *hash_session_to_authentication_agent;
 
+  GDBusConnection *system_bus_connection;
+  guint name_owner_changed_signal_id;
 } PolkitBackendInteractiveAuthorityPrivate;
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -216,6 +218,35 @@ action_pool_changed (PolkitBackendActionPool *action_pool,
   g_signal_emit_by_name (authority, "changed");
 }
 
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+on_name_owner_changed_signal (GDBusConnection *connection,
+                              const gchar     *sender_name,
+                              const gchar     *object_path,
+                              const gchar     *interface_name,
+                              const gchar     *signal_name,
+                              GVariant        *parameters,
+                              gpointer         user_data)
+{
+  PolkitBackendInteractiveAuthority *authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (user_data);
+  const gchar *name;
+  const gchar *old_owner;
+  const gchar *new_owner;
+
+  g_variant_get (parameters,
+                 "(&s&s&s)",
+                 &name,
+                 &old_owner,
+                 &new_owner);
+
+  polkit_backend_interactive_authority_system_bus_name_owner_changed (authority,
+                                                                      name,
+                                                                      old_owner,
+                                                                      new_owner);
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
@@ -231,6 +262,7 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
   GFile *directory;
+  GError *error;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
@@ -254,6 +286,29 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
                     "changed",
                     G_CALLBACK (on_session_monitor_changed),
                     authority);
+
+  error = NULL;
+  priv->system_bus_connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, &error);
+  if (priv->system_bus_connection == NULL)
+    {
+      g_warning ("Error getting system bus: %s", error->message);
+      g_error_free (error);
+    }
+  else
+    {
+      /* TODO: this is a bit inefficient */
+      priv->name_owner_changed_signal_id =
+        g_dbus_connection_signal_subscribe (priv->system_bus_connection,
+                                            "org.freedesktop.DBus",   /* sender */
+                                            "org.freedesktop.DBus",   /* interface */
+                                            "NameOwnerChanged",       /* member */
+                                            "/org/freedesktop/DBus",  /* path */
+                                            NULL,                     /* arg0 */
+                                            G_DBUS_SIGNAL_FLAGS_NONE,
+                                            on_name_owner_changed_signal,
+                                            authority,
+                                            NULL); /* GDestroyNotify */
+    }
 }
 
 static void
@@ -264,6 +319,12 @@ polkit_backend_interactive_authority_finalize (GObject *object)
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (object);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+
+  if (priv->name_owner_changed_signal_id > 0)
+    g_dbus_connection_signal_unsubscribe (priv->system_bus_connection, priv->name_owner_changed_signal_id);
+
+  if (priv->system_bus_connection != NULL)
+    g_object_unref (priv->system_bus_connection);
 
   if (priv->action_pool != NULL)
     g_object_unref (priv->action_pool);
@@ -310,7 +371,6 @@ polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthori
   authority_class->get_name                        = polkit_backend_interactive_authority_get_name;
   authority_class->get_version                     = polkit_backend_interactive_authority_get_version;
   authority_class->get_features                    = polkit_backend_interactive_authority_get_features;
-  authority_class->system_bus_name_owner_changed   = polkit_backend_interactive_authority_system_bus_name_owner_changed;
   authority_class->enumerate_actions               = polkit_backend_interactive_authority_enumerate_actions;
   authority_class->check_authorization             = polkit_backend_interactive_authority_check_authorization;
   authority_class->check_authorization_finish      = polkit_backend_interactive_authority_check_authorization_finish;
@@ -2122,10 +2182,10 @@ polkit_backend_interactive_authority_authentication_agent_response (PolkitBacken
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
-polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
-                                                              const gchar              *name,
-                                                              const gchar              *old_owner,
-                                                              const gchar              *new_owner)
+polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBackendInteractiveAuthority *authority,
+                                                                    const gchar                       *name,
+                                                                    const gchar                       *old_owner,
+                                                                    const gchar                       *new_owner)
 {
   PolkitBackendInteractiveAuthority *interactive_authority;
   PolkitBackendInteractiveAuthorityPrivate *priv;

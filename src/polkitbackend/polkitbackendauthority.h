@@ -98,7 +98,6 @@ struct _PolkitBackendAuthority
  * authorization identified by id or %NULL if the backend doesn't support
  * the operation. See polkit_backend_authority_revoke_temporary_authorization_by_id()
  * for details.
- * @system_bus_name_owner_changed: temporary VFunc, to be removed before API is declared stable.
  *
  * VFuncs that authority backends need to implement.
  */
@@ -169,12 +168,6 @@ struct _PolkitBackendAuthorityClass
                                                     const gchar              *id,
                                                     GError                  **error);
 
-  /* TODO: need something more efficient such that we don't watch all name changes */
-  void (*system_bus_name_owner_changed)  (PolkitBackendAuthority   *authority,
-                                          const gchar              *name,
-                                          const gchar              *old_owner,
-                                          const gchar              *new_owner);
-
   /*< private >*/
   /* Padding for future expansion */
   void (*_polkit_reserved1) (void);
@@ -222,11 +215,6 @@ PolkitAuthorityFeatures  polkit_backend_authority_get_features (PolkitBackendAut
 void     polkit_backend_authority_log (PolkitBackendAuthority *authority,
                                        const gchar *format,
                                        ...);
-
-void     polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
-                                                                 const gchar              *name,
-                                                                 const gchar              *old_owner,
-                                                                 const gchar              *new_owner);
 
 GList   *polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,

@@ -81,20 +81,6 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
                                           0);
 }
 
-void
-polkit_backend_authority_system_bus_name_owner_changed (PolkitBackendAuthority   *authority,
-                                                        const gchar              *name,
-                                                        const gchar              *old_owner,
-                                                        const gchar              *new_owner)
-{
-  PolkitBackendAuthorityClass *klass;
-
-  klass = POLKIT_BACKEND_AUTHORITY_GET_CLASS (authority);
-
-  if (klass->system_bus_name_owner_changed != NULL)
-    klass->system_bus_name_owner_changed (authority, name, old_owner, new_owner);
-}
-
 /**
  * polkit_backend_authority_get_name:
  * @authority: A #PolkitBackendAuthority.
@@ -503,7 +489,6 @@ polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuth
 typedef struct
 {
   guint authority_registration_id;
-  guint name_owner_changed_signal_id;
 
   GDBusNodeInfo *introspection_info;
 
@@ -523,13 +508,8 @@ server_free (Server *server)
 {
   g_free (server->object_path);
 
-  //g_signal_handler_disconnect (server->bus, server->name_owner_changed_id);
-
   if (server->authority_registration_id > 0)
     g_dbus_connection_unregister_object (server->connection, server->authority_registration_id);
-
-  if (server->name_owner_changed_signal_id > 0)
-    g_dbus_connection_signal_unsubscribe (server->connection, server->name_owner_changed_signal_id);
 
   if (server->connection != NULL)
     g_object_unref (server->connection);
@@ -1221,34 +1201,6 @@ server_handle_get_property (GDBusConnection  *connection,
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
-server_on_name_owner_changed_signal (GDBusConnection *connection,
-                                     const gchar     *sender_name,
-                                     const gchar     *object_path,
-                                     const gchar     *interface_name,
-                                     const gchar     *signal_name,
-                                     GVariant        *parameters,
-                                     gpointer         user_data)
-{
-  Server *server = user_data;
-  const gchar *name;
-  const gchar *old_owner;
-  const gchar *new_owner;
-
-  g_variant_get (parameters,
-                 "(&s&s&s)",
-                 &name,
-                 &old_owner,
-                 &new_owner);
-
-  polkit_backend_authority_system_bus_name_owner_changed (server->authority,
-                                                          name,
-                                                          old_owner,
-                                                          new_owner);
-}
-
-/* ---------------------------------------------------------------------------------------------------- */
-
 static const GDBusInterfaceVTable server_vtable =
 {
   server_handle_method_call,
@@ -1310,18 +1262,6 @@ polkit_backend_authority_register (PolkitBackendAuthority   *authority,
     {
       goto error;
     }
-
-  server->name_owner_changed_signal_id =
-    g_dbus_connection_signal_subscribe (server->connection,
-                                        "org.freedesktop.DBus",   /* sender */
-                                        "org.freedesktop.DBus",   /* interface */
-                                        "NameOwnerChanged",       /* member */
-                                        "/org/freedesktop/DBus",  /* path */
-                                        NULL,                     /* arg0 */
-                                        G_DBUS_SIGNAL_FLAGS_NONE,
-                                        server_on_name_owner_changed_signal,
-                                        server,
-                                        NULL); /* GDestroyNotify */
 
   server->authority = g_object_ref (authority);
 
