@@ -260,103 +260,192 @@ polkit_subject_from_string  (const gchar   *str,
   return subject;
 }
 
-PolkitSubject *
-polkit_subject_new_for_real (_PolkitSubject *real)
+GVariant *
+polkit_subject_to_gvariant (PolkitSubject *subject)
 {
-  PolkitSubject *s;
+  GVariantBuilder builder;
+  GVariant *dict;
+  GVariant *ret;
   const gchar *kind;
-  EggDBusHashMap *details;
-  EggDBusVariant *variant;
-  EggDBusVariant *variant2;
 
-  s = NULL;
+  kind = "";
 
-  kind = _polkit_subject_get_subject_kind (real);
-  details = _polkit_subject_get_subject_details (real);
-
-  if (strcmp (kind, "") == 0)
-    {
-      /* explicitly left blank (for subjects that are NULL) */
-    }
-  else if (strcmp (kind, "unix-process") == 0)
-    {
-      variant = egg_dbus_hash_map_lookup (details, "pid");
-      variant2 = egg_dbus_hash_map_lookup (details, "start-time");
-      if (variant != NULL && variant2 != NULL)
-        s = polkit_unix_process_new_full (egg_dbus_variant_get_uint (variant),
-                                          egg_dbus_variant_get_uint64 (variant2));
-    }
-  else if (strcmp (kind, "unix-session") == 0)
-    {
-      variant = egg_dbus_hash_map_lookup (details, "session-id");
-      if (variant != NULL)
-        s = polkit_unix_session_new (egg_dbus_variant_get_string (variant));
-    }
-  else if (strcmp (kind, "system-bus-name") == 0)
-    {
-      variant = egg_dbus_hash_map_lookup (details, "name");
-      if (variant != NULL)
-        s = polkit_system_bus_name_new (egg_dbus_variant_get_string (variant));
-    }
-  else
-    {
-      g_warning ("Unknown subject kind %s:", kind);
-    }
-
-  return s;
-}
-
-_PolkitSubject *
-polkit_subject_get_real (PolkitSubject *subject)
-{
-  _PolkitSubject *real;
-  const gchar *kind;
-  EggDBusHashMap *details;
-
-  real = NULL;
-  kind = NULL;
-  details = egg_dbus_hash_map_new (G_TYPE_STRING, NULL, EGG_DBUS_TYPE_VARIANT, (GDestroyNotify) g_object_unref);
-
-  if (subject == NULL)
-    {
-      kind = "";
-    }
-  else if (POLKIT_IS_UNIX_PROCESS (subject))
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{sv}"));
+  if (POLKIT_IS_UNIX_PROCESS (subject))
     {
       kind = "unix-process";
-      egg_dbus_hash_map_insert (details,
-                                "pid",
-                                egg_dbus_variant_new_for_uint (polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject))));
-      egg_dbus_hash_map_insert (details,
-                                "start-time",
-                                egg_dbus_variant_new_for_uint64 (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject))));
+      g_variant_builder_add (&builder, "{sv}", "pid",
+                             g_variant_new_uint32 (polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject))));
+      g_variant_builder_add (&builder, "{sv}", "start-time",
+                             g_variant_new_uint64 (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject))));
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
       kind = "unix-session";
-      egg_dbus_hash_map_insert (details,
-                                "session-id",
-                                egg_dbus_variant_new_for_string (polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject))));
+      g_variant_builder_add (&builder, "{sv}", "session-id",
+                             g_variant_new_string (polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject))));
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
       kind = "system-bus-name";
-      egg_dbus_hash_map_insert (details,
-                                "name",
-                                egg_dbus_variant_new_for_string (polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject))));
+      g_variant_builder_add (&builder, "{sv}", "name",
+                             g_variant_new_string (polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject))));
     }
   else
     {
       g_warning ("Unknown class %s implementing PolkitSubject", g_type_name (G_TYPE_FROM_INSTANCE (subject)));
     }
 
-  if (kind != NULL)
+  dict = g_variant_builder_end (&builder);
+  ret = g_variant_new ("(s@a{sv})", kind, dict);
+  return ret;
+}
+
+static GVariant *
+lookup_asv (GVariant            *dict,
+            const gchar         *given_key,
+            const GVariantType  *given_type,
+            GError             **error)
+{
+  GVariantIter iter;
+  const gchar *key;
+  GVariant *value;
+  GVariant *ret;
+
+  ret = NULL;
+
+  g_variant_iter_init (&iter, dict);
+  while (g_variant_iter_next (&iter, "{&sv}", &key, &value))
     {
-      real = _polkit_subject_new (kind, details);
+      if (g_strcmp0 (key, given_key) == 0)
+        {
+          if (!g_variant_is_of_type (value, given_type))
+            {
+              gchar *type_string;
+              type_string = g_variant_type_dup_string (given_type);
+              g_set_error (error,
+                           POLKIT_ERROR,
+                           POLKIT_ERROR_FAILED,
+                           "Value for key `%s' found but is of type %s and type %s was expected",
+                           given_key,
+                           g_variant_get_type_string (value),
+                           type_string);
+              g_free (type_string);
+              goto out;
+            }
+          ret = value;
+          goto out;
+        }
+      g_variant_unref (value);
     }
 
-  if (details != NULL)
-    g_object_unref (details);
+ out:
+  if (ret == NULL)
+    {
+      gchar *type_string;
+      type_string = g_variant_type_dup_string (given_type);
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Didn't find value for key `%s' of type %s",
+                   given_key,
+                   type_string);
+      g_free (type_string);
+    }
 
-  return real;
+  return ret;
+}
+
+PolkitSubject *
+polkit_subject_new_for_gvariant (GVariant  *variant,
+                                 GError    **error)
+{
+  PolkitSubject *ret;
+  const gchar *kind;
+  GVariant *details_gvariant;
+
+  ret = NULL;
+
+  g_variant_get (variant,
+                 "(&s@a{sv})",
+                 &kind,
+                 &details_gvariant);
+
+  if (g_strcmp0 (kind, "unix-process") == 0)
+    {
+      GVariant *v;
+      guint32 pid;
+      guint64 start_time;
+
+      v = lookup_asv (details_gvariant, "pid", G_VARIANT_TYPE_UINT32, error);
+      if (v == NULL)
+        {
+          g_prefix_error (error, "Error parsing unix-process subject: ");
+          goto out;
+        }
+      pid = g_variant_get_uint32 (v);
+      g_variant_unref (v);
+
+      v = lookup_asv (details_gvariant, "start-time", G_VARIANT_TYPE_UINT64, error);
+      if (v == NULL)
+        {
+          g_prefix_error (error, "Error parsing unix-process subject: ");
+          goto out;
+        }
+      start_time = g_variant_get_uint64 (v);
+      g_variant_unref (v);
+
+      ret = polkit_unix_process_new_full (pid, start_time);
+    }
+  else if (g_strcmp0 (kind, "unix-session") == 0)
+    {
+      GVariant *v;
+      const gchar *session_id;
+
+      v = lookup_asv (details_gvariant, "session-id", G_VARIANT_TYPE_STRING, error);
+      if (v == NULL)
+        {
+          g_prefix_error (error, "Error parsing unix-session subject: ");
+          goto out;
+        }
+      session_id = g_variant_get_string (v, NULL);
+      ret = polkit_unix_session_new (session_id);
+      g_variant_unref (v);
+    }
+  else if (g_strcmp0 (kind, "system-bus-name") == 0)
+    {
+      GVariant *v;
+      const gchar *name;
+
+      v = lookup_asv (details_gvariant, "name", G_VARIANT_TYPE_STRING, error);
+      if (v == NULL)
+        {
+          g_prefix_error (error, "Error parsing system-bus-name subject: ");
+          goto out;
+        }
+      name = g_variant_get_string (v, NULL);
+      if (!g_dbus_is_unique_name (name))
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Error parsing system-bus-name subject: `%s' is not a valid unique name",
+                       name);
+          goto out;
+        }
+      ret = polkit_system_bus_name_new (name);
+      g_variant_unref (v);
+    }
+  else
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Unknown subject of kind `%s'",
+                   kind);
+    }
+
+ out:
+  g_variant_unref (details_gvariant);
+  return ret;
 }

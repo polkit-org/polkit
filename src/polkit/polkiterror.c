@@ -34,9 +34,22 @@
  * Error codes.
  */
 
+static const GDBusErrorEntry polkit_error_entries[] =
+{
+  {POLKIT_ERROR_FAILED,         "org.freedesktop.PolicyKit1.Error.Failed"},
+  {POLKIT_ERROR_CANCELLED,      "org.freedesktop.PolicyKit1.Error.Cancelled"},
+  {POLKIT_ERROR_NOT_SUPPORTED,  "org.freedesktop.PolicyKit1.Error.NotSupported"},
+  {POLKIT_ERROR_NOT_AUTHORIZED, "org.freedesktop.PolicyKit1.Error.NotAuthorized"},
+};
+
 GQuark
 polkit_error_quark (void)
 {
-  return _polkit_error_quark ();
+  static volatile gsize quark_volatile = 0;
+  g_dbus_error_register_error_domain ("polkit-error-quark",
+                                      &quark_volatile,
+                                      polkit_error_entries,
+                                      G_N_ELEMENTS (polkit_error_entries));
+  G_STATIC_ASSERT (G_N_ELEMENTS (polkit_error_entries) - 1 == POLKIT_ERROR_NOT_AUTHORIZED);
+  return (GQuark) quark_volatile;
 }
-

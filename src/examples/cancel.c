@@ -34,13 +34,23 @@
 
 #include <polkit/polkit.h>
 
+static gboolean
+on_tensec_timeout (gpointer user_data)
+{
+  GMainLoop *loop = user_data;
+  g_print ("Ten seconds has passed. Now exiting.\n");
+  g_main_loop_quit (loop);
+  return FALSE;
+}
+
 static void
 check_authorization_cb (PolkitAuthority *authority,
                         GAsyncResult    *res,
-                        GMainLoop       *loop)
+                        gpointer         user_data)
 {
-  GError *error;
+  GMainLoop *loop = user_data;
   PolkitAuthorizationResult *result;
+  GError *error;
 
   error = NULL;
   result = polkit_authority_check_authorization_finish (authority, res, &error);
@@ -68,7 +78,9 @@ check_authorization_cb (PolkitAuthority *authority,
       g_print ("Authorization result: %s\n", result_str);
     }
 
-  g_main_loop_quit (loop);
+  g_print ("Authorization check has been cancelled and the dialog should now be hidden.\n"
+           "This process will exit in ten seconds.\n");
+  g_timeout_add (10000, on_tensec_timeout, loop);
 }
 
 static gboolean

@@ -102,7 +102,7 @@ polkit_details_new (void)
 }
 
 /* private */
-PolkitDetails *
+static PolkitDetails *
 polkit_details_new_for_hash (GHashTable *hash)
 {
   PolkitDetails *details;
@@ -112,13 +112,6 @@ polkit_details_new_for_hash (GHashTable *hash)
     details->hash = g_hash_table_ref (hash);
 
   return details;
-}
-
-/* private */
-GHashTable *
-polkit_details_get_hash (PolkitDetails *details)
-{
-  return details->hash;
 }
 
 /**
@@ -188,3 +181,43 @@ polkit_details_get_keys (PolkitDetails *details)
 
   return ret;
 }
+
+GVariant *
+polkit_details_to_gvariant (PolkitDetails *details)
+{
+  GVariant *ret;
+  GVariantBuilder builder;
+
+  g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{ss}"));
+  if (details != NULL && details->hash != NULL)
+    {
+      GHashTableIter hash_iter;
+      const gchar *key;
+      const gchar *value;
+
+      g_hash_table_iter_init (&hash_iter, details->hash);
+      while (g_hash_table_iter_next (&hash_iter, (gpointer) &key, (gpointer) &value))
+        g_variant_builder_add (&builder, "{ss}", key, value);
+    }
+  ret = g_variant_builder_end (&builder);
+  return ret;
+}
+
+PolkitDetails *
+polkit_details_new_for_gvariant (GVariant *value)
+{
+  PolkitDetails *ret;
+  GHashTable *hash;
+  GVariantIter iter;
+  gchar *hash_key;
+  gchar *hash_value;
+
+  hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  g_variant_iter_init (&iter, value);
+  while (g_variant_iter_next (&iter, "{ss}", &hash_key, &hash_value))
+    g_hash_table_insert (hash, hash_key, hash_value);
+  ret = polkit_details_new_for_hash (hash);
+  g_hash_table_unref (hash);
+  return ret;
+}
+

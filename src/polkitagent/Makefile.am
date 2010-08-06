@@ -14,7 +14,6 @@ INCLUDES =                                                      \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
-	-DEGG_DBUS_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
         $(NULL)
 
 BUILT_SOURCES = 						\
@@ -52,14 +51,11 @@ libpolkit_agent_1_la_CFLAGS =                                        	\
         -D_POLKIT_COMPILATION                                  		\
 	-D_POLKIT_AGENT_COMPILATION					\
         $(GLIB_CFLAGS)							\
-        $(EGG_DBUS_CFLAGS)						\
         $(NULL)
 
 libpolkit_agent_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
-        $(EGG_DBUS_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
-	$(top_builddir)/src/polkit/libpolkit-private.la			\
 	$(EXPAT_LIBS)							\
         $(NULL)
 

@@ -1,5 +1,6 @@
-/*
- * Copyright (C) 2008 Red Hat, Inc.
+/* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
+/* 
+ * Copyright (C) 2010 Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,7 +20,23 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifndef __POLKIT_BACKEND_PRIVATE_H
-#define __POLKIT_BACKEND_PRIVATE_H
+#ifndef ___G_POSIX_SIGNAL_H__
+#define ___G_POSIX_SIGNAL_H__
 
-#endif /* __POLKIT_BACKEND_PRIVATE_H */
+#include <glib.h>
+
+G_BEGIN_DECLS
+
+typedef gboolean (*_GPosixSignalWatchFunc) (gpointer user_data);
+
+GSource *_g_posix_signal_source_new (gint signum);
+
+guint _g_posix_signal_watch_add (gint                   signum,
+                                 gint                   priority,
+                                 _GPosixSignalWatchFunc function,
+                                 gpointer               user_data,
+                                 GDestroyNotify         notify);
+
+G_END_DECLS
+
+#endif /* ___G_POSIX_SIGNAL_H__ */

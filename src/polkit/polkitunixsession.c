@@ -347,29 +347,59 @@ polkit_unix_session_to_string (PolkitSubject *subject)
   return g_strdup_printf ("unix-session:%s", session->session_id);
 }
 
-static void
-session_exists_cb (GObject      *source_object,
-                   GAsyncResult *res,
-                   gpointer      user_data)
+static gboolean
+polkit_unix_session_exists_sync (PolkitSubject   *subject,
+                                    GCancellable    *cancellable,
+                                    GError         **error)
 {
-  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
-  EggDBusMessage *reply;
-  GError *error;
+  PolkitUnixSession *session = POLKIT_UNIX_SESSION (subject);
+  GDBusConnection *connection;
+  GVariant *result;
+  gboolean ret;
 
+  ret = FALSE;
+
+  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
+  if (connection == NULL)
+    goto out;
+
+  result = g_dbus_connection_call_sync (connection,
+                                        "org.freedesktop.ConsoleKit",           /* name */
+                                        session->session_id,                    /* object path */
+                                        "org.freedesktop.ConsoleKit.Session",   /* interface name */
+                                        "GetUser",                              /* method */
+                                        NULL, /* parameters */
+                                        G_VARIANT_TYPE ("(u)"),
+                                        G_DBUS_CALL_FLAGS_NONE,
+                                        -1,
+                                        cancellable,
+                                        error);
+  if (result == NULL)
+    goto out;
+
+  ret = TRUE;
+  g_variant_unref (result);
+
+ out:
+  if (connection != NULL)
+    g_object_unref (connection);
+  return ret;
+}
+
+static void
+exists_in_thread_func (GSimpleAsyncResult *res,
+                       GObject            *object,
+                       GCancellable       *cancellable)
+{
+  GError *error;
   error = NULL;
-  reply = egg_dbus_connection_send_message_with_reply_finish (EGG_DBUS_CONNECTION (source_object),
-                                                              res,
-                                                              &error);
-  if (error != NULL)
+  if (!polkit_unix_session_exists_sync (POLKIT_SUBJECT (object),
+                                        cancellable,
+                                        &error))
     {
-      g_simple_async_result_set_from_error (simple, error);
+      g_simple_async_result_set_from_error (res, error);
       g_error_free (error);
     }
-  if (reply != NULL)
-    g_object_unref (reply);
-
-  g_simple_async_result_complete (simple);
-  g_object_unref (simple);
 }
 
 static void
@@ -378,91 +408,25 @@ polkit_unix_session_exists (PolkitSubject       *subject,
                             GAsyncReadyCallback  callback,
                             gpointer             user_data)
 {
-  PolkitUnixSession *session = POLKIT_UNIX_SESSION (subject);
-  EggDBusMessage *message;
-  EggDBusConnection *connection;
   GSimpleAsyncResult *simple;
 
-  message = NULL;
-  connection = NULL;
+  g_return_if_fail (POLKIT_IS_UNIX_SESSION (subject));
 
-  connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-
-  message = egg_dbus_connection_new_message_for_method_call (connection,
-                                                             NULL,
-                                                             "org.freedesktop.ConsoleKit",
-                                                             session->session_id,
-                                                             "org.freedesktop.ConsoleKit.Session",
-                                                             "GetUser");
-
-  simple = g_simple_async_result_new (G_OBJECT (session),
+  simple = g_simple_async_result_new (G_OBJECT (subject),
                                       callback,
                                       user_data,
                                       polkit_unix_session_exists);
-
-  egg_dbus_connection_send_message_with_reply (connection,
-                                               EGG_DBUS_CALL_FLAGS_NONE,
-                                               message,
-                                               NULL,
-                                               cancellable,
-                                               session_exists_cb,
-                                               simple);
-
-  g_object_unref (message);
-  g_object_unref (connection);
-}
-
-static gboolean
-polkit_unix_session_exists_sync (PolkitSubject   *subject,
-                                 GCancellable    *cancellable,
-                                 GError         **error)
-{
-  PolkitUnixSession *session = POLKIT_UNIX_SESSION (subject);
-  EggDBusMessage *message;
-  EggDBusMessage *reply;
-  EggDBusConnection *connection;
-  gboolean ret;
-
-  message = NULL;
-  reply = NULL;
-  connection = NULL;
-  ret = FALSE;
-
-  connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-
-  message = egg_dbus_connection_new_message_for_method_call (connection,
-                                                             NULL,
-                                                             "org.freedesktop.ConsoleKit",
-                                                             session->session_id,
-                                                             "org.freedesktop.ConsoleKit.Session",
-                                                             "GetUser");
-
-  reply = egg_dbus_connection_send_message_with_reply_sync (connection,
-                                                            EGG_DBUS_CALL_FLAGS_NONE,
-                                                            message,
-                                                            NULL,
-                                                            cancellable,
-                                                            error);
-  if (reply == NULL)
-    goto out;
-
-  ret = TRUE;
-
- out:
-  if (message != NULL)
-    g_object_unref (message);
-  if (reply != NULL)
-    g_object_unref (reply);
-  if (connection != NULL)
-    g_object_unref (connection);
-
-  return ret;
+  g_simple_async_result_run_in_thread (simple,
+                                       exists_in_thread_func,
+                                       G_PRIORITY_DEFAULT,
+                                       cancellable);
+  g_object_unref (simple);
 }
 
 static gboolean
 polkit_unix_session_exists_finish (PolkitSubject  *subject,
-                                   GAsyncResult   *res,
-                                   GError        **error)
+                                      GAsyncResult   *res,
+                                      GError        **error)
 {
   GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
   gboolean ret;
@@ -474,7 +438,7 @@ polkit_unix_session_exists_finish (PolkitSubject  *subject,
   if (g_simple_async_result_propagate_error (simple, error))
     goto out;
 
-  ret = TRUE;
+  ret = g_simple_async_result_get_op_res_gboolean (simple);
 
  out:
   return ret;
@@ -497,45 +461,44 @@ polkit_unix_session_initable_init (GInitable     *initable,
                                    GError       **error)
 {
   PolkitUnixSession *session = POLKIT_UNIX_SESSION (initable);
-  EggDBusMessage *message;
-  EggDBusMessage *reply;
-  EggDBusConnection *connection;
+  GDBusConnection *connection;
+  GVariant *result;
   gboolean ret;
 
-  message = NULL;
-  reply = NULL;
   connection = NULL;
   ret = FALSE;
 
-  connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+  if (session->session_id != NULL)
+    {
+      /* already set, nothing to do */
+      ret = TRUE;
+      goto out;
+    }
 
-  message = egg_dbus_connection_new_message_for_method_call (connection,
-                                                             NULL,
-                                                             "org.freedesktop.ConsoleKit",
-                                                             "/org/freedesktop/ConsoleKit/Manager",
-                                                             "org.freedesktop.ConsoleKit.Manager",
-                                                             "GetSessionForUnixProcess");
-  egg_dbus_message_append_uint (message, session->pid, NULL);
-
-  reply = egg_dbus_connection_send_message_with_reply_sync (connection,
-                                                            EGG_DBUS_CALL_FLAGS_NONE,
-                                                            message,
-                                                            NULL,
-                                                            cancellable,
-                                                            error);
-  if (reply == NULL)
+  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
+  if (connection == NULL)
     goto out;
 
-  if (!egg_dbus_message_extract_object_path (reply, &session->session_id, error))
+  result = g_dbus_connection_call_sync (connection,
+                                        "org.freedesktop.ConsoleKit",           /* name */
+                                        "/org/freedesktop/ConsoleKit/Manager",  /* object path */
+                                        "org.freedesktop.ConsoleKit.Manager",   /* interface name */
+                                        "GetSessionForUnixProcess",             /* method */
+                                        g_variant_new ("(u)", session->pid),    /* parameters */
+                                        G_VARIANT_TYPE ("(o)"),
+                                        G_DBUS_CALL_FLAGS_NONE,
+                                        -1,
+                                        cancellable,
+                                        error);
+  if (result == NULL)
     goto out;
+
+  g_variant_get (result, "(o)", &session->session_id);
+  g_variant_unref (result);
 
   ret = TRUE;
 
  out:
-  if (message != NULL)
-    g_object_unref (message);
-  if (reply != NULL)
-    g_object_unref (reply);
   if (connection != NULL)
     g_object_unref (connection);
 
@@ -549,109 +512,7 @@ initable_iface_init (GInitableIface *initable_iface)
 }
 
 static void
-async_init_cb (GObject      *source_object,
-               GAsyncResult *res,
-               gpointer      user_data)
-{
-  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
-  EggDBusMessage *reply;
-  GError *error;
-
-  error = NULL;
-  reply = egg_dbus_connection_send_message_with_reply_finish (EGG_DBUS_CONNECTION (source_object),
-                                                              res,
-                                                              &error);
-
-  if (reply != NULL)
-    {
-      gchar *session_id;
-      if (egg_dbus_message_extract_object_path (reply, &session_id, &error))
-        {
-          g_simple_async_result_set_op_res_gpointer (simple,
-                                                     session_id,
-                                                     g_free);
-        }
-      g_object_unref (reply);
-    }
-
-  if (error != NULL)
-    {
-      g_simple_async_result_set_from_error (simple, error);
-      g_error_free (error);
-    }
-
-  g_simple_async_result_complete (simple);
-  g_object_unref (simple);
-}
-
-static void
-polkit_unix_session_async_initable_init_async (GAsyncInitable      *async_initable,
-                                               gint                 io_priority,
-                                               GCancellable        *cancellable,
-                                               GAsyncReadyCallback  callback,
-                                               gpointer             user_data)
-{
-  PolkitUnixSession *session = POLKIT_UNIX_SESSION (async_initable);
-  EggDBusMessage *message;
-  EggDBusConnection *connection;
-  GSimpleAsyncResult *simple;
-
-  message = NULL;
-  connection = NULL;
-
-  connection = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
-
-  message = egg_dbus_connection_new_message_for_method_call (connection,
-                                                             NULL,
-                                                             "org.freedesktop.ConsoleKit",
-                                                             "/org/freedesktop/ConsoleKit/Manager",
-                                                             "org.freedesktop.ConsoleKit.Manager",
-                                                             "GetSessionForUnixProcess");
-  egg_dbus_message_append_uint (message, session->pid, NULL);
-
-  simple = g_simple_async_result_new (G_OBJECT (session),
-                                      callback,
-                                      user_data,
-                                      polkit_unix_session_async_initable_init_async);
-
-  egg_dbus_connection_send_message_with_reply (connection,
-                                               EGG_DBUS_CALL_FLAGS_NONE,
-                                               message,
-                                               NULL,
-                                               cancellable,
-                                               async_init_cb,
-                                               simple);
-
-  g_object_unref (message);
-  g_object_unref (connection);
-}
-
-static gboolean
-polkit_unix_session_async_initable_init_finish (GAsyncInitable   *async_initable,
-                                                GAsyncResult     *res,
-                                                GError          **error)
-{
-  PolkitUnixSession *session = POLKIT_UNIX_SESSION (async_initable);
-  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
-  gboolean ret;
-
-  ret = FALSE;
-
-  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_unix_session_async_initable_init_async);
-
-  if (g_simple_async_result_propagate_error (simple, error))
-    goto out;
-
-  session->session_id = g_strdup (g_simple_async_result_get_op_res_gpointer (simple));
-  ret = TRUE;
-
- out:
-  return ret;
-}
-
-static void
 async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
 {
-  async_initable_iface->init_async = polkit_unix_session_async_initable_init_async;
-  async_initable_iface->init_finish = polkit_unix_session_async_initable_init_finish;
+  /* use default implementation to run GInitable code in a thread */
 }

@@ -56,7 +56,7 @@ typedef struct
   GHashTable *localized_message;
 
   /* this maps from annotation key (string) to annotation value (also a string) */
-  EggDBusHashMap *annotations;
+  GHashTable *annotations;
 } ParsedAction;
 
 static void
@@ -72,7 +72,7 @@ parsed_action_free (ParsedAction *action)
   g_hash_table_unref (action->localized_description);
   g_hash_table_unref (action->localized_message);
 
-  g_object_unref (action->annotations);
+  g_hash_table_unref (action->annotations);
   g_free (action);
 }
 
@@ -365,7 +365,6 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
 {
   PolkitBackendActionPoolPrivate *priv;
   PolkitActionDescription *ret;
-  _PolkitActionDescription *real;
   ParsedAction *parsed_action;
   const gchar *description;
   const gchar *message;
@@ -393,19 +392,16 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
                        parsed_action->message,
                        locale);
 
-  real = _polkit_action_description_new (action_id,
-                                         description,
-                                         message,
-                                         parsed_action->vendor_name,
-                                         parsed_action->vendor_url,
-                                         parsed_action->icon_name,
-                                         parsed_action->implicit_authorization_any,
-                                         parsed_action->implicit_authorization_inactive,
-                                         parsed_action->implicit_authorization_active,
-                                         parsed_action->annotations);
-
-  ret = polkit_action_description_new_for_real (real);
-  g_object_unref (real);
+  ret = polkit_action_description_new (action_id,
+                                       description,
+                                       message,
+                                       parsed_action->vendor_name,
+                                       parsed_action->vendor_url,
+                                       parsed_action->icon_name,
+                                       parsed_action->implicit_authorization_any,
+                                       parsed_action->implicit_authorization_inactive,
+                                       parsed_action->implicit_authorization_active,
+                                       parsed_action->annotations);
 
  out:
   return ret;
@@ -615,7 +611,7 @@ typedef struct {
   char *elem_lang;
 
   char *annotate_key;
-  EggDBusHashMap *annotations;
+  GHashTable *annotations;
 
   PolkitBackendActionPool *pool;
 } ParserData;
@@ -651,7 +647,7 @@ pd_unref_action_data (ParserData *pd)
   pd->annotate_key = NULL;
   if (pd->annotations != NULL)
     {
-      g_object_unref (pd->annotations);
+      g_hash_table_unref (pd->annotations);
       pd->annotations = NULL;
     }
   g_free (pd->elem_lang);
@@ -712,7 +708,7 @@ _start (void *data, const char *el, const char **attr)
                                                        g_str_equal,
                                                        g_free,
                                                        g_free);
-          pd->annotations = egg_dbus_hash_map_new (G_TYPE_STRING, g_free, G_TYPE_STRING, g_free);
+          pd->annotations = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
           /* initialize defaults */
           pd->implicit_authorization_any = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
           pd->implicit_authorization_inactive = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
@@ -943,9 +939,7 @@ _cdata (void *data, const char *s, int len)
       break;
 
     case STATE_IN_ANNOTATE:
-      egg_dbus_hash_map_insert (pd->annotations,
-                                g_strdup (pd->annotate_key),
-                                str);
+      g_hash_table_insert (pd->annotations, g_strdup (pd->annotate_key), str);
       str = NULL;
       break;
 

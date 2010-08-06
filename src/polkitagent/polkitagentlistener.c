@@ -44,27 +44,15 @@
  * To register a #PolkitAgentListener with the PolicyKit daemon, use polkit_agent_register_listener().
  */
 
-/* private class for exporting a D-Bus interface */
-
-#define TYPE_SERVER         (server_get_type ())
-#define SERVER(o)           (G_TYPE_CHECK_INSTANCE_CAST ((o), TYPE_SERVER, Server))
-#define SERVER_CLASS(k)     (G_TYPE_CHECK_CLASS_CAST ((k), POLKIT_AGENT_TYPE_LISTENER, ServerClass))
-#define SERVER_GET_CLASS(o) (G_TYPE_INSTANCE_GET_CLASS ((o), TYPE_SERVER, ServerClass))
-#define IS_SERVER(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), TYPE_SERVER))
-#define IS_SERVER_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), TYPE_SERVER))
-
-typedef struct _Server Server;
-typedef struct _ServerClass ServerClass;
-
-struct _Server
+typedef struct
 {
   GObject parent_instance;
 
-  EggDBusConnection *system_bus;
-
-  EggDBusObjectProxy *authority_proxy;
+  GDBusConnection *system_bus;
+  guint auth_agent_registration_id;
 
   PolkitAuthority *authority;
+  gulong notify_owner_handler_id;
 
   gboolean is_registered;
 
@@ -74,23 +62,46 @@ struct _Server
   gchar *object_path;
 
   GHashTable *cookie_to_pending_auth;
+} Server;
 
-};
-
-struct _ServerClass
+static void
+server_free (Server *server)
 {
-  GObjectClass parent_class;
+  if (server->is_registered)
+    {
+      GError *error;
+      error = NULL;
+      if (!polkit_authority_unregister_authentication_agent_sync (server->authority,
+                                                                  server->subject,
+                                                                  server->object_path,
+                                                                  NULL,
+                                                                  &error))
+        {
+          g_warning ("Error unregistering authentication agent: %s", error->message);
+          g_error_free (error);
+        }
+    }
 
-};
+  if (server->auth_agent_registration_id > 0)
+    g_dbus_connection_unregister_object (server->system_bus, server->auth_agent_registration_id);
 
-static GType server_get_type (void) G_GNUC_CONST;
+  if (server->notify_owner_handler_id > 0)
+    g_signal_handler_disconnect (server->authority, server->notify_owner_handler_id);
 
-static void authentication_agent_iface_init (_PolkitAuthenticationAgentIface *agent_iface);
+  if (server->authority != NULL)
+    g_object_unref (server->authority);
 
-G_DEFINE_TYPE_WITH_CODE (Server, server, G_TYPE_OBJECT,
-                         G_IMPLEMENT_INTERFACE (_POLKIT_TYPE_AUTHENTICATION_AGENT,
-                                                authentication_agent_iface_init)
-                         );
+  if (server->system_bus != NULL)
+    g_object_unref (server->system_bus);
+
+  if (server->cookie_to_pending_auth != NULL)
+    g_hash_table_unref (server->cookie_to_pending_auth);
+
+  if (server->subject != NULL)
+    g_object_unref (server->subject);
+
+  g_free (server->object_path);
+}
 
 static gboolean
 server_register (Server   *server,
@@ -122,15 +133,14 @@ server_register (Server   *server,
 }
 
 static void
-name_owner_notify (EggDBusObjectProxy *object_proxy,
-                   GParamSpec *pspec,
-                   gpointer user_data)
+on_notify_authority_owner (GObject    *object,
+                           GParamSpec *pspec,
+                           gpointer    user_data)
 {
-  Server *server = SERVER (user_data);
+  Server *server = user_data;
   gchar *owner;
 
-  owner = egg_dbus_object_proxy_get_name_owner (server->authority_proxy);
-
+  owner = polkit_authority_get_owner (server->authority);
   if (owner == NULL)
     {
       g_printerr ("PolicyKit daemon disconnected from the bus.\n");
@@ -162,84 +172,128 @@ name_owner_notify (EggDBusObjectProxy *object_proxy,
             }
         }
     }
-
   g_free (owner);
 }
 
-static void
-server_init (Server *server)
+static gboolean
+server_init_sync (Server        *server,
+                  GCancellable  *cancellable,
+                  GError       **error)
 {
-  server->cookie_to_pending_auth = g_hash_table_new (g_str_hash, g_str_equal);
+  gboolean ret;
 
-  server->system_bus = egg_dbus_connection_get_for_bus (EGG_DBUS_BUS_TYPE_SYSTEM);
+  ret = FALSE;
+
+  server->system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
+  if (server->system_bus == NULL)
+    goto out;
 
   server->authority = polkit_authority_get ();
+  if (server->authority == NULL)
+    goto out;
 
   /* the only use of this proxy is to re-register with the polkit daemon
    * if it jumps off the bus and comes back (which is useful for debugging)
    */
-  server->authority_proxy = egg_dbus_connection_get_object_proxy (server->system_bus,
-                                                                  "org.freedesktop.PolicyKit1",
-                                                                  "/org/freedesktop/PolicyKit1/Authority");
+  server->notify_owner_handler_id = g_signal_connect (server->authority,
+                                                      "notify::owner",
+                                                      G_CALLBACK (on_notify_authority_owner),
+                                                      server);
 
-  g_signal_connect (server->authority_proxy,
-                    "notify::name-owner",
-                    G_CALLBACK (name_owner_notify),
-                    server);
+  ret = TRUE;
+
+ out:
+  return ret;
 }
 
-static void
-server_finalize (GObject *object)
+static Server *
+server_new (PolkitSubject  *subject,
+            const gchar    *object_path,
+            GCancellable   *cancellable,
+            GError        **error)
 {
-  Server *server = SERVER (object);
+  Server *server;
 
-  if (server->is_registered)
+  server = g_new0 (Server, 1);
+  server->subject = g_object_ref (subject);
+  server->object_path = object_path != NULL ? g_strdup (object_path) :
+                                              g_strdup ("/org/freedesktop/PolicyKit1/AuthenticationAgent");
+  server->cookie_to_pending_auth = g_hash_table_new (g_str_hash, g_str_equal);
+
+  if (!server_init_sync (server, cancellable, error))
     {
-      GError *error;
-
-      error = NULL;
-      if (!polkit_authority_unregister_authentication_agent_sync (server->authority,
-                                                                  server->subject,
-                                                                  server->object_path,
-                                                                  NULL,
-                                                                  &error))
-        {
-          g_warning ("Error unregistering authentication agent: %s", error->message);
-          g_error_free (error);
-        }
+      server_free (server);
+      goto out;
     }
 
-  g_object_unref (server->subject);
-  g_free (server->object_path);
-
-  g_object_unref (server->authority);
-
-  g_object_unref (server->authority_proxy);
-
-  g_object_unref (server->system_bus);
-
-  g_hash_table_unref (server->cookie_to_pending_auth);
-
-  if (G_OBJECT_CLASS (server_parent_class)->finalize != NULL)
-    G_OBJECT_CLASS (server_parent_class)->finalize (object);
-}
-
-static void
-server_class_init (ServerClass *klass)
-{
-  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
-
-  gobject_class->finalize = server_finalize;
+ out:
+  return server;
 }
 
 static void
 listener_died (gpointer user_data,
                GObject *where_the_object_was)
 {
-  Server *server = SERVER (user_data);
+  Server *server = user_data;
 
-  g_object_unref (server);
+  server_free (server);
 }
+
+static void auth_agent_handle_begin_authentication (Server                 *server,
+                                                    GVariant               *parameters,
+                                                    GDBusMethodInvocation  *invocation);
+
+static void auth_agent_handle_cancel_authentication (Server                 *server,
+                                                     GVariant               *parameters,
+                                                     GDBusMethodInvocation  *invocation);
+
+static void
+auth_agent_handle_method_call (GDBusConnection        *connection,
+                               const gchar            *sender,
+                               const gchar            *object_path,
+                               const gchar            *interface_name,
+                               const gchar            *method_name,
+                               GVariant               *parameters,
+                               GDBusMethodInvocation  *invocation,
+                               gpointer                user_data)
+{
+  Server *server = user_data;
+
+  /* The shipped D-Bus policy also ensures that only uid 0 can invoke
+   * methods on our interface. So no need to check the caller.
+   */
+
+  if (g_strcmp0 (method_name, "BeginAuthentication") == 0)
+    auth_agent_handle_begin_authentication (server, parameters, invocation);
+  else if (g_strcmp0 (method_name, "CancelAuthentication") == 0)
+    auth_agent_handle_cancel_authentication (server, parameters, invocation);
+  else
+    g_assert_not_reached ();
+}
+
+static const gchar *auth_agent_introspection_data =
+  "<node>"
+  "  <interface name='org.freedesktop.PolicyKit1.AuthenticationAgent'>"
+  "    <method name='BeginAuthentication'>"
+  "      <arg type='s' name='action_id' direction='in'/>"
+  "      <arg type='s' name='message' direction='in'/>"
+  "      <arg type='s' name='icon_name' direction='in'/>"
+  "      <arg type='a{ss}' name='details' direction='in'/>"
+  "      <arg type='s' name='cookie' direction='in'/>"
+  "      <arg type='a(sa{sv})' name='identities' direction='in'/>"
+  "    </method>"
+  "    <method name='CancelAuthentication'>"
+  "      <arg type='s' name='cookie' direction='in'/>"
+  "    </method>"
+  "  </interface>"
+  "</node>";
+
+static const GDBusInterfaceVTable auth_agent_vtable =
+{
+  auth_agent_handle_method_call,
+  NULL, /* _handle_get_property */
+  NULL  /* _handle_set_property */
+};
 
 /**
  * polkit_agent_register_listener:
@@ -270,65 +324,68 @@ polkit_agent_register_listener (PolkitAgentListener  *listener,
                                 GError              **error)
 {
   Server *server;
+  gboolean ret;
+  GDBusNodeInfo *node_info;
 
-  server = SERVER (g_object_new (TYPE_SERVER, NULL));
-  server->subject = g_object_ref (subject);
-  server->object_path = object_path != NULL ? g_strdup (object_path) :
-                                              g_strdup ("/org/freedesktop/PolicyKit1/AuthenticationAgent");
+  ret = FALSE;
+
+  server = server_new (subject, object_path, NULL, error);
+  if (server == NULL)
+    goto out;
+
+  node_info = g_dbus_node_info_new_for_xml (auth_agent_introspection_data, error);
+  if (node_info == NULL)
+    goto out;
+
   server->listener = listener;
+  server->auth_agent_registration_id = g_dbus_connection_register_object (server->system_bus,
+                                                                          server->object_path,
+                                                                          g_dbus_node_info_lookup_interface (node_info, "org.freedesktop.PolicyKit1.AuthenticationAgent"),
+                                                                          &auth_agent_vtable,
+                                                                          server,
+                                                                          NULL, /* user_data GDestroyNotify */
+                                                                          error);
+  g_dbus_node_info_unref (node_info);
 
-  egg_dbus_connection_register_interface (server->system_bus,
-                                          server->object_path,
-                                          _POLKIT_TYPE_AUTHENTICATION_AGENT,
-                                          G_OBJECT (server),
-                                          G_TYPE_INVALID);
+  if (server->auth_agent_registration_id == 0)
+    {
+      server_free (server);
+      goto out;
+    }
 
   if (!server_register (server, error))
     {
-      g_object_unref (server);
-      return FALSE;
+      server_free (server);
+      goto out;
     }
 
   /* take a weak ref and kill server when listener dies */
   g_object_weak_ref (G_OBJECT (server->listener), listener_died, server);
 
-  return TRUE;
+  ret = TRUE;
+
+ out:
+  return ret;
 }
 
 typedef struct
 {
   Server *server;
   gchar *cookie;
-  EggDBusMethodInvocation *method_invocation;
+  GDBusMethodInvocation *invocation;
   GCancellable *cancellable;
 } AuthData;
-
-static AuthData *
-auth_data_new (Server                  *server,
-               const gchar             *cookie,
-               EggDBusMethodInvocation *method_invocation,
-               GCancellable            *cancellable)
-{
-  AuthData *data;
-
-  data = g_new0 (AuthData, 1);
-  data->server = g_object_ref (server);
-  data->cookie = g_strdup (cookie);
-  data->method_invocation = g_object_ref (method_invocation);
-  data->cancellable = g_object_ref (cancellable);
-
-  return data;
-}
 
 static void
 auth_data_free (AuthData *data)
 {
-  g_object_unref (data->server);
   g_free (data->cookie);
-  g_object_unref (data->method_invocation);
+  g_object_unref (data->invocation);
   g_object_unref (data->cancellable);
   g_free (data);
 }
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 static void
 auth_cb (GObject      *source_object,
@@ -343,12 +400,12 @@ auth_cb (GObject      *source_object,
                                                              res,
                                                              &error))
     {
-      egg_dbus_method_invocation_return_gerror (data->method_invocation, error);
+      g_dbus_method_invocation_return_gerror (data->invocation, error);
       g_error_free (error);
     }
   else
     {
-      _polkit_authentication_agent_handle_begin_authentication_finish (data->method_invocation);
+      g_dbus_method_invocation_return_value (data->invocation, NULL);
     }
 
   g_hash_table_remove (data->server->cookie_to_pending_auth, data->cookie);
@@ -357,87 +414,115 @@ auth_cb (GObject      *source_object,
 }
 
 static void
-handle_begin_authentication (_PolkitAuthenticationAgent *instance,
-                             const gchar                *action_id,
-                             const gchar                *message,
-                             const gchar                *icon_name,
-                             EggDBusHashMap             *details,
-                             const gchar                *cookie,
-                             EggDBusArraySeq            *identities,
-                             EggDBusMethodInvocation    *method_invocation)
+auth_agent_handle_begin_authentication (Server                 *server,
+                                        GVariant               *parameters,
+                                        GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
-  AuthData *data;
-  GList *list;
+  const gchar *action_id;
+  const gchar *message;
+  const gchar *icon_name;
+  GVariant    *details_gvariant;
+  const gchar *cookie;
+  GVariant    *identities_gvariant;
+  GList *identities;
+  PolkitDetails *details;
+  GVariantIter iter;
+  GVariant *child;
   guint n;
-  GCancellable *cancellable;
-  PolkitDetails *_details;
+  AuthData *data;
 
-  list = NULL;
-  for (n = 0; n < identities->size; n++)
+  identities = NULL;
+  details = NULL;
+
+  g_variant_get (parameters,
+                 "(&s&s&s@a{ss}&s@a(sa{sv}))",
+                 &action_id,
+                 &message,
+                 &icon_name,
+                 &details_gvariant,
+                 &cookie,
+                 &identities_gvariant);
+
+  details = polkit_details_new_for_gvariant (details_gvariant);
+
+  g_variant_iter_init (&iter, identities_gvariant);
+  n = 0;
+  while ((child = g_variant_iter_next_value (&iter)) != NULL)
     {
-      _PolkitIdentity *real_identity = _POLKIT_IDENTITY (identities->data.v_ptr[n]);
+      PolkitIdentity *identity;
+      GError *error;
+      error = NULL;
+      identity = polkit_identity_new_for_gvariant (child, &error);
+      g_variant_unref (child);
 
-      list = g_list_prepend (list, polkit_identity_new_for_real (real_identity));
+      if (identity == NULL)
+        {
+          g_prefix_error (&error, "Error extracting identity %d: ", n);
+          g_dbus_method_invocation_return_gerror (invocation, error);
+          g_error_free (error);
+          goto out;
+        }
+      n++;
+
+      identities = g_list_prepend (identities, identity);
     }
+  identities = g_list_reverse (identities);
 
-  list = g_list_reverse (list);
-
-  cancellable = g_cancellable_new ();
-  data = auth_data_new (server,
-                        cookie,
-                        method_invocation,
-                        cancellable);
-  g_object_unref (cancellable);
+  data = g_new0 (AuthData, 1);
+  data->server = server;
+  data->cookie = g_strdup (cookie);
+  data->invocation = g_object_ref (invocation);
+  data->cancellable = g_cancellable_new ();
 
   g_hash_table_insert (server->cookie_to_pending_auth, (gpointer) cookie, data);
-
-  _details = polkit_details_new_for_hash (details->data);
 
   polkit_agent_listener_initiate_authentication (server->listener,
                                                  action_id,
                                                  message,
                                                  icon_name,
-                                                 _details,
+                                                 details,
                                                  cookie,
-                                                 list,
+                                                 identities,
                                                  data->cancellable,
                                                  auth_cb,
                                                  data);
 
-  g_list_free (list);
-  g_object_unref (_details);
+ out:
+  g_list_foreach (identities, (GFunc) g_object_unref, NULL);
+  g_list_free (identities);
+  g_object_unref (details);
+  g_variant_unref (details_gvariant);
+  g_variant_unref (identities_gvariant);
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static void
-handle_cancel_authentication (_PolkitAuthenticationAgent *instance,
-                              const gchar                *cookie,
-                              EggDBusMethodInvocation    *method_invocation)
+auth_agent_handle_cancel_authentication (Server                 *server,
+                                         GVariant               *parameters,
+                                         GDBusMethodInvocation  *invocation)
 {
-  Server *server = SERVER (instance);
   AuthData *data;
+  const gchar *cookie;
+
+  g_variant_get (parameters,
+                 "(&s)",
+                 &cookie);
 
   data = g_hash_table_lookup (server->cookie_to_pending_auth, cookie);
   if (data == NULL)
     {
-      egg_dbus_method_invocation_return_error (method_invocation,
-                                               POLKIT_ERROR,
-                                               POLKIT_ERROR_FAILED,
-                                               "No pending authentication request for cookie '%s'",
-                                               cookie);
+      g_dbus_method_invocation_return_error (invocation,
+                                             POLKIT_ERROR,
+                                             POLKIT_ERROR_FAILED,
+                                             "No pending authentication request for cookie '%s'",
+                                             cookie);
     }
   else
     {
       g_cancellable_cancel (data->cancellable);
-      _polkit_authentication_agent_handle_cancel_authentication_finish (method_invocation);
+      g_dbus_method_invocation_return_value (invocation, NULL);
     }
-}
-
-static void
-authentication_agent_iface_init (_PolkitAuthenticationAgentIface *agent_iface)
-{
-  agent_iface->handle_begin_authentication = handle_begin_authentication;
-  agent_iface->handle_cancel_authentication = handle_cancel_authentication;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

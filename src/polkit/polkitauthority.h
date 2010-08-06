@@ -49,6 +49,7 @@ GType         polkit_authority_get_type         (void) G_GNUC_CONST;
 
 PolkitAuthority *polkit_authority_get (void);
 
+gchar                   *polkit_authority_get_owner            (PolkitAuthority *authority);
 const gchar             *polkit_authority_get_backend_name     (PolkitAuthority *authority);
 const gchar             *polkit_authority_get_backend_version  (PolkitAuthority *authority);
 PolkitAuthorityFeatures  polkit_authority_get_backend_features (PolkitAuthority *authority);
@@ -108,16 +109,6 @@ gboolean                   polkit_authority_revoke_temporary_authorization_by_id
                                                                                        const gchar         *id,
                                                                                        GCancellable        *cancellable,
                                                                                        GError             **error);
-
-gboolean                   polkit_authority_add_lockdown_for_action_sync (PolkitAuthority     *authority,
-                                                                          const gchar         *action_id,
-                                                                          GCancellable        *cancellable,
-                                                                          GError             **error);
-
-gboolean                   polkit_authority_remove_lockdown_for_action_sync (PolkitAuthority     *authority,
-                                                                             const gchar         *action_id,
-                                                                             GCancellable        *cancellable,
-                                                                             GError             **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -206,26 +197,6 @@ void                       polkit_authority_revoke_temporary_authorization_by_id
 gboolean                   polkit_authority_revoke_temporary_authorization_by_id_finish (PolkitAuthority *authority,
                                                                                          GAsyncResult    *res,
                                                                                          GError         **error);
-
-void                       polkit_authority_add_lockdown_for_action (PolkitAuthority     *authority,
-                                                                     const gchar         *action_id,
-                                                                     GCancellable        *cancellable,
-                                                                     GAsyncReadyCallback  callback,
-                                                                     gpointer             user_data);
-
-gboolean                   polkit_authority_add_lockdown_for_action_finish (PolkitAuthority *authority,
-                                                                            GAsyncResult    *res,
-                                                                            GError         **error);
-
-void                       polkit_authority_remove_lockdown_for_action (PolkitAuthority     *authority,
-                                                                        const gchar         *action_id,
-                                                                        GCancellable        *cancellable,
-                                                                        GAsyncReadyCallback  callback,
-                                                                        gpointer             user_data);
-
-gboolean                   polkit_authority_remove_lockdown_for_action_finish (PolkitAuthority *authority,
-                                                                               GAsyncResult    *res,
-                                                                               GError         **error);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
