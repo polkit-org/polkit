@@ -42,6 +42,7 @@
 #include <polkit/polkitauthority.h>
 #include <polkit/polkitdetails.h>
 #include <polkit/polkittemporaryauthorization.h>
+#include <polkit/polkitpermission.h>
 
 #undef _POLKIT_INSIDE_POLKIT_H
 

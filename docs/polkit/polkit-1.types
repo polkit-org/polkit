@@ -13,6 +13,7 @@ polkit_system_bus_name_get_type
 polkit_error_get_type
 polkit_authorization_result_get_type
 polkit_temporary_authorization_get_type
+polkit_permission_get_type
 
 polkit_backend_authority_get_type
 polkit_backend_interactive_authority_get_type

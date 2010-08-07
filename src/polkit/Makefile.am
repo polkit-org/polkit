@@ -55,6 +55,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitcheckauthorizationflags.h							\
 	polkitimplicitauthorization.h							\
 	polkittemporaryauthorization.h							\
+	polkitpermission.h								\
         $(NULL)
 
 libpolkit_gobject_1_la_SOURCES =                                   			\
@@ -76,6 +77,7 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitcheckauthorizationflags.c		polkitcheckauthorizationflags.h		\
 	polkitimplicitauthorization.c		polkitimplicitauthorization.h		\
 	polkittemporaryauthorization.c		polkittemporaryauthorization.h		\
+	polkitpermission.c			polkitpermission.h			\
         $(NULL)
 
 libpolkit_gobject_1_la_CFLAGS =                                        	\

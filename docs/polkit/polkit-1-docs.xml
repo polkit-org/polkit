@@ -73,6 +73,7 @@
     <xi:include href="xml/polkiterror.xml"/>
     <xi:include href="xml/polkitactiondescription.xml"/>
     <xi:include href="xml/polkittemporaryauthorization.xml"/>
+    <xi:include href="xml/polkitpermission.xml"/>
     <chapter id="subjects">
       <title>Subjects</title>
       <xi:include href="xml/polkitsubject.xml"/>

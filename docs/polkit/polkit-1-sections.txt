@@ -468,3 +468,22 @@ POLKIT_TEMPORARY_AUTHORIZATION_CLASS
 POLKIT_TEMPORARY_IS_AUTHORIZATION_CLASS
 POLKIT_TEMPORARY_AUTHORIZATION_GET_CLASS
 </SECTION>
+
+<SECTION>
+<FILE>polkitpermission</FILE>
+PolkitPermission
+polkit_permission_new
+polkit_permission_new_finish
+polkit_permission_new_sync
+polkit_permission_get_action_id
+polkit_permission_get_subject
+<SUBSECTION Standard>
+PolkitPermissionClass
+POLKIT_PERMISSION
+POLKIT_IS_PERMISSION
+POLKIT_TYPE_PERMISSION
+polkit_permission_get_type
+POLKIT_PERMISSION_CLASS
+POLKIT_IS_PERMISSION_CLASS
+POLKIT_PERMISSION_GET_CLASS
+</SECTION>
