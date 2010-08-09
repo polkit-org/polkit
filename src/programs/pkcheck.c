@@ -209,7 +209,14 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  authority = polkit_authority_get ();
+  error = NULL;
+  authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
+  if (authority == NULL)
+    {
+      g_printerr ("Error getting authority: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
 
   error = NULL;
   flags = POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE;

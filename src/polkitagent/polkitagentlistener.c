@@ -188,7 +188,7 @@ server_init_sync (Server        *server,
   if (server->system_bus == NULL)
     goto out;
 
-  server->authority = polkit_authority_get ();
+  server->authority = polkit_authority_get_sync (cancellable, error);
   if (server->authority == NULL)
     goto out;
 
