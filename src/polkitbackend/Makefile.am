@@ -26,11 +26,7 @@ libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackendauthority.h					\
 	polkitbackendinteractiveauthority.h				\
 	polkitbackendlocalauthority.h					\
-	polkitbackendactionpool.h					\
-	polkitbackendsessionmonitor.h					\
-	polkitbackendconfigsource.h					\
 	polkitbackendactionlookup.h					\
-	polkitbackendlocalauthorizationstore.h				\
         $(NULL)
 
 libpolkit_backend_1_la_SOURCES =                                   			\

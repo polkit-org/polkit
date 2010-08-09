@@ -26,6 +26,7 @@
 #include <string.h>
 #include <glib/gstdio.h>
 
+#include "polkitbackend/polkitbackendconfigsource.h"
 #include "polkitbackendnullauthority.h"
 
 struct _PolkitBackendNullAuthorityPrivate

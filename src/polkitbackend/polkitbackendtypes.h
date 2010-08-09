@@ -24,12 +24,6 @@
 
 #include <glib-object.h>
 
-struct _PolkitBackendSessionMonitor;
-typedef struct _PolkitBackendSessionMonitor PolkitBackendSessionMonitor;
-
-struct _PolkitBackendConfigSource;
-typedef struct _PolkitBackendConfigSource PolkitBackendConfigSource;
-
 struct _PolkitBackendActionLookup;
 typedef struct _PolkitBackendActionLookup PolkitBackendActionLookup; /* Dummy typedef */
 
@@ -41,9 +35,6 @@ typedef struct _PolkitBackendInteractiveAuthority PolkitBackendInteractiveAuthor
 
 struct _PolkitBackendLocalAuthority;
 typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
-
-struct _PolkitBackendLocalAuthorizationStore;
-typedef struct _PolkitBackendLocalAuthorizationStore PolkitBackendLocalAuthorizationStore;
 
 #endif /* __POLKIT_BACKEND_TYPES_H */
 

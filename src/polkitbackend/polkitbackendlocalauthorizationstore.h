@@ -19,8 +19,8 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#if !defined (_POLKIT_BACKEND_COMPILATION) && !defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
-#error "Only <polkitbackend/polkitbackend.h> can be included directly, this file may disappear or change contents."
+#if !defined (_POLKIT_BACKEND_COMPILATION) || defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
+#error "This is a private header file."
 #endif
 
 #ifndef __POLKIT_BACKEND_LOCAL_AUTHORIZATION_STORE_H
@@ -39,6 +39,7 @@ G_BEGIN_DECLS
 #define POLKIT_BACKEND_IS_LOCAL_AUTHORIZATION_STORE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_BACKEND_TYPE_LOCAL_AUTHORIZATION_STORE))
 #define POLKIT_BACKEND_IS_LOCAL_AUTHORIZATION_STORE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_BACKEND_TYPE_LOCAL_AUTHORIZATION_STORE))
 
+typedef struct _PolkitBackendLocalAuthorizationStore         PolkitBackendLocalAuthorizationStore;
 typedef struct _PolkitBackendLocalAuthorizationStoreClass    PolkitBackendLocalAuthorizationStoreClass;
 typedef struct _PolkitBackendLocalAuthorizationStorePrivate  PolkitBackendLocalAuthorizationStorePrivate;
 

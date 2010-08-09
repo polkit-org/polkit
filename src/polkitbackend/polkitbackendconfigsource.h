@@ -19,8 +19,8 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#if !defined (_POLKIT_BACKEND_COMPILATION) && !defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
-#error "Only <polkitbackend/polkitbackend.h> can be included directly, this file may disappear or change contents."
+#if !defined (_POLKIT_BACKEND_COMPILATION) || defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
+#error "This is a private header file."
 #endif
 
 #ifndef __POLKIT_BACKEND_CONFIG_SOURCE_H
@@ -39,6 +39,7 @@ G_BEGIN_DECLS
 #define POLKIT_BACKEND_IS_CONFIG_SOURCE(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_BACKEND_TYPE_CONFIG_SOURCE))
 #define POLKIT_BACKEND_IS_CONFIG_SOURCE_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_BACKEND_TYPE_CONFIG_SOURCE))
 
+typedef struct _PolkitBackendConfigSource         PolkitBackendConfigSource;
 typedef struct _PolkitBackendConfigSourceClass    PolkitBackendConfigSourceClass;
 typedef struct _PolkitBackendConfigSourcePrivate  PolkitBackendConfigSourcePrivate;
 

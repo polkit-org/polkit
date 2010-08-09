@@ -19,8 +19,8 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#if !defined (_POLKIT_BACKEND_COMPILATION) && !defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
-#error "Only <polkitbackend/polkitbackend.h> can be included directly, this file may disappear or change contents."
+#if !defined (_POLKIT_BACKEND_COMPILATION) || defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
+#error "This is a private header file."
 #endif
 
 #include <glib-object.h>

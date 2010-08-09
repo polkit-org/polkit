@@ -19,6 +19,10 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#if !defined (_POLKIT_BACKEND_COMPILATION) || defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
+#error "This is a private header file."
+#endif
+
 #ifndef __POLKIT_BACKEND_PRIVATE_H
 #define __POLKIT_BACKEND_PRIVATE_H
 

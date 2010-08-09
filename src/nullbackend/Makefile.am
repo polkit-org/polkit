@@ -15,6 +15,7 @@ INCLUDES =                                              	\
 	-DPACKAGE_LIB_DIR=\""$(libdir)"\"               	\
 	-D_POSIX_PTHREAD_SEMANTICS                      	\
 	-D_REENTRANT	                                	\
+	-D_POLKIT_BACKEND_COMPILATION				\
 	$(NULL)
 
 polkitmodulesdir = $(libdir)/polkit-1/extensions

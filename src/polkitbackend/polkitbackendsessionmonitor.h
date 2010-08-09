@@ -19,8 +19,8 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#if !defined (_POLKIT_BACKEND_COMPILATION) && !defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
-#error "Only <polkitbackend/polkitbackend.h> can be included directly, this file may disappear or change contents."
+#if !defined (_POLKIT_BACKEND_COMPILATION) || defined(_POLKIT_BACKEND_INSIDE_POLKIT_BACKEND_H)
+#error "This is a private header file."
 #endif
 
 #ifndef __POLKIT_BACKEND_SESSION_MONITOR_H
@@ -38,9 +38,7 @@ G_BEGIN_DECLS
 #define POLKIT_BACKEND_IS_SESSION_MONITOR(o)        (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_BACKEND_TYPE_SESSION_MONITOR))
 #define POLKIT_BACKEND_IS_SESSION_MONITOR_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), POLKIT_BACKEND_TYPE_SESSION_MONITOR))
 
-#if 0
 typedef struct _PolkitBackendSessionMonitor         PolkitBackendSessionMonitor;
-#endif
 typedef struct _PolkitBackendSessionMonitorClass    PolkitBackendSessionMonitorClass;
 
 GType                        polkit_backend_session_monitor_get_type     (void) G_GNUC_CONST;

@@ -94,10 +94,6 @@
     <xi:include href="xml/polkitbackendauthority.xml"/>
     <xi:include href="xml/polkitbackendinteractiveauthority.xml"/>
     <xi:include href="xml/polkitbackendlocalauthority.xml"/>
-    <xi:include href="xml/polkitbackendlocalauthorizationstore.xml"/>
-    <xi:include href="xml/polkitbackendactionpool.xml"/>
-    <xi:include href="xml/polkitbackendsessionmonitor.xml"/>
-    <xi:include href="xml/polkitbackendconfigsource.xml"/>
     <xi:include href="xml/polkitbackendactionlookup.xml"/>
   </part>
 
