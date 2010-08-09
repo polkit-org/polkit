@@ -27,7 +27,9 @@
 #define __POLKIT_BACKEND_ACTION_LOOKUP_H
 
 #include <glib-object.h>
-#include "polkitbackendtypes.h"
+
+#include <polkit/polkit.h>
+#include <polkitbackend/polkitbackendtypes.h>
 
 G_BEGIN_DECLS
 

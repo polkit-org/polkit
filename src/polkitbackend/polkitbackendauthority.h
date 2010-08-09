@@ -28,7 +28,8 @@
 
 #include <glib-object.h>
 
-#include "polkitbackendtypes.h"
+#include <polkit/polkit.h>
+#include <polkitbackend/polkitbackendtypes.h>
 
 G_BEGIN_DECLS
 
