@@ -64,7 +64,6 @@ localauthorityconfigdir = $(sysconfdir)/polkit-1/localauthority.conf.d
 localauthorityconfig_DATA = 50-localauthority.conf
 
 EXTRA_DIST =								\
-	org.freedesktop.ConsoleKit.xml					\
 	$(localauthorityconfig_DATA)					\
 	$(NULL)
 
