@@ -28,6 +28,9 @@
 #include "polkitauthority.h"
 #include "polkiterror.h"
 #include "polkitenumtypes.h"
+#include "polkitsubject.h"
+#include "polkitidentity.h"
+#include "polkitdetails.h"
 
 #include "polkitprivate.h"
 
@@ -403,9 +406,8 @@ get_uninitialized_authority (GCancellable *cancellable,
       goto out;
     }
   the_authority = POLKIT_AUTHORITY (g_object_new (POLKIT_TYPE_AUTHORITY, NULL));
-  G_UNLOCK (the_lock);
-
  out:
+  G_UNLOCK (the_lock);
   return the_authority;
 }
 
@@ -459,6 +461,8 @@ polkit_authority_get_async  (GCancellable        *cancellable,
   GSimpleAsyncResult *simple;
   GError *error;
 
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   simple = g_simple_async_result_new (NULL,
                                       callback,
                                       user_data,
@@ -498,11 +502,14 @@ PolkitAuthority *
 polkit_authority_get_finish (GAsyncResult        *res,
                              GError             **error)
 {
-  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
+  GSimpleAsyncResult *simple;
   GObject *object;
   PolkitAuthority *ret;
 
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  simple = G_SIMPLE_ASYNC_RESULT (res);
 
   g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_get_async);
 
@@ -538,6 +545,7 @@ polkit_authority_get_sync (GCancellable        *cancellable,
 {
   PolkitAuthority *authority;
 
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   authority = get_uninitialized_authority (cancellable, error);
@@ -634,6 +642,8 @@ polkit_authority_enumerate_actions (PolkitAuthority     *authority,
                                     GAsyncReadyCallback  callback,
                                     gpointer             user_data)
 {
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
   g_dbus_proxy_call (authority->proxy,
                      "EnumerateActions",
                      g_variant_new ("(s)",
@@ -670,6 +680,10 @@ polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
   GVariant *child;
   GVariant *array;
   GAsyncResult *_res;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   ret = NULL;
 
@@ -714,6 +728,10 @@ polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
 {
   GList *ret;
   CallSyncData *data;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   data = call_sync_new ();
   polkit_authority_enumerate_actions (authority, cancellable, call_sync_cb, data);
@@ -841,6 +859,12 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
   GVariant *details_value;
   CheckAuthData *data;
 
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (action_id != NULL);
+  g_return_if_fail (details == NULL || POLKIT_IS_DETAILS (details));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   subject_value = polkit_subject_to_gvariant (subject);
   details_value = polkit_details_to_gvariant (details);
   g_variant_ref_sink (subject_value);
@@ -889,15 +913,18 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
                                              GAsyncResult             *res,
                                              GError                  **error)
 {
-  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
   PolkitAuthorizationResult *ret;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   ret = NULL;
 
-  if (g_simple_async_result_propagate_error (simple, error))
+  if (g_simple_async_result_propagate_error (G_SIMPLE_ASYNC_RESULT (res), error))
     goto out;
 
-  ret = g_object_ref (g_simple_async_result_get_op_res_gpointer (simple));
+  ret = g_object_ref (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
 
  out:
   return ret;
@@ -934,6 +961,13 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
 {
   PolkitAuthorizationResult *ret;
   CallSyncData *data;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), NULL);
+  g_return_val_if_fail (action_id != NULL, NULL);
+  g_return_val_if_fail (details == NULL || POLKIT_IS_DETAILS (details), NULL);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   data = call_sync_new ();
   polkit_authority_check_authorization (authority, subject, action_id, details, flags, cancellable, call_sync_cb, data);
@@ -972,6 +1006,13 @@ polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
                                                 gpointer              user_data)
 {
   GVariant *subject_value;
+
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (locale != NULL);
+  g_return_if_fail (g_variant_is_object_path (object_path));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   subject_value = polkit_subject_to_gvariant (subject);
   g_variant_ref_sink (subject_value);
   g_dbus_proxy_call (authority->proxy,
@@ -1009,6 +1050,10 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
   gboolean ret;
   GVariant *value;
   GAsyncResult *_res;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
   ret = FALSE;
 
@@ -1050,6 +1095,13 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
   gboolean ret;
   CallSyncData *data;
 
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (locale != NULL, FALSE);
+  g_return_val_if_fail (g_variant_is_object_path (object_path), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   data = call_sync_new ();
   polkit_authority_register_authentication_agent (authority, subject, locale, object_path, cancellable, call_sync_cb, data);
   call_sync_block (data);
@@ -1086,6 +1138,12 @@ polkit_authority_unregister_authentication_agent (PolkitAuthority      *authorit
                                                   gpointer              user_data)
 {
   GVariant *subject_value;
+
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (g_variant_is_object_path (object_path));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   subject_value = polkit_subject_to_gvariant (subject);
   g_variant_ref_sink (subject_value);
   g_dbus_proxy_call (authority->proxy,
@@ -1122,6 +1180,10 @@ polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *author
   gboolean ret;
   GVariant *value;
   GAsyncResult *_res;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
   ret = FALSE;
 
@@ -1162,6 +1224,12 @@ polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *auth
   gboolean ret;
   CallSyncData *data;
 
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (g_variant_is_object_path (object_path), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   data = call_sync_new ();
   polkit_authority_unregister_authentication_agent (authority, subject, object_path, cancellable, call_sync_cb, data);
   call_sync_block (data);
@@ -1201,6 +1269,12 @@ polkit_authority_authentication_agent_response (PolkitAuthority      *authority,
                                                 gpointer              user_data)
 {
   GVariant *identity_value;
+
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (cookie != NULL);
+  g_return_if_fail (POLKIT_IS_IDENTITY (identity));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   identity_value = polkit_identity_to_gvariant (identity);
   g_variant_ref_sink (identity_value);
   g_dbus_proxy_call (authority->proxy,
@@ -1237,6 +1311,10 @@ polkit_authority_authentication_agent_response_finish (PolkitAuthority *authorit
   gboolean ret;
   GVariant *value;
   GAsyncResult *_res;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
   ret = FALSE;
 
@@ -1278,6 +1356,12 @@ polkit_authority_authentication_agent_response_sync (PolkitAuthority     *author
   gboolean ret;
   CallSyncData *data;
 
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (cookie != NULL, FALSE);
+  g_return_val_if_fail (POLKIT_IS_IDENTITY (identity), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   data = call_sync_new ();
   polkit_authority_authentication_agent_response (authority, cookie, identity, cancellable, call_sync_cb, data);
   call_sync_block (data);
@@ -1311,6 +1395,11 @@ polkit_authority_enumerate_temporary_authorizations (PolkitAuthority     *author
                                                      gpointer             user_data)
 {
   GVariant *subject_value;
+
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   subject_value = polkit_subject_to_gvariant (subject);
   g_variant_ref_sink (subject_value);
   g_dbus_proxy_call (authority->proxy,
@@ -1350,6 +1439,10 @@ polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *aut
   GVariant *child;
   GVariant *array;
   GAsyncResult *_res;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   ret = NULL;
 
@@ -1405,6 +1498,11 @@ polkit_authority_enumerate_temporary_authorizations_sync (PolkitAuthority     *a
   GList *ret;
   CallSyncData *data;
 
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), NULL);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
   data = call_sync_new ();
   polkit_authority_enumerate_temporary_authorizations (authority, subject, cancellable, call_sync_cb, data);
   call_sync_block (data);
@@ -1438,6 +1536,11 @@ polkit_authority_revoke_temporary_authorizations (PolkitAuthority     *authority
                                                   gpointer             user_data)
 {
   GVariant *subject_value;
+
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   subject_value = polkit_subject_to_gvariant (subject);
   g_variant_ref_sink (subject_value);
   g_dbus_proxy_call (authority->proxy,
@@ -1474,6 +1577,10 @@ polkit_authority_revoke_temporary_authorizations_finish (PolkitAuthority *author
   GVariant *value;
   GAsyncResult *_res;
 
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   ret = FALSE;
 
   g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_revoke_temporary_authorizations);
@@ -1509,6 +1616,11 @@ polkit_authority_revoke_temporary_authorizations_sync (PolkitAuthority     *auth
   gboolean ret;
   CallSyncData *data;
 
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   data = call_sync_new ();
   polkit_authority_revoke_temporary_authorizations (authority, subject, cancellable, call_sync_cb, data);
   call_sync_block (data);
@@ -1541,6 +1653,10 @@ polkit_authority_revoke_temporary_authorization_by_id (PolkitAuthority     *auth
                                                        GAsyncReadyCallback  callback,
                                                        gpointer             user_data)
 {
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (id != NULL);
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
   g_dbus_proxy_call (authority->proxy,
                      "RevokeTemporaryAuthorizationById",
                      g_variant_new ("(s)",
@@ -1573,6 +1689,10 @@ polkit_authority_revoke_temporary_authorization_by_id_finish (PolkitAuthority *a
   gboolean ret;
   GVariant *value;
   GAsyncResult *_res;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
   ret = FALSE;
 
@@ -1609,6 +1729,11 @@ polkit_authority_revoke_temporary_authorization_by_id_sync (PolkitAuthority     
   gboolean ret;
   CallSyncData *data;
 
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (id != NULL, FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   data = call_sync_new ();
   polkit_authority_revoke_temporary_authorization_by_id (authority, id, cancellable, call_sync_cb, data);
   call_sync_block (data);
@@ -1634,6 +1759,7 @@ polkit_authority_revoke_temporary_authorization_by_id_sync (PolkitAuthority     
 gchar *
 polkit_authority_get_owner (PolkitAuthority *authority)
 {
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
   return g_dbus_proxy_get_name_owner (authority->proxy);
 }
 
@@ -1648,6 +1774,7 @@ polkit_authority_get_owner (PolkitAuthority *authority)
 const gchar *
 polkit_authority_get_backend_name (PolkitAuthority *authority)
 {
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
   if (authority->name == NULL)
     {
       GVariant *value;
@@ -1669,6 +1796,7 @@ polkit_authority_get_backend_name (PolkitAuthority *authority)
 const gchar *
 polkit_authority_get_backend_version (PolkitAuthority *authority)
 {
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), NULL);
   if (authority->version == NULL)
     {
       GVariant *value;
@@ -1692,6 +1820,8 @@ polkit_authority_get_backend_features (PolkitAuthority *authority)
 {
   PolkitAuthorityFeatures ret;
   GVariant *value;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), 0);
 
   value = g_dbus_proxy_get_cached_property (authority->proxy, "BackendFeatures");
   ret = (PolkitAuthorityFeatures) g_variant_get_uint32 (value);
