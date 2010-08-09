@@ -1,4 +1,67 @@
 --------------
+PolicyKit 0.97
+--------------
+
+This is PolicyKit 0.97.
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+The main change since the previous version is a port from eggdbus to
+GLib's new D-Bus implementation. Other changes includes various bug
+fixes and support for shadow authentication. Support for the
+AddLockdown() and RemoveLockdown() methods has been removed. You will
+need an updated version of PolicyKit-gnome to go with this release.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.25.11
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+
+Changes since PolicyKit 0.96:
+
+Andrew Psaltis (1):
+      Add shadow support
+
+Dan Rosenberg (1):
+      Bug 26982 – pkexec information disclosure vulnerability
+
+David Zeuthen (23):
+      Post-release version bump to 0.97
+      Port core bits to gdbus
+      Port CK class to gdbus
+      Port PolkitBackendInteractiveAuthority to gdbus
+      Port PolkitAgent to gdbus
+      Add generated docbook D-Bus API docs to git
+      Nuke eggdbus usage
+      Make polkitd accept --replace and gracefully handle SIGINT
+      Implement polkit_temporary_authorization_new_for_gvariant()
+      Remove Lock Down functionality
+      Make NameOwnerChanged a private impl detail of the interactive authority
+      Update README
+      Merge remote branch 'origin/gdbus'
+      Add a GPermission implementation
+      PolkitAuthority: Implement failable initialization
+      PolkitAuthority: Add g_return_if_fail() checks
+      Add g_return_if_fail() to all public API entry points
+      Use polkit_authority_get_sync() instead of deprecated polkit_authority_get
+      PolkitBackend: Don't export unneeded convenience API
+      Update GI annotations
+      Don't dist org.freedesktop.ConsoleKit.xml; It's dead, Jim
+      Properly reference headers
+      Update NEWS for release
+
+Petr Mrázek (1):
+      Bug 29051 – Configuration reload on every query
+
+Thanks to our contributors.
+
+David Zeuthen,
+August 9, 2010
+
+--------------
 PolicyKit 0.96
 --------------
 
