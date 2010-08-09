@@ -85,6 +85,7 @@ polkit_identity_get_type (void)
 guint
 polkit_identity_hash (PolkitIdentity *identity)
 {
+  g_return_val_if_fail (POLKIT_IS_IDENTITY (identity), 0);
   return POLKIT_IDENTITY_GET_IFACE (identity)->hash (identity);
 }
 
@@ -103,6 +104,9 @@ gboolean
 polkit_identity_equal (PolkitIdentity *a,
                       PolkitIdentity *b)
 {
+  g_return_val_if_fail (POLKIT_IS_IDENTITY (a), FALSE);
+  g_return_val_if_fail (POLKIT_IS_IDENTITY (b), FALSE);
+
   if (!g_type_is_a (G_TYPE_FROM_INSTANCE (a), G_TYPE_FROM_INSTANCE (b)))
     return FALSE;
 
@@ -121,6 +125,7 @@ polkit_identity_equal (PolkitIdentity *a,
 gchar *
 polkit_identity_to_string (PolkitIdentity *identity)
 {
+  g_return_val_if_fail (POLKIT_IS_IDENTITY (identity), NULL);
   return POLKIT_IDENTITY_GET_IFACE (identity)->to_string (identity);
 }
 
@@ -144,6 +149,7 @@ polkit_identity_from_string  (const gchar   *str,
   gchar *endptr;
 
   g_return_val_if_fail (str != NULL, NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   /* TODO: we could do something with VFuncs like in g_icon_from_string() */
 

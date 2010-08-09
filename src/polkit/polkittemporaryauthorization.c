@@ -126,6 +126,7 @@ polkit_temporary_authorization_new (const gchar                  *id,
 const gchar *
 polkit_temporary_authorization_get_id (PolkitTemporaryAuthorization *authorization)
 {
+  g_return_val_if_fail (POLKIT_IS_TEMPORARY_AUTHORIZATION (authorization), NULL);
   return authorization->id;
 }
 
@@ -140,6 +141,7 @@ polkit_temporary_authorization_get_id (PolkitTemporaryAuthorization *authorizati
 const gchar *
 polkit_temporary_authorization_get_action_id (PolkitTemporaryAuthorization *authorization)
 {
+  g_return_val_if_fail (POLKIT_IS_TEMPORARY_AUTHORIZATION (authorization), NULL);
   return authorization->action_id;
 }
 
@@ -154,6 +156,7 @@ polkit_temporary_authorization_get_action_id (PolkitTemporaryAuthorization *auth
 PolkitSubject *
 polkit_temporary_authorization_get_subject (PolkitTemporaryAuthorization *authorization)
 {
+  g_return_val_if_fail (POLKIT_IS_TEMPORARY_AUTHORIZATION (authorization), NULL);
   return g_object_ref (authorization->subject);
 }
 
@@ -168,6 +171,7 @@ polkit_temporary_authorization_get_subject (PolkitTemporaryAuthorization *author
 guint64
 polkit_temporary_authorization_get_time_obtained (PolkitTemporaryAuthorization *authorization)
 {
+  g_return_val_if_fail (POLKIT_IS_TEMPORARY_AUTHORIZATION (authorization), 0);
   return authorization->time_obtained;
 }
 
@@ -182,6 +186,7 @@ polkit_temporary_authorization_get_time_obtained (PolkitTemporaryAuthorization *
 guint64
 polkit_temporary_authorization_get_time_expires (PolkitTemporaryAuthorization *authorization)
 {
+  g_return_val_if_fail (POLKIT_IS_TEMPORARY_AUTHORIZATION (authorization), 0);
   return authorization->time_expires;
 }
 

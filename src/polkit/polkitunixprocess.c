@@ -197,6 +197,7 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
 gint
 polkit_unix_process_get_pid (PolkitUnixProcess *process)
 {
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
   return process->pid;
 }
 
@@ -220,6 +221,9 @@ polkit_unix_process_get_owner (PolkitUnixProcess  *process,
   struct stat statbuf;
   char procbuf[32];
 #endif
+
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
+  g_return_val_if_fail (error == NULL || *error == NULL, 0);
 
   result = 0;
 
@@ -268,6 +272,7 @@ polkit_unix_process_get_owner (PolkitUnixProcess  *process,
 guint64
 polkit_unix_process_get_start_time (PolkitUnixProcess *process)
 {
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
   return process->start_time;
 }
 
@@ -282,6 +287,7 @@ void
 polkit_unix_process_set_pid (PolkitUnixProcess *process,
                              gint              pid)
 {
+  g_return_if_fail (POLKIT_IS_UNIX_PROCESS (process));
   process->pid = pid;
   if (pid != (gint) -1)
     process->start_time = get_start_time_for_pid (pid, NULL);

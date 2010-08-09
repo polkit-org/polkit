@@ -106,6 +106,8 @@ polkit_authorization_result_new (gboolean                   is_authorized,
 {
   PolkitAuthorizationResult *authorization_result;
 
+  g_return_val_if_fail (details == NULL || POLKIT_IS_DETAILS (details), NULL);
+
   authorization_result = POLKIT_AUTHORIZATION_RESULT (g_object_new (POLKIT_TYPE_AUTHORIZATION_RESULT, NULL));
   authorization_result->is_authorized = is_authorized;
   authorization_result->is_challenge = is_challenge;
@@ -128,6 +130,7 @@ polkit_authorization_result_new (gboolean                   is_authorized,
 gboolean
 polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result)
 {
+  g_return_val_if_fail (POLKIT_IS_AUTHORIZATION_RESULT (result), FALSE);
   return result->is_authorized;
 }
 
@@ -142,6 +145,7 @@ polkit_authorization_result_get_is_authorized (PolkitAuthorizationResult *result
 gboolean
 polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
 {
+  g_return_val_if_fail (POLKIT_IS_AUTHORIZATION_RESULT (result), FALSE);
   return result->is_challenge;
 }
 
@@ -157,6 +161,7 @@ polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
 PolkitDetails *
 polkit_authorization_result_get_details (PolkitAuthorizationResult *result)
 {
+  g_return_val_if_fail (POLKIT_IS_AUTHORIZATION_RESULT (result), NULL);
   return result->details;
 }
 
@@ -182,6 +187,8 @@ polkit_authorization_result_get_retains_authorization (PolkitAuthorizationResult
 {
   gboolean ret;
   PolkitDetails *details;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORIZATION_RESULT (result), FALSE);
 
   ret = FALSE;
   details = polkit_authorization_result_get_details (result);
@@ -218,6 +225,8 @@ polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationR
 {
   const gchar *ret;
   PolkitDetails *details;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORIZATION_RESULT (result), NULL);
 
   ret = NULL;
   details = polkit_authorization_result_get_details (result);

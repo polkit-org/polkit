@@ -86,6 +86,7 @@ polkit_subject_get_type (void)
 guint
 polkit_subject_hash (PolkitSubject *subject)
 {
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), 0);
   return POLKIT_SUBJECT_GET_IFACE (subject)->hash (subject);
 }
 
@@ -104,6 +105,9 @@ gboolean
 polkit_subject_equal (PolkitSubject *a,
                       PolkitSubject *b)
 {
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (a), FALSE);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (b), FALSE);
+
   if (!g_type_is_a (G_TYPE_FROM_INSTANCE (a), G_TYPE_FROM_INSTANCE (b)))
     return FALSE;
 
@@ -122,6 +126,7 @@ polkit_subject_equal (PolkitSubject *a,
 gchar *
 polkit_subject_to_string (PolkitSubject *subject)
 {
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), NULL);
   return POLKIT_SUBJECT_GET_IFACE (subject)->to_string (subject);
 }
 
@@ -144,6 +149,8 @@ polkit_subject_exists (PolkitSubject       *subject,
                        GAsyncReadyCallback  callback,
                        gpointer             user_data)
 {
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
   POLKIT_SUBJECT_GET_IFACE (subject)->exists (subject,
                                               cancellable,
                                               callback,
@@ -165,6 +172,9 @@ polkit_subject_exists_finish (PolkitSubject   *subject,
                               GAsyncResult    *res,
                               GError         **error)
 {
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (G_IS_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
   return POLKIT_SUBJECT_GET_IFACE (subject)->exists_finish (subject,
                                                             res,
                                                             error);
@@ -188,6 +198,9 @@ polkit_subject_exists_sync   (PolkitSubject  *subject,
                               GCancellable   *cancellable,
                               GError        **error)
 {
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
   return POLKIT_SUBJECT_GET_IFACE (subject)->exists_sync (subject,
                                                           cancellable,
                                                           error);
@@ -213,6 +226,7 @@ polkit_subject_from_string  (const gchar   *str,
   gchar *endptr;
 
   g_return_val_if_fail (str != NULL, NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   /* TODO: we could do something with VFuncs like in g_icon_from_string() */
 

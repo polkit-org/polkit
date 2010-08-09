@@ -243,6 +243,9 @@ polkit_agent_session_new (PolkitIdentity *identity,
 {
   PolkitAgentSession *session;
 
+  g_return_val_if_fail (POLKIT_IS_IDENTITY (identity), NULL);
+  g_return_val_if_fail (cookie != NULL, NULL);
+
   session = POLKIT_AGENT_SESSION (g_object_new (POLKIT_AGENT_TYPE_SESSION, NULL));
 
   session->identity = g_object_ref (identity);
@@ -408,6 +411,7 @@ polkit_agent_session_response (PolkitAgentSession *session,
   size_t response_len;
   const char newline[] = "\n";
 
+  g_return_if_fail (POLKIT_AGENT_IS_SESSION (session));
   g_return_if_fail (response != NULL);
 
   response_len = strlen (response);
@@ -435,6 +439,8 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
   gchar *helper_argv[4];
   gboolean ret;
   struct passwd *passwd;
+
+  g_return_if_fail (POLKIT_AGENT_IS_SESSION (session));
 
   ret = FALSE;
 
@@ -506,5 +512,6 @@ error:
 void
 polkit_agent_session_cancel (PolkitAgentSession *session)
 {
+  g_return_if_fail (POLKIT_AGENT_IS_SESSION (session));
   complete_session (session, FALSE);
 }

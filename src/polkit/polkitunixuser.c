@@ -153,6 +153,7 @@ polkit_unix_user_class_init (PolkitUnixUserClass *klass)
 gint
 polkit_unix_user_get_uid (PolkitUnixUser *user)
 {
+  g_return_val_if_fail (POLKIT_IS_UNIX_USER (user), -1);
   return user->uid;
 }
 
@@ -167,6 +168,7 @@ void
 polkit_unix_user_set_uid (PolkitUnixUser *user,
                           gint uid)
 {
+  g_return_if_fail (POLKIT_IS_UNIX_USER (user));
   user->uid = uid;
 }
 
@@ -202,6 +204,9 @@ polkit_unix_user_new_for_name (const gchar    *name,
 {
   struct passwd *passwd;
   PolkitIdentity *identity;
+
+  g_return_val_if_fail (name != NULL, NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   identity = NULL;
 

@@ -127,6 +127,8 @@ const gchar *
 polkit_details_lookup (PolkitDetails *details,
                        const gchar   *key)
 {
+  g_return_val_if_fail (POLKIT_IS_DETAILS (details), NULL);
+  g_return_val_if_fail (key != NULL, NULL);
   if (details->hash == NULL)
     return NULL;
   else
@@ -146,6 +148,8 @@ polkit_details_insert (PolkitDetails *details,
                        const gchar   *key,
                        const gchar   *value)
 {
+  g_return_if_fail (POLKIT_IS_DETAILS (details));
+  g_return_if_fail (key != NULL);
   if (details->hash == NULL)
     details->hash = g_hash_table_new_full (g_str_hash,
                                            g_str_equal,
@@ -168,6 +172,8 @@ polkit_details_get_keys (PolkitDetails *details)
   GList *keys, *l;
   gchar **ret;
   guint n;
+
+  g_return_val_if_fail (POLKIT_IS_DETAILS (details), NULL);
 
   if (details->hash == NULL)
     return NULL;

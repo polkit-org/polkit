@@ -163,6 +163,7 @@ polkit_system_bus_name_class_init (PolkitSystemBusNameClass *klass)
 const gchar *
 polkit_system_bus_name_get_name (PolkitSystemBusName *system_bus_name)
 {
+  g_return_val_if_fail (POLKIT_IS_SYSTEM_BUS_NAME (system_bus_name), NULL);
   return system_bus_name->name;
 }
 
@@ -177,6 +178,8 @@ void
 polkit_system_bus_name_set_name (PolkitSystemBusName *system_bus_name,
                                  const gchar         *name)
 {
+  g_return_if_fail (POLKIT_IS_SYSTEM_BUS_NAME (system_bus_name));
+  g_return_if_fail (g_dbus_is_unique_name (name));
   g_free (system_bus_name->name);
   system_bus_name->name = g_strdup (name);
 }
@@ -355,6 +358,10 @@ polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,
   PolkitSubject *ret;
   GVariant *result;
   guint32 pid;
+
+  g_return_val_if_fail (POLKIT_IS_SYSTEM_BUS_NAME (system_bus_name), NULL);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
   ret = NULL;
 

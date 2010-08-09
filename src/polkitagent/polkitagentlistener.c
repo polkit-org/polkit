@@ -327,6 +327,11 @@ polkit_agent_register_listener (PolkitAgentListener  *listener,
   gboolean ret;
   GDBusNodeInfo *node_info;
 
+  g_return_val_if_fail (POLKIT_AGENT_IS_LISTENER (listener), FALSE);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (g_variant_is_object_path (object_path), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
   ret = FALSE;
 
   server = server_new (subject, object_path, NULL, error);
@@ -575,6 +580,13 @@ polkit_agent_listener_initiate_authentication (PolkitAgentListener  *listener,
                                                GAsyncReadyCallback   callback,
                                                gpointer              user_data)
 {
+  g_return_if_fail (POLKIT_AGENT_IS_LISTENER (listener));
+  g_return_if_fail (details == NULL || POLKIT_IS_DETAILS (details));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+  g_return_if_fail (action_id != NULL);
+  g_return_if_fail (message != NULL);
+  g_return_if_fail (cookie != NULL);
+  g_return_if_fail (identities != NULL);
   POLKIT_AGENT_LISTENER_GET_CLASS (listener)->initiate_authentication (listener,
                                                                        action_id,
                                                                        message,
@@ -603,6 +615,9 @@ polkit_agent_listener_initiate_authentication_finish (PolkitAgentListener  *list
                                                       GAsyncResult         *res,
                                                       GError              **error)
 {
+  g_return_val_if_fail (POLKIT_AGENT_IS_LISTENER (listener), FALSE);
+  g_return_val_if_fail (G_IS_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
   return POLKIT_AGENT_LISTENER_GET_CLASS (listener)->initiate_authentication_finish (listener,
                                                                                      res,
                                                                                      error);

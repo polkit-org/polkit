@@ -195,6 +195,7 @@ polkit_unix_session_class_init (PolkitUnixSessionClass *klass)
 const gchar *
 polkit_unix_session_get_session_id (PolkitUnixSession *session)
 {
+  g_return_val_if_fail (POLKIT_IS_UNIX_SESSION (session), NULL);
   return session->session_id;
 }
 
@@ -209,6 +210,8 @@ void
 polkit_unix_session_set_session_id (PolkitUnixSession *session,
                                     const gchar       *session_id)
 {
+  g_return_if_fail (POLKIT_IS_UNIX_SESSION (session));
+  /*g_return_if_fail (session_id != NULL);*/
   g_free (session->session_id);
   session->session_id = g_strdup (session_id);
 }

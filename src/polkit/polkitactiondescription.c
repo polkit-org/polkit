@@ -112,6 +112,7 @@ polkit_action_description_class_init (PolkitActionDescriptionClass *klass)
 const gchar  *
 polkit_action_description_get_action_id (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
   return action_description->action_id;
 }
 
@@ -126,6 +127,7 @@ polkit_action_description_get_action_id (PolkitActionDescription *action_descrip
 const gchar  *
 polkit_action_description_get_description (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
   return action_description->description;
 }
 
@@ -140,6 +142,7 @@ polkit_action_description_get_description (PolkitActionDescription *action_descr
 const gchar  *
 polkit_action_description_get_message (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
   return action_description->message;
 }
 
@@ -155,6 +158,7 @@ polkit_action_description_get_message (PolkitActionDescription *action_descripti
 const gchar  *
 polkit_action_description_get_vendor_name (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
   return action_description->vendor_name;
 }
 
@@ -170,6 +174,7 @@ polkit_action_description_get_vendor_name (PolkitActionDescription *action_descr
 const gchar  *
 polkit_action_description_get_vendor_url (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
   return action_description->vendor_url;
 }
 
@@ -185,6 +190,7 @@ polkit_action_description_get_vendor_url (PolkitActionDescription *action_descri
 PolkitImplicitAuthorization
 polkit_action_description_get_implicit_any (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), 0);
   return action_description->implicit_any;
 }
 
@@ -200,6 +206,7 @@ polkit_action_description_get_implicit_any (PolkitActionDescription *action_desc
 PolkitImplicitAuthorization
 polkit_action_description_get_implicit_inactive (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), 0);
   return action_description->implicit_inactive;
 }
 
@@ -215,6 +222,7 @@ polkit_action_description_get_implicit_inactive (PolkitActionDescription *action
 PolkitImplicitAuthorization
 polkit_action_description_get_implicit_active (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), 0);
   return action_description->implicit_active;
 }
 
@@ -231,6 +239,7 @@ polkit_action_description_get_implicit_active (PolkitActionDescription *action_d
 const gchar *
 polkit_action_description_get_icon_name (PolkitActionDescription *action_description)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
   return action_description->icon_name;
 }
 
@@ -248,6 +257,7 @@ const gchar *
 polkit_action_description_get_annotation (PolkitActionDescription *action_description,
                                           const gchar             *key)
 {
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
   return g_hash_table_lookup (action_description->annotations, key);
 }
 
@@ -265,6 +275,8 @@ polkit_action_description_get_annotation_keys (PolkitActionDescription *action_d
   GPtrArray *p;
   GHashTableIter iter;
   const gchar *key;
+
+  g_return_val_if_fail (POLKIT_IS_ACTION_DESCRIPTION (action_description), NULL);
 
   if (action_description->annotation_keys != NULL)
     goto out;
@@ -295,6 +307,7 @@ polkit_action_description_new (const gchar                 *action_id,
                                GHashTable                  *annotations)
 {
   PolkitActionDescription *ret;
+  g_return_val_if_fail (annotations != NULL, NULL);
   ret = POLKIT_ACTION_DESCRIPTION (g_object_new (POLKIT_TYPE_ACTION_DESCRIPTION, NULL));
   ret->action_id = g_strdup (action_id);
   ret->description = g_strdup (description);
