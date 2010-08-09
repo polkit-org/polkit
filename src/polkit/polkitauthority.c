@@ -64,6 +64,9 @@ struct _PolkitAuthority
 
   GDBusProxy *proxy;
   guint cancellation_id_counter;
+
+  gboolean initialized;
+  GError *initialization_error;
 };
 
 struct _PolkitAuthorityClass
@@ -72,8 +75,7 @@ struct _PolkitAuthorityClass
 
 };
 
-/* TODO: fix up locking */
-
+G_LOCK_DEFINE_STATIC (the_lock);
 static PolkitAuthority *the_authority = NULL;
 
 enum
@@ -93,7 +95,12 @@ enum
 
 static guint signals[LAST_SIGNAL] = {0};
 
-G_DEFINE_TYPE (PolkitAuthority, polkit_authority, G_TYPE_OBJECT);
+static void initable_iface_init       (GInitableIface *initable_iface);
+static void async_initable_iface_init (GAsyncInitableIface *async_initable_iface);
+
+G_DEFINE_TYPE_WITH_CODE (PolkitAuthority, polkit_authority, G_TYPE_OBJECT,
+                         G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init)
+                         G_IMPLEMENT_INTERFACE (G_TYPE_ASYNC_INITABLE, async_initable_iface_init))
 
 static void
 on_proxy_signal (GDBusProxy   *proxy,
@@ -121,31 +128,20 @@ on_notify_g_name_owner (GObject    *object,
 static void
 polkit_authority_init (PolkitAuthority *authority)
 {
-  GError *error;
+}
 
-  /* TODO: do this instead in GInitable and GAsyncInitable implementations */
-  error = NULL;
-  authority->proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
-                                                    G_DBUS_PROXY_FLAGS_NONE,
-                                                    NULL, /* GDBusInterfaceInfo* */
-                                                    "org.freedesktop.PolicyKit1",            /* name */
-                                                    "/org/freedesktop/PolicyKit1/Authority", /* path */
-                                                    "org.freedesktop.PolicyKit1.Authority",  /* interface */
-                                                    NULL, /* GCancellable */
-                                                    &error);
-  if (authority->proxy == NULL)
-    {
-      g_warning ("Error initializing authority: %s", error->message);
-      g_error_free (error);
-    }
-  g_signal_connect (authority->proxy,
-                    "g-signal",
-                    G_CALLBACK (on_proxy_signal),
-                    authority);
-  g_signal_connect (authority->proxy,
-                    "notify::g-name-owner",
-                    G_CALLBACK (on_notify_g_name_owner),
-                    authority);
+static void
+polkit_authority_dispose (GObject *object)
+{
+  PolkitAuthority *authority = POLKIT_AUTHORITY (object);
+
+  G_LOCK (the_lock);
+  if (authority == the_authority)
+    the_authority = NULL;
+  G_UNLOCK (the_lock);
+
+  if (G_OBJECT_CLASS (polkit_authority_parent_class)->dispose != NULL)
+    G_OBJECT_CLASS (polkit_authority_parent_class)->dispose (object);
 }
 
 static void
@@ -153,7 +149,8 @@ polkit_authority_finalize (GObject *object)
 {
   PolkitAuthority *authority = POLKIT_AUTHORITY (object);
 
-  the_authority = NULL;
+  if (authority->initialization_error != NULL)
+    g_error_free (authority->initialization_error);
 
   g_free (authority->name);
   g_free (authority->version);
@@ -201,6 +198,7 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
+  gobject_class->dispose      = polkit_authority_dispose;
   gobject_class->finalize     = polkit_authority_finalize;
   gobject_class->get_property = polkit_authority_get_property;
 
@@ -288,34 +286,272 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
                                           0);
 }
 
-/**
- * polkit_authority_get:
- *
- * Gets a reference to the authority.
- *
- * Returns: A #PolkitAuthority. Free it with g_object_unref() when done with it.
- **/
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gboolean
+polkit_authority_initable_init (GInitable     *initable,
+                                GCancellable  *cancellable,
+                                GError       **error)
+{
+  PolkitAuthority *authority = POLKIT_AUTHORITY (initable);
+  gboolean ret;
+
+  /* This method needs to be idempotent to work with the singleton
+   * pattern. See the docs for g_initable_init(). We implement this by
+   * locking.
+   */
+
+  ret = FALSE;
+
+  G_LOCK (the_lock);
+  if (authority->initialized)
+    {
+      if (authority->initialization_error == NULL)
+        ret = TRUE;
+      goto out;
+    }
+
+  authority->proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                                    G_DBUS_PROXY_FLAGS_NONE,
+                                                    NULL, /* TODO: pass GDBusInterfaceInfo* */
+                                                    "org.freedesktop.PolicyKit1",            /* name */
+                                                    "/org/freedesktop/PolicyKit1/Authority", /* path */
+                                                    "org.freedesktop.PolicyKit1.Authority",  /* interface */
+                                                    cancellable,
+                                                    &authority->initialization_error);
+  if (authority->proxy == NULL)
+    {
+      g_prefix_error (&authority->initialization_error, "Error initializing authority: ");
+      goto out;
+    }
+  g_signal_connect (authority->proxy,
+                    "g-signal",
+                    G_CALLBACK (on_proxy_signal),
+                    authority);
+  g_signal_connect (authority->proxy,
+                    "notify::g-name-owner",
+                    G_CALLBACK (on_notify_g_name_owner),
+                    authority);
+
+  ret = TRUE;
+
+ out:
+  authority->initialized = TRUE;
+
+  if (!ret)
+    {
+      g_assert (authority->initialization_error != NULL);
+      g_propagate_error (error, g_error_copy (authority->initialization_error));
+    }
+  G_UNLOCK (the_lock);
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+initable_iface_init (GInitableIface *initable_iface)
+{
+  initable_iface->init = polkit_authority_initable_init;
+}
+
+static void
+async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
+{
+  /* for now, we use default implementation to run GInitable code in a
+   * thread - would probably be nice to have real async version to
+   * avoid the thread-overhead
+   */
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 PolkitAuthority *
 polkit_authority_get (void)
 {
-  static volatile GQuark error_quark = 0;
+  GError *error;
+  PolkitAuthority *ret;
 
-  if (error_quark == 0)
+  error = NULL;
+  ret = polkit_authority_get_sync (NULL, /* GCancellable* */
+                                   &error);
+  if (ret == NULL)
     {
-      error_quark = POLKIT_ERROR;
+      g_warning ("polkit_authority_get: Error getting authority: %s",
+                 error->message);
+      g_error_free (error);
     }
 
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static PolkitAuthority *
+get_uninitialized_authority (GCancellable *cancellable,
+                             GError       **error)
+{
+  static volatile GQuark error_quark = 0;
+
+  G_LOCK (the_lock);
+  if (error_quark == 0)
+    error_quark = POLKIT_ERROR;
 
   if (the_authority != NULL)
     {
       g_object_ref (the_authority);
       goto out;
     }
-
   the_authority = POLKIT_AUTHORITY (g_object_new (POLKIT_TYPE_AUTHORITY, NULL));
+  G_UNLOCK (the_lock);
 
  out:
   return the_authority;
+}
+
+static void
+authority_get_async_cb (GObject      *source_object,
+                        GAsyncResult *res,
+                        gpointer      user_data)
+{
+  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
+  GError *error;
+
+  error = NULL;
+  if (!g_async_initable_init_finish (G_ASYNC_INITABLE (source_object),
+                                     res,
+                                     &error))
+    {
+      g_assert (error != NULL);
+      g_simple_async_result_set_from_error (simple, error);
+      g_error_free (error);
+      g_object_unref (source_object);
+    }
+  else
+    {
+      g_simple_async_result_set_op_res_gpointer (simple,
+                                                 source_object,
+                                                 g_object_unref);
+    }
+  g_simple_async_result_complete_in_idle (simple);
+  g_object_unref (simple);
+}
+
+/**
+ * polkit_authority_get_async:
+ * @cancellable: A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously gets a reference to the authority.
+ *
+ * This is an asynchronous failable function. When the result is
+ * ready, @callback will be invoked and you can use
+ * polkit_authority_get_finish() to get the result. See
+ * polkit_authority_get_sync() for the synchronous version.
+ */
+void
+polkit_authority_get_async  (GCancellable        *cancellable,
+                             GAsyncReadyCallback  callback,
+                             gpointer             user_data)
+{
+  PolkitAuthority *authority;
+  GSimpleAsyncResult *simple;
+  GError *error;
+
+  simple = g_simple_async_result_new (NULL,
+                                      callback,
+                                      user_data,
+                                      polkit_authority_get_async);
+
+  error = NULL;
+  authority = get_uninitialized_authority (cancellable, &error);
+  if (authority == NULL)
+    {
+      g_assert (error != NULL);
+      g_simple_async_result_set_from_error (simple, error);
+      g_error_free (error);
+      g_simple_async_result_complete_in_idle (simple);
+      g_object_unref (simple);
+    }
+  else
+    {
+      g_async_initable_init_async (G_ASYNC_INITABLE (authority),
+                                   G_PRIORITY_DEFAULT,
+                                   cancellable,
+                                   authority_get_async_cb,
+                                   simple);
+    }
+}
+
+/**
+ * polkit_authority_get_finish:
+ * @res: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to polkit_authority_get_async().
+ * @error: Return location for error or %NULL.
+ *
+ * Finishes an operation started with polkit_authority_get_async().
+ *
+ * Returns: A #PolkitAuthority. Free it with g_object_unref() when
+ * done with it.
+ */
+PolkitAuthority *
+polkit_authority_get_finish (GAsyncResult        *res,
+                             GError             **error)
+{
+  GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (res);
+  GObject *object;
+  PolkitAuthority *ret;
+
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (simple) == polkit_authority_get_async);
+
+  ret = NULL;
+
+  if (g_simple_async_result_propagate_error (simple, error))
+    goto out;
+
+  object = g_simple_async_result_get_op_res_gpointer (simple);
+  g_assert (object != NULL);
+  ret = g_object_ref (POLKIT_AUTHORITY (object));
+
+ out:
+  return ret;
+}
+
+/**
+ * polkit_authority_get_sync:
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error or %NULL.
+ *
+ * Synchronously gets a reference to the authority.
+ *
+ * This is a synchronous failable function. See
+ * polkit_authority_get_async() for the synchronous version.
+ *
+ * Returns: A #PolkitAuthority. Free it with g_object_unref() when
+ * done with it.
+ */
+PolkitAuthority *
+polkit_authority_get_sync (GCancellable        *cancellable,
+                           GError             **error)
+{
+  PolkitAuthority *authority;
+
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  authority = get_uninitialized_authority (cancellable, error);
+  if (authority == NULL)
+    goto out;
+
+  if (!g_initable_init (G_INITABLE (authority), cancellable, error))
+    {
+      g_object_unref (authority);
+      authority = NULL;
+    }
+
+ out:
+  return authority;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -616,8 +852,10 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
                                             callback,
                                             user_data,
                                             polkit_authority_check_authorization);
+  G_LOCK (the_lock);
   if (cancellable != NULL)
     data->cancellation_id = g_strdup_printf ("cancellation-id-%d", authority->cancellation_id_counter++);
+  G_UNLOCK (the_lock);
 
   g_dbus_proxy_call (authority->proxy,
                      "CheckAuthorization",

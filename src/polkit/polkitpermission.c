@@ -408,8 +408,9 @@ polkit_permission_initable_init (GInitable     *initable,
 
   ret = FALSE;
 
-  /* TODO: use sync failable getter instead */
-  permission->authority = polkit_authority_get ();
+  permission->authority = polkit_authority_get_sync (cancellable, error);
+  if (permission->authority == NULL)
+    goto out;
 
   g_signal_connect (permission->authority,
                     "changed",

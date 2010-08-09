@@ -47,7 +47,15 @@ typedef struct _PolkitAuthorityClass PolkitAuthorityClass;
 
 GType         polkit_authority_get_type         (void) G_GNUC_CONST;
 
-PolkitAuthority *polkit_authority_get (void);
+PolkitAuthority *polkit_authority_get (void) G_GNUC_DEPRECATED_FOR (polkit_authority_get_sync);
+
+void             polkit_authority_get_async  (GCancellable        *cancellable,
+                                              GAsyncReadyCallback  callback,
+                                              gpointer             user_data);
+PolkitAuthority *polkit_authority_get_finish (GAsyncResult        *res,
+                                              GError             **error);
+PolkitAuthority *polkit_authority_get_sync   (GCancellable        *cancellable,
+                                              GError             **error);
 
 gchar                   *polkit_authority_get_owner            (PolkitAuthority *authority);
 const gchar             *polkit_authority_get_backend_name     (PolkitAuthority *authority);

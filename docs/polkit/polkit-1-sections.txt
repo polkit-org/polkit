@@ -21,7 +21,9 @@ POLKIT_UNIX_USER_GET_CLASS
 PolkitAuthority
 PolkitAuthorityFeatures
 PolkitCheckAuthorizationFlags
-polkit_authority_get
+polkit_authority_get_sync
+polkit_authority_get_async
+polkit_authority_get_finish
 polkit_authority_get_owner
 polkit_authority_get_backend_name
 polkit_authority_get_backend_version
