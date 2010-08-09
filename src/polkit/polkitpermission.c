@@ -248,8 +248,8 @@ polkit_permission_class_init (PolkitPermissionClass *class)
 /**
  * polkit_permission_new:
  * @action_id: The PolicyKit action identifier.
- * @subject: A #PolkitSubject or %NULL for the current process.
- * @cancellable: A #GCancellable or %NULL.
+ * @subject: (allow-none): A #PolkitSubject or %NULL for the current process.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -287,7 +287,7 @@ polkit_permission_new (const gchar         *action_id,
 /**
  * polkit_permission_new_finish:
  * @res: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to polkit_permission_new().
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes an operation started with polkit_permission_new().
  *
@@ -318,9 +318,9 @@ polkit_permission_new_finish (GAsyncResult  *res,
 /**
  * polkit_permission_new_sync:
  * @action_id: The PolicyKit action identifier.
- * @subject: A #PolkitSubject or %NULL for the current process.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @subject: (allow-none): A #PolkitSubject or %NULL for the current process.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Creates a #GPermission instance for the PolicyKit action
  * @action_id.
@@ -381,12 +381,12 @@ polkit_permission_get_action_id (PolkitPermission *permission)
 }
 
 /**
- * polkit_permission_get_action_id:
+ * polkit_permission_get_subject:
  * @permission: A #PolkitPermission.
  *
  * Gets the subject used for @permission.
  *
- * Returns: An object owned by @permission. Do not free.
+ * Returns: (transfer none): An object owned by @permission. Do not free.
  */
 PolkitSubject *
 polkit_permission_get_subject   (PolkitPermission    *permission)

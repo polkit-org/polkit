@@ -129,6 +129,7 @@ Polkit-1.0.gir: libpolkit-gobject-1.la $(G_IR_SCANNER) Makefile.am
 		$(srcdir)/polkitunixprocess.h 			\
 		$(srcdir)/polkitunixsession.h 			\
 		$(srcdir)/polkitunixuser.h 			\
+		$(srcdir)/polkitpermission.h 			\
 		$(NULL)
 
 Polkit-1.0.typelib: Polkit-1.0.gir $(G_IR_COMPILER)

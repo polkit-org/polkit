@@ -369,6 +369,7 @@ async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+/* deprecated, see polkitauthority.h */
 PolkitAuthority *
 polkit_authority_get (void)
 {
@@ -441,7 +442,7 @@ authority_get_async_cb (GObject      *source_object,
 
 /**
  * polkit_authority_get_async:
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -491,7 +492,7 @@ polkit_authority_get_async  (GCancellable        *cancellable,
 /**
  * polkit_authority_get_finish:
  * @res: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to polkit_authority_get_async().
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes an operation started with polkit_authority_get_async().
  *
@@ -528,8 +529,8 @@ polkit_authority_get_finish (GAsyncResult        *res,
 
 /**
  * polkit_authority_get_sync:
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Synchronously gets a reference to the authority.
  *
@@ -626,7 +627,7 @@ generic_async_cb (GObject      *source_obj,
 /**
  * polkit_authority_enumerate_actions:
  * @authority: A #PolkitAuthority.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -662,7 +663,7 @@ polkit_authority_enumerate_actions (PolkitAuthority     *authority,
  * polkit_authority_enumerate_actions_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes retrieving all registered actions.
  *
@@ -713,8 +714,8 @@ polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
 /**
  * polkit_authority_enumerate_actions_sync:
  * @authority: A #PolkitAuthority.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Synchronously retrieves all registered actions.
  *
@@ -826,10 +827,11 @@ check_authorization_cb (GDBusProxy    *proxy,
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject.
  * @action_id: The action to check for.
- * @details: Details about the action or %NULL. Keys starting with <literal>polkit.</literal> are reserved
- * for internal use and cannot be used.
+ * @details: (allow-none): Details about the action or %NULL. Keys
+ * starting with <literal>polkit.</literal> are reserved for internal
+ * use and cannot be used.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -902,7 +904,7 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
  * polkit_authority_check_authorization_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes checking if a subject is authorized for an action.
  *
@@ -935,11 +937,12 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject.
  * @action_id: The action to check for.
- * @details: Details about the action or %NULL. Keys starting with <literal>polkit.</literal> are reserved
- * for internal use and cannot be used.
+ * @details: (allow-none): Details about the action or %NULL. Keys
+ * starting with <literal>polkit.</literal> are reserved for internal
+ * use and cannot be used.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Checks if @subject is authorized to perform the action represented by @action_id.
  *
@@ -986,7 +989,7 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
  * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
  * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -1036,7 +1039,7 @@ polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
  * polkit_authority_register_authentication_agent_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes registering an authentication agent.
  *
@@ -1077,8 +1080,8 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
  * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
  * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Registers an authentication agent.
  *
@@ -1119,7 +1122,7 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
  * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
  * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -1166,7 +1169,7 @@ polkit_authority_unregister_authentication_agent (PolkitAuthority      *authorit
  * polkit_authority_unregister_authentication_agent_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes unregistering an authentication agent.
  *
@@ -1207,8 +1210,8 @@ polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *author
  * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
  * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Unregisters an authentication agent.
  *
@@ -1246,7 +1249,7 @@ polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *auth
  * @authority: A #PolkitAuthority.
  * @cookie: The cookie passed to the authentication agent from the authority.
  * @identity: The identity that was authenticated.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -1297,7 +1300,7 @@ polkit_authority_authentication_agent_response (PolkitAuthority      *authority,
  * polkit_authority_authentication_agent_response_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes providing response from an authentication agent.
  *
@@ -1337,8 +1340,8 @@ polkit_authority_authentication_agent_response_finish (PolkitAuthority *authorit
  * @authority: A #PolkitAuthority.
  * @cookie: The cookie passed to the authentication agent from the authority.
  * @identity: The identity that was authenticated.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Provide response that @identity successfully authenticated for the
  * authentication request identified by @cookie. See polkit_authority_authentication_agent_response()
@@ -1377,7 +1380,7 @@ polkit_authority_authentication_agent_response_sync (PolkitAuthority     *author
  * polkit_authority_enumerate_temporary_authorizations:
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject, typically a #PolkitUnixSession.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -1421,7 +1424,7 @@ polkit_authority_enumerate_temporary_authorizations (PolkitAuthority     *author
  * polkit_authority_enumerate_temporary_authorizations_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes retrieving all registered actions.
  *
@@ -1481,8 +1484,8 @@ polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *aut
  * polkit_authority_enumerate_temporary_authorizations_sync:
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject, typically a #PolkitUnixSession.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Synchronousky gets all temporary authorizations for @subject.
  *
@@ -1518,7 +1521,7 @@ polkit_authority_enumerate_temporary_authorizations_sync (PolkitAuthority     *a
  * polkit_authority_revoke_temporary_authorizations:
  * @authority: A #PolkitAuthority.
  * @subject: The subject to revoke authorizations from, typically a #PolkitUnixSession.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -1562,7 +1565,7 @@ polkit_authority_revoke_temporary_authorizations (PolkitAuthority     *authority
  * polkit_authority_revoke_temporary_authorizations_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes revoking temporary authorizations.
  *
@@ -1600,8 +1603,8 @@ polkit_authority_revoke_temporary_authorizations_finish (PolkitAuthority *author
  * polkit_authority_revoke_temporary_authorizations_sync:
  * @authority: A #PolkitAuthority.
  * @subject: The subject to revoke authorizations from, typically a #PolkitUnixSession.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Synchronously revokes all temporary authorization from @subject.
  *
@@ -1636,7 +1639,7 @@ polkit_authority_revoke_temporary_authorizations_sync (PolkitAuthority     *auth
  * polkit_authority_revoke_temporary_authorization_by_id:
  * @authority: A #PolkitAuthority.
  * @id: The opaque identifier for the temporary authorization.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
  *
@@ -1675,7 +1678,7 @@ polkit_authority_revoke_temporary_authorization_by_id (PolkitAuthority     *auth
  * polkit_authority_revoke_temporary_authorization_by_id_finish:
  * @authority: A #PolkitAuthority.
  * @res: A #GAsyncResult obtained from the callback.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes revoking a temporary authorization by id.
  *
@@ -1713,8 +1716,8 @@ polkit_authority_revoke_temporary_authorization_by_id_finish (PolkitAuthority *a
  * polkit_authority_revoke_temporary_authorization_by_id_sync:
  * @authority: A #PolkitAuthority.
  * @id: The opaque identifier for the temporary authorization.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Synchronously revokes a temporary authorization.
  *
@@ -1754,7 +1757,7 @@ polkit_authority_revoke_temporary_authorization_by_id_sync (PolkitAuthority     
  * currently owns the name. You may connect to the #GObject::notify
  * signal to track changes to the #PolkitAuthority::owner property.
  *
- * Returns: %NULL or a string that should be freed with g_free().
+ * Returns: (allow-none): %NULL or a string that should be freed with g_free().
  **/
 gchar *
 polkit_authority_get_owner (PolkitAuthority *authority)

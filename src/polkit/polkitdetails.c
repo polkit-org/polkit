@@ -121,7 +121,7 @@ polkit_details_new_for_hash (GHashTable *hash)
  *
  * Gets the value for @key on @details.
  *
- * Returns: %NULL if there is no value for @key, otherwise a string owned by @details.
+ * Returns: (allow-none): %NULL if there is no value for @key, otherwise a string owned by @details.
  */
 const gchar *
 polkit_details_lookup (PolkitDetails *details,
@@ -139,7 +139,7 @@ polkit_details_lookup (PolkitDetails *details,
  * polkit_details_insert:
  * @details: A #PolkitDetails.
  * @key: A key.
- * @value: A value.
+ * @value: (allow-none): A value.
  *
  * Inserts a copy of @key and @value on @details.
  */
@@ -164,7 +164,8 @@ polkit_details_insert (PolkitDetails *details,
  *
  * Gets a list of all keys on @details.
  *
- * Returns: An array of strings that should be freed with g_strfreev().
+ * Returns: (allow-none): %NULL if there are no keys otherwise an
+ * array of strings that should be freed with g_strfreev().
  */
 gchar **
 polkit_details_get_keys (PolkitDetails *details)

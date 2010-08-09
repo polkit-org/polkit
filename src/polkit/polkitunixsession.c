@@ -235,7 +235,7 @@ polkit_unix_session_new (const gchar *session_id)
 /**
  * polkit_unix_session_new_for_process:
  * @pid: The process id of the process to get the session for.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied
  * @user_data: The data to pass to @callback.
  *
@@ -267,12 +267,13 @@ polkit_unix_session_new_for_process (gint                pid,
 /**
  * polkit_unix_session_new_for_process_finish:
  * @res: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to polkit_unix_session_new_for_process().
- * @error: Return location for error.
+ * @error: (allow-none): Return location for error.
  *
  * Finishes constructing a #PolkitSubject for a process id.
  *
- * Returns: A #PolkitUnixSession for the @pid passed to polkit_unix_session_new_for_process() or %NULL
- *     if @error is set. Free with g_object_unref().
+ * Returns: (allow-none): A #PolkitUnixSession for the @pid passed to
+ *     polkit_unix_session_new_for_process() or %NULL if @error is
+ *     set. Free with g_object_unref().
  **/
 PolkitSubject *
 polkit_unix_session_new_for_process_finish (GAsyncResult   *res,
@@ -299,15 +300,16 @@ polkit_unix_session_new_for_process_finish (GAsyncResult   *res,
 /**
  * polkit_unix_session_new_for_process_sync:
  * @pid: The process id of the process to get the session for.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error.
  *
  * Creates a new #PolkitUnixSession for the process with process id @pid.
  *
  * This is a synchronous call that does blocking IO, for the asynchronous version, use
  * polkit_unix_session_new_for_process().
  *
- * Returns: A #PolkitUnixSession for @pid or %NULL if @error is set. Free with g_object_unref().
+ * Returns: (allow-none): A #PolkitUnixSession for @pid or %NULL if
+ * @error is set. Free with g_object_unref().
  **/
 PolkitSubject *
 polkit_unix_session_new_for_process_sync (gint           pid,

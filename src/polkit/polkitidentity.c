@@ -137,8 +137,8 @@ polkit_identity_to_string (PolkitIdentity *identity)
  * Creates an object from @str that implements the #PolkitIdentity
  * interface.
  *
- * Returns: A #PolkitIdentity or %NULL if @error is set. Free with
- * g_object_unref().
+ * Returns: (allow-none): A #PolkitIdentity or %NULL if @error is
+ * set. Free with g_object_unref().
  */
 PolkitIdentity *
 polkit_identity_from_string  (const gchar   *str,

@@ -204,7 +204,7 @@ polkit_unix_process_get_pid (PolkitUnixProcess *process)
 /**
  * polkit_unix_process_get_owner:
  * @process: A #PolkitUnixProcess.
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Gets the uid of the owner of @process.
  *

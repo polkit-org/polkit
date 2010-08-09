@@ -86,18 +86,6 @@ polkit_temporary_authorization_class_init (PolkitTemporaryAuthorizationClass *kl
   gobject_class->finalize = polkit_temporary_authorization_finalize;
 }
 
-/**
- * polkit_temporary_authorization_new:
- * @id: Id for temporary authorization
- * @action_id: An action id.
- * @subject: A #PolkitSubject.
- * @time_obtained: Time obtained, since the Epoch Jan 1, 1970 0:00 UTC.
- * @time_expires: Time the temporary authorization will expire, since the Epoch Jan 1, 1970 0:00 UTC.
- *
- * Creates a new temporary authorization.
- *
- * Returns: A #PolkitTemporaryAuthorization, free with g_object_unref()
- **/
 PolkitTemporaryAuthorization *
 polkit_temporary_authorization_new (const gchar                  *id,
                                     const gchar                  *action_id,
@@ -151,7 +139,7 @@ polkit_temporary_authorization_get_action_id (PolkitTemporaryAuthorization *auth
  *
  * Gets the subject that @authorization is for.
  *
- * Returns: A #PolkitSubject, free with g_object_unref().
+ * Returns: (transfer full): A #PolkitSubject, free with g_object_unref().
  **/
 PolkitSubject *
 polkit_temporary_authorization_get_subject (PolkitTemporaryAuthorization *authorization)

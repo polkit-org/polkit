@@ -133,7 +133,7 @@ polkit_subject_to_string (PolkitSubject *subject)
 /**
  * polkit_subject_exists:
  * @subject: A #PolkitSubject.
- * @cancellable: A #GCancellable or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied
  * @user_data: The data to pass to @callback.
  *
@@ -161,7 +161,7 @@ polkit_subject_exists (PolkitSubject       *subject,
  * polkit_subject_exists_finish:
  * @subject: A #PolkitSubject.
  * @res: A #GAsyncResult obtained from the #GAsyncReadyCallback passed to polkit_subject_exists().
- * @error: Return location for error or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Finishes checking whether a subject exists.
  *
@@ -183,8 +183,8 @@ polkit_subject_exists_finish (PolkitSubject   *subject,
 /**
  * polkit_subject_exists_sync:
  * @subject: A #PolkitSubject.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Checks if @subject exists.
  *
@@ -209,7 +209,7 @@ polkit_subject_exists_sync   (PolkitSubject  *subject,
 /**
  * polkit_subject_from_string:
  * @str: A string obtained from polkit_subject_to_string().
- * @error: Return location for error.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Creates an object from @str that implements the #PolkitSubject
  * interface.

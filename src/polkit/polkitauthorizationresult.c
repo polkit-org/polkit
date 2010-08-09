@@ -93,7 +93,7 @@ polkit_authorization_result_class_init (PolkitAuthorizationResultClass *klass)
  * @is_challenge: Whether the subject is authorized if more
  * information is provided. Must be %FALSE unless @is_authorized is
  * %TRUE.
- * @details: Must be %NULL unless @is_authorized is %TRUE
+ * @details: (allow-none): Must be %NULL unless @is_authorized is %TRUE
  *
  * Creates a new #PolkitAuthorizationResult object.
  *
@@ -155,8 +155,9 @@ polkit_authorization_result_get_is_challenge (PolkitAuthorizationResult *result)
  *
  * Gets the details about the result.
  *
- * Returns: A #PolkitDetails object. This object is owned by @result
- * and should not be freed by the caller.
+ * Returns: (allow-none) (transfer none): A #PolkitDetails object or
+ * %NULL if there are no details. This object is owned by @result and
+ * should not be freed by the caller.
  */
 PolkitDetails *
 polkit_authorization_result_get_details (PolkitAuthorizationResult *result)
@@ -217,8 +218,9 @@ polkit_authorization_result_get_retains_authorization (PolkitAuthorizationResult
  * This method simply reads the value of the key/value pair in @details with the
  * key <literal>polkit.temporary_authorization_id</literal>.
  *
- * Returns: The opaque temporary authorization id for @result or %NULL if not
- *    available. Do not free this string, it is owned by @result.
+ * Returns: (allow-none): The opaque temporary authorization id for
+ *    @result or %NULL if not available. Do not free this string, it
+ *    is owned by @result.
  */
 const gchar *
 polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationResult *result)

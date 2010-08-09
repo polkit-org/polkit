@@ -196,7 +196,7 @@ polkit_unix_user_new (gint uid)
  * Creates a new #PolkitUnixUser object for a user with the user name
  * @name.
  *
- * Returns: A #PolkitUnixUser object or %NULL if @error is set.
+ * Returns: (allow-none): A #PolkitUnixUser object or %NULL if @error is set.
  */
 PolkitIdentity *
 polkit_unix_user_new_for_name (const gchar    *name,

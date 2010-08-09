@@ -152,8 +152,7 @@ polkit_action_description_get_message (PolkitActionDescription *action_descripti
  *
  * Gets the vendor name for @action_description, if any.
  *
- * Returns: %NULL if there is no vendor, otherwise a string owned by
- * @action_description. Do not free.
+ * Returns: A string owned by @action_description. Do not free.
  */
 const gchar  *
 polkit_action_description_get_vendor_name (PolkitActionDescription *action_description)
@@ -168,8 +167,7 @@ polkit_action_description_get_vendor_name (PolkitActionDescription *action_descr
  *
  * Gets the vendor URL for @action_description, if any.
  *
- * Returns: %NULL if there is no vendor URL, otherwise a string owned
- * by @action_description. Do not free.
+ * Returns: A string owned by @action_description. Do not free.
  */
 const gchar  *
 polkit_action_description_get_vendor_url (PolkitActionDescription *action_description)
@@ -233,8 +231,7 @@ polkit_action_description_get_implicit_active (PolkitActionDescription *action_d
  *
  * Gets the icon name for @action_description, if any.
  *
- * Returns: %NULL if there is no icon for @action, otherwise the icon
- * name owned by @action_description. Do not free.
+ * Returns: A string owned by @action_description. Do not free.
  */
 const gchar *
 polkit_action_description_get_icon_name (PolkitActionDescription *action_description)
@@ -250,8 +247,9 @@ polkit_action_description_get_icon_name (PolkitActionDescription *action_descrip
  *
  * Get the value of the annotation with @key.
  *
- * Returns: %NULL if there is no annoation with @key, otherwise the
- * annotation value owned by @action_description. Do not free.
+ * Returns: (allow-none): %NULL if there is no annoation with @key,
+ * otherwise the annotation value owned by @action_description. Do not
+ * free.
  */
 const gchar *
 polkit_action_description_get_annotation (PolkitActionDescription *action_description,

@@ -195,6 +195,7 @@ polkit_system_bus_name_set_name (PolkitSystemBusName *system_bus_name,
 PolkitSubject *
 polkit_system_bus_name_new (const gchar *name)
 {
+  g_return_val_if_fail (g_dbus_is_unique_name (name), NULL);
   return POLKIT_SUBJECT (g_object_new (POLKIT_TYPE_SYSTEM_BUS_NAME,
                                        "name", name,
                                        NULL));
@@ -342,12 +343,12 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
 /**
  * polkit_system_bus_name_get_process_sync:
  * @system_bus_name: A #PolkitSystemBusName.
- * @cancellable: A #GCancellable or %NULL.
- * @error: Return location for error or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
  *
  * Synchronously gets a #PolkitUnixProcess object for @system_bus_name.
  *
- * Returns: A #PolkitUnixProcess object or %NULL if @error is set.
+ * Returns: (allow-none): A #PolkitUnixProcess object or %NULL if @error is set.
  **/
 PolkitSubject *
 polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,
