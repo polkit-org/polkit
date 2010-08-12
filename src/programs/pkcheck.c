@@ -198,7 +198,7 @@ main (int argc, char *argv[])
     }
   else if (opt_show_version)
     {
-      g_print ("pkexec version %s\n", PACKAGE_VERSION);
+      g_print ("pkcheck version %s\n", PACKAGE_VERSION);
       ret = 0;
       goto out;
     }

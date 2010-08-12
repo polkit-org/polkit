@@ -23,22 +23,23 @@
 #error "Only <polkitagent/polkitagent.h> can be included directly, this file may disappear or change contents"
 #endif
 
-#ifndef __POLKIT_AGENT_TYPES_H
-#define __POLKIT_AGENT_TYPES_H
+#ifndef __POLKIT_AGENT_TEXT_LISTENER_H
+#define __POLKIT_AGENT_TEXT_LISTENER_H
 
-#include <glib-object.h>
+#include <polkit/polkit.h>
+#include <polkitagent/polkitagenttypes.h>
 
 G_BEGIN_DECLS
 
-struct _PolkitAgentListener;
-typedef struct _PolkitAgentListener PolkitAgentListener;
+#define POLKIT_AGENT_TYPE_TEXT_LISTENER          (polkit_agent_text_listener_get_type())
+#define POLKIT_AGENT_TEXT_LISTENER(o)            (G_TYPE_CHECK_INSTANCE_CAST ((o), POLKIT_AGENT_TYPE_TEXT_LISTENER, PolkitAgentTextListener))
+#define POLKIT_AGENT_IS_TEXT_LISTENER(o)         (G_TYPE_CHECK_INSTANCE_TYPE ((o), POLKIT_AGENT_TYPE_TEXT_LISTENER))
 
-struct _PolkitAgentTextListener;
-typedef struct _PolkitAgentTextListener PolkitAgentTextListener;
+GType                polkit_agent_text_listener_get_type (void) G_GNUC_CONST;
+PolkitAgentListener *polkit_agent_text_listener_new      (GCancellable   *cancellable,
+                                                          GError        **error);
 
-struct _PolkitAgentSession;
-typedef struct _PolkitAgentSession PolkitAgentSession;
 
 G_END_DECLS
 
-#endif /* __POLKIT_AGENT_TYPES_H */
+#endif /* __POLKIT_AGENT_TEXT_LISTENER_H */

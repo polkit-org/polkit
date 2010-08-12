@@ -30,7 +30,7 @@
  * sensitive information.
  */
 #undef PAH_DEBUG
-// #define PAH_DEBUG
+/* #define PAH_DEBUG */
 
 #ifdef HAVE_SOLARIS
 #  define LOG_AUTHPRIV    (10<<3)

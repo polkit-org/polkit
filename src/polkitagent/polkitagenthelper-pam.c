@@ -204,15 +204,32 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
         {
 
         case PAM_PROMPT_ECHO_OFF:
+#ifdef PAH_DEBUG
+          fprintf (stderr, "polkit-agent-helper-1: writing `PAM_PROMPT_ECHO_OFF ' to stdout\n");
+#endif /* PAH_DEBUG */
           fprintf (stdout, "PAM_PROMPT_ECHO_OFF ");
           goto conv1;
 
         case PAM_PROMPT_ECHO_ON:
+#ifdef PAH_DEBUG
+          fprintf (stderr, "polkit-agent-helper-1: writing `PAM_PROMPT_ECHO_ON ' to stdout\n");
+#endif /* PAH_DEBUG */
           fprintf (stdout, "PAM_PROMPT_ECHO_ON ");
         conv1:
+#ifdef PAH_DEBUG
+          fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", msg[i]->msg);
+#endif /* PAH_DEBUG */
           fputs (msg[i]->msg, stdout);
           if (strlen (msg[i]->msg) > 0 && msg[i]->msg[strlen (msg[i]->msg) - 1] != '\n')
-            fputc ('\n', stdout);
+            {
+#ifdef PAH_DEBUG
+              fprintf (stderr, "polkit-agent-helper-1: writing newline to stdout\n");
+#endif /* PAH_DEBUG */
+              fputc ('\n', stdout);
+            }
+#ifdef PAH_DEBUG
+          fprintf (stderr, "polkit-agent-helper-1: flushing stdout\n");
+#endif /* PAH_DEBUG */
           fflush (stdout);
 
           if (fgets (buf, sizeof buf, stdin) == NULL)

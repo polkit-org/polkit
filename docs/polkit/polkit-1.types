@@ -26,3 +26,4 @@ polkit_backend_local_authorization_store_get_type
 
 polkit_agent_session_get_type
 polkit_agent_listener_get_type
+polkit_agent_text_listener_get_type

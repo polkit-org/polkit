@@ -18,7 +18,20 @@ INCLUDES =                                                      \
 
 BUILT_SOURCES = 						\
 	marshal.stamp						\
+	polkitagentenumtypes.c		polkitagentenumtypes.h	\
 	$(NULL)
+
+enum_headers = polkitagentlistener.h
+
+polkitagentenumtypes.h: $(enum_headers) polkitagentenumtypes.h.template
+	( top_builddir=`cd $(top_builddir) && pwd`; \
+	 cd $(srcdir) && glib-mkenums --template polkitagentenumtypes.h.template $(enum_headers)) > \
+	   polkitagentenumtypes.h.tmp && mv polkitagentenumtypes.h.tmp polkitagentenumtypes.h
+
+polkitagentenumtypes.c: $(enum_headers) polkitagentenumtypes.c.template
+	( top_builddir=`cd $(top_builddir) && pwd`; \
+	 cd $(srcdir) && glib-mkenums --template polkitagentenumtypes.c.template $(enum_headers)) > \
+	   polkitagentenumtypes.c.tmp && mv polkitagentenumtypes.c.tmp polkitagentenumtypes.c
 
 marshal.stamp : Makefile.am $(srcdir)/polkitagentmarshal.list
 	glib-genmarshal --prefix=_polkit_agent_marshal $(srcdir)/polkitagentmarshal.list --header > polkitagentmarshal.h.tmp && mv polkitagentmarshal.h.tmp polkitagentmarshal.h
@@ -36,6 +49,7 @@ libpolkit_agent_1include_HEADERS =                        				\
 	polkitagenttypes.h								\
 	polkitagentsession.h								\
 	polkitagentlistener.h								\
+	polkitagenttextlistener.h							\
         $(NULL)
 
 libpolkit_agent_1_la_SOURCES =                                   			\
@@ -45,6 +59,7 @@ libpolkit_agent_1_la_SOURCES =                                   			\
 	polkitagenttypes.h								\
 	polkitagentsession.h			polkitagentsession.c			\
 	polkitagentlistener.h			polkitagentlistener.c			\
+	polkitagenttextlistener.h		polkitagenttextlistener.c		\
         $(NULL)
 
 libpolkit_agent_1_la_CFLAGS =                                        	\

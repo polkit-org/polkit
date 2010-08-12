@@ -94,25 +94,47 @@ struct _PolkitAgentListenerClass
 
 GType     polkit_agent_listener_get_type                        (void) G_GNUC_CONST;
 
-void      polkit_agent_listener_initiate_authentication         (PolkitAgentListener  *listener,
-                                                                 const gchar          *action_id,
-                                                                 const gchar          *message,
-                                                                 const gchar          *icon_name,
-                                                                 PolkitDetails        *details,
-                                                                 const gchar          *cookie,
-                                                                 GList                *identities,
-                                                                 GCancellable         *cancellable,
-                                                                 GAsyncReadyCallback   callback,
-                                                                 gpointer              user_data);
+void      polkit_agent_listener_initiate_authentication         (PolkitAgentListener      *listener,
+                                                                 const gchar              *action_id,
+                                                                 const gchar              *message,
+                                                                 const gchar              *icon_name,
+                                                                 PolkitDetails            *details,
+                                                                 const gchar              *cookie,
+                                                                 GList                    *identities,
+                                                                 GCancellable             *cancellable,
+                                                                 GAsyncReadyCallback       callback,
+                                                                 gpointer                  user_data);
 
-gboolean  polkit_agent_listener_initiate_authentication_finish  (PolkitAgentListener  *listener,
-                                                                 GAsyncResult         *res,
-                                                                 GError              **error);
+gboolean  polkit_agent_listener_initiate_authentication_finish  (PolkitAgentListener      *listener,
+                                                                 GAsyncResult             *res,
+                                                                 GError                  **error);
 
-gboolean  polkit_agent_register_listener                        (PolkitAgentListener  *listener,
-                                                                 PolkitSubject        *subject,
-                                                                 const gchar          *object_path,
-                                                                 GError              **error);
+gboolean  polkit_agent_register_listener                        (PolkitAgentListener      *listener,
+                                                                 PolkitSubject            *subject,
+                                                                 const gchar              *object_path,
+                                                                 GError                  **error) G_GNUC_DEPRECATED_FOR (polkit_authority_listener_register);
+
+/**
+ * PolkitAgentRegisterFlags:
+ * @POLKIT_AGENT_REGISTER_FLAGS_NONE: No flags are set.
+ * @POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD: Run the listener in a dedicated thread.
+ *
+ * Flags used in polkit_agent_listener_register().
+ */
+typedef enum
+{
+  POLKIT_AGENT_REGISTER_FLAGS_NONE = 0,
+  POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD = (1<<0)
+} PolkitAgentRegisterFlags;
+
+gpointer  polkit_agent_listener_register                        (PolkitAgentListener      *listener,
+                                                                 PolkitAgentRegisterFlags  flags,
+                                                                 PolkitSubject            *subject,
+                                                                 const gchar              *object_path,
+                                                                 GCancellable             *cancellable,
+                                                                 GError                  **error);
+
+void      polkit_agent_listener_unregister                      (gpointer                  registration_handle);
 
 G_END_DECLS
 

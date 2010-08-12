@@ -85,7 +85,8 @@ typedef void (*AuthenticationAgentCallback) (AuthenticationAgent         *agent,
                                              PolkitIdentity              *authenticated_identity,
                                              gpointer                     user_data);
 
-static void                authentication_agent_free (AuthenticationAgent *agent);
+static AuthenticationAgent *authentication_agent_ref   (AuthenticationAgent *agent);
+static void                 authentication_agent_unref (AuthenticationAgent *agent);
 
 static void                authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                                                     PolkitSubject               *subject,
@@ -99,7 +100,7 @@ static void                authentication_agent_initiate_challenge (Authenticati
                                                                     AuthenticationAgentCallback  callback,
                                                                     gpointer                     user_data);
 
-static PolkitSubject *authentication_agent_get_session (AuthenticationAgent *agent);
+static PolkitSubject *authentication_agent_get_scope (AuthenticationAgent *agent);
 
 static AuthenticationAgent *get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authority,
                                                                   PolkitSubject *subject);
@@ -195,7 +196,17 @@ typedef struct
 
   TemporaryAuthorizationStore *temporary_authorization_store;
 
-  GHashTable *hash_session_to_authentication_agent;
+  /* Maps from PolkitSubject* to AuthenticationAgent* - currently the
+   * following PolkitSubject-derived types are used
+   *
+   *  - PolkitSystemBusName - for authentication agents handling interaction for a single well-known name
+   *    - typically pkexec(1) launched via e.g. ssh(1) or login(1)
+   *
+   *  - PolkitUnixSession - for authentication agents handling interaction for a whole login session
+   *    - typically a desktop environment session
+   *
+   */
+  GHashTable *hash_scope_to_authentication_agent;
 
   GDBusConnection *system_bus_connection;
   guint name_owner_changed_signal_id;
@@ -276,10 +287,10 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
 
   priv->temporary_authorization_store = temporary_authorization_store_new (authority);
 
-  priv->hash_session_to_authentication_agent = g_hash_table_new_full ((GHashFunc) polkit_subject_hash,
-                                                                      (GEqualFunc) polkit_subject_equal,
-                                                                      (GDestroyNotify) g_object_unref,
-                                                                      (GDestroyNotify) authentication_agent_free);
+  priv->hash_scope_to_authentication_agent = g_hash_table_new_full ((GHashFunc) polkit_subject_hash,
+                                                                    (GEqualFunc) polkit_subject_equal,
+                                                                    (GDestroyNotify) g_object_unref,
+                                                                    (GDestroyNotify) authentication_agent_unref);
 
   priv->session_monitor = polkit_backend_session_monitor_new ();
   g_signal_connect (priv->session_monitor,
@@ -334,7 +345,7 @@ polkit_backend_interactive_authority_finalize (GObject *object)
 
   temporary_authorization_store_free (priv->temporary_authorization_store);
 
-  g_hash_table_unref (priv->hash_session_to_authentication_agent);
+  g_hash_table_unref (priv->hash_scope_to_authentication_agent);
 
   G_OBJECT_CLASS (polkit_backend_interactive_authority_parent_class)->finalize (object);
 }
@@ -410,7 +421,9 @@ polkit_backend_interactive_authority_enumerate_actions (PolkitBackendAuthority  
 
 struct AuthenticationAgent
 {
-  PolkitSubject *session;
+  volatile gint ref_count;
+
+  PolkitSubject *scope;
 
   gchar *locale;
   gchar *object_path;
@@ -457,9 +470,9 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
                                                          &error);
       if (process == NULL)
         {
-          g_warning ("Error getting process for system bus name `%s': %s",
-                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
-                     error->message);
+          g_printerr ("Error getting process for system bus name `%s': %s\n",
+                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                      error->message);
           g_error_free (error);
           goto out;
         }
@@ -479,9 +492,9 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
                             &contents_len,
                             &error))
     {
-      g_warning ("Error opening `%s': %s",
-                 filename,
-                 error->message);
+      g_printerr ("Error opening `%s': %s\n",
+                  filename,
+                  error->message);
       g_error_free (error);
       goto out;
     }
@@ -575,7 +588,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   GSimpleAsyncResult *simple = G_SIMPLE_ASYNC_RESULT (user_data);
   PolkitBackendInteractiveAuthorityPrivate *priv;
   PolkitAuthorizationResult *result;
-  gchar *session_str;
+  gchar *scope_str;
   gchar *subject_str;
   gchar *user_of_subject_str;
   gchar *authenticated_identity_str;
@@ -586,7 +599,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
 
   result = NULL;
 
-  session_str = polkit_subject_to_string (agent->session);
+  scope_str = polkit_subject_to_string (agent->scope);
   subject_str = polkit_subject_to_string (subject);
   user_of_subject_str = polkit_identity_to_string (user_of_subject);
   authenticated_identity_str = NULL;
@@ -622,7 +635,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
 
           id = temporary_authorization_store_add_authorization (priv->temporary_authorization_store,
                                                                 subject,
-                                                                authentication_agent_get_session (agent),
+                                                                authentication_agent_get_scope (agent),
                                                                 action_id);
 
           polkit_details_insert (details, "polkit.temporary_authorization_id", id);
@@ -648,7 +661,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Operator of %s successfully authenticated as %s to gain "
                                         "TEMPORARY authorization for action %s for %s [%s] (owned by %s)",
-                                        session_str,
+                                        scope_str,
                                         authenticated_identity_str,
                                         action_id,
                                         subject_str,
@@ -660,7 +673,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Operator of %s successfully authenticated as %s to gain "
                                         "ONE-SHOT authorization for action %s for %s [%s] (owned by %s)",
-                                        session_str,
+                                        scope_str,
                                         authenticated_identity_str,
                                         action_id,
                                         subject_str,
@@ -673,7 +686,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Operator of %s FAILED to authenticate to gain "
                                     "authorization for action %s for %s [%s] (owned by %s)",
-                                    session_str,
+                                    scope_str,
                                     action_id,
                                     subject_str,
                                     subject_cmdline,
@@ -692,7 +705,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   g_free (authenticated_identity_str);
   g_free (user_of_subject_str);
   g_free (subject_str);
-  g_free (session_str);
+  g_free (scope_str);
 }
 
 static PolkitAuthorizationResult *
@@ -1282,7 +1295,7 @@ authentication_session_new (AuthenticationAgent         *agent,
   AuthenticationSession *session;
 
   session = g_new0 (AuthenticationSession, 1);
-  session->agent = agent;
+  session->agent = authentication_agent_ref (agent);
   session->cookie = g_strdup (cookie);
   session->subject = g_object_ref (subject);
   session->user_of_subject = g_object_ref (user_of_subject);
@@ -1311,6 +1324,7 @@ authentication_session_new (AuthenticationAgent         *agent,
 static void
 authentication_session_free (AuthenticationSession *session)
 {
+  authentication_agent_unref (session->agent);
   g_free (session->cookie);
   g_list_foreach (session->identities, (GFunc) g_object_unref, NULL);
   g_list_free (session->identities);
@@ -1340,13 +1354,13 @@ authentication_agent_new_cookie (AuthenticationAgent *agent)
 }
 
 static PolkitSubject *
-authentication_agent_get_session (AuthenticationAgent *agent)
+authentication_agent_get_scope (AuthenticationAgent *agent)
 {
-  return agent->session;
+  return agent->scope;
 }
 
 static void
-authentication_agent_free (AuthenticationAgent *agent)
+authentication_agent_cancel_all_sessions (AuthenticationAgent *agent)
 {
   /* cancel all active authentication sessions; use a copy of the list since
    * callbacks will modify the list
@@ -1360,24 +1374,37 @@ authentication_agent_free (AuthenticationAgent *agent)
       for (l = active_sessions; l != NULL; l = l->next)
         {
           AuthenticationSession *session = l->data;
-
           authentication_session_cancel (session);
         }
       g_list_free (active_sessions);
     }
-
-  if (agent->proxy != NULL)
-    g_object_unref (agent->proxy);
-
-  g_object_unref (agent->session);
-  g_free (agent->locale);
-  g_free (agent->object_path);
-  g_free (agent->unique_system_bus_name);
-  g_free (agent);
 }
 
 static AuthenticationAgent *
-authentication_agent_new (PolkitSubject *session,
+authentication_agent_ref (AuthenticationAgent *agent)
+{
+  g_atomic_int_inc (&agent->ref_count);
+  return agent;
+}
+
+static void
+authentication_agent_unref (AuthenticationAgent *agent)
+{
+  if (g_atomic_int_dec_and_test (&agent->ref_count))
+    {
+      if (agent->proxy != NULL)
+        g_object_unref (agent->proxy);
+
+      g_object_unref (agent->scope);
+      g_free (agent->locale);
+      g_free (agent->object_path);
+      g_free (agent->unique_system_bus_name);
+      g_free (agent);
+    }
+}
+
+static AuthenticationAgent *
+authentication_agent_new (PolkitSubject *scope,
                           const gchar *unique_system_bus_name,
                           const gchar *locale,
                           const gchar *object_path)
@@ -1387,7 +1414,8 @@ authentication_agent_new (PolkitSubject *session,
 
   agent = g_new0 (AuthenticationAgent, 1);
 
-  agent->session = g_object_ref (session);
+  agent->ref_count = 1;
+  agent->scope = g_object_ref (scope);
   agent->object_path = g_strdup (object_path);
   agent->unique_system_bus_name = g_strdup (unique_system_bus_name);
   agent->locale = g_strdup (locale);
@@ -1425,13 +1453,41 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
   agent = NULL;
   session_for_subject = NULL;
 
+  agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
+  if (agent != NULL)
+    goto out;
+
+  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      PolkitSubject *process;
+      process = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
+                                                         NULL,
+                                                         NULL);
+      if (process != NULL)
+        {
+          agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, process);
+          if (agent != NULL)
+            {
+              g_object_unref (process);
+              goto out;
+            }
+          g_object_unref (process);
+        }
+    }
+
+  /* Now, we should also cover the case where @subject is a
+   * UnixProcess but the agent is a SystemBusName. However, this can't
+   * happen because we only allow registering agents for UnixProcess
+   * and UnixSession subjects!
+   */
+
   session_for_subject = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
                                                                                 subject,
                                                                                 NULL);
   if (session_for_subject == NULL)
     goto out;
 
-  agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_subject);
+  agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, session_for_subject);
 
  out:
   if (session_for_subject != NULL)
@@ -1455,7 +1511,7 @@ get_authentication_session_for_cookie (PolkitBackendInteractiveAuthority *author
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
-  g_hash_table_iter_init (&hash_iter, priv->hash_session_to_authentication_agent);
+  g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
     {
       GList *l;
@@ -1491,7 +1547,7 @@ get_authentication_sessions_initiated_by_system_bus_unique_name (PolkitBackendIn
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
-  g_hash_table_iter_init (&hash_iter, priv->hash_session_to_authentication_agent);
+  g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
     {
       GList *l;
@@ -1525,7 +1581,7 @@ get_authentication_sessions_for_system_bus_unique_name_subject (PolkitBackendInt
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
-  g_hash_table_iter_init (&hash_iter, priv->hash_session_to_authentication_agent);
+  g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
     {
       GList *l;
@@ -1557,7 +1613,7 @@ get_authentication_agent_by_unique_system_bus_name (PolkitBackendInteractiveAuth
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
-  g_hash_table_iter_init (&hash_iter, priv->hash_session_to_authentication_agent);
+  g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
     {
       if (strcmp (agent->unique_system_bus_name, unique_system_bus_name) == 0)
@@ -1584,7 +1640,7 @@ authentication_agent_begin_cb (GDBusProxy   *proxy,
                                  res,
                                  &error))
     {
-      g_warning ("Error performing authentication: %s", error->message);
+      g_printerr ("Error performing authentication: %s\n", error->message);
       g_error_free (error);
       gained_authorization = FALSE;
     }
@@ -1681,7 +1737,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
   /* Set LANG and locale so gettext() + friends work when running the code in the extensions */
   if (setlocale (LC_ALL, locale) == NULL)
     {
-      g_warning ("Invalid locale '%s'", locale);
+      g_printerr ("Invalid locale '%s'\n", locale);
     }
   g_setenv ("LANG", locale, TRUE);
 
@@ -1861,7 +1917,7 @@ authentication_agent_cancel_cb (GDBusProxy   *proxy,
   error = NULL;
   if (!g_dbus_proxy_call_finish (proxy, res, &error))
     {
-      g_warning ("Error cancelling authentication: %s", error->message);
+      g_printerr ("Error cancelling authentication: %s\n", error->message);
       g_error_free (error);
     }
 }
@@ -1892,93 +1948,145 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   PolkitBackendInteractiveAuthority *interactive_authority;
   PolkitBackendInteractiveAuthorityPrivate *priv;
   PolkitSubject *session_for_caller;
+  PolkitIdentity *user_of_caller;
+  PolkitIdentity *user_of_subject;
   AuthenticationAgent *agent;
   gboolean ret;
-  gchar *agent_cmdline;
+  gchar *caller_cmdline;
+  gchar *subject_as_string;
+
+  ret = FALSE;
 
   session_for_caller = NULL;
-  ret = FALSE;
+  user_of_caller = NULL;
+  user_of_subject = NULL;
+  subject_as_string = NULL;
+  caller_cmdline = NULL;
+  agent = NULL;
+
+  /* TODO: validate that object path is well-formed */
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
 
-  if (!POLKIT_IS_UNIX_SESSION (subject))
+  if (POLKIT_IS_UNIX_SESSION (subject))
+    {
+      session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                                   caller,
+                                                                                   NULL);
+      if (session_for_caller == NULL)
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot determine session the caller is in");
+          goto out;
+        }
+      if (!polkit_subject_equal (session_for_caller, subject))
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Passed session and the session the caller is in differs. They must be equal for now.");
+          goto out;
+        }
+    }
+  else if (POLKIT_IS_UNIX_PROCESS (subject))
+    {
+      /* explicitly OK */
+    }
+  else
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Can only register PolkitUnixSession objects for now.");
+                   "Only unix-process and unix-session subjects can be used for authentication agents.");
       goto out;
     }
 
-  session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
-                                                                               caller,
-                                                                               NULL);
-  if (session_for_caller == NULL)
+  user_of_caller = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor, caller, NULL);
+  if (user_of_caller == NULL)
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Cannot determine session the caller is in");
+                   "Cannot determine user of caller");
       goto out;
     }
-
-  if (!polkit_subject_equal (session_for_caller, subject))
+  user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor, subject, NULL);
+  if (user_of_subject == NULL)
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Passed session and the session the caller is in differs. They must be equal for now.");
+                   "Cannot determine user of subject");
       goto out;
     }
+  if (!polkit_identity_equal (user_of_caller, user_of_subject))
+    {
+      if (POLKIT_IS_UNIX_USER (user_of_caller) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) == 0)
+        {
+          /* explicitly allow uid 0 to register for other users */
+        }
+      else
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "User of caller and user of subject differs.");
+          goto out;
+        }
+    }
 
-  agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_caller);
+  agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
   if (agent != NULL)
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "An authentication agent already exists for session");
+                   "An authentication agent already exists for the given subject");
       goto out;
     }
 
-  /* TODO: validate that object path is well-formed */
-
-  agent = authentication_agent_new (session_for_caller,
+  agent = authentication_agent_new (subject,
                                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                     locale,
                                     object_path);
 
-  g_hash_table_insert (priv->hash_session_to_authentication_agent,
-                       g_object_ref (session_for_caller),
+  g_hash_table_insert (priv->hash_scope_to_authentication_agent,
+                       g_object_ref (subject),
                        agent);
 
-  agent_cmdline = _polkit_subject_get_cmdline (caller);
-  if (agent_cmdline == NULL)
-    agent_cmdline = g_strdup ("<unknown>");
+  caller_cmdline = _polkit_subject_get_cmdline (caller);
+  if (caller_cmdline == NULL)
+    caller_cmdline = g_strdup ("<unknown>");
 
-  g_debug ("Added authentication agent for session %s at name %s [%s], object path %s, locale %s",
-           polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session_for_caller)),
+  subject_as_string = polkit_subject_to_string (subject);
+
+  g_debug ("Added authentication agent for %s at name %s [%s], object path %s, locale %s",
+           subject_as_string,
            polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
-           agent_cmdline,
+           caller_cmdline,
            object_path,
            locale);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                "Registered Authentication Agent for session %s "
+                                "Registered Authentication Agent for %s "
                                 "(system bus name %s [%s], object path %s, locale %s)",
-                                polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session_for_caller)),
+                                subject_as_string,
                                 polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
-                                agent_cmdline,
+                                caller_cmdline,
                                 object_path,
                                 locale);
-
-  g_free (agent_cmdline);
-
-
   ret = TRUE;
 
  out:
+  g_free (caller_cmdline);
+  g_free (subject_as_string);
+  if (user_of_caller != NULL)
+    g_object_unref (user_of_caller);
+  if (user_of_subject != NULL)
+    g_object_unref (user_of_subject);
   if (session_for_caller != NULL)
     g_object_unref (session_for_caller);
 
@@ -1995,46 +2103,91 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
   PolkitBackendInteractiveAuthority *interactive_authority;
   PolkitBackendInteractiveAuthorityPrivate *priv;
   PolkitSubject *session_for_caller;
+  PolkitIdentity *user_of_caller;
+  PolkitIdentity *user_of_subject;
   AuthenticationAgent *agent;
   gboolean ret;
+  gchar *scope_str;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
 
   ret = FALSE;
   session_for_caller = NULL;
+  user_of_caller = NULL;
+  user_of_subject = NULL;
 
-  if (!POLKIT_IS_UNIX_SESSION (subject))
+  if (POLKIT_IS_UNIX_SESSION (subject))
+    {
+      session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                                   caller,
+                                                                                   NULL);
+      if (session_for_caller == NULL)
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Cannot determine session the caller is in");
+          goto out;
+        }
+
+      if (!polkit_subject_equal (session_for_caller, subject))
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Passed session and the session the caller is in differs. They must be equal for now.");
+          goto out;
+        }
+    }
+  else if (POLKIT_IS_UNIX_PROCESS (subject))
+    {
+      /* explicitly OK */
+    }
+  else
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Can only unregister PolkitUnixSession objects for now.");
+                   "Only unix-process and unix-session subjects can be used for authentication agents.");
       goto out;
     }
 
-  session_for_caller = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
-                                                                               caller,
-                                                                               NULL);
-  if (session_for_caller == NULL)
+  user_of_caller = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor, caller, NULL);
+  if (user_of_caller == NULL)
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Cannot determine session the caller is in");
+                   "Cannot determine user of caller");
       goto out;
     }
-
-  if (!polkit_subject_equal (session_for_caller, subject))
+  user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor, subject, NULL);
+  if (user_of_subject == NULL)
     {
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Passed session and the session the caller is in differs. They must be equal for now.");
+                   "Cannot determine user of subject");
       goto out;
     }
+  if (!polkit_identity_equal (user_of_caller, user_of_subject))
+    {
+      if (POLKIT_IS_UNIX_USER (user_of_caller) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) == 0)
+        {
+          /* explicitly allow uid 0 to register for other users */
+        }
+      else
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "User of caller and user of subject differs.");
+          goto out;
+        }
+    }
 
-  agent = g_hash_table_lookup (priv->hash_session_to_authentication_agent, session_for_caller);
+  agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
   if (agent == NULL)
     {
       g_set_error (error,
@@ -2044,8 +2197,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
       goto out;
     }
 
-  if (strcmp (agent->unique_system_bus_name,
-              polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller))) != 0)
+  if (g_strcmp0 (agent->unique_system_bus_name, polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller))) != 0)
     {
       g_set_error (error,
                    POLKIT_ERROR,
@@ -2054,7 +2206,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
       goto out;
     }
 
-  if (strcmp (agent->object_path, object_path) != 0)
+  if (g_strcmp0 (agent->object_path, object_path) != 0)
     {
       g_set_error (error,
                    POLKIT_ERROR,
@@ -2063,27 +2215,34 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
       goto out;
     }
 
-
-  g_debug ("Removing authentication agent for session %s at name %s, object path %s, locale %s",
-           polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (agent->session)),
+  scope_str = polkit_subject_to_string (agent->scope);
+  g_debug ("Removing authentication agent for %s at name %s, object path %s, locale %s",
+           scope_str,
            agent->unique_system_bus_name,
            agent->object_path,
            agent->locale);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                "Unregistered Authentication Agent for session %s "
+                                "Unregistered Authentication Agent for %s "
                                 "(system bus name %s, object path %s, locale %s)",
-                                polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (agent->session)),
+                                scope_str,
                                 agent->unique_system_bus_name,
                                 agent->object_path,
                                 agent->locale);
+  g_free (scope_str);
 
+  authentication_agent_cancel_all_sessions (agent);
   /* this works because we have exactly one agent per session */
-  g_hash_table_remove (priv->hash_session_to_authentication_agent, agent->session);
+  /* this frees agent... */
+  g_hash_table_remove (priv->hash_scope_to_authentication_agent, agent->scope);
 
   ret = TRUE;
 
  out:
+  if (user_of_caller != NULL)
+    g_object_unref (user_of_caller);
+  if (user_of_subject != NULL)
+    g_object_unref (user_of_subject);
   if (session_for_caller != NULL)
     g_object_unref (session_for_caller);
   return ret;
@@ -2204,21 +2363,27 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
       agent = get_authentication_agent_by_unique_system_bus_name (interactive_authority, name);
       if (agent != NULL)
         {
-          g_debug ("Removing authentication agent for session %s at name %s, object path %s (disconnected from bus)",
-                   polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (agent->session)),
+          gchar *scope_str;
+
+          scope_str = polkit_subject_to_string (agent->scope);
+          g_debug ("Removing authentication agent for %s at name %s, object path %s (disconnected from bus)",
+                   scope_str,
                    agent->unique_system_bus_name,
                    agent->object_path);
 
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        "Unregistered Authentication Agent for session %s "
+                                        "Unregistered Authentication Agent for %s "
                                         "(system bus name %s, object path %s, locale %s) (disconnected from bus)",
-                                        polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (agent->session)),
+                                        scope_str,
                                         agent->unique_system_bus_name,
                                         agent->object_path,
                                         agent->locale);
+          g_free (scope_str);
 
+          authentication_agent_cancel_all_sessions (agent);
           /* this works because we have exactly one agent per session */
-          g_hash_table_remove (priv->hash_session_to_authentication_agent, agent->session);
+          /* this frees agent... */
+          g_hash_table_remove (priv->hash_scope_to_authentication_agent, agent->scope);
         }
 
       /* cancel all authentication sessions initiated by the process owning the vanished name */
@@ -2266,7 +2431,7 @@ struct TemporaryAuthorization
 {
   TemporaryAuthorizationStore *store;
   PolkitSubject *subject;
-  PolkitSubject *session;
+  PolkitSubject *scope;
   gchar *id;
   gchar *action_id;
   guint64 time_granted;
@@ -2280,7 +2445,7 @@ temporary_authorization_free (TemporaryAuthorization *authorization)
 {
   g_free (authorization->id);
   g_object_unref (authorization->subject);
-  g_object_unref (authorization->session);
+  g_object_unref (authorization->scope);
   g_free (authorization->action_id);
   if (authorization->expiration_timeout_id > 0)
     g_source_remove (authorization->expiration_timeout_id);
@@ -2333,9 +2498,9 @@ temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *st
                                                                 &error);
       if (subject_to_use == NULL)
         {
-          g_warning ("Error getting process for system bus name `%s': %s",
-                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
-                     error->message);
+          g_printerr ("Error getting process for system bus name `%s': %s\n",
+                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                      error->message);
           g_error_free (error);
           subject_to_use = g_object_ref (subject);
         }
@@ -2403,7 +2568,7 @@ on_unix_process_check_vanished_timeout (gpointer user_data)
     {
       if (error != NULL)
         {
-          g_warning ("Error checking if process exists: %s", error->message);
+          g_printerr ("Error checking if process exists: %s\n", error->message);
           g_error_free (error);
         }
       else
@@ -2472,7 +2637,7 @@ temporary_authorization_store_remove_authorizations_for_system_bus_name (Tempora
 static const gchar *
 temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *store,
                                                  PolkitSubject               *subject,
-                                                 PolkitSubject               *session,
+                                                 PolkitSubject               *scope,
                                                  const gchar                 *action_id)
 {
   TemporaryAuthorization *authorization;
@@ -2494,9 +2659,9 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
                                                                 &error);
       if (subject_to_use == NULL)
         {
-          g_warning ("Error getting process for system bus name `%s': %s",
-                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
-                     error->message);
+          g_printerr ("Error getting process for system bus name `%s': %s\n",
+                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                      error->message);
           g_error_free (error);
           subject_to_use = g_object_ref (subject);
         }
@@ -2517,7 +2682,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   authorization->id = g_strdup_printf ("tmpauthz%" G_GUINT64_FORMAT, store->serial++);
   authorization->store = store;
   authorization->subject = g_object_ref (subject_to_use);
-  authorization->session = g_object_ref (session);
+  authorization->scope = g_object_ref (scope);
   authorization->action_id = g_strdup (action_id);
   authorization->time_granted = time (NULL);
   authorization->time_expires = authorization->time_granted + expiration_seconds;
@@ -2617,7 +2782,7 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
       TemporaryAuthorization *ta = l->data;
       PolkitTemporaryAuthorization *tmp_authz;
 
-      if (!polkit_subject_equal (ta->session, subject))
+      if (!polkit_subject_equal (ta->scope, subject))
         continue;
 
       tmp_authz = polkit_temporary_authorization_new (ta->id,
@@ -2695,7 +2860,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorizations (PolkitBack
 
       ll = l->next;
 
-      if (!polkit_subject_equal (ta->session, subject))
+      if (!polkit_subject_equal (ta->scope, subject))
         continue;
 
       priv->temporary_authorization_store->authorizations = g_list_remove (priv->temporary_authorization_store->authorizations, ta);
@@ -2760,7 +2925,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorization_by_id (Polki
       if (strcmp (ta->id, id) != 0)
         continue;
 
-      if (!polkit_subject_equal (session_for_caller, ta->session))
+      if (!polkit_subject_equal (session_for_caller, ta->scope))
         {
           g_set_error (error,
                        POLKIT_ERROR,

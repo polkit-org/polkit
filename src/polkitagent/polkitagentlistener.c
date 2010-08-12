@@ -51,6 +51,8 @@ typedef struct
   GDBusConnection *system_bus;
   guint auth_agent_registration_id;
 
+  GDBusInterfaceInfo *interface_info;
+
   PolkitAuthority *authority;
   gulong notify_owner_handler_id;
 
@@ -62,6 +64,12 @@ typedef struct
   gchar *object_path;
 
   GHashTable *cookie_to_pending_auth;
+
+  GThread *thread;
+  GError *thread_initialization_error;
+  gboolean thread_initialized;
+  GMainContext *thread_context;
+  GMainLoop *thread_loop;
 } Server;
 
 static void
@@ -81,6 +89,21 @@ server_free (Server *server)
           g_error_free (error);
         }
     }
+
+  if (server->thread_initialization_error != NULL)
+    g_error_free (server->thread_initialization_error);
+
+  if (server->thread_context != NULL)
+    g_main_context_unref (server->thread_context);
+
+  if (server->thread_loop != NULL)
+    g_main_loop_unref (server->thread_loop);
+
+  if (server->interface_info != NULL)
+    g_dbus_interface_info_unref (server->interface_info);
+
+  if (server->listener != NULL)
+    g_object_unref (server->listener);
 
   if (server->auth_agent_registration_id > 0)
     g_dbus_connection_unregister_object (server->system_bus, server->auth_agent_registration_id);
@@ -109,13 +132,18 @@ server_register (Server   *server,
 {
   GError *local_error;
   gboolean ret;
+  const gchar *locale;
 
   ret = FALSE;
+
+  locale = g_getenv ("LANG");
+  if (locale == NULL)
+    locale = "en_US.UTF-8";
 
   local_error = NULL;
   if (!polkit_authority_register_authentication_agent_sync (server->authority,
                                                             server->subject,
-                                                            g_getenv ("LANG"),
+                                                            locale,
                                                             server->object_path,
                                                             NULL,
                                                             &local_error))
@@ -230,15 +258,6 @@ server_new (PolkitSubject  *subject,
   return server;
 }
 
-static void
-listener_died (gpointer user_data,
-               GObject *where_the_object_was)
-{
-  Server *server = user_data;
-
-  server_free (server);
-}
-
 static void auth_agent_handle_begin_authentication (Server                 *server,
                                                     GVariant               *parameters,
                                                     GDBusMethodInvocation  *invocation);
@@ -295,28 +314,185 @@ static const GDBusInterfaceVTable auth_agent_vtable =
   NULL  /* _handle_set_property */
 };
 
+static gboolean
+server_export_object (Server  *server,
+                      GError **error)
+{
+  gboolean ret;
+  ret = FALSE;
+  server->auth_agent_registration_id = g_dbus_connection_register_object (server->system_bus,
+                                                                          server->object_path,
+                                                                          server->interface_info,
+                                                                          &auth_agent_vtable,
+                                                                          server,
+                                                                          NULL, /* user_data GDestroyNotify */
+                                                                          error);
+  if (server->auth_agent_registration_id > 0)
+    ret = TRUE;
+  return ret;
+}
+
+static gpointer
+server_thread_func (gpointer user_data)
+{
+  Server *server = user_data;
+
+  server->thread_context = g_main_context_new ();
+  server->thread_loop = g_main_loop_new (server->thread_context, FALSE);
+
+  g_main_context_push_thread_default (server->thread_context);
+
+  if (!server_export_object (server, &server->thread_initialization_error))
+    {
+      server->thread_initialized = TRUE;
+      goto out;
+    }
+
+  server->thread_initialized = TRUE;
+
+  g_main_loop_run (server->thread_loop);
+
+ out:
+  g_main_context_pop_thread_default (server->thread_context);
+  return NULL;
+}
+
 /**
- * polkit_agent_register_listener:
- * @listener: An instance of a class that is derived from #PolkitAgentListener.
+ * polkit_agent_listener_register:
+ * @listener: A #PolkitAgentListener.
+ * @flags: A set of flags from the #PolkitAgentRegisterFlags enumeration.
  * @subject: The subject to become an authentication agent for, typically a #PolkitUnixSession object.
  * @object_path: The D-Bus object path to use for the authentication agent or %NULL for the default object path.
+ * @cancellable: A #GCancellable or %NULL.
  * @error: Return location for error.
  *
- * Registers @listener with the PolicyKit daemon as an authentication agent for @subject. This
- * is implemented by registering a D-Bus object at @object_path on the unique name assigned by the
- * system message bus.
+ * Registers @listener with the PolicyKit daemon as an authentication
+ * agent for @subject. This is implemented by registering a D-Bus
+ * object at @object_path on the unique name assigned by the system
+ * message bus.
  *
- * Whenever the PolicyKit daemon needs to authenticate a processes that is related @subject, the methods
- * polkit_agent_listener_initiate_authentication() and polkit_agent_listener_initiate_authentication_finish()
- * will be invoked on @listener.
+ * Whenever the PolicyKit daemon needs to authenticate a processes
+ * that is related to @subject, the methods
+ * polkit_agent_listener_initiate_authentication() and
+ * polkit_agent_listener_initiate_authentication_finish() will be
+ * invoked on @listener.
  *
- * Note that registration of an authentication agent can fail; for example another authentication agent may
- * already be registered.
+ * Note that registration of an authentication agent can fail; for
+ * example another authentication agent may already be registered for
+ * @subject.
  *
- * To unregister @listener, simply free it with g_object_unref().
+ * Returns: %NULL if @error is set, otherwise a registration handle
+ * that can be used with polkit_agent_listener_unregister().
+ */
+gpointer
+polkit_agent_listener_register (PolkitAgentListener      *listener,
+                                PolkitAgentRegisterFlags  flags,
+                                PolkitSubject            *subject,
+                                const gchar              *object_path,
+                                GCancellable             *cancellable,
+                                GError                  **error)
+{
+  Server *server;
+  GDBusNodeInfo *node_info;
+
+  g_return_val_if_fail (POLKIT_AGENT_IS_LISTENER (listener), NULL);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), NULL);
+  g_return_val_if_fail (object_path == NULL || g_variant_is_object_path (object_path), NULL);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  if (object_path == NULL)
+    object_path = "/org/freedesktop/PolicyKit1/AuthenticationAgent";
+
+  server = server_new (subject, object_path, cancellable, error);
+  if (server == NULL)
+    goto out;
+
+  node_info = g_dbus_node_info_new_for_xml (auth_agent_introspection_data, error);
+  if (node_info == NULL)
+    {
+      server_free (server);
+      server = NULL;
+      goto out;
+    }
+  server->interface_info = g_dbus_interface_info_ref (g_dbus_node_info_lookup_interface (node_info, "org.freedesktop.PolicyKit1.AuthenticationAgent"));
+  g_dbus_node_info_unref (node_info);
+
+  server->listener = g_object_ref (listener);
+
+  if (flags & POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD)
+    {
+      server->thread = g_thread_create (server_thread_func,
+                                        server,
+                                        TRUE,
+                                        error);
+      if (server->thread == NULL)
+        {
+          server_free (server);
+          server = NULL;
+          goto out;
+        }
+
+      /* wait for the thread to export and object (TODO: probably use a condition variable instead) */
+      while (!server->thread_initialized)
+        g_thread_yield ();
+      if (server->thread_initialization_error != NULL)
+        {
+          g_propagate_error (error, server->thread_initialization_error);
+          server->thread_initialization_error = NULL;
+          g_thread_join (server->thread);
+          server_free (server);
+          goto out;
+        }
+    }
+  else
+    {
+      if (!server_export_object (server, error))
+        {
+          server_free (server);
+          server = NULL;
+          goto out;
+        }
+    }
+
+  if (!server_register (server, error))
+    {
+      server_free (server);
+      server = NULL;
+      goto out;
+    }
+
+ out:
+  return server;
+}
+
+/**
+ * polkit_agent_listener_unregister:
+ * @registration_handle: A handle obtained from polkit_agent_listener_register().
  *
- * Returns: %TRUE if @listener has been registered, %FALSE if @error is set.
- **/
+ * Unregisters @listener.
+ */
+void
+polkit_agent_listener_unregister (gpointer registration_handle)
+{
+  Server *server = registration_handle;
+  if (server->thread != NULL)
+    {
+      g_main_loop_quit (server->thread_loop);
+      g_thread_join (server->thread);
+    }
+  server_free (server);
+}
+
+
+static void
+listener_died (gpointer user_data,
+               GObject *where_the_object_was)
+{
+  Server *server = user_data;
+  server_free (server);
+}
+
 gboolean
 polkit_agent_register_listener (PolkitAgentListener  *listener,
                                 PolkitSubject        *subject,
@@ -325,45 +501,15 @@ polkit_agent_register_listener (PolkitAgentListener  *listener,
 {
   Server *server;
   gboolean ret;
-  GDBusNodeInfo *node_info;
-
-  g_return_val_if_fail (POLKIT_AGENT_IS_LISTENER (listener), FALSE);
-  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
-  g_return_val_if_fail (g_variant_is_object_path (object_path), FALSE);
-  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
 
   ret = FALSE;
 
-  server = server_new (subject, object_path, NULL, error);
+  server = polkit_agent_listener_register (listener, POLKIT_AGENT_REGISTER_FLAGS_NONE, subject, object_path, NULL, error);
   if (server == NULL)
     goto out;
 
-  node_info = g_dbus_node_info_new_for_xml (auth_agent_introspection_data, error);
-  if (node_info == NULL)
-    goto out;
-
-  server->listener = listener;
-  server->auth_agent_registration_id = g_dbus_connection_register_object (server->system_bus,
-                                                                          server->object_path,
-                                                                          g_dbus_node_info_lookup_interface (node_info, "org.freedesktop.PolicyKit1.AuthenticationAgent"),
-                                                                          &auth_agent_vtable,
-                                                                          server,
-                                                                          NULL, /* user_data GDestroyNotify */
-                                                                          error);
-  g_dbus_node_info_unref (node_info);
-
-  if (server->auth_agent_registration_id == 0)
-    {
-      server_free (server);
-      goto out;
-    }
-
-  if (!server_register (server, error))
-    {
-      server_free (server);
-      goto out;
-    }
-
+  /* drop the ref that server took */
+  g_object_unref (server->listener);
   /* take a weak ref and kill server when listener dies */
   g_object_weak_ref (G_OBJECT (server->listener), listener_died, server);
 

@@ -43,6 +43,8 @@
 #include <stdarg.h>
 
 #include <polkit/polkit.h>
+#define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE
+#include <polkitagent/polkitagent.h>
 
 static gchar *original_user_name = NULL;
 static gchar *original_cwd = NULL;
@@ -361,6 +363,7 @@ validate_environment_variable (const gchar *key,
   return ret;
 }
 
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 int
@@ -417,6 +420,7 @@ main (int argc, char *argv[])
   gchar *opt_user;
   pid_t pid_of_caller;
   uid_t uid_of_caller;
+  gpointer local_agent_handle;
 
   ret = 127;
   authority = NULL;
@@ -428,6 +432,7 @@ main (int argc, char *argv[])
   path = NULL;
   command_line = NULL;
   opt_user = NULL;
+  local_agent_handle = NULL;
 
   /* check for correct invocation */
   if (geteuid () != 0)
@@ -642,6 +647,7 @@ main (int argc, char *argv[])
   action_id = find_action_for_path (authority, path);
   g_assert (action_id != NULL);
 
+ try_again:
   error = NULL;
   result = polkit_authority_check_authorization_sync (authority,
                                                       subject,
@@ -664,8 +670,40 @@ main (int argc, char *argv[])
     }
   else if (polkit_authorization_result_get_is_challenge (result))
     {
-      g_printerr ("Error executing command as another user: No authentication agent was found.\n");
-      goto out;
+      if (local_agent_handle == NULL)
+        {
+          PolkitAgentListener *listener;
+          error = NULL;
+          /* this will fail if we can't find a controlling terminal */
+          listener = polkit_agent_text_listener_new (NULL, &error);
+          if (listener == NULL)
+            {
+              g_printerr ("Error creating textual authentication agent: %s\n", error->message);
+              g_error_free (error);
+              goto out;
+            }
+          local_agent_handle = polkit_agent_listener_register (listener,
+                                                               POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
+                                                               subject,
+                                                               NULL, /* object_path */
+                                                               NULL, /* GCancellable */
+                                                               &error);
+          g_object_unref (listener);
+          if (local_agent_handle == NULL)
+            {
+              g_printerr ("Error registering local authentication agent: %s\n", error->message);
+              g_error_free (error);
+              goto out;
+            }
+          g_object_unref (result);
+          result = NULL;
+          goto try_again;
+        }
+      else
+        {
+          g_printerr ("Error executing command as another user.\n");
+          goto out;
+        }
     }
   else
     {
@@ -802,6 +840,10 @@ main (int argc, char *argv[])
   g_assert_not_reached ();
 
  out:
+  /* if applicable, nuke the local authentication agent */
+  if (local_agent_handle != NULL)
+    polkit_agent_listener_unregister (local_agent_handle);
+
   if (result != NULL)
     g_object_unref (result);
 

@@ -369,7 +369,9 @@ PolkitAgentListener
 PolkitAgentListenerClass
 polkit_agent_listener_initiate_authentication
 polkit_agent_listener_initiate_authentication_finish
-polkit_agent_register_listener
+PolkitAgentRegisterFlags
+polkit_agent_listener_register
+polkit_agent_listener_unregister
 <SUBSECTION Standard>
 POLKIT_AGENT_LISTENER
 POLKIT_AGENT_IS_LISTENER
@@ -378,6 +380,21 @@ polkit_agent_listener_get_type
 POLKIT_AGENT_LISTENER_CLASS
 POLKIT_AGENT_IS_LISTENER_CLASS
 POLKIT_AGENT_LISTENER_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>polkitagenttextlistener</FILE>
+<TITLE>PolkitAgentTextListener</TITLE>
+PolkitAgentTextListener
+polkit_agent_text_listener_new
+<SUBSECTION Standard>
+POLKIT_AGENT_TEXT_LISTENER
+POLKIT_AGENT_IS_TEXT_LISTENER
+POLKIT_AGENT_TYPE_TEXT_LISTENER
+polkit_agent_text_listener_get_type
+POLKIT_AGENT_TEXT_LISTENER_CLASS
+POLKIT_AGENT_IS_TEXT_LISTENER_CLASS
+POLKIT_AGENT_TEXT_LISTENER_GET_CLASS
 </SECTION>
 
 <SECTION>

@@ -28,7 +28,9 @@
 
 #define _POLKIT_AGENT_INSIDE_POLKIT_AGENT_H 1
 #include <polkitagent/polkitagenttypes.h>
+#include <polkitagent/polkitagentenumtypes.h>
 #include <polkitagent/polkitagentlistener.h>
+#include <polkitagent/polkitagenttextlistener.h>
 #include <polkitagent/polkitagentsession.h>
 #undef _POLKIT_AGENT_INSIDE_POLKIT_AGENT_H
 
