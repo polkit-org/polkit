@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <stdio.h>
 
 #include "polkitsubject.h"
 #include "polkitunixprocess.h"
@@ -222,8 +223,6 @@ polkit_subject_from_string  (const gchar   *str,
                              GError       **error)
 {
   PolkitSubject *subject;
-  guint64 val;
-  gchar *endptr;
 
   g_return_val_if_fail (str != NULL, NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
@@ -234,12 +233,15 @@ polkit_subject_from_string  (const gchar   *str,
 
   if (g_str_has_prefix (str, "unix-process:"))
     {
-      val = g_ascii_strtoull (str + sizeof "unix-process:" - 1,
-                              &endptr,
-                              10);
-      if (*endptr == '\0')
+      gint scanned_pid;
+      guint64 scanned_starttime;
+      if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT, &scanned_pid, &scanned_starttime) == 2)
         {
-          subject = polkit_unix_process_new ((gint) val);
+          subject = polkit_unix_process_new_full (scanned_pid, scanned_starttime);
+        }
+      else if (sscanf (str, "unix-process:%d", &scanned_pid) == 1)
+        {
+          subject = polkit_unix_process_new_full (scanned_pid, 0);
           if (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) == 0)
             {
               g_object_unref (subject);
@@ -247,8 +249,8 @@ polkit_subject_from_string  (const gchar   *str,
               g_set_error (error,
                            POLKIT_ERROR,
                            POLKIT_ERROR_FAILED,
-                           "No process with pid %" G_GUINT64_FORMAT,
-                           val);
+                           "Unable to determine start time for process with pid %d",
+                           scanned_pid);
             }
         }
     }
@@ -266,7 +268,7 @@ polkit_subject_from_string  (const gchar   *str,
       g_set_error (error,
                    POLKIT_ERROR,
                    POLKIT_ERROR_FAILED,
-                   "Malformed subject string '%s'",
+                   "Malformed subject string `%s'",
                    str);
     }
 
