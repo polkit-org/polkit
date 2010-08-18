@@ -47,6 +47,7 @@ struct _PolkitBackendSessionMonitor
 
   GKeyFile *database;
   GFileMonitor *database_monitor;
+  time_t database_mtime;
 };
 
 struct _PolkitBackendSessionMonitorClass
@@ -74,8 +75,27 @@ reload_database (PolkitBackendSessionMonitor  *monitor,
                  GError                      **error)
 {
   gboolean ret;
+  struct stat statbuf;
 
   ret = FALSE;
+
+  if (monitor->database != NULL)
+    {
+      g_key_file_free (monitor->database);
+      monitor->database = NULL;
+    }
+
+  if (stat (CKDB_PATH, &statbuf) != 0)
+    {
+      g_set_error (error,
+                   G_IO_ERROR,
+                   g_io_error_from_errno (errno),
+                   "Error statting file " CKDB_PATH ": %s",
+                   strerror (errno));
+      goto out;
+    }
+
+  monitor->database_mtime = statbuf.st_mtime;
 
   monitor->database = g_key_file_new ();
   if (!g_key_file_load_from_file (monitor->database,
@@ -83,8 +103,6 @@ reload_database (PolkitBackendSessionMonitor  *monitor,
                                   G_KEY_FILE_NONE,
                                   error))
     {
-      g_key_file_free (monitor->database);
-      monitor->database = NULL;
       goto out;
     }
 
@@ -102,8 +120,22 @@ ensure_database (PolkitBackendSessionMonitor  *monitor,
 
   if (monitor->database != NULL)
     {
-      ret = TRUE;
-      goto out;
+      struct stat statbuf;
+
+      if (stat (CKDB_PATH, &statbuf) != 0)
+        {
+          g_set_error (error,
+                       G_IO_ERROR,
+                       g_io_error_from_errno (errno),
+                       "Error statting file " CKDB_PATH " to check timestamp: %s",
+                       strerror (errno));
+          goto out;
+        }
+      if (statbuf.st_mtime == monitor->database_mtime)
+        {
+          ret = TRUE;
+          goto out;
+        }
     }
 
   ret = reload_database (monitor, error);
@@ -266,7 +298,6 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
       if (local_error != NULL)
         {
           g_propagate_prefixed_error (error, local_error, "Error getting user for process: ");
-          g_error_free (local_error);
           goto out;
         }
 
@@ -425,6 +456,17 @@ get_boolean (PolkitBackendSessionMonitor *monitor,
   ret = FALSE;
 
   group = g_strdup_printf ("Session %s", polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session)));
+
+  error = NULL;
+  if (!ensure_database (monitor, &error))
+    {
+      g_printerr ("Error getting boolean `%s' in group `%s': Error ensuring CK database at " CKDB_PATH ": %s",
+                  key_name,
+                  group,
+                  error->message);
+      g_error_free (error);
+      goto out;
+    }
 
   error = NULL;
   ret = g_key_file_get_boolean (monitor->database, group, key_name, &error);
