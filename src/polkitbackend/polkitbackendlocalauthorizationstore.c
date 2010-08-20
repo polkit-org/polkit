@@ -25,7 +25,7 @@
 #include <polkit/polkit.h>
 #include "polkitbackendlocalauthorizationstore.h"
 
-/**
+/* <internal>
  * SECTION:polkitbackendlocalauthorizationstore
  * @title: PolkitBackendLocalAuthorizationStore
  * @short_description: Watches a directory for authorization files

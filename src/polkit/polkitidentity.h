@@ -70,7 +70,7 @@ struct _PolkitIdentityIface
 };
 
 GType          polkit_identity_get_type      (void) G_GNUC_CONST;
-guint          polkit_identity_hash          (PolkitIdentity *a);
+guint          polkit_identity_hash          (PolkitIdentity *identity);
 gboolean       polkit_identity_equal         (PolkitIdentity *a,
                                               PolkitIdentity *b);
 gchar          *polkit_identity_to_string    (PolkitIdentity *identity);

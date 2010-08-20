@@ -449,8 +449,10 @@ authority_get_async_cb (GObject      *source_object,
  * Asynchronously gets a reference to the authority.
  *
  * This is an asynchronous failable function. When the result is
- * ready, @callback will be invoked and you can use
- * polkit_authority_get_finish() to get the result. See
+ * ready, @callback will be invoked in the <link
+ * linkend="g-main-context-push-thread-default">thread-default main
+ * loop</link> of the thread you are calling this method from and you
+ * can use polkit_authority_get_finish() to get the result. See
  * polkit_authority_get_sync() for the synchronous version.
  */
 void
@@ -534,8 +536,9 @@ polkit_authority_get_finish (GAsyncResult        *res,
  *
  * Synchronously gets a reference to the authority.
  *
- * This is a synchronous failable function. See
- * polkit_authority_get_async() for the synchronous version.
+ * This is a synchronous failable function - the calling thread is
+ * blocked until a reply is received. See polkit_authority_get_async()
+ * for the asynchronous version.
  *
  * Returns: A #PolkitAuthority. Free it with g_object_unref() when
  * done with it.
@@ -633,9 +636,11 @@ generic_async_cb (GObject      *source_obj,
  *
  * Asynchronously retrieves all registered actions.
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_enumerate_actions_finish() to get the result of
- * the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call polkit_authority_enumerate_actions_finish()
+ * to get the result of the operation.
  **/
 void
 polkit_authority_enumerate_actions (PolkitAuthority     *authority,
@@ -717,7 +722,9 @@ polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
  *
- * Synchronously retrieves all registered actions.
+ * Synchronously retrieves all registered actions - the calling thread
+ * is blocked until a reply is received. See
+ * polkit_authority_enumerate_actions() for the asynchronous version.
  *
  * Returns: A list of #PolkitActionDescription or %NULL if @error is set. The returned list
  * should be freed with g_list_free() after each element have been freed with g_object_unref().
@@ -838,13 +845,17 @@ check_authorization_cb (GDBusProxy    *proxy,
  * Asynchronously checks if @subject is authorized to perform the action represented
  * by @action_id.
  *
- * Note that #POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION
- * SHOULD be passed ONLY if the event that triggered the authorization
- * check is stemming from an user action, e.g. the user pressing a
- * button or attaching a device.
+ * Note that %POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION
+ * <emphasis>SHOULD</emphasis> be passed <emphasis>ONLY</emphasis> if
+ * the event that triggered the authorization check is stemming from
+ * an user action, e.g. the user pressing a button or attaching a
+ * device.
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_check_authorization_finish() to get the result of
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_check_authorization_finish() to get the result of
  * the operation.
  **/
 void
@@ -944,12 +955,22 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
  *
- * Checks if @subject is authorized to perform the action represented by @action_id.
+ * Checks if @subject is authorized to perform the action represented
+ * by @action_id.
  *
- * Note that #POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION
- * SHOULD be passed ONLY if the event that triggered the authorization
- * check is stemming from an user action, e.g. the user pressing a
- * button or attaching a device.
+ * Note that %POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION
+ * <emphasis>SHOULD</emphasis> be passed <emphasis>ONLY</emphasis> if
+ * the event that triggered the authorization check is stemming from
+ * an user action, e.g. the user pressing a button or attaching a
+ * device.
+ *
+ * Note the calling thread is blocked until a reply is received. You
+ * should therefore <emphasis>NEVER</emphasis> do this from a GUI
+ * thread or a daemon service thread when using the
+ * %POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION flag. This
+ * is because it may potentially take minutes (or even hours) for the
+ * operation to complete because it involves waiting for the user to
+ * authenticate.
  *
  * Returns: A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  */
@@ -995,9 +1016,12 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
  *
  * Asynchronously registers an authentication agent.
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_register_authentication_agent_finish() to get the result of
- * the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_register_authentication_agent_finish() to get the
+ * result of the operation.
  **/
 void
 polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
@@ -1083,7 +1107,10 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
  *
- * Registers an authentication agent.
+ * Registers an authentication agent. The calling thread is blocked
+ * until a reply is received. See
+ * polkit_authority_register_authentication_agent() for the
+ * asynchronous version.
  *
  * Returns: %TRUE if the authentication agent was successfully registered, %FALSE if @error is set.
  **/
@@ -1120,7 +1147,6 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
  * polkit_authority_unregister_authentication_agent:
  * @authority: A #PolkitAuthority.
  * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
- * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
@@ -1128,9 +1154,12 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
  *
  * Asynchronously unregisters an authentication agent.
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_unregister_authentication_agent_finish() to get the result of
- * the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_unregister_authentication_agent_finish() to get
+ * the result of the operation.
  **/
 void
 polkit_authority_unregister_authentication_agent (PolkitAuthority      *authority,
@@ -1208,12 +1237,14 @@ polkit_authority_unregister_authentication_agent_finish (PolkitAuthority *author
  * polkit_authority_unregister_authentication_agent_sync:
  * @authority: A #PolkitAuthority.
  * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
- * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
  *
- * Unregisters an authentication agent.
+ * Unregisters an authentication agent. The calling thread is blocked
+ * until a reply is received. See
+ * polkit_authority_unregister_authentication_agent() for the
+ * asynchronous version.
  *
  * Returns: %TRUE if the authentication agent was successfully unregistered, %FALSE if @error is set.
  **/
@@ -1259,9 +1290,12 @@ polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *auth
  * This function is only used by the privileged bits of an authentication agent.
  * It will fail if the caller is not sufficiently privileged (typically uid 0).
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_authentication_agent_response_finish() to get the result of
- * the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_authentication_agent_response_finish() to get the
+ * result of the operation.
  **/
 void
 polkit_authority_authentication_agent_response (PolkitAuthority      *authority,
@@ -1347,6 +1381,10 @@ polkit_authority_authentication_agent_response_finish (PolkitAuthority *authorit
  * authentication request identified by @cookie. See polkit_authority_authentication_agent_response()
  * for limitations on who is allowed is to call this method.
  *
+ * The calling thread is blocked until a reply is received. See
+ * polkit_authority_authentication_agent_response() for the
+ * asynchronous version.
+ *
  * Returns: %TRUE if @authority acknowledged the call, %FALSE if @error is set.
  **/
 gboolean
@@ -1386,9 +1424,12 @@ polkit_authority_authentication_agent_response_sync (PolkitAuthority     *author
  *
  * Asynchronously gets all temporary authorizations for @subject.
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_enumerate_temporary_authorizations_finish() to get the result of
- * the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_enumerate_temporary_authorizations_finish() to get
+ * the result of the operation.
  **/
 void
 polkit_authority_enumerate_temporary_authorizations (PolkitAuthority     *authority,
@@ -1489,6 +1530,10 @@ polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *aut
  *
  * Synchronousky gets all temporary authorizations for @subject.
  *
+ * The calling thread is blocked until a reply is received. See
+ * polkit_authority_enumerate_temporary_authorizations() for the
+ * asynchronous version.
+ *
  * Returns: A list of #PolkitTemporaryAuthorization objects or %NULL if @error is set. The returned list
  * should be freed with g_list_free() after each element have been freed with g_object_unref().
  **/
@@ -1527,9 +1572,12 @@ polkit_authority_enumerate_temporary_authorizations_sync (PolkitAuthority     *a
  *
  * Asynchronously revokes all temporary authorizations for @subject.
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_revoke_temporary_authorizations_finish() to get the result of
- * the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_revoke_temporary_authorizations_finish() to get
+ * the result of the operation.
  **/
 void
 polkit_authority_revoke_temporary_authorizations (PolkitAuthority     *authority,
@@ -1608,6 +1656,10 @@ polkit_authority_revoke_temporary_authorizations_finish (PolkitAuthority *author
  *
  * Synchronously revokes all temporary authorization from @subject.
  *
+ * The calling thread is blocked until a reply is received. See
+ * polkit_authority_revoke_temporary_authorizations() for the
+ * asynchronous version.
+ *
  * Returns: %TRUE if the temporary authorization was revoked, %FALSE if error is set.
  **/
 gboolean
@@ -1645,9 +1697,12 @@ polkit_authority_revoke_temporary_authorizations_sync (PolkitAuthority     *auth
  *
  * Asynchronously revoke a temporary authorization.
  *
- * When the operation is finished, @callback will be invoked. You can then
- * call polkit_authority_revoke_temporary_authorization_by_id_finish() to get the result of
- * the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_revoke_temporary_authorization_by_id_finish() to
+ * get the result of the operation.
  */
 void
 polkit_authority_revoke_temporary_authorization_by_id (PolkitAuthority     *authority,
@@ -1721,6 +1776,10 @@ polkit_authority_revoke_temporary_authorization_by_id_finish (PolkitAuthority *a
  *
  * Synchronously revokes a temporary authorization.
  *
+ * The calling thread is blocked until a reply is received. See
+ * polkit_authority_revoke_temporary_authorization_by_id() for the
+ * asynchronous version.
+ *
  * Returns: %TRUE if the temporary authorization was revoked, %FALSE if error is set.
  **/
 gboolean
@@ -1755,7 +1814,7 @@ polkit_authority_revoke_temporary_authorization_by_id_sync (PolkitAuthority     
  * The unique name on the system message bus of the owner of the name
  * <literal>org.freedesktop.PolicyKit1</literal> or %NULL if no-one
  * currently owns the name. You may connect to the #GObject::notify
- * signal to track changes to the #PolkitAuthority::owner property.
+ * signal to track changes to the #PolkitAuthority:owner property.
  *
  * Returns: (allow-none): %NULL or a string that should be freed with g_free().
  **/

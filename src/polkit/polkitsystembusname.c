@@ -346,7 +346,8 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
  *
- * Synchronously gets a #PolkitUnixProcess object for @system_bus_name.
+ * Synchronously gets a #PolkitUnixProcess object for @system_bus_name
+ * - the calling thread is blocked until a reply is received.
  *
  * Returns: (allow-none): A #PolkitUnixProcess object or %NULL if @error is set.
  **/

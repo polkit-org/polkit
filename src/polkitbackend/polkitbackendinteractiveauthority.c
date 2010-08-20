@@ -1138,7 +1138,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
  *
  * The default implementation returns a list with a single element for the super user.
  *
- * Returns: A list of #PolkitIdentities. Free each element
+ * Returns: A list of #PolkitIdentity objects. Free each element
  *     g_object_unref(), then free the list with g_list_free().
  */
 GList *

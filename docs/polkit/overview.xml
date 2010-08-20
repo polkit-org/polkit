@@ -12,7 +12,7 @@
       PolicyKit provides an authorization API intended to be used by
       privileged programs (<quote>MECHANISMS</quote>) offering service
       to unprivileged programs (<quote>CLIENTS</quote>). See the
-      <link linkend="PolicyKit-1.8">PolicyKit-1</link> manual page for
+      <link linkend="polkit.8">polkit</link> manual page for
       the system architecture and big picture.
     </para>
   </chapter>
@@ -29,14 +29,26 @@
       communicate with the PolicyKit Authority.
     </para>
     <para>
-      Note that <emphasis>clients</emphasis> never use the PolicyKit
-      API directly – it is intended solely for privileged
+      Note that <emphasis>clients</emphasis> normally doesn't use the
+      PolicyKit API directly – it is intended for privileged
       <emphasis>mechanisms</emphasis>. If a client needs to disable,
       modify or remove UI elements to e.g. convey to the user that a
       certain action cannot be carried out (because e.g. the user is
-      not authorized) or authentication is needed (by
-      e.g. displaying a padlock icon in the UI), the mechanism will
-      need to provide API for this.
+      not authorized) or authentication is needed (by e.g. displaying
+      a padlock icon in the UI), it is usually better to have the
+      mechanism provide an API for this.
+    </para>
+    <para>
+      If a PolicyKit application wants to handle the case where no
+      authentication agent exists (for example if the app is launched
+      via a
+      <citerefentry><refentrytitle>ssh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      login), it is trivial for the application to use the <link
+      linkend="PolkitAgentTextListener">PolkitAgentTextListener</link>
+      class to spawn its own authentication agent as needed. See the
+      <link linkend="pkcheck.1">pkcheck</link> or <link
+      linkend="pkexec.1">pkexec</link> program sources for an example
+      of how to do this.
     </para>
     <para>
       As an example of code using the GObject API, see <xref linkend="cancel-example"/>.

@@ -24,7 +24,7 @@
 #include <polkit/polkit.h>
 #include "polkitbackendconfigsource.h"
 
-/**
+/* <internal>
  * SECTION:polkitbackendconfigsource
  * @title: PolkitBackendConfigSource
  * @short_description: Access configuration files

@@ -35,7 +35,6 @@ G_BEGIN_DECLS
  * @POLKIT_AUTHORITY_FEATURES_NONE: No flags set.
  * @POLKIT_AUTHORITY_FEATURES_TEMPORARY_AUTHORIZATION: The authority supports temporary authorizations
  * that can be obtained through authentication.
- * @POLKIT_AUTHORITY_FEATURES_LOCKDOWN: The authority supports the XXX method.
  *
  * Flags describing features supported by the Authority implementation.
  */
@@ -43,7 +42,6 @@ typedef enum
 {
   POLKIT_AUTHORITY_FEATURES_NONE                    = 0,
   POLKIT_AUTHORITY_FEATURES_TEMPORARY_AUTHORIZATION = (1<<0),
-  POLKIT_AUTHORITY_FEATURES_LOCKDOWN                = (1<<1)
 } PolkitAuthorityFeatures;
 
 G_END_DECLS

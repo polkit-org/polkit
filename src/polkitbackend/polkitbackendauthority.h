@@ -62,7 +62,10 @@ struct _PolkitBackendAuthority
 /**
  * PolkitBackendAuthorityClass:
  * @parent_class: The parent class.
- * @changed: Function pointer for #PolkitBackendAuthorityClass::changed signal.
+ * @get_name: Function pointer for the polkit_backend_authority_get_name() function.
+ * @get_version: Function pointer for the polkit_backend_authority_get_version() function.
+ * @get_features: Function pointer for the polkit_backend_authority_get_features() function.
+ * @changed: Function pointer for #PolkitBackendAuthority::changed signal.
  * @enumerate_actions: Enumerates registered actions on the
  * system. See polkit_backend_authority_enumerate_actions() for
  * details.
@@ -100,7 +103,7 @@ struct _PolkitBackendAuthority
  * the operation. See polkit_backend_authority_revoke_temporary_authorization_by_id()
  * for details.
  *
- * VFuncs that authority backends need to implement.
+ * Class structure for #PolkitBackendAuthority.
  */
 struct _PolkitBackendAuthorityClass
 {

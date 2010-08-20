@@ -31,7 +31,7 @@
 
 #define CKDB_PATH "/var/run/ConsoleKit/database"
 
-/**
+/* <internal>
  * SECTION:polkitbackendsessionmonitor
  * @title: PolkitBackendSessionMonitor
  * @short_description: Monitor sessions

@@ -30,7 +30,7 @@
 
 #include "polkitbackendactionpool.h"
 
-/**
+/* <internal>
  * SECTION:polkitbackendactionpool
  * @title: PolkitBackendActionPool
  * @short_description: Registered actions

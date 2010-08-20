@@ -140,9 +140,11 @@ polkit_subject_to_string (PolkitSubject *subject)
  *
  * Asynchronously checks if @subject exists.
  *
- * When the operation is finished, @callback will be invoked. You can
- * then call polkit_subject_exists_finish() to get the result of the
- * operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call polkit_subject_exists_finish() to get the
+ * result of the operation.
  **/
 void
 polkit_subject_exists (PolkitSubject       *subject,
@@ -189,8 +191,9 @@ polkit_subject_exists_finish (PolkitSubject   *subject,
  *
  * Checks if @subject exists.
  *
- * This is a synchronous blocking call, see polkit_subject_exists()
- * for the asynchronous version.
+ * This is a synchronous blocking call - the calling thread is blocked
+ * until a reply is received. See polkit_subject_exists() for the
+ * asynchronous version.
  *
  * Returns: %TRUE if the subject exists, %FALSE if not or @error is set.
  */

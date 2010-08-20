@@ -429,7 +429,11 @@ polkit_agent_session_response (PolkitAgentSession *session,
  * polkit_agent_session_initiate:
  * @session: A #PolkitAgentSession.
  *
- * Initiates the authentication session.
+ * Initiates the authentication session. Before calling this method,
+ * make sure to connect to the various signals. The signals will be
+ * emitted in the <link
+ * linkend="g-main-context-push-thread-default">thread-default main
+ * loop</link> that this method is invoked from.
  *
  * Use polkit_agent_session_cancel() to cancel the session.
  **/

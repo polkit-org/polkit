@@ -242,9 +242,12 @@ polkit_unix_session_new (const gchar *session_id)
  * Asynchronously creates a new #PolkitUnixSession object for the
  * process with process id @pid.
  *
- * When the operation is finished, @callback will be invoked. You can
- * then call polkit_unix_session_new_for_process_finish() to get the
- * result of the operation.
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_unix_session_new_for_process_finish() to get the result of
+ * the operation.
  *
  * This method constructs the object asynchronously, for the synchronous and blocking version
  * use polkit_unix_session_new_for_process_sync().
@@ -305,7 +308,8 @@ polkit_unix_session_new_for_process_finish (GAsyncResult   *res,
  *
  * Creates a new #PolkitUnixSession for the process with process id @pid.
  *
- * This is a synchronous call that does blocking IO, for the asynchronous version, use
+ * This is a synchronous call - the calling thread is blocked until a
+ * reply is received. For the asynchronous version, see
  * polkit_unix_session_new_for_process().
  *
  * Returns: (allow-none): A #PolkitUnixSession for @pid or %NULL if

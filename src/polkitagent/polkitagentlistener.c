@@ -33,15 +33,17 @@
  *
  * #PolkitAgentListener is an abstract base class used for implementing authentication
  * agents. To implement an authentication agent, simply subclass #PolkitAgentListener and
- * implement the @initiate_authentication and @initiate_authentication_finish VFuncs.
+ * implement the @initiate_authentication and @initiate_authentication_finish methods.
  *
- * Typically authentication agents use #PolkitAgentSession to authenticate users (via
- * passwords) and communicate back the authentication result to the PolicyKit daemon.
- * This is however not requirement. Depending on the system an authentication agent
- * may use other means (such as a Yes/No dialog) to obtain sufficient evidence that
- * the user is one of the requested identities.
+ * Typically authentication agents use #PolkitAgentSession to
+ * authenticate users (via passwords) and communicate back the
+ * authentication result to the PolicyKit daemon.  This is however not
+ * requirement. Depending on the system an authentication agent may
+ * use other means (such as a Yes/No dialog) to obtain sufficient
+ * evidence that the user is one of the requested identities.
  *
- * To register a #PolkitAgentListener with the PolicyKit daemon, use polkit_agent_register_listener().
+ * To register a #PolkitAgentListener with the PolicyKit daemon, use
+ * polkit_agent_listener_register().
  */
 
 typedef struct
@@ -381,6 +383,8 @@ server_thread_func (gpointer user_data)
  * example another authentication agent may already be registered for
  * @subject.
  *
+ * Note that the calling thread is blocked until a reply is received.
+ *
  * Returns: %NULL if @error is set, otherwise a registration handle
  * that can be used with polkit_agent_listener_unregister().
  */
@@ -703,17 +707,24 @@ polkit_agent_listener_class_init (PolkitAgentListenerClass *klass)
  * @callback: Function to call when the user is done authenticating.
  * @user_data: Data to pass to @callback.
  *
- * Called on a registered authentication agent (see polkit_agent_register_listener()) when
- * the user owning the session needs to prove he is one of the identities listed in @identities.
+ * Called on a registered authentication agent (see
+ * polkit_agent_listener_register()) when the user owning the session
+ * needs to prove he is one of the identities listed in @identities.
  *
- * When the user is done authenticating (for example by dismissing an authentication dialog
- * or by successfully entering a password or otherwise proving the user is one of the
- * identities in @identities), @callback will be invoked. The caller then calls
- * polkit_agent_listener_initiate_authentication_finish() to get the result.
+ * When the user is done authenticating (for example by dismissing an
+ * authentication dialog or by successfully entering a password or
+ * otherwise proving the user is one of the identities in
+ * @identities), @callback will be invoked. The caller then calls
+ * polkit_agent_listener_initiate_authentication_finish() to get the
+ * result.
  *
- * #PolkitAgentListener derived subclasses imlementing this method MUST not
- * ignore @cancellable; callers of this function can and will use it.
- **/
+ * #PolkitAgentListener derived subclasses imlementing this method
+ * <emphasis>MUST</emphasis> not ignore @cancellable; callers of this
+ * function can and will use it. Additionally, @callback must be
+ * invoked in the <link
+ * linkend="g-main-context-push-thread-default">thread-default main
+ * loop</link> of the thread that this method is called from.
+ */
 void
 polkit_agent_listener_initiate_authentication (PolkitAgentListener  *listener,
                                                const gchar          *action_id,
