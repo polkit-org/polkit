@@ -25,6 +25,8 @@
 
 #include <stdio.h>
 #include <polkit/polkit.h>
+#define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE
+#include <polkitagent/polkitagent.h>
 
 static void
 usage (int argc, char *argv[])
@@ -77,6 +79,7 @@ main (int argc, char *argv[])
   gboolean opt_show_help;
   gboolean opt_show_version;
   gboolean allow_user_interaction;
+  gboolean enable_internal_agent;
   PolkitAuthority *authority;
   PolkitAuthorizationResult *result;
   PolkitSubject *subject;
@@ -84,6 +87,7 @@ main (int argc, char *argv[])
   PolkitCheckAuthorizationFlags flags;
   PolkitDetails *result_details;
   GError *error;
+  gpointer local_agent_handle;
 
   subject = NULL;
   action_id = NULL;
@@ -91,6 +95,8 @@ main (int argc, char *argv[])
   authority = NULL;
   result = NULL;
   allow_user_interaction = FALSE;
+  enable_internal_agent = FALSE;
+  local_agent_handle = NULL;
   ret = 126;
 
   g_type_init ();
@@ -184,6 +190,10 @@ main (int argc, char *argv[])
         {
           allow_user_interaction = TRUE;
         }
+      else if (g_strcmp0 (argv[n], "--enable-internal-agent") == 0)
+        {
+          enable_internal_agent = TRUE;
+        }
       else
         {
           break;
@@ -218,6 +228,7 @@ main (int argc, char *argv[])
       goto out;
     }
 
+ try_again:
   error = NULL;
   flags = POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE;
   if (allow_user_interaction)
@@ -273,9 +284,45 @@ main (int argc, char *argv[])
   else if (polkit_authorization_result_get_is_challenge (result))
     {
       if (allow_user_interaction)
-        g_printerr ("Authorization requires authentication but no agent is available.\n");
+        {
+          if (local_agent_handle == NULL && enable_internal_agent)
+            {
+              PolkitAgentListener *listener;
+              error = NULL;
+              /* this will fail if we can't find a controlling terminal */
+              listener = polkit_agent_text_listener_new (NULL, &error);
+              if (listener == NULL)
+                {
+                  g_printerr ("Error creating textual authentication agent: %s\n", error->message);
+                  g_error_free (error);
+                  goto out;
+                }
+              local_agent_handle = polkit_agent_listener_register (listener,
+                                                                   POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
+                                                                   subject,
+                                                                   NULL, /* object_path */
+                                                                   NULL, /* GCancellable */
+                                                                   &error);
+              g_object_unref (listener);
+              if (local_agent_handle == NULL)
+                {
+                  g_printerr ("Error registering local authentication agent: %s\n", error->message);
+                  g_error_free (error);
+                  goto out;
+                }
+              g_object_unref (result);
+              result = NULL;
+              goto try_again;
+            }
+          else
+            {
+              g_printerr ("Authorization requires authentication but no agent is available.\n");
+            }
+        }
       else
-        g_printerr ("Authorization requires authentication and -u wasn't passed.\n");
+        {
+          g_printerr ("Authorization requires authentication and -u wasn't passed.\n");
+        }
       ret = 2;
     }
   else
@@ -285,6 +332,10 @@ main (int argc, char *argv[])
     }
 
  out:
+  /* if applicable, nuke the local authentication agent */
+  if (local_agent_handle != NULL)
+    polkit_agent_listener_unregister (local_agent_handle);
+
   if (result != NULL)
     g_object_unref (result);
 

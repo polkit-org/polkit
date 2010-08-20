@@ -67,6 +67,7 @@ pkcheck_CFLAGS =                             				\
 pkcheck_LDADD =  	                      				\
 	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la		\
 	$(NULL)
 
 # ----------------------------------------------------------------------------------------------------

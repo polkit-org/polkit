@@ -59,6 +59,12 @@
         </arg>
       </group>
 
+      <group>
+        <arg choice="plain">
+          <option>--enable-internal-agent</option>
+        </arg>
+      </group>
+
       <group rep="repeat">
         <arg choice="plain">
           <option>--detail</option>
@@ -142,6 +148,17 @@ KEY3=VALUE3
       file system depending on the operating system. If only <replaceable>pid</replaceable>
       is passed to the <option>--process</option> option, then <command>pkcheck</command>
       will look up the start time itself but note that this may be racy.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkcheck-auth-agent"><title>AUTHENTICATION AGENT</title>
+    <para>
+      <command>pkcheck</command>, like any other PolicyKit
+      application, will use the authentication agent registered for
+      the process in question. However, if no authentication agent is
+      available, then <command>pkcheck</command> can register its own
+      textual authentication agent if the option
+      <option>--enable-internal-agent</option> is passed.
     </para>
   </refsect1>
 
