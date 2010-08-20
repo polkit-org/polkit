@@ -72,7 +72,7 @@
       process. However, if no authentication agent is available, then
       <command>pkexec</command> will register its own textual
       authentication agent. This behavior can be turned off by passing
-      the <option>--disable-internal-agent</option> is passed.
+      the <option>--disable-internal-agent</option> option.
     </para>
   </refsect1>
 
