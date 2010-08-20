@@ -107,7 +107,7 @@ install-exec-hook:
 	-chown root $(DESTDIR)$(libexecdir)/polkit-agent-helper-1
 	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-agent-helper-1
 
-EXTRA_DIST = polkitagentmarshal.list
+EXTRA_DIST = polkitagentmarshal.list polkitagentenumtypes.h.template polkitagentenumtypes.c.template
 
 dist-hook :
 	(for i in $(marshal_built_sources) $(BUILT_SOURCES) ; do rm -f $(distdir)/$$i ; done)
