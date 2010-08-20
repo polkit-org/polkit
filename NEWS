@@ -1,5 +1,5 @@
 --------------
-PolicyKit 0.98 (not released)
+PolicyKit 0.98
 --------------
 
 This is PolicyKit 0.98.
@@ -10,13 +10,29 @@ some security review. Use at your own risk.
 
 Build requirements
 
- glib, gobject, gio    >= 2.25.11
+ glib, gobject, gio    >= 2.25.12
  gobject-introspection >= 0.6.2 (optional)
  pam (optional)
 
 Changes since PolicyKit 0.97:
 
- TODO
+David Zeuthen (11):
+      Post-release version bump to 0.98
+      Require GLib 2.25.12
+      Fix scanning of unix-process subjects
+      Add textual authentication agent and use it in pkexec(1)
+      Fix ConsoleKit interaction bug
+      pkexec: add --disable-internal-agent option
+      pkcheck: add --enable-internal-agent option
+      Fix wording in pkexec(1) man page
+      Various doc cleanups
+      Fix dist-check
+      Update NEWS for release
+
+Thanks to our contributors.
+
+David Zeuthen,
+August 20, 2010
 
 --------------
 PolicyKit 0.97
