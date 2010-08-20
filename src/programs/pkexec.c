@@ -68,6 +68,7 @@ usage (int argc, char *argv[])
 {
   g_printerr ("pkexec --version |\n"
               "       --help |\n"
+              "       --disable-internal-agent |\n"
               "       [--user username] PROGRAM [ARGUMENTS...]\n"
               "\n"
               "See the pkexec manual page for more details.\n");
@@ -374,6 +375,7 @@ main (int argc, char *argv[])
   gint rc;
   gboolean opt_show_help;
   gboolean opt_show_version;
+  gboolean opt_disable_internal_agent;
   PolkitAuthority *authority;
   PolkitAuthorizationResult *result;
   PolkitSubject *subject;
@@ -460,6 +462,7 @@ main (int argc, char *argv[])
    */
   opt_show_help = FALSE;
   opt_show_version = FALSE;
+  opt_disable_internal_agent = FALSE;
   for (n = 1; n < (guint) argc; n++)
     {
       if (strcmp (argv[n], "--help") == 0)
@@ -480,6 +483,10 @@ main (int argc, char *argv[])
             }
 
           opt_user = g_strdup (argv[n]);
+        }
+      else if (strcmp (argv[n], "--disable-internal-agent") == 0)
+        {
+          opt_disable_internal_agent = TRUE;
         }
       else
         {
@@ -670,7 +677,7 @@ main (int argc, char *argv[])
     }
   else if (polkit_authorization_result_get_is_challenge (result))
     {
-      if (local_agent_handle == NULL)
+      if (local_agent_handle == NULL && !opt_disable_internal_agent)
         {
           PolkitAgentListener *listener;
           error = NULL;
@@ -701,7 +708,7 @@ main (int argc, char *argv[])
         }
       else
         {
-          g_printerr ("Error executing command as another user.\n");
+          g_printerr ("Error executing command as another user: No authentication agent found.\n");
           goto out;
         }
     }

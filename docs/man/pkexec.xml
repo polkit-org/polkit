@@ -25,6 +25,7 @@
     <cmdsynopsis>
       <command>pkexec</command>
       <arg><option>--version</option></arg>
+      <arg><option>--disable-internal-agent</option></arg>
       <arg><option>--help</option></arg>
     </cmdsynopsis>
 
@@ -61,6 +62,17 @@
       not authorized or an authorization could not be obtained through
       authentication or an error occured, <command>pkexec</command>
       exits with a return value of 127.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkexec-auth-agent"><title>AUTHENTICATION AGENT</title>
+    <para>
+      <command>pkexec</command>, like any other PolicyKit application,
+      will use the authentication agent registered for the calling
+      process. However, if no authentication agent is available, then
+      <command>pkexec</command> will register its own textual
+      authentication agent. This behavior can be turned off by passing
+      the <option>--disable-internal-agent</option> is passed.
     </para>
   </refsect1>
 
