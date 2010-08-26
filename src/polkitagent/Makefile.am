@@ -46,6 +46,7 @@ libpolkit_agent_1includedir=$(includedir)/polkit-1/polkitagent
 
 libpolkit_agent_1include_HEADERS =                        				\
 	polkitagent.h									\
+	polkitagentenumtypes.h								\
 	polkitagenttypes.h								\
 	polkitagentsession.h								\
 	polkitagentlistener.h								\
