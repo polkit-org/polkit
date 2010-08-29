@@ -97,6 +97,7 @@ polkit_agent_helper_1_CFLAGS  = 					\
 
 polkit_agent_helper_1_LDADD = 						\
 	$(AUTH_LIBS)							\
+	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(NULL)
 
