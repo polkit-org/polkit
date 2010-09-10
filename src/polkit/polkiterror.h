@@ -40,10 +40,6 @@ G_BEGIN_DECLS
 
 GQuark polkit_error_quark (void);
 
-GType polkit_error_get_type (void) G_GNUC_CONST;
-
-#define POLKIT_TYPE_ERROR (polkit_error_get_type ())
-
 /**
  * PolkitError:
  * @POLKIT_ERROR_FAILED: The operation failed.

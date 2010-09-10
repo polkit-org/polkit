@@ -30,10 +30,6 @@
 
 G_BEGIN_DECLS
 
-GType polkit_check_authorization_flags_get_type (void) G_GNUC_CONST;
-
-#define POLKIT_TYPE_CHECK_AUTHORIZATION_FLAGS (polkit_check_authorization_flags_get_type ())
-
 /**
  * PolkitCheckAuthorizationFlags:
  * @POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE: No flags set.

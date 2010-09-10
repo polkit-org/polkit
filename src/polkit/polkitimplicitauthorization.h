@@ -30,10 +30,6 @@
 
 G_BEGIN_DECLS
 
-GType polkit_implicit_authorization_get_type (void) G_GNUC_CONST;
-
-#define POLKIT_TYPE_IMPLICIT_AUTHORIZATION (polkit_implicit_authorization_get_type ())
-
 /**
  * PolkitImplicitAuthorization:
  * @POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN: Unknown whether the subject is authorized, never returned in any public API.
