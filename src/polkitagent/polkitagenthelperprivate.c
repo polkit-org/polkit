@@ -48,8 +48,8 @@ _polkit_clearenv (void)
 gboolean
 send_dbus_message (const char *cookie, const char *user)
 {
-  PolkitAuthority *authority;
-  PolkitIdentity *identity;
+  PolkitAuthority *authority = NULL;
+  PolkitIdentity *identity = NULL;
   GError *error;
   gboolean ret;
 
