@@ -116,7 +116,7 @@ static gboolean
 ensure_database (PolkitBackendSessionMonitor  *monitor,
                  GError                      **error)
 {
-  gboolean ret;
+  gboolean ret = FALSE;
 
   if (monitor->database != NULL)
     {
