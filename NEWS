@@ -1,4 +1,29 @@
 --------------
+PolicyKit 0.100
+--------------
+
+This is PolicyKit 0.100
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.25.12
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+
+Changes since PolicyKit 0.99:
+
+ TODO:log
+
+Thanks to our contributors.
+
+David Zeuthen,
+TODO:date
+
+--------------
 PolicyKit 0.99
 --------------
 
