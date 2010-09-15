@@ -16,12 +16,22 @@ Build requirements
 
 Changes since PolicyKit 0.98:
 
-TODO:log
+ Colin Walters (3):
+       Remove duplicate definitions of enumeration types
+       Fix (correct) GCC warning about possibly-uninitialized variable
+       Fix another GCC uninitialized variable warning
+
+ David Zeuthen (2):
+       Post-release version bump to 0.99
+       Update NEWS for release
+
+ Vincent Untz (1):
+       Bug 29816 – Install polkitagentenumtypes.h
 
 Thanks to our contributors.
 
 David Zeuthen,
-TODO:date
+September 15, 2010
 
 --------------
 PolicyKit 0.98
