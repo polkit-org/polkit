@@ -178,7 +178,7 @@ polkit_unix_user_set_uid (PolkitUnixUser *user,
  *
  * Creates a new #PolkitUnixUser object for @uid.
  *
- * Returns: A #PolkitUnixUser object. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitUnixUser object. Free with g_object_unref().
  */
 PolkitIdentity *
 polkit_unix_user_new (gint uid)
@@ -196,7 +196,7 @@ polkit_unix_user_new (gint uid)
  * Creates a new #PolkitUnixUser object for a user with the user name
  * @name.
  *
- * Returns: (allow-none): A #PolkitUnixUser object or %NULL if @error is set.
+ * Returns: (allow-none) (transfer full): A #PolkitUnixUser object or %NULL if @error is set.
  */
 PolkitIdentity *
 polkit_unix_user_new_for_name (const gchar    *name,

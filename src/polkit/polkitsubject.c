@@ -218,8 +218,8 @@ polkit_subject_exists_sync   (PolkitSubject  *subject,
  * Creates an object from @str that implements the #PolkitSubject
  * interface.
  *
- * Returns: A #PolkitSubject or %NULL if @error is set. Free with
- * g_object_unref().
+ * Returns: (transfer full): A #PolkitSubject or %NULL if @error is
+ * set. Free with g_object_unref().
  */
 PolkitSubject *
 polkit_subject_from_string  (const gchar   *str,

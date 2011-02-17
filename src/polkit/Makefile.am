@@ -100,6 +100,7 @@ typelibs_DATA = Polkit-1.0.typelib
 
 Polkit-1.0.gir: libpolkit-gobject-1.la $(G_IR_SCANNER) Makefile.am
 	$(G_IR_SCANNER) -v 					\
+		--warn-all					\
 		--namespace Polkit 				\
 		--nsversion=1.0 				\
 		--include=Gio-2.0 				\
@@ -111,25 +112,7 @@ Polkit-1.0.gir: libpolkit-gobject-1.la $(G_IR_SCANNER) Makefile.am
 		--libtool=$(top_builddir)/libtool		\
                 -I$(top_srcdir)/src	 			\
 	        -D_POLKIT_COMPILATION                   	\
-		$(srcdir)/polkit.h 				\
-		$(srcdir)/polkittypes.h 			\
-		$(srcdir)/polkitactiondescription.h 		\
-		$(srcdir)/polkitauthority.h 			\
-		$(srcdir)/polkitauthorizationresult.h 		\
-		$(srcdir)/polkitcheckauthorizationflags.h 	\
-		$(srcdir)/polkitdetails.h 			\
-		$(builddir)/polkitenumtypes.h 			\
-		$(srcdir)/polkiterror.h 			\
-		$(srcdir)/polkitidentity.h 			\
-		$(srcdir)/polkitimplicitauthorization.h 	\
-		$(srcdir)/polkitsubject.h 			\
-		$(srcdir)/polkitsystembusname.h 		\
-		$(srcdir)/polkittemporaryauthorization.h 	\
-		$(srcdir)/polkitunixgroup.h 			\
-		$(srcdir)/polkitunixprocess.h 			\
-		$(srcdir)/polkitunixsession.h 			\
-		$(srcdir)/polkitunixuser.h 			\
-		$(srcdir)/polkitpermission.h 			\
+		$(libpolkit_gobject_1_la_SOURCES)		\
 		$(NULL)
 
 Polkit-1.0.typelib: Polkit-1.0.gir $(G_IR_COMPILER)

@@ -222,7 +222,7 @@ polkit_unix_session_set_session_id (PolkitUnixSession *session,
  *
  * Creates a new #PolkitUnixSession for @session_id.
  *
- * Returns: A #PolkitUnixSession. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitUnixSession. Free with g_object_unref().
  **/
 PolkitSubject *
 polkit_unix_session_new (const gchar *session_id)
@@ -274,7 +274,7 @@ polkit_unix_session_new_for_process (gint                pid,
  *
  * Finishes constructing a #PolkitSubject for a process id.
  *
- * Returns: (allow-none): A #PolkitUnixSession for the @pid passed to
+ * Returns: (transfer full) (allow-none): A #PolkitUnixSession for the @pid passed to
  *     polkit_unix_session_new_for_process() or %NULL if @error is
  *     set. Free with g_object_unref().
  **/
@@ -312,8 +312,8 @@ polkit_unix_session_new_for_process_finish (GAsyncResult   *res,
  * reply is received. For the asynchronous version, see
  * polkit_unix_session_new_for_process().
  *
- * Returns: (allow-none): A #PolkitUnixSession for @pid or %NULL if
- * @error is set. Free with g_object_unref().
+ * Returns: (allow-none) (transfer full): A #PolkitUnixSession for
+ * @pid or %NULL if @error is set. Free with g_object_unref().
  **/
 PolkitSubject *
 polkit_unix_session_new_for_process_sync (gint           pid,

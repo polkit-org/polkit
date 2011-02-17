@@ -190,7 +190,7 @@ polkit_system_bus_name_set_name (PolkitSystemBusName *system_bus_name,
  *
  * Creates a new #PolkitSystemBusName for @name.
  *
- * Returns: A #PolkitSystemBusName. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitSystemBusName. Free with g_object_unref().
  */
 PolkitSubject *
 polkit_system_bus_name_new (const gchar *name)
@@ -349,7 +349,7 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
  * Synchronously gets a #PolkitUnixProcess object for @system_bus_name
  * - the calling thread is blocked until a reply is received.
  *
- * Returns: (allow-none): A #PolkitUnixProcess object or %NULL if @error is set.
+ * Returns: (allow-none) (transfer full): A #PolkitUnixProcess object or %NULL if @error is set.
  **/
 PolkitSubject *
 polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,

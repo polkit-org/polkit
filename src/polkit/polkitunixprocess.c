@@ -302,7 +302,7 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
  * <filename>/proc</filename> filesystem depending on the platform in
  * use.
  *
- * Returns: A #PolkitSubject. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitSubject. Free with g_object_unref().
  */
 PolkitSubject *
 polkit_unix_process_new (gint pid)
@@ -319,7 +319,7 @@ polkit_unix_process_new (gint pid)
  *
  * Creates a new #PolkitUnixProcess object for @pid and @start_time.
  *
- * Returns: A #PolkitSubject. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitSubject. Free with g_object_unref().
  */
 PolkitSubject *
 polkit_unix_process_new_full (gint pid,

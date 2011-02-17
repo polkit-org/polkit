@@ -178,7 +178,7 @@ polkit_unix_group_set_gid (PolkitUnixGroup *group,
  *
  * Creates a new #PolkitUnixGroup object for @gid.
  *
- * Returns: A #PolkitUnixGroup object. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitUnixGroup object. Free with g_object_unref().
  */
 PolkitIdentity *
 polkit_unix_group_new (gint gid)
@@ -196,7 +196,7 @@ polkit_unix_group_new (gint gid)
  * Creates a new #PolkitUnixGroup object for a group with the group name
  * @name.
  *
- * Returns: (allow-none): A #PolkitUnixGroup object or %NULL if @error
+ * Returns: (transfer full): (allow-none): A #PolkitUnixGroup object or %NULL if @error
  * is set.
  */
 PolkitIdentity *

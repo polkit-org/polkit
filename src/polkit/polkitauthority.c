@@ -370,6 +370,14 @@ async_initable_iface_init (GAsyncInitableIface *async_initable_iface)
 /* ---------------------------------------------------------------------------------------------------- */
 
 /* deprecated, see polkitauthority.h */
+
+/**
+ * polkit_authority_get:
+ *
+ * (deprecated)
+ *
+ * Returns: (transfer full): value
+ */
 PolkitAuthority *
 polkit_authority_get (void)
 {
@@ -498,8 +506,8 @@ polkit_authority_get_async  (GCancellable        *cancellable,
  *
  * Finishes an operation started with polkit_authority_get_async().
  *
- * Returns: A #PolkitAuthority. Free it with g_object_unref() when
- * done with it.
+ * Returns: (transfer full): A #PolkitAuthority. Free it with
+ * g_object_unref() when done with it.
  */
 PolkitAuthority *
 polkit_authority_get_finish (GAsyncResult        *res,
@@ -540,8 +548,8 @@ polkit_authority_get_finish (GAsyncResult        *res,
  * blocked until a reply is received. See polkit_authority_get_async()
  * for the asynchronous version.
  *
- * Returns: A #PolkitAuthority. Free it with g_object_unref() when
- * done with it.
+ * Returns: (transfer full): A #PolkitAuthority. Free it with
+ * g_object_unref() when done with it.
  */
 PolkitAuthority *
 polkit_authority_get_sync (GCancellable        *cancellable,
@@ -672,8 +680,10 @@ polkit_authority_enumerate_actions (PolkitAuthority     *authority,
  *
  * Finishes retrieving all registered actions.
  *
- * Returns: A list of #PolkitActionDescription objects or %NULL if @error is set. The returned list
- * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ * Returns: (transfer full): A list of #PolkitActionDescription
+ * objects or %NULL if @error is set. The returned list should be
+ * freed with g_list_free() after each element have been freed with
+ * g_object_unref().
  **/
 GList *
 polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
@@ -726,8 +736,10 @@ polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
  * is blocked until a reply is received. See
  * polkit_authority_enumerate_actions() for the asynchronous version.
  *
- * Returns: A list of #PolkitActionDescription or %NULL if @error is set. The returned list
- * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ * Returns: (transfer full): A list of #PolkitActionDescription or
+ * %NULL if @error is set. The returned list should be freed with
+ * g_list_free() after each element have been freed with
+ * g_object_unref().
  **/
 GList *
 polkit_authority_enumerate_actions_sync (PolkitAuthority *authority,
@@ -919,7 +931,8 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
  *
  * Finishes checking if a subject is authorized for an action.
  *
- * Returns: A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitAuthorizationResult or %NULL if
+ * @error is set. Free with g_object_unref().
  **/
 PolkitAuthorizationResult *
 polkit_authority_check_authorization_finish (PolkitAuthority          *authority,
@@ -972,7 +985,7 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * operation to complete because it involves waiting for the user to
  * authenticate.
  *
- * Returns: A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
+ * Returns: (transfer full): A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  */
 PolkitAuthorizationResult *
 polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
@@ -1469,8 +1482,10 @@ polkit_authority_enumerate_temporary_authorizations (PolkitAuthority     *author
  *
  * Finishes retrieving all registered actions.
  *
- * Returns: A list of #PolkitTemporaryAuthorization objects or %NULL if @error is set. The returned list
- * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ * Returns: (transfer full): A list of #PolkitTemporaryAuthorization
+ * objects or %NULL if @error is set. The returned list should be
+ * freed with g_list_free() after each element have been freed with
+ * g_object_unref().
  **/
 GList *
 polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *authority,
@@ -1534,8 +1549,10 @@ polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *aut
  * polkit_authority_enumerate_temporary_authorizations() for the
  * asynchronous version.
  *
- * Returns: A list of #PolkitTemporaryAuthorization objects or %NULL if @error is set. The returned list
- * should be freed with g_list_free() after each element have been freed with g_object_unref().
+ * Returns: (transfer full): A list of #PolkitTemporaryAuthorization
+ * objects or %NULL if @error is set. The returned list should be
+ * freed with g_list_free() after each element have been freed with
+ * g_object_unref().
  **/
 GList *
 polkit_authority_enumerate_temporary_authorizations_sync (PolkitAuthority     *authority,

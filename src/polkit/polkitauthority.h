@@ -68,14 +68,6 @@ GList                     *polkit_authority_enumerate_actions_sync (PolkitAuthor
                                                                     GCancellable    *cancellable,
                                                                     GError         **error);
 
-GList                     *polkit_authority_enumerate_users_sync (PolkitAuthority *authority,
-                                                                  GCancellable    *cancellable,
-                                                                  GError         **error);
-
-GList                     *polkit_authority_enumerate_groups_sync (PolkitAuthority *authority,
-                                                                   GCancellable    *cancellable,
-                                                                   GError         **error);
-
 PolkitAuthorizationResult *polkit_authority_check_authorization_sync (PolkitAuthority               *authority,
                                                                       PolkitSubject                 *subject,
                                                                       const gchar                   *action_id,

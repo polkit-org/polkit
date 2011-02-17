@@ -164,8 +164,9 @@ polkit_details_insert (PolkitDetails *details,
  *
  * Gets a list of all keys on @details.
  *
- * Returns: (allow-none): %NULL if there are no keys otherwise an
- * array of strings that should be freed with g_strfreev().
+ * Returns: (transfer full) (allow-none): %NULL if there are no keys
+ * otherwise an array of strings that should be freed with
+ * g_strfreev().
  */
 gchar **
 polkit_details_get_keys (PolkitDetails *details)

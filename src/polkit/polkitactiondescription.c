@@ -265,7 +265,7 @@ polkit_action_description_get_annotation (PolkitActionDescription *action_descri
  *
  * Gets the keys of annotations defined in @action_description.
  *
- * Returns: The annotation keys owned by @action_description. Do not free.
+ * Returns: (transfer none): The annotation keys owned by @action_description. Do not free.
  */
 const gchar * const *
 polkit_action_description_get_annotation_keys (PolkitActionDescription *action_description)
