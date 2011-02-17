@@ -385,8 +385,9 @@ server_thread_func (gpointer user_data)
  *
  * Note that the calling thread is blocked until a reply is received.
  *
- * Returns: %NULL if @error is set, otherwise a registration handle
- * that can be used with polkit_agent_listener_unregister().
+ * Returns: (transfer full): %NULL if @error is set, otherwise a
+ * registration handle that can be used with
+ * polkit_agent_listener_unregister().
  */
 gpointer
 polkit_agent_listener_register (PolkitAgentListener      *listener,

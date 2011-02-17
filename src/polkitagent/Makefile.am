@@ -100,6 +100,39 @@ polkit_agent_helper_1_LDADD = 						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(NULL)
 
+if ENABLE_INTROSPECTION
+girdir = $(GIRDIR)
+gir_DATA = PolkitAgent-1.0.gir
+
+typelibsdir = $(GIRTYPELIBDIR)
+typelibs_DATA = PolkitAgent-1.0.typelib
+
+PolkitAgent-1.0.gir: libpolkit-agent-1.la $(G_IR_SCANNER) Makefile.am
+	$(G_IR_SCANNER) -v 					\
+		--warn-all					\
+		--namespace PolkitAgent				\
+		--nsversion=1.0 				\
+		--include=Gio-2.0 				\
+		--include-uninstalled=$(top_builddir)/src/polkit/Polkit-1.0.gir	\
+		--library=polkit-agent-1 			\
+		--output $@ 					\
+		--pkg=glib-2.0 					\
+		--pkg=gobject-2.0 				\
+		--pkg=gio-2.0 					\
+		--libtool=$(top_builddir)/libtool		\
+                -I$(top_srcdir)/src	 			\
+	        -D_POLKIT_COMPILATION                   	\
+	        -D_POLKIT_AGENT_COMPILATION                   	\
+		$(libpolkit_agent_1_la_SOURCES)			\
+		$(NULL)
+
+PolkitAgent-1.0.typelib: PolkitAgent-1.0.gir $(G_IR_COMPILER)
+	$(G_IR_COMPILER) 					\
+		--includedir $(top_builddir)/src/polkit		\
+		$< -o $@
+
+endif # ENABLE_INTROSPECTION
+
 # polkit-agent-helper-1 need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root
 # and/or other users.
