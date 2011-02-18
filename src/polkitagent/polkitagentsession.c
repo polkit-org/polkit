@@ -94,6 +94,13 @@ struct _PolkitAgentSessionClass
 
 enum
 {
+  PROP_0,
+  PROP_IDENTITY,
+  PROP_COOKIE
+};
+
+enum
+{
   REQUEST_SIGNAL,
   SHOW_INFO_SIGNAL,
   SHOW_ERROR_SIGNAL,
@@ -131,6 +138,54 @@ polkit_agent_session_finalize (GObject *object)
 }
 
 static void
+polkit_agent_session_get_property (GObject     *object,
+                                   guint        prop_id,
+                                   GValue      *value,
+                                   GParamSpec  *pspec)
+{
+  PolkitAgentSession *session = POLKIT_AGENT_SESSION (object);
+
+  switch (prop_id)
+    {
+    case PROP_IDENTITY:
+      g_value_set_object (value, session->identity);
+      break;
+
+    case PROP_COOKIE:
+      g_value_set_string (value, session->cookie);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
+polkit_agent_session_set_property (GObject      *object,
+                                   guint         prop_id,
+                                   const GValue *value,
+                                   GParamSpec   *pspec)
+{
+  PolkitAgentSession *session = POLKIT_AGENT_SESSION (object);
+
+  switch (prop_id)
+    {
+    case PROP_IDENTITY:
+      session->identity = g_value_dup_object (value);
+      break;
+
+    case PROP_COOKIE:
+      session->cookie = g_value_dup_string (value);
+      break;
+
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
 polkit_agent_session_class_init (PolkitAgentSessionClass *klass)
 {
   GObjectClass *gobject_class;
@@ -138,6 +193,42 @@ polkit_agent_session_class_init (PolkitAgentSessionClass *klass)
   gobject_class = G_OBJECT_CLASS (klass);
 
   gobject_class->finalize = polkit_agent_session_finalize;
+  gobject_class->get_property = polkit_agent_session_get_property;
+  gobject_class->set_property = polkit_agent_session_set_property;
+
+  /**
+   * PolkitAgentSession:identity:
+   *
+   * The identity to authenticate.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_IDENTITY,
+                                   g_param_spec_object ("identity",
+                                                        "Identity",
+                                                        "The identity to authenticate",
+                                                        POLKIT_TYPE_IDENTITY,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_BLURB |
+                                                        G_PARAM_STATIC_NICK));
+
+  /**
+   * PolkitAgentSession:cookie:
+   *
+   * The cookie obtained from the PolicyKit daemon
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_COOKIE,
+                                   g_param_spec_string ("cookie",
+                                                        "Cookie",
+                                                        "The cookie obtained from the PolicyKit daemon",
+                                                        NULL,
+                                                        G_PARAM_CONSTRUCT_ONLY |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_BLURB |
+                                                        G_PARAM_STATIC_NICK));
 
   /**
    * PolkitAgentSession::request:
@@ -246,10 +337,10 @@ polkit_agent_session_new (PolkitIdentity *identity,
   g_return_val_if_fail (POLKIT_IS_IDENTITY (identity), NULL);
   g_return_val_if_fail (cookie != NULL, NULL);
 
-  session = POLKIT_AGENT_SESSION (g_object_new (POLKIT_AGENT_TYPE_SESSION, NULL));
-
-  session->identity = g_object_ref (identity);
-  session->cookie = g_strdup (cookie);
+  session = POLKIT_AGENT_SESSION (g_object_new (POLKIT_AGENT_TYPE_SESSION,
+                                                "identity", identity,
+                                                "cookie", cookie,
+                                                NULL));
 
   return session;
 }
