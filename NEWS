@@ -16,12 +16,23 @@ Build requirements
 
 Changes since PolicyKit 0.99:
 
- TODO:log
+David Zeuthen (11):
+      Post-release version bump to 0.100
+      Add missing GObject Introspection annotations
+      Build gir/typelib for PolkitAgent-1.0
+      Fix-up PolkitAgentSession to use GObject properties
+      Improve error reporting for authentication sessions
+      Add some debug info that can be shown with the env var POLKIT_DEBUG
+      Fix up debug and timeouts in agent helper
+      Always pass non-zero value to g_once_init_leave()
+      Add a note about POLKIT_DEBUG
+      Pass caller and subject pid to authentication agent
+      Update NEWS for release
 
 Thanks to our contributors.
 
 David Zeuthen,
-TODO:date
+February 21, 2011
 
 --------------
 PolicyKit 0.99
