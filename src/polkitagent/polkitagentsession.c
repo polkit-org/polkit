@@ -60,6 +60,19 @@
 #include "polkitagentmarshal.h"
 #include "polkitagentsession.h"
 
+static gboolean
+_show_debug (void)
+{
+  static gsize show_debug = 0;
+  if (g_once_init_enter (&show_debug))
+    {
+      gsize v;
+      v = g_getenv ("POLKIT_DEBUG") != NULL;
+      g_once_init_leave (&show_debug, v);
+    }
+  return show_debug;
+}
+
 /**
  * PolkitAgentSession:
  *
@@ -391,6 +404,8 @@ complete_session (PolkitAgentSession *session,
                   gboolean            result)
 {
   kill_helper (session);
+  if (G_UNLIKELY (_show_debug ()))
+    g_print ("PolkitAgentSession: emitting ::completed(%s)\n", result ? "TRUE" : "FALSE");
   g_signal_emit_by_name (session, "completed", result);
 }
 
@@ -408,9 +423,10 @@ child_watch_func (GPid     pid,
   /* Special-case a very common error triggered in jhbuild setups */
   if (WIFEXITED (status) && WEXITSTATUS (status) == 2)
     {
-      g_signal_emit_by_name (session,
-                             "show-error",
-                             "Incorrect permissions on " PACKAGE_LIBEXEC_DIR "/polkit-agent-helper-1");
+      const gchar *s = "Incorrect permissions on " PACKAGE_LIBEXEC_DIR "/polkit-agent-helper-1";
+      if (G_UNLIKELY (_show_debug ()))
+        g_print ("PolkitAgentSession: emitting ::show-error('%s')\n", s);
+      g_signal_emit_by_name (session, "show-error", s);
       complete_session (session, FALSE);
     }
 }
@@ -453,27 +469,33 @@ io_watch_have_data (GIOChannel    *channel,
   if (strlen (line) > 0 && line[strlen (line) - 1] == '\n')
     line[strlen (line) - 1] = '\0';
 
-  //g_debug ("Got '%s' from helper", line);
-
   if (g_str_has_prefix (line, "PAM_PROMPT_ECHO_OFF "))
     {
-      g_signal_emit_by_name (session, "request", line + sizeof "PAM_PROMPT_ECHO_OFF " - 1, FALSE);
+      const gchar *s = line + sizeof "PAM_PROMPT_ECHO_OFF " - 1;
+      if (G_UNLIKELY (_show_debug ()))
+        g_print ("PolkitAgentSession: emitting ::request('%s', FALSE)\n", s);
+      g_signal_emit_by_name (session, "request", s, FALSE);
     }
   else if (g_str_has_prefix (line, "PAM_PROMPT_ECHO_ON "))
     {
-      g_signal_emit_by_name (session, "request", line + sizeof "PAM_PROMPT_ECHO_ON " - 1, TRUE);
+      const gchar *s = line + sizeof "PAM_PROMPT_ECHO_ON " - 1;
+      if (G_UNLIKELY (_show_debug ()))
+        g_print ("PolkitAgentSession: emitting ::request('%s', TRUE)\n", s);
+      g_signal_emit_by_name (session, "request", s, TRUE);
     }
   else if (g_str_has_prefix (line, "PAM_ERROR_MSG "))
     {
-      g_signal_emit_by_name (session, "show-error", line + sizeof "PAM_ERROR_MSG " - 1);
+      const gchar *s = line + sizeof "PAM_ERROR_MSG " - 1;
+      if (G_UNLIKELY (_show_debug ()))
+        g_print ("PolkitAgentSession: emitting ::show-error('%s')\n", s);
+      g_signal_emit_by_name (session, "show-error", s);
     }
   else if (g_str_has_prefix (line, "PAM_TEXT_INFO "))
     {
-      g_signal_emit_by_name (session, "show-info", line + sizeof "PAM_TEXT_INFO " - 1);
-    }
-  else if (g_str_has_prefix (line, "PAM_TEXT_INFO "))
-    {
-      g_signal_emit_by_name (session, "show-info", line + sizeof "PAM_TEXT_INFO " - 1);
+      const gchar *s = line + sizeof "PAM_TEXT_INFO " - 1;
+      if (G_UNLIKELY (_show_debug ()))
+        g_print ("PolkitAgentSession: emitting ::show-info('%s')\n", s);
+      g_signal_emit_by_name (session, "show-info", s);
     }
   else if (g_str_has_prefix (line, "SUCCESS"))
     {
@@ -550,6 +572,16 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
 
   ret = FALSE;
 
+  if (G_UNLIKELY (_show_debug ()))
+    {
+      gchar *s;
+      s = polkit_identity_to_string (session->identity);
+      g_print ("PolkitAgentSession: initiating authentication for identity `%s', cookie %s\n",
+               s,
+               session->cookie);
+      g_free (s);
+    }
+
   /* TODO: also support authorization for other kinds of identities */
   if (!POLKIT_IS_UNIX_USER (session->identity))
     {
@@ -625,5 +657,9 @@ void
 polkit_agent_session_cancel (PolkitAgentSession *session)
 {
   g_return_if_fail (POLKIT_AGENT_IS_SESSION (session));
+
+  if (G_UNLIKELY (_show_debug ()))
+    g_print ("PolkitAgentSession: canceling authentication\n");
+
   complete_session (session, FALSE);
 }
