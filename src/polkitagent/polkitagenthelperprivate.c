@@ -98,14 +98,12 @@ send_dbus_message (const char *cookie, const char *user)
   return ret;
 }
 
-/* fflush(3) stdin and stdout and wait a little bit.
- * This replaces the three-line commands at the bottom of
- * polkit-agent-helper-1's main() function.
- */
 void
 flush_and_wait ()
 {
   fflush (stdout);
   fflush (stderr);
-  usleep (10 * 1000); /* since fflush(3) seems buggy */
+  fdatasync (fileno(stdout));
+  fdatasync (fileno(stderr));
+  usleep (100 * 1000);
 }

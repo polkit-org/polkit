@@ -97,6 +97,7 @@ struct _PolkitAgentSession
 
   gboolean success;
   gboolean helper_is_running;
+  gboolean have_emitted_completed;
 };
 
 struct _PolkitAgentSessionClass
@@ -404,9 +405,13 @@ complete_session (PolkitAgentSession *session,
                   gboolean            result)
 {
   kill_helper (session);
-  if (G_UNLIKELY (_show_debug ()))
-    g_print ("PolkitAgentSession: emitting ::completed(%s)\n", result ? "TRUE" : "FALSE");
-  g_signal_emit_by_name (session, "completed", result);
+  if (!session->have_emitted_completed)
+    {
+      if (G_UNLIKELY (_show_debug ()))
+        g_print ("PolkitAgentSession: emitting ::completed(%s)\n", result ? "TRUE" : "FALSE");
+      g_signal_emit_by_name (session, "completed", result);
+      session->have_emitted_completed = TRUE;
+    }
 }
 
 static void
@@ -416,19 +421,17 @@ child_watch_func (GPid     pid,
 {
   PolkitAgentSession *session = POLKIT_AGENT_SESSION (user_data);
 
+  if (G_UNLIKELY (_show_debug ()))
+    {
+      g_print ("PolkitAgentSession: in child_watch_func for pid %d (WIFEXITED=%d WEXITSTATUS=%d)\n",
+               (gint) pid,
+               WIFEXITED(status),
+               WEXITSTATUS(status));
+    }
+
   /* kill all the watches we have set up, except for the child since it has exited already */
   session->child_pid = 0;
-  kill_helper (session);
-
-  /* Special-case a very common error triggered in jhbuild setups */
-  if (WIFEXITED (status) && WEXITSTATUS (status) == 2)
-    {
-      const gchar *s = "Incorrect permissions on " PACKAGE_LIBEXEC_DIR "/polkit-agent-helper-1";
-      if (G_UNLIKELY (_show_debug ()))
-        g_print ("PolkitAgentSession: emitting ::show-error('%s')\n", s);
-      g_signal_emit_by_name (session, "show-error", s);
-      complete_session (session, FALSE);
-    }
+  complete_session (session, FALSE);
 }
 
 static gboolean
@@ -468,6 +471,9 @@ io_watch_have_data (GIOChannel    *channel,
   /* remove terminator */
   if (strlen (line) > 0 && line[strlen (line) - 1] == '\n')
     line[strlen (line) - 1] = '\0';
+
+  if (G_UNLIKELY (_show_debug ()))
+    g_print ("PolkitAgentSession: read `%s' from helper\n", line);
 
   if (g_str_has_prefix (line, "PAM_PROMPT_ECHO_OFF "))
     {
@@ -624,6 +630,9 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
       g_error_free (error);
       goto error;
     }
+
+  if (G_UNLIKELY (_show_debug ()))
+    g_print ("PolkitAgentSession: spawned helper with pid %d\n", (gint) session->child_pid);
 
   session->child_watch_source = g_child_watch_source_new (session->child_pid);
   g_source_set_callback (session->child_watch_source, (GSourceFunc) child_watch_func, session, NULL);

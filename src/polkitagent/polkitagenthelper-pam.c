@@ -64,7 +64,6 @@ int
 main (int argc, char *argv[])
 {
   int rc;
-  int err_ret;
   const char *user_to_auth;
   const char *cookie;
   struct pam_conv pam_conversation;
@@ -73,7 +72,6 @@ main (int argc, char *argv[])
 
   rc = 0;
   pam_h = NULL;
-  err_ret = 1;
 
   /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
   if (_polkit_clearenv () != 0)
@@ -85,11 +83,14 @@ main (int argc, char *argv[])
   /* check that we are setuid root */
   if (geteuid () != 0)
     {
+      gchar *s;
+
       fprintf (stderr, "polkit-agent-helper-1: needs to be setuid root\n");
-      /* Special-case a very common error triggered in jhbuild setups - see
-       * polkitagentsession.c:child_watch_func() for details
-       */
-      err_ret = 2;
+
+      /* Special-case a very common error triggered in jhbuild setups */
+      s = g_strdup_printf ("Incorrect permissions on %s (needs to be setuid root)", argv[0]);
+      send_to_helper ("PAM_ERROR_MSG ", s);
+      g_free (s);
       goto error;
     }
 
@@ -220,7 +221,7 @@ error:
 
   fprintf (stdout, "FAILURE\n");
   flush_and_wait();
-  return err_ret;
+  return 1;
 }
 
 static int
