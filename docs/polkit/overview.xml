@@ -84,6 +84,11 @@
       agents that use the native authentication system
       e.g. pam<literal>(8)</literal>.
     </para>
+    <para>
+      If the environment variable <literal>POLKIT_DEBUG</literal> is
+      set, the libpolkit-agent-1 library prints out diagnostic
+      information on standard output.
+    </para>
   </chapter>
 
   <chapter id="polkit-extending">
