@@ -63,14 +63,15 @@
 static gboolean
 _show_debug (void)
 {
-  static gsize show_debug = 0;
-  if (g_once_init_enter (&show_debug))
+  static volatile gsize has_show_debug = 0;
+  static gboolean show_debug_value = FALSE;
+
+  if (g_once_init_enter (&has_show_debug))
     {
-      gsize v;
-      v = g_getenv ("POLKIT_DEBUG") != NULL;
-      g_once_init_leave (&show_debug, v);
+      show_debug_value = (g_getenv ("POLKIT_DEBUG") != NULL);
+      g_once_init_leave (&has_show_debug, 1);
     }
-  return show_debug;
+  return show_debug_value;
 }
 
 /**
