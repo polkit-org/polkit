@@ -71,7 +71,9 @@ The themed icon describing the action or the empty string if no icon is set.
     <term><literal>IN  Dict&lt;String,String&gt; <parameter>details</parameter></literal>:</term>
     <listitem>
       <para>
-Details about the authentication request. This is a dictionary of key/value pairs where both key and value are strings. These strings are translated into the locale passed when registering the authentication agent using <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>.
+Details about the authentication request. This is a dictionary of key/value pairs where both key and value are strings. These strings are translated into the locale passed when registering the authentication agent using <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent().</link>.
+Keys starting with <literal>polkit.</literal> are reserved for internal use and should never be displayed in the UI.
+Known key/value-pairs include <literal>polkit.caller-pid</literal> (the process id of the mechanism making the authorization check) and <literal>polkit.subject-pid</literal> (the process id of the subject the check is for).
       </para>
     </listitem>
   </varlistentry>

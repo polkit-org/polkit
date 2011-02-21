@@ -1796,6 +1796,60 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
 }
 
 static void
+add_pid (PolkitDetails *details,
+         PolkitSubject *subject,
+         const gchar   *key)
+{
+  gchar buf[32];
+  gint pid;
+
+  if (POLKIT_IS_UNIX_PROCESS (subject))
+    {
+      pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject));
+    }
+  else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      PolkitSubject *process;
+      GError *error;
+
+      error = NULL;
+      process = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
+                                                         NULL,
+                                                         &error);
+      if (process == NULL)
+        {
+          g_printerr ("Error getting process for system bus name `%s': %s\n",
+                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                      error->message);
+          g_error_free (error);
+          goto out;
+        }
+      pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
+      g_object_unref (process);
+    }
+  else if (POLKIT_IS_UNIX_SESSION (subject))
+    {
+      goto out;
+    }
+  else
+    {
+      gchar *s;
+      s = polkit_subject_to_string (subject);
+      g_printerr ("Don't know how to get pid from subject of type %s: %s\n",
+                  g_type_name (G_TYPE_FROM_INSTANCE (subject)),
+                  s);
+      g_free (s);
+      goto out;
+    }
+
+  g_snprintf (buf, sizeof (buf), "%d", pid);
+  polkit_details_insert (details, key, buf);
+
+ out:
+  ;
+}
+
+static void
 authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          PolkitSubject               *subject,
                                          PolkitIdentity              *user_of_subject,
@@ -1865,6 +1919,9 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                         user_data);
 
   agent->active_sessions = g_list_prepend (agent->active_sessions, session);
+
+  add_pid (localized_details, caller, "polkit.caller-pid");
+  add_pid (localized_details, subject, "polkit.subject-pid");
 
   details_gvariant = polkit_details_to_gvariant (localized_details);
   g_variant_ref_sink (details_gvariant);
