@@ -16,7 +16,7 @@ Build requirements
 
 Changes since PolicyKit 0.99:
 
-David Zeuthen (11):
+David Zeuthen (12):
       Post-release version bump to 0.100
       Add missing GObject Introspection annotations
       Build gir/typelib for PolkitAgent-1.0
@@ -28,6 +28,7 @@ David Zeuthen (11):
       Add a note about POLKIT_DEBUG
       Pass caller and subject pid to authentication agent
       Update NEWS for release
+      Fix 'make distcheck'
 
 Thanks to our contributors.
 
