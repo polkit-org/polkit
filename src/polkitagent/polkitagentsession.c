@@ -404,6 +404,15 @@ child_watch_func (GPid     pid,
   /* kill all the watches we have set up, except for the child since it has exited already */
   session->child_pid = 0;
   kill_helper (session);
+
+  /* Special-case a very common error triggered in jhbuild setups */
+  if (WIFEXITED (status) && WEXITSTATUS (status) == 2)
+    {
+      g_signal_emit_by_name (session,
+                             "show-error",
+                             "Incorrect permissions on " PACKAGE_LIBEXEC_DIR "/polkit-agent-helper-1");
+      complete_session (session, FALSE);
+    }
 }
 
 static gboolean

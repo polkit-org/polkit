@@ -35,10 +35,36 @@
 
 static int conversation_function (int n, const struct pam_message **msg, struct pam_response **resp, void *data);
 
+static void
+send_to_helper (const gchar *str1,
+                const gchar *str2)
+{
+#ifdef PAH_DEBUG
+  fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", str1);
+#endif /* PAH_DEBUG */
+  fprintf (stdout, "%s", str1);
+#ifdef PAH_DEBUG
+  fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", str2);
+#endif /* PAH_DEBUG */
+  fprintf (stdout, "%s", str2);
+  if (strlen (str2) > 0 && str2[strlen (str2) - 1] != '\n')
+    {
+#ifdef PAH_DEBUG
+      fprintf (stderr, "polkit-agent-helper-1: writing newline to stdout\n");
+#endif /* PAH_DEBUG */
+      fputc ('\n', stdout);
+    }
+#ifdef PAH_DEBUG
+  fprintf (stderr, "polkit-agent-helper-1: flushing stdout\n");
+#endif /* PAH_DEBUG */
+  fflush (stdout);
+}
+
 int
 main (int argc, char *argv[])
 {
   int rc;
+  int err_ret;
   const char *user_to_auth;
   const char *cookie;
   struct pam_conv pam_conversation;
@@ -47,6 +73,7 @@ main (int argc, char *argv[])
 
   rc = 0;
   pam_h = NULL;
+  err_ret = 1;
 
   /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
   if (_polkit_clearenv () != 0)
@@ -59,6 +86,10 @@ main (int argc, char *argv[])
   if (geteuid () != 0)
     {
       fprintf (stderr, "polkit-agent-helper-1: needs to be setuid root\n");
+      /* Special-case a very common error triggered in jhbuild setups - see
+       * polkitagentsession.c:child_watch_func() for details
+       */
+      err_ret = 2;
       goto error;
     }
 
@@ -116,7 +147,10 @@ main (int argc, char *argv[])
   rc = pam_authenticate (pam_h, 0);
   if (rc != PAM_SUCCESS)
     {
-      fprintf (stderr, "polkit-agent-helper-1: pam_authenticated failed: %s\n", pam_strerror (pam_h, rc));
+      const char *err;
+      err = pam_strerror (pam_h, rc);
+      fprintf (stderr, "polkit-agent-helper-1: pam_authenticate failed: %s\n", err);
+      send_to_helper ("PAM_ERROR_MSG ", err);
       goto error;
     }
 
@@ -124,7 +158,10 @@ main (int argc, char *argv[])
   rc = pam_acct_mgmt (pam_h, 0);
   if (rc != PAM_SUCCESS)
     {
-      fprintf (stderr, "polkit-agent-helper-1: pam_acct_mgmt failed: %s\n", pam_strerror (pam_h, rc));
+      const char *err;
+      err = pam_strerror (pam_h, rc);
+      fprintf (stderr, "polkit-agent-helper-1: pam_acct_mgmt failed: %s\n", err);
+      send_to_helper ("PAM_ERROR_MSG ", err);
       goto error;
     }
 
@@ -132,7 +169,10 @@ main (int argc, char *argv[])
   rc = pam_get_item (pam_h, PAM_USER, &authed_user);
   if (rc != PAM_SUCCESS)
     {
-      fprintf (stderr, "polkit-agent-helper-1: pam_get_item failed: %s\n", pam_strerror (pam_h, rc));
+      const char *err;
+      err = pam_strerror (pam_h, rc);
+      fprintf (stderr, "polkit-agent-helper-1: pam_get_item failed: %s\n", err);
+      send_to_helper ("PAM_ERROR_MSG ", err);
       goto error;
     }
 
@@ -140,6 +180,7 @@ main (int argc, char *argv[])
     {
       fprintf (stderr, "polkit-agent-helper-1: Tried to auth user '%s' but we got auth for user '%s' instead",
                user_to_auth, (const char *) authed_user);
+      send_to_helper ("PAM_ERROR_MSG ", "Authenticated the wrong user");
       goto error;
     }
 
@@ -179,7 +220,7 @@ error:
 
   fprintf (stdout, "FAILURE\n");
   flush_and_wait();
-  return 1;
+  return err_ret;
 }
 
 static int
