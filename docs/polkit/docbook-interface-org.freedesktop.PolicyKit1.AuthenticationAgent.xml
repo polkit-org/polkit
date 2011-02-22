@@ -40,8 +40,24 @@ BeginAuthentication (IN  String               action_id,
                      IN  Array&lt;<link linkend="eggdbus-struct-Identity">Identity</link>&gt;      identities)
     </programlisting>
     <para>
-<para>Called by the PolicyKit daemon when the authentication agent needs the user to authenticate as one of the identities in <parameter>identities</parameter> for the action with the identifier <parameter>action_id</parameter>.</para><para>Upon succesful authentication, the authentication agent must invoke the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link> method on the <link linkend="eggdbus-interface-org.freedesktop.PolicyKit1.Authority">org.freedesktop.PolicyKit1.Authority</link> interface of the PolicyKit daemon before returning.</para><para>If the user dismisses the authentication dialog, the authentication agent should return an error.</para>
+      <para>
+        Called by the PolicyKit daemon when the authentication agent
+        needs the user to authenticate as one of the identities in
+        <parameter>identities</parameter> for the action with the
+        identifier <parameter>action_id</parameter>.</para><para>Upon
+        succesful authentication, the authentication agent must invoke
+        the <link
+        linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
+        method on the <link
+        linkend="eggdbus-interface-org.freedesktop.PolicyKit1.Authority">org.freedesktop.PolicyKit1.Authority</link>
+        interface of the PolicyKit daemon before returning.
+      </para>
+      <para>
+        The authentication agent should not return until after authentication is complete.
+        If the user dismisses the authentication dialog, the authentication agent should return the <link linkend="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.Cancelled">org.freedesktop.PolicyKit1.Error.Cancelled</link> error.
+      </para>
     </para>
+
 <variablelist role="params">
   <varlistentry>
     <term><literal>IN  String <parameter>action_id</parameter></literal>:</term>
@@ -71,7 +87,7 @@ The themed icon describing the action or the empty string if no icon is set.
     <term><literal>IN  Dict&lt;String,String&gt; <parameter>details</parameter></literal>:</term>
     <listitem>
       <para>
-Details about the authentication request. This is a dictionary of key/value pairs where both key and value are strings. These strings are translated into the locale passed when registering the authentication agent using <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent().</link>.
+Details about the authentication request. This is a dictionary of key/value pairs where both key and value are strings. These strings are translated into the locale passed when registering the authentication agent using <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>.
 Keys starting with <literal>polkit.</literal> are reserved for internal use and should never be displayed in the UI.
 Known key/value-pairs include <literal>polkit.caller-pid</literal> (the process id of the mechanism making the authorization check) and <literal>polkit.subject-pid</literal> (the process id of the subject the check is for).
       </para>

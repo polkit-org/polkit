@@ -552,11 +552,22 @@ acquire_cb (GObject      *source_object,
       process_result (data->permission, result);
       if (!polkit_authorization_result_get_is_authorized (result))
         {
-          g_simple_async_result_set_error (data->simple,
-                                           POLKIT_ERROR,
-                                           POLKIT_ERROR_FAILED,
-                                           "Failed to acquire permission for action-id %s",
-                                           data->permission->action_id);
+          if (polkit_authorization_result_get_dismissed (result))
+            {
+              g_simple_async_result_set_error (data->simple,
+                                               G_IO_ERROR,
+                                               G_IO_ERROR_CANCELLED,
+                                               "User dismissed authentication dialog while trying to acquire permission for action-id %s",
+                                               data->permission->action_id);
+            }
+          else
+            {
+              g_simple_async_result_set_error (data->simple,
+                                               POLKIT_ERROR,
+                                               POLKIT_ERROR_FAILED,
+                                               "Failed to acquire permission for action-id %s",
+                                               data->permission->action_id);
+            }
         }
       g_object_unref (result);
     }
@@ -639,6 +650,14 @@ acquire (GPermission   *gpermission,
       if (polkit_authorization_result_get_is_authorized (result))
         {
           ret = TRUE;
+        }
+      else if (polkit_authorization_result_get_dismissed (result))
+        {
+          g_set_error (error,
+                       G_IO_ERROR,
+                       G_IO_ERROR_CANCELLED,
+                       "User dismissed authentication dialog while trying to acquire permission for action-id %s",
+                       permission->action_id);
         }
       else
         {

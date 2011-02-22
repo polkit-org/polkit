@@ -82,6 +82,7 @@ typedef void (*AuthenticationAgentCallback) (AuthenticationAgent         *agent,
                                              const gchar                 *action_id,
                                              PolkitImplicitAuthorization  implicit_authorization,
                                              gboolean                     authentication_success,
+                                             gboolean                     was_dismissed,
                                              PolkitIdentity              *authenticated_identity,
                                              gpointer                     user_data);
 
@@ -274,6 +275,10 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
   PolkitBackendInteractiveAuthorityPrivate *priv;
   GFile *directory;
   GError *error;
+  static volatile GQuark domain = 0;
+
+  /* Force registering error domain */
+  domain = POLKIT_ERROR;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
@@ -582,6 +587,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
                                   const gchar                 *action_id,
                                   PolkitImplicitAuthorization  implicit_authorization,
                                   gboolean                     authentication_success,
+                                  gboolean                     was_dismissed,
                                   PolkitIdentity              *authenticated_identity,
                                   gpointer                     user_data)
 {
@@ -613,9 +619,11 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   g_debug ("In check_authorization_challenge_cb\n"
            "  subject                %s\n"
            "  action_id              %s\n"
+           "  was_dismissed          %d\n"
            "  authentication_success %d\n",
            subject_str,
            action_id,
+           was_dismissed,
            authentication_success);
 
   is_temp = FALSE;
@@ -649,8 +657,15 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
     }
   else
     {
+      PolkitDetails *details;
+
       /* TODO: maybe return set is_challenge? */
-      result = polkit_authorization_result_new (FALSE, FALSE, NULL);
+
+      details = polkit_details_new ();
+      if (was_dismissed)
+        polkit_details_insert (details, "polkit.dismissed", "true");
+      result = polkit_authorization_result_new (FALSE, FALSE, details);
+      g_object_unref (details);
     }
 
   /* Log the event */
@@ -1633,16 +1648,24 @@ authentication_agent_begin_cb (GDBusProxy   *proxy,
 {
   AuthenticationSession *session = user_data;
   gboolean gained_authorization;
+  gboolean was_dismissed;
   GError *error;
+
+  was_dismissed = FALSE;
+  gained_authorization = FALSE;
 
   error = NULL;
   if (!g_dbus_proxy_call_finish (proxy,
                                  res,
                                  &error))
     {
-      g_printerr ("Error performing authentication: %s\n", error->message);
+      g_printerr ("Error performing authentication: %s (%s %d)\n",
+                  error->message,
+                  g_quark_to_string (error->domain),
+                  error->code);
+      if (error->domain == POLKIT_ERROR && error->code == POLKIT_ERROR_CANCELLED)
+        was_dismissed = TRUE;
       g_error_free (error);
-      gained_authorization = FALSE;
     }
   else
     {
@@ -1660,6 +1683,7 @@ authentication_agent_begin_cb (GDBusProxy   *proxy,
                      session->action_id,
                      session->implicit_authorization,
                      gained_authorization,
+                     was_dismissed,
                      session->authenticated_identity,
                      session->user_data);
 

@@ -461,7 +461,7 @@ TRUE if the given <link linkend="eggdbus-struct-Subject">Subject</link> could be
     <term><literal>Dict&lt;String,String&gt; <structfield>details</structfield></literal></term>
     <listitem>
       <para>
-Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id), <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE)).
+Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id), <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE)), <literal>polkit.dismissed</literal> (Set to a non-empty string if the authentication dialog was dismissed by the user).
       </para>
     </listitem>
   </varlistentry>

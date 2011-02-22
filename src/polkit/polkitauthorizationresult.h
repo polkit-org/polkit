@@ -52,6 +52,7 @@ gboolean           polkit_authorization_result_get_is_authorized              (P
 gboolean           polkit_authorization_result_get_is_challenge               (PolkitAuthorizationResult *result);
 gboolean           polkit_authorization_result_get_retains_authorization      (PolkitAuthorizationResult *result);
 const gchar       *polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationResult *result);
+gboolean           polkit_authorization_result_get_dismissed                  (PolkitAuthorizationResult *result);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

@@ -238,6 +238,35 @@ polkit_authorization_result_get_temporary_authorization_id (PolkitAuthorizationR
   return ret;
 }
 
+/**
+ * polkit_authorization_result_get_dismissed:
+ * @result: A #PolkitAuthorizationResult.
+ *
+ * Gets whether the authentication request was dismissed / canceled by the user.
+ *
+ * This method simply reads the value of the key/value pair in @details with the
+ * key <literal>polkit.dismissed</literal>.
+ *
+ * Returns: %TRUE if the authentication request was dismissed, %FALSE otherwise.
+ *
+ * Since: 0.101
+ */
+gboolean
+polkit_authorization_result_get_dismissed (PolkitAuthorizationResult *result)
+{
+  gboolean ret;
+  PolkitDetails *details;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORIZATION_RESULT (result), FALSE);
+
+  ret = FALSE;
+  details = polkit_authorization_result_get_details (result);
+  if (details != NULL && polkit_details_lookup (details, "polkit.dismissed") != NULL)
+    ret = TRUE;
+
+  return ret;
+}
+
 PolkitAuthorizationResult *
 polkit_authorization_result_new_for_gvariant (GVariant *value)
 {

@@ -714,10 +714,19 @@ main (int argc, char *argv[])
     }
   else
     {
-      log_message (LOG_WARNING, TRUE,
-                   "Error executing command as another user: Not authorized");
-      g_printerr ("\n"
-                  "This incident has been reported.\n");
+      if (polkit_authorization_result_get_dismissed (result))
+        {
+          log_message (LOG_WARNING, TRUE,
+                       "Error executing command as another user: Request dismissed");
+          ret = 126;
+        }
+      else
+        {
+          log_message (LOG_WARNING, TRUE,
+                       "Error executing command as another user: Not authorized");
+          g_printerr ("\n"
+                      "This incident has been reported.\n");
+        }
       goto out;
     }
 
