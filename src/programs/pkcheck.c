@@ -145,7 +145,7 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
     }
   else
     {
-      g_warning ("Unknown subject type passed to guess_program_name()");
+      g_warning ("Unknown subject type passed to _polkit_subject_get_cmdline()");
       goto out;
     }
 
@@ -165,15 +165,21 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
       goto out;
     }
 
-  /* The kernel uses '\0' to separate arguments - replace those with a space. */
-  for (n = 0; n < contents_len - 1; n++)
+  if (contents == NULL || contents_len == 0)
     {
-      if (contents[n] == '\0')
-        contents[n] = ' ';
+      goto out;
     }
-
-  ret = g_strdup (contents);
-  g_strstrip (ret);
+  else
+    {
+      /* The kernel uses '\0' to separate arguments - replace those with a space. */
+      for (n = 0; n < contents_len - 1; n++)
+        {
+          if (contents[n] == '\0')
+            contents[n] = ' ';
+        }
+      ret = g_strdup (contents);
+      g_strstrip (ret);
+    }
 
  out:
   g_free (filename);
@@ -281,8 +287,6 @@ do_list_or_revoke_temp_authz (gboolean revoke)
           obtained_rel_str = format_reltime (obtained - now.tv_sec);
           expires_rel_str = format_reltime (expires - now.tv_sec);
 
-          /* TODO: could print cmdline of subject etc. */
-
           g_print ("authorization id: %s\n"
                    "action:           %s\n"
                    "subject:          %s (%s)\n"
@@ -291,7 +295,7 @@ do_list_or_revoke_temp_authz (gboolean revoke)
                    "\n",
                    id,
                    action_id,
-                   subject_str, subject_cmdline,
+                   subject_str, subject_cmdline != NULL ? subject_cmdline : "cannot read cmdline",
                    obtained_rel_str, obtained_str,
                    expires_rel_str, expires_str);
 
