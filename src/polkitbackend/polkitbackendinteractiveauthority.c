@@ -1743,6 +1743,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
   gchar *message;
   gchar *icon_name;
   PolkitDetails *localized_details;
+  const gchar *message_to_use;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
@@ -1767,6 +1768,14 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
       g_printerr ("Invalid locale '%s'\n", locale);
     }
   g_setenv ("LANG", locale, TRUE);
+
+  message_to_use = polkit_details_lookup (details, "polkit.message");
+  if (message_to_use != NULL)
+    {
+      const gchar *gettext_domain;
+      gettext_domain = polkit_details_lookup (details, "polkit.message.gettext-domain");
+      message = g_strdup (g_dgettext (gettext_domain, message_to_use));
+    }
 
   /* call into extension points to get localized auth dialog data - the list is sorted by priority */
   action_lookup_list = get_action_lookup_list ();

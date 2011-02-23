@@ -869,6 +869,17 @@ check_authorization_cb (GDBusProxy    *proxy,
  * from. You can then call
  * polkit_authority_check_authorization_finish() to get the result of
  * the operation.
+ *
+ * Known keys in @details include <literal>polkit.message</literal>
+ * and <literal>polkit.message.gettext-domain</literal> that can be
+ * used to override the message shown to the user (the user might be
+ * running an authentication agent in another locale than the calling
+ * process so that's why both the message and gettext domain is
+ * needed).
+ *
+ * If @details is non-empty then the request will fail with
+ * #POLKIT_ERROR_FAILED unless the process doing the check itsef is
+ * sufficiently authorized (e.g. running as uid 0).
  **/
 void
 polkit_authority_check_authorization (PolkitAuthority               *authority,
@@ -984,6 +995,9 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * is because it may potentially take minutes (or even hours) for the
  * operation to complete because it involves waiting for the user to
  * authenticate.
+ *
+ * See polkit_authority_check_authorization_sync() for how @details is
+ * handled.
  *
  * Returns: (transfer full): A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  */

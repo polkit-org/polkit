@@ -596,6 +596,19 @@ Identifier for the action that <parameter>subject</parameter> is attempting to d
       <para>
 Details describing the action. Keys starting with <literal>polkit.</literal> are reserved for internal use and cannot be used.
       </para>
+      <para>
+        Known keys include <literal>polkit.message</literal> and
+        <literal>polkit.message.gettext-domain</literal> that can be
+        used to override the message shown to the user (the user might
+        be running an authentication agent in another locale than the
+        calling process so that's why both the message and gettext
+        domain is needed.
+      </para>
+      <para>
+        If non-empty, then the request will fail with
+        <link linkend="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.Failed">org.freedesktop.PolicyKit1.Error.Failed</link>
+        unless the process doing the check itsef is sufficiently authorized (e.g. running as uid 0).
+      </para>
     </listitem>
   </varlistentry>
   <varlistentry>
