@@ -47,7 +47,7 @@
 #include <polkitagent/polkitagent.h>
 
 static gchar *original_user_name = NULL;
-static gchar *original_cwd = NULL;
+static gchar original_cwd[PATH_MAX];
 static gchar *command_line = NULL;
 static struct passwd *pw;
 
@@ -450,10 +450,10 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  original_cwd = g_strdup (get_current_dir_name ());
-  if (original_cwd == NULL)
+  if (getcwd (original_cwd, sizeof (original_cwd)) == NULL)
     {
-      g_printerr ("Error getting cwd.\n");
+      g_printerr ("Error getting cwd: %s\n",
+                  g_strerror (errno));
       goto out;
     }
 
@@ -884,7 +884,6 @@ main (int argc, char *argv[])
   g_free (command_line);
   g_free (opt_user);
   g_free (original_user_name);
-  g_free (original_cwd);
 
   return ret;
 }
