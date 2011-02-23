@@ -30,6 +30,16 @@
 
     <cmdsynopsis>
       <command>pkcheck</command>
+      <arg><option>--list-temp</option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>pkcheck</command>
+      <arg><option>--revoke-temp</option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>pkcheck</command>
       <arg choice="plain">
         <option>--action-id</option>
         <replaceable>action</replaceable>
@@ -85,6 +95,12 @@
       option can be used zero or more times to pass details about <replaceable>action</replaceable>.
       If <option>--allow-user-interaction</option> is passed, <command>pkcheck</command> blocks
       while waiting for authentication.
+    </para>
+    <para>
+      The invocation <command>pkcheck --list-temp</command> will list
+      all temporary authorizations for the current session and
+      <command>pkcheck --revoke-temp</command> will revoke all
+      temporary authorizations for the current session.
     </para>
     <para>
       This command is a simple wrapper around the PolicyKit D-Bus interface; see the

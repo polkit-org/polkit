@@ -440,6 +440,7 @@ struct AuthenticationAgent
 };
 
 /* TODO: should probably move to PolkitSubject
+ * (also see copy in src/programs/pkcheck.c)
  *
  * Also, can't really trust the cmdline... but might be useful in the logs anyway.
  */

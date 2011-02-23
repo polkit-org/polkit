@@ -69,6 +69,252 @@ escape_str (const gchar *str)
   return g_string_free (s, FALSE);
 }
 
+static gchar *
+format_reltime (gint seconds)
+{
+  gint magnitude;
+  const gchar *ending;
+  gchar *ret;
+
+  if (seconds >= 0)
+    {
+      magnitude = seconds;
+      ending = "from now";
+    }
+  else
+    {
+      magnitude = -seconds;
+      ending = "ago";
+    }
+
+  if (magnitude >= 60)
+    {
+      ret = g_strdup_printf ("%d min %d sec %s", magnitude/60, magnitude%60, ending);
+    }
+  else
+    {
+      ret = g_strdup_printf ("%d sec %s", magnitude, ending);
+    }
+
+  return ret;
+}
+
+/* TODO: should probably move to PolkitSubject
+ * (also see copy in src/polkitbackend/polkitbackendinteractiveauthority.c)
+ *
+ * Also, can't really trust the cmdline... but might be useful in the logs anyway.
+ */
+static gchar *
+_polkit_subject_get_cmdline (PolkitSubject *subject)
+{
+  PolkitSubject *process;
+  gchar *ret;
+  gint pid;
+  gchar *filename;
+  gchar *contents;
+  gsize contents_len;
+  GError *error;
+  guint n;
+
+  g_return_val_if_fail (subject != NULL, NULL);
+
+  error = NULL;
+
+  ret = NULL;
+  process = NULL;
+  filename = NULL;
+  contents = NULL;
+
+  if (POLKIT_IS_UNIX_PROCESS (subject))
+    {
+      process = g_object_ref (subject);
+    }
+  else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      process = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
+                                                         NULL,
+                                                         &error);
+      if (process == NULL)
+        {
+          g_printerr ("Error getting process for system bus name `%s': %s\n",
+                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                      error->message);
+          g_error_free (error);
+          goto out;
+        }
+    }
+  else
+    {
+      g_warning ("Unknown subject type passed to guess_program_name()");
+      goto out;
+    }
+
+  pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
+
+  filename = g_strdup_printf ("/proc/%d/cmdline", pid);
+
+  if (!g_file_get_contents (filename,
+                            &contents,
+                            &contents_len,
+                            &error))
+    {
+      g_printerr ("Error opening `%s': %s\n",
+                  filename,
+                  error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  /* The kernel uses '\0' to separate arguments - replace those with a space. */
+  for (n = 0; n < contents_len - 1; n++)
+    {
+      if (contents[n] == '\0')
+        contents[n] = ' ';
+    }
+
+  ret = g_strdup (contents);
+  g_strstrip (ret);
+
+ out:
+  g_free (filename);
+  g_free (contents);
+  if (process != NULL)
+    g_object_unref (process);
+  return ret;
+}
+
+static gint
+do_list_or_revoke_temp_authz (gboolean revoke)
+{
+  gint ret;
+  PolkitAuthority *authority;
+  PolkitSubject *session;
+  GError *error;
+
+  ret = 1;
+  authority = NULL;
+  session = NULL;
+
+  error = NULL;
+  authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
+  if (authority == NULL)
+    {
+      g_printerr ("Error getting authority: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  session = polkit_unix_session_new_for_process_sync (getpid (),
+                                                      NULL, /* GCancellable */
+                                                      &error);
+  if (session == NULL)
+    {
+      g_printerr ("Error getting session: %s\n", error->message);
+      g_error_free (error);
+      goto out;
+    }
+
+  if (revoke)
+    {
+      if (!polkit_authority_revoke_temporary_authorizations_sync (authority,
+                                                                  session,
+                                                                  NULL, /* GCancellable */
+                                                                  &error))
+        {
+          g_printerr ("Error revoking temporary authorizations: %s\n", error->message);
+          g_error_free (error);
+          goto out;
+        }
+
+      ret = 0;
+    }
+  else
+    {
+      GList *authorizations;
+      GList *l;
+
+      error = NULL;
+      authorizations = polkit_authority_enumerate_temporary_authorizations_sync (authority,
+                                                                                 session,
+                                                                                 NULL, /* GCancellable */
+                                                                                 &error);
+      if (error != NULL)
+        {
+          g_printerr ("Error getting temporary authorizations: %s\n", error->message);
+          g_error_free (error);
+          goto out;
+        }
+
+      for (l = authorizations; l != NULL; l = l->next)
+        {
+          PolkitTemporaryAuthorization *a = POLKIT_TEMPORARY_AUTHORIZATION (l->data);
+          const gchar *id;
+          const gchar *action_id;
+          PolkitSubject *subject;
+          gchar *subject_cmdline;
+          time_t obtained;
+          time_t expires;
+          GTimeVal now;
+          gchar *subject_str;
+          gchar obtained_str[64];
+          gchar expires_str[64];
+          gchar *obtained_rel_str;
+          gchar *expires_rel_str;
+          struct tm *broken_down;
+
+          id = polkit_temporary_authorization_get_id (a);
+          action_id = polkit_temporary_authorization_get_action_id (a);
+          subject = polkit_temporary_authorization_get_subject (a);
+          subject_str = polkit_subject_to_string (subject);
+          subject_cmdline = _polkit_subject_get_cmdline (subject);
+          obtained = polkit_temporary_authorization_get_time_obtained (a);
+          expires = polkit_temporary_authorization_get_time_expires (a);
+
+          g_get_current_time (&now);
+
+          broken_down = localtime (&obtained);
+          strftime (obtained_str, sizeof (obtained_str), "%c", broken_down);
+          broken_down = localtime (&expires);
+          strftime (expires_str, sizeof (expires_str), "%c", broken_down);
+
+          obtained_rel_str = format_reltime (obtained - now.tv_sec);
+          expires_rel_str = format_reltime (expires - now.tv_sec);
+
+          /* TODO: could print cmdline of subject etc. */
+
+          g_print ("authorization id: %s\n"
+                   "action:           %s\n"
+                   "subject:          %s (%s)\n"
+                   "obtained:         %s (%s)\n"
+                   "expires:          %s (%s)\n"
+                   "\n",
+                   id,
+                   action_id,
+                   subject_str, subject_cmdline,
+                   obtained_rel_str, obtained_str,
+                   expires_rel_str, expires_str);
+
+          g_object_unref (subject);
+          g_free (subject_str);
+          g_free (subject_cmdline);
+          g_free (obtained_rel_str);
+          g_free (expires_rel_str);
+        }
+      g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
+      g_list_free (authorizations);
+
+      ret = 0;
+    }
+
+ out:
+  if (authority != NULL)
+    g_object_unref (authority);
+  if (session != NULL)
+    g_object_unref (session);
+
+  return ret;
+}
 
 int
 main (int argc, char *argv[])
@@ -80,6 +326,8 @@ main (int argc, char *argv[])
   gboolean opt_show_version;
   gboolean allow_user_interaction;
   gboolean enable_internal_agent;
+  gboolean list_temp;
+  gboolean revoke_temp;
   PolkitAuthority *authority;
   PolkitAuthorizationResult *result;
   PolkitSubject *subject;
@@ -96,6 +344,8 @@ main (int argc, char *argv[])
   result = NULL;
   allow_user_interaction = FALSE;
   enable_internal_agent = FALSE;
+  list_temp = FALSE;
+  revoke_temp = FALSE;
   local_agent_handle = NULL;
   ret = 126;
 
@@ -194,6 +444,14 @@ main (int argc, char *argv[])
         {
           enable_internal_agent = TRUE;
         }
+      else if (g_strcmp0 (argv[n], "--list-temp") == 0)
+        {
+          list_temp = TRUE;
+        }
+      else if (g_strcmp0 (argv[n], "--revoke-temp") == 0)
+        {
+          revoke_temp = TRUE;
+        }
       else
         {
           break;
@@ -213,7 +471,17 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  if (subject == NULL)
+  if (list_temp)
+    {
+      ret = do_list_or_revoke_temp_authz (FALSE);
+      goto out;
+    }
+  else if (revoke_temp)
+    {
+      ret = do_list_or_revoke_temp_authz (TRUE);
+      goto out;
+    }
+  else if (subject == NULL)
     {
       usage (argc, argv);
       goto out;
