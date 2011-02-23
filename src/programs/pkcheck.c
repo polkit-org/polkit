@@ -325,6 +325,11 @@ main (int argc, char *argv[])
         }
       ret = 2;
     }
+  else if (polkit_authorization_result_get_dismissed (result))
+    {
+      g_printerr ("Authentication request was dismissed.\n");
+      ret = 3;
+    }
   else
     {
       g_printerr ("Not authorized.\n");

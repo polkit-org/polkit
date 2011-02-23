@@ -125,6 +125,13 @@ KEY3=VALUE3
       Details are printed on standard output.
     </para>
     <para>
+      If the specificied process is not authorized because the
+      authentication dialog / request was dismissed by the user,
+      <command>pkcheck</command> exits with a return value of 3 and a
+      diagnostic message is printed on standard error.  Details are
+      printed on standard output.
+    </para>
+    <para>
       If an error occured while checking for authorization, <command>pkcheck</command> exits
       with a return value of 127 with a diagnostic message printed on standard error.
     </para>
