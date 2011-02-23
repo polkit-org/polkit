@@ -1,5 +1,5 @@
 /* -*- mode: C; c-file-style: "gnu"; indent-tabs-mode: nil; -*- */
-/* 
+/*
  * Copyright (C) 2010 Red Hat, Inc.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,11 +22,12 @@
 
 #include "config.h"
 
+#include "gposixsignal.h"
+
+#if defined(__linux__)
 #include <unistd.h>
 #include <sys/signalfd.h>
 #include <signal.h>
-
-#include "gposixsignal.h"
 
 typedef struct
 {
@@ -126,3 +127,22 @@ _g_posix_signal_watch_add (gint                   signum,
 
   return id;
 }
+#else  /* __linux__ */
+
+GSource *
+_g_posix_signal_source_new (gint signum)
+{
+  return NULL;
+}
+
+guint
+_g_posix_signal_watch_add (gint                   signum,
+                           gint                   priority,
+                           _GPosixSignalWatchFunc function,
+                           gpointer               user_data,
+                           GDestroyNotify         notify)
+{
+  return 0;
+}
+
+#endif /* __linux__ */

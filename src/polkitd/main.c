@@ -90,6 +90,7 @@ on_sigint (gpointer user_data)
   g_main_loop_quit (loop);
   return FALSE;
 }
+
 int
 main (int    argc,
       char **argv)
