@@ -316,6 +316,8 @@ polkit_action_description_new (const gchar                 *action_id,
   ret->implicit_any = implicit_any;
   ret->implicit_inactive = implicit_inactive;
   ret->implicit_active = implicit_active;
+  if (ret->annotations != NULL)
+    g_hash_table_unref (ret->annotations);
   ret->annotations = g_hash_table_ref (annotations);
   return ret;
 }
