@@ -120,7 +120,7 @@ if test "x$GCC" = "xyes"; then
   changequote([,])dnl
 fi
 
-PKG_CHECK_MODULES(GLIB, [gio-2.0 >= 2.25.12])
+PKG_CHECK_MODULES(GLIB, [gio-2.0 >= 2.28.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 

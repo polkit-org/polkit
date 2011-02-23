@@ -2518,8 +2518,11 @@ struct TemporaryAuthorization
   PolkitSubject *scope;
   gchar *id;
   gchar *action_id;
-  guint64 time_granted;
-  guint64 time_expires;
+  /* both of these are obtained using g_get_monotonic_time(),
+   * so the resolution is usec
+   */
+  gint64 time_granted;
+  gint64 time_expires;
   guint expiration_timeout_id;
   guint check_vanished_timeout_id;
 };
@@ -2768,8 +2771,10 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   authorization->subject = g_object_ref (subject_to_use);
   authorization->scope = g_object_ref (scope);
   authorization->action_id = g_strdup (action_id);
-  authorization->time_granted = time (NULL);
-  authorization->time_expires = authorization->time_granted + expiration_seconds;
+  /* store monotonic time and convert to secs-since-epoch when returning TemporaryAuthorization structs */
+  authorization->time_granted = g_get_monotonic_time ();
+  authorization->time_expires = authorization->time_granted + expiration_seconds * G_USEC_PER_SEC;
+  /* g_timeout_add() is using monotonic time since 2.28 */
   authorization->expiration_timeout_id = g_timeout_add (expiration_seconds * 1000,
                                                         on_expiration_timeout,
                                                         authorization);
@@ -2824,6 +2829,8 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
   PolkitSubject *session_for_caller;
   GList *ret;
   GList *l;
+  gint64 monotonic_now;
+  GTimeVal real_now;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
@@ -2861,19 +2868,27 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
       goto out;
     }
 
+  monotonic_now = g_get_monotonic_time ();
+  g_get_current_time (&real_now);
+
   for (l = priv->temporary_authorization_store->authorizations; l != NULL; l = l->next)
     {
       TemporaryAuthorization *ta = l->data;
       PolkitTemporaryAuthorization *tmp_authz;
+      guint64 real_granted;
+      guint64 real_expires;
 
       if (!polkit_subject_equal (ta->scope, subject))
         continue;
 
+      real_granted = (ta->time_granted - monotonic_now) / G_USEC_PER_SEC + real_now.tv_sec;
+      real_expires = (ta->time_expires - monotonic_now) / G_USEC_PER_SEC + real_now.tv_sec;
+
       tmp_authz = polkit_temporary_authorization_new (ta->id,
                                                       ta->action_id,
                                                       ta->subject,
-                                                      ta->time_granted,
-                                                      ta->time_expires);
+                                                      real_granted,
+                                                      real_expires);
 
       ret = g_list_prepend (ret, tmp_authz);
     }

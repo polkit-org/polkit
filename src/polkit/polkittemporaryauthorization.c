@@ -154,6 +154,9 @@ polkit_temporary_authorization_get_subject (PolkitTemporaryAuthorization *author
  *
  * Gets the time when @authorization was obtained.
  *
+ * (Note that the PolicyKit daemon is using monotonic time internally
+ * so the returned value may change if system time changes.)
+ *
  * Returns: Seconds since the Epoch Jan 1. 1970, 0:00 UTC.
  **/
 guint64
@@ -168,6 +171,9 @@ polkit_temporary_authorization_get_time_obtained (PolkitTemporaryAuthorization *
  * @authorization: A #PolkitTemporaryAuthorization.
  *
  * Gets the time when @authorization will expire.
+ *
+ * (Note that the PolicyKit daemon is using monotonic time internally
+ * so the returned value may change if system time changes.)
  *
  * Returns: Seconds since the Epoch Jan 1. 1970, 0:00 UTC.
  **/

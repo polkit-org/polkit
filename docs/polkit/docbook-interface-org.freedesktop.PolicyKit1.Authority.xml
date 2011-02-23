@@ -513,6 +513,7 @@ The subject the temporary authorization is for.
     <listitem>
       <para>
 When the temporary authorization was obtained, in seconds since the Epoch Jan 1, 1970 0:00 UTC.
+Note that the PolicyKit daemon is using monotonic time internally so the returned value may change if system time changes.
       </para>
     </listitem>
   </varlistentry>
@@ -521,6 +522,7 @@ When the temporary authorization was obtained, in seconds since the Epoch Jan 1,
     <listitem>
       <para>
 When the temporary authorization is set to expire, in seconds since the Epoch Jan 1, 1970 0:00 UTC.
+Note that the PolicyKit daemon is using monotonic time internally so the returned value may change if system time changes.
       </para>
     </listitem>
   </varlistentry>
