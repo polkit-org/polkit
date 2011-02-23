@@ -91,15 +91,15 @@ libpolkit_gobject_1_la_LIBADD =                               		\
 
 libpolkit_gobject_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
 
-if ENABLE_INTROSPECTION
-girdir = $(GIRDIR)
+if HAVE_INTROSPECTION
+girdir = $(INTROSPECTION_GIRDIR)
 gir_DATA = Polkit-1.0.gir
 
-typelibsdir = $(GIRTYPELIBDIR)
+typelibsdir = $(INTROSPECTION_TYPELIBDIR)
 typelibs_DATA = Polkit-1.0.typelib
 
-Polkit-1.0.gir: libpolkit-gobject-1.la $(G_IR_SCANNER) Makefile.am
-	$(G_IR_SCANNER) -v 					\
+Polkit-1.0.gir: libpolkit-gobject-1.la $(INTROSPECTION_SCANNER) Makefile.am
+	$(INTROSPECTION_SCANNER) -v 				\
 		--warn-all					\
 		--namespace Polkit 				\
 		--nsversion=1.0 				\
@@ -115,10 +115,10 @@ Polkit-1.0.gir: libpolkit-gobject-1.la $(G_IR_SCANNER) Makefile.am
 		$(libpolkit_gobject_1_la_SOURCES)		\
 		$(NULL)
 
-Polkit-1.0.typelib: Polkit-1.0.gir $(G_IR_COMPILER)
-	$(G_IR_COMPILER) $< -o $@
+Polkit-1.0.typelib: Polkit-1.0.gir $(INTROSPECTION_COMPILER)
+	$(INTROSPECTION_COMPILER) $< -o $@
 
-endif # ENABLE_INTROSPECTION
+endif # HAVE_INTROSPECTION
 
 EXTRA_DIST = polkitenumtypes.h.template polkitenumtypes.c.template
 CLEANFILES = $(gir_DATA) $(typelibs_DATA)
