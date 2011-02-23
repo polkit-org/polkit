@@ -600,6 +600,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   gchar *authenticated_identity_str;
   gchar *subject_cmdline;
   gboolean is_temp;
+  PolkitDetails *details;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
@@ -626,13 +627,14 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
            was_dismissed,
            authentication_success);
 
+  details = polkit_details_new ();
+  if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED_RETAINED ||
+      implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
+    polkit_details_insert (details, "polkit.retains_authorization_after_challenge", "true");
+
   is_temp = FALSE;
   if (authentication_success)
     {
-      PolkitDetails *details;
-
-      details = polkit_details_new ();
-
       /* store temporary authorization depending on value of implicit_authorization */
       if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED_RETAINED ||
           implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
@@ -651,21 +653,14 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
           /* we've added a temporary authorization, let the user know */
           g_signal_emit_by_name (authority, "changed");
         }
-
       result = polkit_authorization_result_new (TRUE, FALSE, details);
-      g_object_unref (details);
     }
   else
     {
-      PolkitDetails *details;
-
       /* TODO: maybe return set is_challenge? */
-
-      details = polkit_details_new ();
       if (was_dismissed)
         polkit_details_insert (details, "polkit.dismissed", "true");
       result = polkit_authorization_result_new (FALSE, FALSE, details);
-      g_object_unref (details);
     }
 
   /* Log the event */
@@ -710,6 +705,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
 
   /* log_result (authority, action_id, subject, caller, result); */
 
+  g_object_unref (details);
   g_simple_async_result_set_op_res_gpointer (simple,
                                              result,
                                              g_object_unref);
