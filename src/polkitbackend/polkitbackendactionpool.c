@@ -519,7 +519,7 @@ ensure_all_files (PolkitBackendActionPool *pool)
 
   error = NULL;
   e = g_file_enumerate_children (priv->directory,
-                                 "standard::*",
+                                 "standard::name",
                                  G_FILE_QUERY_INFO_NONE,
                                  NULL,
                                  &error);

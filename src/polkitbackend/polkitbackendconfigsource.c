@@ -319,7 +319,7 @@ polkit_backend_config_source_ensure (PolkitBackendConfigSource *source)
 
   error = NULL;
   enumerator = g_file_enumerate_children (source->priv->directory,
-                                          "standard::*",
+                                          "standard::name",
                                           G_FILE_QUERY_INFO_NONE,
                                           NULL,
                                           &error);

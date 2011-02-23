@@ -193,7 +193,7 @@ add_all_authorization_stores (PolkitBackendLocalAuthority *authority)
 
       toplevel_directory = g_file_new_for_path (toplevel_path);
       directory_enumerator = g_file_enumerate_children (toplevel_directory,
-                                                        "standard::*",
+                                                        "standard::name,standard::type",
                                                         G_FILE_QUERY_INFO_NONE,
                                                         NULL,
                                                         &error);

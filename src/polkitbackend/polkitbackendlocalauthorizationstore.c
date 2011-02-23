@@ -549,7 +549,7 @@ polkit_backend_local_authorization_store_ensure (PolkitBackendLocalAuthorization
 
   error = NULL;
   enumerator = g_file_enumerate_children (store->priv->directory,
-                                          "standard::*",
+                                          "standard::name",
                                           G_FILE_QUERY_INFO_NONE,
                                           NULL,
                                           &error);
