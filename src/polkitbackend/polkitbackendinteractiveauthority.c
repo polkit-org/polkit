@@ -277,7 +277,7 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
   static volatile GQuark domain = 0;
 
   /* Force registering error domain */
-  domain = POLKIT_ERROR;
+  domain = POLKIT_ERROR; domain;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 

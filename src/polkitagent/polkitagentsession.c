@@ -572,12 +572,9 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
   uid_t uid;
   GError *error;
   gchar *helper_argv[4];
-  gboolean ret;
   struct passwd *passwd;
 
   g_return_if_fail (POLKIT_AGENT_IS_SESSION (session));
-
-  ret = FALSE;
 
   if (G_UNLIKELY (_show_debug ()))
     {

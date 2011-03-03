@@ -535,9 +535,6 @@ acquire_cb (GObject      *source_object,
   AcquireData *data = user_data;
   PolkitAuthorizationResult *result;
   GError *error;
-  gboolean ret;
-
-  ret = FALSE;
 
   error = NULL;
   result = polkit_authority_check_authorization_finish (data->permission->authority,

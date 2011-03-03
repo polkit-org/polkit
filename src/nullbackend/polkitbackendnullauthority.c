@@ -66,10 +66,6 @@ polkit_backend_null_authority_init (PolkitBackendNullAuthority *authority)
 static void
 polkit_backend_null_authority_finalize (GObject *object)
 {
-  PolkitBackendNullAuthority *authority;
-
-  authority = POLKIT_BACKEND_NULL_AUTHORITY (object);
-
   G_OBJECT_CLASS (polkit_backend_null_authority_parent_class)->finalize (object);
 }
 

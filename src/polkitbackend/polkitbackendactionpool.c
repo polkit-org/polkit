@@ -1043,11 +1043,8 @@ process_policy_file (PolkitBackendActionPool *pool,
                      const gchar *xml,
                      GError **error)
 {
-  gboolean ret;
   ParserData pd;
   int xml_res;
-
-  ret = FALSE;
 
   /* clear parser data */
   memset (&pd, 0, sizeof (ParserData));
