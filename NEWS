@@ -1,4 +1,51 @@
 --------------
+PolicyKit 0.101
+--------------
+
+This is PolicyKit 0.101
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.28
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+
+Changes since PolicyKit 0.100:
+
+ Adrian Bunk (1):
+       Bug 27253 – Use GOBJECT_INTROSPECTION_CHECK from gobject-introspection
+
+ David Zeuthen (16):
+       Post-release version bump to 0.101
+       Bug 30653 – No way to detect cancellation in pkexec
+       Bug 27081 – pkexec fails to build on non glibc systems
+       Bug 30438 – PolicyKit fails to build on AIX
+       Bug 32334 – Always set polkit.retains_authorization_after_challenge
+       Fix a memory leak
+       Be more specific about what info we want when enumerating files
+       Make pkcheck(1) report if the authentication dialog was dismissed
+       pkcheck: Make it possible to list and revoke temporary authorizations
+       Be a bit more careful parsing the command-line
+       Bug 29712 – Use monotonic for temporary authorizations
+       Allow overriding message shown in authentication dialog
+       Deprecated PolkitBackendActionLookup
+       Fix a couple of warnings triggered by gcc 4.6
+       Build examples by default and fix compiler warnings
+       Update NEWS for release
+
+ Michael Biebl (1):
+       Bug 29871 – Fix build failures with binutils-gold
+
+Thanks to our contributors.
+
+David Zeuthen,
+March 3, 2011
+
+--------------
 PolicyKit 0.100
 --------------
 
