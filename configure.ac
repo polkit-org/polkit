@@ -383,7 +383,7 @@ GOBJECT_INTROSPECTION_CHECK([0.6.2])
 
 AC_ARG_ENABLE([examples],
               AS_HELP_STRING([--enable-examples], [Build the example programs]),,
-              [enable_examples=no])
+              [enable_examples=yes])
 
 AM_CONDITIONAL(BUILD_EXAMPLES, test "x$enable_examples" = "xyes")
 
@@ -459,6 +459,7 @@ echo "
         Building verbose mode:      ${enable_verbose_mode}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}
+        Building examples:          ${enable_examples}
 
 "
 

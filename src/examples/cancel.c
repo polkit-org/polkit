@@ -112,7 +112,7 @@ main (int argc, char *argv[])
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  authority = polkit_authority_get ();
+  authority = polkit_authority_get_sync (NULL, NULL);
 
   /* Typically mechanisms will use a PolkitSystemBusName since most
    * clients communicate with the mechanism via D-Bus. However for
