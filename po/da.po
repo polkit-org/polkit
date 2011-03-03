@@ -8,86 +8,58 @@ msgid ""
 msgstr ""
 "Project-Id-Version: DeviceKit-disks\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-05-15 13:45-0400\n"
-"PO-Revision-Date: 2009-05-12 17:01-0400\n"
+"POT-Creation-Date: 2011-03-03 13:03-0500\n"
+"PO-Revision-Date: 2011-03-03 13:05-0500\n"
 "Last-Translator: David Zeuthen <davidz@redhat.com>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
+"Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:1
-msgid "Authentication is required to grant authorizations to other users"
-msgstr "Autorisering er påkrævet for at autorisere andre brugere"
+msgid "Authentication is required to configure lock down policy"
+msgstr "Autorisering er påkrævet for at konfigurer lock down"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:2
-msgid ""
-"Authentication is required to modify the defaults for implicit authorizations"
-msgstr "Autorisering er påkrævet for ændre implicit autorisering"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:3
-msgid "Authentication is required to read authorizations of other users"
-msgstr "Autorisering er påkrævet for at læse andre brugers autoriseringer"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:4
-msgid "Authentication is required to revoke authorizations other users"
-msgstr ""
-"Autorisering er påkrævet for at fjerne en autosering fra en anden bruger"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:5
 msgid "Authentication is required to run a program as another user"
 msgstr "Autorisering er påkrævet for at afvikle et program som en anden bruger"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:6
-msgid "Grant authorizations to other users"
-msgstr "Autoriser en anden bruger"
+#: ../actions/org.freedesktop.policykit.policy.in.h:3
+msgid "Configure lock down for an action"
+msgstr "Konfigurer lock down for en action"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:7
-msgid "Modify defaults for implicit authorizations"
-msgstr "Konfigurer implicit autorisering"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:8
-msgid "Read authorizations of other users"
-msgstr "Læs andre brugers autoriseringer"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:9
-msgid "Revoke authorizations from other users"
-msgstr "Fjern autorisering fra en anden bruger"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:10
+#: ../actions/org.freedesktop.policykit.policy.in.h:4
 msgid "Run programs as another user"
 msgstr "Kør et program som en anden bruger"
 
 #: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
 msgid ""
-"Authentication is required to run the PolicyKit example program Frobnicate"
-msgstr "Autorisering er påkrævet for at afvikle PolicyKit eksemplet Frobnicate"
+"Authentication is required to run the PolicyKit example program Frobnicate "
+"(user=$(user), program=$(program), command_line=$(command_line))"
+msgstr ""
+"Autorisering er påkrævet for at afvikle PolicyKit eksemplet Frobnicate (user="
+"$(user), program=$(program), command_line=$(command_line))"
 
 #: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
 msgid "Run the PolicyKit example program Frobnicate"
 msgstr "Kør PolicyKit eksemplet Frobnicate"
 
-#. Translator: %s is a fully qualified path to the executable
-#: ../src/programs/pkexec-action-lookup.c:110
-#, c-format
-msgid "Authentication is needed to run `%s' as the super user"
-msgstr "Autorisering er påkrævet for at afvikle `%s' som super bruger"
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: ../src/programs/pkexec.c:666
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr "Autorisering er påkrævet for at afvikle `$(program)' som super bruger"
 
-#. Translator: %s is a fully qualified path to the executable
-#: ../src/programs/pkexec-action-lookup.c:115
-#, c-format
-msgid "Authentication is needed to run `%s' as another user"
-msgstr "Autorisering er påkrævet for at afvikle `%s' som en anden bruger"
-
-#: ../src/programs/pkexec-action-lookup.c:159
-msgid "Command"
-msgstr "Program"
-
-#: ../src/programs/pkexec-action-lookup.c:168
-msgid "Super User (root)"
-msgstr "Super Bruger (root)"
-
-#: ../src/programs/pkexec-action-lookup.c:170
-msgid "Run As"
-msgstr "Bruger"
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: ../src/programs/pkexec.c:676
+msgid "Authentication is needed to run `$(program)' as user $(user)"
+msgstr ""
+"Autorisering er påkrævet for at afvikle `$(program)' som bruger $(user)"

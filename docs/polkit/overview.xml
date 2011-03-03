@@ -123,14 +123,5 @@
       </para>
     </formalpara>
 
-    <formalpara>
-      <title>POLKIT_BACKEND_ACTION_LOOKUP_EXTENSION_POINT_NAME</title>
-      <para>
-        Allows a mechanism to customize the contents of authentication
-        dialogs. Implementations of this extension point must
-        implement the #PolkitBackendActionLookup interface.
-      </para>
-    </formalpara>
-
   </chapter>
 </part>

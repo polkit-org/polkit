@@ -94,7 +94,6 @@
     <xi:include href="xml/polkitbackendauthority.xml"/>
     <xi:include href="xml/polkitbackendinteractiveauthority.xml"/>
     <xi:include href="xml/polkitbackendlocalauthority.xml"/>
-    <xi:include href="xml/polkitbackendactionlookup.xml"/>
   </part>
 
   <part id="ref-authentication-agent-api">

@@ -32,7 +32,6 @@
 #include "polkitbackendconfigsource.h"
 #include "polkitbackendlocalauthority.h"
 #include "polkitbackendlocalauthorizationstore.h"
-#include "polkitbackendactionlookup.h"
 
 #include <polkit/polkitprivate.h>
 

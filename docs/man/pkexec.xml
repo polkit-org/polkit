@@ -152,13 +152,21 @@
     <programlisting>
 <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" href="../../src/examples/org.freedesktop.policykit.examples.pkexec.policy"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
     <para>
-      and drop it in
-      the <filename>/usr/share/polkit-1/actions</filename> directory
-      under a suitable name (e.g. matching the namespace of the
-      action).  Note that in addition to specifying the program, the
+      and drop it in the
+      <filename>/usr/share/polkit-1/actions</filename> directory under
+      a suitable name (e.g. matching the namespace of the action).
+      Note that in addition to specifying the program, the
       authentication message, description, icon and defaults can be
-      specified. For example, for the action defined above, the following
-      authentication dialog will be shown:
+      specified. Note that occurences of the strings
+      <literal>$(user)</literal>, <literal>$(program)</literal> and
+      <literal>$(command_line)</literal> in the message will be
+      replaced with respectively the user (of the form "Real Name
+      (username)" or just "username" if there is no real name for the
+      username), the binary to execute (a fully-qualified path,
+      e.g. "<literal>/usr/bin/pk-example-frobnicate</literal>") and
+      the command-line, e.g. "<literal>pk-example-frobnicate foo
+      bar</literal>". For example, for the action defined above, the
+      following authentication dialog will be shown:
     </para>
     <mediaobject id="pkexec-frobnicate">
       <imageobject>

@@ -571,7 +571,26 @@ CheckAuthorization (IN  <link linkend="eggdbus-struct-Subject">Subject</link>   
                     OUT <link linkend="eggdbus-struct-AuthorizationResult">AuthorizationResult</link>      result)
     </programlisting>
     <para>
-<para>Checks if <parameter>subject</parameter> is authorized to perform the action with identifier <parameter>action_id</parameter>.</para><para>If <parameter>cancellation_id</parameter> is non-empty and already in use for the caller, the <link linkend="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique">org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique</link> error is returned.</para><para>Note that <link linkend="eggdbus-constant-CheckAuthorizationFlags.AllowUserInteraction">CheckAuthorizationFlags.AllowUserInteraction</link> SHOULD be passed ONLY if the event that triggered the authorization check is stemming from an user action, e.g. the user pressing a button or attaching a device.</para>
+      <para>
+        Checks if <parameter>subject</parameter> is authorized to
+        perform the action with identifier
+        <parameter>action_id</parameter>
+      </para>
+      <para>
+        If <parameter>cancellation_id</parameter> is non-empty and
+        already in use for the caller, the <link
+        linkend="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique">org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique</link>
+        error is returned.
+      </para>
+      <para>
+        Note that <link
+        linkend="eggdbus-constant-CheckAuthorizationFlags.AllowUserInteraction">CheckAuthorizationFlags.AllowUserInteraction</link>
+        SHOULD be passed ONLY if the event that triggered the
+        authorization check is stemming from an user action, e.g. the
+        user pressing a button or attaching a device.
+      </para>
+      <para>
+      </para>
     </para>
 <variablelist role="params">
   <varlistentry>
@@ -594,15 +613,27 @@ Identifier for the action that <parameter>subject</parameter> is attempting to d
     <term><literal>IN  Dict&lt;String,String&gt; <parameter>details</parameter></literal>:</term>
     <listitem>
       <para>
-Details describing the action. Keys starting with <literal>polkit.</literal> are reserved for internal use and cannot be used.
+Details describing the action. Keys starting with <literal>polkit.</literal> are can only be set if defined in this document.
       </para>
       <para>
         Known keys include <literal>polkit.message</literal> and
-        <literal>polkit.message.gettext-domain</literal> that can be
-        used to override the message shown to the user (the user might
-        be running an authentication agent in another locale than the
-        calling process so that's why both the message and gettext
-        domain is needed.
+        <literal>polkit.gettext_domain</literal> that can be used to
+        override the message shown to the user. This latter is needed
+        because the user could be running an authentication agent in
+        another locale than the calling process.
+      </para>
+      <para>
+        The (translated version of) <literal>polkit.message</literal>
+        may include references to other keys that are expanded with
+        their respective values. For example if the key
+        <literal>device_file</literal> has the value
+        <literal>/dev/sda</literal> then the message
+        "<literal>Authenticate to format $(device_file)</literal>" is
+        expanded to "<literal>Authenticate to format
+        /dev/sda</literal>".
+      </para>
+      <para>
+        The key <literal>polkit.icon_name</literal> is used to override the icon shown in the authentication dialog.
       </para>
       <para>
         If non-empty, then the request will fail with

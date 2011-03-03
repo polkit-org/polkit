@@ -23,6 +23,9 @@
 #include <errno.h>
 #include <pwd.h>
 #include <string.h>
+
+#define _POLKIT_BACKEND_ACTION_LOOKUP_NO_DEPRECATED_WARNING
+
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
 #include "polkitbackendactionlookup.h"

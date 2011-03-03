@@ -88,6 +88,7 @@ struct _PolkitBackendActionLookupIface
                                       PolkitActionDescription   *action_description);
 };
 
+#ifdef _POLKIT_BACKEND_ACTION_LOOKUP_NO_DEPRECATED_WARNING
 GType          polkit_backend_action_lookup_get_type      (void) G_GNUC_CONST;
 gchar         *polkit_backend_action_lookup_get_message   (PolkitBackendActionLookup *lookup,
                                                            const gchar               *action_id,
@@ -101,6 +102,21 @@ PolkitDetails *polkit_backend_action_lookup_get_details   (PolkitBackendActionLo
                                                            const gchar               *action_id,
                                                            PolkitDetails             *details,
                                                            PolkitActionDescription   *action_description);
+#else
+GType          polkit_backend_action_lookup_get_type      (void) G_GNUC_CONST G_GNUC_DEPRECATED_FOR (use_PolkitDetails_instead);
+gchar         *polkit_backend_action_lookup_get_message   (PolkitBackendActionLookup *lookup,
+                                                           const gchar               *action_id,
+                                                           PolkitDetails             *details,
+                                                           PolkitActionDescription   *action_description) G_GNUC_DEPRECATED_FOR (use_PolkitDetails_instead);
+gchar         *polkit_backend_action_lookup_get_icon_name (PolkitBackendActionLookup *lookup,
+                                                           const gchar               *action_id,
+                                                           PolkitDetails             *details,
+                                                           PolkitActionDescription   *action_description) G_GNUC_DEPRECATED_FOR (use_PolkitDetails_instead);
+PolkitDetails *polkit_backend_action_lookup_get_details   (PolkitBackendActionLookup *lookup,
+                                                           const gchar               *action_id,
+                                                           PolkitDetails             *details,
+                                                           PolkitActionDescription   *action_description) G_GNUC_DEPRECATED_FOR (use_PolkitDetails_instead);
+#endif
 
 G_END_DECLS
 

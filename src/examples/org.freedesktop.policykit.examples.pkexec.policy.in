@@ -9,7 +9,7 @@
 
   <action id="org.freedesktop.policykit.example.pkexec.run-frobnicate">
     <_description>Run the PolicyKit example program Frobnicate</_description>
-    <_message>Authentication is required to run the PolicyKit example program Frobnicate</_message>
+    <_message>Authentication is required to run the PolicyKit example program Frobnicate (user=$(user), program=$(program), command_line=$(command_line))</_message>
     <icon_name>audio-x-generic</icon_name> <!-- just an example -->
     <defaults>
       <allow_any>no</allow_any>

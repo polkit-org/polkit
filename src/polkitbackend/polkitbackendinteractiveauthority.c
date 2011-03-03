@@ -32,7 +32,6 @@
 #include "polkitbackendactionpool.h"
 #include "polkitbackendsessionmonitor.h"
 #include "polkitbackendconfigsource.h"
-#include "polkitbackendactionlookup.h"
 
 #include <polkit/polkitprivate.h>
 
@@ -1693,35 +1692,81 @@ authentication_agent_begin_cb (GDBusProxy   *proxy,
   authentication_session_free (session);
 }
 
-static GList *
-get_action_lookup_list (void)
+static void
+append_property (GString *dest,
+                 PolkitDetails *details,
+                 const gchar *key,
+                 PolkitBackendInteractiveAuthority *authority,
+                 const gchar *message,
+                 const gchar *action_id)
 {
-  GList *extensions;
-  GList *l;
-  GIOExtensionPoint *action_lookup_ep;
-  static GList *action_lookup_list = NULL;
-  static gboolean have_looked_up_extensions = FALSE;
+  const gchar *value;
 
-  if (have_looked_up_extensions)
-    goto out;
-
-  action_lookup_ep = g_io_extension_point_lookup (POLKIT_BACKEND_ACTION_LOOKUP_EXTENSION_POINT_NAME);
-  g_assert (action_lookup_ep != NULL);
-
-  extensions = g_io_extension_point_get_extensions (action_lookup_ep);
-  for (l = extensions; l != NULL; l = l->next)
+  value = polkit_details_lookup (details, key);
+  if (value != NULL)
     {
-      GIOExtension *extension = l->data;
-      PolkitBackendActionLookup *lookup;
-
-      lookup = g_object_new (g_io_extension_get_type (extension), NULL);
-      action_lookup_list = g_list_prepend (action_lookup_list, lookup);
+      g_string_append (dest, value);
     }
-  action_lookup_list = g_list_reverse (action_lookup_list);
+  else
+    {
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error substituting value for property $(%s) when preparing message `%s' for action-id %s",
+                                    key,
+                                    message,
+                                    action_id);
+      g_string_append (dest, "$(");
+      g_string_append (dest, key);
+      g_string_append (dest, ")");
+    }
+}
 
- out:
-  have_looked_up_extensions = TRUE;
-  return action_lookup_list;
+static gchar *
+expand_properties (const gchar *message,
+                   PolkitDetails *details,
+                   PolkitBackendInteractiveAuthority *authority,
+                   const gchar *action_id)
+{
+  GString *ret;
+  GString *var;
+  guint n;
+  gboolean in_resolve;
+
+  ret = g_string_new (NULL);
+  var = g_string_new (NULL);
+
+  in_resolve = FALSE;
+  for (n = 0; message[n] != '\0'; n++)
+    {
+      gint c = message[n];
+      if (c == '$' && message[n+1] == '(')
+        {
+          in_resolve = TRUE;
+          n += 1;
+        }
+      else
+        {
+          if (in_resolve)
+            {
+              if (c == ')')
+                {
+                  append_property (ret, details, var->str, authority, message, action_id);
+                  g_string_set_size (var, 0);
+                  in_resolve = FALSE;
+                }
+              else
+                {
+                  g_string_append_c (var, c);
+                }
+            }
+          else
+            {
+              g_string_append_c (ret, c);
+            }
+        }
+    }
+  g_string_free (var, TRUE);
+
+  return g_string_free (ret, FALSE);
 }
 
 static void
@@ -1738,12 +1783,12 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
   PolkitActionDescription *action_desc;
-  GList *action_lookup_list;
-  GList *l;
   gchar *message;
   gchar *icon_name;
   PolkitDetails *localized_details;
   const gchar *message_to_use;
+  const gchar *gettext_domain;
+  gchar *s;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
@@ -1762,52 +1807,21 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
   if (action_desc == NULL)
     goto out;
 
-  /* Set LANG and locale so gettext() + friends work when running the code in the extensions */
+  /* Set LANG and locale so g_dgettext() + friends work below */
   if (setlocale (LC_ALL, locale) == NULL)
     {
       g_printerr ("Invalid locale '%s'\n", locale);
     }
   g_setenv ("LANG", locale, TRUE);
 
+  gettext_domain = polkit_details_lookup (details, "polkit.gettext_domain");
   message_to_use = polkit_details_lookup (details, "polkit.message");
   if (message_to_use != NULL)
     {
-      const gchar *gettext_domain;
-      gettext_domain = polkit_details_lookup (details, "polkit.message.gettext-domain");
       message = g_strdup (g_dgettext (gettext_domain, message_to_use));
+      /* g_print ("locale=%s, domain=%s, msg=`%s' -> `%s'\n", locale, gettext_domain, message_to_use, message); */
     }
-
-  /* call into extension points to get localized auth dialog data - the list is sorted by priority */
-  action_lookup_list = get_action_lookup_list ();
-  for (l = action_lookup_list; l != NULL; l = l->next)
-    {
-      PolkitBackendActionLookup *lookup = POLKIT_BACKEND_ACTION_LOOKUP (l->data);
-
-      if (message != NULL && icon_name != NULL && localized_details != NULL)
-        break;
-
-      if (message == NULL)
-        message = polkit_backend_action_lookup_get_message (lookup,
-                                                            action_id,
-                                                            details,
-                                                            action_desc);
-
-      if (icon_name == NULL)
-        icon_name = polkit_backend_action_lookup_get_icon_name (lookup,
-                                                                action_id,
-                                                                details,
-                                                                action_desc);
-
-      if (localized_details == NULL)
-        localized_details = polkit_backend_action_lookup_get_details (lookup,
-                                                                      action_id,
-                                                                      details,
-                                                                      action_desc);
-    }
-
-  /* Back to C! */
-  setlocale (LC_ALL, "C");
-  g_setenv ("LANG", "C", TRUE);
+  icon_name = g_strdup (polkit_details_lookup (details, "polkit.icon_name"));
 
   /* fall back to action description */
   if (message == NULL)
@@ -1818,6 +1832,15 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
     {
       icon_name = g_strdup (polkit_action_description_get_icon_name (action_desc));
     }
+
+  /* replace $(property) with values */
+  s = message;
+  message = expand_properties (message, details, authority, action_id);
+  g_free (s);
+
+  /* Back to C! */
+  setlocale (LC_ALL, "C");
+  g_setenv ("LANG", "C", TRUE);
 
  out:
   if (message == NULL)
@@ -1956,6 +1979,8 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
 
   agent->active_sessions = g_list_prepend (agent->active_sessions, session);
 
+  if (localized_details == NULL)
+    localized_details = polkit_details_new ();
   add_pid (localized_details, caller, "polkit.caller-pid");
   add_pid (localized_details, subject, "polkit.subject-pid");
 

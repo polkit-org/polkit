@@ -846,9 +846,7 @@ check_authorization_cb (GDBusProxy    *proxy,
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject.
  * @action_id: The action to check for.
- * @details: (allow-none): Details about the action or %NULL. Keys
- * starting with <literal>polkit.</literal> are reserved for internal
- * use and cannot be used.
+ * @details: (allow-none): Details about the action or %NULL.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
@@ -871,11 +869,9 @@ check_authorization_cb (GDBusProxy    *proxy,
  * the operation.
  *
  * Known keys in @details include <literal>polkit.message</literal>
- * and <literal>polkit.message.gettext-domain</literal> that can be
- * used to override the message shown to the user (the user might be
- * running an authentication agent in another locale than the calling
- * process so that's why both the message and gettext domain is
- * needed).
+ * and <literal>polkit.gettext_domain</literal> that can be used to
+ * override the message shown to the user. See the documentation for
+ * the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">D-Bus method</link> for more details.
  *
  * If @details is non-empty then the request will fail with
  * #POLKIT_ERROR_FAILED unless the process doing the check itsef is
@@ -972,9 +968,7 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * @authority: A #PolkitAuthority.
  * @subject: A #PolkitSubject.
  * @action_id: The action to check for.
- * @details: (allow-none): Details about the action or %NULL. Keys
- * starting with <literal>polkit.</literal> are reserved for internal
- * use and cannot be used.
+ * @details: (allow-none): Details about the action or %NULL.
  * @flags: A set of #PolkitCheckAuthorizationFlags.
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
@@ -996,8 +990,10 @@ polkit_authority_check_authorization_finish (PolkitAuthority          *authority
  * operation to complete because it involves waiting for the user to
  * authenticate.
  *
- * See polkit_authority_check_authorization_sync() for how @details is
- * handled.
+ * Known keys in @details include <literal>polkit.message</literal>
+ * and <literal>polkit.gettext_domain</literal> that can be used to
+ * override the message shown to the user. See the documentation for
+ * the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">D-Bus method</link> for more details.
  *
  * Returns: (transfer full): A #PolkitAuthorizationResult or %NULL if @error is set. Free with g_object_unref().
  */

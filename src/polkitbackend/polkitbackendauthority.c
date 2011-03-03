@@ -30,7 +30,6 @@
 #include <polkit/polkitprivate.h>
 
 #include "polkitbackendauthority.h"
-#include "polkitbackendactionlookup.h"
 #include "polkitbackendlocalauthority.h"
 
 #include "polkitbackendprivate.h"
@@ -1291,7 +1290,6 @@ PolkitBackendAuthority *
 polkit_backend_authority_get (void)
 {
   static GIOExtensionPoint *ep = NULL;
-  static GIOExtensionPoint *ep_action_lookup = NULL;
   static volatile GType local_authority_type = G_TYPE_INVALID;
   GList *modules;
   GList *authority_implementations;
@@ -1304,11 +1302,6 @@ polkit_backend_authority_get (void)
     {
       ep = g_io_extension_point_register (POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME);
       g_io_extension_point_set_required_type (ep, POLKIT_BACKEND_TYPE_AUTHORITY);
-    }
-  if (ep_action_lookup == NULL)
-    {
-      ep_action_lookup = g_io_extension_point_register (POLKIT_BACKEND_ACTION_LOOKUP_EXTENSION_POINT_NAME);
-      g_io_extension_point_set_required_type (ep_action_lookup, POLKIT_BACKEND_TYPE_ACTION_LOOKUP);
     }
 
   /* make sure local types are registered */

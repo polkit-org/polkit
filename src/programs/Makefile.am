@@ -34,28 +34,6 @@ pkexec_LDADD =  	                      				\
 	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la		\
 	$(NULL)
 
-polkitmodulesdir = $(libdir)/polkit-1/extensions
-polkitmodules_LTLIBRARIES = libpkexec-action-lookup.la
-
-libpkexec_action_lookup_la_SOURCES =                    		\
-	pkexec-action-lookup.c                             		\
-        $(NULL)
-
-libpkexec_action_lookup_la_CFLAGS =                      		\
-        -DPOLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE    		\
-        -DG_LOG_DOMAIN=\"pkexec-action-lookup\"        			\
-	$(GLIB_CFLAGS)							\
-        $(NULL)
-
-libpkexec_action_lookup_la_LDFLAGS =                  			\
-	-export_dynamic -avoid-version -module -no-undefined 		\
-	-export-symbols-regex '^g_io_module_(load|unload)' 		\
-        $(NULL)
-
-libpkexec_action_lookup_la_LIBADD =                 			\
-	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la	\
-        $(NULL)
-
 # ----------------------------------------------------------------------------------------------------
 
 pkcheck_SOURCES = pkcheck.c
