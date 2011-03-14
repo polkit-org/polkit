@@ -151,7 +151,6 @@ main (int argc, char *argv[])
       const char *err;
       err = pam_strerror (pam_h, rc);
       fprintf (stderr, "polkit-agent-helper-1: pam_authenticate failed: %s\n", err);
-      send_to_helper ("PAM_ERROR_MSG ", err);
       goto error;
     }
 
@@ -162,7 +161,6 @@ main (int argc, char *argv[])
       const char *err;
       err = pam_strerror (pam_h, rc);
       fprintf (stderr, "polkit-agent-helper-1: pam_acct_mgmt failed: %s\n", err);
-      send_to_helper ("PAM_ERROR_MSG ", err);
       goto error;
     }
 
@@ -173,7 +171,6 @@ main (int argc, char *argv[])
       const char *err;
       err = pam_strerror (pam_h, rc);
       fprintf (stderr, "polkit-agent-helper-1: pam_get_item failed: %s\n", err);
-      send_to_helper ("PAM_ERROR_MSG ", err);
       goto error;
     }
 
@@ -181,7 +178,6 @@ main (int argc, char *argv[])
     {
       fprintf (stderr, "polkit-agent-helper-1: Tried to auth user '%s' but we got auth for user '%s' instead",
                user_to_auth, (const char *) authed_user);
-      send_to_helper ("PAM_ERROR_MSG ", "Authenticated the wrong user");
       goto error;
     }
 
