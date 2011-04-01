@@ -238,13 +238,18 @@ polkit_subject_from_string  (const gchar   *str,
     {
       gint scanned_pid;
       guint64 scanned_starttime;
-      if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT, &scanned_pid, &scanned_starttime) == 2)
+      gint scanned_uid;
+      if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT ":%d", &scanned_pid, &scanned_starttime, &scanned_uid) == 3)
+        {
+          subject = polkit_unix_process_new_for_owner (scanned_pid, scanned_starttime, scanned_uid);
+        }
+      else if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT, &scanned_pid, &scanned_starttime) == 2)
         {
           subject = polkit_unix_process_new_full (scanned_pid, scanned_starttime);
         }
       else if (sscanf (str, "unix-process:%d", &scanned_pid) == 1)
         {
-          subject = polkit_unix_process_new_full (scanned_pid, 0);
+          subject = polkit_unix_process_new (scanned_pid);
           if (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) == 0)
             {
               g_object_unref (subject);
@@ -297,6 +302,8 @@ polkit_subject_to_gvariant (PolkitSubject *subject)
                              g_variant_new_uint32 (polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject))));
       g_variant_builder_add (&builder, "{sv}", "start-time",
                              g_variant_new_uint64 (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject))));
+      g_variant_builder_add (&builder, "{sv}", "uid",
+                             g_variant_new_int32 (polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject))));
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
@@ -395,6 +402,7 @@ polkit_subject_new_for_gvariant (GVariant  *variant,
       GVariant *v;
       guint32 pid;
       guint64 start_time;
+      gint32 uid;
 
       v = lookup_asv (details_gvariant, "pid", G_VARIANT_TYPE_UINT32, error);
       if (v == NULL)
@@ -414,7 +422,18 @@ polkit_subject_new_for_gvariant (GVariant  *variant,
       start_time = g_variant_get_uint64 (v);
       g_variant_unref (v);
 
-      ret = polkit_unix_process_new_full (pid, start_time);
+      v = lookup_asv (details_gvariant, "uid", G_VARIANT_TYPE_INT32, error);
+      if (v != NULL)
+        {
+          uid = g_variant_get_int32 (v);
+          g_variant_unref (v);
+        }
+      else
+        {
+          uid = -1;
+        }
+
+      ret = polkit_unix_process_new_for_owner (pid, start_time, uid);
     }
   else if (g_strcmp0 (kind, "unix-session") == 0)
     {
