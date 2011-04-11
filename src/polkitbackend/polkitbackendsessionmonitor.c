@@ -418,14 +418,13 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
-      GError *local_error;
-
-      local_error = NULL;
-      uid = polkit_unix_process_get_owner (POLKIT_UNIX_PROCESS (subject), &local_error);
-      if (local_error != NULL)
+      uid = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject));
+      if ((gint) uid == -1)
         {
-          g_propagate_error (error, local_error);
-          g_error_free (local_error);
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Unix process subject does not have uid set");
           goto out;
         }
       user = polkit_unix_user_new (uid);
