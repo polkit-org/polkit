@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <stdio.h>
 
 #include "polkitsubject.h"
 #include "polkitunixprocess.h"
@@ -209,8 +210,6 @@ polkit_subject_from_string  (const gchar   *str,
                              GError       **error)
 {
   PolkitSubject *subject;
-  guint64 val;
-  gchar *endptr;
 
   g_return_val_if_fail (str != NULL, NULL);
 
@@ -220,12 +219,20 @@ polkit_subject_from_string  (const gchar   *str,
 
   if (g_str_has_prefix (str, "unix-process:"))
     {
-      val = g_ascii_strtoull (str + sizeof "unix-process:" - 1,
-                              &endptr,
-                              10);
-      if (*endptr == '\0')
+      gint scanned_pid;
+      guint64 scanned_starttime;
+      gint scanned_uid;
+      if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT ":%d", &scanned_pid, &scanned_starttime, &scanned_uid) == 3)
         {
-          subject = polkit_unix_process_new ((gint) val);
+          subject = polkit_unix_process_new_for_owner (scanned_pid, scanned_starttime, scanned_uid);
+        }
+      else if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT, &scanned_pid, &scanned_starttime) == 2)
+        {
+          subject = polkit_unix_process_new_full (scanned_pid, scanned_starttime);
+        }
+      else if (sscanf (str, "unix-process:%d", &scanned_pid) == 1)
+        {
+          subject = polkit_unix_process_new (scanned_pid);
           if (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) == 0)
             {
               g_object_unref (subject);
@@ -233,8 +240,8 @@ polkit_subject_from_string  (const gchar   *str,
               g_set_error (error,
                            POLKIT_ERROR,
                            POLKIT_ERROR_FAILED,
-                           "No process with pid %" G_GUINT64_FORMAT,
-                           val);
+                           "Unable to determine start time for process with pid %d",
+                           scanned_pid);
             }
         }
     }
@@ -268,6 +275,7 @@ polkit_subject_new_for_real (_PolkitSubject *real)
   EggDBusHashMap *details;
   EggDBusVariant *variant;
   EggDBusVariant *variant2;
+  EggDBusVariant *variant3;
 
   s = NULL;
 
@@ -281,10 +289,24 @@ polkit_subject_new_for_real (_PolkitSubject *real)
   else if (strcmp (kind, "unix-process") == 0)
     {
       variant = egg_dbus_hash_map_lookup (details, "pid");
-      variant2 = egg_dbus_hash_map_lookup (details, "start-time");
-      if (variant != NULL && variant2 != NULL)
-        s = polkit_unix_process_new_full (egg_dbus_variant_get_uint (variant),
-                                          egg_dbus_variant_get_uint64 (variant2));
+      if (variant != NULL && egg_dbus_variant_is_uint (variant))
+        {
+          gint pid;
+          guint64 start_time;
+          gint uid;
+          variant2 = egg_dbus_hash_map_lookup (details, "start-time");
+          pid = egg_dbus_variant_get_uint (variant);
+          if (variant2 != NULL && egg_dbus_variant_is_uint64 (variant2))
+            start_time = egg_dbus_variant_get_uint64 (variant2);
+          else
+            start_time = 0;
+          variant3 = egg_dbus_hash_map_lookup (details, "uid");
+          if (variant3 != NULL && egg_dbus_variant_is_int (variant3))
+            uid = egg_dbus_variant_get_int (variant3);
+          else
+            uid = -1;
+          s = polkit_unix_process_new_for_owner (pid, start_time, uid);
+        }
     }
   else if (strcmp (kind, "unix-session") == 0)
     {
@@ -330,6 +352,9 @@ polkit_subject_get_real (PolkitSubject *subject)
       egg_dbus_hash_map_insert (details,
                                 "start-time",
                                 egg_dbus_variant_new_for_uint64 (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject))));
+      egg_dbus_hash_map_insert (details,
+                                "uid",
+                                egg_dbus_variant_new_for_int (polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject))));
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {

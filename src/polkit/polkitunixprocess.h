@@ -50,11 +50,21 @@ GType           polkit_unix_process_get_type       (void) G_GNUC_CONST;
 PolkitSubject  *polkit_unix_process_new            (gint pid);
 PolkitSubject  *polkit_unix_process_new_full       (gint pid,
                                                     guint64 start_time);
+PolkitSubject  *polkit_unix_process_new_for_owner  (gint    pid,
+                                                    guint64 start_time,
+                                                    gint    uid);
 
 gint            polkit_unix_process_get_pid        (PolkitUnixProcess *process);
+gint            polkit_unix_process_get_uid        (PolkitUnixProcess *process);
 guint64         polkit_unix_process_get_start_time (PolkitUnixProcess *process);
 void            polkit_unix_process_set_pid        (PolkitUnixProcess *process,
                                                     gint               pid);
+void            polkit_unix_process_set_uid        (PolkitUnixProcess *process,
+                                                    gint               uid);
+void            polkit_unix_process_set_start_time (PolkitUnixProcess *process,
+                                                    guint64            start_time);
+
+G_GNUC_DEPRECATED
 gint            polkit_unix_process_get_owner      (PolkitUnixProcess  *process,
                                                     GError            **error);
 
