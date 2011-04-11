@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "polkitunixprocess.h"
 #include "polkitsubject.h"
@@ -207,6 +208,8 @@ polkit_unix_process_get_pid (PolkitUnixProcess *process)
  *
  * Gets the uid of the owner of @process.
  *
+ * Note that this returns the real user-id (not the effective user-id) of @process.
+ *
  * Returns: The UNIX user id of the owner for @process or 0 if @error is set.
  **/
 gint
@@ -214,14 +217,18 @@ polkit_unix_process_get_owner (PolkitUnixProcess  *process,
                                GError            **error)
 {
   gint result;
+  gchar *contents;
+  gchar **lines;
 #ifdef HAVE_FREEBSD
   struct kinfo_proc p;
 #else
-  struct stat statbuf;
-  char procbuf[32];
+  gchar filename[64];
+  guint n;
 #endif
 
   result = 0;
+  lines = NULL;
+  contents = NULL;
 
 #ifdef HAVE_FREEBSD
   if (get_kinfo_proc (process->pid, &p) == 0)
@@ -237,22 +244,51 @@ polkit_unix_process_get_owner (PolkitUnixProcess  *process,
 
   result = p.ki_uid;
 #else
-  g_snprintf (procbuf, sizeof procbuf, "/proc/%d", process->pid);
-  if (stat (procbuf, &statbuf) != 0)
+  /* see 'man proc' for layout of the status file
+   *
+   * Uid, Gid: Real, effective, saved set,  and  file  system  UIDs (GIDs).
+   */
+  g_snprintf (filename, sizeof filename, "/proc/%d/status", process->pid);
+  if (!g_file_get_contents (filename,
+                            &contents,
+                            NULL,
+                            error))
     {
-      g_set_error (error,
-                   POLKIT_ERROR,
-                   POLKIT_ERROR_FAILED,
-                   "stat() failed for /proc/%d: %s",
-                   process->pid,
-                   g_strerror (errno));
       goto out;
     }
+  lines = g_strsplit (contents, "\n", -1);
+  for (n = 0; lines != NULL && lines[n] != NULL; n++)
+    {
+      gint real_uid, effective_uid;
+      if (!g_str_has_prefix (lines[n], "Uid:"))
+        continue;
+      if (sscanf (lines[n] + 4, "%d %d", &real_uid, &effective_uid) != 2)
+        {
+          g_set_error (error,
+                       POLKIT_ERROR,
+                       POLKIT_ERROR_FAILED,
+                       "Unexpected line `%s' in file %s",
+                       lines[n],
+                       filename);
+          goto out;
+        }
+      else
+        {
+          result = real_uid;
+          goto out;
+        }
+    }
 
-  result = statbuf.st_uid;
+  g_set_error (error,
+               POLKIT_ERROR,
+               POLKIT_ERROR_FAILED,
+               "Didn't find any line starting with `Uid:' in file %s",
+               filename);
 #endif
 
  out:
+  g_strfreev (lines);
+  g_free (contents);
 
   return result;
 }
