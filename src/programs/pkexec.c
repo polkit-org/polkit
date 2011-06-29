@@ -229,7 +229,8 @@ fdwalk (FdCallback callback,
 
 static gchar *
 find_action_for_path (PolkitAuthority *authority,
-                      const gchar     *path)
+                      const gchar     *path,
+                      gboolean        *allow_gui)
 {
   GList *l;
   GList *actions;
@@ -239,6 +240,7 @@ find_action_for_path (PolkitAuthority *authority,
   actions = NULL;
   action_id = NULL;
   error = NULL;
+  *allow_gui = FALSE;
 
   actions = polkit_authority_enumerate_actions_sync (authority,
                                                      NULL,
@@ -254,6 +256,7 @@ find_action_for_path (PolkitAuthority *authority,
     {
       PolkitActionDescription *action_desc = POLKIT_ACTION_DESCRIPTION (l->data);
       const gchar *path_for_action;
+      const gchar *allow_gui_annotation;
 
       path_for_action = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.path");
       if (path_for_action == NULL)
@@ -262,6 +265,12 @@ find_action_for_path (PolkitAuthority *authority,
       if (g_strcmp0 (path_for_action, path) == 0)
         {
           action_id = g_strdup (polkit_action_description_get_action_id (action_desc));
+
+          allow_gui_annotation = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.allow_gui");
+
+          if (allow_gui_annotation != NULL && strlen (allow_gui_annotation) > 0)
+            *allow_gui = TRUE;
+
           goto out;
         }
     }
@@ -352,7 +361,7 @@ validate_environment_variable (const gchar *key,
           goto out;
         }
     }
-  else if (strstr (value, "/") != NULL ||
+  else if ((g_strcmp0 (key, "XAUTHORITY") != 0 && strstr (value, "/") != NULL) ||
            strstr (value, "%") != NULL ||
            strstr (value, "..") != NULL)
     {
@@ -388,6 +397,7 @@ main (int argc, char *argv[])
   PolkitDetails *details;
   GError *error;
   gchar *action_id;
+  gboolean allow_gui;
   gchar **exec_argv;
   gchar *path;
   struct passwd pwstruct;
@@ -408,20 +418,20 @@ main (int argc, char *argv[])
     "TERM",
     "COLORTERM",
 
-    /* For now, avoiding pretend that running X11 apps as another user in the same session
-     * will ever work... See
+    /* By default we don't allow running X11 apps, as it does not work in the
+     * general case. See
      *
      *  https://bugs.freedesktop.org/show_bug.cgi?id=17970#c26
      *
      * and surrounding comments for a lot of discussion about this.
+     *
+     * However, it can be enabled for some selected and tested legacy programs
+     * which previously used e. g. gksu, by setting the
+     * org.freedesktop.policykit.exec.allow_gui annotation to a nonempty value.
+     * See https://bugs.freedesktop.org/show_bug.cgi?id=38769 for details.
      */
-#if 0
-    "DESKTOP_STARTUP_ID",
     "DISPLAY",
     "XAUTHORITY",
-    "DBUS_SESSION_BUS_ADDRESS",
-    "ORBIT_SOCKETDIR",
-#endif
     NULL
   };
   GPtrArray *saved_env;
@@ -654,7 +664,7 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  action_id = find_action_for_path (authority, path);
+  action_id = find_action_for_path (authority, path, &allow_gui);
   g_assert (action_id != NULL);
 
   details = polkit_details_new ();
@@ -789,6 +799,11 @@ main (int argc, char *argv[])
     {
       const gchar *key = saved_env->pdata[n];
       const gchar *value = saved_env->pdata[n + 1];
+
+      /* Only set $DISPLAY and $XAUTHORITY when explicitly allowed in the .policy */
+      if (!allow_gui &&
+              (strcmp (key, "DISPLAY") == 0 || strcmp (key, "XAUTHORITY") == 0))
+          continue;
 
       if (!g_setenv (key, value, TRUE))
         {

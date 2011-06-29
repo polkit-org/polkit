@@ -128,8 +128,12 @@
       environment variable is set to the user id of the process
       invoking <command>pkexec</command>. As a
       result, <command>pkexec</command> will not allow you to run
-      e.g. X11 applications as another user since
-      the <literal>$DISPLAY</literal> environment variable is not set.
+      X11 applications as another user since
+      the <literal>$DISPLAY</literal> and <literal>$XAUTHORITY</literal>
+      environment variables are not set. These two variables will be retained
+      if the <emphasis>org.freedesktop.policykit.exec.allow_gui</emphasis> annotation
+      on an action is set to a nonempty value; this is discouraged, though, and
+      should only be used for legacy programs.
     </para>
   </refsect1>
 
