@@ -1834,9 +1834,12 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
     }
 
   /* replace $(property) with values */
-  s = message;
-  message = expand_properties (message, details, authority, action_id);
-  g_free (s);
+  if (message != NULL)
+    {
+      s = message;
+      message = expand_properties (message, details, authority, action_id);
+      g_free (s);
+    }
 
   /* Back to C! */
   setlocale (LC_ALL, "C");
