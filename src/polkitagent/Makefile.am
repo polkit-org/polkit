@@ -120,6 +120,7 @@ PolkitAgent-1.0.gir: libpolkit-agent-1.la $(INTROSPECTION_SCANNER) Makefile.am
 		--pkg=glib-2.0 					\
 		--pkg=gobject-2.0 				\
 		--pkg=gio-2.0 					\
+		--pkg-export=polkit-agent-1			\
 		--c-include='polkitagent/polkitagent.h'		\
 		--libtool=$(top_builddir)/libtool		\
                 -I$(top_srcdir)/src	 			\
