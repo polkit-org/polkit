@@ -1,4 +1,50 @@
 --------------
+PolicyKit 0.102
+--------------
+
+This is PolicyKit 0.102
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.28
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+
+Changes since PolicyKit 0.101:
+
+ Benjamin Otte (1):
+       introspection: Add --c-include to the gir files
+
+ David Zeuthen (7):
+       Post-release version bump to 0.102
+       Don't show diagnostic messages intended for the administrator to the end u
+       PolkitUnixProcess: Clarify that the real uid is returned, not the effectiv
+       Make PolkitUnixProcess also record the uid of the process
+       Use polkit_unix_process_get_uid() to get the owner of a process
+       pkexec: Avoid TOCTTOU problems with parent process
+       Update NEWS for release
+
+ Evan Nemerson (1):
+       Specify exported pkg-config files in GIRs
+
+ Marc Deslauriers (1):
+       Fix multi-line pam prompt handling
+
+ Martin Pitt (3):
+       Ignore .po/ for intltool
+       Fix backend crash if a .policy file does not specify <message>
+       Bug 38769 — pkexec: Support running X11 apps
+
+Thanks to our contributors.
+
+David Zeuthen,
+August 1, 2011
+
+--------------
 PolicyKit 0.101
 --------------
 
