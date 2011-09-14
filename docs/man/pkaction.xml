@@ -56,7 +56,7 @@
     <title>DESCRIPTION</title>
     <para>
       <command>pkaction</command> is used to obtain information about registered
-      polkit actions. If called with <option>--action-id</option> then all
+      polkit actions. If called without <option>--action-id</option> then all
       actions are displayed. Otherwise the action <replaceable>action</replaceable>.
       If called without the <option>--verbose</option> option only the name
       of the action is shown. Otherwise details about the actions are shown.
