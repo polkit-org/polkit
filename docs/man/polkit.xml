@@ -369,8 +369,7 @@ System Context         |                        |
         the <literal>key</literal> attribute and the value is
         specified using the <literal>value</literal> attribute. This
         element may appear zero or more times. See
-            <citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-            for an example of how this can be used. </para></listitem>
+            below for known annotations. </para></listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>vendor</emphasis></term>
@@ -398,6 +397,28 @@ System Context         |                        |
       <citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       command.
     </para>
+
+    <refsect2><title>Known annotations</title>
+    <para>
+      The <literal>org.freedesktop.policykit.exec.path</literal>
+      annotation is used by the <command>pkexec</command> program
+      shipped with PolicyKit - see the
+      <citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      man page for details.
+    </para>
+    <para>
+      The <literal>org.freedesktop.policykit.imply</literal>
+      annotation (its value is a string containing a space separated
+      list of action identifiers) can be used to define <emphasis>meta
+      actions</emphasis>. The way it works is that if a subject is
+      authorized for an action with this annotation, then it is also
+      authorized for any action specified by the annotation. A typical
+      use of this annotation is when defining an UI shell with a
+      single lock button that should unlock multiple actions from
+      distinct mechanisms.
+    </para>
+    </refsect2>
+
   </refsect1>
 
   <refsect1 id="polkit-author"><title>AUTHOR</title>

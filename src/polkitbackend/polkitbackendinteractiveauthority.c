@@ -148,6 +148,7 @@ static PolkitAuthorizationResult *check_authorization_sync (PolkitBackendAuthori
                                                             PolkitDetails                  *details,
                                                             PolkitCheckAuthorizationFlags   flags,
                                                             PolkitImplicitAuthorization    *out_implicit_authorization,
+                                                            gboolean                        checking_imply,
                                                             GError                        **error);
 
 static gboolean polkit_backend_interactive_authority_register_authentication_agent (PolkitBackendAuthority   *authority,
@@ -890,6 +891,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
                                      details,
                                      flags,
                                      &implicit_authorization,
+                                     FALSE, /* checking_imply */
                                      &error);
   if (error != NULL)
     {
@@ -964,6 +966,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
                           PolkitDetails                  *details,
                           PolkitCheckAuthorizationFlags   flags,
                           PolkitImplicitAuthorization    *out_implicit_authorization,
+                          gboolean                        checking_imply,
                           GError                        **error)
 {
   PolkitBackendInteractiveAuthority *interactive_authority;
@@ -979,12 +982,15 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   PolkitImplicitAuthorization implicit_authorization;
   const gchar *tmp_authz_id;
   PolkitDetails *result_details;
+  GList *actions;
+  GList *l;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
 
   result = NULL;
 
+  actions = NULL;
   user_of_subject = NULL;
   groups_of_user = NULL;
   subject_str = NULL;
@@ -1095,6 +1101,64 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       goto out;
     }
 
+  /* then see if implied by another action that the subject is authorized for
+   * (but only one level deep to avoid infinite recursion)
+   *
+   * TODO: if this is slow, we can maintain a hash table for looking up what
+   * actions implies a given action
+   */
+  if (!checking_imply)
+    {
+      actions = polkit_backend_action_pool_get_all_actions (priv->action_pool, NULL);
+      for (l = actions; l != NULL; l = l->next)
+        {
+          PolkitActionDescription *imply_ad = POLKIT_ACTION_DESCRIPTION (l->data);
+          const gchar *imply;
+          imply = polkit_action_description_get_annotation (imply_ad, "org.freedesktop.policykit.imply");
+          if (imply != NULL)
+            {
+              gchar **tokens;
+              guint n;
+              tokens = g_strsplit (imply, " ", 0);
+              for (n = 0; tokens[n] != NULL; n++)
+                {
+                  if (g_strcmp0 (tokens[n], action_id) == 0)
+                    {
+                      PolkitAuthorizationResult *implied_result = NULL;
+                      PolkitImplicitAuthorization implied_implicit_authorization;
+                      GError *implied_error = NULL;
+                      const gchar *imply_action_id;
+
+                      imply_action_id = polkit_action_description_get_action_id (imply_ad);
+
+                      /* g_debug ("%s is implied by %s, checking", action_id, imply_action_id); */
+                      implied_result = check_authorization_sync (authority, caller, subject,
+                                                                 imply_action_id,
+                                                                 details, flags,
+                                                                 &implied_implicit_authorization, TRUE,
+                                                                 &implied_error);
+                      if (implied_result != NULL)
+                        {
+                          if (polkit_authorization_result_get_is_authorized (implied_result))
+                            {
+                              g_debug (" is authorized (implied by %s)", imply_action_id);
+                              result = implied_result;
+                              /* cleanup */
+                              g_object_unref (result_details);
+                              g_strfreev (tokens);
+                              goto out;
+                            }
+                          g_object_unref (implied_result);
+                        }
+                      if (implied_error != NULL)
+                        g_error_free (implied_error);
+                    }
+                }
+              g_strfreev (tokens);
+            }
+        }
+    }
+
   if (implicit_authorization != POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED)
     {
       if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED_RETAINED ||
@@ -1118,6 +1182,9 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       g_debug (" not authorized");
     }
  out:
+  g_list_foreach (actions, (GFunc) g_object_unref, NULL);
+  g_list_free (actions);
+
   g_free (subject_str);
 
   g_list_foreach (groups_of_user, (GFunc) g_object_unref, NULL);
