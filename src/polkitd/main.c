@@ -22,6 +22,9 @@
 #include "config.h"
 
 #include <signal.h>
+
+#include <glib-unix.h>
+
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackend.h>
 
@@ -33,8 +36,10 @@ static PolkitBackendAuthority *authority = NULL;
 static gpointer                registration_id = NULL;
 static GMainLoop              *loop = NULL;
 static gboolean                opt_replace = FALSE;
+static gboolean                opt_no_debug = FALSE;
 static GOptionEntry            opt_entries[] = {
-  {"replace", 0, 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
+  {"replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
+  {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information", NULL},
   {NULL }
 };
 
@@ -119,6 +124,26 @@ main (int    argc,
       g_error_free (error);
       goto out;
     }
+
+  /* If --no-debug is requested don't clutter stdout/stderr etc.
+   */
+  if (opt_no_debug)
+    {
+      gint dev_null_fd;
+      dev_null_fd = open ("/dev/null", O_RDWR);
+      if (dev_null_fd >= 0)
+        {
+          dup2 (dev_null_fd, STDIN_FILENO);
+          dup2 (dev_null_fd, STDOUT_FILENO);
+          dup2 (dev_null_fd, STDERR_FILENO);
+          close (dev_null_fd);
+        }
+      else
+        {
+          g_warning ("Error opening /dev/null: %m");
+        }
+    }
+
 
   loop = g_main_loop_new (NULL, FALSE);
 
