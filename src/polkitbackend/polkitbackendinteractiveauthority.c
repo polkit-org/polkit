@@ -749,6 +749,62 @@ polkit_backend_interactive_authority_check_authorization_finish (PolkitBackendAu
   return result;
 }
 
+static gboolean
+may_identity_check_authorization (PolkitBackendInteractiveAuthority   *interactive_authority,
+                                  const gchar                         *action_id,
+                                  PolkitIdentity                      *identity)
+{
+  PolkitBackendInteractiveAuthorityPrivate *priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  gboolean ret = FALSE;
+  PolkitActionDescription *action_desc = NULL;
+  const gchar *owners = NULL;
+  gchar **tokens = NULL;
+  guint n;
+
+  /* uid 0 may check anything */
+  if (POLKIT_IS_UNIX_USER (identity) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (identity)) == 0)
+    {
+      ret = TRUE;
+      goto out;
+    }
+
+  action_desc = polkit_backend_action_pool_get_action (priv->action_pool, action_id, NULL);
+  if (action_desc == NULL)
+    goto out;
+
+  owners = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.owner");
+  if (owners == NULL)
+    goto out;
+
+  tokens = g_strsplit (owners, " ", 0);
+  for (n = 0; tokens != NULL && tokens[n] != NULL; n++)
+    {
+      PolkitIdentity *owner_identity;
+      GError *error = NULL;
+      owner_identity = polkit_identity_from_string (tokens[n], &error);
+      if (owner_identity == NULL)
+        {
+          g_warning ("Error parsing owner identity %d of action_id %s: %s (%s, %d)",
+                     n, action_id, error->message, g_quark_to_string (error->domain), error->code);
+          g_error_free (error);
+          continue;
+        }
+      if (polkit_identity_equal (identity, owner_identity))
+        {
+          ret = TRUE;
+          g_object_unref (owner_identity);
+          goto out;
+        }
+      g_object_unref (owner_identity);
+    }
+
+ out:
+  g_clear_object (&action_desc);
+  g_strfreev (tokens);
+
+  return ret;
+}
+
 static void
 polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority         *authority,
                                                           PolkitSubject                  *caller,
@@ -851,22 +907,29 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
           g_strfreev (detail_keys);
         }
     }
+
+  /* Not anyone is allowed to check that process XYZ is allowed to do ABC.
+   * We only allow this if, and only if,
+   *
+   *  - processes may check for another process owned by the *same* user but not
+   *    if details are passed (otherwise you'd be able to spoof the dialog)
+   *
+   *  - processes running as uid 0 may check anything and pass any details
+   *
+   *  - if the action_id has the "org.freedesktop.policykit.owner" annotation
+   *    then any uid referenced by that annotation is also allowed to check
+   *    to check anything and pass any details
+   */
   if (!polkit_identity_equal (user_of_caller, user_of_subject) || has_details)
     {
-      /* we only allow trusted callers (uid 0 + others) to check authorizations for subjects
-       * they don't own - and only if there are no details passed (to avoid spoofing dialogs).
-       *
-       * TODO: allow other uids like 'haldaemon'?
-       */
-      if (!POLKIT_IS_UNIX_USER (user_of_caller) ||
-          polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
+      if (!may_identity_check_authorization (interactive_authority, action_id, user_of_caller))
         {
           if (has_details)
             {
               g_simple_async_result_set_error (simple,
                                                POLKIT_ERROR,
                                                POLKIT_ERROR_NOT_AUTHORIZED,
-                                               "Only trusted callers (e.g. uid 0) can use CheckAuthorization() and "
+                                               "Only trusted callers (e.g. uid 0 or an action owner) can use CheckAuthorization() and "
                                                "pass details");
             }
           else
@@ -874,7 +937,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
               g_simple_async_result_set_error (simple,
                                                POLKIT_ERROR,
                                                POLKIT_ERROR_NOT_AUTHORIZED,
-                                               "Only trusted callers (e.g. uid 0) can use CheckAuthorization() for "
+                                               "Only trusted callers (e.g. uid 0 or an action owner) can use CheckAuthorization() for "
                                                "subjects belonging to other identities");
             }
           g_simple_async_result_complete (simple);

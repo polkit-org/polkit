@@ -417,6 +417,19 @@ System Context         |                        |
       single lock button that should unlock multiple actions from
       distinct mechanisms.
     </para>
+    <para>
+      The <literal>org.freedesktop.policykit.owner</literal>
+      annotation can be used to define a set of users who can query
+      whether a client is authorized to perform this action.  If this
+      annotation is not specified then only root can query whether a
+      client running as a different user is authorized for an action.
+      The value of this annotation is a string containing a space
+      separated list of <link
+      linkend="PolkitIdentity-struct">PolkitIdentity</link> entries,
+      for example <literal>"unix-user:42 unix-user:colord"</literal>.
+      A typical use of this annotation is for a daemon process that
+      runs as a system user rather than root.
+    </para>
     </refsect2>
 
   </refsect1>
