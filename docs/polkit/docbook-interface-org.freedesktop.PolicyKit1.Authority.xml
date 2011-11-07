@@ -61,7 +61,7 @@ Structure    <link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuth
   <refsect1 role="desc" id="eggdbus-if-description-org.freedesktop.PolicyKit1.Authority">
     <title role="desc.title">Description</title>
       <para>
-This D-Bus interface is implemented by the <literal>/org/freedesktop/PoliycKit1/Authority</literal> object on the well-known name <literal>org.freedesktop.PolicyKit1</literal> on the system message bus.
+This D-Bus interface is implemented by the <literal>/org/freedesktop/PolicyKit1/Authority</literal> object on the well-known name <literal>org.freedesktop.PolicyKit1</literal> on the system message bus.
       </para>
   </refsect1>
   <refsect1 role="desc" id="eggdbus-if-enumerations-org.freedesktop.PolicyKit1.Authority">
