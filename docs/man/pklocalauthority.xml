@@ -382,10 +382,10 @@
     </para>
     <programlisting>
 [Configuration]
-AdminIdentities=unix-group:desktop_admin_r
+AdminIdentities=unix-group:staff
     </programlisting>
     <para>
-      that any user in the <literal>desktop_admin_r</literal> UNIX
+      specifies that any user in the <literal>staff</literal> UNIX
       group can be used for authentication when administrator
       authentication is needed. This file would typically be installed
       in the <filename>/etc/polkit-1/localauthority.conf.d</filename>
