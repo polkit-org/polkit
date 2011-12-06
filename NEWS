@@ -1,4 +1,45 @@
 --------------
+PolicyKit 0.103
+--------------
+
+This is PolicyKit 0.103
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.28
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+
+IMPORTANT: As of release 0.103, the default Authority backend now
+defaults to allowing members of the 'wheel' group to authenticate as
+an administator Since this is common usage in popular Linux
+distributions. Distributors can change this by patching the
+50-localauthority.conf file in /etc/polkit-1/localauthority.conf.d as
+needed.
+
+Changes since PolicyKit 0.102:
+
+ Alan Near (1):
+      Mistype in DBus object: PoliycKit1 -> PolicyKit1
+
+ David Zeuthen (6):
+      Post-release version bump to 0.103
+      Add support for the org.freedesktop.policykit.imply annotation
+      Add --no-debug option and use this for D-Bus activation
+      Bug 41025 – Add org.freedesktop.policykit.owner annotation
+      Default to AdminIdentities=unix-group:wheel for local authority
+      Update NEWS for release
+
+Thanks to our contributors.
+
+David Zeuthen,
+December 6, 2011
+
+--------------
 PolicyKit 0.102
 --------------
 
