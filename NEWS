@@ -16,7 +16,7 @@ Build requirements
 
 IMPORTANT: As of release 0.103, the default Authority backend now
 defaults to allowing members of the 'wheel' group to authenticate as
-an administator Since this is common usage in popular Linux
+an administator since this is common usage in popular Linux
 distributions. Distributors can change this by patching the
 50-localauthority.conf file in /etc/polkit-1/localauthority.conf.d as
 needed.
@@ -26,13 +26,14 @@ Changes since PolicyKit 0.102:
  Alan Near (1):
       Mistype in DBus object: PoliycKit1 -> PolicyKit1
 
- David Zeuthen (6):
+ David Zeuthen (7):
       Post-release version bump to 0.103
       Add support for the org.freedesktop.policykit.imply annotation
       Add --no-debug option and use this for D-Bus activation
       Bug 41025 – Add org.freedesktop.policykit.owner annotation
       Default to AdminIdentities=unix-group:wheel for local authority
       Update NEWS for release
+      Fix typo
 
 Thanks to our contributors.
 
