@@ -69,7 +69,6 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkiterror.c				polkiterror.h				\
 	polkitsubject.c				polkitsubject.h				\
 	polkitunixprocess.c			polkitunixprocess.h			\
-	polkitunixsession.c			polkitunixsession.h			\
 	polkitsystembusname.c			polkitsystembusname.h			\
 	polkitidentity.c			polkitidentity.h			\
 	polkitunixuser.c			polkitunixuser.h			\
@@ -82,13 +81,23 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitpermission.c			polkitpermission.h			\
         $(NULL)
 
+if HAVE_SYSTEMD
+libpolkit_gobject_1_la_SOURCES += \
+	polkitunixsession-systemd.c		polkitunixsession.h
+else
+libpolkit_gobject_1_la_SOURCES += \
+	polkitunixsession.c			polkitunixsession.h
+endif
+
 libpolkit_gobject_1_la_CFLAGS =                                        	\
         -D_POLKIT_COMPILATION                                  		\
         $(GLIB_CFLAGS)							\
+	$(SYSTEMD_CFLAGS)						\
         $(NULL)
 
 libpolkit_gobject_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
+	$(SYSTEMD_LIBS)							\
         $(NULL)
 
 libpolkit_gobject_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'

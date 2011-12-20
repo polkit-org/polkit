@@ -38,20 +38,29 @@ libpolkit_backend_1_la_SOURCES =                                   			\
 	polkitbackendinteractiveauthority.h	polkitbackendinteractiveauthority.c	\
 	polkitbackendlocalauthority.h		polkitbackendlocalauthority.c		\
 	polkitbackendactionpool.h		polkitbackendactionpool.c		\
-	polkitbackendsessionmonitor.h		polkitbackendsessionmonitor.c		\
 	polkitbackendconfigsource.h		polkitbackendconfigsource.c		\
 	polkitbackendactionlookup.h		polkitbackendactionlookup.c		\
 	polkitbackendlocalauthorizationstore.h	polkitbackendlocalauthorizationstore.c	\
         $(NULL)
 
+if HAVE_SYSTEMD
+libpolkit_backend_1_la_SOURCES += \
+	polkitbackendsessionmonitor.h		polkitbackendsessionmonitor-systemd.c
+else
+libpolkit_backend_1_la_SOURCES += \
+	polkitbackendsessionmonitor.h		polkitbackendsessionmonitor.c
+endif
+
 libpolkit_backend_1_la_CFLAGS =                                        	\
         -D_POLKIT_COMPILATION                                  		\
         -D_POLKIT_BACKEND_COMPILATION                                  	\
         $(GLIB_CFLAGS)							\
+	$(SYSTEMD_CFLAGS)						\
         $(NULL)
 
 libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
+	$(SYSTEMD_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(EXPAT_LIBS)							\
         $(NULL)

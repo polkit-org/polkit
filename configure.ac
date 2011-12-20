@@ -148,6 +148,26 @@ if test "x$GCC" = "xyes"; then
 fi
 
 dnl ---------------------------------------------------------------------------
+dnl - Select wether to use systemd or ConsoleKit for session tracking
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_ENABLE([systemd],
+              AS_HELP_STRING([--enable-systemd], [Use systemd]),
+              [with_systemd=$enableval],
+              [with_systemd=no])
+if test "$with_systemd" = "yes" ; then
+  PKG_CHECK_MODULES(SYSTEMD, [libsystemd-login])
+  SESSION_TRACKING=systemd
+else
+  SESSION_TRACKING=ConsoleKit
+fi
+
+AC_SUBST(SYSTEMD_CFLAGS)
+AC_SUBST(SYSTEMD_LIBS)
+
+AM_CONDITIONAL(HAVE_SYSTEMD, [test "$with_systemd" = "yes"], [Using systemd])
+
+dnl ---------------------------------------------------------------------------
 dnl - Select which authentication framework to use
 dnl ---------------------------------------------------------------------------
 
@@ -449,7 +469,8 @@ echo "
 	introspection:		    ${found_introspection}
 
         Distribution/OS:            ${with_os_type}
-        authentication framework:   ${POLKIT_AUTHFW}
+        Authentication framework:   ${POLKIT_AUTHFW}
+        Session tracking:           ${SESSION_TRACKING}
         PAM support:                ${have_pam}"
 
 if test "$have_pam" = yes ; then
@@ -459,7 +480,6 @@ echo "
         PAM file password:          ${PAM_FILE_INCLUDE_PASSWORD}
         PAM file session:           ${PAM_FILE_INCLUDE_SESSION}"
 fi
-
 echo "
         Maintainer mode:            ${USE_MAINTAINER_MODE}
         Building verbose mode:      ${enable_verbose_mode}
