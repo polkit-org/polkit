@@ -1,6 +1,0 @@
-[Normal Staff Permissions]
-Identity=unix-group:users;unix-user:root
-Action=com.example.awesomeproduct.*
-ResultAny=no
-ResultInactive=auth_self
-ResultActive=yes

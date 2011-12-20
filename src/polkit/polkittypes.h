@@ -49,6 +49,9 @@ typedef struct _PolkitUnixUser PolkitUnixUser;
 struct _PolkitUnixGroup;
 typedef struct _PolkitUnixGroup PolkitUnixGroup;
 
+struct _PolkitUnixNetgroup;
+typedef struct _PolkitUnixNetgroup PolkitUnixNetgroup;
+
 struct _PolkitAuthorizationResult;
 typedef struct _PolkitAuthorizationResult PolkitAuthorizationResult;
 

@@ -1,0 +1,10 @@
+2011-12-19 Nikki VonHollen <vonhollen@google.com>
+
+* Added check for 'id' and 'innetgr' commands before running tests that depend
+  on them. 'make check' now passes without them, without running tests.
+
+
+2011-12-14 Nikki VonHollen <vonhollen@google.com>
+
+* Released version 1.0 with basic NSS passwd, group, and netgroup mocks.
+

@@ -1,0 +1,4 @@
+root:x:0:
+users:x:100:john,jane
+john:x:500:
+jane:x:501:

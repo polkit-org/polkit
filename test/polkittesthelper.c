@@ -20,6 +20,8 @@
  */
 
 #include "polkittesthelper.h"
+#include <stdlib.h>
+
 
 /* TODO: Log handling with unit tests is horrible. Figure out a way to always
  *       show logs, without munging up test output. For now, we hide them
@@ -44,5 +46,23 @@ void
 polkit_test_redirect_logs (void)
 {
   g_log_set_default_handler (polkit_test_log_handler, NULL);
+}
+
+/**
+ * Get absolute path to test data.
+ *
+ * Requires POLKIT_TEST_DATA environment variable to point to root data dir.
+ *
+ * @param relpath Relative path to test data
+ * @return Full path to data as string. Free with g_free().
+ */
+gchar *
+polkit_test_get_data_path (const gchar *relpath)
+{
+  const gchar *root = getenv ("POLKIT_TEST_DATA");
+  if (root == NULL)
+    return NULL;
+
+  return g_strconcat(root, "/", relpath, NULL);
 }
 

@@ -1,0 +1,121 @@
+= MockLibc 1.1 =
+
+Mocks of common libc functions who have global state. Version 1.1 focuses on
+NSS related methods (user, group, and netgroup queries).
+
+This library is a re-implementation of specific libc methods, not a tool for
+creating mock functions. Use MockLibc to create a consistent environment for
+your unit tests, when they need to query system information.
+
+
+== Requirements ==
+
+* Tests require the 'id' and 'innetgr' commands in the PATH
+
+
+== Build ==
+
+$ cd mocklibc-1.1
+$ ./configure
+$ make
+$ make check
+
+
+== Install ==
+
+$ make install
+
+
+== Example Usage ==
+
+$ id foo
+id: foo: No such user
+$ export MOCK_PASSWD=./testdata/passwd
+$ export MOCK_GROUP=./testdata/group
+$ mkdir ./testdata
+$ echo “foo:x:9000:9000::/home/foo:/bin/bash” > “$MOCK_PASSWD”
+$ echo “mockusers:x:9001:foo” > “$MOCK_GROUP”
+$ mocklibc id foo
+uid=9000(foo) gid=9000(foo) groups=9000(foo),9001(mockusers)
+
+
+== Use without install ==
+
+mocklibc can be used directly from the bin directory, without being installed:
+$ cd mocklibc-1.1
+$ ./configure
+$ make
+$ bin/mocklibc id foo
+
+
+== Hacking ==
+
+If using a git checkout instead of a source tarball, always run
+'autogen --install' before './configure'. Whenever a Makefile.am or
+configure.ac is modified, run 'autogen' again without --install.
+
+
+== Mocked Functions ==
+
+NSS Methods completely disregard /etc/nsswitch.conf, similar to using just
+"files", but with modified paths. DNS is not modified and no *_r methods will
+be implemented in this version.
+
+* pwd.h (NSS users, configured with MOCK_PASSWD)
+  * setpwent
+  * getpwent
+  * endpwent
+  * getpwnam
+  * getpwuid
+* grp.h (NSS groups, configured with MOCK_GROUP)
+  * setpwent
+  * getpwent
+  * endpwent
+  * getpwnam
+  * getpwuid
+* netdb.h (NSS netgroups, no DNS, configured with MOCK_NETGROUP)
+  * setnetgrent
+  * getnetgrent
+  * endnetgrent
+  * innetgr
+
+
+== Configuration ==
+
+All configuration is handled through environment variables, though specific
+mocklibc_* methods may be added in the future for things like time and random
+number generation.
+
+Environment Variables:
+* MOCK_PASSWD - Path to /etc/passwd replacement
+* MOCK_GROUP - Path to /etc/group replacement
+* MOCK_NETGROUP - Path to /etc/netgroup replacement
+
+
+== F.A.Q. ==
+
+* Why not use a chroot? Chroot requires root, and forcing unit tests to run as
+  root is not desirable.
+* Is there something that already does this? There are mock frameworks for C,
+  but this library is an implementation of specific common mocks C developers
+  need. A mock of set/get/endgrent still requires some basic code for iterating
+  group objects. This library provides that.
+
+
+== TODO ==
+
+* Add functions to free unused memory in 'netdb_netgroup.c'. It leaks a ton of
+  memory every call. See TODO comments in code.
+
+
+== Future ==
+
+The following may be supported in the future, and I'm taking requests for other
+functionality at 'vonhollen@gmail.com'.
+
+Features:
+* Redirect syslog messages to file at $MOCK_SYSLOG
+* '*_r' methods in pwd.h, grp.h, and netdb.h
+* netdb.h: gethostbyname, gethostbyaddr, getaddrinfo, get/freeaddrinfo
+* Whitelist apps with $MOCK_ONLY (includes list of argv[0] names)
+

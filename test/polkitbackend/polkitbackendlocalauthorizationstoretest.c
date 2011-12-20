@@ -25,16 +25,23 @@
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackendlocalauthorizationstore.h>
 
-#define DATA_DIR "./data/authstore1/10-test"
+#define DATA_DIR "etc/polkit-1/localauthority/10-test"
 #define DATA_EXT ".pkla"
 
 static void
 test_new (void)
 {
   PolkitBackendLocalAuthorizationStore *store;
+  gchar *data_dir_path;
   GFile *data_dir;
 
-  data_dir = g_file_new_for_path (DATA_DIR);
+  data_dir_path = polkit_test_get_data_path (DATA_DIR);
+  g_assert (data_dir_path);
+
+  data_dir = g_file_new_for_path (data_dir_path);
+  g_assert (data_dir);
+
+  g_free (data_dir_path);
 
   store = polkit_backend_local_authorization_store_new (data_dir, DATA_EXT);
   g_assert (store);
@@ -44,6 +51,7 @@ test_new (void)
 static void
 test_lookup (void)
 {
+  gchar *data_dir_path;
   GFile *data_dir;
   PolkitBackendLocalAuthorizationStore *store;
   GError *error = NULL;
@@ -54,8 +62,14 @@ test_lookup (void)
   PolkitImplicitAuthorization ret_active;
   PolkitDetails *details;
 
+  // Get auth store path
+  data_dir_path = polkit_test_get_data_path (DATA_DIR);
+  g_assert (data_dir_path);
+
+  data_dir = g_file_new_for_path (data_dir_path);
+  g_assert (data_dir);
+  
   // Create the auth store
-  data_dir = g_file_new_for_path (DATA_DIR);
   store = polkit_backend_local_authorization_store_new (data_dir, DATA_EXT);
   g_assert (store);
 
@@ -63,7 +77,7 @@ test_lookup (void)
   details = polkit_details_new ();
 
   // Create an identity to query with
-  identity = polkit_identity_from_string("unix-group:users", &error);
+  identity = polkit_identity_from_string ("unix-group:users", &error);
   g_assert (identity);
   g_assert_no_error (error);
 
@@ -71,7 +85,7 @@ test_lookup (void)
   ok = polkit_backend_local_authorization_store_lookup (
       store,
       identity,
-      "com.example.awesomeproduct.dofoo",
+      "com.example.awesomeproduct.foo",
       details,
       &ret_any,
       &ret_inactive,
@@ -83,7 +97,7 @@ test_lookup (void)
   g_assert_cmpstr ("yes", ==, polkit_implicit_authorization_to_string (ret_active));
 
   // Create another identity to query with
-  identity = polkit_identity_from_string("unix-user:root", &error);
+  identity = polkit_identity_from_string ("unix-user:root", &error);
   g_assert (identity);
   g_assert_no_error (error);
 
@@ -91,7 +105,7 @@ test_lookup (void)
   ok = polkit_backend_local_authorization_store_lookup (
       store,
       identity,
-      "com.example.awesomeproduct.dofoo",
+      "com.example.awesomeproduct.foo",
       details,
       &ret_any,
       &ret_inactive,

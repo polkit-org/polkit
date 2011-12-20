@@ -22,36 +22,58 @@
 #include "glib.h"
 #include <polkit/polkit.h>
 
+struct user_entry {
+  const gchar *name;
+  gint uid;
+};
+
+static struct user_entry user_entries [] = {
+  {"root", 0},
+  {"john", 500},
+  {"jane", 501},
+  {NULL},
+};
 
 static void
 test_new (void)
 {
-  PolkitUnixUser *user;
+  unsigned int i;
+  for (i = 0; user_entries[i].name != NULL; i++) {
+    gint uid = user_entries[i].uid;
 
-  user = POLKIT_UNIX_USER (polkit_unix_user_new (0));
-  g_assert (user);
+    PolkitUnixUser *user;
 
-  gint user_uid = polkit_unix_user_get_uid (user);
-  g_assert_cmpint (user_uid, ==, 0);
+    user = POLKIT_UNIX_USER (polkit_unix_user_new (uid));
+    g_assert (user);
 
-  g_object_unref (user);
+    gint user_uid = polkit_unix_user_get_uid (user);
+    g_assert_cmpint (user_uid, ==, uid);
+
+    g_object_unref (user);
+  }
 }
 
 
 static void
 test_new_for_name (void)
 {
-  GError *error = NULL;
-  PolkitUnixUser *user;
+  unsigned int i;
+  for (i = 0; user_entries[i].name != NULL; i++) {
+    const gchar *name = user_entries[i].name;
+    gint expect_uid = user_entries[i].uid;
 
-  user = POLKIT_UNIX_USER (polkit_unix_user_new_for_name ("root", &error));
-  g_assert (user);
-  g_assert_no_error (error);
+    GError *error = NULL;
+    PolkitUnixUser *user;
 
-  gint user_uid = polkit_unix_user_get_uid (user);
-  g_assert_cmpint (user_uid, ==, 0);
+    user = POLKIT_UNIX_USER (polkit_unix_user_new_for_name (name, &error));
+    g_assert (user);
+    g_assert_no_error (error);
 
-  g_object_unref (user);
+    gint user_uid = polkit_unix_user_get_uid (user);
+    g_assert_cmpint (user_uid, ==, expect_uid);
+
+    g_object_unref (user);
+  }
 }
 
 

@@ -1,0 +1,136 @@
+#!/bin/bash
+
+#  Copyright 2011 Google Inc. All Rights Reserved.
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+#  Author: Nikki VonHollen <vonhollen@gmail.com>
+
+
+# Figure out where everything is
+
+MOCKLIBC="@top_builddir@/bin/mocklibc"
+ETCDIR="@top_srcdir@/example"
+
+
+# Setup the mock environment
+
+export MOCK_PASSWD="${ETCDIR}/passwd"
+export MOCK_GROUP="${ETCDIR}/group"
+export MOCK_NETGROUP="${ETCDIR}/netgroup"
+
+
+# Test helper definitions
+
+TESTCOUNT=0
+FAILCOUNT=0
+
+fail () {
+  echo "Test Failed:"
+  echo $@ >&2
+  echo
+  FAILCOUNT=$((FAILCOUNT+1))
+}
+
+finish () {
+  if [[ $FAILCOUNT -gt 0 ]]
+  then
+    echo "Failed $FAILCOUNT of $TESTCOUNT tests."
+    exit 1
+  else
+    echo "Passed $TESTCOUNT tests."
+    exit 0
+  fi
+}
+
+assert_true () {
+  $MOCKLIBC $@ || fail "assert true: $@"
+  TESTCOUNT=$((TESTCOUNT+1))
+}
+
+assert_false () {
+  $MOCKLIBC $@ && fail "assert false: $@"
+  TESTCOUNT=$((TESTCOUNT+1))
+}
+
+assert_grep () {
+  $MOCKLIBC ${@:2} | grep -q "^${1}\$" || fail "'$1' doesn't match output of: ${@:2}"
+  TESTCOUNT=$((TESTCOUNT+1))
+}
+
+
+# Test implementations
+
+test_passwd () {
+  # Test user ids
+  assert_grep "0" id -u root
+  assert_grep "500" id -u john
+  assert_grep "501" id -u jane
+
+  # Test primary groups
+  assert_grep "root" id -gn root
+  assert_grep "john" id -gn john
+  assert_grep "jane" id -gn jane
+}
+
+test_group () {
+  # Test group lists for users
+  assert_grep "root" id -Gn root
+  assert_grep "john users" id -Gn john
+  assert_grep "jane users" id -Gn jane
+}
+
+test_netgroup () {
+  # Test whether each user is each netgroup
+  assert_true innetgr foo -u john
+  assert_false innetgr foo -u jane
+
+  assert_true innetgr bar -u jane
+  assert_false innetgr bar -u john
+
+  assert_true innetgr baz -u john
+  assert_true innetgr baz -u jane
+  assert_false innetgr baz -u henry
+
+  assert_true innetgr all -u john
+  assert_true innetgr all -u jane
+  assert_true innetgr all -u henry
+
+  assert_false innetgr none -u john
+  assert_false innetgr none -u jane
+  assert_false innetgr none -u henry
+
+  assert_false innetgr fake -u john
+}
+
+
+# Run the tests and print a report
+
+if (which id >/dev/null 2>&1)
+then
+  test_passwd
+  test_group
+else
+  echo "No 'id' command found, skipping passwd and group tests." >&2
+fi
+
+if (which innetgr >/dev/null 2>&1)
+then
+  test_netgroup
+else
+  echo "No 'innetgr' command found, skipping netgroup tests." >&2
+fi
+
+
+finish
+

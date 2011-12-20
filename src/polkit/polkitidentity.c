@@ -28,6 +28,7 @@
 #include "polkitidentity.h"
 #include "polkitunixuser.h"
 #include "polkitunixgroup.h"
+#include "polkitunixnetgroup.h"
 #include "polkiterror.h"
 #include "polkitprivate.h"
 
@@ -177,6 +178,10 @@ polkit_identity_from_string  (const gchar   *str,
         identity = polkit_unix_group_new_for_name (str + sizeof "unix-group:" - 1,
                                                   error);
     }
+  else if (g_str_has_prefix (str, "unix-netgroup:"))
+    {
+      identity = polkit_unix_netgroup_new (str + sizeof "unix-netgroup:" - 1);
+    }
 
   if (identity == NULL && (error != NULL && *error == NULL))
     {
@@ -213,6 +218,12 @@ polkit_identity_to_gvariant (PolkitIdentity *identity)
       kind = "unix-group";
       g_variant_builder_add (&builder, "{sv}", "gid",
                              g_variant_new_uint32 (polkit_unix_group_get_gid (POLKIT_UNIX_GROUP (identity))));
+    }
+  else if (POLKIT_IS_UNIX_NETGROUP (identity))
+    {
+      kind = "unix-netgroup";
+      g_variant_builder_add (&builder, "{sv}", "name",
+                             g_variant_new_string (polkit_unix_netgroup_get_name (POLKIT_UNIX_NETGROUP (identity))));
     }
   else
     {
@@ -325,6 +336,21 @@ polkit_identity_new_for_gvariant (GVariant  *variant,
       g_variant_unref (v);
 
       ret = polkit_unix_group_new (gid);
+    }
+  else if (g_strcmp0 (kind, "unix-netgroup") == 0)
+    {
+      GVariant *v;
+      const char *name;
+
+      v = lookup_asv (details_gvariant, "name", G_VARIANT_TYPE_STRING, error);
+      if (v == NULL)
+        {
+          g_prefix_error (error, "Error parsing net identity: ");
+          goto out;
+        }
+      name = g_variant_get_string (v, NULL);
+      ret = polkit_unix_netgroup_new (name);
+      g_variant_unref (v);
     }
   else
     {

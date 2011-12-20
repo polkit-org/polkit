@@ -4,6 +4,7 @@ NULL =
 INCLUDES =                                              	\
 	-I$(top_builddir)/src                           	\
 	-I$(top_srcdir)/src                             	\
+	-I$(top_srcdir)/test                             	\
 	-DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"       	\
 	-DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"       	\
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\"             	\
@@ -16,6 +17,8 @@ INCLUDES =                                              	\
 	$(NULL)
 
 AM_CFLAGS =            				\
+	-D_POLKIT_COMPILATION                                   \
+	-D_POLKIT_BACKEND_COMPILATION                           \
 	$(GLIB_CFLAGS)						\
 	$(NULL)
 
@@ -33,6 +36,9 @@ polkitunixusertest_SOURCES = polkitunixusertest.c
 
 TEST_PROGS += polkitunixgrouptest
 polkitunixgrouptest_SOURCES = polkitunixgrouptest.c
+
+TEST_PROGS += polkitunixnetgrouptest
+polkitunixnetgrouptest_SOURCES = polkitunixnetgrouptest.c
 
 TEST_PROGS += polkitidentitytest
 polkitidentitytest_SOURCES = polkitidentitytest.c

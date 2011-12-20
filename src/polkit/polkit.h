@@ -33,6 +33,7 @@
 #include <polkit/polkitidentity.h>
 #include <polkit/polkitunixuser.h>
 #include <polkit/polkitunixgroup.h>
+#include <polkit/polkitunixnetgroup.h>
 #include <polkit/polkitsubject.h>
 #include <polkit/polkitunixprocess.h>
 #include <polkit/polkitunixsession.h>

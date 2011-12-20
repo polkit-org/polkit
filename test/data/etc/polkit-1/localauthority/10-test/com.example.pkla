@@ -1,0 +1,14 @@
+[Users and Root can do Foo]
+Identity=unix-group:users;unix-user:root
+Action=com.example.awesomeproduct.foo
+ResultAny=no
+ResultInactive=auth_self
+ResultActive=yes
+
+[Users in netgroup baz can do Bar]
+Identity=unix-netgroup:baz
+Action=com.example.awesomeproduct.bar
+ResultAny=no
+ResultInactive=auth_self
+ResultActive=yes
+

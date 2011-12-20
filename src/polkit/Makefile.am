@@ -51,6 +51,7 @@ libpolkit_gobject_1include_HEADERS =                        				\
 	polkitidentity.h								\
 	polkitunixuser.h								\
 	polkitunixgroup.h								\
+	polkitunixnetgroup.h								\
 	polkitauthorizationresult.h							\
 	polkitcheckauthorizationflags.h							\
 	polkitimplicitauthorization.h							\
@@ -73,6 +74,7 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitidentity.c			polkitidentity.h			\
 	polkitunixuser.c			polkitunixuser.h			\
 	polkitunixgroup.c			polkitunixgroup.h			\
+	polkitunixnetgroup.c			polkitunixnetgroup.h			\
 	polkitauthorizationresult.c		polkitauthorizationresult.h		\
 	polkitcheckauthorizationflags.c		polkitcheckauthorizationflags.h		\
 	polkitimplicitauthorization.c		polkitimplicitauthorization.h		\

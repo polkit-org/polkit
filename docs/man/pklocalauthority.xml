@@ -80,8 +80,9 @@
       this key is a semi-colon separated list of identities that can
       be used when administrator authentication is required. Users are
       specified by prefixing the user name with
-      <literal>unix-user:</literal> and groups of users are specified
-      by prefixing with <literal>unix-group:</literal>. See
+      <literal>unix-user:</literal>, groups of users are specified by 
+      prefixing with <literal>unix-group:</literal>, and netgroups of
+      users are specified with <literal>unix-netgroup:</literal>. See
       <xref linkend="pklocalauthority-examples"/> for an example of a
       configuration file.
     </para>
@@ -208,7 +209,9 @@
             A semi-colon separated list of globs to match identities. Each glob
             should start with <literal>unix-user:</literal> or
             <literal>unix-group:</literal> to specify whether to match on a
-            UNIX user name or a UNIX group name.
+            UNIX user name or a UNIX group name. Netgroups are supported with
+            the <literal>unix-netgroup:</literal> prefix, but cannot support
+            glob syntax.
           </para>
         </listitem>
       </varlistentry>

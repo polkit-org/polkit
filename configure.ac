@@ -8,6 +8,9 @@ AM_MAINTAINER_MODE
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
+# Include external mocklibc tool for unit testing
+AC_CONFIG_SUBDIRS([test/mocklibc])
+
 # libtool versioning - this applies to all libraries in this package
 #
 # See http://sources.redhat.com/autobook/autobook/autobook_91.html#SEC91 for details

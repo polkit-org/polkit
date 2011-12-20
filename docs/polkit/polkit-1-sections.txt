@@ -5,6 +5,7 @@ polkit_unix_user_new
 polkit_unix_user_new_for_name
 polkit_unix_user_get_uid
 polkit_unix_user_set_uid
+polkit_unix_user_get_name
 <SUBSECTION Standard>
 PolkitUnixUserClass
 POLKIT_UNIX_USER
@@ -118,6 +119,23 @@ polkit_unix_group_get_type
 POLKIT_UNIX_GROUP_CLASS
 POLKIT_IS_UNIX_GROUP_CLASS
 POLKIT_UNIX_GROUP_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>polkitunixnetgroup</FILE>
+PolkitUnixNetgroup
+polkit_unix_netgroup_new
+polkit_unix_netgroup_get_name
+polkit_unix_netgroup_set_name
+<SUBSECTION Standard>
+PolkitUnixNetgroupClass
+POLKIT_UNIX_NETGROUP
+POLKIT_IS_UNIX_NETGROUP
+POLKIT_TYPE_UNIX_NETGROUP
+polkit_unix_netgroup_get_type
+POLKIT_UNIX_NETGROUP_CLASS
+POLKIT_IS_UNIX_NETGROUP_CLASS
+POLKIT_UNIX_NETGROUP_GET_CLASS
 </SECTION>
 
 <SECTION>

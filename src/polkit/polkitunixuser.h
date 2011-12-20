@@ -53,6 +53,7 @@ PolkitIdentity *polkit_unix_user_new_for_name (const gchar    *name,
 gint            polkit_unix_user_get_uid      (PolkitUnixUser *user);
 void            polkit_unix_user_set_uid      (PolkitUnixUser *user,
                                                gint            uid);
+const gchar    *polkit_unix_user_get_name     (PolkitUnixUser *user);
 
 G_END_DECLS
 

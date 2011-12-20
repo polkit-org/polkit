@@ -49,6 +49,7 @@ struct _PolkitUnixUser
   GObject parent_instance;
 
   gint uid;
+  gchar *name;
 };
 
 struct _PolkitUnixUserClass
@@ -71,6 +72,17 @@ G_DEFINE_TYPE_WITH_CODE (PolkitUnixUser, polkit_unix_user, G_TYPE_OBJECT,
 static void
 polkit_unix_user_init (PolkitUnixUser *unix_user)
 {
+  unix_user->name = NULL;
+}
+
+static void
+polkit_unix_user_finalize (GObject *object)
+{
+  PolkitUnixUser *unix_user = POLKIT_UNIX_USER (object);
+
+  g_free(unix_user->name);
+
+  G_OBJECT_CLASS (polkit_unix_user_parent_class)->finalize (object);
 }
 
 static void
@@ -118,6 +130,7 @@ polkit_unix_user_class_init (PolkitUnixUserClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
+  gobject_class->finalize = polkit_unix_user_finalize;
   gobject_class->get_property = polkit_unix_user_get_property;
   gobject_class->set_property = polkit_unix_user_set_property;
 
@@ -228,6 +241,29 @@ polkit_unix_user_new_for_name (const gchar    *name,
   return identity;
 }
 
+/**
+ * polkit_unix_user_get_name:
+ * @user: A #PolkitUnixUser.
+ *
+ * Get the user's name.
+ *
+ * Returns: (allow-none) (transfer none): User name string or %NULL if user uid not found.
+ */
+const gchar *
+polkit_unix_user_get_name (PolkitUnixUser *user)
+{
+  if (user->name == NULL)
+    {
+      struct passwd *passwd;
+      passwd = getpwuid (user->uid);
+
+      if (passwd != NULL)
+        user->name = g_strdup(passwd->pw_name);
+    }
+
+  return user->name;
+}
+
 static gboolean
 polkit_unix_user_equal (PolkitIdentity *a,
                         PolkitIdentity *b)
@@ -255,14 +291,12 @@ static gchar *
 polkit_unix_user_to_string (PolkitIdentity *identity)
 {
   PolkitUnixUser *user = POLKIT_UNIX_USER (identity);
-  struct passwd *passwd;
+  const gchar *user_name = polkit_unix_user_get_name(user);
 
-  passwd = getpwuid (user->uid);
-
-  if (passwd == NULL)
-    return g_strdup_printf ("unix-user:%d", user->uid);
+  if (user_name != NULL)
+    return g_strdup_printf ("unix-user:%s", user_name);
   else
-    return g_strdup_printf ("unix-user:%s", passwd->pw_name);
+    return g_strdup_printf ("unix-user:%d", user->uid);
 }
 
 static void

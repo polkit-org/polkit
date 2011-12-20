@@ -31,4 +31,6 @@ void polkit_test_log_handler (const gchar *log_domain,
 
 void polkit_test_redirect_logs (void);
 
+gchar *polkit_test_get_data_path (const gchar *relpath);
+
 #endif

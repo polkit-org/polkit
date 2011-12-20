@@ -6,6 +6,7 @@ polkit_implicit_authorization_get_type
 polkit_identity_get_type
 polkit_unix_user_get_type
 polkit_unix_group_get_type
+polkit_unix_netgroup_get_type
 polkit_subject_get_type
 polkit_unix_process_get_type
 polkit_unix_session_get_type

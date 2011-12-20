@@ -57,6 +57,16 @@ test -n "$NO_AUTOMAKE" || (aclocal --version) < /dev/null > /dev/null 2>&1 || {
   DIE=1
 }
 
+
+# if no automake, don't bother testing for autoreconf
+test -n "$NO_AUTOMAKE" || (autoreconf --version) < /dev/null > /dev/null 2>&1 || {
+  echo
+  echo "**Error**: You must have autoreconf installed."
+  echo "You can get autoreconf from ..."
+  DIE=1
+}
+
+
 if test "$DIE" -eq 1; then
   exit 1
 fi
@@ -74,6 +84,9 @@ xlc )
 esac
 
       aclocalinclude="$ACLOCAL_FLAGS"
+
+      echo "Running autoreconf on test/mocklibc ..."
+      (cd "test/mocklibc"; autoreconf --install)
 
       if grep "^AM_PROG_LIBTOOL" configure.ac >/dev/null; then
 	if test -z "$NO_LIBTOOLIZE" ; then 

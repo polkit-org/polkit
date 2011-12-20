@@ -1,0 +1,7 @@
+root:x:0:
+users:x:100:john,jane
+admin:x:101:sally,henry
+john:x:500:
+jane:x:501:
+sally:x:502:
+henry:x:503:
