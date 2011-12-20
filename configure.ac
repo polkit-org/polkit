@@ -419,6 +419,9 @@ docs/Makefile
 docs/polkit/Makefile
 docs/man/Makefile
 po/Makefile.in
+test/Makefile
+test/polkit/Makefile
+test/polkitbackend/Makefile
 ])
 
 dnl ==========================================================================

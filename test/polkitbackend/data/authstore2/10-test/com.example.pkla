@@ -1,0 +1,6 @@
+[Super Secret Project Permissions]
+Identity=unix-user:root
+Action=com.example.restrictedproduct.*
+ResultAny=no
+ResultInactive=no
+ResultActive=auth_self
