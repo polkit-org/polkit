@@ -1,4 +1,40 @@
 --------------
+PolicyKit 0.104
+--------------
+
+This is PolicyKit 0.104
+
+WARNING WARNING WARNING: This is a prerelease on the road to PolicyKit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.28
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since PolicyKit 0.103:
+
+ David Zeuthen (3):
+      Post-release version bump to 0.104
+      Detect whether systemd is available and default to use if so
+      Update NEWS for release
+
+ Matthias Clasen (1):
+      Add optional systemd support
+
+ Nikki VonHollen (2):
+      Bug 43608 – Add unit tests
+      Bug 43610 - Add netgroup support
+
+Thanks to our contributors.
+
+David Zeuthen,
+January 3, 2012
+
+--------------
 PolicyKit 0.103
 --------------
 
