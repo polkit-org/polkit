@@ -151,21 +151,30 @@ dnl ---------------------------------------------------------------------------
 dnl - Select wether to use systemd or ConsoleKit for session tracking
 dnl ---------------------------------------------------------------------------
 
+have_systemd=no
+SESSION_TRACKING=ConsoleKit
+
 AC_ARG_ENABLE([systemd],
-              AS_HELP_STRING([--enable-systemd], [Use systemd]),
-              [with_systemd=$enableval],
-              [with_systemd=no])
-if test "$with_systemd" = "yes" ; then
-  PKG_CHECK_MODULES(SYSTEMD, [libsystemd-login])
-  SESSION_TRACKING=systemd
-else
-  SESSION_TRACKING=ConsoleKit
+              AS_HELP_STRING([--enable-systemd[=@<:@auto/yes/no@:>@]], [Use systemd (auto/yes/no)]),
+              [enable_systemd=$enableval],
+              [enable_systemd=auto])
+if test "$enable_systemd" != "no"; then
+  PKG_CHECK_MODULES(SYSTEMD,
+                    [libsystemd-login],
+                    have_systemd=yes,
+                    have_systemd=no)
+  if test "$have_systemd" = "yes"; then
+    SESSION_TRACKING=systemd
+  else
+    if test "$enable_systemd" = "yes"; then
+      AC_MSG_ERROR([systemd support requested but libsystemd-login1 library not found])
+    fi
+  fi
 fi
 
 AC_SUBST(SYSTEMD_CFLAGS)
 AC_SUBST(SYSTEMD_LIBS)
-
-AM_CONDITIONAL(HAVE_SYSTEMD, [test "$with_systemd" = "yes"], [Using systemd])
+AM_CONDITIONAL(HAVE_SYSTEMD, [test "$have_systemd" = "yes"], [Using systemd])
 
 dnl ---------------------------------------------------------------------------
 dnl - Select which authentication framework to use
