@@ -103,33 +103,26 @@ libpolkit_gobject_1_la_LIBADD =                               		\
 libpolkit_gobject_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
 
 if HAVE_INTROSPECTION
+
+INTROSPECTION_GIRS = Polkit-1.0.gir
+
 girdir = $(INTROSPECTION_GIRDIR)
 gir_DATA = Polkit-1.0.gir
 
 typelibsdir = $(INTROSPECTION_TYPELIBDIR)
 typelibs_DATA = Polkit-1.0.typelib
 
-Polkit-1.0.gir: libpolkit-gobject-1.la $(INTROSPECTION_SCANNER) Makefile.am
-	$(INTROSPECTION_SCANNER) -v 				\
-		--warn-all					\
-		--namespace Polkit 				\
-		--nsversion=1.0 				\
-		--include=Gio-2.0 				\
-		--library=polkit-gobject-1 			\
-		--output $@ 					\
-		--pkg=glib-2.0 					\
-		--pkg=gobject-2.0 				\
-		--pkg=gio-2.0 					\
-		--pkg-export=polkit-gobject-1			\
-		--libtool=$(top_builddir)/libtool		\
-		--c-include='polkit/polkit.h'			\
-                -I$(top_srcdir)/src	 			\
-	        -D_POLKIT_COMPILATION                   	\
-		$(libpolkit_gobject_1_la_SOURCES)		\
-		$(NULL)
+Polkit_1_0_gir_INCLUDES = Gio-2.0
+Polkit_1_0_gir_SCANNERFLAGS = --c-include='polkit/polkit.h'
+Polkit_1_0_gir_CFLAGS = \
+	$(libpolkit_gobject_1_la_CFLAGS)	\
+	-D_POLKIT_COMPILATION			\
+	-I.. -I$(top_srcdir)/src
+Polkit_1_0_gir_LIBS = libpolkit-gobject-1.la
+Polkit_1_0_gir_FILES = $(libpolkit_gobject_1_la_SOURCES)
+Polkit_1_0_gir_EXPORT_PACKAGES = polkit-gobject-1
 
-Polkit-1.0.typelib: Polkit-1.0.gir $(INTROSPECTION_COMPILER)
-	$(INTROSPECTION_COMPILER) $< -o $@
+include $(INTROSPECTION_MAKEFILE)
 
 endif # HAVE_INTROSPECTION
 

@@ -102,37 +102,29 @@ polkit_agent_helper_1_LDADD = 						\
 	$(NULL)
 
 if HAVE_INTROSPECTION
+
 girdir = $(INTROSPECTION_GIRDIR)
 gir_DATA = PolkitAgent-1.0.gir
 
 typelibsdir = $(INTROSPECTION_TYPELIBDIR)
 typelibs_DATA = PolkitAgent-1.0.typelib
 
-PolkitAgent-1.0.gir: libpolkit-agent-1.la $(INTROSPECTION_SCANNER) Makefile.am
-	$(INTROSPECTION_SCANNER) -v 				\
-		--warn-all					\
-		--namespace PolkitAgent				\
-		--nsversion=1.0 				\
-		--include=Gio-2.0 				\
-		--include-uninstalled=$(top_builddir)/src/polkit/Polkit-1.0.gir	\
-		--library=polkit-agent-1 			\
-		--output $@ 					\
-		--pkg=glib-2.0 					\
-		--pkg=gobject-2.0 				\
-		--pkg=gio-2.0 					\
-		--pkg-export=polkit-agent-1			\
-		--c-include='polkitagent/polkitagent.h'		\
-		--libtool=$(top_builddir)/libtool		\
-                -I$(top_srcdir)/src	 			\
-	        -D_POLKIT_COMPILATION                   	\
-	        -D_POLKIT_AGENT_COMPILATION                   	\
-		$(libpolkit_agent_1_la_SOURCES)			\
-		$(NULL)
+INTROSPECTION_COMPILER_ARGS = --includedir=../../src/polkit
+INTROSPECTION_GIRS = PolkitAgent-1.0.gir
+PolkitAgent_1_0_gir_INCLUDES = Gio-2.0
+PolkitAgent_1_0_gir_SCANNERFLAGS = \
+	--include-uninstalled=../../src/polkit/Polkit-1.0.gir	\
+	--c-include='polkitagent/polkitagent.h'
+PolkitAgent_1_0_gir_CFLAGS = \
+        $(libpolkit_agent_1_la_CFLAGS)		\
+        -D_POLKIT_COMPILATION			\
+        -D_POLKIT_AGENT_COMPILATION		\
+        -I.. -I$(top_srcdir)/src
+PolkitAgent_1_0_gir_LIBS = libpolkit-agent-1.la
+PolkitAgent_1_0_gir_FILES = $(libpolkit_agent_1_la_SOURCES)
+PolkitAgent_1_0_gir_EXPORT_PACKAGES = polkit-agent-1
 
-PolkitAgent-1.0.typelib: PolkitAgent-1.0.gir $(INTROSPECTION_COMPILER)
-	$(INTROSPECTION_COMPILER) 				\
-		--includedir $(top_builddir)/src/polkit		\
-		$< -o $@
+include $(INTROSPECTION_MAKEFILE)
 
 endif # HAVE_INTROSPECTION
 

@@ -1,8 +1,6 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-touch ChangeLog
-
 srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
@@ -14,6 +12,11 @@ DIE=0
     exit 1
 }
 
+olddir=`pwd`
+cd "$srcdir"
+
+touch ChangeLog
+
 (autoconf --version) < /dev/null > /dev/null 2>&1 || {
   echo
   echo "**Error**: You must have autoconf installed."
@@ -22,7 +25,7 @@ DIE=0
   DIE=1
 }
 
-(grep "^AM_PROG_LIBTOOL" $srcdir/configure.ac >/dev/null) && {
+(grep "^AM_PROG_LIBTOOL" configure.ac >/dev/null) && {
   (libtool --version) < /dev/null > /dev/null 2>&1 || {
     echo
     echo "**Error**: You must have libtool installed."
@@ -106,6 +109,8 @@ esac
       autoconf
 
 intltoolize --copy --force --automake                  || exit 1
+
+cd "$olddir"
 
 conf_flags="--enable-maintainer-mode --enable-gtk-doc"
 
