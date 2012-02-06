@@ -361,17 +361,15 @@ polkit_unix_session_to_string (PolkitSubject *subject)
 
 static gboolean
 polkit_unix_session_exists_sync (PolkitSubject   *subject,
-                                    GCancellable    *cancellable,
-                                    GError         **error)
+                                 GCancellable    *cancellable,
+                                 GError         **error)
 {
   PolkitUnixSession *session = POLKIT_UNIX_SESSION (subject);
-  gboolean ret;
+  gboolean ret = FALSE;
   uid_t uid;
 
-  ret = FALSE;
-
-  if (!sd_session_get_uid (session->session_id, &uid))
-    ret = FALSE;
+  if (sd_session_get_uid (session->session_id, &uid) == 0)
+    ret = TRUE;
 
   return ret;
 }
