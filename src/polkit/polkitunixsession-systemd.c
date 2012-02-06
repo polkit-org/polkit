@@ -23,6 +23,7 @@
 #  include "config.h"
 #endif
 
+#include <stdlib.h>
 #include <string.h>
 #include "polkitunixsession.h"
 #include "polkitsubject.h"
@@ -450,9 +451,8 @@ polkit_unix_session_initable_init (GInitable     *initable,
                                    GError       **error)
 {
   PolkitUnixSession *session = POLKIT_UNIX_SESSION (initable);
-  gboolean ret;
-
-  ret = FALSE;
+  gboolean ret = FALSE;
+  char *s;
 
   if (session->session_id != NULL)
     {
@@ -461,8 +461,19 @@ polkit_unix_session_initable_init (GInitable     *initable,
       goto out;
     }
 
-  if (!sd_pid_get_session (session->pid, &session->session_id))
-    ret = TRUE;
+  if (sd_pid_get_session (session->pid, &s) == 0)
+    {
+      session->session_id = g_strdup (s);
+      free (s);
+      ret = TRUE;
+      goto out;
+    }
+
+  g_set_error (error,
+               POLKIT_ERROR,
+               POLKIT_ERROR_FAILED,
+               "No session for pid %d",
+               (gint) session->pid);
 
 out:
   return ret;
