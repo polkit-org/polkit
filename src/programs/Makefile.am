@@ -24,6 +24,7 @@ bin_PROGRAMS = pkexec pkcheck pkaction pkttyagent
 pkexec_SOURCES = pkexec.c
 
 pkexec_CFLAGS =                             				\
+	$(SUID_CFLAGS)							\
 	$(GLIB_CFLAGS)							\
 	$(AUTH_LIBS)							\
 	$(NULL)
@@ -32,6 +33,11 @@ pkexec_LDADD =  	                      				\
 	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la		\
+	$(NULL)
+
+pkexec_LDFLAGS =  	                      				\
+	$(SUID_LDFLAGS)							\
+	$(AM_LDFLAGS)							\
 	$(NULL)
 
 # ----------------------------------------------------------------------------------------------------

@@ -479,6 +479,11 @@ AC_SUBST([GETTEXT_PACKAGE])
 AM_GLIB_GNU_GETTEXT
 AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
 
+AC_ARG_VAR([SUID_CFLAGS],
+           [CFLAGS used for binaries which are usually with the suid bit])
+AC_ARG_VAR([SUID_LDFLAGS],
+           [LDFLAGS used for binaries which are usually with the suid bit])
+
 AC_OUTPUT([
 Makefile
 actions/Makefile

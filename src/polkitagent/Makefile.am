@@ -94,6 +94,7 @@ endif
 
 polkit_agent_helper_1_CFLAGS  = 					\
         -D_POLKIT_COMPILATION                                  		\
+	$(SUID_CFLAGS)							\
 	$(GLIB_CFLAGS)							\
 	$(NULL)
 
@@ -101,6 +102,11 @@ polkit_agent_helper_1_LDADD = 						\
 	$(AUTH_LIBS)							\
 	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(NULL)
+
+polkit_agent_helper_1_LDFLAGS = 					\
+	$(SUID_LDFLAGS)							\
+	$(AM_LDFLAGS)							\
 	$(NULL)
 
 if HAVE_INTROSPECTION
