@@ -130,6 +130,8 @@ G_DEFINE_TYPE (PolkitAgentSession, polkit_agent_session, G_TYPE_OBJECT);
 static void
 polkit_agent_session_init (PolkitAgentSession *session)
 {
+  session->child_stdin = -1;
+  session->child_stdout = -1;
 }
 
 static void kill_helper (PolkitAgentSession *session);
@@ -393,6 +395,18 @@ kill_helper (PolkitAgentSession *session)
     {
       g_io_channel_unref (session->child_stdout_channel);
       session->child_stdout_channel = NULL;
+    }
+
+  if (session->child_stdout != -1)
+    {
+      g_warn_if_fail (close (session->child_stdout) == 0);
+      session->child_stdout = -1;
+    }
+
+  if (session->child_stdin != -1)
+    {
+      g_warn_if_fail (close (session->child_stdin) == 0);
+      session->child_stdin = -1;
     }
 
   session->helper_is_running = FALSE;
