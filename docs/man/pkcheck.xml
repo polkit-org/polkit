@@ -213,6 +213,9 @@ KEY3=VALUE3
       </citerefentry>,
       <citerefentry>
         <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

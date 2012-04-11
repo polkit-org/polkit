@@ -1,0 +1,154 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="pkttyagent.1" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <refentryinfo>
+    <title>pkttyagent</title>
+    <date>May 2009</date>
+    <productname>polkit</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>pkttyagent</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>pkttyagent</refname>
+    <refpurpose>Textual authentication helper</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>pkttyagent</command>
+      <arg><option>--version</option></arg>
+      <arg><option>--help</option></arg>
+    </cmdsynopsis>
+
+    <cmdsynopsis>
+      <command>pkttyagent</command>
+
+      <group>
+        <arg choice="plain">
+          <option>--process</option>
+          <group choice="req">
+            <arg choice="plain">
+              <replaceable>pid</replaceable>
+            </arg>
+            <arg choice="plain">
+              <replaceable>pid,pid-start-time</replaceable>
+            </arg>
+          </group>
+        </arg>
+        <arg choice="plain">
+          <option>--system-bus-name</option>
+          <replaceable>busname</replaceable>
+        </arg>
+      </group>
+
+      <group>
+        <arg choice="plain">
+          <option>--notify-fd</option>
+          <replaceable>fd</replaceable>
+        </arg>
+      </group>
+
+    </cmdsynopsis>
+
+  </refsynopsisdiv>
+
+  <refsect1 id="pkttyagent-descsription">
+    <title>DESCRIPTION</title>
+    <para>
+      <command>pkttyagent</command> is used to start a textual
+      authentication agent for the subject specified by either
+      <option>--process</option> or
+      <option>--system-bus-name</option>. If neither of these options
+      are given, the parent process is used.
+    </para>
+    <para>
+      To get notified when the authentication agent has been
+      registered either listen to the <link
+      linkend="eggdbus-signal-org.freedesktop.PolicyKit1.Authority::Changed">Changed</link>
+      D-Bus signal or use <option>--notify-fd</option> to pass the
+      number of a file descriptor that has been passed to the
+      program. This file descriptor will then be closed when the
+      authentication agent has been successfully registered.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkttyagent-return-value">
+    <title>RETURN VALUE</title>
+    <para>
+      If the authentication agent could not be registered,
+      <command>pkttyagent</command> exits with an exit code of
+      127. Diagnostic messages are printed on standard error.
+    </para>
+    <para>
+      If one or more of the options passed are malformed,
+      <command>pkttyagent</command> exits with an exit code of 126. If
+      stdin is a tty, then this manual page is also shown.
+    </para>
+    <para>
+      If the authentication agent was successfully registered,
+      <command>pkttyagent</command> will keep running, interacting
+      with the user as needed. When its services are no longer needed,
+      the process can be killed.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkttyagent-notes">
+    <title>NOTES</title>
+    <para>
+      Since process identifiers can be recycled, the caller should
+      always use <replaceable>pid,pid-start-time</replaceable> when
+      using the <option>--process</option> option.  The value of
+      <replaceable>pid-start-time</replaceable> can be determined by
+      consulting e.g. the
+      <citerefentry>
+        <refentrytitle>proc</refentrytitle><manvolnum>5</manvolnum>
+      </citerefentry>
+      file system depending on the operating system. If only <replaceable>pid</replaceable>
+      is passed to the <option>--process</option> option, then <command>pkttyagent</command>
+      will look up the start time itself but note that this may be racy.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkttyagent-author"><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen <email>davidz@redhat.com</email> with
+      a lot of help from many others.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkttyagent-bugs">
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      on how to subscribe.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkttyagent-see-also">
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

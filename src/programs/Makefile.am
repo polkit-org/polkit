@@ -17,7 +17,7 @@ INCLUDES =                                              	\
 
 # ----------------------------------------------------------------------------------------------------
 
-bin_PROGRAMS = pkexec pkcheck pkaction
+bin_PROGRAMS = pkexec pkcheck pkaction pkttyagent
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -43,6 +43,20 @@ pkcheck_CFLAGS =                             				\
 	$(NULL)
 
 pkcheck_LDADD =  	                      				\
+	$(GLIB_LIBS)							\
+	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la		\
+	$(NULL)
+
+# ----------------------------------------------------------------------------------------------------
+
+pkttyagent_SOURCES = pkttyagent.c
+
+pkttyagent_CFLAGS =                             			\
+	$(GLIB_CFLAGS)							\
+	$(NULL)
+
+pkttyagent_LDADD =  	                      				\
 	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la		\

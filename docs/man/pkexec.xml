@@ -283,6 +283,9 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>
     </para>
   </refsect1>

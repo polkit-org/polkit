@@ -10,6 +10,7 @@ man_MANS = 				\
 	pkexec.1			\
 	pkcheck.1			\
 	pkaction.1			\
+	pkttyagent.1			\
 	$(NULL)
 
 %.8 %.1 : %.xml
@@ -24,6 +25,7 @@ EXTRA_DIST = 				\
 	pkexec.xml			\
 	pkcheck.xml			\
 	pkaction.xml			\
+	pkttyagent.xml			\
 	$(NULL)
 
 clean-local:

@@ -223,6 +223,18 @@ System Context         |                        |
       implemention for systems without a <literal>root</literal>
       account.
     </para>
+
+    <para>
+      Applications that do not run under a desktop environment (for
+      example, if launched from a
+      <citerefentry><refentrytitle>ssh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      login) may not have have an authentication agent associated with
+      them. Such applications may use the <link
+      linkend="PolkitAgentTextListener-struct">PolkitAgentTextListener</link>
+      type or the
+      <citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      helper so the user can authenticate using a textual interface.
+    </para>
   </refsect1>
 
   <refsect1 id="polkit-declaring-actions"><title>DECLARING ACTIONS</title>
@@ -469,6 +481,9 @@ System Context         |                        |
       <citerefentry>
         <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
       </citerefentry>,
+      <citerefentry>
+        <refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
     </para>
   </refsect1>
 </refentry>

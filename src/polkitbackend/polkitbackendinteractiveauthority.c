@@ -2329,6 +2329,9 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
                                 caller_cmdline,
                                 object_path,
                                 locale);
+
+  g_signal_emit_by_name (authority, "changed");
+
   ret = TRUE;
 
  out:
@@ -2487,6 +2490,8 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
   /* this frees agent... */
   g_hash_table_remove (priv->hash_scope_to_authentication_agent, agent->scope);
 
+  g_signal_emit_by_name (authority, "changed");
+
   ret = TRUE;
 
  out:
@@ -2635,6 +2640,8 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
           /* this works because we have exactly one agent per session */
           /* this frees agent... */
           g_hash_table_remove (priv->hash_scope_to_authentication_agent, agent->scope);
+
+          g_signal_emit_by_name (authority, "changed");
         }
 
       /* cancel all authentication sessions initiated by the process owning the vanished name */
