@@ -56,6 +56,12 @@
         </arg>
       </group>
 
+      <group>
+        <arg choice="plain">
+          <option>--fallback</option>
+        </arg>
+      </group>
+
     </cmdsynopsis>
 
   </refsynopsisdiv>
@@ -77,6 +83,11 @@
       number of a file descriptor that has been passed to the
       program. This file descriptor will then be closed when the
       authentication agent has been successfully registered.
+    </para>
+    <para>
+      If <option>--fallback</option> is used, the textual
+      authentication agent will not replace an existing authentication
+      agent.
     </para>
   </refsect1>
 

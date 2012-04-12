@@ -83,6 +83,14 @@ gboolean                   polkit_authority_register_authentication_agent_sync (
                                                                                 GCancellable        *cancellable,
                                                                                 GError             **error);
 
+gboolean                   polkit_authority_register_authentication_agent_with_options_sync (PolkitAuthority     *authority,
+                                                                                             PolkitSubject       *subject,
+                                                                                             const gchar         *locale,
+                                                                                             const gchar         *object_path,
+                                                                                             GVariant            *options,
+                                                                                             GCancellable        *cancellable,
+                                                                                             GError             **error);
+
 gboolean                   polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *authority,
                                                                                   PolkitSubject       *subject,
                                                                                   const gchar         *object_path,
@@ -142,9 +150,23 @@ void                       polkit_authority_register_authentication_agent (Polki
                                                                            GAsyncReadyCallback  callback,
                                                                            gpointer             user_data);
 
+
 gboolean                   polkit_authority_register_authentication_agent_finish (PolkitAuthority *authority,
                                                                                   GAsyncResult    *res,
                                                                                   GError         **error);
+
+gboolean                   polkit_authority_register_authentication_agent_with_options_finish (PolkitAuthority *authority,
+                                                                                               GAsyncResult    *res,
+                                                                                               GError         **error);
+
+void                       polkit_authority_register_authentication_agent_with_options (PolkitAuthority     *authority,
+                                                                                        PolkitSubject       *subject,
+                                                                                        const gchar         *locale,
+                                                                                        const gchar         *object_path,
+                                                                                        GVariant            *options,
+                                                                                        GCancellable        *cancellable,
+                                                                                        GAsyncReadyCallback  callback,
+                                                                                        gpointer             user_data);
 
 void                       polkit_authority_unregister_authentication_agent (PolkitAuthority     *authority,
                                                                              PolkitSubject       *subject,

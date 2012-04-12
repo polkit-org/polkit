@@ -143,6 +143,7 @@ struct _PolkitBackendAuthorityClass
                                              PolkitSubject            *subject,
                                              const gchar              *locale,
                                              const gchar              *object_path,
+                                             GVariant                 *options,
                                              GError                  **error);
 
   gboolean (*unregister_authentication_agent) (PolkitBackendAuthority   *authority,
@@ -244,6 +245,7 @@ gboolean polkit_backend_authority_register_authentication_agent (PolkitBackendAu
                                                                  PolkitSubject             *subject,
                                                                  const gchar               *locale,
                                                                  const gchar               *object_path,
+                                                                 GVariant                  *options,
                                                                  GError                   **error);
 
 gboolean polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority    *authority,

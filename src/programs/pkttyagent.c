@@ -52,15 +52,18 @@ main (int argc, char *argv[])
 {
   gboolean opt_show_help = FALSE;
   gboolean opt_show_version = FALSE;
+  gboolean opt_fallback = FALSE;
   PolkitAuthority *authority = NULL;
   PolkitSubject *subject = NULL;
   gpointer local_agent_handle = NULL;
   PolkitAgentListener *listener = NULL;
+  GVariant *options = NULL;
   GError *error;
   GMainLoop *loop = NULL;
   guint n;
   guint ret = 126;
   gint notify_fd = -1;
+  GVariantBuilder builder;
 
   g_type_init ();
 
@@ -73,6 +76,10 @@ main (int argc, char *argv[])
       else if (g_strcmp0 (argv[n], "--version") == 0)
         {
           opt_show_version = TRUE;
+        }
+      else if (g_strcmp0 (argv[n], "--fallback") == 0)
+        {
+          opt_fallback = TRUE;
         }
       else if (g_strcmp0 (argv[n], "--notify-fd") == 0)
         {
@@ -180,6 +187,13 @@ main (int argc, char *argv[])
       goto out;
     }
 
+  if (opt_fallback)
+    {
+      g_variant_builder_init (&builder, G_VARIANT_TYPE_VARDICT);
+      g_variant_builder_add (&builder, "{sv}", "fallback", g_variant_new_boolean (TRUE));
+      options = g_variant_builder_end (&builder);
+    }
+
   error = NULL;
   /* this will fail if we can't find a controlling terminal */
   listener = polkit_agent_text_listener_new (NULL, &error);
@@ -191,12 +205,14 @@ main (int argc, char *argv[])
       ret = 127;
       goto out;
     }
-  local_agent_handle = polkit_agent_listener_register (listener,
-                                                       POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
-                                                       subject,
-                                                       NULL, /* object_path */
-                                                       NULL, /* GCancellable */
-                                                       &error);
+  local_agent_handle = polkit_agent_listener_register_with_options (listener,
+                                                                    POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
+                                                                    subject,
+                                                                    NULL, /* object_path */
+                                                                    options,
+                                                                    NULL, /* GCancellable */
+                                                                    &error);
+  options = NULL; /* consumed */
   g_object_unref (listener);
   if (local_agent_handle == NULL)
     {
@@ -224,6 +240,9 @@ main (int argc, char *argv[])
 
   if (local_agent_handle != NULL)
     polkit_agent_listener_unregister (local_agent_handle);
+
+  if (options != NULL)
+    g_variant_unref (options);
 
   if (subject != NULL)
     g_object_unref (subject);

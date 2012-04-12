@@ -156,6 +156,7 @@ static gboolean polkit_backend_interactive_authority_register_authentication_age
                                                                                     PolkitSubject            *subject,
                                                                                     const gchar              *locale,
                                                                                     const gchar              *object_path,
+                                                                                    GVariant                 *options,
                                                                                     GError                  **error);
 
 static gboolean polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBackendAuthority   *authority,
@@ -431,6 +432,7 @@ struct AuthenticationAgent
   PolkitSubject *scope;
 
   gchar *locale;
+  GVariant *registration_options;
   gchar *object_path;
   gchar *unique_system_bus_name;
 
@@ -1541,11 +1543,12 @@ authentication_agent_unref (AuthenticationAgent *agent)
     {
       if (agent->proxy != NULL)
         g_object_unref (agent->proxy);
-
       g_object_unref (agent->scope);
       g_free (agent->locale);
       g_free (agent->object_path);
       g_free (agent->unique_system_bus_name);
+      if (agent->registration_options != NULL)
+        g_variant_unref (agent->registration_options);
       g_free (agent);
     }
 }
@@ -1554,7 +1557,8 @@ static AuthenticationAgent *
 authentication_agent_new (PolkitSubject *scope,
                           const gchar *unique_system_bus_name,
                           const gchar *locale,
-                          const gchar *object_path)
+                          const gchar *object_path,
+                          GVariant    *registration_options)
 {
   AuthenticationAgent *agent;
   GError *error;
@@ -1566,6 +1570,7 @@ authentication_agent_new (PolkitSubject *scope,
   agent->object_path = g_strdup (object_path);
   agent->unique_system_bus_name = g_strdup (unique_system_bus_name);
   agent->locale = g_strdup (locale);
+  agent->registration_options = registration_options != NULL ? g_variant_ref (registration_options) : NULL;
 
   error = NULL;
   agent->proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
@@ -1592,19 +1597,16 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
                                       PolkitSubject *subject)
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
-  PolkitSubject *session_for_subject;
-  AuthenticationAgent *agent;
+  PolkitSubject *session_for_subject = NULL;
+  AuthenticationAgent *agent = NULL;
+  AuthenticationAgent *agent_fallback = NULL;
+  gboolean fallback = FALSE;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
-  agent = NULL;
-  session_for_subject = NULL;
-
   agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
-  if (agent != NULL)
-    goto out;
 
-  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+  if (agent == NULL && POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
       PolkitSubject *process;
       process = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
@@ -1613,12 +1615,24 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
       if (process != NULL)
         {
           agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, process);
-          if (agent != NULL)
-            {
-              g_object_unref (process);
-              goto out;
-            }
           g_object_unref (process);
+        }
+    }
+
+  if (agent != NULL)
+    {
+      /* We have an agent! Now see if we should use this as a fallback only */
+      if (agent->registration_options != NULL &&
+          g_variant_lookup (agent->registration_options, "fallback", "b", &fallback) &&
+          fallback)
+        {
+          agent_fallback = agent;
+          agent = NULL;
+        }
+      else
+        {
+          /* Nope, use it */
+          goto out;
         }
     }
 
@@ -1635,6 +1649,10 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
     goto out;
 
   agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, session_for_subject);
+
+  /* use fallback, if available */
+  if (agent == NULL && agent_fallback != NULL)
+    agent = agent_fallback;
 
  out:
   if (session_for_subject != NULL)
@@ -2194,6 +2212,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
                                                                     PolkitSubject            *subject,
                                                                     const gchar              *locale,
                                                                     const gchar              *object_path,
+                                                                    GVariant                 *options,
                                                                     GError                  **error)
 {
   PolkitBackendInteractiveAuthority *interactive_authority;
@@ -2302,7 +2321,8 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   agent = authentication_agent_new (subject,
                                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                     locale,
-                                    object_path);
+                                    object_path,
+                                    options);
 
   g_hash_table_insert (priv->hash_scope_to_authentication_agent,
                        g_object_ref (subject),

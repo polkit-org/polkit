@@ -43,7 +43,8 @@
  * evidence that the user is one of the requested identities.
  *
  * To register a #PolkitAgentListener with the PolicyKit daemon, use
- * polkit_agent_listener_register().
+ * polkit_agent_listener_register() or
+ * polkit_agent_listener_register_with_options().
  */
 
 typedef struct
@@ -61,6 +62,8 @@ typedef struct
   gboolean is_registered;
 
   PolkitAgentListener *listener;
+
+  GVariant *registration_options;
 
   PolkitSubject *subject;
   gchar *object_path;
@@ -104,6 +107,9 @@ server_free (Server *server)
   if (server->interface_info != NULL)
     g_dbus_interface_info_unref (server->interface_info);
 
+  if (server->registration_options != NULL)
+    g_variant_unref (server->registration_options);
+
   if (server->listener != NULL)
     g_object_unref (server->listener);
 
@@ -143,12 +149,13 @@ server_register (Server   *server,
     locale = "en_US.UTF-8";
 
   local_error = NULL;
-  if (!polkit_authority_register_authentication_agent_sync (server->authority,
-                                                            server->subject,
-                                                            locale,
-                                                            server->object_path,
-                                                            NULL,
-                                                            &local_error))
+  if (!polkit_authority_register_authentication_agent_with_options_sync (server->authority,
+                                                                         server->subject,
+                                                                         locale,
+                                                                         server->object_path,
+                                                                         server->registration_options,
+                                                                         NULL,
+                                                                         &local_error))
     {
       g_warning ("Unable to register authentication agent: %s", local_error->message);
       g_propagate_error (error, local_error);
@@ -360,42 +367,30 @@ server_thread_func (gpointer user_data)
 }
 
 /**
- * polkit_agent_listener_register:
+ * polkit_agent_listener_register_with_options:
  * @listener: A #PolkitAgentListener.
  * @flags: A set of flags from the #PolkitAgentRegisterFlags enumeration.
  * @subject: The subject to become an authentication agent for, typically a #PolkitUnixSession object.
  * @object_path: The D-Bus object path to use for the authentication agent or %NULL for the default object path.
+ * @options: (allow-none): A #GVariant with options or %NULL.
  * @cancellable: A #GCancellable or %NULL.
  * @error: Return location for error.
  *
- * Registers @listener with the PolicyKit daemon as an authentication
- * agent for @subject. This is implemented by registering a D-Bus
- * object at @object_path on the unique name assigned by the system
- * message bus.
- *
- * Whenever the PolicyKit daemon needs to authenticate a processes
- * that is related to @subject, the methods
- * polkit_agent_listener_initiate_authentication() and
- * polkit_agent_listener_initiate_authentication_finish() will be
- * invoked on @listener.
- *
- * Note that registration of an authentication agent can fail; for
- * example another authentication agent may already be registered for
- * @subject.
- *
- * Note that the calling thread is blocked until a reply is received.
+ * Like polkit_agent_listener_register() but takes options to influence registration. See the
+ * <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgentWithOptions">RegisterAuthenticationAgentWithOptions()</link> D-Bus method for details.
  *
  * Returns: (transfer full): %NULL if @error is set, otherwise a
  * registration handle that can be used with
  * polkit_agent_listener_unregister().
  */
 gpointer
-polkit_agent_listener_register (PolkitAgentListener      *listener,
-                                PolkitAgentRegisterFlags  flags,
-                                PolkitSubject            *subject,
-                                const gchar              *object_path,
-                                GCancellable             *cancellable,
-                                GError                  **error)
+polkit_agent_listener_register_with_options (PolkitAgentListener      *listener,
+                                             PolkitAgentRegisterFlags  flags,
+                                             PolkitSubject            *subject,
+                                             const gchar              *object_path,
+                                             GVariant                 *options,
+                                             GCancellable             *cancellable,
+                                             GError                  **error)
 {
   Server *server;
   GDBusNodeInfo *node_info;
@@ -424,6 +419,8 @@ polkit_agent_listener_register (PolkitAgentListener      *listener,
   g_dbus_node_info_unref (node_info);
 
   server->listener = g_object_ref (listener);
+
+  server->registration_options = options != NULL ? g_variant_ref_sink (options) : NULL;
 
   if (flags & POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD)
     {
@@ -469,6 +466,47 @@ polkit_agent_listener_register (PolkitAgentListener      *listener,
 
  out:
   return server;
+}
+
+/**
+ * polkit_agent_listener_register:
+ * @listener: A #PolkitAgentListener.
+ * @flags: A set of flags from the #PolkitAgentRegisterFlags enumeration.
+ * @subject: The subject to become an authentication agent for, typically a #PolkitUnixSession object.
+ * @object_path: The D-Bus object path to use for the authentication agent or %NULL for the default object path.
+ * @cancellable: A #GCancellable or %NULL.
+ * @error: Return location for error.
+ *
+ * Registers @listener with the PolicyKit daemon as an authentication
+ * agent for @subject. This is implemented by registering a D-Bus
+ * object at @object_path on the unique name assigned by the system
+ * message bus.
+ *
+ * Whenever the PolicyKit daemon needs to authenticate a processes
+ * that is related to @subject, the methods
+ * polkit_agent_listener_initiate_authentication() and
+ * polkit_agent_listener_initiate_authentication_finish() will be
+ * invoked on @listener.
+ *
+ * Note that registration of an authentication agent can fail; for
+ * example another authentication agent may already be registered for
+ * @subject.
+ *
+ * Note that the calling thread is blocked until a reply is received.
+ *
+ * Returns: (transfer full): %NULL if @error is set, otherwise a
+ * registration handle that can be used with
+ * polkit_agent_listener_unregister().
+ */
+gpointer
+polkit_agent_listener_register (PolkitAgentListener      *listener,
+                                PolkitAgentRegisterFlags  flags,
+                                PolkitSubject            *subject,
+                                const gchar              *object_path,
+                                GCancellable             *cancellable,
+                                GError                  **error)
+{
+  return polkit_agent_listener_register_with_options (listener, flags, subject, object_path, NULL, cancellable, error);
 }
 
 /**

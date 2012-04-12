@@ -1167,6 +1167,170 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
 /* ---------------------------------------------------------------------------------------------------- */
 
 /**
+ * polkit_authority_register_authentication_agent_with_options:
+ * @authority: A #PolkitAuthority.
+ * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
+ * @locale: The locale of the authentication agent.
+ * @object_path: The object path for the authentication agent.
+ * @options: (allow-none): A #GVariant with options or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously registers an authentication agent.
+ *
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_register_authentication_agent_with_options_finish() to get the
+ * result of the operation.
+ **/
+void
+polkit_authority_register_authentication_agent_with_options (PolkitAuthority      *authority,
+                                                             PolkitSubject        *subject,
+                                                             const gchar          *locale,
+                                                             const gchar          *object_path,
+                                                             GVariant             *options,
+                                                             GCancellable         *cancellable,
+                                                             GAsyncReadyCallback   callback,
+                                                             gpointer              user_data)
+{
+  GVariant *subject_value;
+
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (locale != NULL);
+  g_return_if_fail (g_variant_is_object_path (object_path));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+  subject_value = polkit_subject_to_gvariant (subject);
+  g_variant_ref_sink (subject_value);
+  if (options != NULL)
+    {
+      g_dbus_proxy_call (authority->proxy,
+                         "RegisterAuthenticationAgentWithOptions",
+                         g_variant_new ("(@(sa{sv})ss@a{sv})",
+                                        subject_value,
+                                        locale,
+                                        object_path,
+                                        options),
+                         G_DBUS_CALL_FLAGS_NONE,
+                         -1,
+                         cancellable,
+                         generic_async_cb,
+                         g_simple_async_result_new (G_OBJECT (authority),
+                                                    callback,
+                                                    user_data,
+                                                    polkit_authority_register_authentication_agent_with_options));
+    }
+  else
+    {
+      g_dbus_proxy_call (authority->proxy,
+                         "RegisterAuthenticationAgent",
+                         g_variant_new ("(@(sa{sv})ss)",
+                                        subject_value,
+                                        locale,
+                                        object_path),
+                         G_DBUS_CALL_FLAGS_NONE,
+                         -1,
+                         cancellable,
+                         generic_async_cb,
+                         g_simple_async_result_new (G_OBJECT (authority),
+                                                    callback,
+                                                    user_data,
+                                                    polkit_authority_register_authentication_agent_with_options));
+    }
+  g_variant_unref (subject_value);
+}
+
+/**
+ * polkit_authority_register_authentication_agent_with_options_finish:
+ * @authority: A #PolkitAuthority.
+ * @res: A #GAsyncResult obtained from the callback.
+ * @error: (allow-none): Return location for error or %NULL.
+ *
+ * Finishes registering an authentication agent.
+ *
+ * Returns: %TRUE if the authentication agent was successfully registered, %FALSE if @error is set.
+ **/
+gboolean
+polkit_authority_register_authentication_agent_with_options_finish (PolkitAuthority *authority,
+                                                                    GAsyncResult    *res,
+                                                                    GError         **error)
+{
+  gboolean ret;
+  GVariant *value;
+  GAsyncResult *_res;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (G_IS_SIMPLE_ASYNC_RESULT (res), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  ret = FALSE;
+
+  g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) == polkit_authority_register_authentication_agent_with_options);
+  _res = G_ASYNC_RESULT (g_simple_async_result_get_op_res_gpointer (G_SIMPLE_ASYNC_RESULT (res)));
+
+  value = g_dbus_proxy_call_finish (authority->proxy, _res, error);
+  if (value == NULL)
+    goto out;
+  ret = TRUE;
+  g_variant_unref (value);
+
+ out:
+  return ret;
+}
+
+
+/**
+ * polkit_authority_register_authentication_agent_with_options_sync:
+ * @authority: A #PolkitAuthority.
+ * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.
+ * @locale: The locale of the authentication agent.
+ * @object_path: The object path for the authentication agent.
+ * @options: (allow-none): A #GVariant with options or %NULL.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
+ *
+ * Registers an authentication agent. The calling thread is blocked
+ * until a reply is received. See
+ * polkit_authority_register_authentication_agent_with_options() for the
+ * asynchronous version.
+ *
+ * Returns: %TRUE if the authentication agent was successfully registered, %FALSE if @error is set.
+ **/
+gboolean
+polkit_authority_register_authentication_agent_with_options_sync (PolkitAuthority     *authority,
+                                                                  PolkitSubject       *subject,
+                                                                  const gchar         *locale,
+                                                                  const gchar         *object_path,
+                                                                  GVariant            *options,
+                                                                  GCancellable        *cancellable,
+                                                                  GError             **error)
+{
+  gboolean ret;
+  CallSyncData *data;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (locale != NULL, FALSE);
+  g_return_val_if_fail (g_variant_is_object_path (object_path), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  data = call_sync_new ();
+  polkit_authority_register_authentication_agent_with_options (authority, subject, locale, object_path, options, cancellable, call_sync_cb, data);
+  call_sync_block (data);
+  ret = polkit_authority_register_authentication_agent_with_options_finish (authority, data->res, error);
+  call_sync_free (data);
+
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+/**
  * polkit_authority_unregister_authentication_agent:
  * @authority: A #PolkitAuthority.
  * @subject: The subject the authentication agent is for, typically a #PolkitUnixSession object.

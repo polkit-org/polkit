@@ -34,6 +34,10 @@ Structure    <link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuth
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent</link>      (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
                                   IN  String                         locale,
                                   IN  String                         object_path)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgentWithOptions">RegisterAuthenticationAgentWithOptions</link> (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                  subject,
+                                  IN  String                         locale,
+                                  IN  String                         object_path,
+                                  IN  Dict&lt;String,Variant&gt;     options)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent">UnregisterAuthenticationAgent</link>    (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
                                   IN  String                         object_path)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse</link>      (IN  String                         cookie,
@@ -724,6 +728,20 @@ The object path of authentication agent object on the unique name of the caller.
   </varlistentry>
 </variablelist>
     </refsect2>
+
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgentWithOptions">
+      <title>RegisterAuthenticationAgentWithOptions ()</title>
+    <programlisting>
+RegisterAuthenticationAgent (IN  <link linkend="eggdbus-struct-Subject">Subject</link>  subject,
+                             IN  String                   locale,
+                             IN  String                   object_path,
+                             IN  Dict&lt;String,Variant&gt;     options)
+    </programlisting>
+    <para>
+<para>Like <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent</link> but takes additional options. If the option <literal>fallback</literal> (of type <literal>Boolean</literal>) is TRUE, then the authentcation agent will only be used as a fallback, e.g. if another agent (without the <literal>fallback</literal> option set TRUE) is available, it will be used instead.</para>
+    </para>
+    </refsect2>
+
     <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent">
       <title>UnregisterAuthenticationAgent ()</title>
     <programlisting>

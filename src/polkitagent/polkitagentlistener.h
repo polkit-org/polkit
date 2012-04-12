@@ -134,6 +134,14 @@ gpointer  polkit_agent_listener_register                        (PolkitAgentList
                                                                  GCancellable             *cancellable,
                                                                  GError                  **error);
 
+gpointer  polkit_agent_listener_register_with_options           (PolkitAgentListener      *listener,
+                                                                 PolkitAgentRegisterFlags  flags,
+                                                                 PolkitSubject            *subject,
+                                                                 const gchar              *object_path,
+                                                                 GVariant                 *options,
+                                                                 GCancellable             *cancellable,
+                                                                 GError                  **error);
+
 void      polkit_agent_listener_unregister                      (gpointer                  registration_handle);
 
 G_END_DECLS

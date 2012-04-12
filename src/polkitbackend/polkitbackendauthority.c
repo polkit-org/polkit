@@ -268,6 +268,7 @@ polkit_backend_authority_check_authorization_finish (PolkitBackendAuthority  *au
  * @subject: The subject the authentication agent wants to register for.
  * @locale: The locale of the authentication agent.
  * @object_path: The object path for the authentication agent.
+ * @options: A #GVariant with options or %NULL.
  * @error: Return location for error or %NULL.
  *
  * Registers an authentication agent.
@@ -280,6 +281,7 @@ polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority  
                                                         PolkitSubject             *subject,
                                                         const gchar               *locale,
                                                         const gchar               *object_path,
+                                                        GVariant                  *options,
                                                         GError                   **error)
 {
   PolkitBackendAuthorityClass *klass;
@@ -296,7 +298,7 @@ polkit_backend_authority_register_authentication_agent (PolkitBackendAuthority  
     }
   else
     {
-      return klass->register_authentication_agent (authority, caller, subject, locale, object_path, error);
+      return klass->register_authentication_agent (authority, caller, subject, locale, object_path, options, error);
     }
 }
 
@@ -570,6 +572,12 @@ static const gchar *server_introspection_data =
   "      <arg type='(sa{sv})' name='subject' direction='in'/>"
   "      <arg type='s' name='locale' direction='in'/>"
   "      <arg type='s' name='object_path' direction='in'/>"
+  "    </method>"
+  "    <method name='RegisterAuthenticationAgentWithOptions'>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "      <arg type='s' name='locale' direction='in'/>"
+  "      <arg type='s' name='object_path' direction='in'/>"
+  "      <arg type='a{sv}' name='options' direction='in'/>"
   "    </method>"
   "    <method name='UnregisterAuthenticationAgent'>"
   "      <arg type='(sa{sv})' name='subject' direction='in'/>"
@@ -873,6 +881,7 @@ server_handle_register_authentication_agent (Server                 *server,
                                                                subject,
                                                                locale,
                                                                object_path,
+                                                               NULL,
                                                                &error))
     {
       g_dbus_method_invocation_return_gerror (invocation, error);
@@ -883,6 +892,63 @@ server_handle_register_authentication_agent (Server                 *server,
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
+  if (subject != NULL)
+    g_object_unref (subject);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+server_handle_register_authentication_agent_with_options (Server                 *server,
+                                                          GVariant               *parameters,
+                                                          PolkitSubject          *caller,
+                                                          GDBusMethodInvocation  *invocation)
+{
+  GVariant *subject_gvariant;
+  GError *error;
+  PolkitSubject *subject;
+  const gchar *locale;
+  const gchar *object_path;
+  GVariant *options;
+
+  subject = NULL;
+
+  g_variant_get (parameters,
+                 "(@(sa{sv})&s&s@a{sv})",
+                 &subject_gvariant,
+                 &locale,
+                 &object_path,
+                 &options);
+
+  error = NULL;
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
+  if (subject == NULL)
+    {
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  if (!polkit_backend_authority_register_authentication_agent (server->authority,
+                                                               caller,
+                                                               subject,
+                                                               locale,
+                                                               object_path,
+                                                               options,
+                                                               &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
+
+ out:
+  if (options != NULL)
+      g_variant_unref (options);
   if (subject != NULL)
     g_object_unref (subject);
 }
@@ -1150,6 +1216,8 @@ server_handle_method_call (GDBusConnection        *connection,
     server_handle_cancel_check_authorization (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "RegisterAuthenticationAgent") == 0)
     server_handle_register_authentication_agent (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "RegisterAuthenticationAgentWithOptions") == 0)
+    server_handle_register_authentication_agent_with_options (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "UnregisterAuthenticationAgent") == 0)
     server_handle_unregister_authentication_agent (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "AuthenticationAgentResponse") == 0)
