@@ -45,10 +45,9 @@
       <citerefentry><refentrytitle>ssh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       login), it is trivial for the application to use the <link
       linkend="PolkitAgentTextListener">PolkitAgentTextListener</link>
-      class to spawn its own authentication agent as needed. See the
-      <link linkend="pkcheck.1">pkcheck</link> or <link
-      linkend="pkexec.1">pkexec</link> program sources for an example
-      of how to do this.
+      class to spawn its own authentication agent as
+      needed. Alternatively, the <xref linkend="pkttyagent.1"/>
+      helper can be used to do this.
     </para>
     <para>
       As an example of code using the GObject API, see <xref linkend="cancel-example"/>.
