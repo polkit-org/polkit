@@ -5,11 +5,11 @@
 <!ENTITY extensiondir SYSTEM "../extensiondir.xml">
 ]>
 <part id="overview">
-  <title>PolicyKit Overview</title>
+  <title>polkit Overview</title>
   <chapter id="polkit-intro">
     <title>Introduction</title>
     <para>
-      PolicyKit provides an authorization API intended to be used by
+      polkit provides an authorization API intended to be used by
       privileged programs (<quote>MECHANISMS</quote>) offering service
       to unprivileged programs (<quote>CLIENTS</quote>). See the
       <link linkend="polkit.8">polkit</link> manual page for
@@ -18,19 +18,19 @@
   </chapter>
 
   <chapter id="polkit-apps">
-    <title>Writing PolicyKit applications</title>
+    <title>Writing polkit applications</title>
     <para>
-      PolicyKit applications are privileged mechanisms using the
-      PolicyKit authority as a decider component. To do this, a
+      polkit applications are privileged mechanisms using the
+      polkit authority as a decider component. To do this, a
       <emphasis>mechanism</emphasis> use either
       the <link linkend="ref-api">GObject API</link>,
       the <link linkend="ref-dbus-api">D-Bus API</link> or
       the <link linkend="pkcheck.1">pkcheck</link> command to
-      communicate with the PolicyKit Authority.
+      communicate with the polkit Authority.
     </para>
     <para>
       Note that <emphasis>clients</emphasis> normally doesn't use the
-      PolicyKit API directly – it is intended for privileged
+      polkit API directly – it is intended for privileged
       <emphasis>mechanisms</emphasis>. If a client needs to disable,
       modify or remove UI elements to e.g. convey to the user that a
       certain action cannot be carried out (because e.g. the user is
@@ -39,7 +39,7 @@
       mechanism provide an API for this.
     </para>
     <para>
-      If a PolicyKit application wants to handle the case where no
+      If a polkit application wants to handle the case where no
       authentication agent exists (for example if the app is launched
       via a
       <citerefentry><refentrytitle>ssh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -62,10 +62,10 @@
   </chapter>
 
   <chapter id="polkit-agents">
-    <title>Writing PolicyKit Authentication Agents</title>
+    <title>Writing polkit Authentication Agents</title>
     <para>
       Authentication agents are provided by desktop environments. When
-      an user session starts, the agent registers with the PolicyKit
+      an user session starts, the agent registers with the polkit
       Authority using
       the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>
       method. When services are needed, the authority will invoke
@@ -74,7 +74,7 @@
       D-Bus interface. Once the user is authenticated, (a privileged
       part of) the agent invokes
       the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
-      method.  Note that the PolicyKit Authority itself does not care
+      method.  Note that the polkit Authority itself does not care
       how the agent authenticates the user.
     </para>
     <para>
@@ -91,23 +91,23 @@
   </chapter>
 
   <chapter id="polkit-extending">
-    <title>Extending PolicyKit</title>
+    <title>Extending polkit</title>
     <para>
-      PolicyKit exports a number of extension points to
-      replace/customize behavior of the PolicyKit daemon. Note that
+      polkit exports a number of extension points to
+      replace/customize behavior of the polkit daemon. Note that
       all extensions run with super user privileges in the same
-      process as the PolicyKit daemon.
+      process as the polkit daemon.
     </para>
     <para>
-      The PolicyKit daemons loads extensions
+      The polkit daemons loads extensions
       from the <filename>&extensiondir;</filename> directory. See
       the <link linkend="gio-Extension-Points">GIO Extension Point
         documentation</link> for more information about the extension
-      system used by PolicyKit.
+      system used by polkit.
     </para>
     <para>
       The following extension points are currently defined by
-      PolicyKit:
+      polkit:
     </para>
 
     <formalpara>
@@ -118,7 +118,7 @@
         extension point must be derived from the
         PolkitBackendAuthority class. See
         the <filename>src/nullbackend/</filename> directory in the
-        PolicyKit sources for an example.
+        polkit sources for an example.
       </para>
     </formalpara>
 
