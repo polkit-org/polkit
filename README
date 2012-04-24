@@ -1,3 +1,27 @@
-PolicyKit is a toolkit for defining and handling authorizations.  It
-is used for allowing unprivileged processes to speak to privileged
+OVERVIEW
+========
+
+polkit is a toolkit for defining and handling authorizations.  It is
+used for allowing unprivileged processes to speak to privileged
 processes.
+
+RELEASES
+========
+
+Releases of polkit are available in compressed tarballs from
+
+ http://www.freedesktop.org/software/polkit/releases/
+
+To verify the authenticity of the compressed tarball, use this command
+
+ $ gpg --verify polkit-$(VERSION).tar.gz.sign polkit-$(VERSION).tar.gz
+ gpg: Signature made Sat 10 Mar 2012 03:00:30 PM EST using RSA key ID 3418A891
+ gpg: Good signature from "David Zeuthen <zeuthen@gmail.com>"
+ gpg:                 aka "[jpeg image of size 5237]"
+
+BUGS and DEVELOPMENT
+====================
+
+Please report bugs via the freedesktop.org bugzilla at
+
+ https://bugs.freedesktop.org/enter_bug.cgi?product=PolicyKit
