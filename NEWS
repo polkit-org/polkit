@@ -1,4 +1,44 @@
 --------------
+polkit 0.105
+--------------
+
+This is polkit 0.105
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.28
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.104:
+
+David Zeuthen (11):
+      Post-release version bump
+      PolkitUnixSession: Set error if we cannot find a session for the given pid
+      PolkitUnixSession: Actually return TRUE if a session exists
+      PolkitAgentSession: Don't leak file descriptors
+      Add pkttyagent(1) helper
+      Make it possible to influence agent registration with an a{sv} parameter
+      Fix type in docs
+      Mention pkttyagent(1) in "Writing PolicyKit applications" chapter
+      Update the docs to use 'polkit' (instead of 'PolicyKit') as the name
+      Add Makefile rules for signing and publishing releases and docs
+      Update NEWS for release
+
+Ryan Lortie (1):
+      Various builddir != srcdir fixes
+
+Thanks to our contributors.
+
+David Zeuthen,
+April 24, 2012
+
+--------------
 PolicyKit 0.104
 --------------
 
