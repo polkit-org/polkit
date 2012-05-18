@@ -27,6 +27,8 @@
 #include <polkitbackend/polkitbackendjsauthority.h>
 #include <polkittesthelper.h>
 
+/* see test/data/etc/polkit-1/rules.d/10-testing.rules */
+
 /* Test helper types */
 
 static PolkitBackendJsAuthority *get_authority (void);

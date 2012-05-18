@@ -38,6 +38,8 @@
 
 #include <jsapi.h>
 
+#include "initjs.h" /* init.js */
+
 /**
  * SECTION:polkitbackendjsauthority
  * @title: PolkitBackendJsAuthority
@@ -263,8 +265,8 @@ reload_scripts (PolkitBackendJsAuthority *authority)
                            argv,
                            &rval))
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, faileded clearing rules\n");
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error deleting old rules, not loading new ones");
       goto out;
     }
 
@@ -308,81 +310,19 @@ on_dir_monitor_changed (GFileMonitor     *monitor,
     }
 }
 
-static const gchar js_polkit_init[] =
-  "function Details() {\n"
-  "  this.toString = function() {\n"
-  "    var ret = '[Details';\n"
-  "    for (var i in this) {\n"
-  "      if (typeof this[i] != 'function')\n"
-  "        ret += ' ' + i + '=\\'' + this[i] + '\\'';\n"
-  "    }"
-  "    ret += ']';\n"
-  "    return ret;\n"
-  "  };\n"
-  "};\n"
-  "\n"
-  "function Subject() {\n"
-  "  this.isInGroup = function(group) {\n"
-  "    for (var n = 0; n < this.groups.length; n++) {\n"
-  "    if (this.groups[n] == group)\n"
-  "      return true;\n"
-  "    }\n"
-  "    return false;\n"
-  "  };\n"
-  "  \n"
-  "  this.toString = function() {\n"
-  "    var ret = '[Subject';\n"
-  "    for (var i in this) {\n"
-  "      if (typeof this[i] != 'function')\n"
-  "        ret += ' ' + i + '=\\'' + this[i] + '\\'';\n"
-  "    }"
-  "    ret += ']';\n"
-  "    return ret;\n"
-  "  };\n"
-  "};\n"
-  "\n"
-  "polkit._administratorRuleFuncs = [];\n"
-  "polkit.addAdministratorRule = function(callback) {this._administratorRuleFuncs.push(callback);};\n"
-  "polkit._runAdministratorRules = function(action, subject, details) {\n"
-  "  var ret = null;\n"
-  "  for (var n = this._administratorRuleFuncs.length - 1; n >= 0; n--) {\n"
-  "    var func = this._administratorRuleFuncs[n];\n"
-  "    ret = func(action, subject, details);\n"
-  "    if (ret)\n"
-  "      break\n"
-  "  }\n"
-  "  return ret.join(',');\n"
-  "};\n"
-  "\n"
-  "polkit._authorizationRuleFuncs = [];\n"
-  "polkit.addAuthorizationRule = function(callback) {this._authorizationRuleFuncs.push(callback);};\n"
-  "polkit._runAuthorizationRules = function(action, subject, details) {\n"
-  "  var ret = null;\n"
-  "  for (var n = this._authorizationRuleFuncs.length - 1; n >= 0; n--) {\n"
-  "    var func = this._authorizationRuleFuncs[n];\n"
-  "    ret = func(action, subject, details);\n"
-  "    if (ret)\n"
-  "      break\n"
-  "  }\n"
-  "  return ret;\n"
-  "};\n"
-  "\n"
-  "polkit._deleteRules = function() {\n"
-  "  this._administratorRuleFuncs = [];\n"
-  "  this._authorizationRuleFuncs = [];\n"
-  "};\n"
-  "\n"
-  "";
-
-
 static void
 polkit_backend_js_authority_constructed (GObject *object)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
 
-  /* TODO: error checking */
   authority->priv->rt = JS_NewRuntime (8L * 1024L * 1024L);
+  if (authority->priv->rt == NULL)
+    goto fail;
+
   authority->priv->cx = JS_NewContext (authority->priv->rt, 8192);
+  if (authority->priv->cx == NULL)
+    goto fail;
+
   JS_SetOptions (authority->priv->cx,
                  JSOPTION_VAROBJFIX |
                  JSOPTION_JIT |
@@ -394,7 +334,11 @@ polkit_backend_js_authority_constructed (GObject *object)
   authority->priv->js_global = JS_NewCompartmentAndGlobalObject (authority->priv->cx,
                                                                  &js_global_class,
                                                                  NULL);
-  JS_InitStandardClasses (authority->priv->cx, authority->priv->js_global);
+  if (authority->priv->js_global == NULL)
+    goto fail;
+
+  if (!JS_InitStandardClasses (authority->priv->cx, authority->priv->js_global))
+    goto fail;
 
   authority->priv->js_polkit = JS_DefineObject(authority->priv->cx,
                                                authority->priv->js_global,
@@ -402,24 +346,32 @@ polkit_backend_js_authority_constructed (GObject *object)
                                                &js_polkit_class,
                                                NULL,
                                                JSPROP_ENUMERATE);
-  JS_DefineFunctions (authority->priv->cx,
-                      authority->priv->js_polkit,
-                      js_polkit_functions);
+  if (authority->priv->js_polkit == NULL)
+    goto fail;
+
+  if (!JS_DefineFunctions (authority->priv->cx,
+                           authority->priv->js_polkit,
+                           js_polkit_functions))
+    goto fail;
 
   if (!JS_EvaluateScript (authority->priv->cx,
                           authority->priv->js_global,
-                          js_polkit_init,
-                          strlen (js_polkit_init),
-                          NULL,  /* filename */
+                          init_js, strlen (init_js), /* init.js */
+                          "init.js",  /* filename */
                           0,     /* lineno */
                           NULL)) /* rval */
     {
-      g_printerr ("Error running init code\n");
+      goto fail;
     }
 
   load_scripts (authority);
 
   G_OBJECT_CLASS (polkit_backend_js_authority_parent_class)->constructed (object);
+  return;
+
+ fail:
+  g_critical ("Error initializing JavaScript environment");
+  g_assert_not_reached ();
 }
 
 static void
@@ -804,16 +756,18 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
     {
-      /* TODO: syslog? */
-      g_printerr ("Error converting subject to JS object: %s\n", error->message);
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error converting subject to JS object: %s",
+                                    error->message);
       g_clear_error (&error);
       goto out;
     }
 
   if (!details_to_jsval (authority, details, &argv[2], &error))
     {
-      /* TODO: syslog? */
-      g_printerr ("Error converting details to JS object: %s\n", error->message);
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error converting details to JS object: %s",
+                                    error->message);
       g_clear_error (&error);
       goto out;
     }
@@ -825,15 +779,14 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
                            argv,
                            &rval))
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, failed\n");
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error evaluating administrator rules");
       goto out;
     }
 
   if (!JSVAL_IS_STRING (rval) && !JSVAL_IS_NULL (rval))
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, not string\n");
+      g_warning ("Expected a string");
       goto out;
     }
 
@@ -841,12 +794,9 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   ret_str = g_utf16_to_utf8 (JS_GetStringCharsZ (authority->priv->cx, ret_jsstr), -1, NULL, NULL, NULL);
   if (ret_str == NULL)
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, error converting to UTF-8\n");
+      g_warning ("Error converting resulting string to UTF-8: %s", error->message);
       goto out;
     }
-
-  //g_print ("yay, worked `%s'\n", ret_str);
 
   ret_strs = g_strsplit (ret_str, ",", -1);
   for (n = 0; ret_strs != NULL && ret_strs[n] != NULL; n++)
@@ -858,8 +808,9 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       identity = polkit_identity_from_string (identity_str, &error);
       if (identity == NULL)
         {
-          /* TODO: syslog? */
-          g_printerr ("boo, identity `%s' is not valid, ignoring\n", identity_str);
+          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        "Identity `%s' is not valid, ignoring",
+                                        identity_str);
         }
       else
         {
@@ -900,22 +851,25 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   JSString *ret_jsstr;
   const jschar *ret_utf16;
   gchar *ret_str = NULL;
+  gboolean good = FALSE;
 
   action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
   argv[0] = STRING_TO_JSVAL (action_id_jstr);
 
   if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
     {
-      /* TODO: syslog? */
-      g_printerr ("Error converting subject to JS object: %s\n", error->message);
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error converting subject to JS object: %s",
+                                    error->message);
       g_clear_error (&error);
       goto out;
     }
 
   if (!details_to_jsval (authority, details, &argv[2], &error))
     {
-      /* TODO: syslog? */
-      g_printerr ("Error converting details to JS object: %s\n", error->message);
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error converting details to JS object: %s",
+                                    error->message);
       g_clear_error (&error);
       goto out;
     }
@@ -927,45 +881,47 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
                            argv,
                            &rval))
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, failed\n");
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error evaluating authorization rules");
       goto out;
     }
 
   if (!JSVAL_IS_STRING (rval) && !JSVAL_IS_NULL (rval))
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, not string\n");
+      g_warning ("Expected a string");
       goto out;
     }
 
   ret_jsstr = JSVAL_TO_STRING (rval);
   if (ret_jsstr == NULL)
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, string is null\n");
+      /* this fine, means there was no match, use implicit authorizations */
+      good = TRUE;
       goto out;
     }
 
   ret_utf16 = JS_GetStringCharsZ (authority->priv->cx, ret_jsstr);
-  ret_str = g_utf16_to_utf8 (ret_utf16, -1, NULL, NULL, NULL);
+  ret_str = g_utf16_to_utf8 (ret_utf16, -1, NULL, NULL, &error);
   if (ret_str == NULL)
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, error converting to UTF-8\n");
+      g_warning ("Error converting resulting string to UTF-8: %s", error->message);
+      g_clear_error (&error);
       goto out;
     }
 
   if (!polkit_implicit_authorization_from_string (ret_str, &ret))
     {
-      /* TODO: syslog? */
-      g_printerr ("boo, returned result `%s' is not valid\n", ret_str);
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Returned result `%s' is not valid\n",
+                                    ret_str);
       goto out;
     }
 
-  g_print ("yay, worked `%s'\n", ret_str);
+  good = TRUE;
 
  out:
+  if (!good)
+    ret = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
   g_free (ret_str);
   return ret;
 }

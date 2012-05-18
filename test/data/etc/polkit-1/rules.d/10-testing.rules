@@ -1,5 +1,7 @@
 /* -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*- */
 
+/* see test/polkitbackend/test-polkitbackendjsauthority.c */
+
 polkit.addAdministratorRule(function(action, subject, details) {
     return ["unix-group:admin", "unix-user:root"];
 });

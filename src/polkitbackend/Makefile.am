@@ -1,5 +1,7 @@
 NULL =
 
+BUILT_SOURCES =
+
 INCLUDES =                                                      \
         -I$(top_builddir)/src                                   \
         -I$(top_srcdir)/src                                     \
@@ -19,6 +21,12 @@ INCLUDES =                                                      \
 lib_LTLIBRARIES=libpolkit-backend-1.la
 
 libpolkit_backend_1includedir=$(includedir)/polkit-1/polkitbackend
+
+
+initjs.h : init.js
+	$(PERL) $(srcdir)/toarray.pl init.js init_js > $@
+
+BUILT_SOURCES += initjs.h
 
 libpolkit_backend_1include_HEADERS =                        		\
 	polkitbackend.h							\
@@ -77,6 +85,7 @@ localauthorityconfig_DATA = 50-localauthority.conf
 
 EXTRA_DIST =								\
 	$(localauthorityconfig_DATA)					\
+	init.js								\
 	$(NULL)
 
 dist-hook :
