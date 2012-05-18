@@ -276,6 +276,8 @@ reload_scripts (PolkitBackendJsAuthority *authority)
 
   load_scripts (authority);
 
+  /* Let applications know we have new rules... */
+  g_signal_emit_by_name (authority, "changed");
  out:
   ;
 }
