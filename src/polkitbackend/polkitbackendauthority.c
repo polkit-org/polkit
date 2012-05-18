@@ -31,6 +31,7 @@
 
 #include "polkitbackendauthority.h"
 #include "polkitbackendlocalauthority.h"
+#include "polkitbackendjsauthority.h"
 
 #include "polkitbackendprivate.h"
 
@@ -1359,6 +1360,7 @@ polkit_backend_authority_get (void)
 {
   static GIOExtensionPoint *ep = NULL;
   static volatile GType local_authority_type = G_TYPE_INVALID;
+  static volatile GType js_authority_type = G_TYPE_INVALID;
   GList *modules;
   GList *authority_implementations;
   GType authority_type;
@@ -1374,9 +1376,9 @@ polkit_backend_authority_get (void)
 
   /* make sure local types are registered */
   if (local_authority_type == G_TYPE_INVALID)
-    {
-      local_authority_type = POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY;
-    }
+    local_authority_type = POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY;
+  if (js_authority_type == G_TYPE_INVALID)
+    js_authority_type = POLKIT_BACKEND_TYPE_JS_AUTHORITY;
 
   /* load all modules */
   modules = g_io_modules_load_all_in_directory (PACKAGE_LIB_DIR "/polkit-1/extensions");
@@ -1416,17 +1418,114 @@ polkit_backend_authority_get (void)
   return authority;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+typedef enum
+{
+  _COLOR_RESET,
+  _COLOR_BOLD_ON,
+  _COLOR_INVERSE_ON,
+  _COLOR_BOLD_OFF,
+  _COLOR_FG_BLACK,
+  _COLOR_FG_RED,
+  _COLOR_FG_GREEN,
+  _COLOR_FG_YELLOW,
+  _COLOR_FG_BLUE,
+  _COLOR_FG_MAGENTA,
+  _COLOR_FG_CYAN,
+  _COLOR_FG_WHITE,
+  _COLOR_BG_RED,
+  _COLOR_BG_GREEN,
+  _COLOR_BG_YELLOW,
+  _COLOR_BG_BLUE,
+  _COLOR_BG_MAGENTA,
+  _COLOR_BG_CYAN,
+  _COLOR_BG_WHITE
+} _Color;
+
+static gboolean _color_stdin_is_tty = FALSE;
+static gboolean _color_initialized = FALSE;
+
+static void
+_color_init (void)
+{
+  if (_color_initialized)
+    return;
+  _color_initialized = TRUE;
+  _color_stdin_is_tty = (isatty (STDIN_FILENO) != 0 && isatty (STDOUT_FILENO) != 0);
+}
+
+static const gchar *
+_color_get (_Color color)
+{
+  const gchar *str;
+
+  _color_init ();
+
+  if (!_color_stdin_is_tty)
+    return "";
+
+  str = NULL;
+  switch (color)
+    {
+    case _COLOR_RESET:      str="\x1b[0m"; break;
+    case _COLOR_BOLD_ON:    str="\x1b[1m"; break;
+    case _COLOR_INVERSE_ON: str="\x1b[7m"; break;
+    case _COLOR_BOLD_OFF:   str="\x1b[22m"; break;
+    case _COLOR_FG_BLACK:   str="\x1b[30m"; break;
+    case _COLOR_FG_RED:     str="\x1b[31m"; break;
+    case _COLOR_FG_GREEN:   str="\x1b[32m"; break;
+    case _COLOR_FG_YELLOW:  str="\x1b[33m"; break;
+    case _COLOR_FG_BLUE:    str="\x1b[34m"; break;
+    case _COLOR_FG_MAGENTA: str="\x1b[35m"; break;
+    case _COLOR_FG_CYAN:    str="\x1b[36m"; break;
+    case _COLOR_FG_WHITE:   str="\x1b[37m"; break;
+    case _COLOR_BG_RED:     str="\x1b[41m"; break;
+    case _COLOR_BG_GREEN:   str="\x1b[42m"; break;
+    case _COLOR_BG_YELLOW:  str="\x1b[43m"; break;
+    case _COLOR_BG_BLUE:    str="\x1b[44m"; break;
+    case _COLOR_BG_MAGENTA: str="\x1b[45m"; break;
+    case _COLOR_BG_CYAN:    str="\x1b[46m"; break;
+    case _COLOR_BG_WHITE:   str="\x1b[47m"; break;
+    default:
+      g_assert_not_reached ();
+      break;
+    }
+  return str;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 void
 polkit_backend_authority_log (PolkitBackendAuthority *authority,
                               const gchar *format,
                               ...)
 {
+  GTimeVal now;
+  time_t now_time;
+  struct tm *now_tm;
+  gchar time_buf[128];
+  gchar *message;
   va_list var_args;
 
   g_return_if_fail (POLKIT_BACKEND_IS_AUTHORITY (authority));
 
   va_start (var_args, format);
-  vsyslog (LOG_NOTICE, format, var_args);
-
+  message = g_strdup_vprintf (format, var_args);
   va_end (var_args);
+
+  va_start (var_args, format);
+  syslog (LOG_NOTICE, "%s", message);
+
+  g_get_current_time (&now);
+  now_time = (time_t) now.tv_sec;
+  now_tm = localtime (&now_time);
+  strftime (time_buf, sizeof time_buf, "%H:%M:%S", now_tm);
+  g_print ("%s%s%s.%03d%s: %s\n",
+           _color_get (_COLOR_BOLD_ON), _color_get (_COLOR_FG_YELLOW),
+           time_buf, (gint) now.tv_usec / 1000,
+           _color_get (_COLOR_RESET),
+           message);
+
+  g_free (message);
 }

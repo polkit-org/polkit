@@ -37,6 +37,7 @@ libpolkit_backend_1_la_SOURCES =                                   			\
 	polkitbackendauthority.h		polkitbackendauthority.c		\
 	polkitbackendinteractiveauthority.h	polkitbackendinteractiveauthority.c	\
 	polkitbackendlocalauthority.h		polkitbackendlocalauthority.c		\
+	polkitbackendjsauthority.h		polkitbackendjsauthority.c		\
 	polkitbackendactionpool.h		polkitbackendactionpool.c		\
 	polkitbackendconfigsource.h		polkitbackendconfigsource.c		\
 	polkitbackendactionlookup.h		polkitbackendactionlookup.c		\
@@ -56,6 +57,7 @@ libpolkit_backend_1_la_CFLAGS =                                        	\
         -D_POLKIT_BACKEND_COMPILATION                                  	\
         $(GLIB_CFLAGS)							\
 	$(SYSTEMD_CFLAGS)						\
+	$(LIBJS_CFLAGS)							\
         $(NULL)
 
 libpolkit_backend_1_la_LIBADD =                               		\
@@ -63,6 +65,7 @@ libpolkit_backend_1_la_LIBADD =                               		\
 	$(SYSTEMD_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(EXPAT_LIBS)							\
+	$(LIBJS_LIBS)							\
         $(NULL)
 
 libpolkit_backend_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'

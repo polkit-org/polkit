@@ -1,0 +1,32 @@
+/* -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*- */
+
+polkit.addAdministratorRule(function(action, subject) {
+    return ["unix-group:admin", "unix-user:root"];
+});
+
+polkit.addAdministratorRule(function(action, subject) {
+    if (action == "net.company.action1") {
+        return ["unix-group:admin"];
+    }
+    return null;
+});
+
+polkit.addAdministratorRule(function(action, subject) {
+    if (action == "net.company.action2") {
+        return ["unix-group:users"];
+    }
+    return null;
+});
+
+// -----
+
+polkit.addAuthorizationRule(function(action, subject) {
+    return "auth_admin";
+});
+
+polkit.addAuthorizationRule(function(action, subject) {
+    if (action == "org.freedesktop.policykit.exec") {
+        return "auth_admin";
+    }
+    return null;
+});

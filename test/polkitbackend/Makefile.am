@@ -39,8 +39,12 @@ polkitbackendlocalauthorizationstoretest_SOURCES = polkitbackendlocalauthorizati
 TEST_PROGS += polkitbackendlocalauthoritytest
 polkitbackendlocalauthoritytest_SOURCES = polkitbackendlocalauthoritytest.c
 
+TEST_PROGS += polkitbackendjsauthoritytest
+polkitbackendjsauthoritytest_SOURCES = test-polkitbackendjsauthority.c
+
 # ----------------------------------------------------------------------------------------------------
 
+noinst_PROGRAMS = $(TEST_PROGS)
 check_PROGRAMS = $(TEST_PROGS)
 TESTS = $(TEST_PROGS)
 

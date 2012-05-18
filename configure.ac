@@ -127,6 +127,10 @@ PKG_CHECK_MODULES(GLIB, [gio-2.0 >= 2.28.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
+PKG_CHECK_MODULES(LIBJS, [libjs >= 1.8.5])
+AC_SUBST(LIBJS_CFLAGS)
+AC_SUBST(LIBJS_LIBS)
+
 EXPAT_LIB=""
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
                       [
