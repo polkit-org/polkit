@@ -34,6 +34,8 @@
 
 #include <polkit/polkitprivate.h>
 
+#include <systemd/sd-login.h>
+
 #include <jsapi.h>
 
 /**
@@ -307,16 +309,39 @@ on_dir_monitor_changed (GFileMonitor     *monitor,
 }
 
 static const gchar js_polkit_init[] =
+  "function Subject(pid, user, groups, seat, session, local, active) {\n"
+  "  this.pid = pid;\n"
+  "  this.user = user;\n"
+  "  this.groups = groups.split(',');\n"
+  "  this.seat = seat;\n"
+  "  this.session = session;\n"
+  "  this.local = local;\n"
+  "  this.active = active;\n"
+  "  \n"
+  "  this.isInGroup = function(group) {\n"
+  "    for (var n = 0; n < this.groups.length; n++) {\n"
+  "    if (this.groups[n] == group)\n"
+  "      return true;\n"
+  "    }\n"
+  "    return false;\n"
+  "  };\n"
+  "  \n"
+  "  this.toString = function() {\n"
+  "    return '[Subject pid=' + this.pid +\n"
+  "                ' seat=' + this.seat +\n"
+  "                ' session=' + this.session +\n"
+  "                ' local=' + this.local +\n"
+  "                ' active=' + this.active +\n"
+  "                ' user=' + this.user +\n"
+  "                ' groups=' + this.groups + ']';\n"
+  "  };\n"
+  "}\n"
+  "\n"
   "polkit._administratorRuleFuncs = [];\n"
   "polkit.addAdministratorRule = function(callback) {this._administratorRuleFuncs.push(callback);};\n"
-  "polkit._runAdministratorRules = function(action, pid, user, groups, is_local, is_active) {\n"
+  "polkit._runAdministratorRules = function(action, pid, user, groups, seat, session, local, active) {\n"
   "  var ret = null;\n"
-  "  var subject = {};\n"
-  "  subject.pid = pid;\n"
-  "  subject.user = user;\n"
-  "  subject.local = is_local;\n"
-  "  subject.active = is_active;\n"
-  "  subject.groups = groups.split(',');\n"
+  "  var subject = new Subject(pid, user, groups, seat, session, local, active);\n"
   "  for (var n = this._administratorRuleFuncs.length - 1; n >= 0; n--) {\n"
   "    var func = this._administratorRuleFuncs[n];\n"
   "    ret = func(action, subject);\n"
@@ -328,14 +353,9 @@ static const gchar js_polkit_init[] =
   "\n"
   "polkit._authorizationRuleFuncs = [];\n"
   "polkit.addAuthorizationRule = function(callback) {this._authorizationRuleFuncs.push(callback);};\n"
-  "polkit._runAuthorizationRules = function(action, pid, user, groups, is_local, is_active) {\n"
+  "polkit._runAuthorizationRules = function(action, pid, user, groups, seat, session, local, active) {\n"
   "  var ret = null;\n"
-  "  var subject = {};\n"
-  "  subject.pid = pid;\n"
-  "  subject.user = user;\n"
-  "  subject.local = is_local;\n"
-  "  subject.active = is_active;\n"
-  "  subject.groups = groups.split(',');\n"
+  "  var subject = new Subject(pid, user, groups, seat, session, local, active);\n"
   "  for (var n = this._authorizationRuleFuncs.length - 1; n >= 0; n--) {\n"
   "    var func = this._authorizationRuleFuncs[n];\n"
   "    ret = func(action, subject);\n"
@@ -526,16 +546,22 @@ subject_to_js (PolkitBackendJsAuthority *authority,
                jsval                    *jsval_pid,
                jsval                    *jsval_user,
                jsval                    *jsval_groups,
+               jsval                    *jsval_seat,
+               jsval                    *jsval_session,
                GError                  **error)
 {
   gboolean ret = FALSE;
   JSString *user_name_jstr;
   JSString *groups_jstr;
+  JSString *seat_jstr;
+  JSString *session_jstr;
   pid_t pid;
   uid_t uid;
   gchar *user_name = NULL;
   GString *groups = NULL;
   struct passwd *passwd;
+  char *seat_str = NULL;
+  char *session_str = NULL;
 
   g_return_val_if_fail (jsval_pid != NULL, FALSE);
   g_return_val_if_fail (jsval_user != NULL, FALSE);
@@ -558,6 +584,11 @@ subject_to_js (PolkitBackendJsAuthority *authority,
   else
     {
       g_assert_not_reached ();
+    }
+
+  if (sd_pid_get_session (pid, &session_str) == 0)
+    {
+      sd_session_get_seat (session_str, &seat_str);
     }
 
   g_assert (POLKIT_IS_UNIX_USER (user_for_subject));
@@ -609,14 +640,20 @@ subject_to_js (PolkitBackendJsAuthority *authority,
 
   user_name_jstr = JS_NewStringCopyZ (authority->priv->cx, user_name);
   groups_jstr = JS_NewStringCopyZ (authority->priv->cx, groups->str);
+  seat_jstr = JS_NewStringCopyZ (authority->priv->cx, seat_str);
+  session_jstr = JS_NewStringCopyZ (authority->priv->cx, session_str);
   *jsval_pid = INT_TO_JSVAL ((int32) pid);
   *jsval_user = STRING_TO_JSVAL (user_name_jstr);
   *jsval_groups = STRING_TO_JSVAL (groups_jstr);
+  *jsval_seat = STRING_TO_JSVAL (seat_jstr);
+  *jsval_session = STRING_TO_JSVAL (session_jstr);
 
   ret = TRUE;
 
  out:
   /* TODO: are we leaking _jstr ? */
+  free (session_str);
+  free (seat_str);
   g_free (user_name);
   if (groups != NULL)
     g_string_free (groups, TRUE);
@@ -634,7 +671,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   GList *ret = NULL;
-  jsval argv[6] = {0};
+  jsval argv[8] = {0};
   jsval rval = {0};
   JSString *action_id_jstr;
   guint n;
@@ -643,7 +680,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   gchar *ret_str = NULL;
   gchar **ret_strs = NULL;
 
-  if (!subject_to_js (authority, subject, user_for_subject, &argv[1], &argv[2], &argv[3], &error))
+  if (!subject_to_js (authority, subject, user_for_subject, &argv[1], &argv[2], &argv[3], &argv[4], &argv[5], &error))
     {
       /* TODO: syslog? */
       g_printerr ("Error converting subject: %s\n", error->message);
@@ -653,13 +690,13 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
   argv[0] = STRING_TO_JSVAL (action_id_jstr);
-  argv[4] = BOOLEAN_TO_JSVAL (FALSE);//TODO:subject_is_local);
-  argv[5] = BOOLEAN_TO_JSVAL (FALSE);//TODO:subject_is_active);
+  argv[6] = BOOLEAN_TO_JSVAL (FALSE);//TODO:subject_is_local);
+  argv[7] = BOOLEAN_TO_JSVAL (FALSE);//TODO:subject_is_active);
 
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
                            "_runAdministratorRules",
-                           6,
+                           8,
                            argv,
                            &rval))
     {
@@ -731,7 +768,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
-  jsval argv[6] = {0};
+  jsval argv[8] = {0};
   jsval rval = {0};
   JSString *action_id_jstr;
   GError *error = NULL;
@@ -739,7 +776,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   const jschar *ret_utf16;
   gchar *ret_str = NULL;
 
-  if (!subject_to_js (authority, subject, user_for_subject, &argv[1], &argv[2], &argv[3], &error))
+  if (!subject_to_js (authority, subject, user_for_subject, &argv[1], &argv[2], &argv[3], &argv[4], &argv[5], &error))
     {
       /* TODO: syslog? */
       g_printerr ("Error converting subject: %s\n", error->message);
@@ -749,13 +786,13 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
   action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
   argv[0] = STRING_TO_JSVAL (action_id_jstr);
-  argv[4] = BOOLEAN_TO_JSVAL (subject_is_local);
-  argv[5] = BOOLEAN_TO_JSVAL (subject_is_active);
+  argv[6] = BOOLEAN_TO_JSVAL (subject_is_local);
+  argv[7] = BOOLEAN_TO_JSVAL (subject_is_active);
 
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
                            "_runAuthorizationRules",
-                           6,
+                           8,
                            argv,
                            &rval))
     {
