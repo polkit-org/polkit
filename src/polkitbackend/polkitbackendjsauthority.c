@@ -584,11 +584,15 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
 
   src = "new Subject();";
 
-  JS_EvaluateScript (authority->priv->cx,
-                     authority->priv->js_global,
-                     src, strlen (src),
-                     __FILE__, __LINE__,
-                     &ret_jsval);
+  if (!JS_EvaluateScript (authority->priv->cx,
+                          authority->priv->js_global,
+                          src, strlen (src),
+                          __FILE__, __LINE__,
+                          &ret_jsval))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluting '%s' failed", src);
+      goto out;
+    }
 
   obj = JSVAL_TO_OBJECT (ret_jsval);
 
@@ -702,11 +706,15 @@ details_to_jsval (PolkitBackendJsAuthority  *authority,
 
   src = "new Details();";
 
-  JS_EvaluateScript (authority->priv->cx,
-                     authority->priv->js_global,
-                     src, strlen (src),
-                     __FILE__, __LINE__,
-                     &ret_jsval);
+  if (!JS_EvaluateScript (authority->priv->cx,
+                          authority->priv->js_global,
+                          src, strlen (src),
+                          __FILE__, __LINE__,
+                          &ret_jsval))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluting '%s' failed", src);
+      goto out;
+    }
 
   obj = JSVAL_TO_OBJECT (ret_jsval);
   keys = polkit_details_get_keys (details);
@@ -726,6 +734,7 @@ details_to_jsval (PolkitBackendJsAuthority  *authority,
 
   ret = TRUE;
 
+ out:
   if (ret && out_jsval != NULL)
     *out_jsval = ret_jsval;
 
