@@ -100,8 +100,7 @@ static PolkitImplicitAuthorization polkit_backend_js_authority_check_authorizati
                                                           gboolean                           subject_is_active,
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details,
-                                                          PolkitImplicitAuthorization        implicit,
-                                                          PolkitDetails                     *out_details);
+                                                          PolkitImplicitAuthorization        implicit);
 
 G_DEFINE_TYPE_WITH_CODE (PolkitBackendJsAuthority,
                          polkit_backend_js_authority,
@@ -193,7 +192,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
   if (dir == NULL)
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Error opening rules directory: %s (%s, %d)\n",
+                                    "Error opening rules directory: %s (%s, %d)",
                                     error->message, g_quark_to_string (error->domain), error->code);
       g_clear_error (&error);
       goto out;
@@ -858,8 +857,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
                                                       gboolean                           subject_is_active,
                                                       const gchar                       *action_id,
                                                       PolkitDetails                     *details,
-                                                      PolkitImplicitAuthorization        implicit,
-                                                      PolkitDetails                     *out_details)
+                                                      PolkitImplicitAuthorization        implicit)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
@@ -871,6 +869,9 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   const jschar *ret_utf16;
   gchar *ret_str = NULL;
   gboolean good = FALSE;
+  JSIdArray *ids;
+  JSObject *details_obj;
+  gint n;
 
   action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
   argv[0] = STRING_TO_JSVAL (action_id_jstr);
@@ -931,10 +932,57 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   if (!polkit_implicit_authorization_from_string (ret_str, &ret))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Returned result `%s' is not valid\n",
+                                    "Returned result `%s' is not valid",
                                     ret_str);
       goto out;
     }
+
+
+  /* the JS code may have modifed @details - update PolkitDetails
+   * object accordingly
+   */
+  details_obj = JSVAL_TO_OBJECT (argv[2]);
+  ids = JS_Enumerate (authority->priv->cx, details_obj);
+  if (ids == NULL)
+    {
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Failed to enumerate properties of Details object");
+      goto out;
+    }
+  for (n = 0; n < ids->length; n++)
+    {
+      jsval id_val;
+      jsval value_val;
+      char *id_s = NULL;
+      char *value_s = NULL;
+
+      if (!JS_IdToValue (authority->priv->cx, ids->vector[n], &id_val))
+        {
+          g_warning ("Error getting string for property id %d", n);
+          goto cont;
+        }
+      id_s = JS_EncodeString (authority->priv->cx, JSVAL_TO_STRING (id_val));
+
+      if (!JS_GetPropertyById (authority->priv->cx, details_obj, ids->vector[n], &value_val))
+        {
+          g_warning ("Error getting value string for property value %s", id_s);
+          goto cont;
+        }
+
+      /* skip e.g. functions */
+      if (!JSVAL_IS_STRING (value_val) && !JSVAL_IS_NULL (value_val))
+        goto cont;
+
+      value_s = JS_EncodeString (authority->priv->cx, JSVAL_TO_STRING (value_val));
+
+      polkit_details_insert (details, id_s, value_s);
+    cont:
+      if (id_s != NULL)
+        JS_free (authority->priv->cx, id_s);
+      if (value_s != NULL)
+        JS_free (authority->priv->cx, value_s);
+    }
+  JS_DestroyIdArray (authority->priv->cx, ids);
 
   good = TRUE;
 

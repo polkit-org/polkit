@@ -89,8 +89,7 @@ test_lookup (void)
       details,
       &ret_any,
       &ret_inactive,
-      &ret_active,
-      NULL);
+      &ret_active);
   g_assert (ok);
   g_assert_cmpstr ("no", ==, polkit_implicit_authorization_to_string (ret_any));
   g_assert_cmpstr ("auth_self", ==, polkit_implicit_authorization_to_string (ret_inactive));
@@ -109,8 +108,7 @@ test_lookup (void)
       details,
       &ret_any,
       &ret_inactive,
-      &ret_active,
-      NULL);
+      &ret_active);
   g_assert (ok);
   g_assert_cmpstr ("no", ==, polkit_implicit_authorization_to_string (ret_any));
   g_assert_cmpstr ("auth_self", ==, polkit_implicit_authorization_to_string (ret_inactive));
@@ -124,8 +122,7 @@ test_lookup (void)
       details,
       &ret_any,
       &ret_inactive,
-      &ret_active,
-      NULL);
+      &ret_active);
   g_assert (!ok);
 }
 

@@ -669,9 +669,10 @@ polkit_backend_local_authorization_store_ensure (PolkitBackendLocalAuthorization
  * @out_result_any: Return location for the result for any subjects if the look up matched.
  * @out_result_inactive: Return location for the result for subjects in local inactive sessions if the look up matched.
  * @out_result_active: Return location for the result for subjects in local active sessions if the look up matched.
- * @out_details: %NULL or a #PolkitDetails object to append key/value pairs to on a positive match.
  *
- * Checks if an authorization entry from @store matches @identity, @action_id and @details.
+ * Checks if an authorization entry from @store matches @identity,
+ * @action_id and @details. May append information to @details if
+ * found.
  *
  * Returns: %TRUE if @store has an authorization entry that matches
  *     @identity, @action_id and @details. Otherwise %FALSE.
@@ -683,8 +684,7 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
                                                  PolkitDetails                        *details,
                                                  PolkitImplicitAuthorization          *out_result_any,
                                                  PolkitImplicitAuthorization          *out_result_inactive,
-                                                 PolkitImplicitAuthorization          *out_result_active,
-                                                 PolkitDetails                        *out_details)
+                                                 PolkitImplicitAuthorization          *out_result_active)
 {
   GList *l, *ll;
   gboolean ret;
@@ -749,7 +749,7 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
       *out_result_active = authorization->result_active;
       ret = TRUE;
 
-      if (out_details != NULL && authorization->return_value != NULL)
+      if (details != NULL && authorization->return_value != NULL)
         {
           GHashTableIter iter;
           const gchar *key;
@@ -758,7 +758,7 @@ polkit_backend_local_authorization_store_lookup (PolkitBackendLocalAuthorization
           g_hash_table_iter_init (&iter, authorization->return_value);
           while (g_hash_table_iter_next (&iter, (gpointer *) &key, (gpointer *) &value))
             {
-              polkit_details_insert (out_details, key, value);
+              polkit_details_insert (details, key, value);
             }
         }
 

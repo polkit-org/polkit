@@ -66,9 +66,6 @@ test_check_authorization_sync (const void *_ctx)
   PolkitDetails *details = polkit_details_new ();
   g_assert (details);
 
-  PolkitDetails *out_details = polkit_details_new ();
-  g_assert (out_details);
-
   PolkitImplicitAuthorization auth;
 
   auth = polkit_backend_interactive_authority_check_authorization_sync (
@@ -80,8 +77,7 @@ test_check_authorization_sync (const void *_ctx)
       ctx->subject_is_active,
       ctx->action_id,
       details,
-      ctx->implicit,
-      out_details);
+      ctx->implicit);
 
   g_assert_cmpint (auth, ==, ctx->expect);
 
@@ -90,7 +86,6 @@ test_check_authorization_sync (const void *_ctx)
   g_object_unref (subject);
   g_object_unref (user_for_subject);
   g_object_unref (details);
-  g_object_unref (out_details);
 }
 
 static void
