@@ -309,15 +309,19 @@ on_dir_monitor_changed (GFileMonitor     *monitor,
 }
 
 static const gchar js_polkit_init[] =
-  "function Subject(pid, user, groups, seat, session, local, active) {\n"
-  "  this.pid = pid;\n"
-  "  this.user = user;\n"
-  "  this.groups = groups.split(',');\n"
-  "  this.seat = seat;\n"
-  "  this.session = session;\n"
-  "  this.local = local;\n"
-  "  this.active = active;\n"
-  "  \n"
+  "function Details() {\n"
+  "  this.toString = function() {\n"
+  "    var ret = '[Details';\n"
+  "    for (var i in this) {\n"
+  "      if (typeof this[i] != 'function')\n"
+  "        ret += ' ' + i + '=\\'' + this[i] + '\\'';\n"
+  "    }"
+  "    ret += ']';\n"
+  "    return ret;\n"
+  "  };\n"
+  "};\n"
+  "\n"
+  "function Subject() {\n"
   "  this.isInGroup = function(group) {\n"
   "    for (var n = 0; n < this.groups.length; n++) {\n"
   "    if (this.groups[n] == group)\n"
@@ -327,24 +331,23 @@ static const gchar js_polkit_init[] =
   "  };\n"
   "  \n"
   "  this.toString = function() {\n"
-  "    return '[Subject pid=' + this.pid +\n"
-  "                ' seat=' + this.seat +\n"
-  "                ' session=' + this.session +\n"
-  "                ' local=' + this.local +\n"
-  "                ' active=' + this.active +\n"
-  "                ' user=' + this.user +\n"
-  "                ' groups=' + this.groups + ']';\n"
+  "    var ret = '[Subject';\n"
+  "    for (var i in this) {\n"
+  "      if (typeof this[i] != 'function')\n"
+  "        ret += ' ' + i + '=\\'' + this[i] + '\\'';\n"
+  "    }"
+  "    ret += ']';\n"
+  "    return ret;\n"
   "  };\n"
-  "}\n"
+  "};\n"
   "\n"
   "polkit._administratorRuleFuncs = [];\n"
   "polkit.addAdministratorRule = function(callback) {this._administratorRuleFuncs.push(callback);};\n"
-  "polkit._runAdministratorRules = function(action, pid, user, groups, seat, session, local, active) {\n"
+  "polkit._runAdministratorRules = function(action, subject, details) {\n"
   "  var ret = null;\n"
-  "  var subject = new Subject(pid, user, groups, seat, session, local, active);\n"
   "  for (var n = this._administratorRuleFuncs.length - 1; n >= 0; n--) {\n"
   "    var func = this._administratorRuleFuncs[n];\n"
-  "    ret = func(action, subject);\n"
+  "    ret = func(action, subject, details);\n"
   "    if (ret)\n"
   "      break\n"
   "  }\n"
@@ -353,12 +356,11 @@ static const gchar js_polkit_init[] =
   "\n"
   "polkit._authorizationRuleFuncs = [];\n"
   "polkit.addAuthorizationRule = function(callback) {this._authorizationRuleFuncs.push(callback);};\n"
-  "polkit._runAuthorizationRules = function(action, pid, user, groups, seat, session, local, active) {\n"
+  "polkit._runAuthorizationRules = function(action, subject, details) {\n"
   "  var ret = null;\n"
-  "  var subject = new Subject(pid, user, groups, seat, session, local, active);\n"
   "  for (var n = this._authorizationRuleFuncs.length - 1; n >= 0; n--) {\n"
   "    var func = this._authorizationRuleFuncs[n];\n"
-  "    ret = func(action, subject);\n"
+  "    ret = func(action, subject, details);\n"
   "    if (ret)\n"
   "      break\n"
   "  }\n"
@@ -539,34 +541,104 @@ polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static void
+set_property_str (PolkitBackendJsAuthority  *authority,
+                  JSObject                  *obj,
+                  const gchar               *name,
+                  const gchar               *value)
+{
+  JSString *value_jsstr;
+  jsval value_jsval;
+  value_jsstr = JS_NewStringCopyZ (authority->priv->cx, value);
+  value_jsval = STRING_TO_JSVAL (value_jsstr);
+  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+}
+
+static void
+set_property_strv (PolkitBackendJsAuthority  *authority,
+                   JSObject                  *obj,
+                   const gchar               *name,
+                   const gchar *const        *value,
+                   gssize                     len)
+{
+  jsval value_jsval;
+  JSObject *array_object;
+  jsval *jsvals;
+  guint n;
+
+  if (len < 0)
+    len = g_strv_length ((gchar **) value);
+
+  jsvals = g_new0 (jsval, len);
+  for (n = 0; n < len; n++)
+    {
+      JSString *jsstr;
+      jsstr = JS_NewStringCopyZ (authority->priv->cx, value[n]);
+      jsvals[n] = STRING_TO_JSVAL (jsstr);
+    }
+
+  array_object = JS_NewArrayObject (authority->priv->cx, (jsint) len, jsvals);
+
+  value_jsval = OBJECT_TO_JSVAL (array_object);
+  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+
+  g_free (jsvals);
+}
+
+
+static void
+set_property_int32 (PolkitBackendJsAuthority  *authority,
+                    JSObject                  *obj,
+                    const gchar               *name,
+                    gint32                     value)
+{
+  jsval value_jsval;
+  value_jsval = INT_TO_JSVAL ((int32) value);
+  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+}
+
+static void
+set_property_bool (PolkitBackendJsAuthority  *authority,
+                   JSObject                  *obj,
+                   const gchar               *name,
+                   gboolean                   value)
+{
+  jsval value_jsval;
+  value_jsval = BOOLEAN_TO_JSVAL ((JSBool) value);
+  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+}
+
+
 static gboolean
-subject_to_js (PolkitBackendJsAuthority *authority,
-               PolkitSubject            *subject,
-               PolkitIdentity           *user_for_subject,
-               jsval                    *jsval_pid,
-               jsval                    *jsval_user,
-               jsval                    *jsval_groups,
-               jsval                    *jsval_seat,
-               jsval                    *jsval_session,
-               GError                  **error)
+subject_to_jsval (PolkitBackendJsAuthority  *authority,
+                  PolkitSubject             *subject,
+                  PolkitIdentity            *user_for_subject,
+                  jsval                     *out_jsval,
+                  GError                   **error)
 {
   gboolean ret = FALSE;
-  JSString *user_name_jstr;
-  JSString *groups_jstr;
-  JSString *seat_jstr;
-  JSString *session_jstr;
+  jsval ret_jsval;
+  const char *src;
+  JSObject *obj;
   pid_t pid;
   uid_t uid;
   gchar *user_name = NULL;
-  GString *groups = NULL;
+  GPtrArray *groups = NULL;
   struct passwd *passwd;
   char *seat_str = NULL;
   char *session_str = NULL;
+  gboolean is_local = FALSE;
+  gboolean is_active = FALSE;
 
-  g_return_val_if_fail (jsval_pid != NULL, FALSE);
-  g_return_val_if_fail (jsval_user != NULL, FALSE);
-  g_return_val_if_fail (jsval_groups != NULL, FALSE);
-  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+  src = "new Subject();";
+
+  JS_EvaluateScript (authority->priv->cx,
+                     authority->priv->js_global,
+                     src, strlen (src),
+                     __FILE__, __LINE__,
+                     &ret_jsval);
+
+  obj = JSVAL_TO_OBJECT (ret_jsval);
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
@@ -588,13 +660,16 @@ subject_to_js (PolkitBackendJsAuthority *authority,
 
   if (sd_pid_get_session (pid, &session_str) == 0)
     {
-      sd_session_get_seat (session_str, &seat_str);
+      if (sd_session_get_seat (session_str, &seat_str) == 0)
+        is_local = TRUE;
+      if (sd_session_is_active (session_str))
+        is_active = TRUE;
     }
 
   g_assert (POLKIT_IS_UNIX_USER (user_for_subject));
   uid = polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_for_subject));
 
-  groups = g_string_new (NULL);
+  groups = g_ptr_array_new_with_free_func (g_free);
 
   passwd = getpwuid (uid);
   if (passwd == NULL)
@@ -622,44 +697,88 @@ subject_to_js (PolkitBackendJsAuthority *authority,
           for (n = 0; n < num_gids; n++)
             {
               struct group *group;
-              if (n > 0)
-                g_string_append_c (groups, ',');
-
               group = getgrgid (gids[n]);
               if (group == NULL)
                 {
-                  g_string_append_printf (groups, "%d", (gint) gids[n]);
+                  g_ptr_array_add (groups, g_strdup_printf ("%d", (gint) gids[n]));
                 }
               else
                 {
-                  g_string_append_printf (groups, "%s", group->gr_name);
+                  g_ptr_array_add (groups, g_strdup (group->gr_name));
                 }
             }
         }
     }
 
-  user_name_jstr = JS_NewStringCopyZ (authority->priv->cx, user_name);
-  groups_jstr = JS_NewStringCopyZ (authority->priv->cx, groups->str);
-  seat_jstr = JS_NewStringCopyZ (authority->priv->cx, seat_str);
-  session_jstr = JS_NewStringCopyZ (authority->priv->cx, session_str);
-  *jsval_pid = INT_TO_JSVAL ((int32) pid);
-  *jsval_user = STRING_TO_JSVAL (user_name_jstr);
-  *jsval_groups = STRING_TO_JSVAL (groups_jstr);
-  *jsval_seat = STRING_TO_JSVAL (seat_jstr);
-  *jsval_session = STRING_TO_JSVAL (session_jstr);
+  g_ptr_array_add (groups, NULL);
+
+  set_property_int32 (authority, obj, "pid", pid);
+  set_property_str (authority, obj, "user", user_name);
+  set_property_strv (authority, obj, "groups", (const gchar* const *) groups->pdata, groups->len);
+  set_property_str (authority, obj, "seat", seat_str);
+  set_property_str (authority, obj, "session", session_str);
+  set_property_bool (authority, obj, "local", is_local);
+  set_property_bool (authority, obj, "active", is_active);
 
   ret = TRUE;
 
  out:
-  /* TODO: are we leaking _jstr ? */
   free (session_str);
   free (seat_str);
   g_free (user_name);
   if (groups != NULL)
-    g_string_free (groups, TRUE);
+    g_ptr_array_unref (groups);
+
+  if (ret && out_jsval != NULL)
+    *out_jsval = ret_jsval;
+
   return ret;
 }
 
+static gboolean
+details_to_jsval (PolkitBackendJsAuthority  *authority,
+                  PolkitDetails             *details,
+                  jsval                     *out_jsval,
+                  GError                   **error)
+{
+  gboolean ret = FALSE;
+  jsval ret_jsval;
+  const char *src;
+  JSObject *obj;
+  gchar **keys;
+  guint n;
+
+  src = "new Details();";
+
+  JS_EvaluateScript (authority->priv->cx,
+                     authority->priv->js_global,
+                     src, strlen (src),
+                     __FILE__, __LINE__,
+                     &ret_jsval);
+
+  obj = JSVAL_TO_OBJECT (ret_jsval);
+  keys = polkit_details_get_keys (details);
+  for (n = 0; keys != NULL && keys[n] != NULL; n++)
+    {
+      const gchar *key = keys[n];
+      JSString *value_jsstr;
+      jsval value_jsval;
+      const gchar *value;
+
+      value = polkit_details_lookup (details, keys[n]);
+      value_jsstr = JS_NewStringCopyZ (authority->priv->cx, value);
+      value_jsval = STRING_TO_JSVAL (value_jsstr);
+      JS_SetProperty (authority->priv->cx, obj, key, &value_jsval);
+    }
+  g_free (keys);
+
+  ret = TRUE;
+
+  if (ret && out_jsval != NULL)
+    *out_jsval = ret_jsval;
+
+  return ret;
+}
 
 static GList *
 polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveAuthority *_authority,
@@ -671,7 +790,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   GList *ret = NULL;
-  jsval argv[8] = {0};
+  jsval argv[3] = {0};
   jsval rval = {0};
   JSString *action_id_jstr;
   guint n;
@@ -680,23 +799,29 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   gchar *ret_str = NULL;
   gchar **ret_strs = NULL;
 
-  if (!subject_to_js (authority, subject, user_for_subject, &argv[1], &argv[2], &argv[3], &argv[4], &argv[5], &error))
+  action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
+  argv[0] = STRING_TO_JSVAL (action_id_jstr);
+
+  if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
     {
       /* TODO: syslog? */
-      g_printerr ("Error converting subject: %s\n", error->message);
+      g_printerr ("Error converting subject to JS object: %s\n", error->message);
       g_clear_error (&error);
       goto out;
     }
 
-  action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
-  argv[0] = STRING_TO_JSVAL (action_id_jstr);
-  argv[6] = BOOLEAN_TO_JSVAL (FALSE);//TODO:subject_is_local);
-  argv[7] = BOOLEAN_TO_JSVAL (FALSE);//TODO:subject_is_active);
+  if (!details_to_jsval (authority, details, &argv[2], &error))
+    {
+      /* TODO: syslog? */
+      g_printerr ("Error converting details to JS object: %s\n", error->message);
+      g_clear_error (&error);
+      goto out;
+    }
 
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
                            "_runAdministratorRules",
-                           8,
+                           3,
                            argv,
                            &rval))
     {
@@ -768,7 +893,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
-  jsval argv[8] = {0};
+  jsval argv[3] = {0};
   jsval rval = {0};
   JSString *action_id_jstr;
   GError *error = NULL;
@@ -776,23 +901,29 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   const jschar *ret_utf16;
   gchar *ret_str = NULL;
 
-  if (!subject_to_js (authority, subject, user_for_subject, &argv[1], &argv[2], &argv[3], &argv[4], &argv[5], &error))
+  action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
+  argv[0] = STRING_TO_JSVAL (action_id_jstr);
+
+  if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
     {
       /* TODO: syslog? */
-      g_printerr ("Error converting subject: %s\n", error->message);
+      g_printerr ("Error converting subject to JS object: %s\n", error->message);
       g_clear_error (&error);
       goto out;
     }
 
-  action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
-  argv[0] = STRING_TO_JSVAL (action_id_jstr);
-  argv[6] = BOOLEAN_TO_JSVAL (subject_is_local);
-  argv[7] = BOOLEAN_TO_JSVAL (subject_is_active);
+  if (!details_to_jsval (authority, details, &argv[2], &error))
+    {
+      /* TODO: syslog? */
+      g_printerr ("Error converting details to JS object: %s\n", error->message);
+      g_clear_error (&error);
+      goto out;
+    }
 
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
                            "_runAuthorizationRules",
-                           8,
+                           3,
                            argv,
                            &rval))
     {
