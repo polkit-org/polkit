@@ -270,7 +270,12 @@ reload_scripts (PolkitBackendJsAuthority *authority)
       goto out;
     }
 
+  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                "Collecting garbage unconditionally...");
+  JS_GC (authority->priv->cx);
+
   load_scripts (authority);
+
  out:
   ;
 }
@@ -834,6 +839,9 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   /* fallback to root password auth */
   if (ret == NULL)
     ret = g_list_prepend (ret, polkit_unix_user_new (0));
+
+  JS_MaybeGC (authority->priv->cx);
+
   return ret;
 }
 
@@ -932,6 +940,9 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   if (!good)
     ret = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
   g_free (ret_str);
+
+  JS_MaybeGC (authority->priv->cx);
+
   return ret;
 }
 
