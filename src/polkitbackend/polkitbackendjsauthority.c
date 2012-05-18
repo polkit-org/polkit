@@ -143,10 +143,12 @@ static JSClass js_polkit_class = {
 };
 
 static JSBool js_polkit_log (JSContext *cx, uintN argc, jsval *vp);
+static JSBool js_polkit_spawn (JSContext *cx, uintN argc, jsval *vp);
 
 static JSFunctionSpec js_polkit_functions[] =
 {
   JS_FS("log",            js_polkit_log,            0, 0),
+  JS_FS("spawn",          js_polkit_spawn,          0, 0),
   JS_FS_END
 };
 
@@ -929,6 +931,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
+  g_strstrip (ret_str);
   if (!polkit_implicit_authorization_from_string (ret_str, &ret))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1019,6 +1022,123 @@ js_polkit_log (JSContext  *cx,
 
   JS_SET_RVAL (cx, vp, JSVAL_VOID);  /* return undefined */
  out:
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static const gchar *
+get_signal_name (gint signal_number)
+{
+  switch (signal_number)
+    {
+#define _HANDLE_SIG(sig) case sig: return #sig;
+    _HANDLE_SIG (SIGHUP);
+    _HANDLE_SIG (SIGINT);
+    _HANDLE_SIG (SIGQUIT);
+    _HANDLE_SIG (SIGILL);
+    _HANDLE_SIG (SIGABRT);
+    _HANDLE_SIG (SIGFPE);
+    _HANDLE_SIG (SIGKILL);
+    _HANDLE_SIG (SIGSEGV);
+    _HANDLE_SIG (SIGPIPE);
+    _HANDLE_SIG (SIGALRM);
+    _HANDLE_SIG (SIGTERM);
+    _HANDLE_SIG (SIGUSR1);
+    _HANDLE_SIG (SIGUSR2);
+    _HANDLE_SIG (SIGCHLD);
+    _HANDLE_SIG (SIGCONT);
+    _HANDLE_SIG (SIGSTOP);
+    _HANDLE_SIG (SIGTSTP);
+    _HANDLE_SIG (SIGTTIN);
+    _HANDLE_SIG (SIGTTOU);
+    _HANDLE_SIG (SIGBUS);
+    _HANDLE_SIG (SIGPOLL);
+    _HANDLE_SIG (SIGPROF);
+    _HANDLE_SIG (SIGSYS);
+    _HANDLE_SIG (SIGTRAP);
+    _HANDLE_SIG (SIGURG);
+    _HANDLE_SIG (SIGVTALRM);
+    _HANDLE_SIG (SIGXCPU);
+    _HANDLE_SIG (SIGXFSZ);
+#undef _HANDLE_SIG
+    default:
+      break;
+    }
+  return "UNKNOWN_SIGNAL";
+}
+
+static JSBool
+js_polkit_spawn (JSContext  *cx,
+                 uintN       argc,
+                 jsval      *vp)
+{
+  /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
+  JSBool ret = JS_FALSE;
+  JSString *str;
+  char *command_line = NULL;
+  gchar *standard_output = NULL;
+  gchar *standard_error = NULL;
+  gint exit_status;
+  GError *error = NULL;
+  JSString *ret_jsstr;
+
+  if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "S", &str))
+    goto out;
+
+  command_line = JS_EncodeString (cx, str);
+
+  /* TODO: timeout */
+  if (!g_spawn_command_line_sync (command_line,
+                                  &standard_output,
+                                  &standard_error,
+                                  &exit_status,
+                                  &error))
+    {
+      JS_ReportError (cx,
+                      "Failed to spawn command-line `%s': %s (%s, %d)",
+                      command_line,
+                      error->message, g_quark_to_string (error->domain), error->code);
+      g_clear_error (&error);
+      goto out;
+    }
+
+  if (!(WIFEXITED (exit_status) && WEXITSTATUS (exit_status) == 0))
+    {
+      GString *gstr;
+      gstr = g_string_new (NULL);
+      if (WIFEXITED (exit_status))
+        {
+          g_string_append_printf (gstr,
+                                  "Command-line `%s' exited with non-zero exit status %d",
+                                  command_line,
+                                  WEXITSTATUS (exit_status));
+        }
+      else if (WIFSIGNALED (exit_status))
+        {
+          g_string_append_printf (gstr,
+                                  "Command-line `%s' was signaled with signal %s (%d)",
+                                  command_line,
+                                  get_signal_name (WTERMSIG (exit_status)),
+                                  WTERMSIG (exit_status));
+        }
+      g_string_append_printf (gstr, ", stdout=`%s', stderr=`%s'",
+                              standard_output, standard_error);
+      JS_ReportError (cx, gstr->str);
+      g_string_free (gstr, TRUE);
+      goto out;
+    }
+
+  ret = JS_TRUE;
+
+  ret_jsstr = JS_NewStringCopyZ (cx, standard_output);
+  JS_SET_RVAL (cx, vp, STRING_TO_JSVAL (ret_jsstr));
+
+ out:
+  g_free (standard_output);
+  g_free (standard_error);
+  if (command_line != NULL)
+    JS_free (cx, command_line);
   return ret;
 }
 
