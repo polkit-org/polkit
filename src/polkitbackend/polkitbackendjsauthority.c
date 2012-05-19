@@ -1076,7 +1076,6 @@ js_polkit_spawn (JSContext  *cx,
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   JSBool ret = JS_FALSE;
   JSObject *array_object;
-  gchar *command_line = NULL;
   gchar *standard_output = NULL;
   gchar *standard_error = NULL;
   gint exit_status;
@@ -1123,8 +1122,7 @@ js_polkit_spawn (JSContext  *cx,
                      &error))
     {
       JS_ReportError (cx,
-                      "Failed to spawn command-line `%s': %s (%s, %d)",
-                      command_line,
+                      "Failed to spawn helper: %s (%s, %d)",
                       error->message, g_quark_to_string (error->domain), error->code);
       g_clear_error (&error);
       goto out;
@@ -1137,15 +1135,13 @@ js_polkit_spawn (JSContext  *cx,
       if (WIFEXITED (exit_status))
         {
           g_string_append_printf (gstr,
-                                  "Command-line `%s' exited with non-zero exit status %d",
-                                  command_line,
+                                  "Helper exited with non-zero exit status %d",
                                   WEXITSTATUS (exit_status));
         }
       else if (WIFSIGNALED (exit_status))
         {
           g_string_append_printf (gstr,
-                                  "Command-line `%s' was signaled with signal %s (%d)",
-                                  command_line,
+                                  "Helper was signaled with signal %s (%d)",
                                   get_signal_name (WTERMSIG (exit_status)),
                                   WTERMSIG (exit_status));
         }
@@ -1163,7 +1159,6 @@ js_polkit_spawn (JSContext  *cx,
 
  out:
   g_strfreev (argv);
-  g_free (command_line);
   g_free (standard_output);
   g_free (standard_error);
   return ret;
