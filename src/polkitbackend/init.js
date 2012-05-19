@@ -71,7 +71,3 @@ polkit._deleteRules = function() {
     this._administratorRuleFuncs = [];
     this._authorizationRuleFuncs = [];
 };
-
-polkit.quote = function(str) {
-    return '"' + str.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-};

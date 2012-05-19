@@ -1070,30 +1070,57 @@ get_signal_name (gint signal_number)
 
 static JSBool
 js_polkit_spawn (JSContext  *cx,
-                 uintN       argc,
+                 uintN       js_argc,
                  jsval      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   JSBool ret = JS_FALSE;
-  JSString *str;
-  char *command_line = NULL;
+  JSObject *array_object;
+  gchar *command_line = NULL;
   gchar *standard_output = NULL;
   gchar *standard_error = NULL;
   gint exit_status;
   GError *error = NULL;
   JSString *ret_jsstr;
+  jsuint array_len;
+  gchar **argv = NULL;
+  guint n;
 
-  if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "S", &str))
+  if (!JS_ConvertArguments (cx, js_argc, JS_ARGV (cx, vp), "o", &array_object))
     goto out;
 
-  command_line = JS_EncodeString (cx, str);
+  if (!JS_GetArrayLength (cx, array_object, &array_len))
+    {
+      JS_ReportError (cx, "Failed to get array length");
+      goto out;
+    }
 
-  /* TODO: timeout */
-  if (!g_spawn_command_line_sync (command_line,
-                                  &standard_output,
-                                  &standard_error,
-                                  &exit_status,
-                                  &error))
+  argv = g_new0 (gchar*, array_len + 1);
+  for (n = 0; n < array_len; n++)
+    {
+      jsval elem_val;
+      char *s;
+
+      if (!JS_GetElement (cx, array_object, n, &elem_val))
+        {
+          JS_ReportError (cx, "Failed to get element %d", n);
+          goto out;
+        }
+      s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
+      argv[n] = g_strdup (s);
+      JS_free (cx, s);
+    }
+
+  /* TODO: set a timeout */
+  if (!g_spawn_sync (NULL, /* working dir */
+                     argv,
+                     NULL, /* envp */
+                     G_SPAWN_SEARCH_PATH,
+                     NULL, NULL, /* child_setup, user_data */
+                     &standard_output,
+                     &standard_error,
+                     &exit_status,
+                     &error))
     {
       JS_ReportError (cx,
                       "Failed to spawn command-line `%s': %s (%s, %d)",
@@ -1135,10 +1162,10 @@ js_polkit_spawn (JSContext  *cx,
   JS_SET_RVAL (cx, vp, STRING_TO_JSVAL (ret_jsstr));
 
  out:
+  g_strfreev (argv);
+  g_free (command_line);
   g_free (standard_output);
   g_free (standard_error);
-  if (command_line != NULL)
-    JS_free (cx, command_line);
   return ret;
 }
 
