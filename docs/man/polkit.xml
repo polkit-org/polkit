@@ -681,6 +681,26 @@ polkit.addRule(function(action, subject, details) {
 });
 ]]></programlisting>
 
+      <para>
+        Run an external helper to determine if the current user may reboot the system:
+      </para>
+      <programlisting><![CDATA[
+polkit.addRule(function(action, subject, details) {
+    if (action.indexOf("org.freedesktop.login1.reboot") == 0) {
+        try {
+            // user-may-reboot exits with succeess (exit code 0)
+            // only if the passed username is authorized
+            polkit.spawn(["/opt/company/bin/user-may-reboot",
+                          subject.user]);
+            return "yes";
+        } catch (error) {
+            // Nope, but do allow admin authentication
+            return "auth_admin";
+        }
+    }
+});
+]]></programlisting>
+
     </refsect2>
   </refsect1>
 
