@@ -446,6 +446,244 @@ System Context         |                        |
 
   </refsect1>
 
+  <refsect1 id="polkit-rules"><title>AUTHORIZATION RULES</title>
+    <para>
+      <command>polkitd</command> reads <filename
+      class='extension'>.rules</filename> files from the <filename
+      class='directory'>/etc/polkit-1/rules.d</filename> directory in
+      lexical order. This directory is monitored so if a rules file is
+      changed, added or removed, existing rules are purged and all
+      files are read and processed again.  Rules files are written in
+      the <ulink
+      url="http://en.wikipedia.org/wiki/JavaScript">JavaScript</ulink>
+      programming language and interface with
+      <command>polkitd</command> through the global
+      <literal>polkit</literal> object (of type <type>Polkit</type>)
+      using the following methods:
+    </para>
+
+    <funcsynopsis>
+      <funcprototype>
+        <?dbhtml funcsynopsis-style='ansi'?>
+        <funcdef>void <function>addRule</function></funcdef>
+        <paramdef>string <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>, <parameter>details</parameter>) {...}</paramdef>
+      </funcprototype>
+    </funcsynopsis>
+
+    <funcsynopsis>
+      <funcprototype>
+        <?dbhtml funcsynopsis-style='ansi'?>
+        <funcdef>void <function>addAdminRule</function></funcdef>
+        <paramdef>string[] <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>, <parameter>details</parameter>) {...}</paramdef>
+      </funcprototype>
+    </funcsynopsis>
+
+    <funcsynopsis>
+      <funcprototype>
+        <?dbhtml funcsynopsis-style='ansi'?>
+        <funcdef>void <function>log</function></funcdef>
+        <paramdef>string <parameter>message</parameter></paramdef>
+      </funcprototype>
+    </funcsynopsis>
+
+    <funcsynopsis>
+      <funcprototype>
+        <?dbhtml funcsynopsis-style='ansi'?>
+        <funcdef>string <function>spawn</function></funcdef>
+        <paramdef>string[] <parameter>argv</parameter></paramdef>
+      </funcprototype>
+    </funcsynopsis>
+
+    <para>
+      The <function>addRule()</function> method is used for adding a
+      function that is called whenever an authorization check for
+      <parameter>action</parameter>, <parameter>subject</parameter>
+      and <parameter>details</parameter> is performed. The function
+      should return one of the values <literal>"no"</literal>,
+      <literal>"yes"</literal>, <literal>"auth_self"</literal>,
+      <literal>"auth_self_keep"</literal>,
+      <literal>"auth_admin"</literal>,
+      <literal>"auth_admin_keep"</literal> as defined above.
+    </para>
+
+    <para>
+      The <function>addAdminRule()</function> method is used for
+      adding a function that is called whenever administrator
+      authentication is required. The function is used to specify what
+      identies may be used for administrator authentication for the
+      authorization check identified by <parameter>action</parameter>,
+      <parameter>subject</parameter> and
+      <parameter>details</parameter>. The function should return an
+      array of strings where each string is of the form
+      <literal>"unix-group:&lt;group&gt;"</literal> or
+      <literal>"unix-user:&lt;user&gt;"</literal>.
+    </para>
+
+    <para>
+      The <function>log()</function> method writes the given
+      <parameter>message</parameter> to the system logger. Log entries
+      are emitted using the <constant>LOG_AUTHPRIV</constant> flag
+      meaning that the log entries usually ends up in the file
+      <filename>/var/log/secure</filename>. The
+      <function>log()</function> method is usually only used when
+      debugging rules.
+    </para>
+
+    <para>
+      The <function>spawn()</function> method spawns an external
+      helper identified by the argument vector
+      <parameter>argv</parameter> and waits for it to terminate. If an
+      error occurs or the helper doesn't exit normally with exit code
+      0, an exception is thrown. If the helper does not exit within 10
+      seconds it is killed. Otherwise, the program's
+      <emphasis>standard output</emphasis> is returned as a string.
+      The <function>spawn()</function> method should be used sparingly
+      as helpers may take a very long or indeterminate amount of time
+      to complete and no other authorization check can be handled
+      while the helper is running.
+    </para>
+
+    <refsect2 id="polkit-rules-subject">
+      <title>The <type>Subject</type> type</title>
+
+      <para>
+        The <parameter>subject</parameter> parameter passed to user
+        functions is an object with information about the process
+        being checked. It is of type <type>Subject</type> and has the
+        following attributes
+      </para>
+
+      <informaltable id="polkit-js-subject-attributes">
+        <tgroup cols="3" align="left">
+          <thead>
+            <row>
+              <entry>Attribute</entry>
+              <entry>Type</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><parameter>pid</parameter></entry>
+              <entry><type>int</type></entry>
+              <entry>The process id</entry>
+            </row>
+            <row>
+              <entry><parameter>user</parameter></entry>
+              <entry><type>string</type></entry>
+              <entry>The user name</entry>
+            </row>
+            <row>
+              <entry><parameter>groups</parameter></entry>
+              <entry><type>string[]</type></entry>
+              <entry>Array of groups that <parameter>user</parameter> user belongs to</entry>
+            </row>
+            <row>
+              <entry><parameter>seat</parameter></entry>
+              <entry><type>string</type></entry>
+              <entry>The seat that the subject is associated with - blank if not on a local seat</entry>
+            </row>
+            <row>
+              <entry><parameter>session</parameter></entry>
+              <entry><type>string</type></entry>
+              <entry>The session that the subject is associated with</entry>
+            </row>
+            <row>
+              <entry><parameter>local</parameter></entry>
+              <entry><type>boolean</type></entry>
+              <entry>Set to <constant>true</constant> only if seat is local</entry>
+            </row>
+            <row>
+              <entry><parameter>active</parameter></entry>
+              <entry><type>boolean</type></entry>
+              <entry>Set to <constant>true</constant> only if the session is active</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+
+      <para>
+        The following methods are available on the <type>Subject</type> type:
+      </para>
+
+      <funcsynopsis>
+        <funcprototype>
+          <?dbhtml funcsynopsis-style='ansi'?>
+          <funcdef>boolean <function>isInGroup</function></funcdef>
+          <paramdef>string <parameter>groupName</parameter></paramdef>
+        </funcprototype>
+      </funcsynopsis>
+
+    </refsect2>
+
+    <refsect2 id="polkit-rules-details">
+      <title>The <type>Details</type> type</title>
+
+      <para>
+        The <parameter>details</parameter> parameter passed to user
+        functions is an object with more information about the action
+        being checked. It is of type <type>Details</type> and has
+        details being set by the mechanism as attributes. For example,
+        the <link
+        linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+        mechanism sets the details <literal>user</literal>,
+        <literal>program</literal> and <literal>command_line</literal>
+        which can be obtained through e.g. the following JavaScript
+        expression: <literal>details["program"]</literal>. Consult the
+        documentation for each mechanism for what details are
+        available for each action.
+      </para>
+
+    </refsect2>
+
+    <refsect2 id="polkit-rules-examples">
+      <title>Authorzation Rules Examples</title>
+
+      <para>
+        Allow all users in the <literal>admin</literal> group to perform user administration:
+      </para>
+      <programlisting><![CDATA[
+polkit.addRule(function(action, subject, details) {
+    if (action == "org.freedesktop.accounts.user-administration" &&
+        subject.isInGroup("admin")) {
+        return "yes";
+    }
+});
+]]></programlisting>
+
+      <para>
+        Define administrative users to be the users in the <literal>wheel</literal> group:
+      </para>
+      <programlisting><![CDATA[
+polkit.addAdminRule(function(action, subject, details) {
+    return ["unix-group:wheel"];
+});
+]]></programlisting>
+
+      <para>
+        Forbid users in group <literal>children</literal> to change
+        hostname configuration and allow anyone else to do it (after
+        authenticating as themselves):
+      </para>
+      <programlisting><![CDATA[
+function has_prefix(str, prefix) {
+  return str.indexOf(prefix) == 0;
+}
+
+polkit.addRule(function(action, subject, details) {
+    if (has_prefix(action, "org.freedesktop.hostname1.")) {
+        if (subject.isInGroup("children")) {
+            return "no";
+        } else {
+            return "auth_self_keep";
+        }
+    }
+});
+]]></programlisting>
+
+    </refsect2>
+  </refsect1>
+
   <refsect1 id="polkit-author"><title>AUTHOR</title>
     <para>
       Written by David Zeuthen <email>davidz@redhat.com</email> with
