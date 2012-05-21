@@ -511,7 +511,7 @@ System Context         |                        |
 
     <para>
       The <function>addRule()</function> method is used for adding a
-      function that is called whenever an authorization check for
+      function that may be called whenever an authorization check for
       <parameter>action</parameter>, <parameter>subject</parameter>
       and <parameter>details</parameter> is performed. Functions are
       called in the order they have been added until one of the
@@ -532,7 +532,7 @@ System Context         |                        |
 
     <para>
       The <function>addAdminRule()</function> method is used for
-      adding a function that is called whenever administrator
+      adding a function may be called whenever administrator
       authentication is required. The function is used to specify what
       identies may be used for administrator authentication for the
       authorization check identified by <parameter>action</parameter>,
@@ -546,6 +546,15 @@ System Context         |                        |
       returns <constant>null</constant>,
       <constant>undefined</constant> or does not return a value at
       all, the next function is tried.
+    </para>
+
+    <para>
+      There is no guarantee that a function registered with
+      <function>addRule()</function> or
+      <function>addAdminRule()</function> is ever called - for example
+      an early rules file could register a function that always return
+      a value, hence ensuring that functions added later are never
+      called.
     </para>
 
     <para>
