@@ -717,16 +717,13 @@ polkit.addAdminRule(function(action, subject, details) {
 
       <para>
         Forbid users in group <literal>children</literal> to change
-        hostname configuration and allow anyone else to do it (after
-        authenticating as themselves):
+        hostname configuration (that is, any action starting wth
+        <literal>org.freedesktop.hostname1.</literal>) and allow
+        anyone else to do it after authenticating as themselves:
       </para>
       <programlisting><![CDATA[
-function has_prefix(str, prefix) {
-    return str.indexOf(prefix) == 0;
-}
-
 polkit.addRule(function(action, subject, details) {
-    if (has_prefix(action, "org.freedesktop.hostname1.")) {
+    if (action.indexOf("org.freedesktop.hostname1.") == 0) {
         if (subject.isInGroup("children")) {
             return "no";
         } else {
