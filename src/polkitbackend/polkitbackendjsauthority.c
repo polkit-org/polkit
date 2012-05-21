@@ -851,13 +851,13 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
-                           "_runAdministratorRules",
+                           "_runAdminRules",
                            3,
                            argv,
                            &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Error evaluating administrator rules");
+                                    "Error evaluating admin rules");
       goto out;
     }
 
@@ -958,7 +958,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
-                           "_runAuthorizationRules",
+                           "_runRules",
                            3,
                            argv,
                            &rval))

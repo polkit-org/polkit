@@ -4,33 +4,30 @@
 
 /* NOTE: this is the /etc/polkit-1/rules.d version of 10-testing.rules */
 
-polkit.addAdministratorRule(function(action, subject, details) {
+polkit.addAdminRule(function(action, subject, details) {
     return ["unix-group:admin", "unix-user:root"];
 });
 
-polkit.addAdministratorRule(function(action, subject, details) {
+polkit.addAdminRule(function(action, subject, details) {
     if (action == "net.company.action1") {
         return ["unix-group:admin"];
     }
-    return null;
 });
 
-polkit.addAdministratorRule(function(action, subject, details) {
+polkit.addAdminRule(function(action, subject, details) {
     if (action == "net.company.action2") {
         return ["unix-group:users"];
     }
-    return null;
 });
 
 // -----
 
-polkit.addAuthorizationRule(function(action, subject, details) {
+polkit.addRule(function(action, subject, details) {
     return "auth_admin";
 });
 
-polkit.addAuthorizationRule(function(action, subject, details) {
+polkit.addRule(function(action, subject, details) {
     if (action == "org.freedesktop.policykit.exec") {
         return "auth_admin";
     }
-    return null;
 });

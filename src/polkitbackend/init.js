@@ -41,33 +41,37 @@ function Subject() {
     };
 };
 
-polkit._administratorRuleFuncs = [];
-polkit.addAdministratorRule = function(callback) {this._administratorRuleFuncs.push(callback);};
-polkit._runAdministratorRules = function(action, subject, details) {
+polkit._adminRuleFuncs = [];
+polkit.addAdminRule = function(callback) {this._adminRuleFuncs.push(callback);};
+polkit._runAdminRules = function(action, subject, details) {
     var ret = null;
-    for (var n = this._administratorRuleFuncs.length - 1; n >= 0; n--) {
-        var func = this._administratorRuleFuncs[n];
-        ret = func(action, subject, details);
-        if (ret)
+    for (var n = this._adminRuleFuncs.length - 1; n >= 0; n--) {
+        var func = this._adminRuleFuncs[n];
+        var func_ret = func(action, subject, details);
+        if (func_ret) {
+            ret = func_ret;
             break
+        }
     }
     return ret.join(",");
 };
 
-polkit._authorizationRuleFuncs = [];
-polkit.addAuthorizationRule = function(callback) {this._authorizationRuleFuncs.push(callback);};
-polkit._runAuthorizationRules = function(action, subject, details) {
+polkit._ruleFuncs = [];
+polkit.addRule = function(callback) {this._ruleFuncs.push(callback);};
+polkit._runRules = function(action, subject, details) {
     var ret = null;
-    for (var n = this._authorizationRuleFuncs.length - 1; n >= 0; n--) {
-        var func = this._authorizationRuleFuncs[n];
-        ret = func(action, subject, details);
-        if (ret)
+    for (var n = this._ruleFuncs.length - 1; n >= 0; n--) {
+        var func = this._ruleFuncs[n];
+        var func_ret = func(action, subject, details);
+        if (func_ret) {
+            ret = func_ret;
             break
+        }
     }
     return ret;
 };
 
 polkit._deleteRules = function() {
-    this._administratorRuleFuncs = [];
-    this._authorizationRuleFuncs = [];
+    this._adminRuleFuncs = [];
+    this._ruleFuncs = [];
 };
