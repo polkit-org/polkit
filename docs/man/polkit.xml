@@ -541,7 +541,8 @@ System Context         |                        |
       the order they have been added until one of the functions
       returns a value. Each function should return an array of strings
       where each string is of the form
-      <literal>"unix-group:&lt;group&gt;"</literal> or
+      <literal>"unix-group:&lt;group&gt;"</literal>,
+      <literal>"unix-netgroup:&lt;netgroup&gt;"</literal> or
       <literal>"unix-user:&lt;user&gt;"</literal>.  If the function
       returns <constant>null</constant>,
       <constant>undefined</constant> or does not return a value at
