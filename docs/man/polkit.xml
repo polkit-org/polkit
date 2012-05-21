@@ -448,18 +448,33 @@ System Context         |                        |
 
   <refsect1 id="polkit-rules"><title>AUTHORIZATION RULES</title>
     <para>
-      <command>polkitd</command> reads <filename
-      class='extension'>.rules</filename> files from the <filename
-      class='directory'>/etc/polkit-1/rules.d</filename> directory in
-      lexical order. This directory is monitored so if a rules file is
-      changed, added or removed, existing rules are purged and all
-      files are read and processed again.  Rules files are written in
-      the <ulink
-      url="http://en.wikipedia.org/wiki/JavaScript">JavaScript</ulink>
-      programming language and interface with
-      <command>polkitd</command> through the global
-      <literal>polkit</literal> object (of type <type>Polkit</type>)
-      using the following methods:
+      <command>polkitd</command> reads
+      <filename class='extension'>.rules</filename> files from the
+      <filename class='directory'>/etc/polkit-1/rules.d</filename> and
+      <filename class='directory'>/usr/share/polkit-1/rules.d</filename>
+      directories by sorting the files in lexical order based on the
+      basename on each file (and if there's a tie, files in
+      <filename class='directory'>/etc</filename>
+      are processed before files in
+      <filename class='directory'>/usr</filename>).
+      For example, for the following four
+      files, the order is
+    </para>
+    <itemizedlist mark='opencircle' spacing='compact'>
+      <listitem><para><filename>/etc/polkit-1/rules.d/10-auth.rules</filename></para></listitem>
+      <listitem><para><filename>/usr/share/polkit-1/rules.d/10-auth.rules</filename></para></listitem>
+      <listitem><para><filename>/etc/polkit-1/rules.d/15-auth.rules</filename></para></listitem>
+      <listitem><para><filename>/usr/share/polkit-1/rules.d/20-auth.rules</filename></para></listitem>
+    </itemizedlist>
+    <para>
+      Both directories are monitored so if a rules file is changed,
+      added or removed, existing rules are purged and all files are
+      read and processed again.  Rules files are written in the
+      <ulink url="http://en.wikipedia.org/wiki/JavaScript">JavaScript</ulink>
+      programming language and interface with <command>polkitd</command>
+      through the global
+      <literal>polkit</literal> object (of type <type>Polkit</type>).
+      The following methods are available:
     </para>
 
     <funcsynopsis>
@@ -498,12 +513,21 @@ System Context         |                        |
       The <function>addRule()</function> method is used for adding a
       function that is called whenever an authorization check for
       <parameter>action</parameter>, <parameter>subject</parameter>
-      and <parameter>details</parameter> is performed. The function
-      should return one of the values <literal>"no"</literal>,
+      and <parameter>details</parameter> is performed. Functions are
+      called in the order they have been added until one of the
+      functions returns a value. Hence, to add an authorization rule
+      that is processed before other rules, put it in a file in
+      <filename class='directory'>/etc/polkit-1/rules.d</filename>
+      with a name that sorts before other rules files, for example
+      <filename>00-early-checks.rules</filename>. Each function should
+      return one of the values <literal>"no"</literal>,
       <literal>"yes"</literal>, <literal>"auth_self"</literal>,
       <literal>"auth_self_keep"</literal>,
       <literal>"auth_admin"</literal>,
-      <literal>"auth_admin_keep"</literal> as defined above.
+      <literal>"auth_admin_keep"</literal> as defined above. If the
+      function returns <constant>null</constant>,
+      <constant>undefined</constant> or does not return a value at
+      all, the next function is tried.
     </para>
 
     <para>
@@ -513,10 +537,15 @@ System Context         |                        |
       identies may be used for administrator authentication for the
       authorization check identified by <parameter>action</parameter>,
       <parameter>subject</parameter> and
-      <parameter>details</parameter>. The function should return an
-      array of strings where each string is of the form
+      <parameter>details</parameter>. Functions added are called in
+      the order they have been added until one of the functions
+      returns a value. Each function should return an array of strings
+      where each string is of the form
       <literal>"unix-group:&lt;group&gt;"</literal> or
-      <literal>"unix-user:&lt;user&gt;"</literal>.
+      <literal>"unix-user:&lt;user&gt;"</literal>.  If the function
+      returns <constant>null</constant>,
+      <constant>undefined</constant> or does not return a value at
+      all, the next function is tried.
     </para>
 
     <para>
@@ -640,7 +669,9 @@ System Context         |                        |
       <title>Authorzation Rules Examples</title>
 
       <para>
-        Allow all users in the <literal>admin</literal> group to perform user administration:
+        Allow all users in the <literal>admin</literal> group to
+        perform user administration without changing policy for other
+        users:
       </para>
       <programlisting><![CDATA[
 polkit.addRule(function(action, subject, details) {
@@ -667,7 +698,7 @@ polkit.addAdminRule(function(action, subject, details) {
       </para>
       <programlisting><![CDATA[
 function has_prefix(str, prefix) {
-  return str.indexOf(prefix) == 0;
+    return str.indexOf(prefix) == 0;
 }
 
 polkit.addRule(function(action, subject, details) {
