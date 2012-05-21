@@ -26,6 +26,10 @@ function Subject() {
         return false;
     };
 
+    this.isInNetGroup = function(netGroup) {
+        return polkit._userIsInNetGroup(this.user, netGroup);
+    };
+
     this.toString = function() {
         var ret = "[Subject";
         for (var i in this) {

@@ -16,6 +16,12 @@ polkit.addAdminRule(function(action, subject, details) {
     }
 });
 
+polkit.addAdminRule(function(action, subject, details) {
+    if (action == "net.company.action3") {
+        return ["unix-netgroup:foo"];
+    }
+});
+
 // Fallback
 polkit.addAdminRule(function(action, subject, details) {
     return ["unix-group:admin", "unix-user:root"];
@@ -48,6 +54,18 @@ polkit.addRule(function(action, subject, details) {
 polkit.addRule(function(action, subject, details) {
     if (action == "net.company.group.only_group_users") {
         if (subject.isInGroup("users"))
+            return "yes";
+        else
+            return "no";
+    }
+});
+
+// ---------------------------------------------------------------------
+// netgroup membership
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.group.only_netgroup_users") {
+        if (subject.isInNetGroup("foo"))
             return "yes";
         else
             return "no";

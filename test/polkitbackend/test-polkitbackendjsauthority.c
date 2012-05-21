@@ -130,6 +130,12 @@ test_get_admin_identities (void)
         "unix-group:users"
       }
     },
+    {
+      "net.company.action3",
+      {
+        "unix-netgroup:foo"
+      }
+    },
   };
   guint n;
 
@@ -218,6 +224,24 @@ static const RulesTestCase rules_test_cases[] = {
     /* sally is not a member of group 'users', see test/etc/group */
     "group_membership_with_non_member",
     "net.company.group.only_group_users",
+    "unix-user:sally",
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+    NULL
+  },
+
+  /* check netgroup membership */
+  {
+    /* john is a member of netgroup 'foo', see test/etc/netgroup */
+    "netgroup_membership_with_member",
+    "net.company.group.only_netgroup_users",
+    "unix-user:john",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
+  {
+    /* sally is not a member of netgroup 'foo', see test/etc/netgroup */
+    "netgroup_membership_with_non_member",
+    "net.company.group.only_netgroup_users",
     "unix-user:sally",
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
     NULL

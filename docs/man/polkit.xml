@@ -652,6 +652,21 @@ System Context         |                        |
         </funcprototype>
       </funcsynopsis>
 
+      <funcsynopsis>
+        <funcprototype>
+          <?dbhtml funcsynopsis-style='ansi'?>
+          <funcdef>boolean <function>isInNetGroup</function></funcdef>
+          <paramdef>string <parameter>netGroupName</parameter></paramdef>
+        </funcprototype>
+      </funcsynopsis>
+
+      <para>
+        The <function>isInGroup()</function> method can be used to
+        check if the subject is in a given group and
+        <function>isInNetGroup()</function> can be used to check if
+        the subject is in a given netgroup.
+      </para>
+
     </refsect2>
 
     <refsect2 id="polkit-rules-details">

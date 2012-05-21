@@ -2,7 +2,7 @@
 SUBDIRS = mocklibc . polkit polkitbackend
 AM_CFLAGS = $(GLIB_CFLAGS)
 
-check_LTLIBRARIES = libpolkit-test-helper.la
+noinst_LTLIBRARIES = libpolkit-test-helper.la
 libpolkit_test_helper_la_SOURCES = polkittesthelper.c polkittesthelper.h
 libpolkit_test_helper_la_LIBADD = $(GLIB_LIBS)
 
@@ -16,7 +16,6 @@ export TESTS_ENVIRONMENT := $(abs_top_builddir)/test/mocklibc/bin/mocklibc
 
 # Include path to mock config files
 export POLKIT_TEST_DATA := $(abs_top_srcdir)/test/data
-
 
 clean-local :
 	rm -f *~

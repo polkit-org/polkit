@@ -144,11 +144,13 @@ static JSClass js_polkit_class = {
 
 static JSBool js_polkit_log (JSContext *cx, uintN argc, jsval *vp);
 static JSBool js_polkit_spawn (JSContext *cx, uintN argc, jsval *vp);
+static JSBool js_polkit_user_is_in_netgroup (JSContext *cx, uintN argc, jsval *vp);
 
 static JSFunctionSpec js_polkit_functions[] =
 {
   JS_FS("log",            js_polkit_log,            0, 0),
   JS_FS("spawn",          js_polkit_spawn,          0, 0),
+  JS_FS("_userIsInNetGroup", js_polkit_user_is_in_netgroup,          0, 0),
   JS_FS_END
 };
 
@@ -1225,3 +1227,42 @@ js_polkit_spawn (JSContext  *cx,
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+
+static JSBool
+js_polkit_user_is_in_netgroup (JSContext  *cx,
+                               uintN       argc,
+                               jsval      *vp)
+{
+  /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
+  JSBool ret = JS_FALSE;
+  JSString *user_str;
+  JSString *netgroup_str;
+  char *user;
+  char *netgroup;
+  JSBool is_in_netgroup = JS_FALSE;
+
+  if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "SS", &user_str, &netgroup_str))
+    goto out;
+
+  user = JS_EncodeString (cx, user_str);
+  netgroup = JS_EncodeString (cx, netgroup_str);
+
+  if (innetgr (netgroup,
+               NULL,  /* host */
+               user,
+               NULL)) /* domain */
+    {
+      is_in_netgroup =  JS_TRUE;
+    }
+
+  JS_free (cx, netgroup);
+  JS_free (cx, user);
+
+  ret = JS_TRUE;
+
+  JS_SET_RVAL (cx, vp, BOOLEAN_TO_JSVAL (is_in_netgroup));
+ out:
+  return ret;
+}
+
