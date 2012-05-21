@@ -56,8 +56,8 @@
 
 struct _PolkitBackendJsAuthorityPrivate
 {
-  gchar *rules_dir;
-  GFileMonitor *dir_monitor;
+  gchar **rules_dirs;
+  GFileMonitor **dir_monitors; /* NULL-terminated array of GFileMonitor instances */
 
   JSRuntime *rt;
   JSContext *cx;
@@ -79,7 +79,7 @@ static void on_dir_monitor_changed (GFileMonitor     *monitor,
 enum
 {
   PROP_0,
-  PROP_RULES_DIR,
+  PROP_RULES_DIRS,
 };
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -174,40 +174,76 @@ polkit_backend_js_authority_init (PolkitBackendJsAuthority *authority)
                                                  PolkitBackendJsAuthorityPrivate);
 }
 
+static gint
+rules_file_name_cmp (const gchar *a,
+                     const gchar *b)
+{
+  gint ret;
+  const gchar *a_base;
+  const gchar *b_base;
+
+  a_base = strrchr (a, '/');
+  b_base = strrchr (b, '/');
+
+  g_assert (a_base != NULL);
+  g_assert (b_base != NULL);
+  a_base += 1;
+  b_base += 1;
+
+  ret = g_strcmp0 (a_base, b_base);
+  if (ret == 0)
+    {
+      /* /etc wins over /usr */
+      ret = g_strcmp0 (a, b);
+      g_assert (ret != 0);
+    }
+
+  return ret;
+}
+
 static void
 load_scripts (PolkitBackendJsAuthority  *authority)
 {
-  GDir *dir = NULL;
   GList *files = NULL;
   GList *l;
-  const gchar *name;
   guint num_scripts = 0;
   GError *error = NULL;
-
-  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                "Loading scripts from directory %s",
-                                authority->priv->rules_dir);
-
-  dir = g_dir_open (authority->priv->rules_dir,
-                    0,
-                    &error);
-  if (dir == NULL)
-    {
-      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Error opening rules directory: %s (%s, %d)",
-                                    error->message, g_quark_to_string (error->domain), error->code);
-      g_clear_error (&error);
-      goto out;
-    }
+  guint n;
 
   files = NULL;
-  while ((name = g_dir_read_name (dir)) != NULL)
+
+  for (n = 0; authority->priv->rules_dirs != NULL && authority->priv->rules_dirs[n] != NULL; n++)
     {
-      if (g_str_has_suffix (name, ".rules"))
-        files = g_list_prepend (files, g_strdup_printf ("%s/%s", authority->priv->rules_dir, name));
+      const gchar *dir_name = authority->priv->rules_dirs[n];
+      GDir *dir = NULL;
+
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Loading scripts from directory %s",
+                                    dir_name);
+
+      dir = g_dir_open (dir_name,
+                        0,
+                        &error);
+      if (dir == NULL)
+        {
+          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        "Error opening rules directory: %s (%s, %d)",
+                                        error->message, g_quark_to_string (error->domain), error->code);
+          g_clear_error (&error);
+        }
+      else
+        {
+          const gchar *name;
+          while ((name = g_dir_read_name (dir)) != NULL)
+            {
+              if (g_str_has_suffix (name, ".rules"))
+                files = g_list_prepend (files, g_strdup_printf ("%s/%s", dir_name, name));
+            }
+          g_dir_close (dir);
+        }
     }
 
-  files = g_list_sort (files, (GCompareFunc) g_strcmp0);
+  files = g_list_sort (files, (GCompareFunc) rules_file_name_cmp);
 
   for (l = files; l != NULL; l = l->next)
     {
@@ -246,11 +282,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                 "Finished loading, compiling and executing %d scripts",
                                 num_scripts);
-
- out:
   g_list_free_full (files, g_free);
-  if (dir != NULL)
-    g_dir_close (dir);
 }
 
 static void
@@ -318,6 +350,46 @@ on_dir_monitor_changed (GFileMonitor     *monitor,
     }
 }
 
+
+static void
+setup_file_monitors (PolkitBackendJsAuthority *authority)
+{
+  guint n;
+  GPtrArray *p;
+
+  p = g_ptr_array_new ();
+  for (n = 0; authority->priv->rules_dirs != NULL && authority->priv->rules_dirs[n] != NULL; n++)
+    {
+      GFile *file;
+      GError *error;
+      GFileMonitor *monitor;
+
+      file = g_file_new_for_path (authority->priv->rules_dirs[n]);
+      error = NULL;
+      monitor = g_file_monitor_directory (file,
+                                          G_FILE_MONITOR_NONE,
+                                          NULL,
+                                          &error);
+      if (monitor == NULL)
+        {
+          g_warning ("Error monitoring directory %s: %s",
+                     authority->priv->rules_dirs[n],
+                     error->message);
+          g_clear_error (&error);
+        }
+      else
+        {
+          g_signal_connect (monitor,
+                            "changed",
+                            G_CALLBACK (on_dir_monitor_changed),
+                            authority);
+          g_ptr_array_add (p, monitor);
+        }
+    }
+  g_ptr_array_add (p, NULL);
+  authority->priv->dir_monitors = (GFileMonitor**) g_ptr_array_free (p, FALSE);
+}
+
 static void
 polkit_backend_js_authority_constructed (GObject *object)
 {
@@ -372,6 +444,14 @@ polkit_backend_js_authority_constructed (GObject *object)
       goto fail;
     }
 
+  if (authority->priv->rules_dirs == NULL)
+    {
+      authority->priv->rules_dirs = g_new0 (gchar *, 3);
+      authority->priv->rules_dirs[0] = g_strdup (PACKAGE_SYSCONF_DIR "/polkit-1/rules.d");
+      authority->priv->rules_dirs[1] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
+    }
+
+  setup_file_monitors (authority);
   load_scripts (authority);
 
   G_OBJECT_CLASS (polkit_backend_js_authority_parent_class)->constructed (object);
@@ -386,15 +466,18 @@ static void
 polkit_backend_js_authority_finalize (GObject *object)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
+  guint n;
 
-  g_free (authority->priv->rules_dir);
-  if (authority->priv->dir_monitor != NULL)
+  for (n = 0; authority->priv->dir_monitors != NULL && authority->priv->dir_monitors[n] != NULL; n++)
     {
-      g_signal_handlers_disconnect_by_func (authority->priv->dir_monitor,
+      GFileMonitor *monitor = authority->priv->dir_monitors[n];
+      g_signal_handlers_disconnect_by_func (monitor,
                                             G_CALLBACK (on_dir_monitor_changed),
                                             authority);
-      g_object_unref (authority->priv->dir_monitor);
+      g_object_unref (monitor);
     }
+  g_free (authority->priv->dir_monitors);
+  g_strfreev (authority->priv->rules_dirs);
 
   JS_DestroyContext (authority->priv->cx);
   JS_DestroyRuntime (authority->priv->rt);
@@ -410,35 +493,12 @@ polkit_backend_js_authority_set_property (GObject      *object,
                                           GParamSpec   *pspec)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
-  GFile *file;
-  GError *error;
 
   switch (property_id)
     {
-      case PROP_RULES_DIR:
-        g_assert (authority->priv->rules_dir == NULL);
-        authority->priv->rules_dir = g_value_dup_string (value);
-
-        file = g_file_new_for_path (authority->priv->rules_dir);
-        error = NULL;
-        authority->priv->dir_monitor = g_file_monitor_directory (file,
-                                                                 G_FILE_MONITOR_NONE,
-                                                                 NULL,
-                                                                 &error);
-        if (authority->priv->dir_monitor == NULL)
-          {
-            g_warning ("Error monitoring directory %s: %s",
-                       authority->priv->rules_dir,
-                       error->message);
-            g_clear_error (&error);
-          }
-        else
-          {
-            g_signal_connect (authority->priv->dir_monitor,
-                              "changed",
-                              G_CALLBACK (on_dir_monitor_changed),
-                              authority);
-          }
+      case PROP_RULES_DIRS:
+        g_assert (authority->priv->rules_dirs == NULL);
+        authority->priv->rules_dirs = (gchar **) g_value_dup_boxed (value);
         break;
 
       default:
@@ -488,12 +548,12 @@ polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
   interactive_authority_class->check_authorization_sync = polkit_backend_js_authority_check_authorization_sync;
 
   g_object_class_install_property (gobject_class,
-                                   PROP_RULES_DIR,
-                                   g_param_spec_string ("rules-dir",
-                                                        NULL,
-                                                        NULL,
-                                                        PACKAGE_SYSCONF_DIR "/polkit-1/rules.d",
-                                                        G_PARAM_CONSTRUCT_ONLY | G_PARAM_WRITABLE));
+                                   PROP_RULES_DIRS,
+                                   g_param_spec_boxed ("rules-dirs",
+                                                       NULL,
+                                                       NULL,
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_CONSTRUCT_ONLY | G_PARAM_WRITABLE));
 
 
   g_type_class_add_private (klass, sizeof (PolkitBackendJsAuthorityPrivate));

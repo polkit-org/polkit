@@ -2,6 +2,8 @@
 
 /* see test/polkitbackend/test-polkitbackendjsauthority.c */
 
+/* NOTE: this is the /etc/polkit-1/rules.d version of 10-testing.rules */
+
 polkit.addAdministratorRule(function(action, subject, details) {
     return ["unix-group:admin", "unix-user:root"];
 });

@@ -36,16 +36,20 @@ static PolkitBackendJsAuthority *get_authority (void);
 static PolkitBackendJsAuthority *
 get_authority (void)
 {
-  gchar *rules_dir;
+  gchar *rules_dirs[3] = {0};
   PolkitBackendJsAuthority *authority;
 
-  rules_dir = polkit_test_get_data_path ("etc/polkit-1/rules.d");
-  g_assert (rules_dir != NULL);
+  rules_dirs[0] = polkit_test_get_data_path ("etc/polkit-1/rules.d");
+  rules_dirs[1] = polkit_test_get_data_path ("usr/share/polkit-1/rules.d");
+  rules_dirs[2] = NULL;
+  g_assert (rules_dirs[0] != NULL);
+  g_assert (rules_dirs[1] != NULL);
 
   authority = g_object_new (POLKIT_BACKEND_TYPE_JS_AUTHORITY,
-                            "rules-dir", rules_dir,
+                            "rules-dirs", rules_dirs,
                             NULL);
-  g_free (rules_dir);
+  g_free (rules_dirs[0]);
+  g_free (rules_dirs[1]);
   return authority;
 }
 

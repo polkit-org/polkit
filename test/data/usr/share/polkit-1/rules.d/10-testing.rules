@@ -1,0 +1,5 @@
+/* -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*- */
+
+/* see test/polkitbackend/test-polkitbackendjsauthority.c */
+
+/* NOTE: this is the /usr/share/polkit-1/rules.d version of 10-testing.rules */
