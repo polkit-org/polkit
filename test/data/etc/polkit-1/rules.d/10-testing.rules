@@ -41,3 +41,15 @@ polkit.addRule(function(action, subject, details) {
         return "yes";
     }
 });
+
+// ---------------------------------------------------------------------
+// group membership
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.group.only_group_users") {
+        if (subject.isInGroup("users"))
+            return "yes";
+        else
+            return "no";
+    }
+});

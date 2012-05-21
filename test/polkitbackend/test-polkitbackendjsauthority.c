@@ -148,6 +148,7 @@ struct RulesTestCase
 {
   const gchar *test_name;
   const gchar *action_id;
+  const gchar *identity;
   PolkitImplicitAuthorization expected_result;
   const gchar *expected_detail;
 };
@@ -157,12 +158,14 @@ static const RulesTestCase rules_test_cases[] = {
   {
     "basic0",
     "net.company.productA.action0",
+    "unix-user:root",
     POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED,
     NULL
   },
   {
     "basic1",
     "net.company.productA.action1",
+    "unix-user:root",
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED,
     NULL
   },
@@ -181,6 +184,7 @@ static const RulesTestCase rules_test_cases[] = {
     /* defined in file a, b, c, d - should pick file a */
     "order0",
     "net.company.order0",
+    "unix-user:root",
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
     "a"
   },
@@ -188,6 +192,7 @@ static const RulesTestCase rules_test_cases[] = {
     /* defined in file b, c, d - should pick file b */
     "order1",
     "net.company.order1",
+    "unix-user:root",
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
     "b"
   },
@@ -195,8 +200,27 @@ static const RulesTestCase rules_test_cases[] = {
     /* defined in file c, d - should pick file c */
     "order2",
     "net.company.order2",
+    "unix-user:root",
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
     "c"
+  },
+
+  /* check group membership */
+  {
+    /* john is a member of group 'users', see test/etc/group */
+    "group_membership_with_member",
+    "net.company.group.only_group_users",
+    "unix-user:john",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
+  {
+    /* sally is not a member of group 'users', see test/etc/group */
+    "group_membership_with_non_member",
+    "net.company.group.only_group_users",
+    "unix-user:sally",
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+    NULL
   },
 };
 
@@ -218,7 +242,7 @@ rules_test_func (gconstpointer user_data)
 
   caller = polkit_unix_process_new (getpid ());
   subject = polkit_unix_process_new (getpid ());
-  user_for_subject = polkit_identity_from_string ("unix-user:root", &error);
+  user_for_subject = polkit_identity_from_string (tc->identity, &error);
   g_assert_no_error (error);
 
   details = polkit_details_new ();
