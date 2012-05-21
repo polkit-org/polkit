@@ -23,6 +23,7 @@
 
 #include "glib.h"
 
+#include <locale.h>
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackendjsauthority.h>
 #include <polkittesthelper.h>
@@ -246,6 +247,43 @@ static const RulesTestCase rules_test_cases[] = {
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
     NULL
   },
+
+  /* spawning */
+  {
+    "spawning_non_existing_helper",
+    "net.company.spawning.non_existing_helper",
+    "unix-user:root",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
+  {
+    "spawning_successful_helper",
+    "net.company.spawning.successful_helper",
+    "unix-user:root",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
+  {
+    "spawning_failing_helper",
+    "net.company.spawning.failing_helper",
+    "unix-user:root",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
+  {
+    "spawning_helper_with_output",
+    "net.company.spawning.helper_with_output",
+    "unix-user:root",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
+  {
+    "spawning_helper_timeout",
+    "net.company.spawning.helper_timeout",
+    "unix-user:root",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
 };
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -309,6 +347,8 @@ int
 main (int argc, char *argv[])
 {
   GIOExtensionPoint *ep;
+
+  setlocale (LC_ALL, "");
 
   g_type_init ();
   g_test_init (&argc, &argv, NULL);

@@ -71,3 +71,66 @@ polkit.addRule(function(action, subject, details) {
             return "no";
     }
 });
+
+// ---------------------------------------------------------------------
+// spawning
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.spawning.non_existing_helper") {
+        try {
+            polkit.spawn(["/path/to/non/existing/helper"]);
+            return "no";
+        } catch (error) {
+            return "yes";
+        }
+    }
+});
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.spawning.successful_helper") {
+        try {
+            polkit.spawn(["/bin/true"]);
+            return "yes";
+        } catch (error) {
+            return "no";
+        }
+    }
+});
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.spawning.failing_helper") {
+        try {
+            polkit.spawn(["/bin/false"]);
+            return "no";
+        } catch (error) {
+            return "yes";
+        }
+    }
+});
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.spawning.helper_with_output") {
+        try {
+            var out = polkit.spawn(["echo", "-n", "-e", "Hello\nWorld"]);
+            if (out == "Hello\nWorld")
+                return "yes";
+            else
+                return "no";
+        } catch (error) {
+            return "no";
+        }
+    }
+});
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.spawning.helper_timeout") {
+        try {
+            polkit.spawn(["sleep", "20"]);
+            return "no";
+        } catch (error) {
+            if (error == "Error: Error spawning helper: Timed out after 10 seconds (g-io-error-quark, 24)")
+                return "yes";
+            return "no";
+        }
+    }
+});
