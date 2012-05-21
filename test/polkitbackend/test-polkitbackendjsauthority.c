@@ -102,7 +102,7 @@ test_get_admin_identities_for_action_id (const gchar         *action_id,
   g_clear_object (&subject);
   g_clear_object (&caller);
   g_clear_object (&authority);
-}
+ }
 
 static void
 test_get_admin_identities (void)
@@ -140,6 +140,122 @@ test_get_admin_identities (void)
     }
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+typedef struct RulesTestCase RulesTestCase;
+
+struct RulesTestCase
+{
+  const gchar *test_name;
+  const gchar *action_id;
+  PolkitImplicitAuthorization expected_result;
+  const gchar *expected_detail;
+};
+
+static const RulesTestCase rules_test_cases[] = {
+  /* Check basics */
+  {
+    "basic0",
+    "net.company.productA.action0",
+    POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED,
+    NULL
+  },
+  {
+    "basic1",
+    "net.company.productA.action1",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED,
+    NULL
+  },
+
+  /* Ordering tests ... we have four rules files, check they are
+   * evaluated in order by checking the detail set by each rules
+   *
+   * -       etc/polkit-1/rules.d/10-testing.rules (file a)
+   * - usr/share/polkit-1/rules.d/10-testing.rules (file b)
+   * -       etc/polkit-1/rules.d/15-testing.rules (file c)
+   * - usr/share/polkit-1/rules.d/20-testing.rules (file d)
+   *
+   * file.
+   */
+  {
+    /* defined in file a, b, c, d - should pick file a */
+    "order0",
+    "net.company.order0",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    "a"
+  },
+  {
+    /* defined in file b, c, d - should pick file b */
+    "order1",
+    "net.company.order1",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    "b"
+  },
+  {
+    /* defined in file c, d - should pick file c */
+    "order2",
+    "net.company.order2",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    "c"
+  },
+};
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+rules_test_func (gconstpointer user_data)
+{
+  const RulesTestCase *tc = user_data;
+  PolkitBackendJsAuthority *authority = NULL;
+  PolkitSubject *caller = NULL;
+  PolkitSubject *subject = NULL;
+  PolkitIdentity *user_for_subject = NULL;
+  PolkitDetails *details = NULL;
+  GError *error = NULL;
+  PolkitImplicitAuthorization result;
+
+  authority = get_authority ();
+
+  caller = polkit_unix_process_new (getpid ());
+  subject = polkit_unix_process_new (getpid ());
+  user_for_subject = polkit_identity_from_string ("unix-user:root", &error);
+  g_assert_no_error (error);
+
+  details = polkit_details_new ();
+
+  result = polkit_backend_interactive_authority_check_authorization_sync (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
+                                                                          caller,
+                                                                          subject,
+                                                                          user_for_subject,
+                                                                          TRUE,
+                                                                          TRUE,
+                                                                          tc->action_id,
+                                                                          details,
+                                                                          POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN);
+  g_assert_cmpint (result, ==, tc->expected_result);
+  g_assert_cmpstr (polkit_details_lookup (details, "test_detail"), ==, tc->expected_detail);
+
+  g_clear_object (&user_for_subject);
+  g_clear_object (&subject);
+  g_clear_object (&caller);
+  g_clear_object (&authority);
+}
+
+static void
+add_rules_tests (void)
+{
+  guint n;
+  for (n = 0; n < G_N_ELEMENTS (rules_test_cases); n++)
+    {
+      const RulesTestCase *tc = &rules_test_cases[n];
+      gchar *s;
+      s = g_strdup_printf ("/PolkitBackendJsAuthority/rules_%s", tc->test_name);
+      g_test_add_data_func (s, &rules_test_cases[n], rules_test_func);
+      g_free (s);
+    }
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
 
 int
 main (int argc, char *argv[])
@@ -154,6 +270,7 @@ main (int argc, char *argv[])
   g_io_extension_point_set_required_type (ep, POLKIT_BACKEND_TYPE_AUTHORITY);
 
   g_test_add_func ("/PolkitBackendJsAuthority/get_admin_identities", test_get_admin_identities);
+  add_rules_tests ();
 
   return g_test_run ();
 };

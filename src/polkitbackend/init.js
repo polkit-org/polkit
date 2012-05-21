@@ -45,7 +45,7 @@ polkit._adminRuleFuncs = [];
 polkit.addAdminRule = function(callback) {this._adminRuleFuncs.push(callback);};
 polkit._runAdminRules = function(action, subject, details) {
     var ret = null;
-    for (var n = this._adminRuleFuncs.length - 1; n >= 0; n--) {
+    for (var n = 0; n < this._adminRuleFuncs.length; n++) {
         var func = this._adminRuleFuncs[n];
         var func_ret = func(action, subject, details);
         if (func_ret) {
@@ -60,7 +60,7 @@ polkit._ruleFuncs = [];
 polkit.addRule = function(callback) {this._ruleFuncs.push(callback);};
 polkit._runRules = function(action, subject, details) {
     var ret = null;
-    for (var n = this._ruleFuncs.length - 1; n >= 0; n--) {
+    for (var n = 0; n < this._ruleFuncs.length; n++) {
         var func = this._ruleFuncs[n];
         var func_ret = func(action, subject, details);
         if (func_ret) {

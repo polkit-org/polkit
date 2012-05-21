@@ -5,10 +5,6 @@
 /* NOTE: this is the /etc/polkit-1/rules.d version of 10-testing.rules */
 
 polkit.addAdminRule(function(action, subject, details) {
-    return ["unix-group:admin", "unix-user:root"];
-});
-
-polkit.addAdminRule(function(action, subject, details) {
     if (action == "net.company.action1") {
         return ["unix-group:admin"];
     }
@@ -20,14 +16,28 @@ polkit.addAdminRule(function(action, subject, details) {
     }
 });
 
+// Fallback
+polkit.addAdminRule(function(action, subject, details) {
+    return ["unix-group:admin", "unix-user:root"];
+});
+
 // -----
 
 polkit.addRule(function(action, subject, details) {
-    return "auth_admin";
+    if (action == "net.company.productA.action0") {
+        return "auth_admin";
+    }
 });
 
 polkit.addRule(function(action, subject, details) {
-    if (action == "org.freedesktop.policykit.exec") {
-        return "auth_admin";
+    if (action == "net.company.productA.action1") {
+        return "auth_self";
+    }
+});
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.order0") {
+        details["test_detail"] = "a";
+        return "yes";
     }
 });

@@ -253,7 +253,7 @@ main (int argc, char *argv[])
       POLKIT_BACKEND_TYPE_AUTHORITY);
 
   add_check_authorization_tests ();
-  g_test_add_func ("/PolkitBackendLocalAuthority/get_admin_identities", test_get_admin_identities);
+  g_test_add_func ("/PolkitBackendJsAuthority/get_admin_identities", test_get_admin_identities);
 
   return g_test_run ();
 };

@@ -2,18 +2,24 @@
 
 /* see test/polkitbackend/test-polkitbackendjsauthority.c */
 
-/* NOTE: this is the /usr/share/polkit-1/rules.d version of 10-testing.rules */
-
 polkit.addRule(function(action, subject, details) {
     if (action == "net.company.order0") {
-        details["test_detail"] = "c";
+        polkit.log("blabla");
+        details["test_detail"] = "d";
         return "yes";
     }
 });
 
 polkit.addRule(function(action, subject, details) {
     if (action == "net.company.order1") {
-        details["test_detail"] = "b";
+        details["test_detail"] = "d";
+        return "yes";
+    }
+});
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.order2") {
+        details["test_detail"] = "d";
         return "yes";
     }
 });
