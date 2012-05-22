@@ -35,7 +35,10 @@
       should never need to start this daemon as it will be
       automatically started by
       <citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-      whenever an application calls into the service.
+      whenever an application calls into the service. See the
+      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      man page for more information.
+
     </para>
   </refsect1>
 
