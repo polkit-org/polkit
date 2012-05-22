@@ -103,7 +103,7 @@
       temporary authorizations for the current session.
     </para>
     <para>
-      This command is a simple wrapper around the PolicyKit D-Bus interface; see the
+      This command is a simple wrapper around the polkit D-Bus interface; see the
       D-Bus interface documentation for details.
     </para>
   </refsect1>
@@ -176,7 +176,7 @@ KEY3=VALUE3
 
   <refsect1 id="pkcheck-auth-agent"><title>AUTHENTICATION AGENT</title>
     <para>
-      <command>pkcheck</command>, like any other PolicyKit
+      <command>pkcheck</command>, like any other polkit
       application, will use the authentication agent registered for
       the process in question. However, if no authentication agent is
       available, then <command>pkcheck</command> can register its own

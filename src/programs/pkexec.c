@@ -668,11 +668,12 @@ main (int argc, char *argv[])
   g_assert (action_id != NULL);
 
   details = polkit_details_new ();
+  polkit_details_insert (details, "user", pw->pw_name);
   if (pw->pw_gecos != NULL && strlen (pw->pw_gecos) > 0)
     s = g_strdup_printf ("%s (%s)", pw->pw_gecos, pw->pw_name);
   else
     s = g_strdup_printf ("%s", pw->pw_name);
-  polkit_details_insert (details, "user", s);
+  polkit_details_insert (details, "user_full", s);
   g_free (s);
   polkit_details_insert (details, "program", path);
   polkit_details_insert (details, "command_line", command_line);

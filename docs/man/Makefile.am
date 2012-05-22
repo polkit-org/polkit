@@ -6,7 +6,6 @@ if MAN_PAGES_ENABLED
 man_MANS = 				\
 	polkit.8			\
 	polkitd.8			\
-	pklocalauthority.8		\
 	pkexec.1			\
 	pkcheck.1			\
 	pkaction.1			\
@@ -21,7 +20,6 @@ endif # MAN_PAGES_ENABLED
 EXTRA_DIST = 				\
 	polkit.xml                 	\
 	polkitd.xml			\
-	pklocalauthority.xml		\
 	pkexec.xml			\
 	pkcheck.xml			\
 	pkaction.xml			\

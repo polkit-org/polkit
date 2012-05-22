@@ -18,25 +18,25 @@
 
   <refnamediv>
     <refname>polkit</refname>
-    <refpurpose>Authorization Framework</refpurpose>
+    <refpurpose>Authorization Manager</refpurpose>
   </refnamediv>
 
   <refsect1 id="polkit-overview"><title>OVERVIEW</title>
     <para>
-      PolicyKit provides an authorization API intended to be used by
+      polkit provides an authorization API intended to be used by
       privileged programs (<quote>MECHANISMS</quote>) offering service
-      to unprivileged programs (<quote>CLIENTS</quote>) through some
+      to unprivileged programs (<quote>SUBJECTS</quote>) through some
       form of IPC mechanism such as D-Bus or Unix pipes. In this
-      scenario, the mechanism typically treats the client as
-      untrusted. For every request from a client, the mechanism needs
+      scenario, the mechanism typically treats the subject as
+      untrusted. For every request from a subject, the mechanism needs
       to determine if the request is authorized or if it should refuse
-      to service the client. Using the PolicyKit API, a mechanism can
-      offload this decision to a trusted party: The PolicyKit
+      to service the subject. Using the polkit APIs, a mechanism can
+      offload this decision to a trusted party: The polkit
       Authority.
     </para>
 
     <para>
-      In addition to acting as an authority, PolicyKit allows users to
+      In addition to acting as an authority, polkit allows users to
       obtain temporary authorization through authenticating either an
       administrative user or the owner of the session the client
       belongs to. This is useful for scenarios where a mechanism needs
@@ -48,15 +48,15 @@
 
   <refsect1 id="polkit-system-architecture"><title>SYSTEM ARCHITECTURE</title>
     <para>
-      The system architecture of PolicyKit is comprised of
-      the <emphasis>Authority</emphasis> (implemented as a service on
-      the system message bus) and a
-      <emphasis>Authentication Agent</emphasis> per user session
-      (provided and started by the user session e.g. GNOME or KDE).
-      Additionally, PolicyKit supports a number of extension points –
-      specifically, vendors and/or sites can write extensions to
-      completely control authorization policy. In a block diagram, the
-      architecture looks like this:
+      The system architecture of polkit is comprised of the
+      <emphasis>Authority</emphasis> (implemented as a service on the
+      system message bus) and an <emphasis>Authentication
+      Agent</emphasis> per user session (provided and started by the
+      user's graphical environment, for example <ulink
+      url="http://www.gnome.org/">GNOME</ulink>). <emphasis>Actions</emphasis>
+      are defined by applications and vendors, sites and system
+      administrators can control authorization policy through
+      <emphasis>Authorization Rules</emphasis>
     </para>
     <mediaobject id="polkit-architecture">
       <imageobject>
@@ -70,9 +70,9 @@
  +-------------------+
  | libpolkit-agent-1 |
  +-------------------+
-        ^                                  +--------+
-        |                                  | Client |
-        +--------------+                   +--------+
+        ^                                  +---------+
+        |                                  | Subject |
+        +--------------+                   +---------+
                        |                        ^
                        |                        |
 User Session           |                        |
@@ -90,49 +90,44 @@ System Context         |                        |
         |                       |      +---------------------+
         V                       +----> | libpolkit-gobject-1 |
 +------------------+                   +---------------------+
+|    polkitd(8)    |
++------------------+
 | org.freedesktop. |
-|    PolicyKit1    |
-+------------------+
-|   Backends and   |
-|    Extensions    |
-+------------------+
+|    PolicyKit1    |<---------+
++------------------+          |
+          ^                   |
+          |            +--------------------------------------+
+          |            | /usr/share/polkit-1/actions/*.policy |
+          |            +--------------------------------------+
+          |
+   +--------------------------------------+
+   | /etc/polkit-1/rules.d/*.rules        |
+   | /usr/share/polkit-1/rules.d/*.rules  |
+   +--------------------------------------+
 ]]></programlisting>
       </textobject>
     </mediaobject>
     <para>
       For convenience, the <literal>libpolkit-gobject-1</literal>
-      library wraps the PolicyKit D-Bus API using GObject. However, a
-      mechanism can also use the D-Bus API or the
+      library wraps the polkit D-Bus API and is usable from any C/C++
+      program as well as higher-level languages <ulink
+      url="https://live.gnome.org/GObjectIntrospection">GObjectIntrospection</ulink>
+      support such as Javascript and Python.  A mechanism can also use
+      the D-Bus API or the
       <citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-      command to check authorizations.
-    </para>
-
-    <para>
-      The <literal>libpolkit-agent-1</literal> library provides an
+      command to check authorizations. The
+      <literal>libpolkit-agent-1</literal> library provides an
       abstraction of the native authentication system, e.g.
       <citerefentry><refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       and also facilities registration and communication with the
-      PolicyKit D-Bus service.
+      polkit D-Bus service.
     </para>
 
     <para>
-      PolicyKit extensions and authority backends are implemented
-      using the
-      <literal>libpolkit-backend-1</literal> library.
-    </para>
-
-    <para>
-      See the
-      <ulink url="file:///usr/share/gtk-doc/html/polkit-1/index.html">developer
-      documentation</ulink> for more information about using and
-      extending PolicyKit.
-    </para>
-
-    <para>
-      See
-      <citerefentry><refentrytitle>pklocalauthority</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      for information about the Local Authority - the default
-      authority implementation shipped with PolicyKit.
+      See the <ulink
+      url="http://www.freedesktop.org/software/polkit/docs/latest/">developer
+      documentation</ulink> for more information about writing polkit
+      applications.
     </para>
   </refsect1>
 
@@ -154,34 +149,25 @@ System Context         |                        |
       <textobject>
         <programlisting><![CDATA[
 +----------------------------------------------------------+
-|                     Authenticate                     [X] |
-+----------------------------------------------------------+
 |                                                          |
-|  [Icon]  Authentication is required to run ATA SMART     |
-|          self tests                                      |
+|  [Icon]  Authentication required                         |
 |                                                          |
-|          An application is attempting to perform an      |
-|          action that requires privileges. Authentication |
-|          as the super user is required to perform this   |
-|          action.                                         |
+|          Authentication is required to format INTEL      |
+|          SSDSA2MH080G1GC (/dev/sda)                      |
 |                                                          |
-|          Password for root: [_________________________]  |
+|          Administrator                                   |
 |                                                          |
-| [V] Details:                                             |
-|  Drive:  ATA INTEL SSDSA2MH08 (045C)                     |
-|  Device: /dev/sda                                        |
-|  Action: org.fd.devicekit.disks.drive-ata-smart-selftest |
-|  Vendor: The DeviceKit Project                           |
+|          Password: [__________________________________]  |
 |                                                          |
-|                                  [Cancel] [Authenticate] |
+| [Cancel]                                  [Authenticate] |
 +----------------------------------------------------------+
 ]]></programlisting>
       </textobject>
     </mediaobject>
     <para>
       If the system is configured without a <emphasis>root</emphasis>
-      account it may allow you to select the administrative user who
-      is authenticating:
+      account it may prompt for a specific user designated as the
+      administrative user:
     </para>
     <mediaobject id="polkit-authentication-agent-example-wheel">
       <imageobject>
@@ -190,40 +176,21 @@ System Context         |                        |
       <textobject>
         <programlisting><![CDATA[
 +----------------------------------------------------------+
-|                     Authenticate                     [X] |
-+----------------------------------------------------------+
 |                                                          |
-|  [Icon]  Authentication is required to run ATA SMART     |
-|          self tests                                      |
+|  [Icon]  Authentication required                         |
 |                                                          |
-|          An application is attempting to perform an      |
-|          action that requires privileges. Authentication |
-|          as one of the users below is required to        |
-|          perform this action.                            |
+|          Authentication is required to format INTEL      |
+|          SSDSA2MH080G1GC (/dev/sda)                      |
 |                                                          |
-|          [[Face] Patrick Bateman (bateman)         [V]]  |
+|          [Icon] David Zeuthen                            |
 |                                                          |
-|          Password for bateman: [______________________]  |
+|          Password: [__________________________________]  |
 |                                                          |
-| [V] Details:                                             |
-|  Drive:  ATA INTEL SSDSA2MH08 (045C)                     |
-|  Device: /dev/sda                                        |
-|  Action: org.fd.devicekit.disks.drive-ata-smart-selftest |
-|  Vendor: The DeviceKit Project                           |
-|                                                          |
-|                                  [Cancel] [Authenticate] |
+| [Cancel]                                  [Authenticate] |
 +----------------------------------------------------------+
 ]]></programlisting>
       </textobject>
     </mediaobject>
-    <para>
-      See
-      <citerefentry><refentrytitle>pklocalauthority</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      on how to set up the local authority
-      implemention for systems without a <literal>root</literal>
-      account.
-    </para>
-
     <para>
       Applications that do not run under a desktop environment (for
       example, if launched from a
@@ -240,19 +207,20 @@ System Context         |                        |
   <refsect1 id="polkit-declaring-actions"><title>DECLARING ACTIONS</title>
     <para>
       A mechanism need to declare a set of <quote>ACTIONS</quote> in
-      order to use PolicyKit. Actions correspond to operations that
+      order to use polkit. Actions correspond to operations that
       clients can request the mechanism to carry out and are defined
-      in XML files that the mechanism installs into
-      the <filename>/usr/share/polkit-1/actions</filename> directory.
+      in XML files that the mechanism installs into the <filename
+      class='directory'>/usr/share/polkit-1/actions</filename>
+      directory.
     </para>
 
     <para>
-      PolicyKit actions are namespaced and can only contain the
-      characters <literal>[a-z][0-9].-</literal> e.g. lower-case
-      ASCII, digits, period and hyphen. Each XML file can contain more
-      than one action but all actions need to be in the same namespace
-      and the file needs to be named after the namespace and have the
-      extension <literal>.policy</literal>.
+      polkit actions are namespaced and can only contain the
+      characters <literal>[A-Z][a-z][0-9].-</literal> e.g. ASCII,
+      digits, period and hyphen. Each XML file can contain more than
+      one action but all actions need to be in the same namespace and
+      the file needs to be named after the namespace and have the
+      extension <filename class='extension'>.policy</filename>.
     </para>
 
     <para>
@@ -260,8 +228,8 @@ System Context         |                        |
     </para>
     <programlisting><![CDATA[
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
-"http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
 ]]></programlisting>
     <para>
       The <emphasis>policyconfig</emphasis> element must be present
@@ -271,50 +239,77 @@ System Context         |                        |
     <variablelist>
       <varlistentry>
         <term><emphasis>vendor</emphasis></term>
-        <listitem><para>The name of the project or vendor that is
-            supplying the actions in the XML
-            document. Optional.</para></listitem>
+        <listitem>
+          <para>
+            The name of the project or vendor that is supplying the
+            actions in the XML document. Optional.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>vendor_url</emphasis></term>
-        <listitem><para>A URL to the project or vendor that is
-        supplying the actions in the XML document.
-        Optional.</para></listitem>
+        <listitem>
+          <para>
+            A URL to the project or vendor that is supplying the
+            actions in the XML document.  Optional.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>icon_name</emphasis></term>
-        <listitem><para>An icon representing the project or vendor
-        that is supplying the actions in the XML document. The icon
-        name must adhere to
-        the <ulink url="http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html">Freedesktop.org
-        Icon Naming Specification</ulink>. Optional.</para></listitem>
+        <listitem>
+          <para>
+            An icon representing the project or vendor that is
+            supplying the actions in the XML document. The icon name
+            must adhere to the <ulink
+            url="http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html">Freedesktop.org
+            Icon Naming Specification</ulink>. Optional.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>action</emphasis></term>
-        <listitem><para>Declares an action. The action name is
-        specified using the <literal>id</literal> attribute and can
-        only contain the characters <literal>[a-z][0-9].-</literal>
-        e.g. lower-case ASCII, digits, period and
-        hyphen.</para></listitem>
+        <listitem>
+          <para>
+            Declares an action. The action name is specified using the
+            <literal>id</literal> attribute and can only contain the
+            characters <literal>[A-Z][a-z][0-9].-</literal>
+            e.g. ASCII, digits, period and hyphen.
+          </para>
+        </listitem>
       </varlistentry>
     </variablelist>
     <para>
-      Elements that can be used inside <emphasis>action</emphasis> includes:
+      Elements that can be used inside <emphasis>action</emphasis> include:
     </para>
     <variablelist>
       <varlistentry>
         <term><emphasis>description</emphasis></term>
-        <listitem><para>A human readable description of the action, e.g. <quote>Install unsigned software</quote>.</para></listitem>
+        <listitem>
+          <para>
+            A human readable description of the action,
+            e.g. <quote>Install unsigned software</quote>.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>message</emphasis></term>
-        <listitem><para>A human readable message displayed to the user when asking for credentials when authentication is needed, e.g. <quote>Installing unsigned software requires authentication</quote>.</para></listitem>
+        <listitem>
+          <para>
+            A human readable message displayed to the user when asking
+            for credentials when authentication is needed,
+            e.g. <quote>Installing unsigned software requires
+            authentication</quote>.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>defaults</emphasis></term>
-        <listitem><para>This element is used to specify implicit authorizations for clients.</para>
+        <listitem>
           <para>
-            Elements that can be used inside <emphasis>defaults</emphasis> includes:
+            This element is used to specify implicit authorizations
+            for clients. Elements that can be used inside
+            <emphasis>defaults</emphasis> include:
           </para>
           <variablelist>
             <varlistentry>
@@ -376,74 +371,91 @@ System Context         |                        |
       </varlistentry>
       <varlistentry>
         <term><emphasis>annotate</emphasis></term>
-        <listitem><para>Used for annotating an action with a key/value
-        pair. The key is specified using the
-        the <literal>key</literal> attribute and the value is
-        specified using the <literal>value</literal> attribute. This
-        element may appear zero or more times. See
-            below for known annotations. </para></listitem>
+        <listitem>
+          <para>
+            Used for annotating an action with a key/value pair. The
+            key is specified using the the <literal>key</literal>
+            attribute and the value is specified using the
+            <literal>value</literal> attribute. This element may
+            appear zero or more times. See below for known
+            annotations.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>vendor</emphasis></term>
-        <listitem><para>Used for overriding the vendor on a per-action
-        basis. Optional.</para></listitem>
+        <listitem>
+          <para>
+            Used for overriding the vendor on a per-action
+            basis. Optional.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>vendor_url</emphasis></term>
-        <listitem><para>Used for overriding the vendor URL on a
-        per-action basis. Optional.</para></listitem>
+        <listitem>
+          <para>
+            Used for overriding the vendor URL on a per-action
+            basis. Optional.
+          </para>
+        </listitem>
       </varlistentry>
       <varlistentry>
         <term><emphasis>icon_name</emphasis></term>
-        <listitem><para>Used for overriding the icon name on a
-        per-action basis. Optional.</para></listitem>
+        <listitem>
+          <para>
+            Used for overriding the icon name on a per-action
+            basis. Optional.
+          </para>
+        </listitem>
       </varlistentry>
     </variablelist>
     <para>
-      For localization, <emphasis>description</emphasis>
-      and <emphasis>message</emphasis> elements may occur multiple
-      times with different <literal>xml:lang</literal> attributes.
+      For localization, <emphasis>description</emphasis> and
+      <emphasis>message</emphasis> elements may occur multiple times
+      with different <literal>xml:lang</literal> attributes.
     </para>
     <para>
-      To list installed PolicyKit actions, use the
+      To list installed polkit actions, use the
       <citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       command.
     </para>
 
-    <refsect2><title>Known annotations</title>
-    <para>
-      The <literal>org.freedesktop.policykit.exec.path</literal>
-      annotation is used by the <command>pkexec</command> program
-      shipped with PolicyKit - see the
-      <citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-      man page for details.
-    </para>
-    <para>
-      The <literal>org.freedesktop.policykit.imply</literal>
-      annotation (its value is a string containing a space separated
-      list of action identifiers) can be used to define <emphasis>meta
-      actions</emphasis>. The way it works is that if a subject is
-      authorized for an action with this annotation, then it is also
-      authorized for any action specified by the annotation. A typical
-      use of this annotation is when defining an UI shell with a
-      single lock button that should unlock multiple actions from
-      distinct mechanisms.
-    </para>
-    <para>
-      The <literal>org.freedesktop.policykit.owner</literal>
-      annotation can be used to define a set of users who can query
-      whether a client is authorized to perform this action.  If this
-      annotation is not specified then only root can query whether a
-      client running as a different user is authorized for an action.
-      The value of this annotation is a string containing a space
-      separated list of <link
-      linkend="PolkitIdentity-struct">PolkitIdentity</link> entries,
-      for example <literal>"unix-user:42 unix-user:colord"</literal>.
-      A typical use of this annotation is for a daemon process that
-      runs as a system user rather than root.
-    </para>
+    <refsect2>
+      <title>Known annotations</title>
+      <para>
+        The <literal>org.freedesktop.policykit.exec.path</literal>
+        annotation is used by the <command>pkexec</command> program
+        shipped with polkit - see the
+        <citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        man page for details.
+      </para>
+      <para>
+        The <literal>org.freedesktop.policykit.imply</literal>
+        annotation (its value is a string containing a space separated
+        list of action identifiers) can be used to define
+        <emphasis>meta actions</emphasis>. The way it works is that if
+        a subject is authorized for an action with this annotation,
+        then it is also authorized for any action specified by the
+        annotation. A typical use of this annotation is when defining
+        an UI shell with a single lock button that should unlock
+        multiple actions from distinct mechanisms.
+      </para>
+      <para>
+        The <literal>org.freedesktop.policykit.owner</literal>
+        annotation can be used to define a set of users who can query
+        whether a client is authorized to perform this action.  If
+        this annotation is not specified then only root can query
+        whether a client running as a different user is authorized for
+        an action.  The value of this annotation is a string
+        containing a space separated list of <link
+        linkend="PolkitIdentity-struct">PolkitIdentity</link> entries,
+        for example <literal>"unix-user:42
+        unix-user:colord"</literal>.  A typical use of this annotation
+        is for a daemon process that runs as a system user rather than
+        root.
+      </para>
     </refsect2>
-
   </refsect1>
 
   <refsect1 id="polkit-rules"><title>AUTHORIZATION RULES</title>
@@ -777,9 +789,6 @@ polkit.addRule(function(action, subject, details) {
   <refsect1 id="polkit-see-also">
     <title>SEE ALSO</title>
     <para>
-      <citerefentry>
-        <refentrytitle>pklocalauthority</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>
       <citerefentry>
         <refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>

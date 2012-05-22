@@ -70,12 +70,12 @@
 
   <refsect1 id="pkexec-auth-agent"><title>AUTHENTICATION AGENT</title>
     <para>
-      <command>pkexec</command>, like any other PolicyKit application,
+      <command>pkexec</command>, like any other polkit application,
       will use the authentication agent registered for the calling
-      process. However, if no authentication agent is available, then
-      <command>pkexec</command> will register its own textual
-      authentication agent. This behavior can be turned off by passing
-      the <option>--disable-internal-agent</option> option.
+      process or session. However, if no authentication agent is
+      available, then <command>pkexec</command> will register its own
+      textual authentication agent. This behavior can be turned off by
+      passing the <option>--disable-internal-agent</option> option.
     </para>
   </refsect1>
 
@@ -86,39 +86,8 @@
       <xref linkend="pkexec-required-authz"/>) requires administrator
       authentication. In addition, the authentication dialog presented
       to the user will display the full path to the program to be
-      executed so the user is aware of what will happen:
+      executed so the user is aware of what will happen.
     </para>
-    <mediaobject id="pkexec-bash">
-      <imageobject>
-        <imagedata fileref="pkexec-bash.png" format="PNG"/>
-      </imageobject>
-      <textobject>
-        <programlisting><![CDATA[
-+----------------------------------------------------------+
-|                     Authenticate                     [X] |
-+----------------------------------------------------------+
-|                                                          |
-|  [Icon]  Authentication is needed to run `/bin/bash'     |
-|          as the super user                               |
-|                                                          |
-|          An application is attempting to perform an      |
-|          action that requires privileges. Authentication |
-|          as the super user is required to perform this   |
-|          action.                                         |
-|                                                          |
-|          Password for root: [_________________________]  |
-|                                                          |
-| [V] Details:                                             |
-|  Command: /bin/bash                                      |
-|  Run As:  Super User (root)                              |
-|  Action:  org.freedesktop.policykit.exec                 |
-|  Vendor:  The PolicyKit Project                          |
-|                                                          |
-|                                  [Cancel] [Authenticate] |
-+----------------------------------------------------------+
-]]></programlisting>
-      </textobject>
-    </mediaobject>
     <para>
       The environment that <replaceable>PROGRAM</replaceable> will run
       it, will be set to a minimal known and safe environment in order
@@ -127,7 +96,7 @@
       mechanisms. In addition the <literal>PKEXEC_UID</literal>
       environment variable is set to the user id of the process
       invoking <command>pkexec</command>. As a
-      result, <command>pkexec</command> will not allow you to run
+      result, <command>pkexec</command> will not by default allow you to run
       X11 applications as another user since
       the <literal>$DISPLAY</literal> and <literal>$XAUTHORITY</literal>
       environment variables are not set. These two variables will be retained
@@ -135,106 +104,7 @@
       on an action is set to a nonempty value; this is discouraged, though, and
       should only be used for legacy programs.
     </para>
-  </refsect1>
 
-  <refsect1 id="pkexec-required-authz"><title>REQUIRED AUTHORIZATIONS</title>
-    <para>
-      By default,
-      the <emphasis>org.freedesktop.policykit.exec</emphasis>
-      authorization is required unless an action definition file is
-      present for the program in question. To require another
-      authorization, it can be specified using the <emphasis>org.freedesktop.policykit.exec.path</emphasis> annotation on an action (See <xref linkend="pkexec-example"/> for details).
-    </para>
-  </refsect1>
-
-  <refsect1 id="pkexec-example"><title>EXAMPLE</title>
-    <para>
-      To specify what kind of authorization is needed to execute the
-      program <filename>/usr/bin/pk-example-frobnicate</filename> as
-      another user, simply write an action definition file like this
-    </para>
-    <programlisting>
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" parse="text" href="../../src/examples/org.freedesktop.policykit.examples.pkexec.policy"><xi:fallback>FIXME: MISSING XINCLUDE CONTENT</xi:fallback></xi:include></programlisting>
-    <para>
-      and drop it in the
-      <filename>/usr/share/polkit-1/actions</filename> directory under
-      a suitable name (e.g. matching the namespace of the action).
-      Note that in addition to specifying the program, the
-      authentication message, description, icon and defaults can be
-      specified. Note that occurences of the strings
-      <literal>$(user)</literal>, <literal>$(program)</literal> and
-      <literal>$(command_line)</literal> in the message will be
-      replaced with respectively the user (of the form "Real Name
-      (username)" or just "username" if there is no real name for the
-      username), the binary to execute (a fully-qualified path,
-      e.g. "<literal>/usr/bin/pk-example-frobnicate</literal>") and
-      the command-line, e.g. "<literal>pk-example-frobnicate foo
-      bar</literal>". For example, for the action defined above, the
-      following authentication dialog will be shown:
-    </para>
-    <mediaobject id="pkexec-frobnicate">
-      <imageobject>
-        <imagedata fileref="pkexec-frobnicate.png" format="PNG"/>
-      </imageobject>
-      <textobject>
-        <programlisting><![CDATA[
-+----------------------------------------------------------+
-|                     Authenticate                     [X] |
-+----------------------------------------------------------+
-|                                                          |
-|  [Icon]  Authentication is required to run the PolicyKit |
-|          example program Frobnicate                      |
-|                                                          |
-|          An application is attempting to perform an      |
-|          action that requires privileges. Authentication |
-|          is required to perform this action.             |
-|                                                          |
-|          Password: [__________________________________]  |
-|                                                          |
-| [V] Details:                                             |
-|  Command: /usr/bin/pk-example-frobnicate                 |
-|  Run As:  Super User (root)                              |
-|  Action:  org.fd.pk.example.pkexec.run-frobnicate        |
-|  Vendor:  Examples for the PolicyKit Project             |
-|                                                          |
-|                                  [Cancel] [Authenticate] |
-+----------------------------------------------------------+
-]]></programlisting>
-      </textobject>
-    </mediaobject>
-    <para>
-      If the user is using the <literal>da_DK</literal> locale, the
-      dialog looks like this:
-    </para>
-    <mediaobject id="pkexec-frobnicate-da">
-      <imageobject>
-        <imagedata fileref="pkexec-frobnicate-da.png" format="PNG"/>
-      </imageobject>
-      <textobject>
-        <programlisting><![CDATA[
-+----------------------------------------------------------+
-|                     Autorisering                     [X] |
-+----------------------------------------------------------+
-|                                                          |
-|  [Icon]  Autorisering er påkrævet for at afvikle         |
-|          PolicyKit eksemplet Frobnicate                  |
-|                                                          |
-|          Et program forsøger at udføre en handling der   |
-|          kræver privilegier. Autorisering er påkrævet.   |
-|                                                          |
-|          Kodeord: [___________________________________]  |
-|                                                          |
-| [V] Detaljer:                                            |
-|  Bruger:   Super User (root)                             |
-|  Program:  /usr/bin/pk-example-frobnicate                |
-|  Handling: org.fd.pk.example.pkexec.run-frobnicate       |
-|  Vendor:   Examples for the PolicyKit Project            |
-|                                                          |
-|                                [Annullér] [Autorisering] |
-+----------------------------------------------------------+
-]]></programlisting>
-      </textobject>
-    </mediaobject>
     <para>
       Note that <command>pkexec</command> does no validation of
       the <replaceable>ARGUMENTS</replaceable> passed
@@ -244,15 +114,80 @@
       since if the user is an administrator he might as well just
       run <command>pkexec bash</command> to get root.
     </para>
+
     <para>
       However, if an action is used for which the user can retain
-      authorization (or if the user is implicitly authorized), such as
-      with <filename>pk-example-frobnicate</filename> above, this
+      authorization (or if the user is implicitly authorized) this
       could be a security hole. Therefore, as a rule of thumb,
       programs for which the default required authorization is
-      changed, should never implicitly trust user input (e.g. like any
+      changed, should <emphasis role='strong'>never</emphasis> implicitly trust user input (e.g. like any
       other well-written <emphasis>suid</emphasis> program).
     </para>
+  </refsect1>
+
+  <refsect1 id="pkexec-required-authz"><title>REQUIRED AUTHORIZATIONS</title>
+    <para>
+      By default, the
+      <emphasis>org.freedesktop.policykit.exec</emphasis> action is
+      used. To use another action, use the
+      <emphasis>org.freedesktop.policykit.exec.path</emphasis>
+      annotation on an action with the value set to the full path of
+      the program. In addition to specifying the program, the
+      authentication message, description, icon and defaults can be
+      specified. The strings <literal>$(user)</literal>,
+      <literal>$(program)</literal> and
+      <literal>$(command_line)</literal> in the message will be
+      expanded, see <xref linkend="pkexec-variables"/>.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkexec-variables"><title>VARIABLES</title>
+    <para>
+      The following variables are set by
+      <command>pkexec</command>. They can be used in authorization
+      rules and messages shown in authentication dialogs:
+    </para>
+
+    <variablelist>
+      <varlistentry>
+        <term><emphasis>program</emphasis></term>
+        <listitem>
+          <para>
+            Fully qualified path to the program to be executed.
+            Example: <quote>/bin/cat</quote>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>command_line</emphasis></term>
+        <listitem>
+          <para>
+            The requested command-line (do not use this for any
+            security checks, it is not secure).
+            Example: <quote>cat /srv/xyz/foobar</quote>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>user</emphasis></term>
+        <listitem>
+          <para>
+            The user name of the user to execute the program as.
+            Example: <quote>davidz</quote>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>user_full</emphasis></term>
+        <listitem>
+          <para>
+            The full name of the user to execute the program as.
+            Example: <quote>David Zeuthen</quote>
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
   </refsect1>
 
   <refsect1 id="pkexec-author"><title>AUTHOR</title>
