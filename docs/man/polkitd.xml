@@ -59,9 +59,7 @@
   <refsect1 id="polkitd-see-also">
     <title>SEE ALSO</title>
     <para>
-      <citerefentry>
-        <refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>
+      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
     </para>
   </refsect1>
 </refentry>

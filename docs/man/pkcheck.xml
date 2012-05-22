@@ -165,9 +165,7 @@ KEY3=VALUE3
       to check for authorization when using the <option>--process</option> option.
       The value of <replaceable>pid-start-time</replaceable>
       can be determined by consulting e.g. the
-      <citerefentry>
-        <refentrytitle>proc</refentrytitle><manvolnum>5</manvolnum>
-      </citerefentry>
+      <citerefentry><refentrytitle>proc</refentrytitle><manvolnum>5</manvolnum></citerefentry>
       file system depending on the operating system. If only <replaceable>pid</replaceable>
       is passed to the <option>--process</option> option, then <command>pkcheck</command>
       will look up the start time itself but note that this may be racy.
@@ -205,18 +203,10 @@ KEY3=VALUE3
   <refsect1 id="pkcheck-see-also">
     <title>SEE ALSO</title>
     <para>
-      <citerefentry>
-        <refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>
+      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+      <link linkend="pkaction.1"><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
     </para>
   </refsect1>
 </refentry>

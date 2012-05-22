@@ -210,18 +210,10 @@
   <refsect1 id="pkexec-see-also">
     <title>SEE ALSO</title>
     <para>
-      <citerefentry>
-        <refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>
+      <link linkend=""><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+      <link linkend=""><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend=""><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend=""><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
     </para>
   </refsect1>
 </refentry>

@@ -114,7 +114,7 @@ System Context         |                        |
       url="https://live.gnome.org/GObjectIntrospection">GObjectIntrospection</ulink>
       support such as Javascript and Python.  A mechanism can also use
       the D-Bus API or the
-      <citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      <link linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
       command to check authorizations. The
       <literal>libpolkit-agent-1</literal> library provides an
       abstraction of the native authentication system, e.g.
@@ -199,7 +199,7 @@ System Context         |                        |
       them. Such applications may use the <link
       linkend="PolkitAgentTextListener-struct">PolkitAgentTextListener</link>
       type or the
-      <citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
       helper so the user can authenticate using a textual interface.
     </para>
   </refsect1>
@@ -417,7 +417,7 @@ System Context         |                        |
     </para>
     <para>
       To list installed polkit actions, use the
-      <citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+      <link linkend="pkaction.1"><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
       command.
     </para>
 
@@ -427,7 +427,7 @@ System Context         |                        |
         The <literal>org.freedesktop.policykit.exec.path</literal>
         annotation is used by the <command>pkexec</command> program
         shipped with polkit - see the
-        <citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+        <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
         man page for details.
       </para>
       <para>
@@ -690,8 +690,7 @@ System Context         |                        |
         functions is an object with more information about the action
         being checked. It is of type <type>Details</type> and has
         details being set by the mechanism as attributes. For example,
-        the <link
-        linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+        the <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
         mechanism sets the details <literal>user</literal>,
         <literal>program</literal> and <literal>command_line</literal>
         which can be obtained through e.g. the following JavaScript
@@ -789,21 +788,11 @@ polkit.addRule(function(action, subject, details) {
   <refsect1 id="polkit-see-also">
     <title>SEE ALSO</title>
     <para>
-      <citerefentry>
-        <refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>
-      <citerefentry>
-        <refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum>
-      </citerefentry>
+      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      <link linkend="pkaction.1"><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
     </para>
   </refsect1>
 </refentry>
