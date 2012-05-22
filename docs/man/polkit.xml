@@ -700,7 +700,7 @@ System Context         |                        |
     </refsect2>
 
     <refsect2 id="polkit-rules-examples">
-      <title>Authorzation Rules Examples</title>
+      <title>Authorization Rules Examples</title>
 
       <para>
         Allow all users in the <literal>admin</literal> group to
