@@ -92,10 +92,11 @@
   <refsect1 id="pkaction-see-also">
     <title>SEE ALSO</title>
     <para>
-      <link linkend=""><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend=""><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend=""><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend=""><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      <link linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
     </para>
   </refsect1>
 </refentry>
