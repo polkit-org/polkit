@@ -518,3 +518,10 @@ echo "NOTE: The file ${bindir}/pkexec must be owned by root and"
 echo "      have mode 4755 (setuid root binary)"
 echo
 
+echo "NOTE: The directory ${sysconfdir}/polkit-1/rules.d"
+echo "      should have mode 700"
+echo
+
+echo "NOTE: The directory ${datadir}/polkit-1/rules.d"
+echo "      should have mode 700"
+echo
