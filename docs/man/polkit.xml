@@ -25,14 +25,13 @@
     <para>
       polkit provides an authorization API intended to be used by
       privileged programs (<quote>MECHANISMS</quote>) offering service
-      to unprivileged programs (<quote>SUBJECTS</quote>) through some
-      form of IPC mechanism such as D-Bus or Unix pipes. In this
+      to unprivileged programs (<quote>SUBJECTS</quote>) often through
+      some form of inter-process communication mechanism. In this
       scenario, the mechanism typically treats the subject as
       untrusted. For every request from a subject, the mechanism needs
       to determine if the request is authorized or if it should refuse
       to service the subject. Using the polkit APIs, a mechanism can
-      offload this decision to a trusted party: The polkit
-      Authority.
+      offload this decision to a trusted party: The polkit Authority.
     </para>
 
     <para>
@@ -52,11 +51,10 @@
       <emphasis>Authority</emphasis> (implemented as a service on the
       system message bus) and an <emphasis>Authentication
       Agent</emphasis> per user session (provided and started by the
-      user's graphical environment, for example <ulink
-      url="http://www.gnome.org/">GNOME</ulink>). <emphasis>Actions</emphasis>
-      are defined by applications and vendors, sites and system
+      user's graphical environment). <emphasis>Actions</emphasis> are
+      defined by applications. Vendors, sites and system
       administrators can control authorization policy through
-      <emphasis>Authorization Rules</emphasis>
+      <emphasis>Authorization Rules</emphasis>.
     </para>
     <mediaobject id="polkit-architecture">
       <imageobject>
