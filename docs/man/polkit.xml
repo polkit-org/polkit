@@ -602,54 +602,70 @@ System Context         |                        |
         following attributes
       </para>
 
-      <informaltable id="polkit-js-subject-attributes">
-        <tgroup cols="3" align="left">
-          <thead>
-            <row>
-              <entry>Attribute</entry>
-              <entry>Type</entry>
-              <entry>Description</entry>
-            </row>
-          </thead>
-          <tbody>
-            <row>
-              <entry><parameter>pid</parameter></entry>
-              <entry><type>int</type></entry>
-              <entry>The process id</entry>
-            </row>
-            <row>
-              <entry><parameter>user</parameter></entry>
-              <entry><type>string</type></entry>
-              <entry>The user name</entry>
-            </row>
-            <row>
-              <entry><parameter>groups</parameter></entry>
-              <entry><type>string[]</type></entry>
-              <entry>Array of groups that <parameter>user</parameter> user belongs to</entry>
-            </row>
-            <row>
-              <entry><parameter>seat</parameter></entry>
-              <entry><type>string</type></entry>
-              <entry>The seat that the subject is associated with - blank if not on a local seat</entry>
-            </row>
-            <row>
-              <entry><parameter>session</parameter></entry>
-              <entry><type>string</type></entry>
-              <entry>The session that the subject is associated with</entry>
-            </row>
-            <row>
-              <entry><parameter>local</parameter></entry>
-              <entry><type>boolean</type></entry>
-              <entry>Set to <constant>true</constant> only if seat is local</entry>
-            </row>
-            <row>
-              <entry><parameter>active</parameter></entry>
-              <entry><type>boolean</type></entry>
-              <entry>Set to <constant>true</constant> only if the session is active</entry>
-            </row>
-          </tbody>
-        </tgroup>
-      </informaltable>
+      <variablelist id="polkit-js-subject-attributes">
+        <varlistentry>
+          <term><type>int</type> pid</term>
+          <listitem>
+            <para>
+              The process id.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><type>string</type> user</term>
+          <listitem>
+            <para>
+              The user name.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><type>string[]</type> groups</term>
+          <listitem>
+            <para>
+              Array of groups that <parameter>user</parameter> user belongs to.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><type>string</type> seat</term>
+          <listitem>
+            <para>
+              The seat that the subject is associated with - blank if not on a local seat.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><type>string</type> session</term>
+          <listitem>
+            <para>
+              The session that the subject is associated with.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><type>boolean</type> local</term>
+          <listitem>
+            <para>
+              Set to <constant>true</constant> only if seat is local.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><type>boolean</type> active</term>
+          <listitem>
+            <para>
+              Set to <constant>true</constant> only if the session is active.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
 
       <para>
         The following methods are available on the <type>Subject</type> type:
