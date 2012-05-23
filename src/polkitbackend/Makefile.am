@@ -24,7 +24,7 @@ libpolkit_backend_1includedir=$(includedir)/polkit-1/polkitbackend
 
 
 initjs.h : init.js
-	$(PERL) $(srcdir)/toarray.pl init.js init_js > $@
+	$(PERL) $(srcdir)/toarray.pl $(srcdir)/init.js init_js > $@
 
 BUILT_SOURCES += initjs.h
 
@@ -86,6 +86,7 @@ localauthorityconfig_DATA = 50-localauthority.conf
 EXTRA_DIST =								\
 	$(localauthorityconfig_DATA)					\
 	init.js								\
+	toarray.pl							\
 	$(NULL)
 
 dist-hook :
