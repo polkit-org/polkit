@@ -142,6 +142,8 @@ polkit_details_lookup (PolkitDetails *details,
  * @value: (allow-none): A value.
  *
  * Inserts a copy of @key and @value on @details.
+ *
+ * If @value is %NULL, the key will be removed.
  */
 void
 polkit_details_insert (PolkitDetails *details,
@@ -155,7 +157,10 @@ polkit_details_insert (PolkitDetails *details,
                                            g_str_equal,
                                            g_free,
                                            g_free);
-  g_hash_table_insert (details->hash, g_strdup (key), g_strdup (value));
+  if (value != NULL)
+    g_hash_table_insert (details->hash, g_strdup (key), g_strdup (value));
+  else
+    g_hash_table_remove (details->hash, key);
 }
 
 /**
