@@ -689,14 +689,40 @@ System Context         |                        |
         being checked. It is of type <type>Details</type> and has
         details being set by the mechanism as attributes. For example,
         the <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
-        mechanism sets the details <literal>user</literal>,
-        <literal>program</literal> and <literal>command_line</literal>
-        which can be obtained through e.g. the following JavaScript
-        expression: <literal>details["program"]</literal>. Consult the
-        documentation for each mechanism for what details are
+        mechanism sets the variable <parameter>program</parameter>
+        which can be obtained in Javascript using the expression
+        <literal>details["program"]</literal>. Consult the
+        documentation for each mechanism for what variables are
         available for each action.
       </para>
 
+      <para>
+        The <parameter>details</parameter> also has the following
+        well-known attributes:
+      </para>
+      <variablelist>
+        <varlistentry>
+          <term><emphasis>polkit.message</emphasis></term>
+          <listitem>
+            <para>
+              The message to show in the authentication dialog (only
+              used if authentication is needed). Its initial value is
+              taken from the action declaration (the <literal>message</literal> element in the <filename
+              class='extension'>.policy</filename> file) but the value
+              can be overridden by the mechanism setting this key in
+              the <parameter>details</parameter> passed when doing the
+              <link
+              linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
+              call.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>
+        Note that a rule can set the
+        <parameter>polkit.message</parameter> attribute to change the
+        message shown in the authentication dialog.
+      </para>
     </refsect2>
 
     <refsect2 id="polkit-rules-examples">
@@ -759,6 +785,23 @@ polkit.addRule(function(action, subject, details) {
             // Nope, but do allow admin authentication
             return "auth_admin";
         }
+    }
+});
+]]></programlisting>
+
+      <para>
+        The following example showcases two things
+      </para>
+      <itemizedlist mark='opencircle' spacing='compact'>
+        <listitem><para>how the authorization decision can depend on data passed by the mechanism</para></listitem>
+        <listitem><para>how to override the message shown in the authentication dialog</para></listitem>
+      </itemizedlist>
+      <programlisting><![CDATA[
+polkit.addRule(function(action, subject, details) {
+    if (action == "org.freedesktop.policykit.exec" &&
+        details["program"] == "/usr/bin/cat") {
+        details["polkit.message"] = "Achtung! You need to authenticate as yourself to cat(1) files!";
+        return "auth_self";
     }
 });
 ]]></programlisting>
