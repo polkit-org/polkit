@@ -5,6 +5,7 @@ INCLUDES =                                                      \
         -I$(top_srcdir)/src                                     \
         -I$(top_builddir)/src/polkit                            \
         -I$(top_srcdir)/src/polkit                              \
+        -DPACKAGE_PREFIX=\""$(prefix)"\"                    	\
         -DPACKAGE_LIBEXEC_DIR=\""$(libexecdir)"\"               \
         -DPACKAGE_SYSCONF_DIR=\""$(sysconfdir)"\"               \
         -DPACKAGE_DATA_DIR=\""$(datadir)"\"                     \
@@ -77,7 +78,8 @@ libpolkit_agent_1_la_LIBADD =                               		\
 
 libpolkit_agent_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'
 
-libexec_PROGRAMS = polkit-agent-helper-1
+libprivdir = $(prefix)/lib/polkit-1
+libpriv_PROGRAMS = polkit-agent-helper-1
 
 polkit_agent_helper_1_SOURCES = 					\
 	polkitagenthelperprivate.c polkitagenthelperprivate.h		\
@@ -132,9 +134,9 @@ endif # HAVE_INTROSPECTION
 # authenticate not only the invoking user, but possibly also root
 # and/or other users.
 #
-install-exec-hook:
-	-chown root $(DESTDIR)$(libexecdir)/polkit-agent-helper-1
-	-chmod 4755 $(DESTDIR)$(libexecdir)/polkit-agent-helper-1
+install-data-hook:
+	-chown root $(DESTDIR)$(libprivdir)/polkit-agent-helper-1
+	-chmod 4755 $(DESTDIR)$(libprivdir)/polkit-agent-helper-1
 
 EXTRA_DIST = polkitagentmarshal.list polkitagentenumtypes.h.template polkitagentenumtypes.c.template
 

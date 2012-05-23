@@ -2,12 +2,14 @@
 
 NULL =
 
+libprivdir = $(prefix)/lib/polkit-1
+
 servicedir       = $(datadir)/dbus-1/system-services
 service_in_files = org.freedesktop.PolicyKit1.service.in
 service_DATA     = $(service_in_files:.service.in=.service)
 
 $(service_DATA): $(service_in_files) Makefile
-	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
+	@sed -e "s|\@libprivdir\@|$(libprivdir)|" $< > $@
 
 dbusconfdir = $(sysconfdir)/dbus-1/system.d
 dbusconf_DATA = org.freedesktop.PolicyKit1.conf
@@ -27,7 +29,7 @@ if HAVE_SYSTEMD
 systemdservicedir       = $(systemdsystemunitdir)
 systemdservice_DATA     = $(systemdservice_in_files:.service.in=.service)
 $(systemdservice_DATA): $(systemdservice_in_files) Makefile
-	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
+	@sed -e "s|\@libprivdir\@|$(libprivdir)|" $< > $@
 endif
 
 CLEANFILES = $(BUILT_SOURCES)

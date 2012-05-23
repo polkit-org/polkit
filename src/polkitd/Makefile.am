@@ -14,7 +14,8 @@ INCLUDES =                                              		\
 	-D_REENTRANT	                                		\
 	$(NULL)
 
-libexec_PROGRAMS = polkitd
+libprivdir = $(prefix)/lib/polkit-1
+libpriv_PROGRAMS = polkitd
 
 polkitd_SOURCES = 							\
 					main.c				\

@@ -5,4 +5,4 @@ Documentation=man:polkit(8)
 [Service]
 Type=dbus
 BusName=org.freedesktop.PolicyKit1
-ExecStart=@libexecdir@/polkitd --no-debug
+ExecStart=@libprivdir@/polkitd --no-debug

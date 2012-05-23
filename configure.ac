@@ -515,15 +515,7 @@ echo "
 
 "
 
-echo "NOTE: The directory ${sysconfdir}/polkit-1/localauthority must be owned"
-echo "      by root and have mode 700"
-echo
-
-echo "NOTE: The directory ${localstatedir}/lib/polkit-1 must be owned"
-echo "      by root and have mode 700"
-echo
-
-echo "NOTE: The file ${libexecdir}/polkit-agent-helper-1 must be owned"
+echo "NOTE: The file ${prefix}/lib/polkit-1/polkit-agent-helper-1 must be owned"
 echo "      by root and have mode 4755 (setuid root binary)"
 echo
 
