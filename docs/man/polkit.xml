@@ -809,7 +809,7 @@ polkit.addRule(function(action, subject, details) {
         The following example showcases two things
       </para>
       <itemizedlist mark='opencircle' spacing='compact'>
-        <listitem><para>how the authorization decision can depend on data passed by the mechanism</para></listitem>
+        <listitem><para>how the authorization decision can depend on variables passed by the mechanism</para></listitem>
         <listitem><para>how to override the message shown in the authentication dialog</para></listitem>
       </itemizedlist>
       <programlisting><![CDATA[
@@ -822,6 +822,30 @@ polkit.addRule(function(action, subject, details) {
 });
 ]]></programlisting>
 
+      <para>
+        The following example shows another use of variables passed from the
+        mechanism. In this case, the mechanism is
+        <ulink url="http://udisks.freedesktop.org/docs/latest/udisks.8.html">UDisks</ulink>
+        which defines a set of
+        <ulink url="http://udisks.freedesktop.org/docs/latest/udisks-polkit-actions.html">actions</ulink>
+        and also documents the set of possible
+        <ulink url="http://udisks.freedesktop.org/docs/latest/udisks2-Utilities.html#udisks-polkit-details">variables</ulink>
+        passed along with each request.
+      </para>
+      <programlisting><![CDATA[
+// Allow users in group 'engineers' to perform any operation on
+// some drives without having to authenticate
+//
+polkit.addRule(function(action, subject, details) {
+    if (action.indexOf("org.freedesktop.udisks2.") == 0 &&
+        details["drive.vendor"] == "SEAGATE" &&
+        details["drive.model"] == "ST3300657SS" &&
+        subject.isInGroup("engineers")) {
+            return "yes";
+        }
+    }
+});
+]]></programlisting>
     </refsect2>
   </refsect1>
 
