@@ -62,11 +62,15 @@ libpolkit_backend_1_la_LIBADD =                               		\
 	$(LIBJS_LIBS)							\
         $(NULL)
 
+rulesdir = $(sysconfdir)/polkit-1/rules.d
+rules_DATA = 50-default.rules
+
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =								\
 	init.js								\
 	toarray.pl							\
+	$(rules_DATA)							\
 	$(NULL)
 
 dist-hook :
