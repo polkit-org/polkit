@@ -20,15 +20,26 @@ endif
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = polkit-gobject-1.pc polkit-backend-1.pc polkit-agent-1.pc
 
+
+systemdservice_in_files = polkit.service.in
+
+if HAVE_SYSTEMD
+systemdservicedir       = $(systemdsystemunitdir)
+systemdservice_DATA     = $(systemdservice_in_files:.service.in=.service)
+$(systemdservice_DATA): $(systemdservice_in_files) Makefile
+	@sed -e "s|\@libexecdir\@|$(libexecdir)|" $< > $@
+endif
+
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = 							\
 	org.freedesktop.PolicyKit1.Authority.xml 		\
 	org.freedesktop.PolicyKit1.AuthenticationAgent.xml 	\
 	$(service_in_files) 					\
+	$(systemdservice_in_files) 				\
 	$(dbusconf_DATA) 					\
 	$(NULL)
 
 
 clean-local :
-	rm -f *~ $(service_DATA)
+	rm -f *~ $(service_DATA) $(systemdservice_DATA)

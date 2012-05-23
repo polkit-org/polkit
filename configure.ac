@@ -181,6 +181,19 @@ AC_SUBST(LIBSYSTEMD_LOGIN_LIBS)
 AM_CONDITIONAL(HAVE_LIBSYSTEMD_LOGIN, [test "$have_libsystemd_login" = "yes"], [Using libsystemd-login])
 
 dnl ---------------------------------------------------------------------------
+dnl - systemd unit / service files
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH([systemdsystemunitdir],
+            AS_HELP_STRING([--with-systemdsystemunitdir=DIR], [Directory for systemd service files]),
+            [],
+            [with_systemdsystemunitdir=$($PKG_CONFIG --variable=systemdsystemunitdir systemd)])
+if test "x$with_systemdsystemunitdir" != "xno"; then
+  AC_SUBST([systemdsystemunitdir], [$with_systemdsystemunitdir])
+fi
+AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$systemdsystemunitdir"])
+
+dnl ---------------------------------------------------------------------------
 dnl - Select which authentication framework to use
 dnl ---------------------------------------------------------------------------
 
@@ -484,7 +497,8 @@ echo "
         Distribution/OS:            ${with_os_type}
         Authentication framework:   ${POLKIT_AUTHFW}
         Session tracking:           ${SESSION_TRACKING}
-        PAM support:                ${have_pam}"
+        PAM support:                ${have_pam}
+        systemdsystemunitdir:       ${systemdsystemunitdir}"
 
 if test "$have_pam" = yes ; then
 echo "

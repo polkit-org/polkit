@@ -9,7 +9,12 @@ EXTRA_DIST = 			\
 	$(NULL)
 
 # xsltproc barfs on 'make distcheck'; disable for now
-DISTCHECK_CONFIGURE_FLAGS=--disable-man-pages --disable-gtk-doc --disable-introspection
+DISTCHECK_CONFIGURE_FLAGS=							\
+	--disable-man-pages 							\
+	--disable-gtk-doc 							\
+	--disable-introspection							\
+	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)	\
+	$(NULL)
 
 sign : dist
 	gpg --armor --detach-sign --output polkit-$(VERSION).tar.gz.sign polkit-$(VERSION).tar.gz
