@@ -90,37 +90,4 @@
     </para>
   </chapter>
 
-  <chapter id="polkit-extending">
-    <title>Extending polkit</title>
-    <para>
-      polkit exports a number of extension points to
-      replace/customize behavior of the polkit daemon. Note that
-      all extensions run with super user privileges in the same
-      process as the polkit daemon.
-    </para>
-    <para>
-      The polkit daemons loads extensions
-      from the <filename>&extensiondir;</filename> directory. See
-      the <link linkend="gio-Extension-Points">GIO Extension Point
-        documentation</link> for more information about the extension
-      system used by polkit.
-    </para>
-    <para>
-      The following extension points are currently defined by
-      polkit:
-    </para>
-
-    <formalpara>
-      <title>POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME</title>
-      <para>
-        Allows replacing the Authority – the entity responsible for
-        making authorization decisions. Implementations of this
-        extension point must be derived from the
-        PolkitBackendAuthority class. See
-        the <filename>src/nullbackend/</filename> directory in the
-        polkit sources for an example.
-      </para>
-    </formalpara>
-
-  </chapter>
 </part>

@@ -30,7 +30,6 @@
 #include <polkit/polkitprivate.h>
 
 #include "polkitbackendauthority.h"
-#include "polkitbackendlocalauthority.h"
 #include "polkitbackendjsauthority.h"
 
 #include "polkitbackendprivate.h"
@@ -40,7 +39,7 @@
  * @title: PolkitBackendAuthority
  * @short_description: Abstract base class for authority backends
  * @stability: Unstable
- * @see_also: PolkitBackendLocalAuthority
+ * @see_also: PolkitBackendJsAuthority
  *
  * To implement an authority backend, simply subclass #PolkitBackendAuthority
  * and implement the required VFuncs.
@@ -57,7 +56,7 @@ static guint signals[LAST_SIGNAL] = {0};
 G_DEFINE_ABSTRACT_TYPE (PolkitBackendAuthority, polkit_backend_authority, G_TYPE_OBJECT);
 
 static void
-polkit_backend_authority_init (PolkitBackendAuthority *local_authority)
+polkit_backend_authority_init (PolkitBackendAuthority *authority)
 {
 }
 
@@ -1349,71 +1348,30 @@ polkit_backend_authority_register (PolkitBackendAuthority   *authority,
 /**
  * polkit_backend_authority_get:
  *
- * Loads all #GIOModule<!-- -->s from <filename>$(libdir)/polkit-1/extensions</filename> to determine
- * what implementation of #PolkitBackendAuthority to use. Then instantiates an object of the
- * implementation with the highest priority and unloads all other modules.
+ * Gets the #PolkitBackendAuthority to use.
  *
  * Returns: A #PolkitBackendAuthority. Free with g_object_unref().
- **/
+ */
 PolkitBackendAuthority *
 polkit_backend_authority_get (void)
 {
-  static GIOExtensionPoint *ep = NULL;
-  static volatile GType local_authority_type = G_TYPE_INVALID;
-  static volatile GType js_authority_type = G_TYPE_INVALID;
-  GList *modules;
-  GList *authority_implementations;
-  GType authority_type;
   PolkitBackendAuthority *authority;
-  gchar *s;
 
-  /* define extension points */
-  if (ep == NULL)
-    {
-      ep = g_io_extension_point_register (POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME);
-      g_io_extension_point_set_required_type (ep, POLKIT_BACKEND_TYPE_AUTHORITY);
-    }
+  /* TODO: move to polkitd/main.c */
 
-  /* make sure local types are registered */
-  if (local_authority_type == G_TYPE_INVALID)
-    local_authority_type = POLKIT_BACKEND_TYPE_LOCAL_AUTHORITY;
-  if (js_authority_type == G_TYPE_INVALID)
-    js_authority_type = POLKIT_BACKEND_TYPE_JS_AUTHORITY;
-
-  /* load all modules */
-  modules = g_io_modules_load_all_in_directory (PACKAGE_LIB_DIR "/polkit-1/extensions");
-
-  /* find all extensions; we have at least one here since we've registered the local backend */
-  authority_implementations = g_io_extension_point_get_extensions (ep);
-
-  /* the returned list is sorted according to priority so just take the highest one */
-  authority_type = g_io_extension_get_type ((GIOExtension*) authority_implementations->data);
-  authority = POLKIT_BACKEND_AUTHORITY (g_object_new (authority_type, NULL));
-
-  /* unload all modules; the module our instantiated authority is in won't be unloaded because
-   * we've instantiated a reference to a type in this module
-   */
-  g_list_foreach (modules, (GFunc) g_type_module_unuse, NULL);
-  g_list_free (modules);
-
-  /* First announce that we've started in the generic log */
+  /* Announce that we've started in the generic log */
   openlog ("polkitd",
            LOG_PID,
            LOG_DAEMON);  /* system daemons without separate facility value */
-  syslog (LOG_INFO,
-          "started daemon version %s using authority implementation `%s' version `%s'",
-          VERSION,
-          polkit_backend_authority_get_name (authority),
-          polkit_backend_authority_get_version (authority));
+  syslog (LOG_INFO, "Started polkitd version %s", VERSION);
   closelog ();
 
-  /* and then log to the secure log */
-  s = g_strdup_printf ("polkitd(authority=%s)", polkit_backend_authority_get_name (authority));
-  openlog (s,
-           0,
+  /* then start logging to the secure log */
+  openlog ("polkitd",
+           LOG_PID,
            LOG_AUTHPRIV); /* security/authorization messages (private) */
-  /* Ugh, can't free the string - gah, thanks openlog(3) */
-  /*g_free (s);*/
+
+  authority = POLKIT_BACKEND_AUTHORITY (g_object_new (POLKIT_BACKEND_TYPE_JS_AUTHORITY, NULL));
 
   return authority;
 }

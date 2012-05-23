@@ -1,5 +1,5 @@
 
-SUBDIRS = polkit polkitbackend polkitagent polkitd nullbackend programs
+SUBDIRS = polkit polkitbackend polkitagent polkitd programs
 
 if BUILD_EXAMPLES
 SUBDIRS += examples

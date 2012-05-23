@@ -461,7 +461,6 @@ src/polkitagent/Makefile
 src/polkitd/Makefile
 src/programs/Makefile
 src/examples/Makefile
-src/nullbackend/Makefile
 docs/version.xml
 docs/extensiondir.xml
 docs/Makefile

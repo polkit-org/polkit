@@ -33,12 +33,6 @@ TEST_PROGS =
 
 # ----------------------------------------------------------------------------------------------------
 
-TEST_PROGS += polkitbackendlocalauthorizationstoretest
-polkitbackendlocalauthorizationstoretest_SOURCES = polkitbackendlocalauthorizationstoretest.c
-
-TEST_PROGS += polkitbackendlocalauthoritytest
-polkitbackendlocalauthoritytest_SOURCES = polkitbackendlocalauthoritytest.c
-
 TEST_PROGS += polkitbackendjsauthoritytest
 polkitbackendjsauthoritytest_SOURCES = test-polkitbackendjsauthority.c
 

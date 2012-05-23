@@ -114,13 +114,7 @@ static PolkitImplicitAuthorization polkit_backend_js_authority_check_authorizati
                                                           PolkitDetails                     *details,
                                                           PolkitImplicitAuthorization        implicit);
 
-G_DEFINE_TYPE_WITH_CODE (PolkitBackendJsAuthority,
-                         polkit_backend_js_authority,
-                         POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY,
-                         g_io_extension_point_implement (POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME,
-                                                         g_define_type_id,
-                                                         "js-authority" PACKAGE_VERSION,
-                                                         10));
+G_DEFINE_TYPE (PolkitBackendJsAuthority, polkit_backend_js_authority, POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY);
 
 /* ---------------------------------------------------------------------------------------------------- */
 

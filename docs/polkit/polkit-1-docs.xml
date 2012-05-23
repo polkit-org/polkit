@@ -23,7 +23,7 @@
   </part>
 
   <part id="ref-api">
-    <title>Client API Reference</title>
+    <title>Library API Reference</title>
     <xi:include href="xml/polkitauthority.xml"/>
     <xi:include href="xml/polkitauthorizationresult.xml"/>
     <xi:include href="xml/polkitdetails.xml"/>
@@ -45,13 +45,6 @@
       <xi:include href="xml/polkitunixgroup.xml"/>
       <xi:include href="xml/polkitunixnetgroup.xml"/>
     </chapter>
-  </part>
-
-  <part id="ref-backend-api">
-    <title>Backend API Reference</title>
-    <xi:include href="xml/polkitbackendauthority.xml"/>
-    <xi:include href="xml/polkitbackendinteractiveauthority.xml"/>
-    <xi:include href="xml/polkitbackendlocalauthority.xml"/>
   </part>
 
   <part id="ref-authentication-agent-api">

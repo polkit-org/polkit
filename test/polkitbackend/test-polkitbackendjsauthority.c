@@ -346,16 +346,11 @@ add_rules_tests (void)
 int
 main (int argc, char *argv[])
 {
-  GIOExtensionPoint *ep;
-
   setlocale (LC_ALL, "");
 
   g_type_init ();
   g_test_init (&argc, &argv, NULL);
   //polkit_test_redirect_logs ();
-
-  ep = g_io_extension_point_register (POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME);
-  g_io_extension_point_set_required_type (ep, POLKIT_BACKEND_TYPE_AUTHORITY);
 
   g_test_add_func ("/PolkitBackendJsAuthority/get_admin_identities", test_get_admin_identities);
   add_rules_tests ();

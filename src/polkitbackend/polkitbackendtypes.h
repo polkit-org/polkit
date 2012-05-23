@@ -33,9 +33,6 @@ typedef struct _PolkitBackendAuthority PolkitBackendAuthority;
 struct _PolkitBackendInteractiveAuthority;
 typedef struct _PolkitBackendInteractiveAuthority PolkitBackendInteractiveAuthority;
 
-struct _PolkitBackendLocalAuthority;
-typedef struct _PolkitBackendLocalAuthority PolkitBackendLocalAuthority;
-
 struct _PolkitBackendJsAuthority;
 typedef struct _PolkitBackendJsAuthority PolkitBackendJsAuthority;
 

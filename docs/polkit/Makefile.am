@@ -31,8 +31,6 @@ INCLUDES = \
 	$(GIO_CFLAGS)						\
 	-I$(top_srcdir)/src/polkit 				\
 	-I$(top_builddir)/src/polkit				\
-	-I$(top_srcdir)/src/polkitbackend			\
-	-I$(top_builddir)/src/polkitbackend			\
 	-I$(top_srcdir)/src/polkitagent 			\
 	-I$(top_builddir)/src/polkitagent			\
 	$(NULL)
@@ -42,7 +40,6 @@ GTKDOC_LIBS = \
 	$(GLIB_LIBS)						\
 	$(GIO_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
-	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la \
 	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la	\
 	$(NULL)
 

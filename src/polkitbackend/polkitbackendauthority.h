@@ -43,13 +43,6 @@ G_BEGIN_DECLS
 typedef struct _PolkitBackendAuthorityClass    PolkitBackendAuthorityClass;
 
 /**
- * POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME:
- *
- * Extension point name for authority backend implementations.
- */
-#define POLKIT_BACKEND_AUTHORITY_EXTENSION_POINT_NAME "polkit-backend-authority-1"
-
-/**
  * PolkitBackendAuthority:
  *
  * The #PolkitBackendAuthority struct should not be accessed directly.
