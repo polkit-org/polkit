@@ -81,7 +81,7 @@ libpolkit_gobject_1_la_SOURCES =                                   			\
 	polkitpermission.c			polkitpermission.h			\
         $(NULL)
 
-if HAVE_SYSTEMD
+if HAVE_LIBSYSTEMD_LOGIN
 libpolkit_gobject_1_la_SOURCES += \
 	polkitunixsession-systemd.c		polkitunixsession.h
 else
@@ -92,12 +92,12 @@ endif
 libpolkit_gobject_1_la_CFLAGS =                                        	\
         -D_POLKIT_COMPILATION                                  		\
         $(GLIB_CFLAGS)							\
-	$(SYSTEMD_CFLAGS)						\
+	$(LIBSYSTEMD_LOGIN_CFLAGS)					\
         $(NULL)
 
 libpolkit_gobject_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
-	$(SYSTEMD_LIBS)							\
+	$(LIBSYSTEMD_LOGIN_LIBS)					\
         $(NULL)
 
 libpolkit_gobject_1_la_LDFLAGS = -export-symbols-regex '(^polkit_.*)'

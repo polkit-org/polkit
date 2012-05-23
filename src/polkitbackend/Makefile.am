@@ -52,7 +52,7 @@ libpolkit_backend_1_la_SOURCES =                                   			\
 	polkitbackendlocalauthorizationstore.h	polkitbackendlocalauthorizationstore.c	\
         $(NULL)
 
-if HAVE_SYSTEMD
+if HAVE_LIBSYSTEMD_LOGIN
 libpolkit_backend_1_la_SOURCES += \
 	polkitbackendsessionmonitor.h		polkitbackendsessionmonitor-systemd.c
 else
@@ -64,13 +64,13 @@ libpolkit_backend_1_la_CFLAGS =                                        	\
         -D_POLKIT_COMPILATION                                  		\
         -D_POLKIT_BACKEND_COMPILATION                                  	\
         $(GLIB_CFLAGS)							\
-	$(SYSTEMD_CFLAGS)						\
+	$(LIBSYSTEMD_LOGIN_CFLAGS)					\
 	$(LIBJS_CFLAGS)							\
         $(NULL)
 
 libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
-	$(SYSTEMD_LIBS)							\
+	$(LIBSYSTEMD_LOGIN_LIBS)					\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(EXPAT_LIBS)							\
 	$(LIBJS_LIBS)							\
