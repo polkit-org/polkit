@@ -226,7 +226,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       GDir *dir = NULL;
 
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Loading scripts from directory %s",
+                                    "Loading rules from directory %s",
                                     dir_name);
 
       dir = g_dir_open (dir_name,
@@ -288,7 +288,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                "Finished loading, compiling and executing %d scripts",
+                                "Finished loading, compiling and executing %d rules",
                                 num_scripts);
   g_list_free_full (files, g_free);
 }
@@ -351,7 +351,7 @@ on_dir_monitor_changed (GFileMonitor     *monitor,
            event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT))
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        "Reloading scripts");
+                                        "Reloading rules");
           reload_scripts (authority);
         }
       g_free (name);
