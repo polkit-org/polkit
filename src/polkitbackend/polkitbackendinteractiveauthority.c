@@ -2211,31 +2211,6 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
       identities = g_list_prepend (identities, g_object_ref (user_of_subject));
     }
 
-  session = authentication_session_new (agent,
-                                        cookie,
-                                        subject,
-                                        user_of_subject,
-                                        caller,
-                                        authority,
-                                        identities,
-                                        action_id,
-                                        details,
-                                        polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
-                                        implicit_authorization,
-                                        cancellable,
-                                        callback,
-                                        user_data);
-
-  agent->active_sessions = g_list_prepend (agent->active_sessions, session);
-
-  if (localized_details == NULL)
-    localized_details = polkit_details_new ();
-  add_pid (localized_details, caller, "polkit.caller-pid");
-  add_pid (localized_details, subject, "polkit.subject-pid");
-
-  details_gvariant = polkit_details_to_gvariant (localized_details);
-  g_variant_ref_sink (details_gvariant);
-
   /* expand groups/netgroups to users */
   user_identities = NULL;
   for (l = identities; l != NULL; l = l->next)
@@ -2258,6 +2233,31 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
           g_warning ("Unsupported identity");
         }
     }
+
+  session = authentication_session_new (agent,
+                                        cookie,
+                                        subject,
+                                        user_of_subject,
+                                        caller,
+                                        authority,
+                                        user_identities,
+                                        action_id,
+                                        details,
+                                        polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
+                                        implicit_authorization,
+                                        cancellable,
+                                        callback,
+                                        user_data);
+
+  agent->active_sessions = g_list_prepend (agent->active_sessions, session);
+
+  if (localized_details == NULL)
+    localized_details = polkit_details_new ();
+  add_pid (localized_details, caller, "polkit.caller-pid");
+  add_pid (localized_details, subject, "polkit.subject-pid");
+
+  details_gvariant = polkit_details_to_gvariant (localized_details);
+  g_variant_ref_sink (details_gvariant);
 
   g_variant_builder_init (&identities_builder, G_VARIANT_TYPE ("a(sa{sv})"));
   for (l = user_identities; l != NULL; l = l->next)
