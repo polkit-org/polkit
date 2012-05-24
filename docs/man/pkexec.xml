@@ -82,8 +82,8 @@
   <refsect1 id="pkexec-security-notes"><title>SECURITY NOTES</title>
     <para>
       Executing a program as another user is a privileged
-      operation. By default the required authorization (See
-      <xref linkend="pkexec-required-authz"/>) requires administrator
+      operation. By default the action to check for (see
+      <xref linkend="pkexec-action"/>) requires administrator
       authentication. In addition, the authentication dialog presented
       to the user will display the full path to the program to be
       executed so the user is aware of what will happen.
@@ -125,7 +125,7 @@
     </para>
   </refsect1>
 
-  <refsect1 id="pkexec-required-authz"><title>REQUIRED AUTHORIZATIONS</title>
+  <refsect1 id="pkexec-action"><title>ACTION AND AUTHORIZATIONS</title>
     <para>
       By default, the
       <emphasis>org.freedesktop.policykit.exec</emphasis> action is
@@ -134,10 +134,13 @@
       annotation on an action with the value set to the full path of
       the program. In addition to specifying the program, the
       authentication message, description, icon and defaults can be
-      specified. The strings <literal>$(user)</literal>,
-      <literal>$(program)</literal> and
-      <literal>$(command_line)</literal> in the message will be
-      expanded, see <xref linkend="pkexec-variables"/>.
+      specified.
+    </para>
+    <para>
+      Note that authentication messages may reference variables (see
+      <xref linkend="pkexec-variables"/>), for example
+      <literal>$(user)</literal> will be expanded to the value of the
+      <literal>user</literal> variable.
     </para>
   </refsect1>
 
@@ -178,11 +181,22 @@
         </listitem>
       </varlistentry>
       <varlistentry>
-        <term><emphasis>user_full</emphasis></term>
+        <term><emphasis>user.gecos</emphasis></term>
         <listitem>
           <para>
             The full name of the user to execute the program as.
             Example: <quote>David Zeuthen</quote>
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><emphasis>user.display</emphasis></term>
+        <listitem>
+          <para>
+            A representation of the user to execute the program as
+            that is suitable for display in an authentication dialog.
+            Is typically set to a combination of the user name and the
+            full name.
           </para>
         </listitem>
       </varlistentry>

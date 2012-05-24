@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE policyconfig PUBLIC
- "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
- "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
 <policyconfig>
 
-  <vendor>Examples for the PolicyKit Project</vendor>
-  <vendor_url>http://hal.freedesktop.org/docs/PolicyKit/</vendor_url>
+  <vendor>Examples for the polkit project</vendor>
+  <vendor_url>http://www.freedesktop.org/wiki/Software/polkit/</vendor_url>
 
   <action id="org.freedesktop.policykit.example.pkexec.run-frobnicate">
-    <_description>Run the PolicyKit example program Frobnicate</_description>
-    <_message>Authentication is required to run the PolicyKit example program Frobnicate (user=$(user), program=$(program), command_line=$(command_line))</_message>
+    <_description>Run the polkit example program Frobnicate</_description>
+    <_message>Authentication is required to run the polkit example program Frobnicate (user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), program=$(program), command_line=$(command_line))</_message>
     <icon_name>audio-x-generic</icon_name> <!-- just an example -->
     <defaults>
       <allow_any>no</allow_any>

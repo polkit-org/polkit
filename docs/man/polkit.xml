@@ -486,7 +486,7 @@ System Context         |                        |
       <literal>polkit</literal> object (of type <type>Polkit</type>).
     </para>
 
-    <refsect2 id="polkit-rules-actions">
+    <refsect2 id="polkit-rules-polkit">
       <title>The <type>Polkit</type> type</title>
 
       <para>
@@ -616,10 +616,10 @@ polkit.addRule(function(action, subject) {
 });
 ]]></programlisting>
       <para>
-        will produce the following when the user runs 'pkexec bash -i' from a shelll:
+        will produce the following when the user runs 'pkexec -u bateman bash -i' from a shell:
       </para>
       <programlisting><![CDATA[
-May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:3: action=[Action id='org.freedesktop.policykit.exec' command_line='/usr/bin/bash -i' program='/usr/bin/bash' user_full='root (root)' user='root']
+May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:3: action=[Action id='org.freedesktop.policykit.exec' command_line='/usr/bin/bash -i' program='/usr/bin/bash' user='bateman' user.gecos='Patrick Bateman' user.display='Patrick Bateman (bateman)']
 May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: subject=[Subject pid=1352 user='davidz' groups=davidz,wheel, seat='seat0' session='1' local=true active=true]
 ]]></programlisting>
 

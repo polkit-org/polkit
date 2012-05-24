@@ -1,16 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE policyconfig PUBLIC
- "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
- "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
 
-<!-- Policy definitions for core PolicyKit actions. Copyright (c) 2008 Red Hat, Inc. -->
+<!-- Policy definitions for core polkit actions. Copyright (c) 2008-2012 Red Hat, Inc. -->
 
 <policyconfig>
-  <vendor>The PolicyKit Project</vendor>
-  <vendor_url>http://hal.freedesktop.org/docs/PolicyKit/</vendor_url>
+  <vendor>The polkit project</vendor>
+  <vendor_url>http://www.freedesktop.org/wiki/Software/polkit/</vendor_url>
 
   <action id="org.freedesktop.policykit.exec">
-    <_description>Run programs as another user</_description>
+    <_description>Run a program as another user</_description>
     <_message>Authentication is required to run a program as another user</_message>
     <defaults>
       <allow_any>auth_admin</allow_any>
@@ -19,14 +18,4 @@
     </defaults>
   </action>
 
-  <action id="org.freedesktop.policykit.lockdown">
-    <_description>Configure lock down for an action</_description>
-    <_message>Authentication is required to configure lock down policy</_message>
-    <defaults>
-      <allow_any>no</allow_any>
-      <allow_inactive>no</allow_inactive>
-      <allow_active>auth_admin</allow_active>
-    </defaults>
-    <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/pklalockdown</annotate>
-  </action>
 </policyconfig>

@@ -669,11 +669,13 @@ main (int argc, char *argv[])
 
   details = polkit_details_new ();
   polkit_details_insert (details, "user", pw->pw_name);
+  if (pw->pw_gecos != NULL)
+    polkit_details_insert (details, "user.gecos", pw->pw_gecos);
   if (pw->pw_gecos != NULL && strlen (pw->pw_gecos) > 0)
     s = g_strdup_printf ("%s (%s)", pw->pw_gecos, pw->pw_name);
   else
     s = g_strdup_printf ("%s", pw->pw_name);
-  polkit_details_insert (details, "user_full", s);
+  polkit_details_insert (details, "user.display", s);
   g_free (s);
   polkit_details_insert (details, "program", path);
   polkit_details_insert (details, "command_line", command_line);
@@ -696,7 +698,7 @@ main (int argc, char *argv[])
                                   * be expanded to the path of the program e.g. "/bin/bash" and the latter
                                   * to the user e.g. "John Doe (johndoe)" or "johndoe".
                                   */
-                                 N_("Authentication is needed to run `$(program)' as user $(user)"));
+                                 N_("Authentication is needed to run `$(program)' as user $(user.display)"));
         }
     }
   polkit_details_insert (details, "polkit.gettext_domain", GETTEXT_PACKAGE);
