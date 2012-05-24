@@ -4,55 +4,75 @@
 
 /* NOTE: this is the /etc/polkit-1/rules.d version of 10-testing.rules */
 
-polkit.addAdminRule(function(action, subject, details) {
-    if (action == "net.company.action1") {
+// ---------------------------------------------------------------------
+// admin rules
+
+polkit.addAdminRule(function(action, subject) {
+    if (action.id == "net.company.action1") {
         return ["unix-group:admin"];
     }
 });
 
-polkit.addAdminRule(function(action, subject, details) {
-    if (action == "net.company.action2") {
+polkit.addAdminRule(function(action, subject) {
+    if (action.id == "net.company.action2") {
         return ["unix-group:users"];
     }
 });
 
-polkit.addAdminRule(function(action, subject, details) {
-    if (action == "net.company.action3") {
+polkit.addAdminRule(function(action, subject) {
+    if (action.id == "net.company.action3") {
         return ["unix-netgroup:foo"];
     }
 });
 
 // Fallback
-polkit.addAdminRule(function(action, subject, details) {
+polkit.addAdminRule(function(action, subject) {
     return ["unix-group:admin", "unix-user:root"];
 });
 
 // -----
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.productA.action0") {
+// ---------------------------------------------------------------------
+// basics
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.productA.action0") {
         return "auth_admin";
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.productA.action1") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.productA.action1") {
         return "auth_self";
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.order0") {
-        details["test_detail"] = "a";
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order0") {
         return "yes";
     }
 });
 
 // ---------------------------------------------------------------------
+// variables
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.group.variables") {
+        if (action.lookup("foo") == "1")
+            return "yes";
+        else if (action.lookup("foo") == "2")
+            return "auth_self";
+        else
+            return "auth_admin";
+    }
+});
+
+
+// ---------------------------------------------------------------------
 // group membership
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.group.only_group_users") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.group.only_group_users") {
         if (subject.isInGroup("users"))
             return "yes";
         else
@@ -63,8 +83,8 @@ polkit.addRule(function(action, subject, details) {
 // ---------------------------------------------------------------------
 // netgroup membership
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.group.only_netgroup_users") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.group.only_netgroup_users") {
         if (subject.isInNetGroup("foo"))
             return "yes";
         else
@@ -75,8 +95,8 @@ polkit.addRule(function(action, subject, details) {
 // ---------------------------------------------------------------------
 // spawning
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.spawning.non_existing_helper") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.spawning.non_existing_helper") {
         try {
             polkit.spawn(["/path/to/non/existing/helper"]);
             return "no";
@@ -86,8 +106,8 @@ polkit.addRule(function(action, subject, details) {
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.spawning.successful_helper") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.spawning.successful_helper") {
         try {
             polkit.spawn(["/bin/true"]);
             return "yes";
@@ -97,8 +117,8 @@ polkit.addRule(function(action, subject, details) {
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.spawning.failing_helper") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.spawning.failing_helper") {
         try {
             polkit.spawn(["/bin/false"]);
             return "no";
@@ -108,8 +128,8 @@ polkit.addRule(function(action, subject, details) {
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.spawning.helper_with_output") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.spawning.helper_with_output") {
         try {
             var out = polkit.spawn(["echo", "-n", "-e", "Hello\nWorld"]);
             if (out == "Hello\nWorld")
@@ -122,8 +142,8 @@ polkit.addRule(function(action, subject, details) {
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.spawning.helper_timeout") {
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.spawning.helper_timeout") {
         try {
             polkit.spawn(["sleep", "20"]);
             return "no";
@@ -135,8 +155,11 @@ polkit.addRule(function(action, subject, details) {
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.run_away_script") {
+// ---------------------------------------------------------------------
+// runaway scripts
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.run_away_script") {
         try {
             // The following code will never terminate so the runaway
             // script killer will step in after 15 seconds and throw

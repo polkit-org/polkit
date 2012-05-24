@@ -24,6 +24,8 @@
 #include "glib.h"
 
 #include <locale.h>
+#include <string.h>
+
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackendjsauthority.h>
 #include <polkittesthelper.h>
@@ -156,8 +158,8 @@ struct RulesTestCase
   const gchar *test_name;
   const gchar *action_id;
   const gchar *identity;
+  const gchar *vars;
   PolkitImplicitAuthorization expected_result;
-  const gchar *expected_detail;
 };
 
 static const RulesTestCase rules_test_cases[] = {
@@ -166,15 +168,15 @@ static const RulesTestCase rules_test_cases[] = {
     "basic0",
     "net.company.productA.action0",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED,
-    NULL
   },
   {
     "basic1",
     "net.company.productA.action1",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED,
-    NULL
   },
 
   /* Ordering tests ... we have four rules files, check they are
@@ -192,24 +194,47 @@ static const RulesTestCase rules_test_cases[] = {
     "order0",
     "net.company.order0",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    "a"
   },
   {
     /* defined in file b, c, d - should pick file b */
     "order1",
     "net.company.order1",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    "b"
   },
   {
     /* defined in file c, d - should pick file c */
     "order2",
     "net.company.order2",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    "c"
+  },
+
+  /* variables */
+  {
+    "variables1",
+    "net.company.group.variables",
+    "unix-user:root",
+    "foo=1",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+  },
+  {
+    "variables2",
+    "net.company.group.variables",
+    "unix-user:root",
+    "foo=2",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED,
+  },
+  {
+    "variables3",
+    "net.company.group.variables",
+    "unix-user:root",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED,
   },
 
   /* check group membership */
@@ -218,16 +243,16 @@ static const RulesTestCase rules_test_cases[] = {
     "group_membership_with_member",
     "net.company.group.only_group_users",
     "unix-user:john",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
   },
   {
     /* sally is not a member of group 'users', see test/etc/group */
     "group_membership_with_non_member",
     "net.company.group.only_group_users",
     "unix-user:sally",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
-    NULL
   },
 
   /* check netgroup membership */
@@ -236,16 +261,16 @@ static const RulesTestCase rules_test_cases[] = {
     "netgroup_membership_with_member",
     "net.company.group.only_netgroup_users",
     "unix-user:john",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
   },
   {
     /* sally is not a member of netgroup 'foo', see test/etc/netgroup */
     "netgroup_membership_with_non_member",
     "net.company.group.only_netgroup_users",
     "unix-user:sally",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
-    NULL
   },
 
   /* spawning */
@@ -253,43 +278,45 @@ static const RulesTestCase rules_test_cases[] = {
     "spawning_non_existing_helper",
     "net.company.spawning.non_existing_helper",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
   },
   {
     "spawning_successful_helper",
     "net.company.spawning.successful_helper",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
   },
   {
     "spawning_failing_helper",
     "net.company.spawning.failing_helper",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
   },
   {
     "spawning_helper_with_output",
     "net.company.spawning.helper_with_output",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
-  },
-  {
-    "runaway_script",
-    "net.company.run_away_script",
-    "unix-user:root",
-    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
   },
   {
     "spawning_helper_timeout",
     "net.company.spawning.helper_timeout",
     "unix-user:root",
+    NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
-    NULL
+  },
+
+  /* runaway scripts */
+  {
+    "runaway_script",
+    "net.company.run_away_script",
+    "unix-user:root",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
   },
 };
 
@@ -316,6 +343,23 @@ rules_test_func (gconstpointer user_data)
 
   details = polkit_details_new ();
 
+  if (tc->vars != NULL)
+    {
+      gchar *s;
+      const gchar *key;
+      const gchar *value;
+
+      s = g_strdup (tc->vars);
+      key = s;
+      value = strchr (key, '=');
+      g_assert (value != NULL);
+      *((gchar *) value) = '\0';
+      value += 1;
+
+      polkit_details_insert (details, key, value);
+      g_free (s);
+    }
+
   result = polkit_backend_interactive_authority_check_authorization_sync (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
                                                                           caller,
                                                                           subject,
@@ -326,7 +370,6 @@ rules_test_func (gconstpointer user_data)
                                                                           details,
                                                                           POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN);
   g_assert_cmpint (result, ==, tc->expected_result);
-  g_assert_cmpstr (polkit_details_lookup (details, "test_detail"), ==, tc->expected_detail);
 
   g_clear_object (&user_for_subject);
   g_clear_object (&subject);

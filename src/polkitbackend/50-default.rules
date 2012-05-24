@@ -7,6 +7,6 @@
 // See the polkit(8) man page for more information
 // about configuring polkit.
 
-polkit.addAdminRule(function(action, subject, details) {
+polkit.addAdminRule(function(action, subject) {
     return ["unix-group:wheel"];
 });

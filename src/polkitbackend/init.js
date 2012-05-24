@@ -1,14 +1,17 @@
 /* -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*- */
 
-function Details() {
+function Action() {
+    this.lookup = function(name) {
+        return this["_detail_" + name];
+    },
+
     this.toString = function() {
-        var ret = "[Details";
+        var ret = "[Action id='" + this.id + "'";
         for (var i in this) {
-            if (typeof this[i] != "function") {
-                if (typeof this[i] == "string")
-                    ret += " " + i + "='" + this[i] + "'";
-                else
-                    ret += " " + i + "=" + this[i];
+            if (i.indexOf("_detail_") == 0) {
+                var key = i.substr(8);
+                var value = this[i];
+                ret += " " + key + "='" + value + "'";
             }
         }
         ret += "]";
@@ -17,7 +20,6 @@ function Details() {
 };
 
 function Subject() {
-
     this.isInGroup = function(group) {
         for (var n = 0; n < this.groups.length; n++) {
             if (this.groups[n] == group)
@@ -47,11 +49,11 @@ function Subject() {
 
 polkit._adminRuleFuncs = [];
 polkit.addAdminRule = function(callback) {this._adminRuleFuncs.push(callback);};
-polkit._runAdminRules = function(action, subject, details) {
+polkit._runAdminRules = function(action, subject) {
     var ret = null;
     for (var n = 0; n < this._adminRuleFuncs.length; n++) {
         var func = this._adminRuleFuncs[n];
-        var func_ret = func(action, subject, details);
+        var func_ret = func(action, subject);
         if (func_ret) {
             ret = func_ret;
             break
@@ -62,11 +64,11 @@ polkit._runAdminRules = function(action, subject, details) {
 
 polkit._ruleFuncs = [];
 polkit.addRule = function(callback) {this._ruleFuncs.push(callback);};
-polkit._runRules = function(action, subject, details) {
+polkit._runRules = function(action, subject) {
     var ret = null;
     for (var n = 0; n < this._ruleFuncs.length; n++) {
         var func = this._ruleFuncs[n];
-        var func_ret = func(action, subject, details);
+        var func_ret = func(action, subject);
         if (func_ret) {
             ret = func_ret;
             break

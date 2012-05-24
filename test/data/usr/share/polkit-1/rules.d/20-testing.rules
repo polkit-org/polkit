@@ -2,24 +2,20 @@
 
 /* see test/polkitbackend/test-polkitbackendjsauthority.c */
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.order0") {
-        polkit.log("blabla");
-        details["test_detail"] = "d";
-        return "yes";
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order0") {
+        return "no"; // earlier rule should win
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.order1") {
-        details["test_detail"] = "d";
-        return "yes";
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order1") {
+        return "no"; // earlier rule should win
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.order2") {
-        details["test_detail"] = "d";
-        return "yes";
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order2") {
+        return "no"; // earlier rule should win
     }
 });

@@ -4,16 +4,14 @@
 
 /* NOTE: this is the /usr/share/polkit-1/rules.d version of 10-testing.rules */
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.order0") {
-        details["test_detail"] = "c";
-        return "yes";
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order0") {
+        return "no"; // earlier rule should win
     }
 });
 
-polkit.addRule(function(action, subject, details) {
-    if (action == "net.company.order1") {
-        details["test_detail"] = "b";
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order1") {
         return "yes";
     }
 });

@@ -806,10 +806,11 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
 /* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
-details_to_jsval (PolkitBackendJsAuthority  *authority,
-                  PolkitDetails             *details,
-                  jsval                     *out_jsval,
-                  GError                   **error)
+action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
+                             const gchar               *action_id,
+                             PolkitDetails             *details,
+                             jsval                     *out_jsval,
+                             GError                   **error)
 {
   gboolean ret = FALSE;
   jsval ret_jsval;
@@ -818,8 +819,7 @@ details_to_jsval (PolkitBackendJsAuthority  *authority,
   gchar **keys;
   guint n;
 
-  src = "new Details();";
-
+  src = "new Action();";
   if (!JS_EvaluateScript (authority->priv->cx,
                           authority->priv->js_global,
                           src, strlen (src),
@@ -831,18 +831,18 @@ details_to_jsval (PolkitBackendJsAuthority  *authority,
     }
 
   obj = JSVAL_TO_OBJECT (ret_jsval);
+
+  set_property_str (authority, obj, "id", action_id);
+
   keys = polkit_details_get_keys (details);
   for (n = 0; keys != NULL && keys[n] != NULL; n++)
     {
-      const gchar *key = keys[n];
-      JSString *value_jsstr;
-      jsval value_jsval;
+      gchar *key;
       const gchar *value;
-
+      key = g_strdup_printf ("_detail_%s", keys[n]);
       value = polkit_details_lookup (details, keys[n]);
-      value_jsstr = JS_NewStringCopyZ (authority->priv->cx, value);
-      value_jsval = STRING_TO_JSVAL (value_jsstr);
-      JS_SetProperty (authority->priv->cx, obj, key, &value_jsval);
+      set_property_str (authority, obj, key, value);
+      g_free (key);
     }
   g_free (keys);
 
@@ -990,17 +990,22 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   GList *ret = NULL;
-  jsval argv[3] = {0};
+  jsval argv[2] = {0};
   jsval rval = {0};
-  JSString *action_id_jstr;
   guint n;
   GError *error = NULL;
   JSString *ret_jsstr;
   gchar *ret_str = NULL;
   gchar **ret_strs = NULL;
 
-  action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
-  argv[0] = STRING_TO_JSVAL (action_id_jstr);
+  if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
+    {
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Error converting action and details to JS object: %s",
+                                    error->message);
+      g_clear_error (&error);
+      goto out;
+    }
 
   if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
     {
@@ -1011,18 +1016,9 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  if (!details_to_jsval (authority, details, &argv[2], &error))
-    {
-      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Error converting details to JS object: %s",
-                                    error->message);
-      g_clear_error (&error);
-      goto out;
-    }
-
   if (!call_js_function_with_runaway_killer (authority,
                                              "_runAdminRules",
-                                             3,
+                                             2,
                                              argv,
                                              &rval))
     {
@@ -1093,34 +1089,27 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
-  jsval argv[3] = {0};
+  jsval argv[2] = {0};
   jsval rval = {0};
-  JSString *action_id_jstr;
   GError *error = NULL;
   JSString *ret_jsstr;
   const jschar *ret_utf16;
   gchar *ret_str = NULL;
   gboolean good = FALSE;
-  JSIdArray *ids;
-  JSObject *details_obj;
-  gint n;
 
-  action_id_jstr = JS_NewStringCopyZ (authority->priv->cx, action_id);
-  argv[0] = STRING_TO_JSVAL (action_id_jstr);
-
-  if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
+  if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Error converting subject to JS object: %s",
+                                    "Error converting action and details to JS object: %s",
                                     error->message);
       g_clear_error (&error);
       goto out;
     }
 
-  if (!details_to_jsval (authority, details, &argv[2], &error))
+  if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Error converting details to JS object: %s",
+                                    "Error converting subject to JS object: %s",
                                     error->message);
       g_clear_error (&error);
       goto out;
@@ -1168,53 +1157,6 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
                                     ret_str);
       goto out;
     }
-
-
-  /* the JS code may have modifed @details - update PolkitDetails
-   * object accordingly
-   */
-  details_obj = JSVAL_TO_OBJECT (argv[2]);
-  ids = JS_Enumerate (authority->priv->cx, details_obj);
-  if (ids == NULL)
-    {
-      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    "Failed to enumerate properties of Details object");
-      goto out;
-    }
-  for (n = 0; n < ids->length; n++)
-    {
-      jsval id_val;
-      jsval value_val;
-      char *id_s = NULL;
-      char *value_s = NULL;
-
-      if (!JS_IdToValue (authority->priv->cx, ids->vector[n], &id_val))
-        {
-          g_warning ("Error getting string for property id %d", n);
-          goto cont;
-        }
-      id_s = JS_EncodeString (authority->priv->cx, JSVAL_TO_STRING (id_val));
-
-      if (!JS_GetPropertyById (authority->priv->cx, details_obj, ids->vector[n], &value_val))
-        {
-          g_warning ("Error getting value string for property value %s", id_s);
-          goto cont;
-        }
-
-      /* skip e.g. functions */
-      if (!JSVAL_IS_STRING (value_val) && !JSVAL_IS_NULL (value_val))
-        goto cont;
-
-      value_s = JS_EncodeString (authority->priv->cx, JSVAL_TO_STRING (value_val));
-
-      polkit_details_insert (details, id_s, value_s);
-    cont:
-      if (id_s != NULL)
-        JS_free (authority->priv->cx, id_s);
-      if (value_s != NULL)
-        JS_free (authority->priv->cx, value_s);
-    }
-  JS_DestroyIdArray (authority->priv->cx, ids);
 
   good = TRUE;
 

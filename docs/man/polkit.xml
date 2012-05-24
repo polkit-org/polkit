@@ -484,120 +484,196 @@ System Context         |                        |
       programming language and interface with <command>polkitd</command>
       through the global
       <literal>polkit</literal> object (of type <type>Polkit</type>).
-      The following methods are available:
     </para>
 
-    <funcsynopsis>
-      <funcprototype>
-        <?dbhtml funcsynopsis-style='ansi'?>
-        <funcdef>void <function>addRule</function></funcdef>
-        <paramdef>string <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>, <parameter>details</parameter>) {...}</paramdef>
-      </funcprototype>
-    </funcsynopsis>
+    <refsect2 id="polkit-rules-actions">
+      <title>The <type>Polkit</type> type</title>
 
-    <funcsynopsis>
-      <funcprototype>
-        <?dbhtml funcsynopsis-style='ansi'?>
-        <funcdef>void <function>addAdminRule</function></funcdef>
-        <paramdef>string[] <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>, <parameter>details</parameter>) {...}</paramdef>
-      </funcprototype>
-    </funcsynopsis>
+      <para>
+        The following methods are available on the <literal>polkit</literal> object:
+      </para>
 
-    <funcsynopsis>
-      <funcprototype>
-        <?dbhtml funcsynopsis-style='ansi'?>
-        <funcdef>void <function>log</function></funcdef>
-        <paramdef>string <parameter>message</parameter></paramdef>
-      </funcprototype>
-    </funcsynopsis>
+      <funcsynopsis>
+        <funcprototype>
+          <?dbhtml funcsynopsis-style='ansi'?>
+          <funcdef>void <function>addRule</function></funcdef>
+          <paramdef>string <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>) {...}</paramdef>
+        </funcprototype>
+      </funcsynopsis>
 
-    <funcsynopsis>
-      <funcprototype>
-        <?dbhtml funcsynopsis-style='ansi'?>
-        <funcdef>string <function>spawn</function></funcdef>
-        <paramdef>string[] <parameter>argv</parameter></paramdef>
-      </funcprototype>
-    </funcsynopsis>
+      <funcsynopsis>
+        <funcprototype>
+          <?dbhtml funcsynopsis-style='ansi'?>
+          <funcdef>void <function>addAdminRule</function></funcdef>
+          <paramdef>string[] <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>) {...}</paramdef>
+        </funcprototype>
+      </funcsynopsis>
 
-    <para>
-      The <function>addRule()</function> method is used for adding a
-      function that may be called whenever an authorization check for
-      <parameter>action</parameter>, <parameter>subject</parameter>
-      and <parameter>details</parameter> is performed. Functions are
-      called in the order they have been added until one of the
-      functions returns a value. Hence, to add an authorization rule
-      that is processed before other rules, put it in a file in
-      <filename class='directory'>/etc/polkit-1/rules.d</filename>
-      with a name that sorts before other rules files, for example
-      <filename>00-early-checks.rules</filename>. Each function should
-      return one of the values <literal>"no"</literal>,
-      <literal>"yes"</literal>, <literal>"auth_self"</literal>,
-      <literal>"auth_self_keep"</literal>,
-      <literal>"auth_admin"</literal>,
-      <literal>"auth_admin_keep"</literal> as defined above. If the
-      function returns <constant>null</constant>,
-      <constant>undefined</constant> or does not return a value at
-      all, the next function is tried.
-    </para>
+      <funcsynopsis>
+        <funcprototype>
+          <?dbhtml funcsynopsis-style='ansi'?>
+          <funcdef>void <function>log</function></funcdef>
+          <paramdef>string <parameter>message</parameter></paramdef>
+        </funcprototype>
+      </funcsynopsis>
 
-    <para>
-      The <function>addAdminRule()</function> method is used for
-      adding a function may be called whenever administrator
-      authentication is required. The function is used to specify what
-      identies may be used for administrator authentication for the
-      authorization check identified by <parameter>action</parameter>,
-      <parameter>subject</parameter> and
-      <parameter>details</parameter>. Functions added are called in
-      the order they have been added until one of the functions
-      returns a value. Each function should return an array of strings
-      where each string is of the form
-      <literal>"unix-group:&lt;group&gt;"</literal>,
-      <literal>"unix-netgroup:&lt;netgroup&gt;"</literal> or
-      <literal>"unix-user:&lt;user&gt;"</literal>.  If the function
-      returns <constant>null</constant>,
-      <constant>undefined</constant> or does not return a value at
-      all, the next function is tried.
-    </para>
+      <funcsynopsis>
+        <funcprototype>
+          <?dbhtml funcsynopsis-style='ansi'?>
+          <funcdef>string <function>spawn</function></funcdef>
+          <paramdef>string[] <parameter>argv</parameter></paramdef>
+        </funcprototype>
+      </funcsynopsis>
 
-    <para>
-      There is no guarantee that a function registered with
-      <function>addRule()</function> or
-      <function>addAdminRule()</function> is ever called - for example
-      an early rules file could register a function that always return
-      a value, hence ensuring that functions added later are never
-      called.
-    </para>
+      <para>
+        The <function>addRule()</function> method is used for adding a
+        function that may be called whenever an authorization check for
+        <parameter>action</parameter> and <parameter>subject</parameter>
+        is performed. Functions are
+        called in the order they have been added until one of the
+        functions returns a value. Hence, to add an authorization rule
+        that is processed before other rules, put it in a file in
+        <filename class='directory'>/etc/polkit-1/rules.d</filename>
+        with a name that sorts before other rules files, for example
+        <filename>00-early-checks.rules</filename>. Each function should
+        return one of the values <literal>"no"</literal>,
+        <literal>"yes"</literal>, <literal>"auth_self"</literal>,
+        <literal>"auth_self_keep"</literal>,
+        <literal>"auth_admin"</literal>,
+        <literal>"auth_admin_keep"</literal> as defined above. If the
+        function returns <constant>null</constant>,
+        <constant>undefined</constant> or does not return a value at
+        all, the next function is tried.
+      </para>
 
-    <para>
-      If user-provided code takes a long time to execute an exception
-      will be thrown which normally results in the function being
-      terminated (the current limit is 15 seconds). This is used to
-      catch runaway scripts.
-    </para>
+      <para>
+        The <function>addAdminRule()</function> method is used for
+        adding a function may be called whenever administrator
+        authentication is required. The function is used to specify what
+        identies may be used for administrator authentication for the
+        authorization check identified by <parameter>action</parameter>
+        and <parameter>subject</parameter>. Functions added are called in
+        the order they have been added until one of the functions
+        returns a value. Each function should return an array of strings
+        where each string is of the form
+        <literal>"unix-group:&lt;group&gt;"</literal>,
+        <literal>"unix-netgroup:&lt;netgroup&gt;"</literal> or
+        <literal>"unix-user:&lt;user&gt;"</literal>.  If the function
+        returns <constant>null</constant>,
+        <constant>undefined</constant> or does not return a value at
+        all, the next function is tried.
+      </para>
 
-    <para>
-      The <function>log()</function> method writes the given
-      <parameter>message</parameter> to the system logger. Log entries
-      are emitted using the <constant>LOG_AUTHPRIV</constant> flag
-      meaning that the log entries usually ends up in the file
-      <filename>/var/log/secure</filename>. The
-      <function>log()</function> method is usually only used when
-      debugging rules.
-    </para>
+      <para>
+        There is no guarantee that a function registered with
+        <function>addRule()</function> or
+        <function>addAdminRule()</function> is ever called - for example
+        an early rules file could register a function that always return
+        a value, hence ensuring that functions added later are never
+        called.
+      </para>
 
-    <para>
-      The <function>spawn()</function> method spawns an external
-      helper identified by the argument vector
-      <parameter>argv</parameter> and waits for it to terminate. If an
-      error occurs or the helper doesn't exit normally with exit code
-      0, an exception is thrown. If the helper does not exit within 10
-      seconds it is killed. Otherwise, the program's
-      <emphasis>standard output</emphasis> is returned as a string.
-      The <function>spawn()</function> method should be used sparingly
-      as helpers may take a very long or indeterminate amount of time
-      to complete and no other authorization check can be handled
-      while the helper is running.
-    </para>
+      <para>
+        If user-provided code takes a long time to execute an exception
+        will be thrown which normally results in the function being
+        terminated (the current limit is 15 seconds). This is used to
+        catch runaway scripts.
+      </para>
+
+      <para>
+        The <function>spawn()</function> method spawns an external
+        helper identified by the argument vector
+        <parameter>argv</parameter> and waits for it to terminate. If an
+        error occurs or the helper doesn't exit normally with exit code
+        0, an exception is thrown. If the helper does not exit within 10
+        seconds it is killed. Otherwise, the program's
+        <emphasis>standard output</emphasis> is returned as a string.
+        The <function>spawn()</function> method should be used sparingly
+        as helpers may take a very long or indeterminate amount of time
+        to complete and no other authorization check can be handled
+        while the helper is running.
+      </para>
+
+      <para>
+        The <function>log()</function> method writes the given
+        <parameter>message</parameter> to the system logger prefixed
+        with the JavaScript filename and line number. Log entries are
+        emitted using the <constant>LOG_AUTHPRIV</constant> flag meaning
+        that the log entries usually ends up in the file
+        <filename>/var/log/secure</filename>. The
+        <function>log()</function> method is usually only used when
+        debugging rules. The <type>Action</type> and
+        <type>Subject</type> types has suitable
+        <function>toString()</function> methods defined for easy
+        logging, for example,
+      </para>
+      <programlisting><![CDATA[
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec") {
+        polkit.log("action=" + action);
+        polkit.log("subject=" + subject);
+    }
+});
+]]></programlisting>
+      <para>
+        will produce the following when the user runs 'pkexec bash -i' from a shelll:
+      </para>
+      <programlisting><![CDATA[
+May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:3: action=[Action id='org.freedesktop.policykit.exec' command_line='/usr/bin/bash -i' program='/usr/bin/bash' user_full='root (root)' user='root']
+May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: subject=[Subject pid=1352 user='davidz' groups=davidz,wheel, seat='seat0' session='1' local=true active=true]
+]]></programlisting>
+
+    </refsect2>
+
+    <refsect2 id="polkit-rules-actions">
+      <title>The <type>Action</type> type</title>
+
+      <para>
+        The <parameter>action</parameter> parameter passed to user
+        functions is an object with information about the action
+        being checked. It is of type <type>Action</type> and has
+        the following attribute:
+      </para>
+
+      <variablelist id="polkit-js-action-attributes">
+        <varlistentry>
+          <term><type>string</type> id</term>
+          <listitem>
+            <para>
+              The action identifier, for example
+              <emphasis>org.freedesktop.policykit.exec</emphasis>.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+
+      <para>
+        The following methods are available on the <type>Action</type> type:
+      </para>
+
+      <funcsynopsis>
+        <funcprototype>
+          <?dbhtml funcsynopsis-style='ansi'?>
+          <funcdef>string <function>lookup</function></funcdef>
+          <paramdef>string <parameter>key</parameter></paramdef>
+        </funcprototype>
+      </funcsynopsis>
+
+      <para>
+        The <function>lookup()</function> method is used to lookup the
+        polkit variables passed from the mechanism. For example, the
+        <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+        mechanism sets the variable <parameter>program</parameter>
+        which can be obtained in Javascript using the expression
+        <literal>action.lookup("program")</literal>. If there is
+        no value for the given <parameter>key</parameter>,
+        then <constant>undefined</constant> is returned.
+      </para>
+      <para>
+        Consult the documentation for each mechanism for what
+        variables are available for each action.
+      </para>
+    </refsect2>
 
     <refsect2 id="polkit-rules-subject">
       <title>The <type>Subject</type> type</title>
@@ -700,52 +776,6 @@ System Context         |                        |
         <function>isInNetGroup()</function> can be used to check if
         the subject is in a given netgroup.
       </para>
-
-    </refsect2>
-
-    <refsect2 id="polkit-rules-details">
-      <title>The <type>Details</type> type</title>
-
-      <para>
-        The <parameter>details</parameter> parameter passed to user
-        functions is an object with more information about the action
-        being checked. It is of type <type>Details</type> and has
-        details being set by the mechanism as attributes. For example,
-        the <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
-        mechanism sets the variable <parameter>program</parameter>
-        which can be obtained in Javascript using the expression
-        <literal>details["program"]</literal>. Consult the
-        documentation for each mechanism for what variables are
-        available for each action.
-      </para>
-
-      <para>
-        The <parameter>details</parameter> also has the following
-        well-known attributes:
-      </para>
-      <variablelist>
-        <varlistentry>
-          <term><emphasis>polkit.message</emphasis></term>
-          <listitem>
-            <para>
-              The message to show in the authentication dialog (only
-              used if authentication is needed). Its initial value is
-              taken from the action declaration (the <literal>message</literal> element in the <filename
-              class='extension'>.policy</filename> file) but the value
-              can be overridden by the mechanism setting this key in
-              the <parameter>details</parameter> passed when doing the
-              <link
-              linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
-              call.
-            </para>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-      <para>
-        Note that a rule can set the
-        <parameter>polkit.message</parameter> attribute to change the
-        message shown in the authentication dialog.
-      </para>
     </refsect2>
 
     <refsect2 id="polkit-rules-examples">
@@ -757,8 +787,8 @@ System Context         |                        |
         users:
       </para>
       <programlisting><![CDATA[
-polkit.addRule(function(action, subject, details) {
-    if (action == "org.freedesktop.accounts.user-administration" &&
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.accounts.user-administration" &&
         subject.isInGroup("admin")) {
         return "yes";
     }
@@ -769,20 +799,21 @@ polkit.addRule(function(action, subject, details) {
         Define administrative users to be the users in the <literal>wheel</literal> group:
       </para>
       <programlisting><![CDATA[
-polkit.addAdminRule(function(action, subject, details) {
+polkit.addAdminRule(function(action, subject) {
     return ["unix-group:wheel"];
 });
 ]]></programlisting>
 
       <para>
         Forbid users in group <literal>children</literal> to change
-        hostname configuration (that is, any action starting with
-        <literal>org.freedesktop.hostname1.</literal>) and allow
-        anyone else to do it after authenticating as themselves:
+        hostname configuration (that is, any action with an identifier
+        starting with <literal>org.freedesktop.hostname1.</literal>)
+        and allow anyone else to do it after authenticating as
+        themselves:
       </para>
       <programlisting><![CDATA[
-polkit.addRule(function(action, subject, details) {
-    if (action.indexOf("org.freedesktop.hostname1.") == 0) {
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.hostname1.") == 0) {
         if (subject.isInGroup("children")) {
             return "no";
         } else {
@@ -796,8 +827,8 @@ polkit.addRule(function(action, subject, details) {
         Run an external helper to determine if the current user may reboot the system:
       </para>
       <programlisting><![CDATA[
-polkit.addRule(function(action, subject, details) {
-    if (action.indexOf("org.freedesktop.login1.reboot") == 0) {
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.login1.reboot") == 0) {
         try {
             // user-may-reboot exits with succeess (exit code 0)
             // only if the passed username is authorized
@@ -813,17 +844,15 @@ polkit.addRule(function(action, subject, details) {
 ]]></programlisting>
 
       <para>
-        The following example showcases two things
+        The following example shows how the authorization decision
+        can depend on variables passed by the
+        <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+        mechanism:
       </para>
-      <itemizedlist mark='opencircle' spacing='compact'>
-        <listitem><para>how the authorization decision can depend on variables passed by the mechanism</para></listitem>
-        <listitem><para>how to override the message shown in the authentication dialog</para></listitem>
-      </itemizedlist>
       <programlisting><![CDATA[
-polkit.addRule(function(action, subject, details) {
-    if (action == "org.freedesktop.policykit.exec" &&
-        details["program"] == "/usr/bin/cat") {
-        details["polkit.message"] = "Achtung! You need to authenticate as yourself to cat(1) files!";
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        action.lookup("program") == "/usr/bin/cat") {
         return "auth_self";
     }
 });
@@ -843,10 +872,10 @@ polkit.addRule(function(action, subject, details) {
 // Allow users in group 'engineers' to perform any operation on
 // some drives without having to authenticate
 //
-polkit.addRule(function(action, subject, details) {
-    if (action.indexOf("org.freedesktop.udisks2.") == 0 &&
-        details["drive.vendor"] == "SEAGATE" &&
-        details["drive.model"] == "ST3300657SS" &&
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.udisks2.") == 0 &&
+        action.lookup("drive.vendor") == "SEAGATE" &&
+        action.lookup("drive.model") == "ST3300657SS" &&
         subject.isInGroup("engineers")) {
             return "yes";
         }
