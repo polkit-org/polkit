@@ -65,9 +65,10 @@ struct _PolkitBackendJsAuthorityPrivate
   JSObject *js_polkit;
 
   GThread *runaway_killer_thread;
+  GMutex rkt_init_mutex;
+  GCond rkt_init_cond;
   GMainContext *rkt_context;
   GMainLoop *rkt_loop;
-
   GSource *rkt_source;
 
   /* A list of JSObject instances */
@@ -472,13 +473,17 @@ polkit_backend_js_authority_constructed (GObject *object)
       authority->priv->rules_dirs[1] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
     }
 
+  g_mutex_init (&authority->priv->rkt_init_mutex);
+  g_cond_init (&authority->priv->rkt_init_cond);
+
   authority->priv->runaway_killer_thread = g_thread_new ("runaway-killer-thread",
                                                          runaway_killer_thread_func,
                                                          authority);
 
-  /* TODO: use a condition variable */
-  while (authority->priv->rkt_loop == NULL)
-    g_thread_yield ();
+  /* wait for runaway_killer_thread to set up its GMainContext */
+  g_cond_wait (&authority->priv->rkt_init_cond, &authority->priv->rkt_init_mutex);
+  g_mutex_unlock (&authority->priv->rkt_init_mutex);
+  g_assert (authority->priv->rkt_context != NULL);
 
   setup_file_monitors (authority);
   load_scripts (authority);
@@ -496,6 +501,9 @@ polkit_backend_js_authority_finalize (GObject *object)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
   guint n;
+
+  g_mutex_clear (&authority->priv->rkt_init_mutex);
+  g_cond_clear (&authority->priv->rkt_init_cond);
 
   /* shut down the killer thread */
   g_assert (authority->priv->rkt_loop != NULL);
@@ -859,7 +867,10 @@ runaway_killer_thread_func (gpointer user_data)
 
   g_main_context_push_thread_default (authority->priv->rkt_context);
 
-  /* TODO: signal the main thread that we're done constructing */
+  /* Signal the main thread that we're done constructing */
+  g_mutex_lock (&authority->priv->rkt_init_mutex);
+  g_cond_signal (&authority->priv->rkt_init_cond);
+  g_mutex_unlock (&authority->priv->rkt_init_mutex);
 
   g_main_loop_run (authority->priv->rkt_loop);
 
