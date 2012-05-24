@@ -64,9 +64,19 @@ struct _PolkitBackendJsAuthorityPrivate
   JSObject *js_global;
   JSObject *js_polkit;
 
+  GThread *runaway_killer_thread;
+  GMainContext *rkt_context;
+  GMainLoop *rkt_loop;
+
+  GSource *rkt_source;
+
   /* A list of JSObject instances */
   GList *scripts;
 };
+
+static JSBool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
+                                                  JSObject                 *script,
+                                                  jsval                    *rval);
 
 static void utils_spawn (const gchar *const  *argv,
                          guint                timeout_seconds,
@@ -95,6 +105,8 @@ enum
 };
 
 /* ---------------------------------------------------------------------------------------------------- */
+
+static gpointer runaway_killer_thread_func (gpointer user_data);
 
 static GList *polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveAuthority *authority,
                                                                      PolkitSubject                     *caller,
@@ -271,10 +283,9 @@ load_scripts (PolkitBackendJsAuthority  *authority)
 
       /* evaluate the script */
       jsval rval;
-      if (!JS_ExecuteScript (authority->priv->cx,
-                             authority->priv->js_global,
-                             script,
-                             &rval))
+      if (!execute_script_with_runaway_killer (authority,
+                                               script,
+                                               &rval))
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Error executing script %s",
@@ -411,10 +422,12 @@ polkit_backend_js_authority_constructed (GObject *object)
   if (authority->priv->cx == NULL)
     goto fail;
 
+  /* TODO: JIT'ing doesn't work will with killing runaway scripts... I think
+   *       this is just a SpiderMonkey bug. So disable the JIT for now.
+   */
   JS_SetOptions (authority->priv->cx,
-                 JSOPTION_VAROBJFIX |
-                 JSOPTION_JIT |
-                 JSOPTION_METHODJIT);
+                 JSOPTION_VAROBJFIX
+                 /* | JSOPTION_JIT | JSOPTION_METHODJIT*/);
   JS_SetVersion(authority->priv->cx, JSVERSION_LATEST);
   JS_SetErrorReporter(authority->priv->cx, report_error);
   JS_SetContextPrivate (authority->priv->cx, authority);
@@ -428,12 +441,12 @@ polkit_backend_js_authority_constructed (GObject *object)
   if (!JS_InitStandardClasses (authority->priv->cx, authority->priv->js_global))
     goto fail;
 
-  authority->priv->js_polkit = JS_DefineObject(authority->priv->cx,
-                                               authority->priv->js_global,
-                                               "polkit",
-                                               &js_polkit_class,
-                                               NULL,
-                                               JSPROP_ENUMERATE);
+  authority->priv->js_polkit = JS_DefineObject (authority->priv->cx,
+                                                authority->priv->js_global,
+                                                "polkit",
+                                                &js_polkit_class,
+                                                NULL,
+                                                JSPROP_ENUMERATE);
   if (authority->priv->js_polkit == NULL)
     goto fail;
 
@@ -459,6 +472,14 @@ polkit_backend_js_authority_constructed (GObject *object)
       authority->priv->rules_dirs[1] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
     }
 
+  authority->priv->runaway_killer_thread = g_thread_new ("runaway-killer-thread",
+                                                         runaway_killer_thread_func,
+                                                         authority);
+
+  /* TODO: use a condition variable */
+  while (authority->priv->rkt_loop == NULL)
+    g_thread_yield ();
+
   setup_file_monitors (authority);
   load_scripts (authority);
 
@@ -475,6 +496,12 @@ polkit_backend_js_authority_finalize (GObject *object)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
   guint n;
+
+  /* shut down the killer thread */
+  g_assert (authority->priv->rkt_loop != NULL);
+  g_main_loop_quit (authority->priv->rkt_loop);
+  g_thread_join (authority->priv->runaway_killer_thread);
+  g_assert (authority->priv->rkt_loop == NULL);
 
   for (n = 0; authority->priv->dir_monitors != NULL && authority->priv->dir_monitors[n] != NULL; n++)
     {
@@ -636,6 +663,7 @@ set_property_bool (PolkitBackendJsAuthority  *authority,
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
 
 static gboolean
 subject_to_jsval (PolkitBackendJsAuthority  *authority,
@@ -767,6 +795,8 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   return ret;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
 static gboolean
 details_to_jsval (PolkitBackendJsAuthority  *authority,
                   PolkitDetails             *details,
@@ -817,6 +847,128 @@ details_to_jsval (PolkitBackendJsAuthority  *authority,
   return ret;
 }
 
+/* ---------------------------------------------------------------------------------------------------- */
+
+static gpointer
+runaway_killer_thread_func (gpointer user_data)
+{
+  PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (user_data);
+
+  authority->priv->rkt_context = g_main_context_new ();
+  authority->priv->rkt_loop = g_main_loop_new (authority->priv->rkt_context, FALSE);
+
+  g_main_context_push_thread_default (authority->priv->rkt_context);
+
+  /* TODO: signal the main thread that we're done constructing */
+
+  g_main_loop_run (authority->priv->rkt_loop);
+
+  g_main_context_pop_thread_default (authority->priv->rkt_context);
+
+  g_main_loop_unref (authority->priv->rkt_loop);
+  authority->priv->rkt_loop = NULL;
+  g_main_context_unref (authority->priv->rkt_context);
+  authority->priv->rkt_context = NULL;
+
+  return NULL;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static JSBool
+js_operation_callback (JSContext *cx)
+{
+  PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
+  JSString *val_str;
+  jsval val;
+
+  /* Log that we are terminating the script */
+  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority), "Terminating runaway script");
+
+  /* Throw an exception - this way the JS code can ignore the runaway script handling */
+  val_str = JS_NewStringCopyZ (cx, "Terminating runaway script");
+  val = STRING_TO_JSVAL (val_str);
+  JS_SetPendingException (authority->priv->cx, val);
+  return JS_FALSE;
+}
+
+static gboolean
+rkt_on_timeout (gpointer user_data)
+{
+  PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (user_data);
+
+  /* Supposedly this is thread-safe... */
+  JS_TriggerOperationCallback (authority->priv->cx);
+
+  /* keep source around so we keep trying to kill even if the JS bit catches the exception
+   * thrown in js_operation_callback()
+   */
+  return TRUE;
+}
+
+static void
+runaway_killer_setup (PolkitBackendJsAuthority *authority)
+{
+  g_assert (authority->priv->rkt_source == NULL);
+
+  /* set-up timer for runaway scripts, will be executed in runaway_killer_thread */
+  authority->priv->rkt_source = g_timeout_source_new_seconds (15);
+  g_source_set_callback (authority->priv->rkt_source, rkt_on_timeout, authority, NULL);
+  g_source_attach (authority->priv->rkt_source, authority->priv->rkt_context);
+
+  /* ... rkt_on_timeout() will then poke the JSContext so js_operation_callback() is
+   * called... and from there we throw an exception
+   */
+  JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
+}
+
+static void
+runaway_killer_teardown (PolkitBackendJsAuthority *authority)
+{
+  JS_SetOperationCallback (authority->priv->cx, NULL);
+  g_source_destroy (authority->priv->rkt_source);
+  g_source_unref (authority->priv->rkt_source);
+  authority->priv->rkt_source = NULL;
+}
+
+static JSBool
+execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
+                                    JSObject                 *script,
+                                    jsval                    *rval)
+{
+  JSBool ret;
+
+  runaway_killer_setup (authority);
+  ret = JS_ExecuteScript (authority->priv->cx,
+                          authority->priv->js_global,
+                          script,
+                          rval);
+  runaway_killer_teardown (authority);
+
+  return ret;
+}
+
+static JSBool
+call_js_function_with_runaway_killer (PolkitBackendJsAuthority *authority,
+                                      const char               *function_name,
+                                      uintN                     argc,
+                                      jsval                    *argv,
+                                      jsval                    *rval)
+{
+  JSBool ret;
+  runaway_killer_setup (authority);
+  ret = JS_CallFunctionName(authority->priv->cx,
+                            authority->priv->js_polkit,
+                            function_name,
+                            argc,
+                            argv,
+                            rval);
+  runaway_killer_teardown (authority);
+  return ret;
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 static GList *
 polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveAuthority *_authority,
                                                        PolkitSubject                     *caller,
@@ -857,12 +1009,11 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  if (!JS_CallFunctionName(authority->priv->cx,
-                           authority->priv->js_polkit,
-                           "_runAdminRules",
-                           3,
-                           argv,
-                           &rval))
+  if (!call_js_function_with_runaway_killer (authority,
+                                             "_runAdminRules",
+                                             3,
+                                             argv,
+                                             &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error evaluating admin rules");
@@ -964,12 +1115,11 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  if (!JS_CallFunctionName(authority->priv->cx,
-                           authority->priv->js_polkit,
-                           "_runRules",
-                           3,
-                           argv,
-                           &rval))
+  if (!call_js_function_with_runaway_killer (authority,
+                                             "_runRules",
+                                             3,
+                                             argv,
+                                             &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error evaluating authorization rules");

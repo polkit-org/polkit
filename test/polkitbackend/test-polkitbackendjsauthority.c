@@ -278,6 +278,13 @@ static const RulesTestCase rules_test_cases[] = {
     NULL
   },
   {
+    "runaway_script",
+    "net.company.run_away_script",
+    "unix-user:root",
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    NULL
+  },
+  {
     "spawning_helper_timeout",
     "net.company.spawning.helper_timeout",
     "unix-user:root",

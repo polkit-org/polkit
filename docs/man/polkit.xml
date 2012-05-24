@@ -569,6 +569,13 @@ System Context         |                        |
     </para>
 
     <para>
+      If user-provided code takes a long time to execute an exception
+      will be thrown which normally results in the function being
+      terminated (the current limit is 15 seconds). This is used to
+      catch runaway scripts.
+    </para>
+
+    <para>
       The <function>log()</function> method writes the given
       <parameter>message</parameter> to the system logger. Log entries
       are emitted using the <constant>LOG_AUTHPRIV</constant> flag

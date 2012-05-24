@@ -134,3 +134,19 @@ polkit.addRule(function(action, subject, details) {
         }
     }
 });
+
+polkit.addRule(function(action, subject, details) {
+    if (action == "net.company.run_away_script") {
+        try {
+            // The following code will never terminate so the runaway
+            // script killer will step in after 15 seconds and throw
+            // an exception...
+            while (true)
+                ;
+        } catch (error) {
+            if (error == "Terminating runaway script")
+                return "yes"
+            return "no";
+        }
+    }
+});
