@@ -65,6 +65,31 @@ libpolkit_backend_1_la_LIBADD =                               		\
 rulesdir = $(sysconfdir)/polkit-1/rules.d
 rules_DATA = 50-default.rules
 
+# ----------------------------------------------------------------------------------------------------
+
+libprivdir = $(prefix)/lib/polkit-1
+libpriv_PROGRAMS = polkitd
+
+polkitd_SOURCES = 							\
+					polkitd.c			\
+	$(NULL)
+
+polkitd_CFLAGS = 							\
+	-DPOLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE		\
+	-DG_LOG_DOMAIN=\"polkitd-1\"					\
+	$(GLIB_CFLAGS)							\
+	$(NULL)
+
+polkitd_LDADD = 				        		\
+	$(DBUS_GLIB_LIBS)						\
+	$(GLIB_LIBS)							\
+	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
+	$(top_builddir)/src/polkitbackend/libpolkit-backend-1.la	\
+	$(NULL)
+
+# ----------------------------------------------------------------------------------------------------
+
+
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST =								\

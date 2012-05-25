@@ -113,7 +113,7 @@ main (int    argc,
 
   g_type_init ();
 
-  opt_context = g_option_context_new ("polkit authority");
+  opt_context = g_option_context_new ("polkit system daemon");
   g_option_context_add_main_entries (opt_context, opt_entries, NULL);
   error = NULL;
   if (!g_option_context_parse (opt_context, &argc, &argv, &error))
