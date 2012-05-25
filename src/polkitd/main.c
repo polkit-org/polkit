@@ -28,8 +28,6 @@
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackend.h>
 
-#include "gposixsignal.h"
-
 /* ---------------------------------------------------------------------------------------------------- */
 
 static PolkitBackendAuthority *authority = NULL;
@@ -147,11 +145,9 @@ main (int    argc,
 
   loop = g_main_loop_new (NULL, FALSE);
 
-  sigint_id = _g_posix_signal_watch_add (SIGINT,
-                                         G_PRIORITY_DEFAULT,
-                                         on_sigint,
-                                         NULL,
-                                         NULL);
+  sigint_id = g_unix_signal_add (SIGINT,
+                                 on_sigint,
+                                 NULL);
 
   name_owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
                                   "org.freedesktop.PolicyKit1",

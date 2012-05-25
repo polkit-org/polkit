@@ -19,7 +19,6 @@ libpriv_PROGRAMS = polkitd
 
 polkitd_SOURCES = 							\
 					main.c				\
-	gposixsignal.h			gposixsignal.c			\
 	$(NULL)
 
 polkitd_CFLAGS = 							\
