@@ -53,11 +53,7 @@ on_bus_acquired (GDBusConnection *connection,
 
   g_print ("Connected to the system bus\n");
 
-  g_assert (authority == NULL);
   g_assert (registration_id == NULL);
-
-  authority = polkit_backend_authority_get ();
-  g_print ("Using authority class %s\n", g_type_name (G_TYPE_FROM_INSTANCE (authority)));
 
   error = NULL;
   registration_id = polkit_backend_authority_register (authority,
@@ -77,7 +73,8 @@ on_name_lost (GDBusConnection *connection,
               const gchar     *name,
               gpointer         user_data)
 {
-  g_print ("Lost the name org.freedesktop.PolicyKit1 - exiting\n");
+  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                "Lost the name org.freedesktop.PolicyKit1 - exiting");
   g_main_loop_quit (loop);
 }
 
@@ -86,7 +83,8 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
-  g_print ("Acquired the name org.freedesktop.PolicyKit1\n");
+  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
 }
 
 static gboolean
@@ -215,6 +213,8 @@ main (int    argc,
 
   if (g_getenv ("PATH") == NULL)
     g_setenv ("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", TRUE);
+
+  authority = polkit_backend_authority_get ();
 
   loop = g_main_loop_new (NULL, FALSE);
 
