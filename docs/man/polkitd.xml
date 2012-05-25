@@ -41,6 +41,12 @@
     </para>
 
     <para>
+      <command>polkitd</command> must be started with superuser
+      privileges but drops privileges early by switching to the
+      unprivileged <emphasis>polkitd</emphasis> system user.
+    </para>
+
+    <para>
       See the <link
       linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
       man page for more information.

@@ -25,6 +25,9 @@
 
 #include <glib-unix.h>
 
+#include <pwd.h>
+#include <grp.h>
+
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackend.h>
 
@@ -94,6 +97,63 @@ on_sigint (gpointer user_data)
   return FALSE;
 }
 
+static gboolean
+become_user (const gchar  *user,
+             GError      **error)
+{
+  gboolean ret = FALSE;
+  struct passwd *pw;
+
+  g_return_val_if_fail (user != NULL, FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  pw = getpwnam (user);
+  if (pw == NULL)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Error calling getpwnam(): %m");
+      goto out;
+    }
+
+  if (setgroups (0, NULL) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Error clearing groups: %m");
+      goto out;
+    }
+  if (initgroups (pw->pw_name, pw->pw_gid) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Error initializing groups: %m");
+      goto out;
+    }
+
+  setregid (pw->pw_gid, pw->pw_gid);
+  setreuid (pw->pw_uid, pw->pw_uid);
+  if ((geteuid () != pw->pw_uid) || (getuid () != pw->pw_uid) ||
+      (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Error becoming real+effective uid %d and gid %d: %m",
+                   (int) pw->pw_uid, (int) pw->pw_gid);
+      goto out;
+    }
+
+  if (chdir (pw->pw_dir) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
+                   "Error changing to home directory %s: %m",
+                   pw->pw_dir);
+      goto out;
+    }
+
+
+  ret = TRUE;
+
+ out:
+  return ret;
+}
+
 int
 main (int    argc,
       char **argv)
@@ -142,6 +202,19 @@ main (int    argc,
         }
     }
 
+  error = NULL;
+  if (!become_user (POLKITD_USER, &error))
+    {
+      g_printerr ("Error switcing to user %s: %s\n",
+                  POLKITD_USER, error->message);
+      g_clear_error (&error);
+      goto out;
+    }
+
+  g_print ("Successfully changed to user %s\n", POLKITD_USER);
+
+  if (g_getenv ("PATH") == NULL)
+    g_setenv ("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", TRUE);
 
   loop = g_main_loop_new (NULL, FALSE);
 

@@ -194,6 +194,20 @@ fi
 AM_CONDITIONAL(HAVE_SYSTEMD, [test -n "$systemdsystemunitdir"])
 
 dnl ---------------------------------------------------------------------------
+dnl - User for running polkitd
+dnl ---------------------------------------------------------------------------
+
+AC_ARG_WITH(polkitd_user, AS_HELP_STRING([--with-polkitd-user=<user>],[User for running polkitd (polkitd)]))
+
+if test -z "$with_polkitd_user" ; then
+    POLKITD_USER=polkitd
+else
+    POLKITD_USER=$with_polkitd_user
+fi
+AC_SUBST(POLKITD_USER)
+AC_DEFINE_UNQUOTED(POLKITD_USER,"$POLKITD_USER", [User for running polkitd])
+
+dnl ---------------------------------------------------------------------------
 dnl - Select which authentication framework to use
 dnl ---------------------------------------------------------------------------
 
@@ -496,7 +510,8 @@ echo "
         Authentication framework:   ${POLKIT_AUTHFW}
         Session tracking:           ${SESSION_TRACKING}
         PAM support:                ${have_pam}
-        systemdsystemunitdir:       ${systemdsystemunitdir}"
+        systemdsystemunitdir:       ${systemdsystemunitdir}
+        polkitd user:               ${POLKITD_USER}"
 
 if test "$have_pam" = yes ; then
 echo "
@@ -522,10 +537,10 @@ echo "NOTE: The file ${bindir}/pkexec must be owned by root and"
 echo "      have mode 4755 (setuid root binary)"
 echo
 
-echo "NOTE: The directory ${sysconfdir}/polkit-1/rules.d"
-echo "      should have mode 700"
+echo "NOTE: The directory ${sysconfdir}/polkit-1/rules.d must be owned"
+echo "      by user '$POLKITD_USER' and have mode 700"
 echo
 
-echo "NOTE: The directory ${datadir}/polkit-1/rules.d"
-echo "      should have mode 700"
+echo "NOTE: The directory ${datadir}/polkit-1/rules.d must be owned"
+echo "      by user '$POLKITD_USER' and have mode 700"
 echo

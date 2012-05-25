@@ -103,8 +103,10 @@ dist-hook :
 clean-local :
 	rm -f *~ $(BUILT_SOURCES)
 
-install-exec-hook:
+install-data-hook:
 	mkdir -p $(DESTDIR)$(sysconfdir)/polkit-1/rules.d
 	-chmod 700 $(DESTDIR)$(sysconfdir)/polkit-1/rules.d
+	-chown $(POLKITD_USER) $(DESTDIR)$(sysconfdir)/polkit-1/rules.d
 	mkdir -p $(DESTDIR)$(datadir)/polkit-1/rules.d
 	-chmod 700 $(DESTDIR)$(datadir)/polkit-1/rules.d
+	-chown $(POLKITD_USER) $(DESTDIR)$(datadir)/polkit-1/rules.d
