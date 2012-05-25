@@ -26,9 +26,7 @@ IGNORE_HFILES= \
 # CFLAGS and LDFLAGS for compiling scan program. Only needed
 # if $(DOC_MODULE).types is non-empty.
 INCLUDES = \
-	$(DBUS_GLIB_CFLAGS)					\
 	$(GLIB_CFLAGS)						\
-	$(GIO_CFLAGS)						\
 	-I$(top_srcdir)/src/polkit 				\
 	-I$(top_builddir)/src/polkit				\
 	-I$(top_srcdir)/src/polkitagent 			\
@@ -36,9 +34,7 @@ INCLUDES = \
 	$(NULL)
 
 GTKDOC_LIBS = \
-	$(DBUS_GLIB_LIBS)					\
 	$(GLIB_LIBS)						\
-	$(GIO_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la	\
 	$(top_builddir)/src/polkitagent/libpolkit-agent-1.la	\
 	$(NULL)

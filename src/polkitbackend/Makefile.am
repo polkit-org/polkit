@@ -81,7 +81,6 @@ polkitd_CFLAGS = 							\
 	$(NULL)
 
 polkitd_LDADD = 				        		\
-	$(DBUS_GLIB_LIBS)						\
 	$(GLIB_LIBS)							\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	libpolkit-backend-1.la						\
