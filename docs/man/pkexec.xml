@@ -197,6 +197,7 @@
             that is suitable for display in an authentication dialog.
             Is typically set to a combination of the user name and the
             full name.
+            Example: <quote>David Zeuthen (davidz)</quote>
           </para>
         </listitem>
       </varlistentry>
