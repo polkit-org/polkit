@@ -20,16 +20,14 @@
   <chapter id="polkit-apps">
     <title>Writing polkit applications</title>
     <para>
-      polkit applications are privileged mechanisms (typically) using
-      the polkit authority as a decider component. They do this by
-      installing a <filename class='extension'>.policy</filename> file
-      into the
-      <filename class='directory'>/usr/share/polkit-1/actions</filename>
+      polkit applications are applications using the polkit authority
+      as a decider component. They do this by installing a <filename
+      class='extension'>.policy</filename> file into the <filename
+      class='directory'>/usr/share/polkit-1/actions</filename>
       directory and communicating with the polkit authority at runtime
-      (either via the
-      <link linkend="ref-dbus-api">D-Bus API</link> or indirectly
-      via the
-      <link linkend="ref-api">libpolkit-gobject-1</link> library or the
+      (either via the <link linkend="ref-dbus-api">D-Bus API</link> or
+      indirectly through the <link
+      linkend="ref-api">libpolkit-gobject-1</link> library or the
       <link linkend="pkcheck.1">pkcheck</link> command).
     </para>
 
@@ -37,55 +35,139 @@
       <title>Best practices</title>
       <itemizedlist mark='opencircle' spacing='compact'>
 
-        <listitem><para>
-          <emphasis role='bold'>DO</emphasis> use polkit if you are writing a mechanism that is intended to be used by unprivileged programs.
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DO</emphasis> use polkit if you are
+            writing a privileged mechanism (that is, running as
+            <emphasis>root</emphasis> or otherwise has special
+            permissions) that is intended to be used by unprivileged
+            programs.
+          </para>
+        </listitem>
 
-        <listitem><para>
-          <emphasis role='bold'>DO</emphasis> carefully consider what actions to define. In many cases there is not a 1:1 mapping between operations and polkit actions (often a polkit action has more to do with the object the operation is acting on than the operation itself). It is important to strike the right balance between too fine-grained and too coarse-grained.
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DO</emphasis> carefully consider
+            what actions to define. In many cases there isn't a 1:1
+            mapping between operations and polkit actions. Often a
+            polkit action has more to do with the object the operation
+            is acting on than the operation itself. It is important to
+            strike the right balance between too fine-grained and too
+            coarse-grained.
+          </para>
+        </listitem>
 
-        <listitem><para>
-          <emphasis role='bold'>DO</emphasis> try to pick actions and implicit authorizations so applications using your mechanism will work out-of-the box for users logged in at the console (e.g. without interrupting the user with authentication dialogs).
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DO</emphasis> try to pick actions
+            and implicit authorizations so applications using your
+            mechanism will work out-of-the box for users logged in at
+            the console. Not interrupting console users with
+            authentication dialogs should be considered a
+            priority. For example, it is not wise to require console
+            users to authenticate for such mundane tasks as adding a
+            printer queue (if the administrator really wants the OS to
+            act this way, he can always deploy suitable authorization
+            rules).
+          </para>
+        </listitem>
 
-        <listitem><para>
-          <emphasis role='bold'>DO</emphasis> pass polkit variables along with
-        <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
-requests so it's possible to write <emphasis>authorization rules</emphasis> matching on these. Also document these variables in your documentation (for example, see the
-<ulink url="http://udisks.freedesktop.org/docs/latest/udisks-polkit-actions.html">udisks2 actions and variables</ulink>).
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DO</emphasis> pass polkit variables
+            along with <link
+            linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
+            requests so it's possible to write <emphasis>authorization
+            rules</emphasis> matching on these. Also document these
+            variables in your documentation (for example, see the
+            <ulink
+            url="http://udisks.freedesktop.org/docs/latest/udisks-polkit-actions.html">udisks2
+            actions and variables</ulink>).
+          </para>
+        </listitem>
 
-        <listitem><para>
-          <emphasis role='bold'>DO</emphasis> pass a customized authentication message (using the <literal>polkit.message</literal> and <literal>polkit.gettext_domain</literal> variables) that includes more detailed information about the request than whatever is declared in the <filename class='extension'>.policy</filename> file's <literal>message</literal> element. For example, it's better to show <quote>Authentication is needed to format INTEL SSDSA2MH080G1GC (/dev/sda)</quote> than just <quote>Authentication is needed to format the device</quote>.
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DO</emphasis> pass a customized
+            authentication message (using the
+            <literal>polkit.message</literal> and
+            <literal>polkit.gettext_domain</literal> variables) that
+            include more detailed information about the request than
+            whatever is declared in the <filename
+            class='extension'>.policy</filename> file's
+            <literal>message</literal> element. For example, it's
+            better to show <quote>Authentication is needed to format
+            INTEL SSDSA2MH080G1GC (/dev/sda)</quote> than just
+            <quote>Authentication is needed to format the
+            device</quote>.
+          </para>
+        </listitem>
 
 
-        <listitem><para>
-          <emphasis role='bold'>DON'T</emphasis> use polkit if your program isn't intended to be used by unprivileged programs. For example, if you are writing developer tools or low-level core OS command it's fine to just require the user to be root. Users can always run your tool through e.g.
-<citerefentry><refentrytitle>sudo</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-<link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
-or write a simple polkit-using mechanism that allows access to a (safe) subset of your tool.
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DON'T</emphasis> use polkit if your
+            program isn't intended to be used by unprivileged
+            programs. For example, if you are writing developer tools
+            or low-level core OS command-line tools it's fine to just
+            require the user to be root. Users can always run your
+            tool through e.g.
+            <citerefentry><refentrytitle>sudo</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+            <link
+            linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+            or write a simple polkit-using mechanism that allows
+            access to a (safe) subset of your tool.
+          </para>
+        </listitem>
 
-        <listitem><para>
-          <emphasis role='bold'>DON'T</emphasis> use polkit unless you actually have to. In other words, not every single privileged program providing a service to an unprivileged programs has to use polkit. For example, if you have a small well-written <ulink url="http://en.wikipedia.org/wiki/Setuid">setuid</ulink> helper to help deal with some implementation-detail of the OS (such as elevating the priority of the sound server process to real-time for sessions on local seats) it's not really helpful to define a polkit action for this since no-one is going to choose to not grant the privilige (in the example, no-one is going run the sound server process without real-time priority).
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DON'T</emphasis> use polkit unless
+            you actually have to. In other words, not every single
+            privileged program providing service to unprivileged
+            programs has to use polkit. For example, if you have a
+            small well-written <ulink
+            url="http://en.wikipedia.org/wiki/Setuid">setuid</ulink>
+            helper to help deal with some implementation-detail of the
+            OS (such as elevating the priority of the sound server
+            process to real-time for console users) it's not really
+            helpful to define a polkit action for this since,
+            realistically, no-one is going to choose to
+            <emphasis>not</emphasis> grant the privilege. Remember, a
+            secure program is often one with little amount of code and
+            few dependencies.
+          </para>
+        </listitem>
 
-        <listitem><para>
-          <emphasis role='bold'>DON'T</emphasis> call
-        <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
-        for all your actions every time the authority emits the
-        <link linkend="eggdbus-signal-org.freedesktop.PolicyKit1.Authority::Changed">Changed</link> signal. Not only is this a waste of resources, the result may also be inaccurate as authorization rules can return whatever they want, whenever they want.
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DON'T</emphasis> call <link
+            linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
+            for all your actions every time the authority emits the
+            <link
+            linkend="eggdbus-signal-org.freedesktop.PolicyKit1.Authority::Changed">Changed</link>
+            signal. Not only is this a waste of resources, the result
+            may also be inaccurate as authorization rules can return
+            whatever they want, whenever they want.
+          </para>
+        </listitem>
 
-        <listitem><para>
-          <emphasis role='bold'>DON'T</emphasis> block the main thread in your mechanism (e.g. the one used to service IPC requests from unprivileged programs) while waiting for the authority to reply - calls to
-        <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
-        may take a very long time (seconds, even minutes) to complete as user interaction may be involved.
-        Instead, use either the <link linkend="polkit-authority-check-authorization">asynchronous API</link> or
-        a dedicated thread with the <link linkend="polkit-authority-check-authorization-sync">synchronous API</link>.
-        </para></listitem>
+        <listitem>
+          <para>
+            <emphasis role='bold'>DON'T</emphasis> block the main
+            thread in your mechanism (e.g. the one used to service IPC
+            requests from unprivileged programs) while waiting for the
+            authority to reply - calls to <link
+            linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
+            may take a very long time (seconds, even minutes) to
+            complete as user interaction may be involved.  Instead,
+            use either the <link
+            linkend="polkit-authority-check-authorization">asynchronous
+            API</link> or a dedicated thread with the <link
+            linkend="polkit-authority-check-authorization-sync">synchronous
+            API</link>.
+          </para>
+        </listitem>
 
       </itemizedlist>
     </simplesect>
@@ -94,30 +176,32 @@ or write a simple polkit-using mechanism that allows access to a (safe) subset o
       <title>Usage in unprivileged programs</title>
 
       <para>
-        Unprivileged programs consuming privileged mechanisms normally
-        does use polkit directly - they simply call into the mechanism
-        and the mechanism either renders service (or refuses the
-        request) after checking with polkit (which may include
-        presenting an authentication dialog). In either case, the
-        unprivileged program in question is oblivious to the fact that
-        polkit is being used - it simply just waits for the privileged
-        mechanism to carry out the request (which, if authentication
-        dialogs are involved may take many seconds).
+        An unprivileged program normally does not use polkit directly
+        - it simply calls into a privileged mechanism and the
+        mechanism either renders service (or refuses the request)
+        after checking with polkit (which may include presenting an
+        authentication dialog). In this setup, the unprivileged
+        program is oblivious to the fact that polkit is being used -
+        it simply just waits for the privileged mechanism to carry out
+        the request (which, if authentication dialogs are involved may
+        take many seconds). This is a good thing because not worrying
+        about implementation details like polkit, helps simplify the
+        unprivileged program.
       </para>
       <para>
-        Note that unprivileged programs often need to disable, modify
-        or remove UI elements to e.g. convey to the user that a certain
-        action cannot be carried out (because e.g. the user is not
+        Occasionally unprivileged programs need to disable, modify or
+        remove UI elements to convey to the user that a certain action
+        cannot be carried out (because e.g. the user is not
         authorized) or authentication is needed (by e.g. displaying a
-        padlock icon in the UI).
-        In this case, the best approach is
+        padlock icon in the UI). In this case, the best approach is
         usually to have the unprivileged program get this information
-        from the privileged mechanism - especially because there often
-        is no reliable way that the unprivileged program can know what
-        polkit action is going to be used.  In general, there is no
-        guarantee that operations (such as D-Bus methods) map 1:1: to
-        polkit action - for example, a disk manager service's
-        <literal>Format()</literal> method may check for the action
+        from the privileged mechanism instead of polkit. This is
+        especially true because often there is no reliable way that
+        the unprivileged program can know what polkit action is going
+        to be used. In general, there is no guarantee that operations
+        (such as D-Bus methods) map 1:1: to polkit action - for
+        example, a disk manager service's <literal>Format()</literal>
+        method may check for the action
         <literal>net.company.diskmanager.format-removable</literal> if
         the disk is removable and
         <literal>net.company.diskmanager.format-fixed</literal>
@@ -128,7 +212,7 @@ or write a simple polkit-using mechanism that allows access to a (safe) subset o
         <emphasis>org.freedesktop.policykit.imply</emphasis> annotation
         (see the
         <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link> man page),
-        it does make sense for an unprivileged program to query the
+        it is meaningful for an unprivileged program to query the
         polkit authority (to e.g. update UI elements) and it is
         in fact allowed to do so as long as the unprivileged program doesn't pass any variables along with the
         <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
@@ -138,13 +222,16 @@ or write a simple polkit-using mechanism that allows access to a (safe) subset o
         <link linkend="PolkitPermission"><type>PolkitPermission</type></link> type (which is derived from
         <ulink url="http://developer.gnome.org/gio/unstable/GPermission.html"><type>GPermission</type></ulink>)
         that can be used together with
-        <ulink url="http://developer.gnome.org/gtk3/unstable/GtkLockButton.html"><type>GtkLockButton</type></ulink>
-        (often used to implement an
-        <ulink url="http://developer.gnome.org/hig-book/3.2/hig-book.html#windows-instant-apply">instant apply</ulink>
-        paradigm).
+        <ulink url="http://developer.gnome.org/gtk3/unstable/GtkLockButton.html"><type>GtkLockButton</type></ulink>.
         Note that for <type>GtkLockButton</type> to work well, the
         polkit action backing it should use <literal>auth_self_keep</literal> or
         <literal>auth_admin_keep</literal> for its implicit authorizations.
+        This is often used to implement an <ulink
+        url="http://developer.gnome.org/hig-book/3.2/hig-book.html#windows-instant-apply">instant
+        apply</ulink> paradigm whereby the user
+        <emphasis>unlocks</emphasis> (by authenticating) e.g. a
+        preference pane window and is then free to change settings
+        until the authorization expires or is revoked.
       </para>
     </simplesect>
 
