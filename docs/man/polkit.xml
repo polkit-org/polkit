@@ -117,11 +117,11 @@ System Context         |                        |
     <para>
       For convenience, the <literal>libpolkit-gobject-1</literal>
       library wraps the polkit D-Bus API and is usable from any C/C++
-      program as well as higher-level languages <ulink
+      program as well as higher-level languages supporting <ulink
       url="https://live.gnome.org/GObjectIntrospection">GObjectIntrospection</ulink>
-      support such as Javascript and Python.  A mechanism can also use
-      the D-Bus API or the
-      <link linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+      such as Javascript and Python.  A mechanism can also use the
+      D-Bus API or the <link
+      linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
       command to check authorizations. The
       <literal>libpolkit-agent-1</literal> library provides an
       abstraction of the native authentication system, e.g.
@@ -472,7 +472,7 @@ System Context         |                        |
       <filename class='directory'>/etc/polkit-1/rules.d</filename> and
       <filename class='directory'>/usr/share/polkit-1/rules.d</filename>
       directories by sorting the files in lexical order based on the
-      basename on each file (and if there's a tie, files in
+      basename on each file (if there's a tie, files in
       <filename class='directory'>/etc</filename>
       are processed before files in
       <filename class='directory'>/usr</filename>).
@@ -493,6 +493,14 @@ System Context         |                        |
       programming language and interface with <command>polkitd</command>
       through the global
       <literal>polkit</literal> object (of type <type>Polkit</type>).
+    </para>
+    <para>
+      While the JavaScript interpreter used in particular versions of
+      polkit may support non-standard features (such as the
+      <emphasis>let</emphasis> keyword), authorization rules must
+      conform to
+      <ulink url="http://en.wikipedia.org/wiki/ECMAScript#ECMAScript.2C_5th_Edition">ECMA-262 edition 5</ulink>
+      (in other words, the JavaScript interpreter used may change in future versions of polkit).
     </para>
 
     <refsect2 id="polkit-rules-polkit">
