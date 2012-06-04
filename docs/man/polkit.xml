@@ -874,10 +874,8 @@ polkit.addRule(function(action, subject) {
         mechanism. In this case, the mechanism is
         <ulink url="http://udisks.freedesktop.org/docs/latest/udisks.8.html">UDisks</ulink>
         which defines a set of
-        <ulink url="http://udisks.freedesktop.org/docs/latest/udisks-polkit-actions.html">actions</ulink>
-        and also documents the set of possible
-        <ulink url="http://udisks.freedesktop.org/docs/latest/udisks2-Utilities.html#udisks-polkit-details">variables</ulink>
-        passed along with each request.
+        <ulink url="http://udisks.freedesktop.org/docs/latest/udisks-polkit-actions.html">actions and variables</ulink>
+        that is used to match on:
       </para>
       <programlisting><![CDATA[
 // Allow users in group 'engineers' to perform any operation on
