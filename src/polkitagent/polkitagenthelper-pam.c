@@ -227,6 +227,8 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
   char buf[PAM_MAX_RESP_SIZE];
   int i;
   gchar *escaped = NULL;
+  gchar *tmp = NULL;
+  size_t len;
 
   data = data;
   if (n <= 0 || n > PAM_MAX_NUM_MSG)
@@ -258,9 +260,12 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
 #ifdef PAH_DEBUG
           fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", msg[i]->msg);
 #endif /* PAH_DEBUG */
-          if (strlen (msg[i]->msg) > 0 && msg[i]->msg[strlen (msg[i]->msg) - 1] == '\n')
-            msg[i]->msg[strlen (msg[i]->msg) - 1] == '\0';
-          escaped = g_strescape (msg[i]->msg, NULL);
+          tmp = g_strdup (msg[i]->msg);
+          len = strlen (tmp);
+          if (len > 0 && tmp[len - 1] == '\n')
+            tmp[len - 1] = '\0';
+          escaped = g_strescape (tmp, NULL);
+          g_free (tmp);
           fputs (escaped, stdout);
           g_free (escaped);
 #ifdef PAH_DEBUG
