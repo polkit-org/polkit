@@ -1270,6 +1270,8 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
  * @caller: The subject that is inquiring whether @subject is authorized.
  * @subject: The subject we are about to authenticate for.
  * @user_for_subject: The user of the subject we are about to authenticate for.
+ * @subject_is_local: %TRUE if the session for @subject is local.
+ * @subject_is_active: %TRUE if the session for @subject is active.
  * @action_id: The action we are about to authenticate for.
  * @details: Details about the action.
  *
@@ -1285,6 +1287,8 @@ polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteract
                                                            PolkitSubject                     *caller,
                                                            PolkitSubject                     *subject,
                                                            PolkitIdentity                    *user_for_subject,
+                                                           gboolean                           subject_is_local,
+                                                           gboolean                           subject_is_active,
                                                            const gchar                       *action_id,
                                                            PolkitDetails                     *details)
 {
@@ -1303,6 +1307,8 @@ polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteract
                                          caller,
                                          subject,
                                          user_for_subject,
+                                         subject_is_local,
+                                         subject_is_active,
                                          action_id,
                                          details);
     }
@@ -2168,6 +2174,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          AuthenticationAgentCallback  callback,
                                          gpointer                     user_data)
 {
+  PolkitBackendInteractiveAuthorityPrivate *priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
   AuthenticationSession *session;
   gchar *cookie;
   GList *l;
@@ -2199,12 +2206,28 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
   if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED ||
       implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
     {
+      gboolean is_local = FALSE;
+      gboolean is_active = FALSE;
+      PolkitSubject *session_for_subject = NULL;
+
+      session_for_subject = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
+                                                                                    subject,
+                                                                                    NULL);
+      if (session_for_subject != NULL)
+        {
+          is_local = polkit_backend_session_monitor_is_session_local (priv->session_monitor, session_for_subject);
+          is_active = polkit_backend_session_monitor_is_session_active (priv->session_monitor, session_for_subject);
+        }
+
       identities = polkit_backend_interactive_authority_get_admin_identities (authority,
                                                                               caller,
                                                                               subject,
                                                                               user_of_subject,
+                                                                              is_local,
+                                                                              is_active,
                                                                               action_id,
                                                                               details);
+      g_clear_object (&session_for_subject);
     }
   else
     {

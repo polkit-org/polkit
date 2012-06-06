@@ -169,6 +169,7 @@ if test "$enable_libsystemd_login" != "no"; then
                     have_libsystemd_login=no)
   if test "$have_libsystemd_login" = "yes"; then
     SESSION_TRACKING=libsystemd-login
+    AC_DEFINE([HAVE_LIBSYSTEMD_LOGIN], 1, [Define to 1 if libsystemd-login is available])
   else
     if test "$enable_libsystemd_login" = "yes"; then
       AC_MSG_ERROR([libsystemd-login support requested but libsystemd-login library not found])

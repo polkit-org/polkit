@@ -85,6 +85,8 @@ test_get_admin_identities_for_action_id (const gchar         *action_id,
                                                                                 caller,
                                                                                 subject,
                                                                                 user_for_subject,
+                                                                                TRUE, /* is_local */
+                                                                                TRUE, /* is_active */
                                                                                 action_id,
                                                                                 details);
   for (l = admin_identities, n = 0; l != NULL; l = l->next, n++)

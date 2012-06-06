@@ -34,7 +34,9 @@
 
 #include <polkit/polkitprivate.h>
 
+#ifdef HAVE_LIBSYSTEMD_LOGIN
 #include <systemd/sd-login.h>
+#endif /* HAVE_LIBSYSTEMD_LOGIN */
 
 #include <jsapi.h>
 
@@ -113,6 +115,8 @@ static GList *polkit_backend_js_authority_get_admin_auth_identities (PolkitBacke
                                                                      PolkitSubject                     *caller,
                                                                      PolkitSubject                     *subject,
                                                                      PolkitIdentity                    *user_for_subject,
+                                                                     gboolean                           subject_is_local,
+                                                                     gboolean                           subject_is_active,
                                                                      const gchar                       *action_id,
                                                                      PolkitDetails                     *details);
 
@@ -677,6 +681,8 @@ static gboolean
 subject_to_jsval (PolkitBackendJsAuthority  *authority,
                   PolkitSubject             *subject,
                   PolkitIdentity            *user_for_subject,
+                  gboolean                   subject_is_local,
+                  gboolean                   subject_is_active,
                   jsval                     *out_jsval,
                   GError                   **error)
 {
@@ -691,8 +697,6 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   struct passwd *passwd;
   char *seat_str = NULL;
   char *session_str = NULL;
-  gboolean is_local = FALSE;
-  gboolean is_active = FALSE;
 
   src = "new Subject();";
 
@@ -726,13 +730,15 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
       g_assert_not_reached ();
     }
 
+#ifdef HAVE_LIBSYSTEMD_LOGIN
   if (sd_pid_get_session (pid, &session_str) == 0)
     {
       if (sd_session_get_seat (session_str, &seat_str) == 0)
-        is_local = TRUE;
-      if (sd_session_is_active (session_str))
-        is_active = TRUE;
+        {
+          /* do nothing */
+        }
     }
+#endif /* HAVE_LIBSYSTEMD_LOGIN */
 
   g_assert (POLKIT_IS_UNIX_USER (user_for_subject));
   uid = polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_for_subject));
@@ -785,8 +791,8 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   set_property_strv (authority, obj, "groups", (const gchar* const *) groups->pdata, groups->len);
   set_property_str (authority, obj, "seat", seat_str);
   set_property_str (authority, obj, "session", session_str);
-  set_property_bool (authority, obj, "local", is_local);
-  set_property_bool (authority, obj, "active", is_active);
+  set_property_bool (authority, obj, "local", subject_is_local);
+  set_property_bool (authority, obj, "active", subject_is_active);
 
   ret = TRUE;
 
@@ -985,6 +991,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
                                                        PolkitSubject                     *caller,
                                                        PolkitSubject                     *subject,
                                                        PolkitIdentity                    *user_for_subject,
+                                                       gboolean                           subject_is_local,
+                                                       gboolean                           subject_is_active,
                                                        const gchar                       *action_id,
                                                        PolkitDetails                     *details)
 {
@@ -1007,7 +1015,13 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
+  if (!subject_to_jsval (authority,
+                         subject,
+                         user_for_subject,
+                         subject_is_local,
+                         subject_is_active,
+                         &argv[1],
+                         &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error converting subject to JS object: %s",
@@ -1106,7 +1120,13 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  if (!subject_to_jsval (authority, subject, user_for_subject, &argv[1], &error))
+  if (!subject_to_jsval (authority,
+                         subject,
+                         user_for_subject,
+                         subject_is_local,
+                         subject_is_active,
+                         &argv[1],
+                         &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error converting subject to JS object: %s",
