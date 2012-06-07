@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59c)
-AC_INIT(polkit, 0.106, http://lists.freedesktop.org/mailman/listinfo/polkit-devel)
-AM_INIT_AUTOMAKE(polkit, 0.106)
+AC_INIT(polkit, 0.107, http://lists.freedesktop.org/mailman/listinfo/polkit-devel)
+AM_INIT_AUTOMAKE(polkit, 0.107)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 
