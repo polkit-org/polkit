@@ -103,6 +103,28 @@
           </para>
         </listitem>
 
+        <listitem>
+          <para>
+            <emphasis role='bold'>DO</emphasis> make sure
+            your application works even when the
+            <literal>org.freedesktop.PolicyKit1</literal>
+            D-Bus service is not available (this can
+            happen if
+            <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+            is not installed or if the <emphasis>polkit.service</emphasis> systemd unit/service has been
+            <ulink url="http://0pointer.de/blog/projects/three-levels-of-off.html">masked</ulink>). If you are using the
+            <link linkend="ref-api">libpolkit-gobject-1</link> library this
+            means handling
+            <link linkend="polkit-authority-get-sync">polkit_authority_get_sync()</link>
+            or
+            <link linkend="polkit-authority-get-finish">polkit_authority_get_finish()</link>
+            returning <constant>NULL</constant>.
+            An appropriate way of dealing with the polkit authority
+            not being available, could be to allow only uid 0 to
+            perform operations, forbid all operations or something
+            else.
+          </para>
+        </listitem>
 
         <listitem>
           <para>
