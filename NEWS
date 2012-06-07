@@ -1,4 +1,107 @@
 --------------
+polkit 0.106
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+This is polkit 0.106. There's a major change in this release which is
+a switch from .pkla files (keyfile-format) to .rules files
+(JavaScript), see
+
+ http://davidz25.blogspot.com/2012/06/authorization-rules-in-polkit.html
+
+for more information.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.30
+ mozjs185
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.105:
+
+Colin Walters (3):
+      build: Check for mozjs185, not libjs
+      autogen.sh: Fix check for libtool (we only need libtoolize)
+      agenthelper-pam: Fix newline-trimming code
+
+David Zeuthen (65):
+      Post-release version bump to 0.106
+      Add experimental authority backend using JavaScript rule files
+      Include seat and session in Subject object
+      Pass details to JS functions and simplify how Subject instances are constructed
+      Clean up code a bit
+      Add a couple of more error checks
+      Collect garbage
+      Emit ::Changed signal after reloading rules
+      Reformat init.js and also avoid quoting non-string properties in toString()
+      Make it possible for JS code to change details
+      Add polkit.spawn() to spawn external programs
+      Make polkit.spawn() take an array of arguments instead of a command-line
+      Don't include command-line in spawning error messages
+      docs: add AUTHORIZATION RULES section to the polkit(8) man page
+      Also add an example of polkit.spawn() to polkit(8) man page
+      docs: clarify how rules files work
+      Also load rules from /usr/share/polkit/rules.d
+      Use addRule() and addAdminRule()
+      docs: emphasize that registered functions may actually never be called
+      Add test cases for evaluation order
+      Test that subject.isInGroup() works
+      Add netgroup support
+      Minor doc fixes
+      Mention unix-netgroup:xyz as a valid return value in addAdminRule() functions
+      Add test-cases and 10 second timeout for polkit.spawn()
+      Create rules.d directories
+      Update docs
+      docs: enclose local <citerefentry> in <link> to make links work
+      docs: update SEE ALSO to make each man page point to all other man pages
+      Clarify docs a bit
+      polkitd: add reference to polkit(8) from its man page
+      Fix speling
+      Fix a couple typos in the docs
+      Mention details["polkit.message"] and add an example using details
+      Use <variablelist> instead of <informaltable> for Subject attributes
+      Make polkit_details_insert() remove the key if passed value is NULL
+      Add real-world example featuring udisks2 and the drive.* variables it passes
+      Rename --enable-systemd to --enable-libsystemd-login
+      Fix distcheck
+      Add a systemd .service file
+      Nuke polkitbackend library, localauthority backend and extension system
+      Mention systemd(1) in the polkitd(8) man page
+      Store private binaries in /usr/lib/polkit-1 instead of /usr/libexec
+      Add default rules
+      Pass expanded identity list to the AuthenticationSession
+      Use "rules", not "scripts" to refer to files in rules.d
+      Terminate runaway scripts
+      Use a condition variable to signal that runaway killer thread is ready
+      Combine action and details parameters
+      Clarify pkexec(1) variables
+      Use g_unix_signal_add() from GLib 2.30
+      Move polkitd into src/polkitbackend
+      Ensure polkitd is rebuilt if libpolkit-backend-1.la changes
+      Remove unused DBUS_GLIB_* and GIO_* variables
+      Run polkitd as an unprivileged user
+      Log when the name org.fd.PolicyKit1 has been acquired
+      Rewrite the "Writing polkit applications" chapter
+      Update links to udisks docs
+      Update pkexec(1) man page with example
+      Small updates to the "Writing polkit applications" chapter
+      State that authorization rules must not rely on SpiderMonkey features
+      Make it work when using ConsoleKit instead of libsystemd-login
+      Mention the implications of returning *_keep in an authorization rule
+      docs: add a "make sure your app works when there's no polkitd(8)" note
+      Update NEWS for release
+
+Thanks to our contributors.
+
+David Zeuthen,
+June 7, 2012
+
+--------------
 polkit 0.105
 --------------
 
