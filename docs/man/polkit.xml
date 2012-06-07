@@ -367,11 +367,11 @@ System Context         |                        |
               <term><literal>auth_self_keep</literal></term>
               <listitem><para>Like <literal>auth_self</literal> but
               the authorization is kept for a brief
-              period.</para></listitem>
+              period (e.g. five minutes).</para></listitem>
             </varlistentry>
             <varlistentry>
               <term><literal>auth_admin_keep</literal></term>
-              <listitem><para>Like <literal>auth_admin</literal> but the authorization is kept for a brief period.</para></listitem>
+              <listitem><para>Like <literal>auth_admin</literal> but the authorization is kept for a brief period  (e.g. five minutes).</para></listitem>
             </varlistentry>
           </variablelist>
         </listitem>
@@ -561,6 +561,22 @@ System Context         |                        |
         function returns <constant>null</constant>,
         <constant>undefined</constant> or does not return a value at
         all, the next function is tried.
+      </para>
+
+      <para>
+        Keep in mind that if <literal>"auth_self_keep"</literal> or
+        <literal>"auth_admin_keep"</literal> is returned,
+        authorization checks for the same action identifier and
+        subject will succeed (that is, return "yes") for the next
+        brief period (e.g. five minutes) <emphasis>even</emphasis> if
+        the variables passed along with the check are
+        different. Therefore, if the result of an authorization rule
+        depend on such variables, it should not use the
+        <literal>"*_keep"</literal> variants (if similar functionality
+        is required, the authorization rule can easily implement
+        temporary authorizations using the
+        <ulink url="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date"><type>Date</type></ulink>
+        type for timestamps).
       </para>
 
       <para>
