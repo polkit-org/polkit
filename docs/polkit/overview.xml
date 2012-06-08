@@ -118,7 +118,12 @@
             <link linkend="polkit-authority-get-sync">polkit_authority_get_sync()</link>
             or
             <link linkend="polkit-authority-get-finish">polkit_authority_get_finish()</link>
-            returning <constant>NULL</constant>.
+            returning <constant>NULL</constant> or
+            <link linkend="polkit-authority-check-authorization">polkit_authority_check_authorization()</link> /
+            <link linkend="polkit-authority-check-authorization-sync">polkit_authority_check_authorization_sync()</link>
+            failing with an error not in the
+            <link linkend="POLKIT-ERROR:CAPS">POLKIT_ERROR</link>
+            domain.
             An appropriate way of dealing with the polkit authority
             not being available, could be to allow only uid 0 to
             perform operations, forbid all operations or something
