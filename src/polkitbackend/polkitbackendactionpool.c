@@ -1108,7 +1108,7 @@ _localize (GHashTable *translations,
            const gchar *lang)
 {
   const gchar *result;
-  gchar lang2[256];
+  gchar **langs;
   guint n;
 
   if (lang == NULL)
@@ -1123,16 +1123,14 @@ _localize (GHashTable *translations,
     goto out;
 
   /* we could have a translation for 'da' but lang=='da_DK'; cut off the last part and try again */
-  strncpy (lang2, lang, sizeof (lang2));
-  for (n = 0; lang2[n] != '\0'; n++)
+  langs = g_get_locale_variants (lang);
+  for (n = 0; langs[n] != NULL; n++)
     {
-      if (lang2[n] == '_')
-        {
-          lang2[n] = '\0';
-          break;
-        }
+      result = (const char *) g_hash_table_lookup (translations, (void *) langs[n]);
+      if (result != NULL)
+        break;
     }
-  result = (const char *) g_hash_table_lookup (translations, (void *) lang2);
+  g_strfreev (langs);
   if (result != NULL)
     goto out;
 
