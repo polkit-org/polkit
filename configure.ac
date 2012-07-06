@@ -34,7 +34,6 @@ AM_PROG_CC_C_O
 
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
-AC_ARG_ENABLE(verbose-mode,     [  --enable-verbose-mode   support verbose debug mode],enable_verbose_mode=$enableval,enable_verbose_mode=$USE_MAINTAINER_MODE)
 AC_ARG_ENABLE(man-pages,        [  --enable-man-pages      build manual pages],enable_man_pages=$enableval,enable_man_pages=yes)
 
 if test "${enable_man_page}" != no; then
@@ -522,7 +521,6 @@ echo "
 fi
 echo "
         Maintainer mode:            ${USE_MAINTAINER_MODE}
-        Building verbose mode:      ${enable_verbose_mode}
         Building api docs:          ${enable_gtk_doc}
         Building man pages:         ${enable_man_pages}
         Building examples:          ${enable_examples}
