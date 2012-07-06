@@ -32,7 +32,7 @@ endif
 # ----------------------------------------------------------------------------------------------------
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = polkit-gobject-1.pc polkit-backend-1.pc polkit-agent-1.pc
+pkgconfig_DATA = polkit-gobject-1.pc polkit-agent-1.pc
 
 # ----------------------------------------------------------------------------------------------------
 
