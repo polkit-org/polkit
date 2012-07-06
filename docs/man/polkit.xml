@@ -514,7 +514,7 @@ System Context         |                        |
         <funcprototype>
           <?dbhtml funcsynopsis-style='ansi'?>
           <funcdef>void <function>addRule</function></funcdef>
-          <paramdef>string <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>) {...}</paramdef>
+          <paramdef><type>polkit.Result</type> <function>function</function>(<parameter>action</parameter>, <parameter>subject</parameter>) {...}</paramdef>
         </funcprototype>
       </funcsynopsis>
 
@@ -553,26 +553,38 @@ System Context         |                        |
         <filename class='directory'>/etc/polkit-1/rules.d</filename>
         with a name that sorts before other rules files, for example
         <filename>00-early-checks.rules</filename>. Each function should
-        return one of the values <literal>"no"</literal>,
-        <literal>"yes"</literal>, <literal>"auth_self"</literal>,
-        <literal>"auth_self_keep"</literal>,
-        <literal>"auth_admin"</literal>,
-        <literal>"auth_admin_keep"</literal> as defined above. If the
-        function returns <constant>null</constant>,
-        <constant>undefined</constant> or does not return a value at
-        all, the next function is tried.
+        return a value from <literal>polkit.Result</literal>
+      </para>
+      <programlisting><![CDATA[
+polkit.Result = {
+    NO              : "no",
+    YES             : "yes",
+    AUTH_SELF       : "auth_self",
+    AUTH_SELF_KEEP  : "auth_self_keep",
+    AUTH_ADMIN      : "auth_admin",
+    AUTH_ADMIN_KEEP : "auth_admin_keep",
+    NOT_HANDLED     : null
+};
+]]></programlisting>
+      <para>
+        corresponding to the values that can be used as defaults. If
+        the function returns
+        <constant>polkit.Result.NOT_HANDLED</constant>,
+        <constant>null</constant>, <constant>undefined</constant> or
+        does not return a value at all, the next user function is
+        tried.
       </para>
 
       <para>
-        Keep in mind that if <literal>"auth_self_keep"</literal> or
-        <literal>"auth_admin_keep"</literal> is returned,
+        Keep in mind that if <constant>polkit.Result.AUTH_SELF_KEEP</constant>
+        or <constant>polkit.Result.AUTH_ADMIN_KEEP</constant> is returned,
         authorization checks for the same action identifier and
-        subject will succeed (that is, return "yes") for the next
+        subject will succeed (that is, return <constant>polkit.Result.YES</constant>) for the next
         brief period (e.g. five minutes) <emphasis>even</emphasis> if
         the variables passed along with the check are
         different. Therefore, if the result of an authorization rule
         depend on such variables, it should not use the
-        <literal>"*_keep"</literal> variants (if similar functionality
+        <constant>"*_KEEP"</constant> constants (if similar functionality
         is required, the authorization rule can easily implement
         temporary authorizations using the
         <ulink url="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date"><type>Date</type></ulink>
@@ -825,7 +837,7 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
 polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.accounts.user-administration" &&
         subject.isInGroup("admin")) {
-        return "yes";
+        return polkit.Result.YES;
     }
 });
 ]]></programlisting>
@@ -850,9 +862,9 @@ polkit.addAdminRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id.indexOf("org.freedesktop.hostname1.") == 0) {
         if (subject.isInGroup("children")) {
-            return "no";
+            return polkit.Result.NO;
         } else {
-            return "auth_self_keep";
+            return polkit.Result.AUTH_SELF_KEEP;
         }
     }
 });
@@ -869,10 +881,10 @@ polkit.addRule(function(action, subject) {
             // only if the passed username is authorized
             polkit.spawn(["/opt/company/bin/user-may-reboot",
                           subject.user]);
-            return "yes";
+            return polkit.Result.YES;
         } catch (error) {
             // Nope, but do allow admin authentication
-            return "auth_admin";
+            return polkit.Result.AUTH_ADMIN;
         }
     }
 });
@@ -888,7 +900,7 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.policykit.exec" &&
         action.lookup("program") == "/usr/bin/cat") {
-        return "auth_self";
+        return polkit.Result.AUTH_SELF;
     }
 });
 ]]></programlisting>
@@ -910,7 +922,7 @@ polkit.addRule(function(action, subject) {
         action.lookup("drive.vendor") == "SEAGATE" &&
         action.lookup("drive.model") == "ST3300657SS" &&
         subject.isInGroup("engineers")) {
-            return "yes";
+            return polkit.Result.YES;
         }
     }
 });

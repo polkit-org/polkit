@@ -37,19 +37,19 @@ polkit.addAdminRule(function(action, subject) {
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.productA.action0") {
-        return "auth_admin";
+        return polkit.Result.AUTH_ADMIN;
     }
 });
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.productA.action1") {
-        return "auth_self";
+        return polkit.Result.AUTH_SELF;
     }
 });
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.order0") {
-        return "yes";
+        return polkit.Result.YES;
     }
 });
 
@@ -59,11 +59,11 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.group.variables") {
         if (action.lookup("foo") == "1")
-            return "yes";
+            return polkit.Result.YES;
         else if (action.lookup("foo") == "2")
-            return "auth_self";
+            return polkit.Result.AUTH_SELF;
         else
-            return "auth_admin";
+            return polkit.Result.AUTH_ADMIN;
     }
 });
 
@@ -74,9 +74,9 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.group.only_group_users") {
         if (subject.isInGroup("users"))
-            return "yes";
+            return polkit.Result.YES;
         else
-            return "no";
+            return polkit.Result.NO;
     }
 });
 
@@ -86,9 +86,9 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.group.only_netgroup_users") {
         if (subject.isInNetGroup("foo"))
-            return "yes";
+            return polkit.Result.YES;
         else
-            return "no";
+            return polkit.Result.NO;
     }
 });
 
@@ -99,9 +99,9 @@ polkit.addRule(function(action, subject) {
     if (action.id == "net.company.spawning.non_existing_helper") {
         try {
             polkit.spawn(["/path/to/non/existing/helper"]);
-            return "no";
+            return polkit.Result.NO;
         } catch (error) {
-            return "yes";
+            return polkit.Result.YES;
         }
     }
 });
@@ -110,9 +110,9 @@ polkit.addRule(function(action, subject) {
     if (action.id == "net.company.spawning.successful_helper") {
         try {
             polkit.spawn(["/bin/true"]);
-            return "yes";
+            return polkit.Result.YES;
         } catch (error) {
-            return "no";
+            return polkit.Result.NO;
         }
     }
 });
@@ -121,9 +121,9 @@ polkit.addRule(function(action, subject) {
     if (action.id == "net.company.spawning.failing_helper") {
         try {
             polkit.spawn(["/bin/false"]);
-            return "no";
+            return polkit.Result.NO;
         } catch (error) {
-            return "yes";
+            return polkit.Result.YES;
         }
     }
 });
@@ -133,11 +133,11 @@ polkit.addRule(function(action, subject) {
         try {
             var out = polkit.spawn(["echo", "-n", "-e", "Hello\nWorld"]);
             if (out == "Hello\nWorld")
-                return "yes";
+                return polkit.Result.YES;
             else
-                return "no";
+                return polkit.Result.NO;
         } catch (error) {
-            return "no";
+            return polkit.Result.NO;
         }
     }
 });
@@ -146,11 +146,11 @@ polkit.addRule(function(action, subject) {
     if (action.id == "net.company.spawning.helper_timeout") {
         try {
             polkit.spawn(["sleep", "20"]);
-            return "no";
+            return polkit.Result.NO;
         } catch (error) {
             if (error == "Error: Error spawning helper: Timed out after 10 seconds (g-io-error-quark, 24)")
-                return "yes";
-            return "no";
+                return polkit.Result.YES;
+            return polkit.Result.NO;
         }
     }
 });
@@ -168,8 +168,8 @@ polkit.addRule(function(action, subject) {
                 ;
         } catch (error) {
             if (error == "Terminating runaway script")
-                return "yes"
-            return "no";
+                return polkit.Result.YES;
+            return polkit.Result.NO;
         }
     }
 });

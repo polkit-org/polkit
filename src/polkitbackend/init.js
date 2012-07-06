@@ -81,3 +81,13 @@ polkit._deleteRules = function() {
     this._adminRuleFuncs = [];
     this._ruleFuncs = [];
 };
+
+polkit.Result = {
+    NO              : "no",
+    YES             : "yes",
+    AUTH_SELF       : "auth_self",
+    AUTH_SELF_KEEP  : "auth_self_keep",
+    AUTH_ADMIN      : "auth_admin",
+    AUTH_ADMIN_KEEP : "auth_admin_keep",
+    NOT_HANDLED     : null
+};

@@ -4,18 +4,18 @@
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.order0") {
-        return "no"; // earlier rule should win
+        return polkit.Result.NO; // earlier rule should win
     }
 });
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.order1") {
-        return "no"; // earlier rule should win
+        return polkit.Result.NO; // earlier rule should win
     }
 });
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.order2") {
-        return "no"; // earlier rule should win
+        return polkit.Result.NO; // earlier rule should win
     }
 });
