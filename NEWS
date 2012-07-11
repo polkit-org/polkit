@@ -1,4 +1,41 @@
 --------------
+polkit 0.107
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+This is polkit 0.107
+
+Build requirements
+
+ glib, gobject, gio    >= 2.30
+ mozjs185
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.106:
+
+David Zeuthen (7):
+      Post-release version bump to 0.107
+      Update guidance on situations where there is no polkit authority
+      Nuke leftover polkit-backend-1.pc file
+      Nuke --enable-verbose flag
+      Introduce a polkit.Result enumeration for authorization rules
+      pkexec: add support for argv1 annotation and mention shebang-wrappers
+      Update NEWS for release
+
+Matthias Clasen (1):
+      Try harder to look up the right localization
+
+Thanks to our contributors.
+
+David Zeuthen,
+July 11, 2012
+
+--------------
 polkit 0.106
 --------------
 
