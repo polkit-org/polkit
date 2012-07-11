@@ -230,6 +230,7 @@ fdwalk (FdCallback callback,
 static gchar *
 find_action_for_path (PolkitAuthority *authority,
                       const gchar     *path,
+                      const gchar     *argv1,
                       gboolean        *allow_gui)
 {
   GList *l;
@@ -255,6 +256,7 @@ find_action_for_path (PolkitAuthority *authority,
   for (l = actions; l != NULL; l = l->next)
     {
       PolkitActionDescription *action_desc = POLKIT_ACTION_DESCRIPTION (l->data);
+      const gchar *argv1_for_action;
       const gchar *path_for_action;
       const gchar *allow_gui_annotation;
 
@@ -262,8 +264,17 @@ find_action_for_path (PolkitAuthority *authority,
       if (path_for_action == NULL)
         continue;
 
+      argv1_for_action = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.argv1");
+
       if (g_strcmp0 (path_for_action, path) == 0)
         {
+          /* check against org.freedesktop.policykit.exec.argv1 but only if set */
+          if (argv1_for_action != NULL)
+            {
+              if (g_strcmp0 (argv1, argv1_for_action) != 0)
+                continue;
+            }
+
           action_id = g_strdup (polkit_action_description_get_action_id (action_desc));
 
           allow_gui_annotation = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.allow_gui");
@@ -664,7 +675,10 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  action_id = find_action_for_path (authority, path, &allow_gui);
+  action_id = find_action_for_path (authority,
+                                    path,
+                                    exec_argv[1],
+                                    &allow_gui);
   g_assert (action_id != NULL);
 
   details = polkit_details_new ();

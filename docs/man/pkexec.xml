@@ -134,13 +134,52 @@
       annotation on an action with the value set to the full path of
       the program. In addition to specifying the program, the
       authentication message, description, icon and defaults can be
-      specified.
+      specified. If the <emphasis>org.freedesktop.policykit.exec.argv1</emphasis>
+      annotation is present, the action will only be picked if the
+      first argument to the program matches the value of the annotation.
     </para>
     <para>
       Note that authentication messages may reference variables (see
       <xref linkend="pkexec-variables"/>), for example
       <literal>$(user)</literal> will be expanded to the value of the
       <literal>user</literal> variable.
+    </para>
+  </refsect1>
+
+  <refsect1 id="pkexec-wrapper"><title>WRAPPER USAGE</title>
+    <para>
+      To avoid modifying existing software to prefix their
+      command-line invocations with <command>pkexec</command>,
+      it's possible to use <command>pkexec</command> in a
+      <ulink url="http://en.wikipedia.org/wiki/Shebang_(Unix)">she-bang wrapper</ulink>
+      like this:
+    </para>
+    <programlisting><![CDATA[
+#!/usr/bin/pkexec /usr/bin/python
+
+import os
+import sys
+
+print "Hello, I'm running as uid %d"%(os.getuid())
+
+for n in range(len(sys.argv)):
+    print "arg[%d]=`%s'"%(n, sys.argv[n])
+]]></programlisting>
+    <para>
+      If this script is installed into <filename>/usr/bin/my-pk-test</filename>,
+      then the following annotations
+    </para>
+    <programlisting><![CDATA[
+  [...]
+  <annotate key="org.freedesktop.policykit.exec.path">/usr/bin/python</annotate>
+  <annotate key="org.freedesktop.policykit.exec.argv1">/usr/bin/my-pk-test</annotate>
+  [...]
+]]></programlisting>
+    <para>
+      can be used to select the appropriate polkit action. Be careful
+      to get the latter annotation right, otherwise it will match any
+      <command>pkexec</command> invocation of
+      <filename>/usr/bin/python</filename> scripts.
     </para>
   </refsect1>
 
