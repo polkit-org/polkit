@@ -1293,15 +1293,11 @@ polkit_backend_interactive_authority_get_admin_identities (PolkitBackendInteract
                                                            PolkitDetails                     *details)
 {
   PolkitBackendInteractiveAuthorityClass *klass;
-  GList *ret;
+  GList *ret = NULL;
 
   klass = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_CLASS (authority);
 
-  if (klass->get_admin_identities == NULL)
-    {
-      ret = g_list_prepend (NULL, polkit_unix_user_new (0));
-    }
-  else
+  if (klass->get_admin_identities != NULL)
     {
       ret = klass->get_admin_identities (authority,
                                          caller,
@@ -2256,6 +2252,10 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
           g_warning ("Unsupported identity");
         }
     }
+
+  /* Fall back to uid 0 if no users are available (rhbz #834494) */
+  if (user_identities == NULL)
+    user_identities = g_list_prepend (NULL, polkit_unix_user_new (0));
 
   session = authentication_session_new (agent,
                                         cookie,
