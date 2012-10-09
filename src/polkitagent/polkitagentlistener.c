@@ -260,10 +260,9 @@ server_new (PolkitSubject  *subject,
   if (!server_init_sync (server, cancellable, error))
     {
       server_free (server);
-      goto out;
+      return NULL;
     }
 
- out:
   return server;
 }
 
