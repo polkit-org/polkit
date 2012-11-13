@@ -108,6 +108,8 @@ if HAVE_INTROSPECTION
 girdir = $(INTROSPECTION_GIRDIR)
 gir_DATA = PolkitAgent-1.0.gir
 
+PolkitAgent-1.0.gir: libpolkit-agent-1.la
+
 typelibsdir = $(INTROSPECTION_TYPELIBDIR)
 typelibs_DATA = PolkitAgent-1.0.typelib
 

@@ -106,6 +106,8 @@ if HAVE_INTROSPECTION
 
 INTROSPECTION_GIRS = Polkit-1.0.gir
 
+Polkit-1.0.gir: libpolkit-gobject-1.la
+
 girdir = $(INTROSPECTION_GIRDIR)
 gir_DATA = Polkit-1.0.gir
 
