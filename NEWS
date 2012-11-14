@@ -1,4 +1,42 @@
 --------------
+polkit 0.108
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+This is polkit 0.108.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.30
+ mozjs185
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.107:
+
+Adam Jackson (1):
+      PolkitAgent: Avoid crashing if initializing the server object fails
+
+David Zeuthen (5):
+      Post-release version bump to 0.108
+      Fall back to authenticating as uid 0 if the list of admin identities is empty
+      Dynamically load libmozjs185.so and cope with it not being available
+      docs: mention the audience for authorization rules
+      Update NEWS for release
+
+Ryan Lortie (1):
+      build: Fix .gir generation for parallel make
+
+Thanks to our contributors.
+
+David Zeuthen,
+November 14, 2012
+
+--------------
 polkit 0.107
 --------------
 
