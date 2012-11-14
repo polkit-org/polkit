@@ -54,12 +54,13 @@ libpolkit_backend_1_la_CFLAGS =                                        	\
 	$(LIBJS_CFLAGS)							\
         $(NULL)
 
+# Note: We don't include $(LIBJS_LIBS) here since it's dlopen()'ed in polkitbackendjsauthority.c
+#
 libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
 	$(LIBSYSTEMD_LOGIN_LIBS)					\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(EXPAT_LIBS)							\
-	$(LIBJS_LIBS)							\
         $(NULL)
 
 rulesdir = $(sysconfdir)/polkit-1/rules.d
