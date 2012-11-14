@@ -196,6 +196,16 @@
           </para>
         </listitem>
 
+        <listitem>
+          <para>
+            <emphasis role='bold'>DON'T</emphasis> include any
+            authorization rules with your application as this is only
+            intended for administrators and special-purpose operating
+            systems / environments. See <xref linkend="polkit-rules"/>
+            for more information.
+          </para>
+        </listitem>
+
       </itemizedlist>
     </simplesect>
 

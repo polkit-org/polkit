@@ -503,6 +503,19 @@ System Context         |                        |
       (in other words, the JavaScript interpreter used may change in future versions of polkit).
     </para>
 
+    <para>
+      Authorization rules are intended for two specific audiences
+    </para>
+    <itemizedlist mark='opencircle' spacing='compact'>
+      <listitem><para>System Administrators</para></listitem>
+      <listitem><para>Special-purpose Operating Systems / Environments</para></listitem>
+    </itemizedlist>
+    <para>
+      and those audiences only. In particular, applications,
+      mechanisms and general-purpose operating systems must never
+      include any authorization rules.
+    </para>
+
     <refsect2 id="polkit-rules-polkit">
       <title>The <type>Polkit</type> type</title>
 
