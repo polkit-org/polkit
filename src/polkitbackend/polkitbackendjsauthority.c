@@ -238,7 +238,7 @@ djs_init (PolkitBackendJsAuthority *authority)
   guint n;
   const gchar *library_name;
 
-  library_name = "libmozjs185.so";
+  library_name = "libmozjs185.so.1.0";
   module = g_module_open (library_name, 0);
   if (module == NULL)
     goto out;
