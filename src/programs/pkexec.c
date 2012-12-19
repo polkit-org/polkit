@@ -608,6 +608,28 @@ main (int argc, char *argv[])
       g_ptr_array_add (saved_env, g_strdup (value));
     }
 
+  /* $XAUTHORITY is "special" - if unset, we need to set it to ~/.Xauthority. Yes,
+   * this is broken but it's unfortunately how things work (see fdo #51623 for
+   * details)
+   */
+  if (g_getenv ("XAUTHORITY") == NULL)
+    {
+      const gchar *home;
+
+      /* pre-2.36 GLib does not examine $HOME (it always looks in /etc/passwd) and
+       * this is not what we want
+       */
+      home = g_getenv ("HOME");
+      if (home == NULL)
+        home = g_get_home_dir ();
+
+      if (home != NULL)
+        {
+          g_ptr_array_add (saved_env, g_strdup ("XAUTHORITY"));
+          g_ptr_array_add (saved_env, g_build_filename (home, ".Xauthority", NULL));
+        }
+    }
+
   /* Nuke the environment to get a well-known and sanitized environment to avoid attacks
    * via e.g. the DBUS_SYSTEM_BUS_ADDRESS environment variable and similar.
    */
