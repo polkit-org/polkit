@@ -1,4 +1,35 @@
 --------------
+polkit 0.109
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+This is polkit 0.109.
+
+Build requirements
+
+ glib, gobject, gio    >= 2.30
+ mozjs185
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.108:
+
+David Zeuthen (4):
+      Post-release version bump to 0.109
+      Include gmodule-2.0 to avoid linker errors
+      Don't require libmozjs185 devel packages for polkit rules to work
+      Update NEWS for release
+
+Thanks to our contributors.
+
+David Zeuthen,
+December 19, 2012
+
+--------------
 polkit 0.108
 --------------
 
