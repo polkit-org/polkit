@@ -1,5 +1,5 @@
 --------------
-polkit 0.110 (unreleased)
+polkit 0.110
 --------------
 
 WARNING WARNING WARNING: This is a prerelease on the road to polkit
@@ -18,12 +18,23 @@ Build requirements
 
 Changes since polkit 0.109:
 
- TODO
+David Zeuthen (5):
+      Post-release version bump to 0.110
+      Set XAUTHORITY environment variable if is unset
+      Use mutex and condition variables properly
+      Remove AM_PROG_CC_STDC
+      Update NEWS for release
+
+Emilio Pozuelo Monfort (1):
+      Fix build on GNU Hurd
+
+Michael Biebl (1):
+      build: Remove generated introspection files on "make clean"
 
 Thanks to our contributors.
 
 David Zeuthen,
-$DATE
+Jan 9, 2013
 
 --------------
 polkit 0.109
