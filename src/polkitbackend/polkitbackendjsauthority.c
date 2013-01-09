@@ -622,9 +622,10 @@ polkit_backend_js_authority_constructed (GObject *object)
                                                          authority);
 
   /* wait for runaway_killer_thread to set up its GMainContext */
-  g_cond_wait (&authority->priv->rkt_init_cond, &authority->priv->rkt_init_mutex);
+  g_mutex_lock (&authority->priv->rkt_init_mutex);
+  while (authority->priv->rkt_context == NULL)
+    g_cond_wait (&authority->priv->rkt_init_cond, &authority->priv->rkt_init_mutex);
   g_mutex_unlock (&authority->priv->rkt_init_mutex);
-  g_assert (authority->priv->rkt_context != NULL);
 
   setup_file_monitors (authority);
   load_scripts (authority);
@@ -1011,13 +1012,13 @@ runaway_killer_thread_func (gpointer user_data)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (user_data);
 
+  g_mutex_lock (&authority->priv->rkt_init_mutex);
+
   authority->priv->rkt_context = g_main_context_new ();
   authority->priv->rkt_loop = g_main_loop_new (authority->priv->rkt_context, FALSE);
-
   g_main_context_push_thread_default (authority->priv->rkt_context);
 
   /* Signal the main thread that we're done constructing */
-  g_mutex_lock (&authority->priv->rkt_init_mutex);
   g_cond_signal (&authority->priv->rkt_init_cond);
   g_mutex_unlock (&authority->priv->rkt_init_mutex);
 
