@@ -3,7 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.59c)
 AC_INIT(polkit, 0.111 http://lists.freedesktop.org/mailman/listinfo/polkit-devel)
 AM_INIT_AUTOMAKE(polkit, 0.111)
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 AM_MAINTAINER_MODE
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
