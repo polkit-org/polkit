@@ -137,36 +137,36 @@ G_DEFINE_TYPE (PolkitBackendJsAuthority, polkit_backend_js_authority, POLKIT_BAC
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static JSBool          (*dJS_CallFunctionName)(JSContext *cx, JSObject *obj, const char *name, uintN argc, jsval *argv, jsval *rval);
+static JSBool          (*dJS_CallFunctionName)(JSContext *cx, JSObject *obj, const char *name, unsigned argc, jsval *argv, jsval *rval);
 static JSObject       *(*dJS_CompileFile)(JSContext *cx, JSObject *obj, const char *filename);
-static JSBool          (*dJS_ConvertArguments)(JSContext *cx, uintN argc, jsval *argv, const char *format, ...);
+static JSBool          (*dJS_ConvertArguments)(JSContext *cx, unsigned argc, jsval *argv, const char *format, ...);
 static JSBool          (*dJS_ConvertStub)(JSContext *cx, JSObject *obj, JSType type, jsval *vp);
 static JSBool          (*dJS_DefineFunctions)(JSContext *cx, JSObject *obj, JSFunctionSpec *fs);
-static JSObject       *(*dJS_DefineObject)(JSContext *cx, JSObject *obj, const char *name, JSClass *clasp, JSObject *proto, uintN attrs);
+static JSObject       *(*dJS_DefineObject)(JSContext *cx, JSObject *obj, const char *name, JSClass *clasp, JSObject *proto, unsigned attrs);
 static void            (*dJS_DestroyContext)(JSContext *cx);
 #define dJS_DestroyRuntime dJS_Finish
 static void            (*dJS_Finish)(JSRuntime *rt);
 static char           *(*dJS_EncodeString)(JSContext *cx, JSString *str);
 static JSBool          (*dJS_EnumerateStub)(JSContext *cx, JSObject *obj);
 static JSBool          (*dJS_EvaluateScript)(JSContext *cx, JSObject *obj,
-                                             const char *bytes, uintN length,
-                                             const char *filename, uintN lineno,
+                                             const char *bytes, unsigned length,
+                                             const char *filename, unsigned lineno,
                                              jsval *rval);
 static JSBool          (*dJS_ExecuteScript)(JSContext *cx, JSObject *obj, JSObject *scriptObj, jsval *rval);
 static void            (*dJS_FinalizeStub)(JSContext *cx, JSObject *obj);
 static void            (*dJS_free)(JSContext *cx, void *p);
 static void            (*dJS_GC)(JSContext *cx);
-static JSBool          (*dJS_GetArrayLength)(JSContext *cx, JSObject *obj, jsuint *lengthp);
+static JSBool          (*dJS_GetArrayLength)(JSContext *cx, JSObject *obj, guint32 *lengthp);
 static void           *(*dJS_GetContextPrivate)(JSContext *cx);
-static JSBool          (*dJS_GetElement)(JSContext *cx, JSObject *obj, jsint index, jsval *vp);
+static JSBool          (*dJS_GetElement)(JSContext *cx, JSObject *obj, gint32 index, jsval *vp);
 static const jschar   *(*dJS_GetStringCharsZ)(JSContext *cx, JSString *str);
 static JSBool          (*dJS_InitStandardClasses)(JSContext *cx, JSObject *obj);
 static void            (*dJS_MaybeGC)(JSContext *cx);
-static JSObject       *(*dJS_NewArrayObject)(JSContext *cx, jsint length, jsval *vector);
+static JSObject       *(*dJS_NewArrayObject)(JSContext *cx, gint32 length, jsval *vector);
 static JSObject       *(*dJS_NewCompartmentAndGlobalObject)(JSContext *cx, JSClass *clasp, JSPrincipals *principals);
 static JSContext      *(*dJS_NewContext)(JSRuntime *rt, size_t stackChunkSize);
 #define dJS_NewRuntime dJS_Init
-static JSRuntime      *(*dJS_Init)(uint32 maxbytes);
+static JSRuntime      *(*dJS_Init)(guint32 maxbytes);
 static JSString       *(*dJS_NewStringCopyZ)(JSContext *cx, const char *s);
 static JSBool          (*dJS_PropertyStub)(JSContext *cx, JSObject *obj, jsid id, jsval *vp);
 static void            (*dJS_ReportError)(JSContext *cx, const char *format, ...);
@@ -175,7 +175,7 @@ static JSBool          (*dJS_ResolveStub)(JSContext *cx, JSObject *obj, jsid id)
 static void            (*dJS_SetContextPrivate)(JSContext *cx, void *data);
 static JSErrorReporter (*dJS_SetErrorReporter)(JSContext *cx, JSErrorReporter er);
 JSOperationCallback    (*dJS_SetOperationCallback)(JSContext *cx, JSOperationCallback callback);
-static uint32          (*dJS_SetOptions)(JSContext *cx, uint32 options);
+static guint32        (*dJS_SetOptions)(JSContext *cx, guint32 options);
 static void            (*dJS_SetPendingException)(JSContext *cx, jsval v);
 static JSBool          (*dJS_SetProperty)(JSContext *cx, JSObject *obj, const char *name, jsval *vp);
 static JSVersion       (*dJS_SetVersion)(JSContext *cx, JSVersion version);
@@ -277,9 +277,9 @@ djs_init (PolkitBackendJsAuthority *authority)
 static JSClass js_global_class = {0};
 static JSClass js_polkit_class = {0};
 
-static JSBool js_polkit_log (JSContext *cx, uintN argc, jsval *vp);
-static JSBool js_polkit_spawn (JSContext *cx, uintN argc, jsval *vp);
-static JSBool js_polkit_user_is_in_netgroup (JSContext *cx, uintN argc, jsval *vp);
+static JSBool js_polkit_log (JSContext *cx, unsigned argc, jsval *vp);
+static JSBool js_polkit_spawn (JSContext *cx, unsigned argc, jsval *vp);
+static JSBool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, jsval *vp);
 
 static JSFunctionSpec js_polkit_functions[] =
 {
@@ -788,7 +788,7 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
       jsvals[n] = STRING_TO_JSVAL (jsstr);
     }
 
-  array_object = dJS_NewArrayObject (authority->priv->cx, (jsint) len, jsvals);
+  array_object = dJS_NewArrayObject (authority->priv->cx, (gint32) len, jsvals);
 
   value_jsval = OBJECT_TO_JSVAL (array_object);
   dJS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
@@ -804,7 +804,7 @@ set_property_int32 (PolkitBackendJsAuthority  *authority,
                     gint32                     value)
 {
   jsval value_jsval;
-  value_jsval = INT_TO_JSVAL ((int32) value);
+  value_jsval = INT_TO_JSVAL ((gint32) value);
   dJS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
@@ -1112,7 +1112,7 @@ execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
 static JSBool
 call_js_function_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                       const char               *function_name,
-                                      uintN                     argc,
+                                      unsigned                  argc,
                                       jsval                    *argv,
                                       jsval                    *rval)
 {
@@ -1351,7 +1351,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
 static JSBool
 js_polkit_log (JSContext  *cx,
-               uintN       argc,
+               unsigned    argc,
                jsval      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (dJS_GetContextPrivate (cx)); */
@@ -1434,7 +1434,7 @@ spawn_cb (GObject       *source_object,
 
 static JSBool
 js_polkit_spawn (JSContext  *cx,
-                 uintN       js_argc,
+                 unsigned    js_argc,
                  jsval      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (dJS_GetContextPrivate (cx)); */
@@ -1445,7 +1445,7 @@ js_polkit_spawn (JSContext  *cx,
   gint exit_status;
   GError *error = NULL;
   JSString *ret_jsstr;
-  jsuint array_len;
+  guint32 array_len;
   gchar **argv = NULL;
   GMainContext *context = NULL;
   GMainLoop *loop = NULL;
@@ -1552,7 +1552,7 @@ js_polkit_spawn (JSContext  *cx,
 
 static JSBool
 js_polkit_user_is_in_netgroup (JSContext  *cx,
-                               uintN       argc,
+                               unsigned    argc,
                                jsval      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (dJS_GetContextPrivate (cx)); */
