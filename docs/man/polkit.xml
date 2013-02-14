@@ -913,7 +913,7 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id == "org.freedesktop.policykit.exec" &&
         action.lookup("program") == "/usr/bin/cat") {
-        return polkit.Result.AUTH_SELF;
+        return polkit.Result.AUTH_ADMIN;
     }
 });
 ]]></programlisting>

@@ -261,8 +261,8 @@
         that can be used together with
         <ulink url="http://developer.gnome.org/gtk3/unstable/GtkLockButton.html"><type>GtkLockButton</type></ulink>.
         Note that for <type>GtkLockButton</type> to work well, the
-        polkit action backing it should use <literal>auth_self_keep</literal> or
-        <literal>auth_admin_keep</literal> for its implicit authorizations.
+        polkit action backing it should use <literal>auth_admin_keep</literal> or
+        <literal>auth_self_keep</literal> for its implicit authorizations.
         This is often used to implement an <ulink
         url="http://developer.gnome.org/hig-book/3.2/hig-book.html#windows-instant-apply">instant
         apply</ulink> paradigm whereby the user
