@@ -175,6 +175,26 @@ if test "$enable_libsystemd_login" != "no"; then
   fi
 fi
 
+AS_IF([test "x$cross_compiling" != "xyes" ], [
+  AS_IF([test "$have_libsystemd_login" = "yes"], [
+    AS_IF([test ! -d /sys/fs/cgroup/systemd/ ], [
+      AS_IF([test "$enable_libsystemd_login" = "yes"], [
+        AC_MSG_WARN([libsystemd-login requested but system does not appear to be using systemd])
+      ], [
+        AC_MSG_ERROR([libsystemd-login autoconfigured, but system does not appear to use systemd])
+      ])
+    ])
+  ], [
+    AS_IF([test -d /sys/fs/cgroup/systemd/ ], [
+      AS_IF([test "$enable_libsystemd_login" = "no" ], [
+        AC_MSG_WARN([ConsoleKit requested but system appears to use systemd])
+      ], [
+        AC_MSG_ERROR([ConsoleKit autoconfigured, but systemd is in use (missing libsystemd-login pkg-config?)])
+      ])
+    ])
+  ])
+])
+
 AC_SUBST(LIBSYSTEMD_LOGIN_CFLAGS)
 AC_SUBST(LIBSYSTEMD_LOGIN_LIBS)
 AM_CONDITIONAL(HAVE_LIBSYSTEMD_LOGIN, [test "$have_libsystemd_login" = "yes"], [Using libsystemd-login])
