@@ -145,6 +145,7 @@ open_session (const gchar *user_to_auth)
   gboolean ret;
   gint rc;
   pam_handle_t *pam_h;
+  char **envlist;
   struct pam_conv conversation;
 
   ret = FALSE;
@@ -175,6 +176,15 @@ open_session (const gchar *user_to_auth)
     }
 
   ret = TRUE;
+
+  envlist = pam_getenvlist (pam_h);
+  if (envlist != NULL)
+    {
+      guint n;
+      for (n = 0; envlist[n]; n++)
+        putenv (envlist[n]);
+      free (envlist);
+    }
 
 out:
   if (pam_h != NULL)
