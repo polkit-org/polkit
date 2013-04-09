@@ -69,6 +69,8 @@
       <xi:include href="xml/tree_index.sgml"/>
   </chapter>
 
+  <xi:include href="xml/annotation-glossary.xml"><xi:fallback /></xi:include>
+
   <index id="polit-index">
     <title>Index</title>
   </index>
