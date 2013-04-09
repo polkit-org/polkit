@@ -59,7 +59,7 @@ polkit._runAdminRules = function(action, subject) {
             break
         }
     }
-    return ret.join(",");
+    return ret ? ret.join(",") : "";
 };
 
 polkit._ruleFuncs = [];
