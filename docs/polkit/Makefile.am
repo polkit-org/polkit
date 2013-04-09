@@ -16,7 +16,7 @@ SCAN_OPTIONS=--ignore-headers=config.h
 # gtk-doc will search all .c and .h files beneath these paths
 # for inline comments documenting functions and macros.
 # e.g. DOC_SOURCE_DIR=$(top_srcdir)/gtk $(top_srcdir)/gdk
-DOC_SOURCE_DIR=$(top_srcdir)/src
+DOC_SOURCE_DIR=$(top_srcdir)/src/polkit $(top_srcdir)/src/polkitagent
 
 # Used for dependencies
 HFILE_GLOB=$(top_srcdir)/src/polkit*/*.h
