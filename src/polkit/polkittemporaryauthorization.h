@@ -45,11 +45,6 @@ typedef struct _PolkitTemporaryAuthorization PolkitTemporaryAuthorization;
 typedef struct _PolkitTemporaryAuthorizationClass PolkitTemporaryAuthorizationClass;
 
 GType          polkit_temporary_authorization_get_type              (void) G_GNUC_CONST;
-PolkitTemporaryAuthorization *polkit_temporary_authorization_new    (const gchar                  *id,
-                                                                     const gchar                  *action_id,
-                                                                     PolkitSubject                *subject,
-                                                                     guint64                       time_obtained,
-                                                                     guint64                       time_expires);
 const gchar   *polkit_temporary_authorization_get_id                (PolkitTemporaryAuthorization *authorization);
 const gchar   *polkit_temporary_authorization_get_action_id         (PolkitTemporaryAuthorization *authorization);
 PolkitSubject *polkit_temporary_authorization_get_subject           (PolkitTemporaryAuthorization *authorization);
