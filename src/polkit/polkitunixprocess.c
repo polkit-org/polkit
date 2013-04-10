@@ -740,6 +740,13 @@ out:
 }
 
 /* deprecated public method */
+/**
+ * polkit_unix_process_get_owner:
+ * @process: A #PolkitUnixProcess.
+ * @error: Return location for error.
+ *
+ * (deprecated)
+ */
 gint
 polkit_unix_process_get_owner (PolkitUnixProcess  *process,
                                GError            **error)

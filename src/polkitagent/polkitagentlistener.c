@@ -535,6 +535,15 @@ listener_died (gpointer user_data,
   server_free (server);
 }
 
+/**
+ * polkit_agent_register_listener:
+ * @listener: A #PolkitAgentListener.
+ * @subject: The subject to become an authentication agent for, typically a #PolkitUnixSession object.
+ * @object_path: The D-Bus object path to use for the authentication agent or %NULL for the default object path.
+ * @error: Return location for error.
+ *
+ * (deprecated)
+ */
 gboolean
 polkit_agent_register_listener (PolkitAgentListener  *listener,
                                 PolkitSubject        *subject,

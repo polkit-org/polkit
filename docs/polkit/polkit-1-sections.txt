@@ -25,6 +25,7 @@ PolkitCheckAuthorizationFlags
 polkit_authority_get_async
 polkit_authority_get_finish
 polkit_authority_get_sync
+polkit_authority_get
 polkit_authority_get_owner
 polkit_authority_get_backend_name
 polkit_authority_get_backend_version
@@ -173,6 +174,7 @@ polkit_unix_process_set_start_time
 polkit_unix_process_get_start_time
 polkit_unix_process_set_uid
 polkit_unix_process_get_uid
+polkit_unix_process_get_owner
 <SUBSECTION Standard>
 PolkitUnixProcessClass
 POLKIT_UNIX_PROCESS
@@ -320,6 +322,7 @@ PolkitAgentRegisterFlags
 polkit_agent_listener_register
 polkit_agent_listener_register_with_options
 polkit_agent_listener_unregister
+polkit_agent_register_listener
 <SUBSECTION Standard>
 POLKIT_AGENT_LISTENER
 POLKIT_AGENT_IS_LISTENER
