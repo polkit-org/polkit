@@ -168,7 +168,7 @@ polkit_unix_netgroup_get_name (PolkitUnixNetgroup *group)
 }
 
 /**
- * polkit_unix_netgroup_set_gid:
+ * polkit_unix_netgroup_set_name:
  * @group: A #PolkitUnixNetgroup.
  * @name: A netgroup name.
  *
