@@ -28,14 +28,6 @@
 #include "polkitimplicitauthorization.h"
 #include "polkitprivate.h"
 
-/**
- * SECTION:polkitimplicitauthorization
- * @title: PolkitImplicitAuthorization
- * @short_description: Implicit Authorizations
- *
- * Possible implicit authorizations.
- */
-
 gboolean
 polkit_implicit_authorization_from_string (const gchar *string,
                                            PolkitImplicitAuthorization *out_implicit_authorization)

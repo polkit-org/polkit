@@ -66,6 +66,7 @@ polkit_authority_get_type
 POLKIT_AUTHORITY_CLASS
 POLKIT_IS_AUTHORITY_CLASS
 POLKIT_AUTHORITY_GET_CLASS
+polkit_check_authorization_flags_get_type
 </SECTION>
 
 <SECTION>
@@ -236,6 +237,8 @@ polkit_action_description_get_implicit_inactive
 polkit_action_description_get_implicit_active
 polkit_action_description_get_annotation
 polkit_action_description_get_annotation_keys
+polkit_implicit_authorization_to_string
+polkit_implicit_authorization_from_string
 <SUBSECTION Standard>
 PolkitActionDescriptionClass
 POLKIT_ACTION_DESCRIPTION
@@ -245,23 +248,6 @@ polkit_action_description_get_type
 POLKIT_ACTION_DESCRIPTION_CLASS
 POLKIT_IS_ACTION_DESCRIPTION_CLASS
 POLKIT_ACTION_DESCRIPTION_GET_CLASS
-</SECTION>
-
-<SECTION>
-<FILE>polkitcheckauthorizationflags</FILE>
-POLKIT_TYPE_CHECK_AUTHORIZATION_FLAGS
-PolkitCheckAuthorizationFlags
-<SUBSECTION Standard>
-polkit_check_authorization_flags_get_type
-</SECTION>
-
-<SECTION>
-<FILE>polkitimplicitauthorization</FILE>
-POLKIT_TYPE_IMPLICIT_AUTHORIZATION
-PolkitImplicitAuthorization
-polkit_implicit_authorization_to_string
-polkit_implicit_authorization_from_string
-<SUBSECTION Standard>
 polkit_implicit_authorization_get_type
 </SECTION>
 
