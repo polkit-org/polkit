@@ -10,7 +10,7 @@ DOC_MODULE=polkit-1
 DOC_MAIN_SGML_FILE=polkit-1-docs.xml
 
 # Extra options to supply to gtkdoc-scan
-SCAN_OPTIONS=--ignore-headers=config.h
+SCAN_OPTIONS=
 
 # Directories containing the source code.
 # gtk-doc will search all .c and .h files beneath these paths
@@ -24,6 +24,8 @@ CFILE_GLOB=$(top_srcdir)/src/polkit*/*.c
 
 # Headers to ignore
 IGNORE_HFILES= \
+	polkitprivate.h \
+	polkitagenthelperprivate.h \
 	$(NULL)
 
 # CFLAGS and LDFLAGS for compiling scan program. Only needed
