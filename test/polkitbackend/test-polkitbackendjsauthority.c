@@ -104,6 +104,7 @@ test_get_admin_identities_for_action_id (const gchar         *action_id,
   g_assert (expected_admins[n] == NULL);
 
   g_list_free_full (admin_identities, g_object_unref);
+  g_clear_object (&details);
   g_clear_object (&user_for_subject);
   g_clear_object (&subject);
   g_clear_object (&caller);
@@ -374,6 +375,7 @@ rules_test_func (gconstpointer user_data)
                                                                           POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN);
   g_assert_cmpint (result, ==, tc->expected_result);
 
+  g_clear_object (&details);
   g_clear_object (&user_for_subject);
   g_clear_object (&subject);
   g_clear_object (&caller);

@@ -507,6 +507,7 @@ setup_file_monitors (PolkitBackendJsAuthority *authority)
                                           G_FILE_MONITOR_NONE,
                                           NULL,
                                           &error);
+      g_object_unref (file);
       if (monitor == NULL)
         {
           g_warning ("Error monitoring directory %s: %s",
@@ -995,7 +996,7 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
       set_property_str (authority, obj, key, value);
       g_free (key);
     }
-  g_free (keys);
+  g_strfreev (keys);
 
   ret = TRUE;
 

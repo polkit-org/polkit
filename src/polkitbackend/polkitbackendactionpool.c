@@ -1051,7 +1051,6 @@ process_policy_file (PolkitBackendActionPool *pool,
 
   pd.pool = pool;
 
-  pd.parser = XML_ParserCreate_MM (NULL, NULL, NULL);
   pd.parser = XML_ParserCreate (NULL);
   pd.stack_depth = 0;
   XML_SetUserData (pd.parser, &pd);
@@ -1084,6 +1083,7 @@ process_policy_file (PolkitBackendActionPool *pool,
 
   XML_ParserFree (pd.parser);
 
+  pd_unref_data (&pd);
   return TRUE;
 
 error:

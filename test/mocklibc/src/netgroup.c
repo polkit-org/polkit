@@ -122,7 +122,10 @@ struct netgroup *netgroup_parse_all() {
     char * line = NULL;
     ssize_t line_size = getline(&line, &line_alloc, stream);
     if (line_size == -1)
-      break;
+      {
+	free(line);
+	break;
+      }
 
     struct netgroup *nextgroup = netgroup_parse_line(line);
     free(line);
