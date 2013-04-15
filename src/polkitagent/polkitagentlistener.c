@@ -749,7 +749,7 @@ polkit_agent_listener_class_init (PolkitAgentListenerClass *klass)
  * @icon_name: A themed icon name representing the action or %NULL.
  * @details: Details describing the action.
  * @cookie: The cookie for the authentication request.
- * @identities: A list of #PolkitIdentity objects that the user can choose to authenticate as.
+ * @identities: (element-type Polkit.Identity): A list of #PolkitIdentity objects that the user can choose to authenticate as.
  * @cancellable: A #GCancellable.
  * @callback: Function to call when the user is done authenticating.
  * @user_data: Data to pass to @callback.
