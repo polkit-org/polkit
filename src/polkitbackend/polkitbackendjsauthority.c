@@ -1191,7 +1191,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  if (!JSVAL_IS_STRING (rval) && !JSVAL_IS_NULL (rval))
+  if (!JSVAL_IS_STRING (rval))
     {
       g_warning ("Expected a string");
       goto out;
