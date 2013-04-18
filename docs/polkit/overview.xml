@@ -74,6 +74,24 @@
 
         <listitem>
           <para>
+            <emphasis role='bold'>DO</emphasis> consider the impact of the
+            chosen implicit authorizations on multi-user systems.  Generally,
+            ordinary users should be able to neither modify important system's
+            behavior for other users, nor view other users' private data.  If
+            your application needs an authorization framework at all, it is
+            fairly likely that the default configuration should deny
+            authorization in at least some cases.  Default to using
+            <literal>auth_admin</literal>* instead of
+            <literal>auth_self</literal>*.  (On single-user desktops, the
+            single user is typically configured as a polkit administrator, so
+            the two variants behave equally.  On multi-user systems,
+            non-administrator users will be restricted by the default
+            configuration.)
+          </para>
+        </listitem>
+
+        <listitem>
+          <para>
             <emphasis role='bold'>DO</emphasis> pass polkit variables
             along with <link
             linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link>
@@ -261,8 +279,10 @@
         that can be used together with
         <ulink url="http://developer.gnome.org/gtk3/unstable/GtkLockButton.html"><type>GtkLockButton</type></ulink>.
         Note that for <type>GtkLockButton</type> to work well, the
-        polkit action backing it should use <literal>auth_admin_keep</literal> or
-        <literal>auth_self_keep</literal> for its implicit authorizations.
+        polkit action backing it should use <literal>auth_admin_keep</literal>
+	for its implicit authorizations (or more rarely
+	<literal>auth_self_keep</literal> for services which don't affect other
+	users).
         This is often used to implement an <ulink
         url="http://developer.gnome.org/hig-book/3.2/hig-book.html#windows-instant-apply">instant
         apply</ulink> paradigm whereby the user

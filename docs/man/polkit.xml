@@ -356,7 +356,9 @@ System Context         |                        |
               <term><literal>auth_self</literal></term>
               <listitem><para>Authentication by the owner of the
               session that the client originates from is
-              required.</para></listitem>
+              required.  Note that this is not restrictive enough for most
+	      uses on multi-user systems; <literal>auth_admin</literal>* is
+	      generally recommended.</para></listitem>
             </varlistentry>
             <varlistentry>
               <term><literal>auth_admin</literal></term>
@@ -367,7 +369,9 @@ System Context         |                        |
               <term><literal>auth_self_keep</literal></term>
               <listitem><para>Like <literal>auth_self</literal> but
               the authorization is kept for a brief
-              period (e.g. five minutes).</para></listitem>
+              period (e.g. five minutes).  The warning about
+	      <literal>auth_self</literal> above applies
+	      likewise.</para></listitem>
             </varlistentry>
             <varlistentry>
               <term><literal>auth_admin_keep</literal></term>
