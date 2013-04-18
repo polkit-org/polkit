@@ -1357,6 +1357,12 @@ js_polkit_spawn (JSContext  *cx,
           JS_ReportError (cx, "Failed to get element %d", n);
           goto out;
         }
+      if (!JSVAL_IS_STRING (elem_val))
+	{
+          JS_ReportError (cx, "Element %d is not a string", n);
+          goto out;
+	}
+      s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
       s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
       argv[n] = g_strdup (s);
       JS_free (cx, s);
