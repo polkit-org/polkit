@@ -1188,20 +1188,20 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  if (!JSVAL_IS_STRING (rval) && !JSVAL_IS_NULL (rval))
-    {
-      g_warning ("Expected a string");
-      goto out;
-    }
-
-  ret_jsstr = JSVAL_TO_STRING (rval);
-  if (ret_jsstr == NULL)
+  if (JSVAL_IS_NULL (rval))
     {
       /* this fine, means there was no match, use implicit authorizations */
       good = TRUE;
       goto out;
     }
 
+  if (!JSVAL_IS_STRING (rval))
+    {
+      g_warning ("Expected a string");
+      goto out;
+    }
+
+  ret_jsstr = JSVAL_TO_STRING (rval);
   ret_utf16 = JS_GetStringCharsZ (authority->priv->cx, ret_jsstr);
   ret_str = g_utf16_to_utf8 (ret_utf16, -1, NULL, NULL, &error);
   if (ret_str == NULL)
