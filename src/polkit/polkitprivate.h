@@ -28,6 +28,16 @@
 #include "polkitauthorizationresult.h"
 #include "polkittemporaryauthorization.h"
 
+/* FIXME: This header file is currently installed among other public header
+   files, and the symbols are exported in the shared library.
+
+   For application writers: relying on any function here is strongly
+   discouraged.
+
+   For polkit maintainers: This should be made private if a large ABI break
+   were necessary in the future.  In the meantime, consider that there is
+   non-zero risk that changing these functions might break some applications. */
+
 PolkitActionDescription  *polkit_action_description_new_for_gvariant (GVariant *value);
 GVariant *polkit_action_description_to_gvariant (PolkitActionDescription *action_description);
 
