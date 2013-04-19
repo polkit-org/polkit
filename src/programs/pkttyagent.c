@@ -63,6 +63,7 @@ main (int argc, char *argv[])
       { NULL, 0, 0, 0, NULL, NULL, NULL }
     };
   GOptionContext *context;
+  gchar *s;
   PolkitAuthority *authority = NULL;
   PolkitSubject *subject = NULL;
   gpointer local_agent_handle = NULL;
@@ -77,6 +78,11 @@ main (int argc, char *argv[])
 
   error = NULL;
   context = g_option_context_new ("");
+  s = g_strdup_printf (_("Report bugs to: %s\n"
+			 "%s home page: <%s>"), PACKAGE_BUGREPORT,
+		       PACKAGE_NAME, PACKAGE_URL);
+  g_option_context_set_description (context, s);
+  g_free (s);
   g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {

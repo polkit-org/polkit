@@ -48,7 +48,10 @@ help (void)
 "  --revoke-temp                      Revoke all temporary authorizations for current session\n"
 "  -s, --system-bus-name=BUS_NAME     Check authorization of owner of BUS_NAME\n"
 "  --version                          Show version\n"
-	     "\n"));
+	     "\n"
+	     "Report bugs to: %s\n"
+	     "%s home page: <%s>\n"), PACKAGE_BUGREPORT, PACKAGE_NAME,
+	   PACKAGE_URL);
 }
 
 static gchar *

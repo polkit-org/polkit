@@ -90,6 +90,7 @@ main (int argc, char *argv[])
 {
   guint ret;
   gchar *opt_action_id;
+  gchar *s;
   gboolean opt_show_version;
   gboolean opt_verbose;
   GOptionEntry options[] =
@@ -127,6 +128,11 @@ main (int argc, char *argv[])
 
   error = NULL;
   context = g_option_context_new (N_("[--action-id ACTION]"));
+  s = g_strdup_printf (_("Report bugs to: %s\n"
+			 "%s home page: <%s>"), PACKAGE_BUGREPORT,
+		       PACKAGE_NAME, PACKAGE_URL);
+  g_option_context_set_description (context, s);
+  g_free (s);
   g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
   if (!g_option_context_parse (context, &argc, &argv, &error))
     {
