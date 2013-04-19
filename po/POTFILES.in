@@ -3,4 +3,7 @@
 [encoding: UTF-8]
 actions/org.freedesktop.policykit.policy.in
 src/examples/org.freedesktop.policykit.examples.pkexec.policy.in
+src/programs/pkaction.c
+src/programs/pkcheck.c
 src/programs/pkexec.c
+src/programs/pkttyagent.c

@@ -24,24 +24,8 @@
 #endif
 
 #include <stdio.h>
+#include <glib/gi18n.h>
 #include <polkit/polkit.h>
-
-static void
-usage (int argc, char *argv[])
-{
-  GError *error;
-
-  error = NULL;
-  if (!g_spawn_command_line_sync ("man pkaction",
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  &error))
-    {
-      g_printerr ("Cannot show manual page: %s\n", error->message);
-      g_error_free (error);
-    }
-}
 
 static void
 print_action (PolkitActionDescription *action,
@@ -104,68 +88,59 @@ action_desc_compare_by_action_id_func (PolkitActionDescription *a,
 int
 main (int argc, char *argv[])
 {
-  guint n;
   guint ret;
-  gchar *action_id;
-  gboolean opt_show_help;
+  gchar *opt_action_id;
   gboolean opt_show_version;
   gboolean opt_verbose;
+  GOptionEntry options[] =
+    {
+      {
+	"action-id", 'a', 0, G_OPTION_ARG_STRING, &opt_action_id,
+	N_("Only output information about ACTION"), N_("ACTION")
+      },
+      {
+	"verbose", 'v', 0, G_OPTION_ARG_NONE, &opt_verbose,
+	N_("Output detailed action information"), NULL
+      },
+      {
+	"version", 0, 0, G_OPTION_ARG_NONE, &opt_show_version,
+	N_("Show version"), NULL
+      },
+      { NULL, 0, 0, 0, NULL, NULL, NULL }
+    };
+  GOptionContext *context;
   PolkitAuthority *authority;
   GList *l;
   GList *actions;
   GError *error;
 
-  action_id = NULL;
+  opt_action_id = NULL;
+  context = NULL;
   authority = NULL;
   actions = NULL;
   ret = 1;
 
   g_type_init ();
 
-  opt_show_help = FALSE;
   opt_show_version = FALSE;
   opt_verbose = FALSE;
-  for (n = 1; n < (guint) argc; n++)
-    {
-      if (g_strcmp0 (argv[n], "--help") == 0)
-        {
-          opt_show_help = TRUE;
-        }
-      else if (g_strcmp0 (argv[n], "--version") == 0)
-        {
-          opt_show_version = TRUE;
-        }
-      else if (g_strcmp0 (argv[n], "--action-id") == 0 || g_strcmp0 (argv[n], "-a") == 0)
-        {
-          n++;
-          if (n >= (guint) argc)
-            {
-              usage (argc, argv);
-              goto out;
-            }
 
-          action_id = g_strdup (argv[n]);
-        }
-      else if (g_strcmp0 (argv[n], "--verbose") == 0 || g_strcmp0 (argv[n], "-v") == 0)
-        {
-          opt_verbose = TRUE;
-        }
-    }
-
-  if (opt_show_help)
+  error = NULL;
+  context = g_option_context_new (N_("[--action-id ACTION]"));
+  g_option_context_add_main_entries (context, options, GETTEXT_PACKAGE);
+  if (!g_option_context_parse (context, &argc, &argv, &error))
     {
-      usage (argc, argv);
-      ret = 0;
+      g_printerr ("%s: %s\n", g_get_prgname (), error->message);
+      g_error_free (error);
       goto out;
     }
-  else if (opt_show_version)
+  if (opt_show_version)
     {
       g_print ("pkaction version %s\n", PACKAGE_VERSION);
       ret = 0;
       goto out;
     }
 
-  error = NULL;
   authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
   if (authority == NULL)
     {
@@ -185,7 +160,7 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  if (action_id != NULL)
+  if (opt_action_id != NULL)
     {
       for (l = actions; l != NULL; l = l->next)
         {
@@ -194,7 +169,7 @@ main (int argc, char *argv[])
 
           id = polkit_action_description_get_action_id (action);
 
-          if (g_strcmp0 (id, action_id) == 0)
+          if (g_strcmp0 (id, opt_action_id) == 0)
             {
               print_action (action, opt_verbose);
               break;
@@ -203,7 +178,7 @@ main (int argc, char *argv[])
 
       if (l == NULL)
         {
-          g_printerr ("No action with action id %s\n", action_id);
+          g_printerr ("No action with action id %s\n", opt_action_id);
           goto out;
         }
     }
@@ -224,10 +199,12 @@ main (int argc, char *argv[])
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
 
-  g_free (action_id);
+  g_free (opt_action_id);
 
   if (authority != NULL)
     g_object_unref (authority);
+
+  g_option_context_free (context);
 
   return ret;
 }

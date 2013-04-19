@@ -24,25 +24,31 @@
 #endif
 
 #include <stdio.h>
+#include <glib/gi18n.h>
 #include <polkit/polkit.h>
 #define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE
 #include <polkitagent/polkitagent.h>
 
 static void
-usage (int argc, char *argv[])
+help (void)
 {
-  GError *error;
-
-  error = NULL;
-  if (!g_spawn_command_line_sync ("man pkcheck",
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  &error))
-    {
-      g_printerr ("Cannot show manual page: %s\n", error->message);
-      g_error_free (error);
-    }
+  g_print (_("Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if necessary\n"
+"  --list-temp                        List temporary authorizations for current session\n"
+"  -p, --process=PID[,START_TIME]     Check authorization of specified process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of BUS_NAME\n"
+"  --version                          Show version\n"
+	     "\n"));
 }
 
 static gchar *
@@ -359,6 +365,7 @@ main (int argc, char *argv[])
 
   opt_show_help = FALSE;
   opt_show_version = FALSE;
+  g_set_prgname ("pkcheck");
   for (n = 1; n < (guint) argc; n++)
     {
       if (g_strcmp0 (argv[n], "--help") == 0)
@@ -377,7 +384,8 @@ main (int argc, char *argv[])
           n++;
           if (n >= (guint) argc)
             {
-              usage (argc, argv);
+	      g_printerr (_("%s: Argument expected after `%s'\n"),
+			  g_get_prgname (), "--process");
               goto out;
             }
 
@@ -391,7 +399,8 @@ main (int argc, char *argv[])
             }
           else
             {
-              usage (argc, argv);
+	      g_printerr (_("%s: Invalid --process value `%s'\n"),
+			  g_get_prgname (), argv[n]);
               goto out;
             }
         }
@@ -400,7 +409,8 @@ main (int argc, char *argv[])
           n++;
           if (n >= (guint) argc)
             {
-              usage (argc, argv);
+	      g_printerr (_("%s: Argument expected after `%s'\n"),
+			  g_get_prgname (), "--system-bus-name");
               goto out;
             }
 
@@ -411,7 +421,8 @@ main (int argc, char *argv[])
           n++;
           if (n >= (guint) argc)
             {
-              usage (argc, argv);
+	      g_printerr (_("%s: Argument expected after `%s'\n"),
+			  g_get_prgname (), "--action-id");
               goto out;
             }
 
@@ -425,7 +436,8 @@ main (int argc, char *argv[])
           n++;
           if (n >= (guint) argc)
             {
-              usage (argc, argv);
+	      g_printerr (_("%s: Two arguments expected after `--detail'\n"),
+			  g_get_prgname ());
               goto out;
             }
           key = argv[n];
@@ -433,7 +445,8 @@ main (int argc, char *argv[])
           n++;
           if (n >= (guint) argc)
             {
-              usage (argc, argv);
+	      g_printerr (_("%s: Two arguments expected after `--detail'\n"),
+			  g_get_prgname ());
               goto out;
             }
           value = argv[n];
@@ -464,7 +477,7 @@ main (int argc, char *argv[])
 
   if (opt_show_help)
     {
-      usage (argc, argv);
+      help ();
       ret = 0;
       goto out;
     }
@@ -487,7 +500,7 @@ main (int argc, char *argv[])
     }
   else if (subject == NULL)
     {
-      usage (argc, argv);
+      g_printerr (_("%s: Subject not specified\n"), g_get_prgname ());
       goto out;
     }
 
