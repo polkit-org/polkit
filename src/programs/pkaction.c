@@ -207,6 +207,8 @@ main (int argc, char *argv[])
         }
     }
 
+  ret = 0;
+
  out:
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
