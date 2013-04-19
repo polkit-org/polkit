@@ -140,6 +140,12 @@ main (int argc, char *argv[])
       g_error_free (error);
       goto out;
     }
+  if (argc > 1)
+    {
+      g_printerr (_("%s: Unexpected argument `%s'\n"), g_get_prgname (),
+		  argv[1]);
+      goto out;
+    }
   if (opt_show_version)
     {
       g_print ("pkaction version %s\n", PACKAGE_VERSION);

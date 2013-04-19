@@ -477,6 +477,12 @@ main (int argc, char *argv[])
           break;
         }
     }
+  if (argv[n] != NULL)
+    {
+      g_printerr (_("%s: Unexpected argument `%s'\n"), g_get_prgname (),
+		  argv[n]);
+      goto out;
+    }
 
   if (opt_show_help)
     {
