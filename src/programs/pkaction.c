@@ -113,13 +113,11 @@ main (int argc, char *argv[])
   PolkitAuthority *authority;
   GList *l;
   GList *actions;
-  PolkitActionDescription *description;
   GError *error;
 
   action_id = NULL;
   authority = NULL;
   actions = NULL;
-  description = NULL;
   ret = 1;
 
   g_type_init ();
@@ -225,9 +223,6 @@ main (int argc, char *argv[])
  out:
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
-
-  if (description != NULL)
-    g_object_unref (description);
 
   g_free (action_id);
 
