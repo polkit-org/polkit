@@ -321,6 +321,7 @@ error:
       }
     }
   memset (aresp, 0, n * sizeof *aresp);
+  free (aresp);
   *resp = NULL;
   return PAM_CONV_ERR;
 }
