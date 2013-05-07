@@ -1472,7 +1472,6 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
   message = g_strdup_vprintf (format, var_args);
   va_end (var_args);
 
-  va_start (var_args, format);
   syslog (LOG_NOTICE, "%s", message);
 
   g_get_current_time (&now);
