@@ -67,6 +67,7 @@ content_files =  			    								\
 	../man/pkaction.xml										\
 	../man/pkexec.xml										\
 	../man/pkttyagent.xml										\
+	../../COPYING											\
 	$(NULL)
 
 # Images to copy into HTML directory
