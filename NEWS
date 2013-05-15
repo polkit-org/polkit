@@ -1,5 +1,5 @@
 --------------
-polkit 0.111 (unreleased)
+polkit 0.111
 --------------
 
 WARNING WARNING WARNING: This is a prerelease on the road to polkit
@@ -8,22 +8,86 @@ some security review. Use at your own risk.
 
 This is polkit 0.111.
 
+Highlights:
+ The JavaScript interpreter is now mandatory.
+ Both js185 and mozjs17 versions of SpiderMonkey are supported.
+
 Build requirements
 
  glib, gobject, gio    >= 2.30
- mozjs185
+ mozjs185 or mozjs-17.0
  gobject-introspection >= 0.6.2 (optional)
  pam (optional)
  ConsoleKit OR systemd
 
 Changes since polkit 0.110:
 
- TODO
+Colin Walters (6):
+      mocklibc: Only require autoconf 2.63
+      configure: Specify GLib min/max version
+      jsauthority: We can really only handle a string
+      jsauthority: Use JSVAL_NULL rather than {0} struct initialization
+      Revert "Dynamically load libmozjs185.so and cope with it not being available"
+      jsauthority: Work with mozjs-17.0 too
+
+David Zeuthen (1):
+      Post-release version bump to 0.111
+
+Giovanni Campagna (1):
+      build: try harder to avoid systemd/consolekit misconfiguration
+
+Michael Biebl (1):
+      man: Fix pkaction man page wrt to --action-id option
+
+Miloslav Trmač (28):
+      Clean (git status) after autogen.sh
+      Fix build with srcdir!=builddir
+      Fix DOC_SOURCE_DIR for builddir != srcdir
+      Fix various memory leaks.
+      Add annotation glossary
+      Leave out backend from gtk-doc generation
+      Fix most "undocumented symbol" warnings
+      Move polkit_temporary_authorization_new to private header file.
+      Include documentation of polkit_action_description_get_annotation_keys
+      Document deprecated functions.
+      Fold enum documentation into relevant classes
+      Fix an obvious docstring typo.
+      Add annotations for element types of returned lists
+      Add a FIXME to polkitprivate.h
+      Use auth_admin* instead of auth_self* in examples
+      More warnings about using auth_self*
+      Fix a TypeError when no admin rules are registered
+      Fix handling of null returned from _runRules
+      Refuse non-string parameters to Polkit.spawn()
+      Drop unused variable
+      Fix a memory leak
+      Remove an unused va_start
+      Don't spawn man for --help
+      Fix package version / bug report address mixing
+      Add bug reporting address and home page to --help output
+      Refuse unrecognized command-line operands
+      Exit pkaction with status 0 on success
+      Fix inclusion of COPYING into documentation with srcdir != builddir
+
+Nuno Araujo (1):
+      Fix the build with automake 1.13
+
+Samuli Suominen (1):
+      Add missing #include <sys/wait.h>
+
+Steve Langasek (1):
+      pkexec: Set process environment from pam_getenvlist()
+
+Vincent Untz (1):
+      polkitagent, pkexec: Respect SUID_CFLAGS and SUID_LDFLAGS
+
+darkxst (1):
+      update types for js188
 
 Thanks to our contributors.
 
-David Zeuthen,
-$DATE
+Miloslav Trmač,
+May 15, 2013
 
 --------------
 polkit 0.110
