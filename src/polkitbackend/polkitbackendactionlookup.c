@@ -74,9 +74,9 @@ base_init (gpointer g_iface)
 GType
 polkit_backend_action_lookup_get_type (void)
 {
-  static GType iface_type = 0;
+  static volatile gsize g_define_type_id__volatile = 0;
 
-  if (iface_type == 0)
+  if (g_once_init_enter (&g_define_type_id__volatile))
     {
       static const GTypeInfo info =
       {
@@ -92,12 +92,14 @@ polkit_backend_action_lookup_get_type (void)
         NULL                    /* value_table    */
       };
 
-      iface_type = g_type_register_static (G_TYPE_INTERFACE, "PolkitBackendActionLookup", &info, 0);
+      GType iface_type =
+        g_type_register_static (G_TYPE_INTERFACE, "PolkitBackendActionLookup", &info, 0);
 
       g_type_interface_add_prerequisite (iface_type, G_TYPE_OBJECT);
+      g_once_init_leave (&g_define_type_id__volatile, iface_type);
     }
 
-  return iface_type;
+  return g_define_type_id__volatile;
 }
 
 /**
