@@ -1,0 +1,65 @@
+# Danish translations for PolicyKit.
+# Copyright (C) 2013 SUSE Linux GmbH
+# This file is distributed under the same license as the PolicyKit package.
+#
+# Tomáš Chvátal <tchvatal@suse.cz>, 2013.
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2011-03-03 13:03-0500\n"
+"PO-Revision-Date: 2013-06-02 11:38+0200\n"
+"Last-Translator: Tomáš Chvátal <tchvatal@suse.cz>\n"
+"Language-Team: Czech <kde-i18n-doc@kde.org>\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 1.5\n"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:1
+msgid "Authentication is required to configure lock down policy"
+msgstr "Pro nastavení pravidel uzamčení je vyžadováno ověření"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:2
+msgid "Authentication is required to run a program as another user"
+msgstr "Pro spuštění programu pod jiným uživatelem je vyžadováno ověření"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:3
+msgid "Configure lock down for an action"
+msgstr "Nastavit uzamčení pro činnost"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:4
+msgid "Run programs as another user"
+msgstr "Spustit program jako jiný uživatel"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+msgid ""
+"Authentication is required to run the PolicyKit example program Frobnicate "
+"(user=$(user), program=$(program), command_line=$(command_line))"
+msgstr ""
+"Pro spuštění ukázkového programu PolicyKit Frobnicate je vyžadováno ověření "
+"(user=$(user), program=$(program), command_line=$(command_line))"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+msgid "Run the PolicyKit example program Frobnicate"
+msgstr "Spustit ukázkový program PolicyKit Frobnicate"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: ../src/programs/pkexec.c:666
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr "Pro spuštění `$(program)' jako správce je vyžadováno ověření"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: ../src/programs/pkexec.c:676
+msgid "Authentication is needed to run `$(program)' as user $(user)"
+msgstr "Pro spuštění `$(program)' jako uživatel $(user) je vyžadováno ověření"
+
