@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: polkit\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2011-03-03 13:03-0500\n"
-"PO-Revision-Date: 2013-06-02 11:38+0200\n"
+"POT-Creation-Date: 2013-06-04 11:06+0200\n"
+"PO-Revision-Date: 2013-06-04 11:33+0200\n"
 "Last-Translator: Tomáš Chvátal <tchvatal@suse.cz>\n"
 "Language-Team: Czech <kde-i18n-doc@kde.org>\n"
 "Language: cs\n"
@@ -19,38 +19,145 @@ msgstr ""
 "X-Generator: Lokalize 1.5\n"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:1
-msgid "Authentication is required to configure lock down policy"
-msgstr "Pro nastavení pravidel uzamčení je vyžadováno ověření"
+msgid "Run a program as another user"
+msgstr "Spustit program jako jiný uživatel"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:2
 msgid "Authentication is required to run a program as another user"
 msgstr "Pro spuštění programu pod jiným uživatelem je vyžadováno ověření"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:3
-msgid "Configure lock down for an action"
-msgstr "Nastavit uzamčení pro činnost"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:4
-msgid "Run programs as another user"
-msgstr "Spustit program jako jiný uživatel"
-
 #: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
-msgid ""
-"Authentication is required to run the PolicyKit example program Frobnicate "
-"(user=$(user), program=$(program), command_line=$(command_line))"
-msgstr ""
-"Pro spuštění ukázkového programu PolicyKit Frobnicate je vyžadováno ověření "
-"(user=$(user), program=$(program), command_line=$(command_line))"
+msgid "Run the polkit example program Frobnicate"
+msgstr "Spustit ukázkový program polkit Frobnicate"
 
 #: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
-msgid "Run the PolicyKit example program Frobnicate"
-msgstr "Spustit ukázkový program PolicyKit Frobnicate"
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"Pro spuštění ukázkového programu polkit Frobnicate je vyžadováno ověření "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+
+#: ../src/programs/pkaction.c:100
+msgid "Only output information about ACTION"
+msgstr "Pouze vypsat informace o ČINNOSTI"
+
+#: ../src/programs/pkaction.c:100
+msgid "ACTION"
+msgstr "ČINNOST"
+
+#: ../src/programs/pkaction.c:104
+msgid "Output detailed action information"
+msgstr "Vypsat podrobné informace o činnosti"
+
+#: ../src/programs/pkaction.c:108 ../src/programs/pkttyagent.c:61
+msgid "Show version"
+msgstr "Zobrazit verzi"
+
+#: ../src/programs/pkaction.c:130
+msgid "[--action-id ACTION]"
+msgstr "[--action-id ČINNOST]"
+
+#: ../src/programs/pkaction.c:131 ../src/programs/pkttyagent.c:81
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Chyby hlaste na: %s\n"
+"%s domovská stránka: <%s>"
+
+#: ../src/programs/pkaction.c:145 ../src/programs/pkcheck.c:482
+#: ../src/programs/pkttyagent.c:95
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: neočekávaný argument `%s'\n"
+
+#: ../src/programs/pkcheck.c:35
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME]     Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Použití:\n"
+"  pkcheck [MOŽNOSTI]\n"
+"\n"
+"Možnosti nápovědy:\n"
+"  -h, --help                         Zobrazit možnosti nápovědy\n"
+"\n"
+"Možnosti aplikace:\n"
+"  -a, --action-id=ČINNOST             Zkontroluje oprávnění pro vykonání "
+"činnosti\n"
+"  -u, --allow-user-interaction       Povolit uživatelskou interakci, pokud je "
+"potřeba\n"
+"  -d, --details=KLÍČ HODNOTA            Přidá (KLÍČ, HODNOTA) do informací o "
+"činnosti\n"
+"  --enable-internal-agent            Pokud je třeba, tak použít interního "
+"agenta ověření\n"
+"  --list-temp                        Vypsat dočasná oprávnění pro aktuální "
+"sezení\n"
+"  -p, --process=PID[,ČAS_ZAHÁJENÍ]     Zkontrolovat oprávnění vybraného "
+"procesu\n"
+"  --revoke-temp                      Zrušit všechna dočasná oprávnění pro "
+"aktuální sezení\n"
+"  -s, --system-bus-name=NÁZEV_SBĚRNICE     Zkontrolovat oprávnění vlastníka "
+"NÁZEV_SBĚRNICE\n"
+"  --version                          Zobrazit verzi\n"
+"\n"
+"Chyby hlaste na: %s\n"
+"%s domovská stránka: <%s>\n"
+
+#: ../src/programs/pkcheck.c:390 ../src/programs/pkcheck.c:415
+#: ../src/programs/pkcheck.c:427
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: po `%s' je očekáván argument\n"
+
+#: ../src/programs/pkcheck.c:405
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: Neplatná hodnota --process `%s'\n"
+
+#: ../src/programs/pkcheck.c:442 ../src/programs/pkcheck.c:451
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: po `--detail' jsou očekávány dva argumenty\n"
+
+#: ../src/programs/pkcheck.c:512
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: neurčen předmět\n"
 
 #. Translators: message shown when trying to run a program as root. Do not
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:666
+#: ../src/programs/pkexec.c:741
 msgid "Authentication is needed to run `$(program)' as the super user"
 msgstr "Pro spuštění `$(program)' jako správce je vyžadováno ověření"
 
@@ -59,7 +166,46 @@ msgstr "Pro spuštění `$(program)' jako správce je vyžadováno ověření"
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:676
-msgid "Authentication is needed to run `$(program)' as user $(user)"
-msgstr "Pro spuštění `$(program)' jako uživatel $(user) je vyžadováno ověření"
+#: ../src/programs/pkexec.c:751
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgstr ""
+"Pro spuštění `$(program)' jako uživatel $(user.display) je vyžadováno ověření"
 
+#: ../src/programs/pkttyagent.c:44
+msgid "Don't replace existing agent if any"
+msgstr "Nenahrazovat již bežícího agenta"
+
+#: ../src/programs/pkttyagent.c:48
+msgid "Close FD when the agent is registered"
+msgstr "Uzavře FD při registraci agenta"
+
+#: ../src/programs/pkttyagent.c:48
+msgid "FD"
+msgstr "FD"
+
+#: ../src/programs/pkttyagent.c:52
+msgid "Register the agent for the specified process"
+msgstr "Registrovat agenta pro určený proces"
+
+#: ../src/programs/pkttyagent.c:53
+msgid "PID[,START_TIME]"
+msgstr "PID[,ČAS_ZAHÁJENÍ]"
+
+#: ../src/programs/pkttyagent.c:57
+msgid "Register the agent owner of BUS_NAME"
+msgstr "Registrovat agenta vlastníka NÁZEV_SBĚRNICE"
+
+#: ../src/programs/pkttyagent.c:57
+msgid "BUS_NAME"
+msgstr "NÁZEV_SBĚRNICE"
+
+#: ../src/programs/pkttyagent.c:119
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: neplatný identifikátor procesu `%s'\n"
+
+#~ msgid "Authentication is required to configure lock down policy"
+#~ msgstr "Pro nastavení pravidel uzamčení je vyžadováno ověření"
+
+#~ msgid "Configure lock down for an action"
+#~ msgstr "Nastavit uzamčení pro činnost"
