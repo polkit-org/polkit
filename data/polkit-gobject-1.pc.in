@@ -11,3 +11,6 @@ Version: @VERSION@
 Libs: -L${libdir} -lpolkit-gobject-1
 Cflags: -I${includedir}/polkit-1
 Requires: gio-2.0 >= 2.18 glib-2.0 >= 2.18
+# Programs using pkcheck can use this to determine
+# whether or not it can be passed a uid.
+pkcheck_supports_uid=true
