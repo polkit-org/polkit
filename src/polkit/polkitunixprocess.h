@@ -47,7 +47,9 @@ typedef struct _PolkitUnixProcess PolkitUnixProcess;
 typedef struct _PolkitUnixProcessClass PolkitUnixProcessClass;
 
 GType           polkit_unix_process_get_type       (void) G_GNUC_CONST;
+G_GNUC_DEPRECATED_FOR(polkit_unix_process_new_for_owner)
 PolkitSubject  *polkit_unix_process_new            (gint               pid);
+G_GNUC_DEPRECATED_FOR(polkit_unix_process_new_for_owner)
 PolkitSubject  *polkit_unix_process_new_full       (gint               pid,
                                                     guint64            start_time);
 PolkitSubject  *polkit_unix_process_new_for_owner  (gint               pid,
