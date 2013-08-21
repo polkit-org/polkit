@@ -56,6 +56,10 @@ PolkitSubject  *polkit_system_bus_name_get_process_sync   (PolkitSystemBusName  
                                                            GCancellable         *cancellable,
                                                            GError              **error);
 
+PolkitUnixUser * polkit_system_bus_name_get_user_sync     (PolkitSystemBusName  *system_bus_name,
+							   GCancellable         *cancellable,
+							   GError              **error);
+
 G_END_DECLS
 
 #endif /* __POLKIT_SYSTEM_BUS_NAME_H */

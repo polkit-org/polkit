@@ -25,6 +25,7 @@
 
 #include <string.h>
 #include "polkitsystembusname.h"
+#include "polkitunixuser.h"
 #include "polkitsubject.h"
 #include "polkitprivate.h"
 
@@ -396,3 +397,58 @@ polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,
   return ret;
 }
 
+/**
+ * polkit_system_bus_name_get_user_sync:
+ * @system_bus_name: A #PolkitSystemBusName.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
+ *
+ * Synchronously gets a #PolkitUnixUser object for @system_bus_name;
+ * the calling thread is blocked until a reply is received.
+ *
+ * Returns: (allow-none) (transfer full): A #PolkitUnixUser object or %NULL if @error is set.
+ **/
+PolkitUnixUser *
+polkit_system_bus_name_get_user_sync (PolkitSystemBusName  *system_bus_name,
+				      GCancellable         *cancellable,
+				      GError              **error)
+{
+  GDBusConnection *connection;
+  PolkitUnixUser *ret;
+  GVariant *result;
+  guint32 uid;
+
+  g_return_val_if_fail (POLKIT_IS_SYSTEM_BUS_NAME (system_bus_name), NULL);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
+  g_return_val_if_fail (error == NULL || *error == NULL, NULL);
+
+  ret = NULL;
+
+  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
+  if (connection == NULL)
+    goto out;
+
+  result = g_dbus_connection_call_sync (connection,
+                                        "org.freedesktop.DBus",       /* name */
+                                        "/org/freedesktop/DBus",      /* object path */
+                                        "org.freedesktop.DBus",       /* interface name */
+                                        "GetConnectionUnixUser",      /* method */
+                                        g_variant_new ("(s)", system_bus_name->name),
+                                        G_VARIANT_TYPE ("(u)"),
+                                        G_DBUS_CALL_FLAGS_NONE,
+                                        -1,
+                                        cancellable,
+                                        error);
+  if (result == NULL)
+    goto out;
+
+  g_variant_get (result, "(u)", &uid);
+  g_variant_unref (result);
+
+  ret = (PolkitUnixUser*)polkit_unix_user_new (uid);
+
+ out:
+  if (connection != NULL)
+    g_object_unref (connection);
+  return ret;
+}

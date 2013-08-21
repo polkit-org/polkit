@@ -306,25 +306,7 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
-      GVariant *result;
-
-      result = g_dbus_connection_call_sync (monitor->system_bus,
-                                            "org.freedesktop.DBus",
-                                            "/org/freedesktop/DBus",
-                                            "org.freedesktop.DBus",
-                                            "GetConnectionUnixUser",
-                                            g_variant_new ("(s)", polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject))),
-                                            G_VARIANT_TYPE ("(u)"),
-                                            G_DBUS_CALL_FLAGS_NONE,
-                                            -1, /* timeout_msec */
-                                            NULL, /* GCancellable */
-                                            error);
-      if (result == NULL)
-        goto out;
-      g_variant_get (result, "(u)", &uid);
-      g_variant_unref (result);
-
-      ret = polkit_unix_user_new (uid);
+      ret = (PolkitIdentity*)polkit_system_bus_name_get_user_sync (POLKIT_SYSTEM_BUS_NAME (subject));
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
