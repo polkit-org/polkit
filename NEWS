@@ -2,6 +2,8 @@
 polkit 0.112
 --------------
 
+NOTE: This release is an important security update, see below.
+
 WARNING WARNING WARNING: This is a prerelease on the road to polkit
 1.0. Public API might change and certain parts of the code still needs
 some security review. Use at your own risk.
@@ -9,7 +11,18 @@ some security review. Use at your own risk.
 This is polkit 0.112.
 
 Highlights:
- TODO
+ This release fixes CVE-2013-4288: Race condition with process subjects that do
+ not have securely determined uid.
+
+ pkcheck(1) now supports a new format for the --process argument; all
+ applications need to use the new format to avoid a race condition (or use
+ --system-bus-name to identify the process instead).
+
+ Similarly, applications using the API should always use
+ polkit_unix_process_new_for_owner().  polkit_unix_process_new() and
+ polkit_unix_process_new_full() are unsafe and have been deprecated.
+
+ Thanks to Sebastian Krahmer of the SUSE Security Team for reporting this issue.
 
 Build requirements
 
@@ -21,12 +34,24 @@ Build requirements
 
 Changes since polkit 0.111:
 
- TODO
+Colin Walters (2):
+      polkitunixprocess: Deprecate racy APIs
+      pkcheck: Support --process=pid,start-time,uid syntax too
+
+Miloslav Trmač (1):
+      Post-release version bump to 0.112
+
+Tomas Bzatek (1):
+      Use GOnce for interface type registration
+
+Tomas Chvatal (2):
+      Add czech translation po file to distribution.
+      Update the czech once more with newest pot file.
 
 Thanks to our contributors.
 
-Miloslav Trmač,
-$DATE
+Colin Walters and Miloslav Trmač,
+September 18, 2013
 
 --------------
 polkit 0.111
