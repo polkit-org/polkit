@@ -111,9 +111,17 @@ main (int argc, char *argv[])
 
       if (sscanf (opt_process, "%i,%" G_GUINT64_FORMAT, &pid, &pid_start_time)
 	  == 2)
-	subject = polkit_unix_process_new_full (pid, pid_start_time);
+	{
+	  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+          subject = polkit_unix_process_new_full (pid, pid_start_time);
+	  G_GNUC_END_IGNORE_DEPRECATIONS
+	}
       else if (sscanf (opt_process, "%i", &pid) == 1)
-	subject = polkit_unix_process_new (pid);
+	{
+	  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+	  subject = polkit_unix_process_new (pid);
+	  G_GNUC_END_IGNORE_DEPRECATIONS
+	}
       else
 	{
 	  g_printerr (_("%s: Invalid process specifier `%s'\n"),

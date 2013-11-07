@@ -399,11 +399,15 @@ main (int argc, char *argv[])
             }
           else if (sscanf (argv[n], "%i,%" G_GUINT64_FORMAT, &pid, &pid_start_time) == 2)
             {
+	      G_GNUC_BEGIN_IGNORE_DEPRECATIONS
               subject = polkit_unix_process_new_full (pid, pid_start_time);
+	      G_GNUC_END_IGNORE_DEPRECATIONS
             }
           else if (sscanf (argv[n], "%i", &pid) == 1)
             {
+	      G_GNUC_BEGIN_IGNORE_DEPRECATIONS
               subject = polkit_unix_process_new (pid);
+	      G_GNUC_END_IGNORE_DEPRECATIONS
             }
           else
             {

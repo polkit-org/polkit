@@ -247,11 +247,15 @@ polkit_subject_from_string  (const gchar   *str,
         }
       else if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT, &scanned_pid, &scanned_starttime) == 2)
         {
+	  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
           subject = polkit_unix_process_new_full (scanned_pid, scanned_starttime);
+	  G_GNUC_END_IGNORE_DEPRECATIONS
         }
       else if (sscanf (str, "unix-process:%d", &scanned_pid) == 1)
         {
+	  G_GNUC_BEGIN_IGNORE_DEPRECATIONS
           subject = polkit_unix_process_new (scanned_pid);
+	  G_GNUC_END_IGNORE_DEPRECATIONS
           if (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) == 0)
             {
               g_object_unref (subject);
