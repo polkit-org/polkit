@@ -128,7 +128,7 @@ main (int argc, char *argv[])
       g_printerr ("Parent process was reaped by init(1)\n");
       return 1;
     }
-  subject = polkit_unix_process_new (parent_pid);
+  subject = polkit_unix_process_new_for_owner (parent_pid, 0, getuid ());
 
   cancellable = g_cancellable_new ();
 
