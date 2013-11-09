@@ -74,8 +74,8 @@ test_get_admin_identities_for_action_id (const gchar         *action_id,
 
   authority = get_authority ();
 
-  caller = polkit_unix_process_new (getpid ());
-  subject = polkit_unix_process_new (getpid ());
+  caller = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+  subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
   user_for_subject = polkit_identity_from_string ("unix-user:root", &error);
   g_assert_no_error (error);
 
@@ -340,8 +340,8 @@ rules_test_func (gconstpointer user_data)
 
   authority = get_authority ();
 
-  caller = polkit_unix_process_new (getpid ());
-  subject = polkit_unix_process_new (getpid ());
+  caller = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+  subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
   user_for_subject = polkit_identity_from_string (tc->identity, &error);
   g_assert_no_error (error);
 

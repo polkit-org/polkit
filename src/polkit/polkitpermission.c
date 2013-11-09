@@ -122,7 +122,7 @@ polkit_permission_constructed (GObject *object)
   PolkitPermission *permission = POLKIT_PERMISSION (object);
 
   if (permission->subject == NULL)
-    permission->subject = polkit_unix_process_new (getpid ());
+    permission->subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
 
   if (G_OBJECT_CLASS (polkit_permission_parent_class)->constructed != NULL)
     G_OBJECT_CLASS (polkit_permission_parent_class)->constructed (object);
