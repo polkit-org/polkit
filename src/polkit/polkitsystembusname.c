@@ -341,6 +341,116 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+typedef struct {
+  GError **error;
+  guint retrieved_uid : 1;
+  guint retrieved_pid : 1;
+  guint caught_error : 1;
+
+  guint32 uid;
+  guint32 pid;
+} AsyncGetBusNameCredsData;
+
+static void
+on_retrieved_unix_uid_pid (GObject              *src,
+			   GAsyncResult         *res,
+			   gpointer              user_data)
+{
+  AsyncGetBusNameCredsData *data = user_data;
+  GVariant *v;
+
+  v = g_dbus_connection_call_finish ((GDBusConnection*)src, res,
+				     data->caught_error ? NULL : data->error);
+  if (!v)
+    {
+      data->caught_error = TRUE;
+    }
+  else
+    {
+      guint32 value;
+      g_variant_get (v, "(u)", &value);
+      g_variant_unref (v);
+      if (!data->retrieved_uid)
+	{
+	  data->retrieved_uid = TRUE;
+	  data->uid = value;
+	}
+      else
+	{
+	  g_assert (!data->retrieved_pid);
+	  data->retrieved_pid = TRUE;
+	  data->pid = value;
+	}
+    }
+}
+
+static gboolean
+polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus_name,
+				       guint32                       *out_uid,
+				       guint32                       *out_pid,
+				       GCancellable                  *cancellable,
+				       GError                       **error)
+{
+  gboolean ret = FALSE;
+  AsyncGetBusNameCredsData data = { 0, };
+  GDBusConnection *connection = NULL;
+  GMainContext *tmp_context = NULL;
+
+  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
+  if (connection == NULL)
+    goto out;
+
+  data.error = error;
+
+  tmp_context = g_main_context_new ();
+  g_main_context_push_thread_default (tmp_context);
+
+  /* Do two async calls as it's basically as fast as one sync call.
+   */
+  g_dbus_connection_call (connection,
+			  "org.freedesktop.DBus",       /* name */
+			  "/org/freedesktop/DBus",      /* object path */
+			  "org.freedesktop.DBus",       /* interface name */
+			  "GetConnectionUnixUser",      /* method */
+			  g_variant_new ("(s)", system_bus_name->name),
+			  G_VARIANT_TYPE ("(u)"),
+			  G_DBUS_CALL_FLAGS_NONE,
+			  -1,
+			  cancellable,
+			  on_retrieved_unix_uid_pid,
+			  &data);
+  g_dbus_connection_call (connection,
+			  "org.freedesktop.DBus",       /* name */
+			  "/org/freedesktop/DBus",      /* object path */
+			  "org.freedesktop.DBus",       /* interface name */
+			  "GetConnectionUnixProcessID", /* method */
+			  g_variant_new ("(s)", system_bus_name->name),
+			  G_VARIANT_TYPE ("(u)"),
+			  G_DBUS_CALL_FLAGS_NONE,
+			  -1,
+			  cancellable,
+			  on_retrieved_unix_uid_pid,
+			  &data);
+
+  while (!((data.retrieved_uid && data.retrieved_pid) || data.caught_error))
+    g_main_context_iteration (tmp_context, TRUE);
+
+  if (out_uid)
+    *out_uid = data.uid;
+  if (out_pid)
+    *out_pid = data.pid;
+  ret = TRUE;
+ out:
+  if (tmp_context)
+    {
+      g_main_context_pop_thread_default (tmp_context);
+      g_main_context_unref (tmp_context);
+    }
+  if (connection != NULL)
+    g_object_unref (connection);
+  return ret;
+}
+
 /**
  * polkit_system_bus_name_get_process_sync:
  * @system_bus_name: A #PolkitSystemBusName.
@@ -357,43 +467,21 @@ polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,
                                          GCancellable         *cancellable,
                                          GError              **error)
 {
-  GDBusConnection *connection;
-  PolkitSubject *ret;
-  GVariant *result;
+  PolkitSubject *ret = NULL;
   guint32 pid;
+  guint32 uid;
 
   g_return_val_if_fail (POLKIT_IS_SYSTEM_BUS_NAME (system_bus_name), NULL);
   g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-  ret = NULL;
-
-  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
-  if (connection == NULL)
+  if (!polkit_system_bus_name_get_creds_sync (system_bus_name, &uid, &pid,
+					      cancellable, error))
     goto out;
 
-  result = g_dbus_connection_call_sync (connection,
-                                        "org.freedesktop.DBus",       /* name */
-                                        "/org/freedesktop/DBus",      /* object path */
-                                        "org.freedesktop.DBus",       /* interface name */
-                                        "GetConnectionUnixProcessID", /* method */
-                                        g_variant_new ("(s)", system_bus_name->name),
-                                        G_VARIANT_TYPE ("(u)"),
-                                        G_DBUS_CALL_FLAGS_NONE,
-                                        -1,
-                                        cancellable,
-                                        error);
-  if (result == NULL)
-    goto out;
-
-  g_variant_get (result, "(u)", &pid);
-  g_variant_unref (result);
-
-  ret = polkit_unix_process_new (pid);
+  ret = polkit_unix_process_new_for_owner (pid, 0, uid);
 
  out:
-  if (connection != NULL)
-    g_object_unref (connection);
   return ret;
 }
 
@@ -413,42 +501,19 @@ polkit_system_bus_name_get_user_sync (PolkitSystemBusName  *system_bus_name,
 				      GCancellable         *cancellable,
 				      GError              **error)
 {
-  GDBusConnection *connection;
-  PolkitUnixUser *ret;
-  GVariant *result;
+  PolkitUnixUser *ret = NULL;
   guint32 uid;
 
   g_return_val_if_fail (POLKIT_IS_SYSTEM_BUS_NAME (system_bus_name), NULL);
   g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-  ret = NULL;
-
-  connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
-  if (connection == NULL)
+  if (!polkit_system_bus_name_get_creds_sync (system_bus_name, &uid, NULL,
+					      cancellable, error))
     goto out;
-
-  result = g_dbus_connection_call_sync (connection,
-                                        "org.freedesktop.DBus",       /* name */
-                                        "/org/freedesktop/DBus",      /* object path */
-                                        "org.freedesktop.DBus",       /* interface name */
-                                        "GetConnectionUnixUser",      /* method */
-                                        g_variant_new ("(s)", system_bus_name->name),
-                                        G_VARIANT_TYPE ("(u)"),
-                                        G_DBUS_CALL_FLAGS_NONE,
-                                        -1,
-                                        cancellable,
-                                        error);
-  if (result == NULL)
-    goto out;
-
-  g_variant_get (result, "(u)", &uid);
-  g_variant_unref (result);
 
   ret = (PolkitUnixUser*)polkit_unix_user_new (uid);
 
  out:
-  if (connection != NULL)
-    g_object_unref (connection);
   return ret;
 }
