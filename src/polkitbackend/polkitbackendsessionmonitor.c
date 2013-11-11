@@ -306,7 +306,7 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
-      ret = (PolkitIdentity*)polkit_system_bus_name_get_user_sync (POLKIT_SYSTEM_BUS_NAME (subject), NULL, NULL);
+      ret = (PolkitIdentity*)polkit_system_bus_name_get_user_sync (POLKIT_SYSTEM_BUS_NAME (subject), NULL, error);
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
