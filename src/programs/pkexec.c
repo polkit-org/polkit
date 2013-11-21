@@ -143,8 +143,22 @@ pam_conversation_function (int n,
   return PAM_CONV_ERR;
 }
 
+/* A work around for:
+ * https://bugzilla.redhat.com/show_bug.cgi?id=753882
+ */
 static gboolean
-open_session (const gchar *user_to_auth)
+xdg_runtime_dir_is_owned_by (const char *path,
+			     uid_t       target_uid)
+{
+  struct stat stbuf;
+
+  return stat (path, &stbuf) == 0 &&
+    stbuf.st_uid == target_uid;
+}
+
+static gboolean
+open_session (const gchar *user_to_auth,
+	      uid_t        target_uid)
 {
   gboolean ret;
   gint rc;
@@ -186,7 +200,19 @@ open_session (const gchar *user_to_auth)
     {
       guint n;
       for (n = 0; envlist[n]; n++)
-        putenv (envlist[n]);
+	{
+	  const char *envitem = envlist[n];
+	  
+	  if (g_str_has_prefix (envitem, "XDG_RUNTIME_DIR="))
+	    {
+	      const char *eq = strchr (envitem, '=');
+	      g_assert (eq);
+	      if (!xdg_runtime_dir_is_owned_by (eq + 1, target_uid))
+		continue;
+	    }
+
+	  putenv (envlist[n]);
+	}
       free (envlist);
     }
 
@@ -913,7 +939,8 @@ main (int argc, char *argv[])
    * As evident above, neither su(1) (and, for that matter, nor sudo(8)) does this.
    */
 #ifdef POLKIT_AUTHFW_PAM
-  if (!open_session (pw->pw_name))
+  if (!open_session (pw->pw_name,
+		     pw->pw_uid))
     {
       goto out;
     }
