@@ -1363,7 +1363,6 @@ js_polkit_spawn (JSContext  *cx,
           goto out;
 	}
       s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
-      s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
       argv[n] = g_strdup (s);
       JS_free (cx, s);
     }
