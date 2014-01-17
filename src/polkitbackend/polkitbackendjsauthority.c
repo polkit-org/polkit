@@ -740,7 +740,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
                           __FILE__, __LINE__,
                           &ret_jsval))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluting '%s' failed", src);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
     }
 
@@ -866,7 +866,7 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
                           __FILE__, __LINE__,
                           &ret_jsval))
     {
-      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluting '%s' failed", src);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
     }
 
