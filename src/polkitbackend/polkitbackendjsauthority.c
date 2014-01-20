@@ -1286,7 +1286,9 @@ get_signal_name (gint signal_number)
     _HANDLE_SIG (SIGTTIN);
     _HANDLE_SIG (SIGTTOU);
     _HANDLE_SIG (SIGBUS);
+#ifdef SIGPOLL
     _HANDLE_SIG (SIGPOLL);
+#endif
     _HANDLE_SIG (SIGPROF);
     _HANDLE_SIG (SIGSYS);
     _HANDLE_SIG (SIGTRAP);

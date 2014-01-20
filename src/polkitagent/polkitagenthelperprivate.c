@@ -103,7 +103,12 @@ flush_and_wait ()
 {
   fflush (stdout);
   fflush (stderr);
+#ifdef HAVE_FDATASYNC
   fdatasync (fileno(stdout));
   fdatasync (fileno(stderr));
+#else
+  fsync (fileno(stdout));
+  fsync (fileno(stderr));
+#endif
   usleep (100 * 1000);
 }

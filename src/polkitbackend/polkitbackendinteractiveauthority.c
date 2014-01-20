@@ -2113,11 +2113,15 @@ get_users_in_net_group (PolkitIdentity                    *group,
   ret = NULL;
   name = polkit_unix_netgroup_get_name (POLKIT_UNIX_NETGROUP (group));
 
+#ifdef HAVE_SETNETGRENT_RETURN
   if (setnetgrent (name) == 0)
     {
       g_warning ("Error looking up net group with name %s: %s", name, g_strerror (errno));
       goto out;
     }
+#else
+  setnetgrent (name);
+#endif
 
   for (;;)
     {

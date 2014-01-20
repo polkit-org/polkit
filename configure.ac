@@ -158,11 +158,30 @@ AC_CHECK_LIB(expat,XML_ParserCreate,[EXPAT_LIBS="-lexpat"],
 	     [AC_MSG_ERROR([Can't find expat library. Please install expat.])])
 AC_SUBST(EXPAT_LIBS)
 
-AC_CHECK_FUNCS(clearenv)
+AC_CHECK_FUNCS(clearenv fdatasync)
 
 if test "x$GCC" = "xyes"; then
   LDFLAGS="-Wl,--as-needed $LDFLAGS"
 fi
+
+dnl ---------------------------------------------------------------------------
+dnl - Check whether setnetgrent has a return value
+dnl ---------------------------------------------------------------------------
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+	#include <stddef.h>
+	#include <netdb.h>
+]], [[
+	int r = setnetgrent (NULL);]])],
+[AC_DEFINE([HAVE_SETNETGRENT_RETURN], 1, [Define to 1 if setnetgrent has return value])])
+
+dnl ---------------------------------------------------------------------------
+dnl - Check whether we want to build test
+dnl ---------------------------------------------------------------------------
+AC_ARG_ENABLE([test],
+              [AS_HELP_STRING([--disable-test], [Do not build tests])],
+              [enable_test=$enableval], [enable_test=yes])
+
+AM_CONDITIONAL(BUILD_TEST, [test "x$enable_test" = "xyes"])
 
 dnl ---------------------------------------------------------------------------
 dnl - Select wether to use libsystemd-login or ConsoleKit for session tracking
