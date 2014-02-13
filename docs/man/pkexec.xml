@@ -47,11 +47,12 @@
 
   <refsect1 id="pkexec-description"><title>DESCRIPTION</title>
     <para>
-      <command>pkexec</command> allows an authorized user to
-      execute <replaceable>PROGRAM</replaceable> as another
-      user. If <replaceable>username</replaceable> is not specified,
-      then the program will be executed as the administrative super
-      user, <emphasis>root</emphasis>.
+      <command>pkexec</command> allows an authorized user to execute
+      <replaceable>PROGRAM</replaceable> as another user. If
+      <replaceable>PROGRAM</replaceable> is not specified, the default
+      shell will be run.  If <replaceable>username</replaceable> is
+      not specified, then the program will be executed as the
+      administrative super user, <emphasis>root</emphasis>.
     </para>
   </refsect1>
 

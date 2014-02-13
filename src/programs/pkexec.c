@@ -75,7 +75,7 @@ usage (int argc, char *argv[])
   g_printerr ("pkexec --version |\n"
               "       --help |\n"
               "       --disable-internal-agent |\n"
-              "       [--user username] PROGRAM [ARGUMENTS...]\n"
+              "       [--user username] [PROGRAM] [ARGUMENTS...]\n"
               "\n"
               "See the pkexec manual page for more details.\n"
 	      "\n"
@@ -498,6 +498,7 @@ main (int argc, char *argv[])
   action_id = NULL;
   saved_env = NULL;
   path = NULL;
+  exec_argv = NULL;
   command_line = NULL;
   opt_user = NULL;
   local_agent_handle = NULL;
@@ -576,6 +577,21 @@ main (int argc, char *argv[])
   if (opt_user == NULL)
     opt_user = g_strdup ("root");
 
+  /* Look up information about the user we care about - yes, the return
+   * value of this function is a bit funky
+   */
+  rc = getpwnam_r (opt_user, &pwstruct, pwbuf, sizeof pwbuf, &pw);
+  if (rc == 0 && pw == NULL)
+    {
+      g_printerr ("User `%s' does not exist.\n", opt_user);
+      goto out;
+    }
+  else if (pw == NULL)
+    {
+      g_printerr ("Error getting information for user `%s': %s\n", opt_user, g_strerror (rc));
+      goto out;
+    }
+
   /* Now figure out the command-line to run - argv is guaranteed to be NULL-terminated, see
    *
    *  http://lkml.indiana.edu/hypermail/linux/kernel/0409.2/0287.html
@@ -588,8 +604,21 @@ main (int argc, char *argv[])
   path = g_strdup (argv[n]);
   if (path == NULL)
     {
-      usage (argc, argv);
-      goto out;
+      GPtrArray *shell_argv;
+
+      path = g_strdup (pwstruct.pw_shell);
+      if (!path)
+	{
+          g_printerr ("No shell configured or error retrieving pw_shell\n");
+          goto out;
+	}
+      /* If you change this, be sure to change the if (!command_line)
+	 case below too */
+      command_line = g_strdup (path);
+      shell_argv = g_ptr_array_new ();
+      g_ptr_array_add (shell_argv, path);
+      g_ptr_array_add (shell_argv, NULL);
+      exec_argv = (char**)g_ptr_array_free (shell_argv, FALSE);
     }
   if (path[0] != '/')
     {
@@ -608,22 +637,13 @@ main (int argc, char *argv[])
       g_printerr ("Error accessing %s: %s\n", path, g_strerror (errno));
       goto out;
     }
-  command_line = g_strjoinv (" ", argv + n);
-  exec_argv = argv + n;
 
-  /* Look up information about the user we care about - yes, the return
-   * value of this function is a bit funky
-   */
-  rc = getpwnam_r (opt_user, &pwstruct, pwbuf, sizeof pwbuf, &pw);
-  if (rc == 0 && pw == NULL)
+  if (!command_line)
     {
-      g_printerr ("User `%s' does not exist.\n", opt_user);
-      goto out;
-    }
-  else if (pw == NULL)
-    {
-      g_printerr ("Error getting information for user `%s': %s\n", opt_user, g_strerror (rc));
-      goto out;
+      /* If you change this, be sure to change the path == NULL case
+	 above too */
+      command_line = g_strjoinv (" ", argv + n);
+      exec_argv = argv + n;
     }
 
   /* now save the environment variables we care about */
@@ -737,6 +757,8 @@ main (int argc, char *argv[])
       goto out;
     }
 
+  g_assert (path != NULL);
+  g_assert (exec_argv != NULL);
   action_id = find_action_for_path (authority,
                                     path,
                                     exec_argv[1],
