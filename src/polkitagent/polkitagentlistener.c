@@ -156,7 +156,6 @@ server_register (Server   *server,
                                                                          NULL,
                                                                          &local_error))
     {
-      g_warning ("Unable to register authentication agent: %s", local_error->message);
       g_propagate_error (error, local_error);
     }
   else
