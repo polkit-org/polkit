@@ -318,6 +318,9 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
   PolkitSubject *session = NULL;
   char *session_id = NULL;
   pid_t pid;
+#if HAVE_SD_UID_GET_DISPLAY
+  uid_t uid;
+#endif
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     process = POLKIT_UNIX_PROCESS (subject); /* We already have a process */
@@ -338,16 +341,30 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
                    g_type_name (G_TYPE_FROM_INSTANCE (subject)));
     }
 
-  /* Now do process -> pid -> session */
+  /* Now do process -> pid -> same session */
   g_assert (process != NULL);
   pid = polkit_unix_process_get_pid (process);
 
-  if (sd_pid_get_session (pid, &session_id) < 0)
+  if (sd_pid_get_session (pid, &session_id) >= 0)
+    {
+      session = polkit_unix_session_new (session_id);
+      goto out;
+    }
+
+#if HAVE_SD_UID_GET_DISPLAY
+  /* Now do process -> uid -> graphical session (systemd version 213)*/
+  if (sd_pid_get_owner_uid (pid, &uid) < 0)
     goto out;
-  
-  session = polkit_unix_session_new (session_id);
-  free (session_id);
+
+  if (sd_uid_get_display (uid, &session_id) >= 0)
+    {
+      session = polkit_unix_session_new (session_id);
+      goto out;
+    }
+#endif
+
  out:
+  free (session_id);
   if (tmp_process) g_object_unref (tmp_process);
   return session;
 }

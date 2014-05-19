@@ -202,6 +202,10 @@ if test "$enable_libsystemd_login" != "no"; then
   if test "$have_libsystemd_login" = "yes"; then
     SESSION_TRACKING=libsystemd-login
     AC_DEFINE([HAVE_LIBSYSTEMD_LOGIN], 1, [Define to 1 if libsystemd-login is available])
+    save_LIBS=$LIBS
+    LIBS=$LIBSYSTEMD_LOGIN_LIBS
+    AC_CHECK_FUNCS(sd_uid_get_display)
+    LIBS=$save_LIBS
   else
     if test "$enable_libsystemd_login" = "yes"; then
       AC_MSG_ERROR([libsystemd-login support requested but libsystemd-login library not found])
