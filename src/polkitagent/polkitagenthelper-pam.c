@@ -230,7 +230,7 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
   gchar *tmp = NULL;
   size_t len;
 
-  data = data;
+  (void)data;
   if (n <= 0 || n > PAM_MAX_NUM_MSG)
     return PAM_CONV_ERR;
 
