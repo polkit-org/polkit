@@ -559,7 +559,11 @@ log_result (PolkitBackendInteractiveAuthority    *authority,
   user_of_subject = polkit_backend_session_monitor_get_user_for_subject (priv->session_monitor, subject, NULL);
 
   subject_str = polkit_subject_to_string (subject);
-  user_of_subject_str = polkit_identity_to_string (user_of_subject);
+
+  if (user_of_subject != NULL)
+    user_of_subject_str = polkit_identity_to_string (user_of_subject);
+  else
+    user_of_subject_str = g_strdup ("<unknown>");
   caller_str = polkit_subject_to_string (caller);
 
   subject_cmdline = _polkit_subject_get_cmdline (subject);
