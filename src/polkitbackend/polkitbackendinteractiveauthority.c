@@ -278,10 +278,9 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
   PolkitBackendInteractiveAuthorityPrivate *priv;
   GFile *directory;
   GError *error;
-  static volatile GQuark domain = 0;
 
   /* Force registering error domain */
-  domain = POLKIT_ERROR; domain;
+  (void)POLKIT_ERROR;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
