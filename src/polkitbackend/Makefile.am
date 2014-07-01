@@ -2,7 +2,7 @@ NULL =
 
 BUILT_SOURCES =
 
-INCLUDES =                                                      \
+AM_CPPFLAGS =                                                   \
         -I$(top_builddir)/src                                   \
         -I$(top_srcdir)/src                                     \
         -I$(top_builddir)/src/polkit                            \
