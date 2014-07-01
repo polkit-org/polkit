@@ -80,6 +80,8 @@ struct _PolkitBackendJsAuthorityPrivate
   GMainContext *rkt_context;
   GMainLoop *rkt_loop;
   GSource *rkt_source;
+  GMutex rkt_timeout_pending_mutex;
+  gboolean rkt_timeout_pending;
 
   /* A list of JSObject instances */
   GList *scripts;
@@ -528,6 +530,7 @@ polkit_backend_js_authority_constructed (GObject *object)
 
   g_mutex_init (&authority->priv->rkt_init_mutex);
   g_cond_init (&authority->priv->rkt_init_cond);
+  g_mutex_init (&authority->priv->rkt_timeout_pending_mutex);
 
   authority->priv->runaway_killer_thread = g_thread_new ("runaway-killer-thread",
                                                          runaway_killer_thread_func,
@@ -563,6 +566,7 @@ polkit_backend_js_authority_finalize (GObject *object)
 
   g_mutex_clear (&authority->priv->rkt_init_mutex);
   g_cond_clear (&authority->priv->rkt_init_cond);
+  g_mutex_clear (&authority->priv->rkt_timeout_pending_mutex);
 
   /* shut down the killer thread */
   g_assert (authority->priv->rkt_loop != NULL);
@@ -957,6 +961,18 @@ js_operation_callback (JSContext *cx)
   JSString *val_str;
   jsval val;
 
+  /* This callback can be called by the runtime at any time without us causing
+   * it by JS_TriggerOperationCallback().
+   */
+  g_mutex_lock (&authority->priv->rkt_timeout_pending_mutex);
+  if (!authority->priv->rkt_timeout_pending)
+    {
+      g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
+      return JS_TRUE;
+    }
+  authority->priv->rkt_timeout_pending = FALSE;
+  g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
+
   /* Log that we are terminating the script */
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority), "Terminating runaway script");
 
@@ -973,6 +989,10 @@ static gboolean
 rkt_on_timeout (gpointer user_data)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (user_data);
+
+  g_mutex_lock (&authority->priv->rkt_timeout_pending_mutex);
+  authority->priv->rkt_timeout_pending = TRUE;
+  g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
 
   /* Supposedly this is thread-safe... */
 #if JS_VERSION == 186
@@ -993,6 +1013,9 @@ runaway_killer_setup (PolkitBackendJsAuthority *authority)
   g_assert (authority->priv->rkt_source == NULL);
 
   /* set-up timer for runaway scripts, will be executed in runaway_killer_thread */
+  g_mutex_lock (&authority->priv->rkt_timeout_pending_mutex);
+  authority->priv->rkt_timeout_pending = FALSE;
+  g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
   authority->priv->rkt_source = g_timeout_source_new_seconds (15);
   g_source_set_callback (authority->priv->rkt_source, rkt_on_timeout, authority, NULL);
   g_source_attach (authority->priv->rkt_source, authority->priv->rkt_context);
