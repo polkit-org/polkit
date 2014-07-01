@@ -659,26 +659,22 @@ static void
 set_property_strv (PolkitBackendJsAuthority  *authority,
                    JSObject                  *obj,
                    const gchar               *name,
-                   const gchar *const        *value,
-                   gssize                     len)
+                   GPtrArray                 *value)
 {
   jsval value_jsval;
   JSObject *array_object;
   jsval *jsvals;
   guint n;
 
-  if (len < 0)
-    len = g_strv_length ((gchar **) value);
-
-  jsvals = g_new0 (jsval, len);
-  for (n = 0; n < len; n++)
+  jsvals = g_new0 (jsval, value->len);
+  for (n = 0; n < value->len; n++)
     {
       JSString *jsstr;
-      jsstr = JS_NewStringCopyZ (authority->priv->cx, value[n]);
+      jsstr = JS_NewStringCopyZ (authority->priv->cx, g_ptr_array_index(value, n));
       jsvals[n] = STRING_TO_JSVAL (jsstr);
     }
 
-  array_object = JS_NewArrayObject (authority->priv->cx, (gint32) len, jsvals);
+  array_object = JS_NewArrayObject (authority->priv->cx, value->len, jsvals);
 
   value_jsval = OBJECT_TO_JSVAL (array_object);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
@@ -818,11 +814,9 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
         }
     }
 
-  g_ptr_array_add (groups, NULL);
-
   set_property_int32 (authority, obj, "pid", pid);
   set_property_str (authority, obj, "user", user_name);
-  set_property_strv (authority, obj, "groups", (const gchar* const *) groups->pdata, groups->len);
+  set_property_strv (authority, obj, "groups", groups);
   set_property_str (authority, obj, "seat", seat_str);
   set_property_str (authority, obj, "session", session_str);
   set_property_bool (authority, obj, "local", subject_is_local);
