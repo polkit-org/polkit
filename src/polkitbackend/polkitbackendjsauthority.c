@@ -482,6 +482,7 @@ polkit_backend_js_authority_constructed (GObject *object)
 
   if (authority->priv->js_global == NULL)
     goto fail;
+  JS_AddObjectRoot (authority->priv->cx, &authority->priv->js_global);
 
   if (!JS_InitStandardClasses (authority->priv->cx, authority->priv->js_global))
     goto fail;
@@ -494,6 +495,7 @@ polkit_backend_js_authority_constructed (GObject *object)
                                                 JSPROP_ENUMERATE);
   if (authority->priv->js_polkit == NULL)
     goto fail;
+  JS_AddObjectRoot (authority->priv->cx, &authority->priv->js_polkit);
 
   if (!JS_DefineFunctions (authority->priv->cx,
                            authority->priv->js_polkit,
@@ -571,6 +573,11 @@ polkit_backend_js_authority_finalize (GObject *object)
     }
   g_free (authority->priv->dir_monitors);
   g_strfreev (authority->priv->rules_dirs);
+
+  JS_BeginRequest (authority->priv->cx);
+  JS_RemoveObjectRoot (authority->priv->cx, &authority->priv->js_polkit);
+  JS_RemoveObjectRoot (authority->priv->cx, &authority->priv->js_global);
+  JS_EndRequest (authority->priv->cx);
 
   JS_DestroyContext (authority->priv->cx);
   JS_DestroyRuntime (authority->priv->rt);
