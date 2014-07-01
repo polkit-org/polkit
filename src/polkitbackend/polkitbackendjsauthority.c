@@ -43,6 +43,13 @@
 
 #include "initjs.h" /* init.js */
 
+#ifdef JSGC_USE_EXACT_ROOTING
+/* See https://developer.mozilla.org/en-US/docs/SpiderMonkey/Internals/GC/Exact_Stack_Rooting
+ * for more information about exact stack rooting.
+ */
+#error "This code is not safe in SpiderMonkey exact stack rooting configurations"
+#endif
+
 /**
  * SECTION:polkitbackendjsauthority
  * @title: PolkitBackendJsAuthority
