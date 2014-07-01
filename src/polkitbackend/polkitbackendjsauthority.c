@@ -1074,7 +1074,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   if (!call_js_function_with_runaway_killer (authority,
                                              "_runAdminRules",
-                                             2,
+                                             G_N_ELEMENTS (argv),
                                              argv,
                                              &rval))
     {
@@ -1179,7 +1179,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
   if (!call_js_function_with_runaway_killer (authority,
                                              "_runRules",
-                                             3,
+                                             G_N_ELEMENTS (argv),
                                              argv,
                                              &rval))
     {
