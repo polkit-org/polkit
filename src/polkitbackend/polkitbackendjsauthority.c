@@ -663,23 +663,22 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
 {
   jsval value_jsval;
   JSObject *array_object;
-  jsval *jsvals;
   guint n;
 
-  jsvals = g_new0 (jsval, value->len);
+  array_object = JS_NewArrayObject (authority->priv->cx, 0, NULL);
+
   for (n = 0; n < value->len; n++)
     {
       JSString *jsstr;
-      jsstr = JS_NewStringCopyZ (authority->priv->cx, g_ptr_array_index(value, n));
-      jsvals[n] = STRING_TO_JSVAL (jsstr);
-    }
+      jsval val;
 
-  array_object = JS_NewArrayObject (authority->priv->cx, value->len, jsvals);
+      jsstr = JS_NewStringCopyZ (authority->priv->cx, g_ptr_array_index(value, n));
+      val = STRING_TO_JSVAL (jsstr);
+      JS_SetElement (authority->priv->cx, array_object, n, &val);
+    }
 
   value_jsval = OBJECT_TO_JSVAL (array_object);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
-
-  g_free (jsvals);
 }
 
 
