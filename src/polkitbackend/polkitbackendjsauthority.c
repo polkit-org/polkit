@@ -239,6 +239,7 @@ rules_file_name_cmp (const gchar *a,
   return ret;
 }
 
+/* authority->priv->cx must be within a request */
 static void
 load_scripts (PolkitBackendJsAuthority  *authority)
 {
@@ -339,6 +340,8 @@ reload_scripts (PolkitBackendJsAuthority *authority)
   jsval argv[1] = {JSVAL_NULL};
   jsval rval = JSVAL_NULL;
 
+  JS_BeginRequest (authority->priv->cx);
+
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
                            "_deleteRules",
@@ -364,7 +367,7 @@ reload_scripts (PolkitBackendJsAuthority *authority)
   /* Let applications know we have new rules... */
   g_signal_emit_by_name (authority, "changed");
  out:
-  ;
+  JS_EndRequest (authority->priv->cx);
 }
 
 static void
@@ -447,6 +450,7 @@ static void
 polkit_backend_js_authority_constructed (GObject *object)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
+  gboolean entered_request = FALSE;
 
   authority->priv->rt = JS_NewRuntime (8L * 1024L * 1024L);
   if (authority->priv->rt == NULL)
@@ -465,6 +469,9 @@ polkit_backend_js_authority_constructed (GObject *object)
   JS_SetVersion(authority->priv->cx, JSVERSION_LATEST);
   JS_SetErrorReporter(authority->priv->cx, report_error);
   JS_SetContextPrivate (authority->priv->cx, authority);
+
+  JS_BeginRequest(authority->priv->cx);
+  entered_request = TRUE;
 
   authority->priv->js_global =
 #if JS_VERSION == 186
@@ -526,10 +533,15 @@ polkit_backend_js_authority_constructed (GObject *object)
   setup_file_monitors (authority);
   load_scripts (authority);
 
+  JS_EndRequest (authority->priv->cx);
+  entered_request = FALSE;
+
   G_OBJECT_CLASS (polkit_backend_js_authority_parent_class)->constructed (object);
   return;
 
  fail:
+  if (entered_request)
+    JS_EndRequest (authority->priv->cx);
   g_critical ("Error initializing JavaScript environment");
   g_assert_not_reached ();
 }
@@ -642,6 +654,7 @@ polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+/* authority->priv->cx must be within a request */
 static void
 set_property_str (PolkitBackendJsAuthority  *authority,
                   JSObject                  *obj,
@@ -655,6 +668,7 @@ set_property_str (PolkitBackendJsAuthority  *authority,
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
+/* authority->priv->cx must be within a request */
 static void
 set_property_strv (PolkitBackendJsAuthority  *authority,
                    JSObject                  *obj,
@@ -681,7 +695,7 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
-
+/* authority->priv->cx must be within a request */
 static void
 set_property_int32 (PolkitBackendJsAuthority  *authority,
                     JSObject                  *obj,
@@ -693,6 +707,7 @@ set_property_int32 (PolkitBackendJsAuthority  *authority,
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
+/* authority->priv->cx must be within a request */
 static void
 set_property_bool (PolkitBackendJsAuthority  *authority,
                    JSObject                  *obj,
@@ -706,6 +721,7 @@ set_property_bool (PolkitBackendJsAuthority  *authority,
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+/* authority->priv->cx must be within a request */
 static gboolean
 subject_to_jsval (PolkitBackendJsAuthority  *authority,
                   PolkitSubject             *subject,
@@ -838,6 +854,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+/* authority->priv->cx must be within a request */
 static gboolean
 action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
                              const gchar               *action_id,
@@ -1041,6 +1058,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   gchar *ret_str = NULL;
   gchar **ret_strs = NULL;
 
+  JS_BeginRequest (authority->priv->cx);
+
   if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1120,6 +1139,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   JS_MaybeGC (authority->priv->cx);
 
+  JS_EndRequest (authority->priv->cx);
+
   return ret;
 }
 
@@ -1145,6 +1166,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   const jschar *ret_utf16;
   gchar *ret_str = NULL;
   gboolean good = FALSE;
+
+  JS_BeginRequest (authority->priv->cx);
 
   if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
     {
@@ -1221,6 +1244,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   g_free (ret_str);
 
   JS_MaybeGC (authority->priv->cx);
+
+  JS_EndRequest (authority->priv->cx);
 
   return ret;
 }
