@@ -900,6 +900,7 @@ server_handle_register_authentication_agent (Server                 *server,
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
+  g_variant_unref (subject_gvariant);
   if (subject != NULL)
     g_object_unref (subject);
 }
