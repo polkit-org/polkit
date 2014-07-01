@@ -961,9 +961,11 @@ js_operation_callback (JSContext *cx)
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority), "Terminating runaway script");
 
   /* Throw an exception - this way the JS code can ignore the runaway script handling */
+  JS_SetOperationCallback (authority->priv->cx, NULL);
   val_str = JS_NewStringCopyZ (cx, "Terminating runaway script");
   val = STRING_TO_JSVAL (val_str);
   JS_SetPendingException (authority->priv->cx, val);
+  JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
   return JS_FALSE;
 }
 
