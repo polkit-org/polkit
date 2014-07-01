@@ -1022,7 +1022,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
 
   /* Otherwise just return the result */
   g_simple_async_result_set_op_res_gpointer (simple,
-                                             result,
+                                             g_object_ref (result),
                                              g_object_unref);
   g_simple_async_result_complete (simple);
   g_object_unref (simple);
@@ -1039,6 +1039,9 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
   g_free (subject_str);
   g_free (user_of_caller_str);
   g_free (user_of_subject_str);
+
+  if (result != NULL)
+    g_object_unref (result);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

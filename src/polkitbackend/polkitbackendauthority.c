@@ -714,6 +714,7 @@ check_auth_cb (GObject      *source_object,
       g_variant_ref_sink (value);
       g_dbus_method_invocation_return_value (data->invocation, g_variant_new ("(@(bba{ss}))", value));
       g_variant_unref (value);
+      g_object_unref (result);
     }
 
   check_auth_data_free (data);
