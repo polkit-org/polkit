@@ -549,6 +549,11 @@ main (int argc, char *argv[])
               goto out;
             }
 
+          if (opt_user != NULL)
+            {
+              g_printerr ("--user specified twice\n");
+              goto out;
+            }
           opt_user = g_strdup (argv[n]);
         }
       else if (strcmp (argv[n], "--disable-internal-agent") == 0)
