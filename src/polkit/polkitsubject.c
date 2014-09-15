@@ -428,7 +428,7 @@ polkit_subject_new_for_gvariant (GVariant  *variant,
       start_time = g_variant_get_uint64 (v);
       g_variant_unref (v);
 
-      v = lookup_asv (details_gvariant, "uid", G_VARIANT_TYPE_INT32, error);
+      v = lookup_asv (details_gvariant, "uid", G_VARIANT_TYPE_INT32, NULL);
       if (v != NULL)
         {
           uid = g_variant_get_int32 (v);
