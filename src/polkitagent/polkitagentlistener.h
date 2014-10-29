@@ -112,7 +112,7 @@ gboolean  polkit_agent_listener_initiate_authentication_finish  (PolkitAgentList
 gboolean  polkit_agent_register_listener                        (PolkitAgentListener      *listener,
                                                                  PolkitSubject            *subject,
                                                                  const gchar              *object_path,
-                                                                 GError                  **error) G_GNUC_DEPRECATED_FOR (polkit_authority_listener_register);
+                                                                 GError                  **error) G_GNUC_DEPRECATED_FOR (polkit_agent_listener_register);
 
 /**
  * PolkitAgentRegisterFlags:
