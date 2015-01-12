@@ -715,7 +715,6 @@ polkit_authority_enumerate_actions_finish (PolkitAuthority *authority,
   while ((child = g_variant_iter_next_value (&iter)) != NULL)
     {
       ret = g_list_prepend (ret, polkit_action_description_new_for_gvariant (child));
-      g_variant_ref_sink (child);
       g_variant_unref (child);
     }
   ret = g_list_reverse (ret);
