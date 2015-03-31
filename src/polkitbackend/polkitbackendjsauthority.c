@@ -35,9 +35,9 @@
 
 #include <polkit/polkitprivate.h>
 
-#ifdef HAVE_LIBSYSTEMD_LOGIN
+#ifdef HAVE_LIBSYSTEMD
 #include <systemd/sd-login.h>
-#endif /* HAVE_LIBSYSTEMD_LOGIN */
+#endif /* HAVE_LIBSYSTEMD */
 
 #include <jsapi.h>
 
@@ -764,7 +764,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
       g_assert_not_reached ();
     }
 
-#ifdef HAVE_LIBSYSTEMD_LOGIN
+#ifdef HAVE_LIBSYSTEMD
   if (sd_pid_get_session (pid, &session_str) == 0)
     {
       if (sd_session_get_seat (session_str, &seat_str) == 0)
@@ -772,7 +772,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
           /* do nothing */
         }
     }
-#endif /* HAVE_LIBSYSTEMD_LOGIN */
+#endif /* HAVE_LIBSYSTEMD */
 
   g_assert (POLKIT_IS_UNIX_USER (user_for_subject));
   uid = polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_for_subject));
