@@ -40,7 +40,6 @@
 
 typedef struct
 {
-  gchar *action_id;
   gchar *vendor_name;
   gchar *vendor_url;
   gchar *icon_name;
@@ -62,7 +61,6 @@ typedef struct
 static void
 parsed_action_free (ParsedAction *action)
 {
-  g_free (action->action_id);
   g_free (action->vendor_name);
   g_free (action->vendor_url);
   g_free (action->icon_name);
@@ -134,7 +132,7 @@ polkit_backend_action_pool_init (PolkitBackendActionPool *pool)
 
   priv->parsed_actions = g_hash_table_new_full (g_str_hash,
                                                 g_str_equal,
-                                                NULL,
+                                                g_free,
                                                 (GDestroyNotify) parsed_action_free);
 
   priv->parsed_files = g_hash_table_new_full (g_str_hash,
@@ -988,7 +986,6 @@ _end (void *data, const char *el)
           icon_name = pd->global_icon_name;
 
         action = g_new0 (ParsedAction, 1);
-        action->action_id = g_strdup (pd->action_id);
         action->vendor_name = g_strdup (vendor);
         action->vendor_url = g_strdup (vendor_url);
         action->icon_name = g_strdup (icon_name);
@@ -1003,7 +1000,8 @@ _end (void *data, const char *el)
         action->implicit_authorization_inactive = pd->implicit_authorization_inactive;
         action->implicit_authorization_active = pd->implicit_authorization_active;
 
-        g_hash_table_insert (priv->parsed_actions, action->action_id, action);
+        g_hash_table_insert (priv->parsed_actions, g_strdup (pd->action_id),
+                             action);
 
         /* we steal these hash tables */
         pd->annotations = NULL;
