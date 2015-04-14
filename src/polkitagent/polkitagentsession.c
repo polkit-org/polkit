@@ -412,8 +412,9 @@ complete_session (PolkitAgentSession *session,
     {
       if (G_UNLIKELY (_show_debug ()))
         g_print ("PolkitAgentSession: emitting ::completed(%s)\n", result ? "TRUE" : "FALSE");
-      g_signal_emit_by_name (session, "completed", result);
       session->have_emitted_completed = TRUE;
+      /* Note that the signal handler may drop the last reference to session. */
+      g_signal_emit_by_name (session, "completed", result);
     }
 }
 
