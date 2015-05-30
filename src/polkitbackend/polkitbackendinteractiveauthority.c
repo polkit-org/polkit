@@ -1566,36 +1566,42 @@ authentication_agent_new (PolkitSubject *scope,
                           const gchar *unique_system_bus_name,
                           const gchar *locale,
                           const gchar *object_path,
-                          GVariant    *registration_options)
+                          GVariant    *registration_options,
+                          GError     **error)
 {
   AuthenticationAgent *agent;
-  GError *error;
+  GDBusProxy *proxy;
+
+  if (!g_variant_is_object_path (object_path))
+    {
+      g_set_error (error, POLKIT_ERROR, POLKIT_ERROR_FAILED,
+                   "Invalid object path '%s'", object_path);
+      return NULL;
+    }
+
+  proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
+                                         G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
+                                         G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
+                                         NULL, /* GDBusInterfaceInfo* */
+                                         unique_system_bus_name,
+                                         object_path,
+                                         "org.freedesktop.PolicyKit1.AuthenticationAgent",
+                                         NULL, /* GCancellable* */
+                                         error);
+  if (proxy == NULL)
+    {
+      g_prefix_error (error, "Failed to construct proxy for agent: " );
+      return NULL;
+    }
 
   agent = g_new0 (AuthenticationAgent, 1);
-
   agent->ref_count = 1;
   agent->scope = g_object_ref (scope);
   agent->object_path = g_strdup (object_path);
   agent->unique_system_bus_name = g_strdup (unique_system_bus_name);
   agent->locale = g_strdup (locale);
   agent->registration_options = registration_options != NULL ? g_variant_ref (registration_options) : NULL;
-
-  error = NULL;
-  agent->proxy = g_dbus_proxy_new_for_bus_sync (G_BUS_TYPE_SYSTEM,
-                                                G_DBUS_PROXY_FLAGS_DO_NOT_LOAD_PROPERTIES |
-                                                G_DBUS_PROXY_FLAGS_DO_NOT_CONNECT_SIGNALS,
-                                                NULL, /* GDBusInterfaceInfo* */
-                                                agent->unique_system_bus_name,
-                                                agent->object_path,
-                                                "org.freedesktop.PolicyKit1.AuthenticationAgent",
-                                                NULL, /* GCancellable* */
-                                                &error);
-  if (agent->proxy == NULL)
-    {
-      g_warning ("Error constructing proxy for agent: %s", error->message);
-      g_error_free (error);
-      /* TODO: Make authentication_agent_new() return NULL and set a GError */
-    }
+  agent->proxy = proxy;
 
   return agent;
 }
@@ -2398,8 +2404,6 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   caller_cmdline = NULL;
   agent = NULL;
 
-  /* TODO: validate that object path is well-formed */
-
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
 
@@ -2486,7 +2490,10 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
                                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                     locale,
                                     object_path,
-                                    options);
+                                    options,
+                                    error);
+  if (!agent)
+    goto out;
 
   g_hash_table_insert (priv->hash_scope_to_authentication_agent,
                        g_object_ref (subject),
