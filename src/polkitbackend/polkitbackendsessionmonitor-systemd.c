@@ -389,6 +389,37 @@ gboolean
 polkit_backend_session_monitor_is_session_active (PolkitBackendSessionMonitor *monitor,
                                                   PolkitSubject               *session)
 {
-  return sd_session_is_active (polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session)));
+  const char *session_id;
+  char *state;
+  uid_t uid;
+  gboolean is_active = FALSE;
+
+  session_id = polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session));
+
+  g_debug ("Checking whether session %s is active.", session_id);
+
+  /* Check whether *any* of the user's current sessions are active. */
+  if (sd_session_get_uid (session_id, &uid) < 0)
+    goto fallback;
+
+  g_debug ("Session %s has UID %u.", session_id, uid);
+
+  if (sd_uid_get_state (uid, &state) < 0)
+    goto fallback;
+
+  g_debug ("UID %u has state %s.", uid, state);
+
+  is_active = (g_strcmp0 (state, "active") == 0);
+  free (state);
+
+  return is_active;
+
+fallback:
+  /* Fall back to checking the session. This is not ideal, since the user
+   * might have multiple sessions, and we cannot guarantee to have chosen
+   * the active one.
+   *
+   * See: https://bugs.freedesktop.org/show_bug.cgi?id=76358. */
+  return sd_session_is_active (session_id);
 }
 
