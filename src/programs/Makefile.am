@@ -88,3 +88,5 @@ clean-local :
 
 install-exec-hook :
 	-chmod 4755 $(DESTDIR)$(bindir)/pkexec
+
+-include $(top_srcdir)/git.mk

@@ -6,3 +6,5 @@ bin_PROGRAMS = mocklibc-debug-netgroup
 mocklibc_debug_netgroup_SOURCES = netgroup-debug.c netgroup-debug.h
 mocklibc_debug_netgroup_LDADD = libmocklibc.la
 
+
+-include $(top_srcdir)/git.mk

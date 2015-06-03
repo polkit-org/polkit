@@ -110,3 +110,5 @@ install-data-hook:
 	mkdir -p $(DESTDIR)$(datadir)/polkit-1/rules.d
 	-chmod 700 $(DESTDIR)$(datadir)/polkit-1/rules.d
 	-chown $(POLKITD_USER) $(DESTDIR)$(datadir)/polkit-1/rules.d
+
+-include $(top_srcdir)/git.mk

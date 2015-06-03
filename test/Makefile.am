@@ -27,3 +27,5 @@ install-exec:; @:
 install-data:; @:
 uninstall:; @:
 
+
+-include $(top_srcdir)/git.mk

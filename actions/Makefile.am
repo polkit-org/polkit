@@ -14,3 +14,5 @@ clean-local :
 DISTCLEANFILES = org.freedesktop.policykit.policy
 
 EXTRA_DIST = org.freedesktop.policykit.policy.in
+
+-include $(top_srcdir)/git.mk

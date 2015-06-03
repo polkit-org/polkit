@@ -23,3 +23,5 @@ mocklibc mocklibc-test: Makefile
 
 mocklibc: $(srcdir)/mocklibc.in
 mocklibc-test: $(srcdir)/mocklibc-test.in
+
+-include $(top_srcdir)/git.mk

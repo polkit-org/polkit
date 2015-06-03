@@ -28,3 +28,5 @@ EXTRA_DIST = 				\
 
 clean-local:
 	rm -f *~ *.1 *.8
+
+-include $(top_srcdir)/git.mk

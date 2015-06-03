@@ -103,3 +103,5 @@ CLEANFILES +=   *~				\
 		-rf html xml			\
 		$(NULL)
 
+
+-include $(top_srcdir)/git.mk

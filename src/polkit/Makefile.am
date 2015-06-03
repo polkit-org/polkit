@@ -137,3 +137,5 @@ dist-hook :
 clean-local :
 	rm -f *~ $(polkit_built_sources) $(BUILT_SOURCES)
 
+
+-include $(top_srcdir)/git.mk

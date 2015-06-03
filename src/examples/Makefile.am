@@ -64,3 +64,5 @@ EXTRA_DIST = org.freedesktop.policykit.examples.pkexec.policy.in
 
 clean-local :
 	rm -f *~
+
+-include $(top_srcdir)/git.mk

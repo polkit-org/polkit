@@ -60,3 +60,5 @@ EXTRA_DIST = 							\
 
 clean-local :
 	rm -f *~ $(service_DATA) $(dbusconf_DATA) $(systemdservice_DATA)
+
+-include $(top_srcdir)/git.mk

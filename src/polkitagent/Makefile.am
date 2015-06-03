@@ -154,3 +154,5 @@ dist-hook :
 
 clean-local :
 	rm -f *~ $(marshal_built_sources) $(BUILT_SOURCES)
+
+-include $(top_srcdir)/git.mk
