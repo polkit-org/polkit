@@ -326,7 +326,7 @@ struct entry *netgroup_iter_next(struct netgroup_iter *iter) {
 
       // Grow the stack
       iter->depth++;
-      if (iter->depth > NETGROUP_MAX_DEPTH) {
+      if (iter->depth >= NETGROUP_MAX_DEPTH) {
         iter->depth = -1;
         return NULL; // Too much recursion
       }
