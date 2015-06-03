@@ -214,6 +214,9 @@ typedef struct
 
   GDBusConnection *system_bus_connection;
   guint name_owner_changed_signal_id;
+
+  guint64 start_time;
+  guint64 cookie;
 } PolkitBackendInteractiveAuthorityPrivate;
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -328,6 +331,8 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
                                             authority,
                                             NULL); /* GDestroyNotify */
     }
+
+  priv->start_time = g_get_monotonic_time ();
 }
 
 static void
@@ -1485,14 +1490,24 @@ authentication_session_free (AuthenticationSession *session)
   g_free (session);
 }
 
+/*
+ * Generate a value that is used to identify authentication requests.
+ * This doesn't need to be protected against active forgery - callers
+ * will have to also match the agent identity.
+ *
+ * It'd probably make sense to just use a UUID, we're just not doing
+ * that for lack of a convenient API.  This code is an evolution
+ * of older code which used a single process-local 32 bit counter.
+ */
 static gchar *
-authentication_agent_new_cookie (AuthenticationAgent *agent)
+get_new_cookie (PolkitBackendInteractiveAuthority *authority)
 {
-  static gint counter = 0;
-
-  /* TODO: use a more random-looking cookie */
-
-  return g_strdup_printf ("cookie%d", counter++);
+  PolkitBackendInteractiveAuthorityPrivate *priv =
+    POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  guint32 rv = g_random_int ();
+  priv->cookie++;
+  return g_strdup_printf ("cookie-%" G_GUINT64_FORMAT "-%" G_GUINT64_FORMAT "-%u",
+                          priv->start_time, priv->cookie, rv);
 }
 
 static PolkitSubject *
@@ -2198,7 +2213,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                     &localized_icon_name,
                                     &localized_details);
 
-  cookie = authentication_agent_new_cookie (agent);
+  cookie = get_new_cookie (authority);
 
   identities = NULL;
 
