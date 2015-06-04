@@ -22,6 +22,22 @@ To verify the authenticity of the compressed tarball, use this command
 BUGS and DEVELOPMENT
 ====================
 
-Please report bugs via the freedesktop.org bugzilla at
+Please report non-security bugs via the freedesktop.org bugzilla at
 
  https://bugs.freedesktop.org/enter_bug.cgi?product=PolicyKit
+
+SECURITY ISSUES
+===============
+
+polkit uses the same mechanism for reporting security issues as dbus,
+the most recent copy of instructions can be found in the DBus git
+repository:
+
+http://cgit.freedesktop.org/dbus/dbus/tree/HACKING
+
+A copy of the instructions as of 2015-06-04:
+
+If you find a security vulnerability that is not known to the public,
+please report it privately to dbus-security@lists.freedesktop.org
+or by reporting a freedesktop.org bug that is marked as
+restricted to the "D-BUS security group".
