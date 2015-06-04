@@ -46,7 +46,7 @@ main (int argc, char *argv[])
 {
   struct spwd *shadow;
   const char *user_to_auth;
-  const char *cookie;
+  char *cookie = NULL;
   time_t now;
 
   /* clear the entire environment to avoid attacks with
@@ -67,7 +67,7 @@ main (int argc, char *argv[])
   openlog ("polkit-agent-helper-1", LOG_CONS | LOG_PID, LOG_AUTHPRIV);
 
   /* check for correct invocation */
-  if (argc != 3)
+  if (!(argc == 2 || argc == 3))
     {
       syslog (LOG_NOTICE, "inappropriate use of helper, wrong number of arguments [uid=%d]", getuid ());
       fprintf (stderr, "polkit-agent-helper-1: wrong number of arguments. This incident has been logged.\n");
@@ -86,7 +86,10 @@ main (int argc, char *argv[])
     }
 
   user_to_auth = argv[1];
-  cookie = argv[2];
+
+  cookie = read_cookie (argc, argv);
+  if (!cookie)
+    goto error;
 
 #ifdef PAH_DEBUG
   fprintf (stderr, "polkit-agent-helper-1: user to auth is '%s'.\n", user_to_auth);
@@ -153,6 +156,8 @@ main (int argc, char *argv[])
       goto error;
     }
 
+  free (cookie);
+
 #ifdef PAH_DEBUG
   fprintf (stderr, "polkit-agent-helper-1: successfully sent D-Bus message to PolicyKit daemon\n");
 #endif /* PAH_DEBUG */
@@ -162,6 +167,7 @@ main (int argc, char *argv[])
   return 0;
 
 error:
+  free (cookie);
   fprintf (stdout, "FAILURE\n");
   flush_and_wait ();
   return 1;

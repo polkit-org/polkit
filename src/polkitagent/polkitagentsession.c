@@ -55,6 +55,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <gio/gunixoutputstream.h>
 #include <pwd.h>
 
 #include "polkitagentmarshal.h"
@@ -88,7 +89,7 @@ struct _PolkitAgentSession
   gchar *cookie;
   PolkitIdentity *identity;
 
-  int child_stdin;
+  GOutputStream *child_stdin;
   int child_stdout;
   GPid child_pid;
 
@@ -129,7 +130,6 @@ G_DEFINE_TYPE (PolkitAgentSession, polkit_agent_session, G_TYPE_OBJECT);
 static void
 polkit_agent_session_init (PolkitAgentSession *session)
 {
-  session->child_stdin = -1;
   session->child_stdout = -1;
 }
 
@@ -395,11 +395,7 @@ kill_helper (PolkitAgentSession *session)
       session->child_stdout = -1;
     }
 
-  if (session->child_stdin != -1)
-    {
-      g_warn_if_fail (close (session->child_stdin) == 0);
-      session->child_stdin = -1;
-    }
+  g_clear_object (&session->child_stdin);
 
   session->helper_is_running = FALSE;
 
@@ -545,9 +541,9 @@ polkit_agent_session_response (PolkitAgentSession *session,
 
   add_newline = (response[response_len] != '\n');
 
-  write (session->child_stdin, response, response_len);
+  (void) g_output_stream_write_all (session->child_stdin, response, response_len, NULL, NULL, NULL);
   if (add_newline)
-    write (session->child_stdin, newline, 1);
+    (void) g_output_stream_write_all (session->child_stdin, newline, 1, NULL, NULL, NULL);
 }
 
 /**
@@ -567,8 +563,9 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
 {
   uid_t uid;
   GError *error;
-  gchar *helper_argv[4];
+  gchar *helper_argv[3];
   struct passwd *passwd;
+  int stdin_fd = -1;
 
   g_return_if_fail (POLKIT_AGENT_IS_SESSION (session));
 
@@ -600,10 +597,8 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
 
   helper_argv[0] = PACKAGE_PREFIX "/lib/polkit-1/polkit-agent-helper-1";
   helper_argv[1] = passwd->pw_name;
-  helper_argv[2] = session->cookie;
-  helper_argv[3] = NULL;
+  helper_argv[2] = NULL;
 
-  session->child_stdin = -1;
   session->child_stdout = -1;
 
   error = NULL;
@@ -615,7 +610,7 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
                                  NULL,
                                  NULL,
                                  &session->child_pid,
-                                 &session->child_stdin,
+                                 &stdin_fd,
                                  &session->child_stdout,
                                  NULL,
                                  &error))
@@ -627,6 +622,13 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
 
   if (G_UNLIKELY (_show_debug ()))
     g_print ("PolkitAgentSession: spawned helper with pid %d\n", (gint) session->child_pid);
+
+  session->child_stdin = (GOutputStream*)g_unix_output_stream_new (stdin_fd, TRUE);
+
+  /* Write the cookie on stdin so it can't be seen by other processes */
+  (void) g_output_stream_write_all (session->child_stdin, session->cookie, strlen (session->cookie),
+                                    NULL, NULL, NULL);
+  (void) g_output_stream_write_all (session->child_stdin, "\n", 1, NULL, NULL, NULL);
 
   session->child_stdout_channel = g_io_channel_unix_new (session->child_stdout);
   session->child_stdout_watch_source = g_io_create_watch (session->child_stdout_channel,

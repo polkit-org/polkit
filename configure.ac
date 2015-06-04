@@ -121,7 +121,7 @@ if test "x$GCC" = "xyes"; then
   changequote([,])dnl
 fi
 
-PKG_CHECK_MODULES(GLIB, [gmodule-2.0 gio-2.0 >= 2.30.0])
+PKG_CHECK_MODULES(GLIB, [gmodule-2.0 gio-unix-2.0 >= 2.30.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 AC_DEFINE([GLIB_VERSION_MIN_REQUIRED], [GLIB_VERSION_2_30],
