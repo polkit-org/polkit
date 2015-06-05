@@ -546,12 +546,10 @@ polkit_agent_text_listener_initiate_authentication_finish (PolkitAgentListener  
                                                            GAsyncResult         *res,
                                                            GError              **error)
 {
-  PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (_listener);
   gboolean ret;
 
   g_warn_if_fail (g_simple_async_result_get_source_tag (G_SIMPLE_ASYNC_RESULT (res)) ==
                   polkit_agent_text_listener_initiate_authentication);
-  g_assert (listener->active_session == NULL);
 
   ret = FALSE;
 
