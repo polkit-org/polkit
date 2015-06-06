@@ -224,6 +224,14 @@ G_DEFINE_TYPE (PolkitBackendInteractiveAuthority,
 
 #define POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY, PolkitBackendInteractiveAuthorityPrivate))
 
+static gboolean
+identity_is_root_user (PolkitIdentity *user)
+{
+  if (!POLKIT_IS_UNIX_USER (user))
+    return FALSE;
+  return polkit_unix_user_get_uid (POLKIT_UNIX_USER (user)) == 0;
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
@@ -767,7 +775,7 @@ may_identity_check_authorization (PolkitBackendInteractiveAuthority   *interacti
   guint n;
 
   /* uid 0 may check anything */
-  if (POLKIT_IS_UNIX_USER (identity) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (identity)) == 0)
+  if (identity_is_root_user (identity))
     {
       ret = TRUE;
       goto out;
@@ -1095,7 +1103,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       goto out;
 
   /* special case: uid 0, root, is _always_ authorized for anything */
-  if (POLKIT_IS_UNIX_USER (user_of_subject) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_subject)) == 0)
+  if (identity_is_root_user (user_of_subject))
     {
       result = polkit_authorization_result_new (TRUE, FALSE, NULL);
       goto out;
@@ -2450,7 +2458,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
     }
   if (!polkit_identity_equal (user_of_caller, user_of_subject))
     {
-      if (POLKIT_IS_UNIX_USER (user_of_caller) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) == 0)
+      if (identity_is_root_user (user_of_caller))
         {
           /* explicitly allow uid 0 to register for other users */
         }
@@ -2606,7 +2614,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
     }
   if (!polkit_identity_equal (user_of_caller, user_of_subject))
     {
-      if (POLKIT_IS_UNIX_USER (user_of_caller) && polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) == 0)
+      if (identity_is_root_user (user_of_caller))
         {
           /* explicitly allow uid 0 to register for other users */
         }
@@ -2719,7 +2727,7 @@ polkit_backend_interactive_authority_authentication_agent_response (PolkitBacken
     goto out;
 
   /* only uid 0 is allowed to invoke this method */
-  if (!POLKIT_IS_UNIX_USER (user_of_caller) || polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_caller)) != 0)
+  if (!identity_is_root_user (user_of_caller))
     {
       g_set_error (error,
                    POLKIT_ERROR,
