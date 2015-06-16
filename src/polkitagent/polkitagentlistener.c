@@ -37,10 +37,7 @@
  *
  * Typically authentication agents use #PolkitAgentSession to
  * authenticate users (via passwords) and communicate back the
- * authentication result to the PolicyKit daemon.  This is however not
- * requirement. Depending on the system an authentication agent may
- * use other means (such as a Yes/No dialog) to obtain sufficient
- * evidence that the user is one of the requested identities.
+ * authentication result to the PolicyKit daemon.
  *
  * To register a #PolkitAgentListener with the PolicyKit daemon, use
  * polkit_agent_listener_register() or

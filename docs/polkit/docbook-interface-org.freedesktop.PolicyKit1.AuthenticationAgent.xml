@@ -47,10 +47,13 @@ BeginAuthentication (IN  String               action_id,
         identifier <parameter>action_id</parameter>.</para><para>Upon
         succesful authentication, the authentication agent must invoke
         the <link
-        linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
+        linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2">AuthenticationAgentResponse2()</link>
         method on the <link
         linkend="eggdbus-interface-org.freedesktop.PolicyKit1.Authority">org.freedesktop.PolicyKit1.Authority</link>
-        interface of the PolicyKit daemon before returning.
+        interface of the PolicyKit daemon before returning. This is normally
+        achieved via the <link linkend="PolkitAgentSession">PolkitAgentSession</link>
+        API, which invokes a private setuid helper process to verify the
+        authentication.
       </para>
       <para>
         The authentication agent should not return until after authentication is complete.

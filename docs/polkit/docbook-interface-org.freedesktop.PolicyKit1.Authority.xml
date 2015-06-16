@@ -42,7 +42,7 @@ Structure    <link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuth
                                   IN  String                         object_path)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse</link>      (IN  String                         cookie,
                                   IN  <link linkend="eggdbus-struct-Identity">Identity</link>                       identity)
-<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse2</link>      (IN uint32 uid, IN  String                         cookie,
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2">AuthenticationAgentResponse2</link>      (IN uint32 uid, IN  String                         cookie,
                                   IN  <link linkend="eggdbus-struct-Identity">Identity</link>                       identity)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.EnumerateTemporaryAuthorizations">EnumerateTemporaryAuthorizations</link> (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
                                   OUT Array&lt;<link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link>&gt;  temporary_authorizations)
@@ -701,7 +701,7 @@ RegisterAuthenticationAgent (IN  <link linkend="eggdbus-struct-Subject">Subject<
                              IN  String   object_path)
     </programlisting>
     <para>
-<para>Register an authentication agent.</para><para>Note that current versions of PolicyKit will only work if <parameter>session_id</parameter> is set to the empty string. In the future it might work for non-empty strings if the caller is sufficiently privileged.</para>
+<para>Register an authentication agent.</para><para>Note that this should be called by same effective UID which will be passed to <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2">AuthenticationAgentResponse2()</link>.</para>
     </para>
 <variablelist role="params">
   <varlistentry>
@@ -781,7 +781,8 @@ AuthenticationAgentResponse (IN  String    cookie,
     <para>
 Method for authentication agents to invoke on successful
 authentication, intended only for use by a privileged helper process
-internal to polkit.  Deprecated in favor of AuthenticationAgentResponse2.
+internal to polkit. This method will fail unless a sufficiently privileged
++caller invokes it. Deprecated in favor of <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2">AuthenticationAgentResponse2()</link>.
     </para>
 <variablelist role="params">
   <varlistentry>
@@ -812,7 +813,10 @@ AuthenticationAgentResponse2 (IN  uint32 uid,
     <para>
 Method for authentication agents to invoke on successful
 authentication, intended only for use by a privileged helper process
-internal to polkit.  Note this method was introduced in 0.114 to fix a security issue.
+internal to polkit. This method will fail unless a sufficiently privileged
+caller invokes it. Note this method was introduced in 0.114 and should be
+preferred over <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
+as it fixes a security issue.
     </para>
 <variablelist role="params">
   <varlistentry>

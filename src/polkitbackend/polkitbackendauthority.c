@@ -343,6 +343,7 @@ polkit_backend_authority_unregister_authentication_agent (PolkitBackendAuthority
  * polkit_backend_authority_authentication_agent_response:
  * @authority: A #PolkitBackendAuthority.
  * @caller: The system bus name that initiated the query.
+ * @uid: The real UID of the registered agent, or (uid_t)-1 if unknown.
  * @cookie: The cookie passed to the authentication agent from the authority.
  * @identity: The identity that was authenticated.
  * @error: Return location for error or %NULL.

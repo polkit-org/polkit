@@ -283,7 +283,7 @@
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <method name="RegisterAuthenticationAgent">
-      <annotation name="org.gtk.EggDBus.DocString" value="<para>Register an authentication agent.</para><para>Note that current versions of PolicyKit will only work if @session_id is set to the empty string. In the future it might work for non-empty strings if the caller is sufficiently privileged.</para>"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="<para>Register an authentication agent.</para><para>Note that this should be called by the same effective UID which will be passed to org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2().</para>"/>
 
       <arg name="subject" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.Type" value="Subject"/>
@@ -315,7 +315,8 @@
     <method name="AuthenticationAgentResponse">
       <annotation name="org.gtk.EggDBus.DocString" value="Method for authentication agents to invoke on successful
 authentication, intended only for use by a privileged helper process
-internal to polkit."/>
+internal to polkit. This method will fail unless a sufficiently privileged
+caller invokes it. Deprecated in favor of org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2."/>
 
       <arg name="cookie" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request that was passed to the authentication agent."/>
@@ -330,11 +331,13 @@ internal to polkit."/>
     <method name="AuthenticationAgentResponse2">
       <annotation name="org.gtk.EggDBus.DocString" value="Method for authentication agents to invoke on successful
 authentication, intended only for use by a privileged helper process
-internal to polkit.   Note this method was added in 0.114, and should be preferred over AuthenticationAgentResponse
+internal to polkit. This method will fail unless a sufficiently privileged
+caller invokes it. Note this method was added in 0.114, and should be preferred over org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse()
 as it fixes a security issue."/>
 
       <arg name="uid" direction="in" type="u">
-        <annotation name="org.gtk.EggDBus.DocString" value="The real uid of the agent.  Normally set by the setuid helper program."/>
+        <annotation name="org.gtk.EggDBus.DocString" value="The real uid of the agent.  Normally set by the setuid helper program.
+Must match the effective UID of the caller of org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent()."/>
       </arg>
 
       <arg name="cookie" direction="in" type="s">

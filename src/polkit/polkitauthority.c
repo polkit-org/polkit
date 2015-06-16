@@ -1038,6 +1038,10 @@ polkit_authority_check_authorization_sync (PolkitAuthority               *author
  *
  * Asynchronously registers an authentication agent.
  *
+ * Note that this should be called by the same effective UID which will be
+ * the real UID using the #PolkitAgentSession API or otherwise calling
+ * polkit_authority_authentication_agent_response().
+ *
  * When the operation is finished, @callback will be invoked in the
  * <link linkend="g-main-context-push-thread-default">thread-default
  * main loop</link> of the thread you are calling this method
@@ -1129,7 +1133,13 @@ polkit_authority_register_authentication_agent_finish (PolkitAuthority *authorit
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
  *
- * Registers an authentication agent. The calling thread is blocked
+ * Registers an authentication agent.
+ *
+ * Note that this should be called by the same effective UID which will be
+ * the real UID using the #PolkitAgentSession API or otherwise calling
+ * polkit_authority_authentication_agent_response().
+ *
+ * The calling thread is blocked
  * until a reply is received. See
  * polkit_authority_register_authentication_agent() for the
  * asynchronous version.
@@ -1177,6 +1187,10 @@ polkit_authority_register_authentication_agent_sync (PolkitAuthority     *author
  * @user_data: The data to pass to @callback.
  *
  * Asynchronously registers an authentication agent.
+ *
+ * Note that this should be called by the same effective UID which will be
+ * the real UID using the #PolkitAgentSession API or otherwise calling
+ * polkit_authority_authentication_agent_response().
  *
  * When the operation is finished, @callback will be invoked in the
  * <link linkend="g-main-context-push-thread-default">thread-default
@@ -1292,7 +1306,13 @@ polkit_authority_register_authentication_agent_with_options_finish (PolkitAuthor
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @error: (allow-none): Return location for error or %NULL.
  *
- * Registers an authentication agent. The calling thread is blocked
+ * Registers an authentication agent.
+ *
+ * Note that this should be called by the same effective UID which will be
+ * the real UID using the #PolkitAgentSession API or otherwise calling
+ * polkit_authority_authentication_agent_response().
+ *
+ * The calling thread is blocked
  * until a reply is received. See
  * polkit_authority_register_authentication_agent_with_options() for the
  * asynchronous version.

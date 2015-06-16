@@ -321,11 +321,11 @@
       linkend="eggdbus-interface-org.freedesktop.PolicyKit1.AuthenticationAgent">org.freedesktop.PolicyKit1.AuthenticationAgent</link>
       D-Bus interface. Once the user is authenticated, (a privileged
       part of) the agent invokes the <link
-      linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
+      linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2">AuthenticationAgentResponse2()</link>
       method.  This method should be treated as an internal
-      implementation detail, and callers should use the public shared
-      library API to invoke it, which currently uses a setuid helper
-      program.
+      implementation detail, and callers should use the
+      <link linkend="PolkitAgentSession">PolkitAgentSession</link> API to invoke
+      it, which currently uses a setuid helper program.
     </para>
     <para>
       The <link linkend="ref-authentication-agent-api">libpolkit-agent-1</link>
