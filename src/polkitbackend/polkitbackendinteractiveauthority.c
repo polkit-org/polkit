@@ -108,8 +108,9 @@ static AuthenticationAgent *get_authentication_agent_for_subject (PolkitBackendI
                                                                   PolkitSubject *subject);
 
 
-static AuthenticationSession *get_authentication_session_for_cookie (PolkitBackendInteractiveAuthority *authority,
-                                                                     const gchar *cookie);
+static AuthenticationSession *get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority *authority,
+                                                                             uid_t                              uid,
+                                                                             const gchar                       *cookie);
 
 static GList *get_authentication_sessions_initiated_by_system_bus_unique_name (PolkitBackendInteractiveAuthority *authority,
                                                                                const gchar *system_bus_unique_name);
@@ -169,6 +170,7 @@ static gboolean polkit_backend_interactive_authority_unregister_authentication_a
 
 static gboolean polkit_backend_interactive_authority_authentication_agent_response (PolkitBackendAuthority   *authority,
                                                                               PolkitSubject            *caller,
+                                                                              uid_t                     uid,
                                                                               const gchar              *cookie,
                                                                               PolkitIdentity           *identity,
                                                                               GError                  **error);
@@ -440,6 +442,7 @@ struct AuthenticationAgent
 {
   volatile gint ref_count;
 
+  uid_t creator_uid;
   PolkitSubject *scope;
   guint64 serial;
 
@@ -1603,6 +1606,7 @@ authentication_agent_unref (AuthenticationAgent *agent)
 static AuthenticationAgent *
 authentication_agent_new (guint64      serial,
                           PolkitSubject *scope,
+                          PolkitIdentity *creator,
                           const gchar *unique_system_bus_name,
                           const gchar *locale,
                           const gchar *object_path,
@@ -1611,6 +1615,10 @@ authentication_agent_new (guint64      serial,
 {
   AuthenticationAgent *agent;
   GDBusProxy *proxy;
+  PolkitUnixUser *creator_user;
+
+  g_assert (POLKIT_IS_UNIX_USER (creator));
+  creator_user = POLKIT_UNIX_USER (creator);
 
   if (!g_variant_is_object_path (object_path))
     {
@@ -1638,6 +1646,7 @@ authentication_agent_new (guint64      serial,
   agent->ref_count = 1;
   agent->serial = serial;
   agent->scope = g_object_ref (scope);
+  agent->creator_uid = (uid_t)polkit_unix_user_get_uid (creator_user);
   agent->object_path = g_strdup (object_path);
   agent->unique_system_bus_name = g_strdup (unique_system_bus_name);
   agent->locale = g_strdup (locale);
@@ -1736,8 +1745,9 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
 }
 
 static AuthenticationSession *
-get_authentication_session_for_cookie (PolkitBackendInteractiveAuthority *authority,
-                                       const gchar *cookie)
+get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority *authority,
+                                               uid_t                              uid,
+                                               const gchar                       *cookie)
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
   GHashTableIter hash_iter;
@@ -1754,6 +1764,23 @@ get_authentication_session_for_cookie (PolkitBackendInteractiveAuthority *author
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
     {
       GList *l;
+
+      /* We need to ensure that if somehow we have duplicate cookies
+       * due to wrapping, that the cookie used is matched to the user
+       * who called AuthenticationAgentResponse2.  See
+       * http://lists.freedesktop.org/archives/polkit-devel/2015-June/000425.html
+       * 
+       * Except if the legacy AuthenticationAgentResponse is invoked,
+       * we don't know the uid and hence use -1.  Continue to support
+       * the old behavior for backwards compatibility, although everyone
+       * who is using our own setuid helper will automatically be updated
+       * to the new API.
+       */
+      if (uid != (uid_t)-1)
+        {
+          if (agent->creator_uid != uid)
+            continue;
+        }
 
       for (l = agent->active_sessions; l != NULL; l = l->next)
         {
@@ -2544,6 +2571,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   priv->agent_serial++;
   agent = authentication_agent_new (priv->agent_serial,
                                     subject,
+                                    user_of_caller,
                                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                     locale,
                                     object_path,
@@ -2757,6 +2785,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
 static gboolean
 polkit_backend_interactive_authority_authentication_agent_response (PolkitBackendAuthority   *authority,
                                                               PolkitSubject            *caller,
+                                                              uid_t                     uid,
                                                               const gchar              *cookie,
                                                               PolkitIdentity           *identity,
                                                               GError                  **error)
@@ -2799,7 +2828,7 @@ polkit_backend_interactive_authority_authentication_agent_response (PolkitBacken
     }
 
   /* find the authentication session */
-  session = get_authentication_session_for_cookie (interactive_authority, cookie);
+  session = get_authentication_session_for_uid_and_cookie (interactive_authority, uid, cookie);
   if (session == NULL)
     {
       g_set_error (error,

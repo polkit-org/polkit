@@ -8,7 +8,19 @@
     <annotation name="org.gtk.EggDBus.DocString" value="<para>This D-Bus interface is used for communication between the system-wide PolicyKit daemon and one or more authentication agents each running in a user session.</para><para>An authentication agent must implement this interface and register (passing the object path of the object implementing the interface) using the org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent() and org.freedesktop.PolicyKit1.Authority.UnregisterAuthenticationAgent() methods on the #org.freedesktop.PolicyKit1.Authority interface of the PolicyKit daemon.</para>"/>
 
     <method name="BeginAuthentication">
-      <annotation name="org.gtk.EggDBus.DocString" value="<para>Called by the PolicyKit daemon when the authentication agent needs the user to authenticate as one of the identities in @identities for the action with the identifier @action_id.</para><para>Upon succesful authentication, the authentication agent must invoke the org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse() method on the #org.freedesktop.PolicyKit1.Authority interface of the PolicyKit daemon before returning.</para><para>If the user dismisses the authentication dialog, the authentication agent should return an error.</para>"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="<para>Called
+      by the PolicyKit daemon when the authentication agent needs the
+      user to authenticate as one of the identities in @identities for
+      the action with the identifier @action_id.</para><para>This
+      authentication is normally achieved via the
+      polkit_agent_session_response() API, which invokes a private
+      setuid helper process to verify the authentication.  When
+      successful, it calls the
+      org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2()
+      method on the #org.freedesktop.PolicyKit1.Authority interface of
+      the PolicyKit daemon before returning.  If the user dismisses the
+      authentication dialog, the authentication agent should call
+      polkit_agent_session_cancel().</para>"/>
 
       <arg name="action_id" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="The identifier for the action that the user is authentication for."/>

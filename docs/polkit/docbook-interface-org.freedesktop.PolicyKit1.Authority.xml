@@ -42,6 +42,8 @@ Structure    <link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuth
                                   IN  String                         object_path)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse</link>      (IN  String                         cookie,
                                   IN  <link linkend="eggdbus-struct-Identity">Identity</link>                       identity)
+<link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse2</link>      (IN uint32 uid, IN  String                         cookie,
+                                  IN  <link linkend="eggdbus-struct-Identity">Identity</link>                       identity)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.EnumerateTemporaryAuthorizations">EnumerateTemporaryAuthorizations</link> (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject,
                                   OUT Array&lt;<link linkend="eggdbus-struct-TemporaryAuthorization">TemporaryAuthorization</link>&gt;  temporary_authorizations)
 <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RevokeTemporaryAuthorizations">RevokeTemporaryAuthorizations</link>    (IN  <link linkend="eggdbus-struct-Subject">Subject</link>                        subject)
@@ -777,9 +779,51 @@ AuthenticationAgentResponse (IN  String    cookie,
                              IN  <link linkend="eggdbus-struct-Identity">Identity</link>  identity)
     </programlisting>
     <para>
-Method for authentication agents to invoke on successful authentication. This method will fail unless a sufficiently privileged caller invokes it.
+Method for authentication agents to invoke on successful
+authentication, intended only for use by a privileged helper process
+internal to polkit.  Deprecated in favor of AuthenticationAgentResponse2.
     </para>
 <variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  String <parameter>cookie</parameter></literal>:</term>
+    <listitem>
+      <para>
+The cookie identifying the authentication request that was passed to the authentication agent.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry>
+    <term><literal>IN  <link linkend="eggdbus-struct-Identity">Identity</link> <parameter>identity</parameter></literal>:</term>
+    <listitem>
+      <para>
+A <link linkend="eggdbus-struct-Identity">Identity</link> struct describing what identity was authenticated.
+      </para>
+    </listitem>
+  </varlistentry>
+</variablelist>
+    </refsect2>
+    <refsect2 role="function" id="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2">
+      <title>AuthenticationAgentResponse2 ()</title>
+    <programlisting>
+AuthenticationAgentResponse2 (IN  uint32 uid,
+                              IN  String cookie,
+                              IN  <link linkend="eggdbus-struct-Identity">Identity</link>  identity)
+    </programlisting>
+    <para>
+Method for authentication agents to invoke on successful
+authentication, intended only for use by a privileged helper process
+internal to polkit.  Note this method was introduced in 0.114 to fix a security issue.
+    </para>
+<variablelist role="params">
+  <varlistentry>
+    <term><literal>IN  uint32 <parameter>uid</parameter></literal>:</term>
+    <listitem>
+      <para>
+The user id of the agent; normally this is the owner of the parent pid
+of the process that invoked the internal setuid helper.
+      </para>
+    </listitem>
+  </varlistentry>
   <varlistentry>
     <term><literal>IN  String <parameter>cookie</parameter></literal>:</term>
     <listitem>

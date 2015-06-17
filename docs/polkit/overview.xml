@@ -314,16 +314,18 @@
     <para>
       Authentication agents are provided by desktop environments. When
       an user session starts, the agent registers with the polkit
-      Authority using
-      the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>
+      Authority using the <link
+      linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.RegisterAuthenticationAgent">RegisterAuthenticationAgent()</link>
       method. When services are needed, the authority will invoke
-      methods on
-      the <link linkend="eggdbus-interface-org.freedesktop.PolicyKit1.AuthenticationAgent">org.freedesktop.PolicyKit1.AuthenticationAgent</link>
+      methods on the <link
+      linkend="eggdbus-interface-org.freedesktop.PolicyKit1.AuthenticationAgent">org.freedesktop.PolicyKit1.AuthenticationAgent</link>
       D-Bus interface. Once the user is authenticated, (a privileged
-      part of) the agent invokes
-      the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
-      method.  Note that the polkit Authority itself does not care
-      how the agent authenticates the user.
+      part of) the agent invokes the <link
+      linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse">AuthenticationAgentResponse()</link>
+      method.  This method should be treated as an internal
+      implementation detail, and callers should use the public shared
+      library API to invoke it, which currently uses a setuid helper
+      program.
     </para>
     <para>
       The <link linkend="ref-authentication-agent-api">libpolkit-agent-1</link>

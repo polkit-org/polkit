@@ -313,7 +313,29 @@
     </method>
 
     <method name="AuthenticationAgentResponse">
-      <annotation name="org.gtk.EggDBus.DocString" value="Method for authentication agents to invoke on successful authentication. This method will fail unless a sufficiently privileged caller invokes it."/>
+      <annotation name="org.gtk.EggDBus.DocString" value="Method for authentication agents to invoke on successful
+authentication, intended only for use by a privileged helper process
+internal to polkit."/>
+
+      <arg name="cookie" direction="in" type="s">
+        <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request that was passed to the authentication agent."/>
+      </arg>
+
+      <arg name="identity" direction="in" type="(sa{sv})">
+        <annotation name="org.gtk.EggDBus.Type" value="Identity"/>
+        <annotation name="org.gtk.EggDBus.DocString" value="A #Identity struct describing what identity was authenticated."/>
+      </arg>
+    </method>
+
+    <method name="AuthenticationAgentResponse2">
+      <annotation name="org.gtk.EggDBus.DocString" value="Method for authentication agents to invoke on successful
+authentication, intended only for use by a privileged helper process
+internal to polkit.   Note this method was added in 0.114, and should be preferred over AuthenticationAgentResponse
+as it fixes a security issue."/>
+
+      <arg name="uid" direction="in" type="u">
+        <annotation name="org.gtk.EggDBus.DocString" value="The real uid of the agent.  Normally set by the setuid helper program."/>
+      </arg>
 
       <arg name="cookie" direction="in" type="s">
         <annotation name="org.gtk.EggDBus.DocString" value="The cookie identifying the authentication request that was passed to the authentication agent."/>
