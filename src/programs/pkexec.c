@@ -707,11 +707,6 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  /* Initialize the GLib type system - this is needed to interact with the
-   * PolicyKit daemon
-   */
-  g_type_init ();
-
   /* make sure we are nuked if the parent process dies */
 #ifdef __linux__
   if (prctl (PR_SET_PDEATHSIG, SIGTERM) != 0)

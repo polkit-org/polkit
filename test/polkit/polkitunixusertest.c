@@ -95,7 +95,6 @@ test_set_uid (void)
 int
 main (int argc, char *argv[])
 {
-  g_type_init ();
   g_test_init (&argc, &argv, NULL);
   g_test_add_func ("/PolkitUnixUser/new", test_new);
   g_test_add_func ("/PolkitUnixUser/new_for_name", test_new_for_name);

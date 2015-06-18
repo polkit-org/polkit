@@ -88,8 +88,6 @@ send_dbus_message (const char *cookie, const char *user)
 
   ret = FALSE;
 
-  g_type_init ();
-
   error = NULL;
   authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
   if (authority == NULL)

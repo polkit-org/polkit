@@ -125,8 +125,6 @@ main (int argc, char *argv[])
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
 
-  g_type_init ();
-
   opt_show_version = FALSE;
   opt_verbose = FALSE;
 

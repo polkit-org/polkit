@@ -170,7 +170,6 @@ add_comparison_tests (void)
 int
 main (int argc, char *argv[])
 {
-  g_type_init ();
   g_test_init (&argc, &argv, NULL);
 
   g_test_add_data_func ("/PolkitIdentity/user_string_0", "unix-user:root", test_string);

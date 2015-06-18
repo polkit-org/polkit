@@ -77,10 +77,6 @@ AC_SUBST(WARN_CFLAGS)
 PKG_CHECK_MODULES(GLIB, [gmodule-2.0 gio-unix-2.0 >= 2.30.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
-AC_DEFINE([GLIB_VERSION_MIN_REQUIRED], [GLIB_VERSION_2_30],
-	[Avoid warning spew about g_type_init() being deprecated])
-AC_DEFINE([GLIB_VERSION_MAX_ALLOWED], [G_ENCODE_VERSION(2,34)],
-        [Notify us when we'll need to transition away from g_type_init()])
 
 PKG_CHECK_MODULES(LIBJS, [mozjs-24])
 

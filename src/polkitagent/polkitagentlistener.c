@@ -422,10 +422,8 @@ polkit_agent_listener_register_with_options (PolkitAgentListener      *listener,
 
   if (flags & POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD)
     {
-      server->thread = g_thread_create (server_thread_func,
-                                        server,
-                                        TRUE,
-                                        error);
+      server->thread = g_thread_try_new ("polkit agent listener",
+					 server_thread_func, server, error);
       if (server->thread == NULL)
         {
           server_free (server);

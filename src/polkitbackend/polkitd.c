@@ -173,8 +173,6 @@ main (int    argc,
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
 
-  g_type_init ();
-
   opt_context = g_option_context_new ("polkit system daemon");
   g_option_context_add_main_entries (opt_context, opt_entries, NULL);
   error = NULL;

@@ -366,8 +366,6 @@ main (int argc, char *argv[])
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
 
-  g_type_init ();
-
   details = polkit_details_new ();
 
   opt_show_help = FALSE;

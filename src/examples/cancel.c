@@ -102,8 +102,6 @@ main (int argc, char *argv[])
   PolkitAuthority *authority;
   GCancellable *cancellable;
 
-  g_type_init ();
-
   if (argc != 2)
     {
       g_printerr ("usage: %s <action_id>\n", argv[0]);

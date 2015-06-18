@@ -78,8 +78,6 @@ main (int argc, char *argv[])
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
 
-  g_type_init ();
-
   error = NULL;
   context = g_option_context_new ("");
   s = g_strdup_printf (_("Report bugs to: %s\n"
