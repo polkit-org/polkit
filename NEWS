@@ -11,7 +11,27 @@ some security review. Use at your own risk.
 This is polkit 0.113.
 
 Highlights:
- TODO
+ Fixes CVE-2015-4625, a local privilege escalation due to predictable
+ authentication session cookie values. Thanks to Tavis Ormandy, Google Project
+ Zero for reporting this issue. For the future, authentication agents are
+ encouraged to use PolkitAgentSession instead of using the D-Bus agent response
+ API directly.
+
+ Fixes CVE-2015-3256, various memory corruption vulnerabilities in use of the
+ JavaScript interpreter, possibly leading to local privilege escalation.
+
+ Fixes CVE-2015-3255, a memory corruption vulnerability in handling duplicate
+ action IDs, possibly leading to local privilege escalation. Thanks to
+ Laurent Bigonville for reporting this issue.
+
+ Fixes CVE-2015-3218, which allowed any local user to crash polkitd. Thanks to
+ Tavis Ormandy, Google Project Zero, for reporting this issue.
+
+ On systemd-213 and later, the “active” state is shared across all sessions of
+ an user, instead of being tracked separately.
+
+ (pkexec), when not given a program to execute, runs the users’ shell by
+ default.
 
 Build requirements
 
@@ -23,12 +43,79 @@ Build requirements
 
 Changes since polkit 0.112:
 
- TODO
+Colin Walters (17):
+      PolkitSystemBusName: Add public API to retrieve Unix user
+      examples/cancel: Fix to securely lookup subject
+      sessionmonitor-systemd: Deduplicate code paths
+      PolkitSystemBusName: Retrieve both pid and uid
+      Port internals non-deprecated PolkitProcess API where possible
+      Use G_GNUC_BEGIN_IGNORE_DEPRECATIONS to avoid warning spam
+      pkexec: Work around systemd injecting broken XDG_RUNTIME_DIR
+      pkexec: Support just plain "pkexec" to run shell
+      .dir-locals: Style for Emacs - we don't use tabs
+      authority: Avoid cookie wrapping by using u64 counter
+      CVE-2015-3218: backend: Handle invalid object paths in RegisterAuthenticationAgent
+      build: Start using git.mk
+      Revert "authority: Avoid cookie wrapping by using u64 counter"
+      authority: Add a helper method for checking whether an identity is root
+      CVE-2015-4625: Use unpredictable cookie values, keep them secret
+      CVE-2015-4625: Bind use of cookies to specific uids
+      README: Note to send security reports via DBus's mechanism
+
+Kay Sievers (1):
+      sessionmonitor-systemd: prepare for D-Bus "user bus" model
+
+Lukasz Skalski (1):
+      polkitd: Fix problem with removing non-existent source
+
+Max A. Dednev (1):
+      authority: Fix memory leak in EnumerateActions call results handler
+
+Miloslav Trmač (24):
+      Post-release version bump to 0.113
+      Don't discard error data returned by polkit_system_bus_name_get_user_sync
+      Fix a memory leak
+      Refuse duplicate --user arguments to pkexec
+      Fix a possible NULL dereference.
+      Remove a redundant assignment.
+      Simplify forced error domain registration
+      Fix a typo, s/Evaluting/Evaluating/g
+      s/INCLUDES/AM_CPPFLAGS/g
+      Fix duplicate GError use when "uid" is missing
+      Fix a crash when two authentication requests are in flight.
+      docs: Update for changes to uid binding/AuthenticationAgentResponse2
+      Don't pass an uninitialized JS parameter
+      Don't add extra NULL group to subject.groups
+      Don't store unrooted jsvals on heap
+      Fix a per-authorization memory leak
+      Fix a memory leak when registering an authentication agent
+      Wrap all JS usage within “requests”
+      Register heap-based JSObject pointers to GC
+      Prevent builds against SpiderMonkey with exact stack rooting
+      Clear the JS operation callback before invoking JS in the callback
+      Fix spurious timeout exceptions on GC
+      Fix GHashTable usage.
+      Fix use-after-free in polkitagentsession.c
+
+Philip Withnall (1):
+      sessionmonitor-systemd: Use sd_uid_get_state() to check session activity
+
+Rui Matos (1):
+      PolkitAgentSession: fix race between child and io watches
+
+Simon McVittie (1):
+      Use libsystemd instead of older libsystemd-login if possible
+
+Ting-Wei Lan (1):
+      build: Fix several issues on FreeBSD
+
+Xabier Rodriguez Calvar (1):
+      Fixed compilation problem in the backend
 
 Thanks to our contributors.
 
 Colin Walters and Miloslav Trmač,
-$DATE
+July 2, 2015
 
 --------------
 polkit 0.112
