@@ -23,7 +23,11 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
+#if defined HAVE_OPENBSD
+#include <netgroup.h>
+#else
 #include <netdb.h>
+#endif
 #include <string.h>
 #include <glib/gstdio.h>
 #include <locale.h>
@@ -2236,7 +2240,11 @@ get_users_in_net_group (PolkitIdentity                    *group,
 
   for (;;)
     {
+#if defined HAVE_OPENBSD
+      const char *hostname, *username, *domainname;
+#else
       char *hostname, *username, *domainname;
+#endif
       PolkitIdentity *user;
       GError *error = NULL;
 

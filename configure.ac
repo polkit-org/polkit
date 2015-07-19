@@ -167,11 +167,15 @@ fi
 dnl ---------------------------------------------------------------------------
 dnl - Check whether setnetgrent has a return value
 dnl ---------------------------------------------------------------------------
+AC_CHECK_HEADERS([netgroup.h])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-	#include <stddef.h>
-	#include <netdb.h>
-]], [[
-	int r = setnetgrent (NULL);]])],
+    #include <stddef.h>
+    #ifdef HAVE_NETGROUP_H
+    #include <netgroup.h>
+    #else
+    #include <netdb.h>
+    #endif
+]], [[int r = setnetgrent (NULL);]])],
 [AC_DEFINE([HAVE_SETNETGRENT_RETURN], 1, [Define to 1 if setnetgrent has return value])])
 
 dnl ---------------------------------------------------------------------------
@@ -318,6 +322,11 @@ case $POLKIT_AUTHFW in
     AC_DEFINE(POLKIT_AUTHFW_SHADOW, 1, [If using the Shadow authentication framework])
     ;;
 
+  bsdauth)
+    need_pam=no
+    AC_DEFINE(POLKIT_AUTHFW_BSDAUTH, 1, [If using the bsd_auth(3) authentication framework])
+    ;;
+
   *)
     AC_MSG_ERROR([Unknown Authentication Framework: $POLKIT_AUTHFW])
     ;;
@@ -326,6 +335,7 @@ esac
 AM_CONDITIONAL(POLKIT_AUTHFW_NONE, [test x$POLKIT_AUTHFW = xnone], [Using no authfw])
 AM_CONDITIONAL(POLKIT_AUTHFW_PAM, [test x$POLKIT_AUTHFW = xpam], [Using PAM authfw])
 AM_CONDITIONAL(POLKIT_AUTHFW_SHADOW, [test x$POLKIT_AUTHFW = xshadow], [Using Shadow authfw])
+AM_CONDITIONAL(POLKIT_AUTHFW_BSDAUTH, [test x$POLKIT_AUTHFW = xbsdauth], [Using bsd_auth(3) authfw])
 
 
 dnl ---------------------------------------------------------------------------
@@ -504,6 +514,9 @@ case "$host_os" in
 	;;
   *freebsd*)
   	AC_DEFINE([HAVE_FREEBSD], 1, [Is this a FreeBSD system?])
+	;;
+  *openbsd*)
+	AC_DEFINE([HAVE_OPENBSD], 1, [Is this an OpenBSD system?])
 	;;
 esac
 

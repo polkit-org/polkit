@@ -24,7 +24,11 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
+#if defined HAVE_OPENBSD
+#include <netgroup.h>
+#else
 #include <netdb.h>
+#endif
 #include <string.h>
 #include <glib/gstdio.h>
 #include <locale.h>

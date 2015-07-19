@@ -91,6 +91,9 @@ endif
 if POLKIT_AUTHFW_SHADOW
 polkit_agent_helper_1_SOURCES += polkitagenthelper-shadow.c
 endif
+if POLKIT_AUTHFW_BSDAUTH
+polkit_agent_helper_1_SOURCES += polkitagenthelper-bsdauth.c
+endif
 
 polkit_agent_helper_1_CFLAGS  = 					\
         -D_POLKIT_COMPILATION                                  		\
