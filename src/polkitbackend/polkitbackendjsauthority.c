@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
-#if defined HAVE_OPENBSD
+#ifdef HAVE_NETGROUP_H
 #include <netgroup.h>
 #else
 #include <netdb.h>
