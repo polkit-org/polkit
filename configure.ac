@@ -421,7 +421,7 @@ fi
 
 AC_SUBST(PAM_MODULE_DIR)
 
-AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat/suse/gentoo/pardus/solaris)])
+AC_ARG_WITH(os-type,     [  --with-os-type=<os>        distribution or OS (redhat/suse/gentoo/pardus/solaris/netbsd)])
 
 #### Check our operating system (distro-tweaks required)
 if test "z$with_os_type" = "z"; then
@@ -450,8 +450,17 @@ if test x$with_os_type = x; then
 	with_os_type=solaris
     elif test x$operating_system = xfreebsd ; then
 	with_os_type=freebsd
+    elif test x$operating_system = xnetbsd ; then
+	with_os_type=netbsd
     else
-        with_os_type=unknown
+	case "$host_os" in
+	  *netbsd*)
+		with_os_type=netbsd
+		;;
+	  *)
+		with_os_type=unknown
+		::
+	esac
     fi
 fi
 
@@ -482,7 +491,7 @@ elif test x$with_os_type = xsuse -o x$with_os_type = xsolaris ; then
    PAM_FILE_INCLUDE_ACCOUNT=common-account
    PAM_FILE_INCLUDE_PASSWORD=common-password
    PAM_FILE_INCLUDE_SESSION=common-session
-elif test x$with_os_type = xfreebsd ; then
+elif test x$with_os_type = xfreebsd -o x$with_os_type = xnetbsd; then
     PAM_FILE_INCLUDE_AUTH=system
     PAM_FILE_INCLUDE_ACCOUNT=system
     PAM_FILE_INCLUDE_PASSWORD=system
@@ -514,6 +523,9 @@ case "$host_os" in
 	;;
   *freebsd*)
   	AC_DEFINE([HAVE_FREEBSD], 1, [Is this a FreeBSD system?])
+	;;
+  *netbsd*)
+	AC_DEFINE([HAVE_NETBSD], 1, [Is this an NetBSD system?])
 	;;
   *openbsd*)
 	AC_DEFINE([HAVE_OPENBSD], 1, [Is this an OpenBSD system?])

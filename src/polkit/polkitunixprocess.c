@@ -29,6 +29,10 @@
 #include <sys/sysctl.h>
 #include <sys/user.h>
 #endif
+#ifdef HAVE_NETBSD
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#endif
 #ifdef HAVE_OPENBSD
 #include <sys/sysctl.h>
 #endif
@@ -89,8 +93,13 @@ static guint64 get_start_time_for_pid (gint    pid,
 static gint _polkit_unix_process_get_owner (PolkitUnixProcess  *process,
                                             GError            **error);
 
-#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
-static gboolean get_kinfo_proc (gint pid, struct kinfo_proc *p);
+#if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
+static gboolean get_kinfo_proc (gint pid,
+#if defined(HAVE_NETBSD)
+                                struct kinfo_proc2 *p);
+#else
+                                struct kinfo_proc *p);
+#endif
 #endif
 
 G_DEFINE_TYPE_WITH_CODE (PolkitUnixProcess, polkit_unix_process, G_TYPE_OBJECT,
@@ -557,9 +566,14 @@ get_kinfo_proc (pid_t pid, struct kinfo_proc *p)
 }
 #endif
 
-#ifdef HAVE_OPENBSD
+#if defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
 static gboolean
-get_kinfo_proc (gint pid, struct kinfo_proc *p)
+get_kinfo_proc (gint pid,
+#ifdef HAVE_NETBSD
+                struct kinfo_proc2 *p)
+#else
+                struct kinfo_proc *p)
+#endif
 {
   int name[6];
   u_int namelen;
@@ -568,7 +582,11 @@ get_kinfo_proc (gint pid, struct kinfo_proc *p)
   sz = sizeof(*p);
   namelen = 0;
   name[namelen++] = CTL_KERN;
+#ifdef HAVE_NETBSD
+  name[namelen++] = KERN_PROC2;
+#else
   name[namelen++] = KERN_PROC;
+#endif
   name[namelen++] = KERN_PROC_PID;
   name[namelen++] = pid;
   name[namelen++] = sz;
@@ -586,7 +604,7 @@ get_start_time_for_pid (pid_t    pid,
                         GError **error)
 {
   guint64 start_time;
-#if !defined(HAVE_FREEBSD) && !defined(HAVE_OPENBSD)
+#if !defined(HAVE_FREEBSD) && !defined(HAVE_NETBSD) && !defined(HAVE_OPENBSD)
   gchar *filename;
   gchar *contents;
   size_t length;
@@ -659,7 +677,11 @@ get_start_time_for_pid (pid_t    pid,
   g_free (filename);
   g_free (contents);
 #else
+#ifdef HAVE_NETBSD
+  struct kinfo_proc2 p;
+#else
   struct kinfo_proc p;
+#endif
 
   start_time = 0;
 
@@ -695,6 +717,8 @@ _polkit_unix_process_get_owner (PolkitUnixProcess  *process,
   gchar **lines;
 #if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
   struct kinfo_proc p;
+#elif defined(HAVE_NETBSD)
+  struct kinfo_proc2 p;
 #else
   gchar filename[64];
   guint n;
@@ -707,7 +731,7 @@ _polkit_unix_process_get_owner (PolkitUnixProcess  *process,
   lines = NULL;
   contents = NULL;
 
-#if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
+#if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
   if (get_kinfo_proc (process->pid, &p) == 0)
     {
       g_set_error (error,

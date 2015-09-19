@@ -2240,7 +2240,7 @@ get_users_in_net_group (PolkitIdentity                    *group,
 
   for (;;)
     {
-#if defined HAVE_OPENBSD
+#if defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
       const char *hostname, *username, *domainname;
 #else
       char *hostname, *username, *domainname;
