@@ -206,9 +206,9 @@ on_completed (PolkitAgentSession *session,
 
   fprintf (listener->tty, "\x1B[1;31m");
   if (gained_authorization)
-    fprintf (listener->tty, "==== AUTHENTICATION COMPLETE ===\n");
+    fprintf (listener->tty, "==== AUTHENTICATION COMPLETE ====\n");
   else
-    fprintf (listener->tty, "==== AUTHENTICATION FAILED ===\n");
+    fprintf (listener->tty, "==== AUTHENTICATION FAILED ====\n");
   fprintf (listener->tty, "\x1B[0m");
   fflush (listener->tty);
 
@@ -473,7 +473,7 @@ polkit_agent_text_listener_initiate_authentication (PolkitAgentListener  *_liste
 
   fprintf (listener->tty, "\x1B[1;31m");
   fprintf (listener->tty,
-           "==== AUTHENTICATING FOR %s ===\n",
+           "==== AUTHENTICATING FOR %s ====\n",
            action_id);
   fprintf (listener->tty, "\x1B[0m");
   fprintf (listener->tty,
@@ -487,7 +487,7 @@ polkit_agent_text_listener_initiate_authentication (PolkitAgentListener  *_liste
       if (identity == NULL)
         {
           fprintf (listener->tty, "\x1B[1;31m");
-          fprintf (listener->tty, "==== AUTHENTICATION CANCELED ===\n");
+          fprintf (listener->tty, "==== AUTHENTICATION CANCELED ====\n");
           fprintf (listener->tty, "\x1B[0m");
           fflush (listener->tty);
           g_simple_async_result_set_error (simple,
