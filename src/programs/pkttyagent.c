@@ -55,7 +55,7 @@ main (int argc, char *argv[])
       },
       {
 	"system-bus-name", 's', 0, G_OPTION_ARG_STRING, &opt_system_bus_name,
-	N_("Register the agent owner of BUS_NAME"), N_("BUS_NAME")
+	N_("Register the agent for the owner of BUS_NAME"), N_("BUS_NAME")
       },
       {
 	"version", 0, 0, G_OPTION_ARG_NONE, &opt_show_version,
