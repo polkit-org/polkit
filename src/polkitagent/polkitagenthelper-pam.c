@@ -302,10 +302,15 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
         case PAM_TEXT_INFO:
           fprintf (stdout, "PAM_TEXT_INFO ");
         conv2:
-          fputs (msg[i]->msg, stdout);
-          if (strlen (msg[i]->msg) > 0 &&
-              msg[i]->msg[strlen (msg[i]->msg) - 1] != '\n')
-            fputc ('\n', stdout);
+          tmp = g_strdup (msg[i]->msg);
+          len = strlen (tmp);
+          if (len > 0 && tmp[len - 1] == '\n')
+            tmp[len - 1] = '\0';
+          escaped = g_strescape (tmp, NULL);
+          g_free (tmp);
+          fputs (escaped, stdout);
+          g_free (escaped);
+          fputc ('\n', stdout);
           fflush (stdout);
           break;
 
