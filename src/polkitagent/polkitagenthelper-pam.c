@@ -39,25 +39,35 @@ static void
 send_to_helper (const gchar *str1,
                 const gchar *str2)
 {
+  char *escaped;
+  char *tmp2;
+  size_t len2;
+
+  tmp2 = g_strdup(str2);
+  len2 = strlen(tmp2);
 #ifdef PAH_DEBUG
-  fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", str1);
+  fprintf (stderr, "polkit-agent-helper-1: writing `%s ' to stdout\n", str1);
 #endif /* PAH_DEBUG */
-  fprintf (stdout, "%s", str1);
+  fprintf (stdout, "%s ", str1);
+
+  if (len2 > 0 && tmp2[len2 - 1] == '\n')
+    tmp2[len2 - 1] = '\0';
+  escaped = g_strescape (tmp2, NULL);
 #ifdef PAH_DEBUG
-  fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", str2);
+  fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", escaped);
 #endif /* PAH_DEBUG */
-  fprintf (stdout, "%s", str2);
-  if (strlen (str2) > 0 && str2[strlen (str2) - 1] != '\n')
-    {
+  fprintf (stdout, "%s", escaped);
 #ifdef PAH_DEBUG
-      fprintf (stderr, "polkit-agent-helper-1: writing newline to stdout\n");
+  fprintf (stderr, "polkit-agent-helper-1: writing newline to stdout\n");
 #endif /* PAH_DEBUG */
-      fputc ('\n', stdout);
-    }
+  fputc ('\n', stdout);
 #ifdef PAH_DEBUG
   fprintf (stderr, "polkit-agent-helper-1: flushing stdout\n");
 #endif /* PAH_DEBUG */
   fflush (stdout);
+
+  g_free (escaped);
+  g_free (tmp2);
 }
 
 int
@@ -89,7 +99,7 @@ main (int argc, char *argv[])
 
       /* Special-case a very common error triggered in jhbuild setups */
       s = g_strdup_printf ("Incorrect permissions on %s (needs to be setuid root)", argv[0]);
-      send_to_helper ("PAM_ERROR_MSG ", s);
+      send_to_helper ("PAM_ERROR_MSG", s);
       g_free (s);
       goto error;
     }
@@ -232,9 +242,6 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
   struct pam_response *aresp;
   char buf[PAM_MAX_RESP_SIZE];
   int i;
-  gchar *escaped = NULL;
-  gchar *tmp = NULL;
-  size_t len;
 
   (void)data;
   if (n <= 0 || n > PAM_MAX_NUM_MSG)
@@ -251,38 +258,13 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
         {
 
         case PAM_PROMPT_ECHO_OFF:
-#ifdef PAH_DEBUG
-          fprintf (stderr, "polkit-agent-helper-1: writing `PAM_PROMPT_ECHO_OFF ' to stdout\n");
-#endif /* PAH_DEBUG */
-          fprintf (stdout, "PAM_PROMPT_ECHO_OFF ");
+          send_to_helper ("PAM_PROMPT_ECHO_OFF", msg[i]->msg);
           goto conv1;
 
         case PAM_PROMPT_ECHO_ON:
-#ifdef PAH_DEBUG
-          fprintf (stderr, "polkit-agent-helper-1: writing `PAM_PROMPT_ECHO_ON ' to stdout\n");
-#endif /* PAH_DEBUG */
-          fprintf (stdout, "PAM_PROMPT_ECHO_ON ");
-        conv1:
-#ifdef PAH_DEBUG
-          fprintf (stderr, "polkit-agent-helper-1: writing `%s' to stdout\n", msg[i]->msg);
-#endif /* PAH_DEBUG */
-          tmp = g_strdup (msg[i]->msg);
-          len = strlen (tmp);
-          if (len > 0 && tmp[len - 1] == '\n')
-            tmp[len - 1] = '\0';
-          escaped = g_strescape (tmp, NULL);
-          g_free (tmp);
-          fputs (escaped, stdout);
-          g_free (escaped);
-#ifdef PAH_DEBUG
-          fprintf (stderr, "polkit-agent-helper-1: writing newline to stdout\n");
-#endif /* PAH_DEBUG */
-          fputc ('\n', stdout);
-#ifdef PAH_DEBUG
-          fprintf (stderr, "polkit-agent-helper-1: flushing stdout\n");
-#endif /* PAH_DEBUG */
-          fflush (stdout);
+          send_to_helper ("PAM_PROMPT_ECHO_ON", msg[i]->msg);
 
+        conv1:
           if (fgets (buf, sizeof buf, stdin) == NULL)
             goto error;
 
@@ -296,22 +278,11 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
           break;
 
         case PAM_ERROR_MSG:
-          fprintf (stdout, "PAM_ERROR_MSG ");
-          goto conv2;
+          send_to_helper ("PAM_ERROR_MSG", msg[i]->msg);
+          break;
 
         case PAM_TEXT_INFO:
-          fprintf (stdout, "PAM_TEXT_INFO ");
-        conv2:
-          tmp = g_strdup (msg[i]->msg);
-          len = strlen (tmp);
-          if (len > 0 && tmp[len - 1] == '\n')
-            tmp[len - 1] = '\0';
-          escaped = g_strescape (tmp, NULL);
-          g_free (tmp);
-          fputs (escaped, stdout);
-          g_free (escaped);
-          fputc ('\n', stdout);
-          fflush (stdout);
+          send_to_helper ("PAM_TEXT_INFO", msg[i]->msg);
           break;
 
         default:
