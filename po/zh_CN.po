@@ -1,0 +1,196 @@
+# Chinese (China) translation for polkit.
+# Copyright (C) 2015 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Mingye Wang <arthur2e5@aosc.xyz>, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit master\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?"
+"product=PolicyKit&keywords=I18N+L10N&component=libpolkit\n"
+"POT-Creation-Date: 2015-11-13 02:11+0000\n"
+"PO-Revision-Date: 2015-11-13 01:59-0500\n"
+"Last-Translator: Mingye Wang (Arthur2e5) <arthur200126@gmail.com>\n"
+"Language-Team: Chinese (China) <i18n-zh@googlegroups.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.6\n"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:1
+msgid "Run a program as another user"
+msgstr "作为另一个用户运行程序"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:2
+msgid "Authentication is required to run a program as another user"
+msgstr "需要验证：作为另一个用户运行程序"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+msgid "Run the polkit example program Frobnicate"
+msgstr "运行 polkit 示例程序“Frobnicate”"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"需要验证：运行 polkit 示例程序 Frobnicate (user=$(user), user.gecos=$(user."
+"gecos), user.display=$(user.display), program=$(program), command_line="
+"$(command_line))"
+
+#: ../src/programs/pkaction.c:100
+msgid "Only output information about ACTION"
+msgstr "只输出与操作有关的信息"
+
+#: ../src/programs/pkaction.c:100
+msgid "ACTION"
+msgstr "操作"
+
+#: ../src/programs/pkaction.c:104
+msgid "Output detailed action information"
+msgstr "输出详细的操作信息"
+
+#: ../src/programs/pkaction.c:108 ../src/programs/pkttyagent.c:61
+msgid "Show version"
+msgstr "显示版本"
+
+#: ../src/programs/pkaction.c:130
+msgid "[--action-id ACTION]"
+msgstr "[--action-id 操作]"
+
+#: ../src/programs/pkaction.c:131 ../src/programs/pkttyagent.c:81
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"报告错误到：%s\n"
+"%s 项目主页：<%s>"
+
+#: ../src/programs/pkaction.c:145 ../src/programs/pkcheck.c:491
+#: ../src/programs/pkttyagent.c:95
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: 意外的参数 \"%s\"\n"
+
+#: ../src/programs/pkcheck.c:35
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"用法\n"
+"  pkcheck [选项...]\n"
+"\n"
+"帮助选项\n"
+"  -h, --help                         显示可选的帮助\n"
+"\n"
+"应用选项\n"
+"  -a, --action-id=操作               检查 <操作> 的授权情况\n"
+"  -u, --allow-user-interaction       在必要时进行用户交互\n"
+"  -d, --details=键 值                将 (键, 值) 加入有关操作的信息\n"
+"  --enable-internal-agent            在必要时使用内置授权助理程序\n"
+"  --list-temp                        列出当前会话的临时授权\n"
+"  -p, --process=PID[,开始时间,UID]    检查指定进程的授权\n"
+"  --revoke-temp                      吊销所有当前会话的临时授权\n"
+"  -s, --system-bus-name=BUS_NAME     检查 BUS_NAME 所有者的授权\n"
+"  --version                          显示版本\n"
+"\n"
+"报告错误到：%s\n"
+"%s 项目主页：<%s>\n"
+
+#: ../src/programs/pkcheck.c:391 ../src/programs/pkcheck.c:424
+#: ../src/programs/pkcheck.c:436
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: %s 后预期参数\n"
+
+#: ../src/programs/pkcheck.c:414
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: 无效 --process 值 \"%s\"\n"
+
+#: ../src/programs/pkcheck.c:451 ../src/programs/pkcheck.c:460
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: --detail 后预期两个参数\n"
+
+#: ../src/programs/pkcheck.c:521
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: 主题未指定\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: ../src/programs/pkexec.c:794
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr "需要授权：作为超级用户身份运行 \"$(program)\" "
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: ../src/programs/pkexec.c:804
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgstr "需要授权：作为用户 \"$(user.display)\" 运行 \"$(program)\" "
+
+#: ../src/programs/pkttyagent.c:44
+msgid "Don't replace existing agent if any"
+msgstr "不替换现有助理程序，若有的话"
+
+#: ../src/programs/pkttyagent.c:48
+msgid "Close FD when the agent is registered"
+msgstr "注册助理程序时关闭文件描述符"
+
+#: ../src/programs/pkttyagent.c:48
+msgid "FD"
+msgstr "文件描述符"
+
+#: ../src/programs/pkttyagent.c:52
+msgid "Register the agent for the specified process"
+msgstr "对指定进程注册助理程序"
+
+#: ../src/programs/pkttyagent.c:53
+msgid "PID[,START_TIME]"
+msgstr "PID[,开始时间]"
+
+#: ../src/programs/pkttyagent.c:57
+msgid "Register the agent owner of BUS_NAME"
+msgstr "注册 BUS_NAME 的助理所有者"
+
+#: ../src/programs/pkttyagent.c:57
+msgid "BUS_NAME"
+msgstr ""
+
+#: ../src/programs/pkttyagent.c:127
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: 无效进程定义 \"%s\" \n"
