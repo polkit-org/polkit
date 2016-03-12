@@ -129,6 +129,8 @@ server_free (Server *server)
     g_object_unref (server->subject);
 
   g_free (server->object_path);
+
+  g_free (server);
 }
 
 static gboolean
