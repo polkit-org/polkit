@@ -36,7 +36,6 @@
 #include "polkitbackendinteractiveauthority.h"
 #include "polkitbackendactionpool.h"
 #include "polkitbackendsessionmonitor.h"
-#include "polkitbackendconfigsource.h"
 
 #include <polkit/polkitprivate.h>
 

@@ -34,7 +34,6 @@ libpolkit_backend_1_la_SOURCES =                                   			\
 	polkitbackendinteractiveauthority.h	polkitbackendinteractiveauthority.c	\
 	polkitbackendjsauthority.h		polkitbackendjsauthority.c		\
 	polkitbackendactionpool.h		polkitbackendactionpool.c		\
-	polkitbackendconfigsource.h		polkitbackendconfigsource.c		\
 	polkitbackendactionlookup.h		polkitbackendactionlookup.c		\
         $(NULL)
 
