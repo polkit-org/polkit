@@ -1,0 +1,211 @@
+# Turkish translation for polkit.
+# Copyright (C) 2016 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Muhammet Kara <muhammetk@gmail.com>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit master\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?"
+"product=PolicyKit&keywords=I18N+L10N&component=libpolkit\n"
+"POT-Creation-Date: 2016-04-15 13:51+0000\n"
+"PO-Revision-Date: 2016-04-15 23:32+0300\n"
+"Last-Translator: Muhammet Kara <muhammetk@gmail.com>\n"
+"Language-Team: Türkçe <gnome-turk@gnome.org>\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Gtranslator 2.91.7\n"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:1
+msgid "Run a program as another user"
+msgstr "Bir programı başka bir kullanıcı olarak çalıştırın"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:2
+msgid "Authentication is required to run a program as another user"
+msgstr ""
+"Bir programı başka bir kullanıcı olarak çalıştırmak için kimlik doğrulama "
+"gerekir"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+msgid "Run the polkit example program Frobnicate"
+msgstr "polkit örnek programı Frobnicate'i çalıştırın"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"polkit örnek programı Frobnicate'i çalıştırmak için kimlik doğrulama gerekir "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+
+#: ../src/programs/pkaction.c:100
+msgid "Only output information about ACTION"
+msgstr "Sadece EYLEM hakkındaki bilgileri çıktı verin"
+
+#: ../src/programs/pkaction.c:100
+msgid "ACTION"
+msgstr "EYLEM"
+
+#: ../src/programs/pkaction.c:104
+msgid "Output detailed action information"
+msgstr "Ayrıntılı eylem bilgilerini çıktı verin"
+
+#: ../src/programs/pkaction.c:108 ../src/programs/pkttyagent.c:61
+msgid "Show version"
+msgstr "Sürümü göster"
+
+#: ../src/programs/pkaction.c:130
+msgid "[--action-id ACTION]"
+msgstr "[--action-id EYLEM]"
+
+#: ../src/programs/pkaction.c:131 ../src/programs/pkttyagent.c:81
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Hataları şuraya bildirin: %s\n"
+"%s ev sayfası: <%s>"
+
+#: ../src/programs/pkaction.c:145 ../src/programs/pkcheck.c:491
+#: ../src/programs/pkttyagent.c:95
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: Beklenmeyen değişken `%s'\n"
+
+#: ../src/programs/pkcheck.c:35
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Kullanımı:\n"
+"  pkcheck [SEÇENEK...]\n"
+"\n"
+"Yardım Seçenekleri:\n"
+"  -h, --help                         Yardım seçeneklerini göster\n"
+"\n"
+"Uygulama seçenekleri:\n"
+"  -a, --action-id=EYLEM               EYLEM'i gerçekleştirmek için "
+"yetkilendirmeyi kontrol et\n"
+"  -u, --allow-user-interaction        Eğer gerekliyse kullanıcı ile "
+"etkileşime gir\n"
+"  -d, --details=ANAHTAR DEĞER         (ANAHTAR, DEĞER)'i eylem hakkındaki "
+"bilgilere ekle\n"
+"  --enable-internal-agent             Eğer gerekirse dahili bir kimlik "
+"doğrulama vekilini kullan\n"
+"  --list-temp                         Geçerli oturum için geçici "
+"yetkilendirmeleri listele\n"
+"  -p, --process=PID[,START_TIME,UID]  Belirtilen sürecin yetkilendirmesini "
+"kontrol et\n"
+"  --revoke-temp                       Geçerli oturum için tüm geçici "
+"yetkilendirmeleri iptal et\n"
+"  -s, --system-bus-name=VERİYOLU_ADI  VERİYOLU_ADI'nın sahibinin "
+"yetkilendirmesini kontrol et\n"
+"  --version                           Sürümü göster\n"
+"\n"
+"Hataları şuraya bildirin: %s\n"
+"%s ev sayfası: <%s>\n"
+
+#: ../src/programs/pkcheck.c:391 ../src/programs/pkcheck.c:424
+#: ../src/programs/pkcheck.c:436
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: `%s'den sonra değişken bekleniyor\n"
+
+#: ../src/programs/pkcheck.c:414
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: Geçersiz --process değeri `%s'\n"
+
+#: ../src/programs/pkcheck.c:451 ../src/programs/pkcheck.c:460
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: `--detail'den sonra iki değişken bekleniyor\n"
+
+#: ../src/programs/pkcheck.c:521
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: Konu belirtilmedi\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: ../src/programs/pkexec.c:794
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr ""
+"`$(program)' programını süper kullanıcı olarak çalıştırmak için kimlik "
+"doğrulama gerekiyor"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: ../src/programs/pkexec.c:804
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgstr ""
+"`$(program)' programını $(user.display) kullanıcısı olarak çalıştırmak için "
+"kimlik doğrulama gerekir"
+
+#: ../src/programs/pkttyagent.c:44
+msgid "Don't replace existing agent if any"
+msgstr "Eğer varsa, mevcut vekili değiştirme"
+
+#: ../src/programs/pkttyagent.c:48
+msgid "Close FD when the agent is registered"
+msgstr "Vekil kaydedildiğinde FD'yi kapat"
+
+#: ../src/programs/pkttyagent.c:48
+msgid "FD"
+msgstr "FD"
+
+#: ../src/programs/pkttyagent.c:52
+msgid "Register the agent for the specified process"
+msgstr "Belirtilen süreç için vekili kaydet"
+
+#: ../src/programs/pkttyagent.c:53
+msgid "PID[,START_TIME]"
+msgstr "PID[,BAŞLANGIÇ_ZAMANI]"
+
+#: ../src/programs/pkttyagent.c:57
+msgid "Register the agent owner of BUS_NAME"
+msgstr "VERİYOLU_ADI'nın vekil sahibini kaydet"
+
+#: ../src/programs/pkttyagent.c:57
+msgid "BUS_NAME"
+msgstr "VEKİL_ADI"
+
+#: ../src/programs/pkttyagent.c:127
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: Geçersiz süreç belirteci `%s'\n"
