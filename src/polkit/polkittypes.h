@@ -64,4 +64,21 @@ typedef struct _PolkitTemporaryAuthorization PolkitTemporaryAuthorization;
 struct _PolkitPermission;
 typedef struct _PolkitPermission PolkitPermission;
 
+#if GLIB_CHECK_VERSION(2, 44, 0)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitAuthority, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitActionDescription, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitSubject, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitUnixProcess, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitUnixSession, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitSystemBusName, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitIdentity, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitUnixUser, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitUnixGroup, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitUnixNetgroup, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitAuthorizationResult, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitDetails, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitTemporaryAuthorization, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitPermission, g_object_unref)
+#endif
+
 #endif /* __POLKIT_TYPES_H */
