@@ -503,6 +503,9 @@ main (int argc, char *argv[])
   opt_user = NULL;
   local_agent_handle = NULL;
 
+  /* Disable remote file access from GIO. */
+  setenv ("GIO_USE_VFS", "local", 1);
+
   /* check for correct invocation */
   if (geteuid () != 0)
     {

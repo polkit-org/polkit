@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include <signal.h>
+#include <stdlib.h>
 
 #include <glib-unix.h>
 
@@ -168,6 +169,9 @@ main (int    argc,
   name_owner_id = 0;
   sigint_id = 0;
   registration_id = NULL;
+
+  /* Disable remote file access from GIO. */
+  setenv ("GIO_USE_VFS", "local", 1);
 
   g_type_init ();
 
