@@ -53,7 +53,7 @@ libpolkit_backend_1_la_CFLAGS =                                        	\
 	$(LIBJS_CFLAGS)							\
         $(NULL)
 
-libpolkit_backend_1_la_CXXFLAGS = $(libpolkit_backend_1_la_CFLAGS) -fpermissive
+libpolkit_backend_1_la_CXXFLAGS = $(libpolkit_backend_1_la_CFLAGS)
 
 libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
