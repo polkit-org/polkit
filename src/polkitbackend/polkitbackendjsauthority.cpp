@@ -92,11 +92,7 @@ struct _PolkitBackendJsAuthorityPrivate
 };
 
 static JSBool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
-#if JS_VERSION == 186
                                                   JSScript                 *script,
-#else
-                                                  JSObject                 *script,
-#endif
                                                   jsval                    *rval);
 
 static void utils_spawn (const gchar *const  *argv,
@@ -157,17 +153,13 @@ static JSClass js_global_class = {
   "global",
   JSCLASS_GLOBAL_FLAGS,
   JS_PropertyStub,
-  JS_PropertyStub,
+  JS_DeletePropertyStub,
   JS_PropertyStub,
   JS_StrictPropertyStub,
   JS_EnumerateStub,
   JS_ResolveStub,
   JS_ConvertStub,
-#if JS_VERSION == 186      
   NULL,
-#else
-  JS_FinalizeStub,
-#endif
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
@@ -177,17 +169,13 @@ static JSClass js_polkit_class = {
   "Polkit",
   0,
   JS_PropertyStub,
-  JS_PropertyStub,
+  JS_DeletePropertyStub,
   JS_PropertyStub,
   JS_StrictPropertyStub,
   JS_EnumerateStub,
   JS_ResolveStub,
   JS_ConvertStub,
-#if JS_VERSION == 186      
   NULL,
-#else
-  JS_FinalizeStub,
-#endif
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
@@ -300,22 +288,14 @@ load_scripts (PolkitBackendJsAuthority  *authority)
   for (l = files; l != NULL; l = l->next)
     {
       const gchar *filename = l->data;
-#if JS_VERSION == 186
-      JSScript *script;
-#else
-      JSObject *script;
-#endif
+      JS::RootedScript script(authority->priv->cx);
+      JS::CompileOptions options(authority->priv->cx);
+      JS::RootedObject   obj(authority->priv->cx,authority->priv->js_global);
+      options.setUTF8(true);
+      script = JS::Compile (authority->priv->cx,
+                            obj, options,
+                            filename);
 
-#if JS_VERSION == 186
-      script = JS_CompileUTF8File (authority->priv->cx,
-				   authority->priv->js_global,
-				   filename);
-      
-#else
-      script = JS_CompileFile (authority->priv->cx,
-			       authority->priv->js_global,
-			       filename);
-#endif
       if (script == NULL)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -355,6 +335,8 @@ reload_scripts (PolkitBackendJsAuthority *authority)
 
   JS_BeginRequest (authority->priv->cx);
 
+  JSAutoCompartment ac(authority->priv->cx,  authority->priv->js_global);
+
   if (!JS_CallFunctionName(authority->priv->cx,
                            authority->priv->js_polkit,
                            "_deleteRules",
@@ -369,11 +351,7 @@ reload_scripts (PolkitBackendJsAuthority *authority)
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                 "Collecting garbage unconditionally...");
-#if JS_VERSION == 186
   JS_GC (authority->priv->rt);
-#else
-  JS_GC (authority->priv->cx);
-#endif
 
   load_scripts (authority);
 
@@ -465,7 +443,7 @@ polkit_backend_js_authority_constructed (GObject *object)
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
   gboolean entered_request = FALSE;
 
-  authority->priv->rt = JS_NewRuntime (8L * 1024L * 1024L);
+  authority->priv->rt = JS_NewRuntime (8L * 1024L * 1024L, JS_USE_HELPER_THREADS);
   if (authority->priv->rt == NULL)
     goto fail;
 
@@ -479,19 +457,17 @@ polkit_backend_js_authority_constructed (GObject *object)
   JS_SetOptions (authority->priv->cx,
                  JSOPTION_VAROBJFIX
                  /* | JSOPTION_JIT | JSOPTION_METHODJIT*/);
-  JS_SetVersion(authority->priv->cx, JSVERSION_LATEST);
   JS_SetErrorReporter(authority->priv->cx, report_error);
   JS_SetContextPrivate (authority->priv->cx, authority);
 
   JS_BeginRequest(authority->priv->cx);
   entered_request = TRUE;
 
-  authority->priv->js_global =
-#if JS_VERSION == 186
-    JS_NewGlobalObject (authority->priv->cx, &js_global_class, NULL);
-#else
-    JS_NewCompartmentAndGlobalObject (authority->priv->cx, &js_global_class, NULL);
-#endif
+  {
+  JS::CompartmentOptions compart_opts;
+  compart_opts.setVersion(JSVERSION_LATEST);
+  authority->priv->js_global = JS_NewGlobalObject (authority->priv->cx, &js_global_class, NULL, compart_opts);
+  JSAutoCompartment ac(authority->priv->cx,  authority->priv->js_global);
 
   if (authority->priv->js_global == NULL)
     goto fail;
@@ -548,11 +524,12 @@ polkit_backend_js_authority_constructed (GObject *object)
 
   setup_file_monitors (authority);
   load_scripts (authority);
-
+  }
   JS_EndRequest (authority->priv->cx);
   entered_request = FALSE;
 
   G_OBJECT_CLASS (polkit_backend_js_authority_parent_class)->constructed (object);
+
   return;
 
  fail:
@@ -766,7 +743,6 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   char *session_str = NULL;
 
   src = "new Subject();";
-
   if (!JS_EvaluateScript (authority->priv->cx,
                           authority->priv->js_global,
                           src, strlen (src),
@@ -999,11 +975,7 @@ rkt_on_timeout (gpointer user_data)
   g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
 
   /* Supposedly this is thread-safe... */
-#if JS_VERSION == 186
   JS_TriggerOperationCallback (authority->priv->rt);
-#else
-  JS_TriggerOperationCallback (authority->priv->cx);
-#endif
 
   /* keep source around so we keep trying to kill even if the JS bit catches the exception
    * thrown in js_operation_callback()
@@ -1041,11 +1013,7 @@ runaway_killer_teardown (PolkitBackendJsAuthority *authority)
 
 static JSBool
 execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
-#if JS_VERSION == 186
                                     JSScript                 *script,
-#else
-                                    JSObject                 *script,
-#endif
                                     jsval                    *rval)
 {
   JSBool ret;
@@ -1102,6 +1070,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   gchar **ret_strs = NULL;
 
   JS_BeginRequest (authority->priv->cx);
+
+  JSAutoCompartment ac(authority->priv->cx,  authority->priv->js_global);
 
   if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
     {
@@ -1211,6 +1181,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   gboolean good = FALSE;
 
   JS_BeginRequest (authority->priv->cx);
+
+  JSAutoCompartment ac(authority->priv->cx,  authority->priv->js_global);
 
   if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
     {
