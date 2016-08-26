@@ -35,6 +35,9 @@ TEST_PROGS =
 
 TEST_PROGS += polkitbackendjsauthoritytest
 polkitbackendjsauthoritytest_SOURCES = test-polkitbackendjsauthority.c
+# force C++ link via dummy C++ file, (see GNU automake manual section 8.3.5)
+nodist_EXTRA_polkitbackendjsauthoritytest_SOURCES = dummy-force-cpp-link.cxx
+
 
 # ----------------------------------------------------------------------------------------------------
 

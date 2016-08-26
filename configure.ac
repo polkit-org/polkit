@@ -30,6 +30,8 @@ AC_PROG_MAKE_SET
 AC_PROG_LN_S
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
+AC_PROG_CXX
+AX_CXX_COMPILE_STDCXX_11()
 
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
@@ -142,6 +144,7 @@ AS_IF([test x${with_mozjs} != xauto], [
   ])
 ])
 AC_SUBST(LIBJS_CFLAGS)
+AC_SUBST(LIBJS_CXXFLAGS)
 AC_SUBST(LIBJS_LIBS)
 
 EXPAT_LIB=""
