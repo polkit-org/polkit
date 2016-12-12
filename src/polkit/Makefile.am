@@ -1,5 +1,6 @@
 NULL =
 
+AM_CFLAGS = -std=gnu99 $(WARN_CFLAGS)
 AM_CPPFLAGS =                                                   \
         -I$(top_builddir)/src                                   \
         -I$(top_srcdir)/src                                     \

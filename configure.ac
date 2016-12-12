@@ -4,6 +4,7 @@ AC_PREREQ(2.59c)
 AC_INIT([polkit], [0.114], [http://lists.freedesktop.org/mailman/listinfo/polkit-devel], , [http://www.freedesktop.org/wiki/Software/polkit])
 AM_INIT_AUTOMAKE([])
 AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_MACRO_DIR([buildutil])
 AM_MAINTAINER_MODE
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -52,76 +53,26 @@ GTK_DOC_CHECK([1.3])
 
 #### gcc warning flags
 
-if test "x$GCC" = "xyes"; then
-  changequote(,)dnl
-  case " $CFLAGS " in
-  *[\ \	]-Wall[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wall" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wchar-subscripts[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wchar-subscripts" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wmissing-declarations[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wmissing-declarations" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wnested-externs[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wnested-externs" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wpointer-arith[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wpointer-arith" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wcast-align[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wcast-align" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wsign-compare[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wsign-compare" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wformat[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wformat" ;;
-  esac
-
-  case " $CFLAGS " in
-  *[\ \	]-Wformat-security[\ \	]*) ;;
-  *) CFLAGS="$CFLAGS -Wformat-security" ;;
-  esac
-
-  if test "x$enable_ansi" = "xyes"; then
-    case " $CFLAGS " in
-    *[\ \	]-ansi[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -ansi" ;;
-    esac
-
-    case " $CFLAGS " in
-    *[\ \	]-D_POSIX_C_SOURCE*) ;;
-    *) CFLAGS="$CFLAGS -D_POSIX_C_SOURCE=199309L" ;;
-    esac
-
-    case " $CFLAGS " in
-    *[\ \	]-D_BSD_SOURCE[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -D_BSD_SOURCE" ;;
-    esac
-
-    case " $CFLAGS " in
-    *[\ \	]-pedantic[\ \	]*) ;;
-    *) CFLAGS="$CFLAGS -pedantic" ;;
-    esac
-  fi
-  changequote([,])dnl
-fi
+CC_CHECK_FLAGS_APPEND([WARN_CFLAGS], [CFLAGS], [\
+        -pipe \
+        -Wall \
+	-Werror=empty-body \
+	-Werror=strict-prototypes \
+	-Werror=missing-prototypes \
+	-Werror=implicit-function-declaration \
+        "-Werror=format=2 -Werror=format-security -Werror=format-nonliteral" \
+	-Werror=pointer-arith -Werror=init-self \
+        -Werror=missing-declarations \
+        -Werror=return-type \
+        -Werror=overflow \
+        -Werror=int-conversion \
+        -Werror=parenthesis \
+        -Werror=incompatible-pointer-types \
+        -Werror=misleading-indentation \
+	-Werror=missing-include-dirs -Werror=aggregate-return \
+	-Werror=declaration-after-statement \
+])
+AC_SUBST(WARN_CFLAGS)
 
 PKG_CHECK_MODULES(GLIB, [gmodule-2.0 gio-unix-2.0 >= 2.30.0])
 AC_SUBST(GLIB_CFLAGS)
