@@ -951,6 +951,7 @@ server_handle_register_authentication_agent_with_options (Server                
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
+  g_variant_unref (subject_gvariant);
   if (options != NULL)
       g_variant_unref (options);
   if (subject != NULL)
