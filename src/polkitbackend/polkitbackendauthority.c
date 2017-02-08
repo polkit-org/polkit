@@ -645,11 +645,8 @@ server_handle_enumerate_actions (Server                 *server,
   for (l = actions; l != NULL; l = l->next)
     {
       PolkitActionDescription *ad = POLKIT_ACTION_DESCRIPTION (l->data);
-      GVariant *value;
-      value = polkit_action_description_to_gvariant (ad);
-      g_variant_ref_sink (value);
-      g_variant_builder_add_value (&builder, value);
-      g_variant_unref (value);
+      g_variant_builder_add_value (&builder,
+                                   polkit_action_description_to_gvariant (ad)); /* A floating value */
     }
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a(ssssssuuua{ss}))", &builder));
 
@@ -709,11 +706,9 @@ check_auth_cb (GObject      *source_object,
     }
   else
     {
-      GVariant *value;
-      value = polkit_authorization_result_to_gvariant (result);
-      g_variant_ref_sink (value);
-      g_dbus_method_invocation_return_value (data->invocation, g_variant_new ("(@(bba{ss}))", value));
-      g_variant_unref (value);
+      g_dbus_method_invocation_return_value (data->invocation,
+                                             g_variant_new ("(@(bba{ss}))",
+                                                            polkit_authorization_result_to_gvariant (result))); /* A floating value */
       g_object_unref (result);
     }
 
@@ -1158,11 +1153,8 @@ server_handle_enumerate_temporary_authorizations (Server                 *server
   for (l = authorizations; l != NULL; l = l->next)
     {
       PolkitTemporaryAuthorization *a = POLKIT_TEMPORARY_AUTHORIZATION (l->data);
-      GVariant *value;
-      value = polkit_temporary_authorization_to_gvariant (a);
-      g_variant_ref_sink (value);
-      g_variant_builder_add_value (&builder, value);
-      g_variant_unref (value);
+      g_variant_builder_add_value (&builder,
+                                   polkit_temporary_authorization_to_gvariant (a)); /* A floating value */
     }
   g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
   g_list_free (authorizations);

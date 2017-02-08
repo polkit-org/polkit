@@ -290,12 +290,12 @@ polkit_subject_from_string  (const gchar   *str,
   return subject;
 }
 
+/* Note that this returns a floating value. */
 GVariant *
 polkit_subject_to_gvariant (PolkitSubject *subject)
 {
   GVariantBuilder builder;
   GVariant *dict;
-  GVariant *ret;
   const gchar *kind;
 
   kind = "";
@@ -329,8 +329,7 @@ polkit_subject_to_gvariant (PolkitSubject *subject)
     }
 
   dict = g_variant_builder_end (&builder);
-  ret = g_variant_new ("(s@a{sv})", kind, dict);
-  return ret;
+  return g_variant_new ("(s@a{sv})", kind, dict);
 }
 
 static GVariant *

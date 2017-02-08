@@ -195,10 +195,10 @@ polkit_details_get_keys (PolkitDetails *details)
   return ret;
 }
 
+/* Note that this returns a floating value. */
 GVariant *
 polkit_details_to_gvariant (PolkitDetails *details)
 {
-  GVariant *ret;
   GVariantBuilder builder;
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a{ss}"));
@@ -212,8 +212,7 @@ polkit_details_to_gvariant (PolkitDetails *details)
       while (g_hash_table_iter_next (&hash_iter, (gpointer) &key, (gpointer) &value))
         g_variant_builder_add (&builder, "{ss}", key, value);
     }
-  ret = g_variant_builder_end (&builder);
-  return ret;
+  return g_variant_builder_end (&builder);
 }
 
 PolkitDetails *

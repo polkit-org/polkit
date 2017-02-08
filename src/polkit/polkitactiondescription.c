@@ -352,10 +352,10 @@ polkit_action_description_new_for_gvariant (GVariant *value)
   return action_description;
 }
 
+/* Note that this returns a floating value. */
 GVariant *
 polkit_action_description_to_gvariant (PolkitActionDescription *action_description)
 {
-  GVariant *value;
   GVariantBuilder builder;
   GHashTableIter iter;
   const gchar *a_key;
@@ -368,17 +368,15 @@ polkit_action_description_to_gvariant (PolkitActionDescription *action_descripti
     g_variant_builder_add (&builder, "{ss}", a_key, a_value);
 
   /* TODO: note 'foo ? : ""' is a gcc specific extension (it's a short-hand for 'foo ? foo : ""') */
-  value = g_variant_new ("(ssssssuuua{ss})",
-                         action_description->action_id ? : "",
-                         action_description->description ? : "",
-                         action_description->message ? : "",
-                         action_description->vendor_name ? : "",
-                         action_description->vendor_url ? : "",
-                         action_description->icon_name ? : "",
-                         action_description->implicit_any,
-                         action_description->implicit_inactive,
-                         action_description->implicit_active,
-                         &builder);
-
-  return value;
+  return g_variant_new ("(ssssssuuua{ss})",
+                        action_description->action_id ? : "",
+                        action_description->description ? : "",
+                        action_description->message ? : "",
+                        action_description->vendor_name ? : "",
+                        action_description->vendor_url ? : "",
+                        action_description->icon_name ? : "",
+                        action_description->implicit_any,
+                        action_description->implicit_inactive,
+                        action_description->implicit_active,
+                        &builder);
 }

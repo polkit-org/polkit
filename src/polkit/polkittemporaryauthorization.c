@@ -212,22 +212,15 @@ polkit_temporary_authorization_new_for_gvariant (GVariant  *value,
   return authorization;
 }
 
+/* Note that this returns a floating value. */
 GVariant *
 polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization)
 {
-  GVariant *ret;
-  GVariant *subject_gvariant;
-
-  subject_gvariant = polkit_subject_to_gvariant (authorization->subject);
-  g_variant_ref_sink (subject_gvariant);
-  ret = g_variant_new ("(ss@(sa{sv})tt)",
-                       authorization->id,
-                       authorization->action_id,
-                       subject_gvariant,
-                       authorization->time_obtained,
-                       authorization->time_expires);
-  g_variant_unref (subject_gvariant);
-
-  return ret;
+  return g_variant_new ("(ss@(sa{sv})tt)",
+                        authorization->id,
+                        authorization->action_id,
+                        polkit_subject_to_gvariant (authorization->subject), /* A floating value */
+                        authorization->time_obtained,
+                        authorization->time_expires);
 }
 

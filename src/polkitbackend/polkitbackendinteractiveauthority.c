@@ -2299,7 +2299,6 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
   gchar *localized_message;
   gchar *localized_icon_name;
   PolkitDetails *localized_details;
-  GVariant *details_gvariant;
   GList *user_identities = NULL;
   GVariantBuilder identities_builder;
   GVariant *parameters;
@@ -2397,28 +2396,21 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
   add_pid (localized_details, caller, "polkit.caller-pid");
   add_pid (localized_details, subject, "polkit.subject-pid");
 
-  details_gvariant = polkit_details_to_gvariant (localized_details);
-  g_variant_ref_sink (details_gvariant);
-
   g_variant_builder_init (&identities_builder, G_VARIANT_TYPE ("a(sa{sv})"));
   for (l = user_identities; l != NULL; l = l->next)
     {
       PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
-      GVariant *value;
-      value = polkit_identity_to_gvariant (identity);
-      g_variant_ref_sink (value);
-      g_variant_builder_add_value (&identities_builder, value);
-      g_variant_unref (value);
+      g_variant_builder_add_value (&identities_builder,
+                                   polkit_identity_to_gvariant (identity)); /* A floating value */
     }
 
   parameters = g_variant_new ("(sss@a{ss}sa(sa{sv}))",
                               action_id,
                               localized_message,
                               localized_icon_name,
-                              details_gvariant,
+                              polkit_details_to_gvariant (localized_details), /* A floating value */
                               session->cookie,
                               &identities_builder);
-  g_variant_unref (details_gvariant);
 
   g_dbus_proxy_call (agent->proxy,
                      "BeginAuthentication",
