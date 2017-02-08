@@ -1054,6 +1054,7 @@ server_handle_authentication_agent_response (Server                 *server,
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
+  g_variant_unref (identity_gvariant);
   if (identity != NULL)
     g_object_unref (identity);
 }
@@ -1104,6 +1105,7 @@ server_handle_authentication_agent_response2 (Server                 *server,
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
+  g_variant_unref (identity_gvariant);
   if (identity != NULL)
     g_object_unref (identity);
 }
