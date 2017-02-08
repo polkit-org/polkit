@@ -362,6 +362,7 @@ lookup_asv (GVariant            *dict,
                            g_variant_get_type_string (value),
                            type_string);
               g_free (type_string);
+              g_variant_unref (value);
               goto out;
             }
           ret = value;
