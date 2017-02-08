@@ -1165,6 +1165,7 @@ server_handle_enumerate_temporary_authorizations (Server                 *server
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a(ss(sa{sv})tt))", &builder));
 
  out:
+  g_variant_unref (subject_gvariant);
   if (subject != NULL)
     g_object_unref (subject);
 }
@@ -1211,6 +1212,7 @@ server_handle_revoke_temporary_authorizations (Server                 *server,
   g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
 
  out:
+  g_variant_unref (subject_gvariant);
   if (subject != NULL)
     g_object_unref (subject);
 }
