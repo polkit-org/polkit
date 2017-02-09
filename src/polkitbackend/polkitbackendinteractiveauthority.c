@@ -1906,15 +1906,15 @@ authentication_agent_begin_cb (GDBusProxy   *proxy,
   AuthenticationSession *session = user_data;
   gboolean gained_authorization;
   gboolean was_dismissed;
+  GVariant *result;
   GError *error;
 
   was_dismissed = FALSE;
   gained_authorization = FALSE;
 
   error = NULL;
-  if (!g_dbus_proxy_call_finish (proxy,
-                                 res,
-                                 &error))
+  result = g_dbus_proxy_call_finish (proxy, res, &error);
+  if (result == NULL)
     {
       g_printerr ("Error performing authentication: %s (%s %d)\n",
                   error->message,
@@ -1926,6 +1926,7 @@ authentication_agent_begin_cb (GDBusProxy   *proxy,
     }
   else
     {
+      g_variant_unref (result);
       gained_authorization = session->is_authenticated;
       g_debug ("Authentication complete, is_authenticated = %d", session->is_authenticated);
     }
