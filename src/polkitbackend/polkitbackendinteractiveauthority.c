@@ -2437,13 +2437,18 @@ authentication_agent_cancel_cb (GDBusProxy   *proxy,
                                 GAsyncResult *res,
                                 gpointer      user_data)
 {
+  GVariant *result;
   GError *error;
+
   error = NULL;
-  if (!g_dbus_proxy_call_finish (proxy, res, &error))
+  result = g_dbus_proxy_call_finish (proxy, res, &error);
+  if (result == NULL)
     {
       g_printerr ("Error cancelling authentication: %s\n", error->message);
       g_error_free (error);
     }
+  else
+    g_variant_unref (result);
 }
 
 static void
