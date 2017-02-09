@@ -1698,11 +1698,13 @@ polkit_authority_enumerate_temporary_authorizations_finish (PolkitAuthority *aut
           g_prefix_error (error, "Error serializing return value of EnumerateTemporaryAuthorizations: ");
           g_list_foreach (ret, (GFunc) g_object_unref, NULL);
           g_list_free (ret);
-          goto out;
+          ret = NULL;
+          goto out_array;
         }
       ret = g_list_prepend (ret, auth);
     }
   ret = g_list_reverse (ret);
+ out_array:
   g_variant_unref (array);
   g_variant_unref (value);
 
