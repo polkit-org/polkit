@@ -1,0 +1,205 @@
+# Indonesian translation for polkit.
+# Copyright (C) 2016 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Lorenz Adam Damara <lorenzadam@resolution-consulting.co.id>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit master\n"
+"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?"
+"product=PolicyKit&keywords=I18N+L10N&component=libpolkit\n"
+"POT-Creation-Date: 2016-07-10 02:28+0000\n"
+"PO-Revision-Date: 2016-07-10 17:27+0700\n"
+"Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
+"Language: id\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Lorenz Adam Damara <lorenzrenz@gmail.com>\n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:1
+msgid "Run a program as another user"
+msgstr "Jalankan program sebagai pengguna lain"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:2
+msgid "Authentication is required to run a program as another user"
+msgstr "Otentikasi diperlukan untuk menjalankan program sebagai pengguna lain"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+msgid "Run the polkit example program Frobnicate"
+msgstr "Jalankan contoh program polkit Frobnicate"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"Otentikasi dibutuhkan untuk menjalankan contoh program Frobnicate (user="
+"$(user), user.gecos=$(user.gecos), user.display=$(user.display), program="
+"$(program), command_line=$(command_line))"
+
+#: ../src/programs/pkaction.c:101
+msgid "Only output information about ACTION"
+msgstr "Hanya informasi keluaran tentang AKSI"
+
+#: ../src/programs/pkaction.c:101
+msgid "ACTION"
+msgstr "ACTION"
+
+#: ../src/programs/pkaction.c:105
+msgid "Output detailed action information"
+msgstr "Informasi detil aksi keluaran"
+
+#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
+msgid "Show version"
+msgstr "Tampilkan versi"
+
+#: ../src/programs/pkaction.c:134
+msgid "[--action-id ACTION]"
+msgstr "[--action-id ACTION]"
+
+#: ../src/programs/pkaction.c:135 ../src/programs/pkttyagent.c:85
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Laporkan kutu ke: %s\n"
+"halaman beranda %s: <%s>"
+
+#: ../src/programs/pkaction.c:149 ../src/programs/pkcheck.c:495
+#: ../src/programs/pkttyagent.c:99
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: argumen yang tak terduga `%s'\n"
+
+#: ../src/programs/pkcheck.c:36
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Penggunaan:\n"
+" pkcheck [PILIHAN...]\n"
+"\n"
+"Bantuan Pilihan:\n"
+"  -h, --help                         Show help options\n"
+"Pilihan Aplikasi:\n"
+"-a, --action-id=ACTION             Periksa otorisasi untuk melakukan ACTION\n"
+"  -u, --allow-user-interaction       Berkomunikasi dengan pengguna jika "
+"dibutuhkan\n"
+"  -d, --details=KEY VALUE            Tambahkan (KEY, VALUE) untuk informasi "
+"mengenai aksi\n"
+"  --enable-internal-agent            Gunakan otentikasi agen internal jika "
+"dibutuhkan\n"
+"  --list-temp                        Daftar otorisasi sementara untuk sesi "
+"ini\n"
+"  -p, --process=PID[,START_TIME,UID] Periksa otorisasi untuk proses yang "
+"spesifik\n"
+"  --revoke-temp                      Cabut semua otorisasi sementara untuk "
+"sesi saat ini\n"
+"  -s, --system-bus-name=BUS_NAME     Periksa otorisasi bagi pemilik "
+"BUS_NAME\n"
+"  --version                          Tampilkan versi\n"
+"\n"
+"Laporkan kutu ke: %s\n"
+"halaman beranda %s: <%s>\n"
+
+#: ../src/programs/pkcheck.c:395 ../src/programs/pkcheck.c:428
+#: ../src/programs/pkcheck.c:440
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: Argumen diharapkan setelah `%s'\n"
+
+#: ../src/programs/pkcheck.c:418
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: kesalahan nilai --process `%s'\n"
+
+#: ../src/programs/pkcheck.c:455 ../src/programs/pkcheck.c:464
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: Dua argumen diharapkan setelah `--detail'\n"
+
+#: ../src/programs/pkcheck.c:525
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: Subyek tidak dispesifikasikan\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: ../src/programs/pkexec.c:797
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr ""
+"Otentikasi dibutuhkan untuk menjalankan `$(program)' sebagai super user"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: ../src/programs/pkexec.c:807
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgstr ""
+"Otentikasi dibutuhkan untuk menjalankan `$(program)' sebagai pengguna $(user."
+"display)"
+
+#: ../src/programs/pkttyagent.c:45
+msgid "Don't replace existing agent if any"
+msgstr "Jangan ganti agen yang sudah ada"
+
+#: ../src/programs/pkttyagent.c:49
+msgid "Close FD when the agent is registered"
+msgstr "Tutup FD ketika agen sudah terdaftar"
+
+#: ../src/programs/pkttyagent.c:49
+msgid "FD"
+msgstr "FD"
+
+#: ../src/programs/pkttyagent.c:53
+msgid "Register the agent for the specified process"
+msgstr "Daftarkan agen untuk proses yang spesifik"
+
+#: ../src/programs/pkttyagent.c:54
+msgid "PID[,START_TIME]"
+msgstr "PID,[,START_TIME]"
+
+#: ../src/programs/pkttyagent.c:58
+msgid "Register the agent owner of BUS_NAME"
+msgstr "Daftarkan agen pemilik BUS_NAME"
+
+#: ../src/programs/pkttyagent.c:58
+msgid "BUS_NAME"
+msgstr "BUS_NAME"
+
+#: ../src/programs/pkttyagent.c:131
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: Kesalahan spesifikasi proses `%s'\n"
