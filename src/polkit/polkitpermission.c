@@ -454,6 +454,7 @@ changed_check_cb (GObject       *source_object,
   if (result != NULL)
     {
       process_result (permission, result);
+      g_object_unref (result);
     }
   else
     {
