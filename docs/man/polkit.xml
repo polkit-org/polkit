@@ -894,7 +894,7 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id.indexOf("org.freedesktop.login1.reboot") == 0) {
         try {
-            // user-may-reboot exits with succeess (exit code 0)
+            // user-may-reboot exits with success (exit code 0)
             // only if the passed username is authorized
             polkit.spawn(["/opt/company/bin/user-may-reboot",
                           subject.user]);
