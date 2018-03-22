@@ -464,9 +464,10 @@ polkit_backend_js_authority_constructed (GObject *object)
   /* TODO: JIT'ing doesn't work will with killing runaway scripts... I think
    *       this is just a SpiderMonkey bug. So disable the JIT for now.
    */
-  JS_SetOptions (authority->priv->cx,
-                 JSOPTION_VAROBJFIX
-                 /* | JSOPTION_JIT | JSOPTION_METHODJIT*/);
+  JS::ContextOptionsRef (authority->priv->cx)
+      .setIon (FALSE)
+      .setBaseline (FALSE)
+      .setAsmJS (FALSE);
   JS_SetErrorReporter(authority->priv->cx, report_error);
   JS_SetContextPrivate (authority->priv->cx, authority);
 
