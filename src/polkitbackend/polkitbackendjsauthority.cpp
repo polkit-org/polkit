@@ -471,7 +471,7 @@ polkit_backend_js_authority_constructed (GObject *object)
 
   {
     JS::CompartmentOptions compart_opts;
-    compart_opts.setVersion(JSVERSION_LATEST);
+    compart_opts.behaviors().setVersion(JSVERSION_LATEST);
     authority->priv->js_global = JS_NewGlobalObject (authority->priv->cx, &js_global_class, NULL, compart_opts);
 
     if (authority->priv->js_global == NULL)
