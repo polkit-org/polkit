@@ -342,8 +342,8 @@ load_scripts (PolkitBackendJsAuthority  *authority)
 static void
 reload_scripts (PolkitBackendJsAuthority *authority)
 {
-  JS::Value argv[1] = {JSVAL_NULL};
-  JS::Value rval = JSVAL_NULL;
+  JS::Value argv[1] = {JS::NullValue()};
+  JS::Value rval = JS::NullValue();
 
   JS_BeginRequest (authority->priv->cx);
 
@@ -1084,8 +1084,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   GList *ret = NULL;
-  JS::Value argv[2] = {JSVAL_NULL, JSVAL_NULL};
-  JS::Value rval = JSVAL_NULL;
+  JS::Value argv[2] = {JS::NullValue(), JS::NullValue()};
+  JS::Value rval = JS::NullValue();
   guint n;
   GError *error = NULL;
   JSString *ret_jsstr;
@@ -1193,8 +1193,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
-  JS::Value argv[2] = {JSVAL_NULL, JSVAL_NULL};
-  JS::Value rval = JSVAL_NULL;
+  JS::Value argv[2] = {JS::NullValue(), JS::NullValue()};
+  JS::Value rval = JS::NullValue();
   GError *error = NULL;
   JSString *ret_jsstr;
   const jschar *ret_utf16;
