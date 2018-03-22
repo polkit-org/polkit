@@ -149,34 +149,47 @@ G_DEFINE_TYPE (PolkitBackendJsAuthority, polkit_backend_js_authority, POLKIT_BAC
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static const struct JSClassOps js_global_class_ops = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
 static JSClass js_global_class = {
   "global",
   JSCLASS_GLOBAL_FLAGS,
-  JS_PropertyStub,
-  JS_DeletePropertyStub,
-  JS_PropertyStub,
-  JS_StrictPropertyStub,
-  JS_EnumerateStub,
-  JS_ResolveStub,
-  JS_ConvertStub,
-  NULL,
-  JSCLASS_NO_OPTIONAL_MEMBERS
+  &js_global_class_ops
 };
 
 /* ---------------------------------------------------------------------------------------------------- */
+static const struct JSClassOps js_polkit_class_ops = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
 
 static JSClass js_polkit_class = {
   "Polkit",
   0,
-  JS_PropertyStub,
-  JS_DeletePropertyStub,
-  JS_PropertyStub,
-  JS_StrictPropertyStub,
-  JS_EnumerateStub,
-  JS_ResolveStub,
-  JS_ConvertStub,
-  NULL,
-  JSCLASS_NO_OPTIONAL_MEMBERS
+  &js_polkit_class_ops
 };
 
 static JSBool js_polkit_log (JSContext *cx, unsigned argc, jsval *vp);
