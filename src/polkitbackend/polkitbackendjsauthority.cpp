@@ -207,7 +207,6 @@ static JSFunctionSpec js_polkit_functions[] =
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void report_error (JSContext     *cx,
-                          const char    *message,
                           JSErrorReport *report)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
@@ -215,7 +214,7 @@ static void report_error (JSContext     *cx,
                                 "%s:%u: %s",
                                 report->filename ? report->filename : "<no filename>",
                                 (unsigned int) report->lineno,
-                                message);
+                                report->message().c_str());
 }
 
 static void
@@ -468,7 +467,7 @@ polkit_backend_js_authority_constructed (GObject *object)
       .setIon (FALSE)
       .setBaseline (FALSE)
       .setAsmJS (FALSE);
-  JS_SetErrorReporter(authority->priv->cx, report_error);
+  JS::SetWarningReporter(authority->priv->cx, report_error);
   JS_SetContextPrivate (authority->priv->cx, authority);
 
   JS_BeginRequest(authority->priv->cx);
