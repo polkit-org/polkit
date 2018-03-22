@@ -670,7 +670,7 @@ set_property_str (PolkitBackendJsAuthority  *authority,
   JSString *value_jsstr;
   JS::Value value_jsval;
   value_jsstr = JS_NewStringCopyZ (authority->priv->cx, value);
-  value_jsval = STRING_TO_JSVAL (value_jsstr);
+  value_jsval = JS::StringValue (value_jsstr);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
@@ -693,7 +693,7 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
       JS::Value val;
 
       jsstr = JS_NewStringCopyZ (authority->priv->cx, (char *)g_ptr_array_index(value, n));
-      val = STRING_TO_JSVAL (jsstr);
+      val = JS::StringValue (jsstr);
       JS_SetElement (authority->priv->cx, array_object, n, &val);
     }
 
@@ -950,7 +950,7 @@ js_operation_callback (JSContext *cx)
   /* Throw an exception - this way the JS code can ignore the runaway script handling */
   JS_SetOperationCallback (authority->priv->cx, NULL);
   val_str = JS_NewStringCopyZ (cx, "Terminating runaway script");
-  val = STRING_TO_JSVAL (val_str);
+  val = JS::StringValue (val_str);
   JS_SetPendingException (authority->priv->cx, val);
   JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
   return false;
@@ -1477,7 +1477,7 @@ js_polkit_spawn (JSContext  *cx,
   ret = true;
 
   ret_jsstr = JS_NewStringCopyZ (cx, standard_output);
-  JS_SET_RVAL (cx, vp, STRING_TO_JSVAL (ret_jsstr));
+  JS_SET_RVAL (cx, vp, JS::StringValue (ret_jsstr));
 
  out:
   g_strfreev (argv);
