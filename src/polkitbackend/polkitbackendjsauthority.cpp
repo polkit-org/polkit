@@ -660,66 +660,75 @@ polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
 /* authority->priv->cx must be within a request */
 static void
 set_property_str (PolkitBackendJsAuthority  *authority,
-                  JSObject                  *obj,
+                  JS::HandleObject           obj,
                   const gchar               *name,
                   const gchar               *value)
 {
-  JSString *value_jsstr;
-  JS::Value value_jsval;
-  value_jsstr = JS_NewStringCopyZ (authority->priv->cx, value);
-  value_jsval = JS::StringValue (value_jsstr);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS::RootedValue value_jsval(authority->priv->cx);
+  if (value)
+    {
+      JS::ConstUTF8CharsZ chars(value, strlen(value));
+      JS::RootedString str(authority->priv->cx, JS_NewStringCopyUTF8Z(authority->priv->cx, chars));
+      value_jsval = JS::StringValue (str);
+    }
+  else
+    value_jsval = JS::NullValue ();
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* authority->priv->cx must be within a request */
 static void
 set_property_strv (PolkitBackendJsAuthority  *authority,
-                   JSObject                  *obj,
+                   JS::HandleObject           obj,
                    const gchar               *name,
                    GPtrArray                 *value)
 {
-  JS::Value value_jsval;
-  JSObject *array_object;
+  JS::RootedValue value_jsval(authority->priv->cx);
+  JS::AutoValueVector elems(authority->priv->cx);
   guint n;
 
-  array_object = JS_NewArrayObject (authority->priv->cx, 0, NULL);
-
+  elems.resize(value->len);
   for (n = 0; n < value->len; n++)
     {
-      JSString *jsstr;
-      JS::Value val;
-
-      jsstr = JS_NewStringCopyZ (authority->priv->cx, (char *)g_ptr_array_index(value, n));
-      val = JS::StringValue (jsstr);
-      JS_SetElement (authority->priv->cx, array_object, n, &val);
+      const char *c_string = (const char *) g_ptr_array_index(value, n);
+      if (c_string)
+        {
+          JS::ConstUTF8CharsZ chars(c_string, strlen(c_string));
+          JS::RootedString str(authority->priv->cx, JS_NewStringCopyUTF8Z(authority->priv->cx, chars));
+          elems[n].setString(str);
+        }
+      else
+        elems[n].setNull ();
     }
 
+  JS::RootedObject array_object(authority->priv->cx, JS_NewArrayObject (authority->priv->cx, elems));
+
   value_jsval = JS::ObjectValue (*array_object);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* authority->priv->cx must be within a request */
 static void
 set_property_int32 (PolkitBackendJsAuthority  *authority,
-                    JSObject                  *obj,
+                    JS::HandleObject           obj,
                     const gchar               *name,
                     gint32                     value)
 {
-  JS::Value value_jsval;
-  value_jsval = INT_TO_JSVAL ((gint32) value);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS::RootedValue value_jsval(authority->priv->cx);
+  value_jsval = JS::Int32Value ((gint32) value);
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* authority->priv->cx must be within a request */
 static void
 set_property_bool (PolkitBackendJsAuthority  *authority,
-                   JSObject                  *obj,
+                   JS::HandleObject           obj,
                    const gchar               *name,
                    gboolean                   value)
 {
-  JS::Value value_jsval;
-  value_jsval = BOOLEAN_TO_JSVAL ((bool) value);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS::RootedValue value_jsval(authority->priv->cx);
+  value_jsval = JS::BooleanValue ((bool) value);
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
