@@ -90,7 +90,7 @@ struct _PolkitBackendJsAuthorityPrivate
   GList *scripts;
 };
 
-static JSBool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
+static bool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                                   JSScript                 *script,
                                                   jsval                    *rval);
 
@@ -192,9 +192,9 @@ static JSClass js_polkit_class = {
   &js_polkit_class_ops
 };
 
-static JSBool js_polkit_log (JSContext *cx, unsigned argc, jsval *vp);
-static JSBool js_polkit_spawn (JSContext *cx, unsigned argc, jsval *vp);
-static JSBool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, jsval *vp);
+static bool js_polkit_log (JSContext *cx, unsigned argc, jsval *vp);
+static bool js_polkit_spawn (JSContext *cx, unsigned argc, jsval *vp);
+static bool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, jsval *vp);
 
 static JSFunctionSpec js_polkit_functions[] =
 {
@@ -721,7 +721,7 @@ set_property_bool (PolkitBackendJsAuthority  *authority,
                    gboolean                   value)
 {
   jsval value_jsval;
-  value_jsval = BOOLEAN_TO_JSVAL ((JSBool) value);
+  value_jsval = BOOLEAN_TO_JSVAL ((bool) value);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
@@ -925,7 +925,7 @@ runaway_killer_thread_func (gpointer user_data)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static JSBool
+static bool
 js_operation_callback (JSContext *cx)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
@@ -939,7 +939,7 @@ js_operation_callback (JSContext *cx)
   if (!authority->priv->rkt_timeout_pending)
     {
       g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
-      return JS_TRUE;
+      return true;
     }
   authority->priv->rkt_timeout_pending = FALSE;
   g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
@@ -953,7 +953,7 @@ js_operation_callback (JSContext *cx)
   val = STRING_TO_JSVAL (val_str);
   JS_SetPendingException (authority->priv->cx, val);
   JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
-  return JS_FALSE;
+  return false;
 }
 
 static gboolean
@@ -1034,12 +1034,12 @@ runaway_killer_terminate (PolkitBackendJsAuthority *authority)
   g_thread_join (authority->priv->runaway_killer_thread);
 }
 
-static JSBool
+static bool
 execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                     JSScript                 *script,
                                     jsval                    *rval)
 {
-  JSBool ret;
+  bool ret;
 
   runaway_killer_setup (authority);
   ret = JS_ExecuteScript (authority->priv->cx,
@@ -1051,14 +1051,14 @@ execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
   return ret;
 }
 
-static JSBool
+static bool
 call_js_function_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                       const char               *function_name,
                                       unsigned                  argc,
                                       jsval                    *argv,
                                       jsval                    *rval)
 {
-  JSBool ret;
+  bool ret;
   runaway_killer_setup (authority);
   ret = JS_CallFunctionName(authority->priv->cx,
                             authority->priv->js_polkit,
@@ -1286,13 +1286,13 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static JSBool
+static bool
 js_polkit_log (JSContext  *cx,
                unsigned    argc,
                jsval      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
-  JSBool ret = JS_FALSE;
+  bool ret = false;
   JSString *str;
   char *s;
 
@@ -1303,7 +1303,7 @@ js_polkit_log (JSContext  *cx,
   JS_ReportWarningUTF8 (cx, s);
   JS_free (cx, s);
 
-  ret = JS_TRUE;
+  ret = true;
 
   JS_SET_RVAL (cx, vp, JSVAL_VOID);  /* return undefined */
  out:
@@ -1371,13 +1371,13 @@ spawn_cb (GObject       *source_object,
   g_main_loop_quit (data->loop);
 }
 
-static JSBool
+static bool
 js_polkit_spawn (JSContext  *cx,
                  unsigned    js_argc,
                  jsval      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
-  JSBool ret = JS_FALSE;
+  bool ret = false;
   JSObject *array_object;
   gchar *standard_output = NULL;
   gchar *standard_error = NULL;
@@ -1474,7 +1474,7 @@ js_polkit_spawn (JSContext  *cx,
       goto out;
     }
 
-  ret = JS_TRUE;
+  ret = true;
 
   ret_jsstr = JS_NewStringCopyZ (cx, standard_output);
   JS_SET_RVAL (cx, vp, STRING_TO_JSVAL (ret_jsstr));
@@ -1494,18 +1494,18 @@ js_polkit_spawn (JSContext  *cx,
 /* ---------------------------------------------------------------------------------------------------- */
 
 
-static JSBool
+static bool
 js_polkit_user_is_in_netgroup (JSContext  *cx,
                                unsigned    argc,
                                jsval      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
-  JSBool ret = JS_FALSE;
+  bool ret = false;
   JSString *user_str;
   JSString *netgroup_str;
   char *user;
   char *netgroup;
-  JSBool is_in_netgroup = JS_FALSE;
+  bool is_in_netgroup = false;
 
   if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "SS", &user_str, &netgroup_str))
     goto out;
@@ -1518,13 +1518,13 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
                user,
                NULL)) /* domain */
     {
-      is_in_netgroup =  JS_TRUE;
+      is_in_netgroup =  true;
     }
 
   JS_free (cx, netgroup);
   JS_free (cx, user);
 
-  ret = JS_TRUE;
+  ret = true;
 
   JS_SET_RVAL (cx, vp, BOOLEAN_TO_JSVAL (is_in_netgroup));
  out:
