@@ -507,12 +507,12 @@ polkit_backend_js_authority_constructed (GObject *object)
                              js_polkit_functions))
       goto fail;
 
-    if (!JS_EvaluateScript (authority->priv->cx,
-                            global,
-                            init_js, strlen (init_js), /* init.js */
-                            "init.js",  /* filename */
-                            0,     /* lineno */
-                            NULL)) /* rval */
+    JS::CompileOptions options(authority->priv->cx, JSVERSION_UNKNOWN);
+    JS::RootedValue rval(authority->priv->cx);
+    if (!JS::Evaluate (authority->priv->cx,
+                       options,
+                       init_js, strlen (init_js), /* init.js */
+                       &rval)) /* rval */
       {
         goto fail;
       }
@@ -731,11 +731,11 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
                   PolkitIdentity            *user_for_subject,
                   gboolean                   subject_is_local,
                   gboolean                   subject_is_active,
-                  JS::Value                     *out_jsval,
+                  JS::MutableHandleValue     out_jsval,
                   GError                   **error)
 {
   gboolean ret = FALSE;
-  JS::Value ret_jsval;
+  JS::CompileOptions options(authority->priv->cx, JSVERSION_UNKNOWN);
   const char *src;
   JS::RootedObject obj(authority->priv->cx);
   pid_t pid;
@@ -748,17 +748,16 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Subject();";
-  if (!JS_EvaluateScript (authority->priv->cx,
-                          global,
-                          src, strlen (src),
-                          __FILE__, __LINE__,
-                          &ret_jsval))
+  if (!JS::Evaluate (authority->priv->cx,
+                     options,
+                     src, strlen (src),
+                     out_jsval))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
     }
 
-  obj = ret_jsval.toObjectOrNull();
+  obj = out_jsval.toObjectOrNull();
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
@@ -849,9 +848,6 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   if (groups != NULL)
     g_ptr_array_unref (groups);
 
-  if (ret && out_jsval != NULL)
-    *out_jsval = ret_jsval;
-
   return ret;
 }
 
@@ -862,11 +858,11 @@ static gboolean
 action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
                              const gchar               *action_id,
                              PolkitDetails             *details,
-                             JS::Value                     *out_jsval,
+                             JS::MutableHandleValue     out_jsval,
                              GError                   **error)
 {
   gboolean ret = FALSE;
-  JS::Value ret_jsval;
+  JS::CompileOptions options(authority->priv->cx, JSVERSION_UNKNOWN);
   const char *src;
   JS::RootedObject obj(authority->priv->cx);
   gchar **keys;
@@ -874,17 +870,17 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
   JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Action();";
-  if (!JS_EvaluateScript (authority->priv->cx,
-                          global,
-                          src, strlen (src),
-                          __FILE__, __LINE__,
-                          &ret_jsval))
+
+  if (!JS::Evaluate (authority->priv->cx,
+                     options,
+                     src, strlen (src),
+                     out_jsval))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
     }
 
-  obj = ret_jsval.toObjectOrNull();
+  obj = out_jsval.toObjectOrNull();
 
   set_property_str (authority, obj, "id", action_id);
 
@@ -903,9 +899,6 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
   ret = TRUE;
 
  out:
-  if (ret && out_jsval != NULL)
-    *out_jsval = ret_jsval;
-
   return ret;
 }
 
