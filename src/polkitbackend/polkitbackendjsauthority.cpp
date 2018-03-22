@@ -75,9 +75,9 @@ struct _PolkitBackendJsAuthorityPrivate
   GFileMonitor **dir_monitors; /* NULL-terminated array of GFileMonitor instances */
 
   JSContext *cx;
-  JSObject *js_global;
+  JS::Heap<JSObject*> *js_global;
   JSAutoCompartment *ac;
-  JSObject *js_polkit;
+  JS::Heap<JSObject*> *js_polkit;
 
   GThread *runaway_killer_thread;
   GMainContext *rkt_context;
@@ -478,38 +478,42 @@ polkit_backend_js_authority_constructed (GObject *object)
   {
     JS::CompartmentOptions compart_opts;
     compart_opts.behaviors().setVersion(JSVERSION_LATEST);
-    authority->priv->js_global = JS_NewGlobalObject (authority->priv->cx, &js_global_class, NULL, compart_opts);
+    JS::RootedObject global(authority->priv->cx);
 
-    if (authority->priv->js_global == NULL)
+    authority->priv->js_global = new JS::Heap<JSObject*> (JS_NewGlobalObject (authority->priv->cx, &js_global_class, NULL, JS::FireOnNewGlobalHook, compart_opts));
+
+    global = authority->priv->js_global->get ();
+
+    if (global == NULL)
       goto fail;
 
-    authority->priv->ac = new JSAutoCompartment(authority->priv->cx,  authority->priv->js_global);
+    authority->priv->ac = new JSAutoCompartment(authority->priv->cx,  global);
 
     if (authority->priv->ac == NULL)
       goto fail;
 
-    JS_AddObjectRoot (authority->priv->cx, &authority->priv->js_global);
-
-    if (!JS_InitStandardClasses (authority->priv->cx, authority->priv->js_global))
+    if (!JS_InitStandardClasses (authority->priv->cx, global))
       goto fail;
 
-    authority->priv->js_polkit = JS_DefineObject (authority->priv->cx,
-                                                  authority->priv->js_global,
-                                                  "polkit",
-                                                  &js_polkit_class,
-                                                  NULL,
-                                                  JSPROP_ENUMERATE);
-    if (authority->priv->js_polkit == NULL)
+    JS::RootedObject polkit(authority->priv->cx);
+
+    authority->priv->js_polkit = new JS::Heap<JSObject *> (JS_NewObject (authority->priv->cx, &js_polkit_class));
+
+    polkit = authority->priv->js_polkit->get ();
+
+    if (polkit == NULL)
       goto fail;
-    JS_AddObjectRoot (authority->priv->cx, &authority->priv->js_polkit);
+
+    if (!JS_DefineProperty(authority->priv->cx, global, "polkit", polkit, JSPROP_ENUMERATE))
+      goto fail;
 
     if (!JS_DefineFunctions (authority->priv->cx,
-                             authority->priv->js_polkit,
+                             polkit,
                              js_polkit_functions))
       goto fail;
 
     if (!JS_EvaluateScript (authority->priv->cx,
-                            authority->priv->js_global,
+                            global,
                             init_js, strlen (init_js), /* init.js */
                             "init.js",  /* filename */
                             0,     /* lineno */
@@ -573,11 +577,7 @@ polkit_backend_js_authority_finalize (GObject *object)
   g_free (authority->priv->dir_monitors);
   g_strfreev (authority->priv->rules_dirs);
 
-  JS_BeginRequest (authority->priv->cx);
-  JS_RemoveObjectRoot (authority->priv->cx, &authority->priv->js_polkit);
   delete authority->priv->ac;
-  JS_RemoveObjectRoot (authority->priv->cx, &authority->priv->js_global);
-  JS_EndRequest (authority->priv->cx);
 
   JS_DestroyContext (authority->priv->cx);
   /* JS_ShutDown (); */
@@ -750,10 +750,11 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   struct passwd *passwd;
   char *seat_str = NULL;
   char *session_str = NULL;
+  JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Subject();";
   if (!JS_EvaluateScript (authority->priv->cx,
-                          authority->priv->js_global,
+                          global,
                           src, strlen (src),
                           __FILE__, __LINE__,
                           &ret_jsval))
@@ -875,10 +876,11 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
   JSObject *obj;
   gchar **keys;
   guint n;
+  JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Action();";
   if (!JS_EvaluateScript (authority->priv->cx,
-                          authority->priv->js_global,
+                          global,
                           src, strlen (src),
                           __FILE__, __LINE__,
                           &ret_jsval))
