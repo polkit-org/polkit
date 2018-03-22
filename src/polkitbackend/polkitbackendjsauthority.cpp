@@ -302,13 +302,8 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       const gchar *filename = (gchar *)l->data;
       JS::RootedScript script(authority->priv->cx);
       JS::CompileOptions options(authority->priv->cx);
-      JS::RootedObject   obj(authority->priv->cx,authority->priv->js_global);
       options.setUTF8(true);
-      script = JS::Compile (authority->priv->cx,
-                            obj, options,
-                            filename);
-
-      if (script == NULL)
+      if (!JS::Compile (authority->priv->cx, options, filename, &script))
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Error compiling script %s",
