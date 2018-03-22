@@ -92,7 +92,7 @@ struct _PolkitBackendJsAuthorityPrivate
 
 static bool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                                   JSScript                 *script,
-                                                  jsval                    *rval);
+                                                  JS::Value                    *rval);
 
 static void utils_spawn (const gchar *const  *argv,
                          guint                timeout_seconds,
@@ -192,9 +192,9 @@ static JSClass js_polkit_class = {
   &js_polkit_class_ops
 };
 
-static bool js_polkit_log (JSContext *cx, unsigned argc, jsval *vp);
-static bool js_polkit_spawn (JSContext *cx, unsigned argc, jsval *vp);
-static bool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, jsval *vp);
+static bool js_polkit_log (JSContext *cx, unsigned argc, JS::Value *vp);
+static bool js_polkit_spawn (JSContext *cx, unsigned argc, JS::Value *vp);
+static bool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, JS::Value *vp);
 
 static JSFunctionSpec js_polkit_functions[] =
 {
@@ -317,7 +317,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
         }
 
       /* evaluate the script */
-      jsval rval;
+      JS::Value rval;
       if (!execute_script_with_runaway_killer (authority,
                                                script,
                                                &rval))
@@ -342,8 +342,8 @@ load_scripts (PolkitBackendJsAuthority  *authority)
 static void
 reload_scripts (PolkitBackendJsAuthority *authority)
 {
-  jsval argv[1] = {JSVAL_NULL};
-  jsval rval = JSVAL_NULL;
+  JS::Value argv[1] = {JSVAL_NULL};
+  JS::Value rval = JSVAL_NULL;
 
   JS_BeginRequest (authority->priv->cx);
 
@@ -668,7 +668,7 @@ set_property_str (PolkitBackendJsAuthority  *authority,
                   const gchar               *value)
 {
   JSString *value_jsstr;
-  jsval value_jsval;
+  JS::Value value_jsval;
   value_jsstr = JS_NewStringCopyZ (authority->priv->cx, value);
   value_jsval = STRING_TO_JSVAL (value_jsstr);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
@@ -681,7 +681,7 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
                    const gchar               *name,
                    GPtrArray                 *value)
 {
-  jsval value_jsval;
+  JS::Value value_jsval;
   JSObject *array_object;
   guint n;
 
@@ -690,7 +690,7 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
   for (n = 0; n < value->len; n++)
     {
       JSString *jsstr;
-      jsval val;
+      JS::Value val;
 
       jsstr = JS_NewStringCopyZ (authority->priv->cx, (char *)g_ptr_array_index(value, n));
       val = STRING_TO_JSVAL (jsstr);
@@ -708,7 +708,7 @@ set_property_int32 (PolkitBackendJsAuthority  *authority,
                     const gchar               *name,
                     gint32                     value)
 {
-  jsval value_jsval;
+  JS::Value value_jsval;
   value_jsval = INT_TO_JSVAL ((gint32) value);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
@@ -720,7 +720,7 @@ set_property_bool (PolkitBackendJsAuthority  *authority,
                    const gchar               *name,
                    gboolean                   value)
 {
-  jsval value_jsval;
+  JS::Value value_jsval;
   value_jsval = BOOLEAN_TO_JSVAL ((bool) value);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
@@ -734,11 +734,11 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
                   PolkitIdentity            *user_for_subject,
                   gboolean                   subject_is_local,
                   gboolean                   subject_is_active,
-                  jsval                     *out_jsval,
+                  JS::Value                     *out_jsval,
                   GError                   **error)
 {
   gboolean ret = FALSE;
-  jsval ret_jsval;
+  JS::Value ret_jsval;
   const char *src;
   JSObject *obj;
   pid_t pid;
@@ -864,11 +864,11 @@ static gboolean
 action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
                              const gchar               *action_id,
                              PolkitDetails             *details,
-                             jsval                     *out_jsval,
+                             JS::Value                     *out_jsval,
                              GError                   **error)
 {
   gboolean ret = FALSE;
-  jsval ret_jsval;
+  JS::Value ret_jsval;
   const char *src;
   JSObject *obj;
   gchar **keys;
@@ -930,7 +930,7 @@ js_operation_callback (JSContext *cx)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   JSString *val_str;
-  jsval val;
+  JS::Value val;
 
   /* This callback can be called by the runtime at any time without us causing
    * it by JS_TriggerOperationCallback().
@@ -1037,7 +1037,7 @@ runaway_killer_terminate (PolkitBackendJsAuthority *authority)
 static bool
 execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                     JSScript                 *script,
-                                    jsval                    *rval)
+                                    JS::Value                    *rval)
 {
   bool ret;
 
@@ -1055,8 +1055,8 @@ static bool
 call_js_function_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                       const char               *function_name,
                                       unsigned                  argc,
-                                      jsval                    *argv,
-                                      jsval                    *rval)
+                                      JS::Value                    *argv,
+                                      JS::Value                    *rval)
 {
   bool ret;
   runaway_killer_setup (authority);
@@ -1084,8 +1084,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   GList *ret = NULL;
-  jsval argv[2] = {JSVAL_NULL, JSVAL_NULL};
-  jsval rval = JSVAL_NULL;
+  JS::Value argv[2] = {JSVAL_NULL, JSVAL_NULL};
+  JS::Value rval = JSVAL_NULL;
   guint n;
   GError *error = NULL;
   JSString *ret_jsstr;
@@ -1193,8 +1193,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
-  jsval argv[2] = {JSVAL_NULL, JSVAL_NULL};
-  jsval rval = JSVAL_NULL; 
+  JS::Value argv[2] = {JSVAL_NULL, JSVAL_NULL};
+  JS::Value rval = JSVAL_NULL;
   GError *error = NULL;
   JSString *ret_jsstr;
   const jschar *ret_utf16;
@@ -1289,7 +1289,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 static bool
 js_polkit_log (JSContext  *cx,
                unsigned    argc,
-               jsval      *vp)
+               JS::Value      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   bool ret = false;
@@ -1374,7 +1374,7 @@ spawn_cb (GObject       *source_object,
 static bool
 js_polkit_spawn (JSContext  *cx,
                  unsigned    js_argc,
-                 jsval      *vp)
+                 JS::Value      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   bool ret = false;
@@ -1403,7 +1403,7 @@ js_polkit_spawn (JSContext  *cx,
   argv = g_new0 (gchar*, array_len + 1);
   for (n = 0; n < array_len; n++)
     {
-      jsval elem_val;
+      JS::Value elem_val;
       char *s;
 
       if (!JS_GetElement (cx, array_object, n, &elem_val))
@@ -1497,7 +1497,7 @@ js_polkit_spawn (JSContext  *cx,
 static bool
 js_polkit_user_is_in_netgroup (JSContext  *cx,
                                unsigned    argc,
-                               jsval      *vp)
+                               JS::Value      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
   bool ret = false;
