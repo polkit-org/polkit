@@ -1526,7 +1526,7 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
 
   ret = true;
 
-  JS_SET_RVAL (cx, vp, BOOLEAN_TO_JSVAL (is_in_netgroup));
+  JS_SET_RVAL (cx, vp, JS::BooleanValue (is_in_netgroup));
  out:
   return ret;
 }
