@@ -950,11 +950,11 @@ js_operation_callback (JSContext *cx)
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority), "Terminating runaway script");
 
   /* Throw an exception - this way the JS code can ignore the runaway script handling */
-  JS_SetOperationCallback (authority->priv->cx, NULL);
+  JS_ResetInterruptCallback (authority->priv->cx, TRUE);
   val_str = JS_NewStringCopyZ (cx, "Terminating runaway script");
   val = JS::StringValue (val_str);
   JS_SetPendingException (authority->priv->cx, val);
-  JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
+  JS_ResetInterruptCallback (authority->priv->cx, FALSE);
   return false;
 }
 
@@ -968,7 +968,7 @@ rkt_on_timeout (gpointer user_data)
   g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
 
   /* Supposedly this is thread-safe... */
-  JS_TriggerOperationCallback (authority->priv->rt);
+  JS_RequestInterruptCallback (authority->priv->cx);
 
   /* keep source around so we keep trying to kill even if the JS bit catches the exception
    * thrown in js_operation_callback()
@@ -992,13 +992,15 @@ runaway_killer_setup (PolkitBackendJsAuthority *authority)
   /* ... rkt_on_timeout() will then poke the JSContext so js_operation_callback() is
    * called... and from there we throw an exception
    */
-  JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
+  JS_AddInterruptCallback (authority->priv->cx, js_operation_callback);
+  JS_ResetInterruptCallback (authority->priv->cx, FALSE);
 }
 
 static void
 runaway_killer_teardown (PolkitBackendJsAuthority *authority)
 {
-  JS_SetOperationCallback (authority->priv->cx, NULL);
+  JS_ResetInterruptCallback (authority->priv->cx, TRUE);
+
   g_source_destroy (authority->priv->rkt_source);
   g_source_unref (authority->priv->rkt_source);
   authority->priv->rkt_source = NULL;
