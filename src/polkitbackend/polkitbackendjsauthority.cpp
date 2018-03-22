@@ -1305,7 +1305,7 @@ js_polkit_log (JSContext  *cx,
 
   ret = true;
 
-  JS_SET_RVAL (cx, vp, JSVAL_VOID);  /* return undefined */
+  JS_SET_RVAL (cx, vp, JS::UndefinedValue());  /* return undefined */
  out:
   return ret;
 }
