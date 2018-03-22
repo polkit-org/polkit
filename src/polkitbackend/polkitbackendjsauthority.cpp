@@ -91,8 +91,8 @@ struct _PolkitBackendJsAuthorityPrivate
 };
 
 static bool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
-                                                  JSScript                 *script,
-                                                  JS::Value                    *rval);
+                                    JS::HandleScript                 script,
+                                    JS::MutableHandleValue           rval);
 
 static void utils_spawn (const gchar *const  *argv,
                          guint                timeout_seconds,
@@ -342,16 +342,18 @@ load_scripts (PolkitBackendJsAuthority  *authority)
 static void
 reload_scripts (PolkitBackendJsAuthority *authority)
 {
-  JS::Value argv[1] = {JS::NullValue()};
-  JS::Value rval = JS::NullValue();
-
   JS_BeginRequest (authority->priv->cx);
 
+  JS::AutoValueArray<1> args(authority->priv->cx);
+  JS::RootedValue rval(authority->priv->cx);
+
+  JS::RootedObject js_polkit(authority->priv->cx, authority->priv->js_polkit->get ());
+
+  args[0].setUndefined ();
   if (!JS_CallFunctionName(authority->priv->cx,
-                           authority->priv->js_polkit,
+                           js_polkit,
                            "_deleteRules",
-                           0,
-                           argv,
+                           args,
                            &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1036,8 +1038,8 @@ runaway_killer_terminate (PolkitBackendJsAuthority *authority)
 
 static bool
 execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
-                                    JSScript                 *script,
-                                    JS::Value                    *rval)
+                                    JS::HandleScript                 script,
+                                    JS::MutableHandleValue           rval)
 {
   bool ret;
 
@@ -1054,17 +1056,17 @@ execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
 static bool
 call_js_function_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                       const char               *function_name,
-                                      unsigned                  argc,
-                                      JS::Value                    *argv,
-                                      JS::Value                    *rval)
+                                      const JS::HandleValueArray     &args,
+                                      JS::RootedValue          *rval)
 {
   bool ret;
+  JS::RootedObject js_polkit(authority->priv->cx, authority->priv->js_polkit->get ());
+
   runaway_killer_setup (authority);
   ret = JS_CallFunctionName(authority->priv->cx,
-                            authority->priv->js_polkit,
+                            js_polkit,
                             function_name,
-                            argc,
-                            argv,
+                            args,
                             rval);
   runaway_killer_teardown (authority);
   return ret;
@@ -1084,8 +1086,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   GList *ret = NULL;
-  JS::Value argv[2] = {JS::NullValue(), JS::NullValue()};
-  JS::Value rval = JS::NullValue();
+  JS::AutoValueArray<2> args(authority->priv->cx);
+  JS::RootedValue rval(authority->priv->cx);
   guint n;
   GError *error = NULL;
   JSString *ret_jsstr;
@@ -1094,7 +1096,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   JS_BeginRequest (authority->priv->cx);
 
-  if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
+  if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error converting action and details to JS object: %s",
@@ -1108,7 +1110,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
                          user_for_subject,
                          subject_is_local,
                          subject_is_active,
-                         &argv[1],
+                         args[1],
                          &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1120,8 +1122,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   if (!call_js_function_with_runaway_killer (authority,
                                              "_runAdminRules",
-                                             G_N_ELEMENTS (argv),
-                                             argv,
+                                             args,
                                              &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1193,8 +1194,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
-  JS::Value argv[2] = {JS::NullValue(), JS::NullValue()};
-  JS::Value rval = JS::NullValue();
+  JS::AutoValueArray<2> args(authority->priv->cx);
+  JS::RootedValue rval(authority->priv->cx);
   GError *error = NULL;
   JSString *ret_jsstr;
   const jschar *ret_utf16;
@@ -1203,7 +1204,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
   JS_BeginRequest (authority->priv->cx);
 
-  if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
+  if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error converting action and details to JS object: %s",
@@ -1217,7 +1218,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
                          user_for_subject,
                          subject_is_local,
                          subject_is_active,
-                         &argv[1],
+                         args[1],
                          &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1229,8 +1230,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
   if (!call_js_function_with_runaway_killer (authority,
                                              "_runRules",
-                                             G_N_ELEMENTS (argv),
-                                             argv,
+                                             args,
                                              &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
