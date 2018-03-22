@@ -697,7 +697,7 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
       JS_SetElement (authority->priv->cx, array_object, n, &val);
     }
 
-  value_jsval = OBJECT_TO_JSVAL (array_object);
+  value_jsval = JS::ObjectValue (*array_object);
   JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
 }
 
