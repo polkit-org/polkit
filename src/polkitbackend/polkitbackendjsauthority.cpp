@@ -73,7 +73,6 @@ struct _PolkitBackendJsAuthorityPrivate
   gchar **rules_dirs;
   GFileMonitor **dir_monitors; /* NULL-terminated array of GFileMonitor instances */
 
-  JSRuntime *rt;
   JSContext *cx;
   JSObject *js_global;
   JSAutoCompartment *ac;
@@ -362,7 +361,7 @@ reload_scripts (PolkitBackendJsAuthority *authority)
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                 "Collecting garbage unconditionally...");
-  JS_GC (authority->priv->rt);
+  JS_GC (authority->priv->cx);
 
   load_scripts (authority);
 
@@ -454,11 +453,7 @@ polkit_backend_js_authority_constructed (GObject *object)
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
   gboolean entered_request = FALSE;
 
-  authority->priv->rt = JS_NewRuntime (8L * 1024L * 1024L, JS_USE_HELPER_THREADS);
-  if (authority->priv->rt == NULL)
-    goto fail;
-
-  authority->priv->cx = JS_NewContext (authority->priv->rt, 8192);
+  authority->priv->cx = JS_NewContext (8L * 1024L * 1024L);
   if (authority->priv->cx == NULL)
     goto fail;
 
@@ -579,7 +574,6 @@ polkit_backend_js_authority_finalize (GObject *object)
   JS_EndRequest (authority->priv->cx);
 
   JS_DestroyContext (authority->priv->cx);
-  JS_DestroyRuntime (authority->priv->rt);
   /* JS_ShutDown (); */
 
   G_OBJECT_CLASS (polkit_backend_js_authority_parent_class)->finalize (object);
