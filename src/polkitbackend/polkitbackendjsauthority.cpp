@@ -458,6 +458,9 @@ polkit_backend_js_authority_constructed (GObject *object)
   if (authority->priv->cx == NULL)
     goto fail;
 
+  if (!JS::InitSelfHostedCode (authority->priv->cx))
+    goto fail;
+
   /* TODO: JIT'ing doesn't work will with killing runaway scripts... I think
    *       this is just a SpiderMonkey bug. So disable the JIT for now.
    */
