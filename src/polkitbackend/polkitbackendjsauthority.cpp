@@ -317,7 +317,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
         }
 
       /* evaluate the script */
-      JS::Value rval;
+      JS::RootedValue rval(authority->priv->cx);
       if (!execute_script_with_runaway_killer (authority,
                                                script,
                                                &rval))
@@ -742,7 +742,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   gboolean ret = FALSE;
   JS::Value ret_jsval;
   const char *src;
-  JSObject *obj;
+  JS::RootedObject obj(authority->priv->cx);
   pid_t pid;
   uid_t uid;
   gchar *user_name = NULL;
@@ -873,7 +873,7 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
   gboolean ret = FALSE;
   JS::Value ret_jsval;
   const char *src;
-  JSObject *obj;
+  JS::RootedObject obj(authority->priv->cx);
   gchar **keys;
   guint n;
   JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
@@ -934,7 +934,7 @@ js_operation_callback (JSContext *cx)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   JSString *val_str;
-  JS::Value val;
+  JS::RootedValue val(cx);
 
   /* This callback can be called by the runtime at any time without us causing
    * it by JS_TriggerOperationCallback().
