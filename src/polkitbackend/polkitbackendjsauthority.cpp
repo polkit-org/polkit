@@ -43,6 +43,7 @@
 #include <systemd/sd-login.h>
 #endif /* HAVE_LIBSYSTEMD */
 
+#include <js/Initialization.h>
 #include <jsapi.h>
 
 #include "initjs.h" /* init.js */
@@ -650,6 +651,8 @@ polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
 
 
   g_type_class_add_private (klass, sizeof (PolkitBackendJsAuthorityPrivate));
+
+  JS_Init ();
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
