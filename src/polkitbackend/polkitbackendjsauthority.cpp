@@ -1238,7 +1238,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  if (JSVAL_IS_NULL (rval))
+  if (rval.isNull())
     {
       /* this fine, means there was no match, use implicit authorizations */
       good = TRUE;
