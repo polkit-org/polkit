@@ -1044,7 +1044,6 @@ execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
 
   runaway_killer_setup (authority);
   ret = JS_ExecuteScript (authority->priv->cx,
-                          authority->priv->js_global,
                           script,
                           rval);
   runaway_killer_teardown (authority);
