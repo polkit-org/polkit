@@ -1135,7 +1135,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  ret_jsstr = JSVAL_TO_STRING (rval);
+  ret_jsstr = rval.toString();
   ret_str = g_utf16_to_utf8 (JS_GetStringCharsZ (authority->priv->cx, ret_jsstr), -1, NULL, NULL, NULL);
   if (ret_str == NULL)
     {
@@ -1251,7 +1251,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  ret_jsstr = JSVAL_TO_STRING (rval);
+  ret_jsstr = rval.toString();
   ret_utf16 = JS_GetStringCharsZ (authority->priv->cx, ret_jsstr);
   ret_str = g_utf16_to_utf8 (ret_utf16, -1, NULL, NULL, &error);
   if (ret_str == NULL)
@@ -1416,7 +1416,7 @@ js_polkit_spawn (JSContext  *cx,
           JS_ReportErrorUTF8 (cx, "Element %d is not a string", n);
           goto out;
 	}
-      s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
+      s = JS_EncodeString (cx, elem_val.toString());
       argv[n] = g_strdup (s);
       JS_free (cx, s);
     }
