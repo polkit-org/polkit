@@ -1129,7 +1129,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  if (!JSVAL_IS_STRING (rval))
+  if (!rval.isString())
     {
       g_warning ("Expected a string");
       goto out;
@@ -1245,7 +1245,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  if (!JSVAL_IS_STRING (rval))
+  if (!rval.isString())
     {
       g_warning ("Expected a string");
       goto out;
@@ -1411,7 +1411,7 @@ js_polkit_spawn (JSContext  *cx,
           JS_ReportErrorUTF8 (cx, "Failed to get element %d", n);
           goto out;
         }
-      if (!JSVAL_IS_STRING (elem_val))
+      if (!elem_val.isString())
 	{
           JS_ReportErrorUTF8 (cx, "Element %d is not a string", n);
           goto out;
