@@ -1300,7 +1300,7 @@ js_polkit_log (JSContext  *cx,
     goto out;
 
   s = JS_EncodeString (cx, str);
-  JS_ReportWarning (cx, s);
+  JS_ReportWarningUTF8 (cx, s);
   JS_free (cx, s);
 
   ret = JS_TRUE;
@@ -1396,7 +1396,7 @@ js_polkit_spawn (JSContext  *cx,
 
   if (!JS_GetArrayLength (cx, array_object, &array_len))
     {
-      JS_ReportError (cx, "Failed to get array length");
+      JS_ReportErrorUTF8 (cx, "Failed to get array length");
       goto out;
     }
 
@@ -1408,12 +1408,12 @@ js_polkit_spawn (JSContext  *cx,
 
       if (!JS_GetElement (cx, array_object, n, &elem_val))
         {
-          JS_ReportError (cx, "Failed to get element %d", n);
+          JS_ReportErrorUTF8 (cx, "Failed to get element %d", n);
           goto out;
         }
       if (!JSVAL_IS_STRING (elem_val))
 	{
-          JS_ReportError (cx, "Element %d is not a string", n);
+          JS_ReportErrorUTF8 (cx, "Element %d is not a string", n);
           goto out;
 	}
       s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
@@ -1443,7 +1443,7 @@ js_polkit_spawn (JSContext  *cx,
                            &standard_error,
                            &error))
     {
-      JS_ReportError (cx,
+      JS_ReportErrorUTF8 (cx,
                       "Error spawning helper: %s (%s, %d)",
                       error->message, g_quark_to_string (error->domain), error->code);
       g_clear_error (&error);
@@ -1469,7 +1469,7 @@ js_polkit_spawn (JSContext  *cx,
         }
       g_string_append_printf (gstr, ", stdout=`%s', stderr=`%s'",
                               standard_output, standard_error);
-      JS_ReportError (cx, gstr->str);
+      JS_ReportErrorUTF8 (cx, gstr->str);
       g_string_free (gstr, TRUE);
       goto out;
     }
