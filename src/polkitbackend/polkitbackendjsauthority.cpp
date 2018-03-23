@@ -1090,7 +1090,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   JS::RootedValue rval(authority->priv->cx);
   guint n;
   GError *error = NULL;
-  JSString *ret_jsstr;
+  JS::RootedString ret_jsstr (authority->priv->cx);
   gchar *ret_str = NULL;
   gchar **ret_strs = NULL;
 
@@ -1137,10 +1137,10 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
     }
 
   ret_jsstr = rval.toString();
-  ret_str = g_utf16_to_utf8 (JS_GetStringCharsZ (authority->priv->cx, ret_jsstr), -1, NULL, NULL, NULL);
+  ret_str = JS_EncodeStringToUTF8 (authority->priv->cx, ret_jsstr);
   if (ret_str == NULL)
     {
-      g_warning ("Error converting resulting string to UTF-8: %s", error->message);
+      g_warning ("Error converting resulting string to UTF-8");
       goto out;
     }
 
@@ -1197,8 +1197,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   JS::AutoValueArray<2> args(authority->priv->cx);
   JS::RootedValue rval(authority->priv->cx);
   GError *error = NULL;
-  JSString *ret_jsstr;
-  const jschar *ret_utf16;
+  JS::RootedString ret_jsstr (authority->priv->cx);
   gchar *ret_str = NULL;
   gboolean good = FALSE;
 
@@ -1252,12 +1251,10 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
     }
 
   ret_jsstr = rval.toString();
-  ret_utf16 = JS_GetStringCharsZ (authority->priv->cx, ret_jsstr);
-  ret_str = g_utf16_to_utf8 (ret_utf16, -1, NULL, NULL, &error);
+  ret_str = JS_EncodeStringToUTF8 (authority->priv->cx, ret_jsstr);
   if (ret_str == NULL)
     {
-      g_warning ("Error converting resulting string to UTF-8: %s", error->message);
-      g_clear_error (&error);
+      g_warning ("Error converting resulting string to UTF-8");
       goto out;
     }
 
