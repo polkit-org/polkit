@@ -198,9 +198,9 @@ static JSBool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, jsval
 
 static JSFunctionSpec js_polkit_functions[] =
 {
-  JS_FS("log",            js_polkit_log,            0, 0),
-  JS_FS("spawn",          js_polkit_spawn,          0, 0),
-  JS_FS("_userIsInNetGroup", js_polkit_user_is_in_netgroup,          0, 0),
+  JS_FN("log",            js_polkit_log,            0, 0),
+  JS_FN("spawn",          js_polkit_spawn,          0, 0),
+  JS_FN("_userIsInNetGroup", js_polkit_user_is_in_netgroup,          0, 0),
   JS_FS_END
 };
 
