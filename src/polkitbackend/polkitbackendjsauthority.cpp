@@ -1469,7 +1469,7 @@ js_polkit_spawn (JSContext  *cx,
         }
       g_string_append_printf (gstr, ", stdout=`%s', stderr=`%s'",
                               standard_output, standard_error);
-      JS_ReportErrorUTF8 (cx, gstr->str);
+      JS_ReportErrorUTF8 (cx, "%s", gstr->str);
       g_string_free (gstr, TRUE);
       goto out;
     }
