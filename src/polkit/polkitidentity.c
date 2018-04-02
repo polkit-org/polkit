@@ -198,12 +198,12 @@ polkit_identity_from_string  (const gchar   *str,
   return identity;
 }
 
+/* Note that this returns a floating value. */
 GVariant *
 polkit_identity_to_gvariant (PolkitIdentity *identity)
 {
   GVariantBuilder builder;
   GVariant *dict;
-  GVariant *ret;
   const gchar *kind;
 
   kind = "";
@@ -233,8 +233,7 @@ polkit_identity_to_gvariant (PolkitIdentity *identity)
     }
 
   dict = g_variant_builder_end (&builder);
-  ret = g_variant_new ("(s@a{sv})", kind, dict);
-  return ret;
+  return g_variant_new ("(s@a{sv})", kind, dict);
 }
 
 static GVariant *
@@ -267,6 +266,7 @@ lookup_asv (GVariant            *dict,
                            g_variant_get_type_string (value),
                            type_string);
               g_free (type_string);
+              g_variant_unref (value);
               goto out;
             }
           ret = value;

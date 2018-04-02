@@ -290,19 +290,15 @@ polkit_authorization_result_new_for_gvariant (GVariant *value)
   return ret;
 }
 
+/* Note that this returns a floating value. */
 GVariant *
 polkit_authorization_result_to_gvariant (PolkitAuthorizationResult *authorization_result)
 {
-  GVariant *ret;
-  GVariant *details_gvariant;
+  PolkitDetails *details;
 
-  details_gvariant = polkit_details_to_gvariant (polkit_authorization_result_get_details (authorization_result));
-  g_variant_ref_sink (details_gvariant);
-  ret = g_variant_new ("(bb@a{ss})",
-                       polkit_authorization_result_get_is_authorized (authorization_result),
-                       polkit_authorization_result_get_is_challenge (authorization_result),
-                       details_gvariant);
-  g_variant_unref (details_gvariant);
-
-  return ret;
+  details = polkit_authorization_result_get_details (authorization_result);
+  return g_variant_new ("(bb@a{ss})",
+                        polkit_authorization_result_get_is_authorized (authorization_result),
+                        polkit_authorization_result_get_is_challenge (authorization_result),
+                        polkit_details_to_gvariant (details)); /* A floating value */
 }
