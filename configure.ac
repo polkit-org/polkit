@@ -132,10 +132,11 @@ AC_ARG_ENABLE([test],
 AM_CONDITIONAL(BUILD_TEST, [test "x$enable_test" = "xyes"])
 
 dnl ---------------------------------------------------------------------------
-dnl - Select wether to use libsystemd-login or ConsoleKit for session tracking
+dnl - Select wether to use libsystemd-login, libelogind or ConsoleKit for session tracking
 dnl ---------------------------------------------------------------------------
 
 have_libsystemd=no
+have_libelogind=no
 SESSION_TRACKING=ConsoleKit
 
 AC_ARG_ENABLE([libsystemd-login],
@@ -156,16 +157,48 @@ if test "$enable_libsystemd_login" != "no"; then
       ],
       [have_libsystemd=no])])
   if test "$have_libsystemd" = "yes"; then
-    SESSION_TRACKING=libsystemd-login
-    AC_DEFINE([HAVE_LIBSYSTEMD], 1, [Define to 1 if libsystemd is available])
-    save_LIBS=$LIBS
-    LIBS=$LIBSYSTEMD_LIBS
-    AC_CHECK_FUNCS(sd_uid_get_display)
-    LIBS=$save_LIBS
+      SESSION_TRACKING=libsystemd-login
+  fi
+fi
+
+AC_ARG_ENABLE([libelogind],
+              [AS_HELP_STRING([--enable-libelogind[=@<:@auto/yes/no@:>@]], [Use libelogind (auto/yes/no)])],
+              [enable_libelogind=$enableval],
+              [enable_libelogind=auto])
+dnl Using libelogind makes no sense when libsystemd-login is already in use
+if test "$have_libsystemd" = "yes"; then
+  enable_libelogind=no
+fi
+if test "$enable_libelogind" != "no"; then
+  PKG_CHECK_MODULES([LIBELOGIND],
+    [libelogind],
+    [have_libelogind=yes])
+  if test "$have_libelogind" = "yes"; then
+      SESSION_TRACKING=libelogind
+  fi
+fi
+
+dnl libelogind is a drop-in replacement for libsystemd-login, so using it does
+dnl not need any different actions than using libsystemd-login.
+if test "$SESSION_TRACKING" != "ConsoleKit"; then
+  AC_DEFINE([HAVE_LIBSYSTEMD], 1, [Define to 1 if libsystemd or libelogind is available])
+  save_LIBS=$LIBS
+  if test "$have_libelogind" = "yes"; then
+    LIBS=$LIBELOGIND_LIBS
+    dnl We have to act like this was libsystemd-login
+    LIBSYSTEMD_CFLAGS=$LIBELOGIND_CFLAGS
+    LIBSYSTEMD_LIBS=$LIBELOGIND_LIBS
   else
-    if test "$enable_libsystemd_login" = "yes"; then
-      AC_MSG_ERROR([libsystemd support requested but libsystemd or libsystemd-login library not found])
-    fi
+    LIBS=$LIBSYSTEMD_LIBS
+  fi
+  AC_CHECK_FUNCS(sd_uid_get_display)
+  LIBS=$save_LIBS
+else
+  if test "$enable_libsystemd_login" = "yes"; then
+    AC_MSG_ERROR([libsystemd support requested but libsystemd or libsystemd-login library not found])
+  fi
+  if test "$enable_libelogind" = "yes"; then
+    AC_MSG_ERROR([libelogind support requested but libelogind library not found])
   fi
 fi
 
