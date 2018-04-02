@@ -37,7 +37,7 @@ pkgconfig_DATA = polkit-gobject-1.pc polkit-agent-1.pc
 # ----------------------------------------------------------------------------------------------------
 
 itsdir = $(datadir)/gettext/its
-its_DATA = polkit.loc polkit.its
+dist_its_DATA = polkit.loc polkit.its
 
 # ----------------------------------------------------------------------------------------------------
 
