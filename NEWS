@@ -9,24 +9,165 @@ some security review. Use at your own risk.
 This is polkit 0.114.
 
 Highlights:
- TODO
+ Port to mozjs 52, the latest version of the firefox JavaScript engine.
+
+ Add gettext support for policy files
+
+ Fixes for various memory leaks
 
 Build requirements
 
- glib, gobject, gio    >= 2.30
- mozjs185 or mozjs-17.0
+ glib, gobject, gio    >= 2.32
+ mozjs-52
  gobject-introspection >= 0.6.2 (optional)
  pam (optional)
  ConsoleKit OR systemd
 
 Changes since polkit 0.113:
 
- TODO
+Anders Jonsson (2):
+      pkcheck: fix man typos
+      Add Swedish translation
+
+Antoine Jacoutot (1):
+      Add support for OpenBSD
+
+Christian Kirbach (1):
+      Add German translation
+
+Colin Walters (3):
+      build: Pull in GCC warning infra from ostree
+      build: Use AC_USE_SYSTEM_EXTENSIONS
+      tests: Correct boundary test for overflow
+
+Dariusz Gadomski (2):
+      Fix multi-line pam text info.
+      Refactor send_to_helper usage
+
+Gabor Kelemen (1):
+      Add initial Hungarian translation, and add hu to LINGUAS
+
+Jeremy Linton (5):
+      change mozjs interface module to c++
+      Switch to hard requiring mozjs24
+      Fix warnings caused by building with C++
+      Replace autocompartment
+      test: Add a test case to handle actions without explicit rules
+
+Jiří Klimeš (1):
+      trivial: fix deprecated indication for polkit_agent_register_listener()
+
+Matthias Clasen (1):
+      Add gettext support for .policy files
+
+Miloslav Trmač (21):
+      Post-release version bump to 0.114
+      Consistently use HAVE_NETGROUP_H instead of HAVE_OPENBSD
+      Fix a memory leak of PolkitAgentListener's Server object
+      Remove polkitbackendconfigsource.[ch]
+      Add Slovak translation by Dusan Kazik <prescott66@gmail.com>
+      Add Indonesian translation by Andika Triwidada
+      Add Chinese (Taiwan) translation
+      Fix a typo in polkit(8)
+      Simplify GVariant reference counting
+      Fix a memory leak on an error path of lookup_asv (twice)
+      Fix a memory leak in server_handle_register_authentication_agent_with_options
+      Fix a memory leak in server_handle_unregister_authentication_agent
+      Fix a memory leak in server_handle_authentication_agent_response{,2}
+      Fix memory leaks in server_handle_*_temporary_authorizations
+      Fix error handling in polkit_authority_enumerate_temporary_authorizations_finish
+      Fix a memory leak per agent authentication
+      Fix a memory leak on agent authentication cancellation
+      Audit and fix GVariant reference counting
+      Fix help for (pkttyagent -s)
+      Fix a race condition when terminating runaway_killer_thread
+      Move to current GLib
+
+Mingye Wang (Arthur2e5) (1):
+      Add zh_CN translation
+
+Muhammet Kara (1):
+      Added Turkish translation
+
+OBATA Akio (1):
+      Add support for NetBSD
+
+Peter Hutterer (1):
+      gettext: switch to default-translate "no"
+
+Philip Withnall (3):
+      polkit: Add g_autoptr() support for GObject-derived polkit types
+      data: Set GIO_USE_VFS=local in the environment
+      polkitbackend: Fix typos in a couple of initialisation error messages
+
+Piotr Drąg (1):
+      Add Polish translation
+
+Rafael Fontenelle (1):
+      Add Brazilian Portuguese translation
+
+Ray Strode (34):
+      configure: bump mozjs requirement to 52
+      jsauthority: fix how classes are defined
+      jsauthority: use JS_FN instead of JS_FS
+      jsauthority: get rid of JSRuntime
+      jsauthority: change how setVersion is called
+      jsauthority: call JS_Init
+      jsauthority: call JS_InitSelfHostedCode
+      jsauthority: change how JIT is disabled
+      jsauthority: JS::SetWarningReporter instead of JS_SetErrorReporter
+      jsauthority: add UTF8 suffix to renamed functions
+      jsauthority: pass "%s" format string to report functions
+      jsauthority: s/JSBool/bool/
+      jsauthority: s/jsval/JS::Value/
+      jsauthority: s/JSVAL_NULL/JS::NullValue()/
+      jsauthority: s/JSVAL_VOID/JS::UndefinedValue()/
+      jsauthority: s/OBJECT_TO_JSVAL/JS::ObjectValue/
+      jsauthority: s/STRING_TO_JSVAL/JS::StringValue/
+      jsauthority: s/BOOLEAN_TO_JSVAL/JS::BooleanValue/
+      jsauthority: JSVAL_TO_OBJECT (o) to o.toObjectOrNull()
+      jsauthority: JSVAL_TO_STRING (s) to s.toString()
+      jsauthority: JSVAL_IS_STRING (s) to s.isString()
+      jsauthority: JSVAL_IS_NULL (o) to o.isNull()
+      jsauthority: Fix up JS_CallFunctionName invocations
+      jsauthority: use InterruptCallback api instead of OperationCallback
+      jsauthority: redo how global objects are set up
+      jsauthority: root some locals to the context
+      jsauthority: adapt arguments for new JS::Compile API
+      jsauthority: adapt arguments for new JS_ExecuteScript API
+      jsauthority: use JS::Evaluate instead of JS_EvaluateScript
+      jsauthority: fix up set_property methods
+      jsauthority: stop using JS_GetStringCharsZ
+      jsauthority: switch from JS_ConvertArguments to JS::CallArgsFromVp
+      jsauthority: re-enable JIT
+      Port JavaScript authority to mozjs52
+
+Rui Matos (1):
+      polkitpermission: Fix a memory leak on authority changes
+
+Sebastien Bacher (1):
+      Support polkit session agent running outside user session
+
+Stef Walter (2):
+      polkitagent: Fix access after dereference on hashtable
+      polkitagent: No double warnings in polkit_agent_listener_register()
+
+Sven Eden (1):
+      configure: enable elogind support in PolicyKit
+
+Yuri Chornoivan (1):
+      Add Ukrainian translation
+
+enkore (1):
+      Fix abnomal formatting of authentication header lines
+
+muzena (1):
+      Add hr.po
 
 Thanks to our contributors.
 
 Colin Walters and Miloslav Trmač,
-$DATE
+April 2, 2017
 
 --------------
 polkit 0.113
