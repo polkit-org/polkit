@@ -451,6 +451,7 @@ polkit_unix_session_initable_init (GInitable     *initable,
   PolkitUnixSession *session = POLKIT_UNIX_SESSION (initable);
   gboolean ret = FALSE;
   char *s;
+  uid_t uid;
 
   if (session->session_id != NULL)
     {
@@ -467,6 +468,19 @@ polkit_unix_session_initable_init (GInitable     *initable,
       goto out;
     }
 
+  /* Now do process -> uid -> graphical session (systemd version 213)*/
+  if (sd_pid_get_owner_uid (session->pid, &uid) < 0)
+    goto error;
+
+  if (sd_uid_get_display (uid, &s) >= 0)
+    {
+      session->session_id =  g_strdup (s);
+      free (s);
+      ret = TRUE;
+      goto out;
+    }
+
+error:
   g_set_error (error,
                POLKIT_ERROR,
                POLKIT_ERROR_FAILED,
