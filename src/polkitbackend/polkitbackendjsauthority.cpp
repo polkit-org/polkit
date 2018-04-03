@@ -1292,7 +1292,7 @@ js_polkit_log (JSContext  *cx,
   JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
   s = JS_EncodeString (cx, args[0].toString ());
-  JS_ReportWarningUTF8 (cx, s);
+  JS_ReportWarningUTF8 (cx, "%s", s);
   JS_free (cx, s);
 
   ret = true;
