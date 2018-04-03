@@ -182,6 +182,14 @@ static const RulesTestCase rules_test_cases[] = {
     NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED,
   },
+  /* actions without explict rules aren't automatically NOT_AUTHORIZED */
+  {
+    "basic2",
+    "net.company.productA.action2",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN,
+  },
 
   /* Ordering tests ... we have four rules files, check they are
    * evaluated in order by checking the detail set by each rules

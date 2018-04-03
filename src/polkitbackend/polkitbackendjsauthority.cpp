@@ -43,6 +43,7 @@
 #include <systemd/sd-login.h>
 #endif /* HAVE_LIBSYSTEMD */
 
+#include <js/Initialization.h>
 #include <jsapi.h>
 
 #include "initjs.h" /* init.js */
@@ -73,11 +74,10 @@ struct _PolkitBackendJsAuthorityPrivate
   gchar **rules_dirs;
   GFileMonitor **dir_monitors; /* NULL-terminated array of GFileMonitor instances */
 
-  JSRuntime *rt;
   JSContext *cx;
-  JSObject *js_global;
+  JS::Heap<JSObject*> *js_global;
   JSAutoCompartment *ac;
-  JSObject *js_polkit;
+  JS::Heap<JSObject*> *js_polkit;
 
   GThread *runaway_killer_thread;
   GMainContext *rkt_context;
@@ -90,9 +90,9 @@ struct _PolkitBackendJsAuthorityPrivate
   GList *scripts;
 };
 
-static JSBool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
-                                                  JSScript                 *script,
-                                                  jsval                    *rval);
+static bool execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
+                                    JS::HandleScript                 script,
+                                    JS::MutableHandleValue           rval);
 
 static void utils_spawn (const gchar *const  *argv,
                          guint                timeout_seconds,
@@ -149,52 +149,64 @@ G_DEFINE_TYPE (PolkitBackendJsAuthority, polkit_backend_js_authority, POLKIT_BAC
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static const struct JSClassOps js_global_class_ops = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
 static JSClass js_global_class = {
   "global",
   JSCLASS_GLOBAL_FLAGS,
-  JS_PropertyStub,
-  JS_DeletePropertyStub,
-  JS_PropertyStub,
-  JS_StrictPropertyStub,
-  JS_EnumerateStub,
-  JS_ResolveStub,
-  JS_ConvertStub,
-  NULL,
-  JSCLASS_NO_OPTIONAL_MEMBERS
+  &js_global_class_ops
 };
 
 /* ---------------------------------------------------------------------------------------------------- */
+static const struct JSClassOps js_polkit_class_ops = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
 
 static JSClass js_polkit_class = {
   "Polkit",
   0,
-  JS_PropertyStub,
-  JS_DeletePropertyStub,
-  JS_PropertyStub,
-  JS_StrictPropertyStub,
-  JS_EnumerateStub,
-  JS_ResolveStub,
-  JS_ConvertStub,
-  NULL,
-  JSCLASS_NO_OPTIONAL_MEMBERS
+  &js_polkit_class_ops
 };
 
-static JSBool js_polkit_log (JSContext *cx, unsigned argc, jsval *vp);
-static JSBool js_polkit_spawn (JSContext *cx, unsigned argc, jsval *vp);
-static JSBool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, jsval *vp);
+static bool js_polkit_log (JSContext *cx, unsigned argc, JS::Value *vp);
+static bool js_polkit_spawn (JSContext *cx, unsigned argc, JS::Value *vp);
+static bool js_polkit_user_is_in_netgroup (JSContext *cx, unsigned argc, JS::Value *vp);
 
 static JSFunctionSpec js_polkit_functions[] =
 {
-  JS_FS("log",            js_polkit_log,            0, 0),
-  JS_FS("spawn",          js_polkit_spawn,          0, 0),
-  JS_FS("_userIsInNetGroup", js_polkit_user_is_in_netgroup,          0, 0),
+  JS_FN("log",            js_polkit_log,            0, 0),
+  JS_FN("spawn",          js_polkit_spawn,          0, 0),
+  JS_FN("_userIsInNetGroup", js_polkit_user_is_in_netgroup,          0, 0),
   JS_FS_END
 };
 
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void report_error (JSContext     *cx,
-                          const char    *message,
                           JSErrorReport *report)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
@@ -202,7 +214,7 @@ static void report_error (JSContext     *cx,
                                 "%s:%u: %s",
                                 report->filename ? report->filename : "<no filename>",
                                 (unsigned int) report->lineno,
-                                message);
+                                report->message().c_str());
 }
 
 static void
@@ -290,13 +302,8 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       const gchar *filename = (gchar *)l->data;
       JS::RootedScript script(authority->priv->cx);
       JS::CompileOptions options(authority->priv->cx);
-      JS::RootedObject   obj(authority->priv->cx,authority->priv->js_global);
       options.setUTF8(true);
-      script = JS::Compile (authority->priv->cx,
-                            obj, options,
-                            filename);
-
-      if (script == NULL)
+      if (!JS::Compile (authority->priv->cx, options, filename, &script))
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Error compiling script %s",
@@ -305,7 +312,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
         }
 
       /* evaluate the script */
-      jsval rval;
+      JS::RootedValue rval(authority->priv->cx);
       if (!execute_script_with_runaway_killer (authority,
                                                script,
                                                &rval))
@@ -330,16 +337,18 @@ load_scripts (PolkitBackendJsAuthority  *authority)
 static void
 reload_scripts (PolkitBackendJsAuthority *authority)
 {
-  jsval argv[1] = {JSVAL_NULL};
-  jsval rval = JSVAL_NULL;
-
   JS_BeginRequest (authority->priv->cx);
 
+  JS::AutoValueArray<1> args(authority->priv->cx);
+  JS::RootedValue rval(authority->priv->cx);
+
+  JS::RootedObject js_polkit(authority->priv->cx, authority->priv->js_polkit->get ());
+
+  args[0].setUndefined ();
   if (!JS_CallFunctionName(authority->priv->cx,
-                           authority->priv->js_polkit,
+                           js_polkit,
                            "_deleteRules",
-                           0,
-                           argv,
+                           args,
                            &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -349,7 +358,7 @@ reload_scripts (PolkitBackendJsAuthority *authority)
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                 "Collecting garbage unconditionally...");
-  JS_GC (authority->priv->rt);
+  JS_GC (authority->priv->cx);
 
   load_scripts (authority);
 
@@ -441,21 +450,18 @@ polkit_backend_js_authority_constructed (GObject *object)
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
   gboolean entered_request = FALSE;
 
-  authority->priv->rt = JS_NewRuntime (8L * 1024L * 1024L, JS_USE_HELPER_THREADS);
-  if (authority->priv->rt == NULL)
-    goto fail;
-
-  authority->priv->cx = JS_NewContext (authority->priv->rt, 8192);
+  authority->priv->cx = JS_NewContext (8L * 1024L * 1024L);
   if (authority->priv->cx == NULL)
     goto fail;
 
-  /* TODO: JIT'ing doesn't work will with killing runaway scripts... I think
-   *       this is just a SpiderMonkey bug. So disable the JIT for now.
-   */
-  JS_SetOptions (authority->priv->cx,
-                 JSOPTION_VAROBJFIX
-                 /* | JSOPTION_JIT | JSOPTION_METHODJIT*/);
-  JS_SetErrorReporter(authority->priv->cx, report_error);
+  if (!JS::InitSelfHostedCode (authority->priv->cx))
+    goto fail;
+
+  JS::ContextOptionsRef (authority->priv->cx)
+      .setIon (TRUE)
+      .setBaseline (TRUE)
+      .setAsmJS (TRUE);
+  JS::SetWarningReporter(authority->priv->cx, report_error);
   JS_SetContextPrivate (authority->priv->cx, authority);
 
   JS_BeginRequest(authority->priv->cx);
@@ -463,43 +469,47 @@ polkit_backend_js_authority_constructed (GObject *object)
 
   {
     JS::CompartmentOptions compart_opts;
-    compart_opts.setVersion(JSVERSION_LATEST);
-    authority->priv->js_global = JS_NewGlobalObject (authority->priv->cx, &js_global_class, NULL, compart_opts);
+    compart_opts.behaviors().setVersion(JSVERSION_LATEST);
+    JS::RootedObject global(authority->priv->cx);
 
-    if (authority->priv->js_global == NULL)
+    authority->priv->js_global = new JS::Heap<JSObject*> (JS_NewGlobalObject (authority->priv->cx, &js_global_class, NULL, JS::FireOnNewGlobalHook, compart_opts));
+
+    global = authority->priv->js_global->get ();
+
+    if (global == NULL)
       goto fail;
 
-    authority->priv->ac = new JSAutoCompartment(authority->priv->cx,  authority->priv->js_global);
+    authority->priv->ac = new JSAutoCompartment(authority->priv->cx,  global);
 
     if (authority->priv->ac == NULL)
       goto fail;
 
-    JS_AddObjectRoot (authority->priv->cx, &authority->priv->js_global);
-
-    if (!JS_InitStandardClasses (authority->priv->cx, authority->priv->js_global))
+    if (!JS_InitStandardClasses (authority->priv->cx, global))
       goto fail;
 
-    authority->priv->js_polkit = JS_DefineObject (authority->priv->cx,
-                                                  authority->priv->js_global,
-                                                  "polkit",
-                                                  &js_polkit_class,
-                                                  NULL,
-                                                  JSPROP_ENUMERATE);
-    if (authority->priv->js_polkit == NULL)
+    JS::RootedObject polkit(authority->priv->cx);
+
+    authority->priv->js_polkit = new JS::Heap<JSObject *> (JS_NewObject (authority->priv->cx, &js_polkit_class));
+
+    polkit = authority->priv->js_polkit->get ();
+
+    if (polkit == NULL)
       goto fail;
-    JS_AddObjectRoot (authority->priv->cx, &authority->priv->js_polkit);
+
+    if (!JS_DefineProperty(authority->priv->cx, global, "polkit", polkit, JSPROP_ENUMERATE))
+      goto fail;
 
     if (!JS_DefineFunctions (authority->priv->cx,
-                             authority->priv->js_polkit,
+                             polkit,
                              js_polkit_functions))
       goto fail;
 
-    if (!JS_EvaluateScript (authority->priv->cx,
-                            authority->priv->js_global,
-                            init_js, strlen (init_js), /* init.js */
-                            "init.js",  /* filename */
-                            0,     /* lineno */
-                            NULL)) /* rval */
+    JS::CompileOptions options(authority->priv->cx, JSVERSION_UNKNOWN);
+    JS::RootedValue rval(authority->priv->cx);
+    if (!JS::Evaluate (authority->priv->cx,
+                       options,
+                       init_js, strlen (init_js), /* init.js */
+                       &rval)) /* rval */
       {
         goto fail;
       }
@@ -559,14 +569,9 @@ polkit_backend_js_authority_finalize (GObject *object)
   g_free (authority->priv->dir_monitors);
   g_strfreev (authority->priv->rules_dirs);
 
-  JS_BeginRequest (authority->priv->cx);
-  JS_RemoveObjectRoot (authority->priv->cx, &authority->priv->js_polkit);
   delete authority->priv->ac;
-  JS_RemoveObjectRoot (authority->priv->cx, &authority->priv->js_global);
-  JS_EndRequest (authority->priv->cx);
 
   JS_DestroyContext (authority->priv->cx);
-  JS_DestroyRuntime (authority->priv->rt);
   /* JS_ShutDown (); */
 
   G_OBJECT_CLASS (polkit_backend_js_authority_parent_class)->finalize (object);
@@ -643,6 +648,8 @@ polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
 
 
   g_type_class_add_private (klass, sizeof (PolkitBackendJsAuthorityPrivate));
+
+  JS_Init ();
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -650,66 +657,75 @@ polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
 /* authority->priv->cx must be within a request */
 static void
 set_property_str (PolkitBackendJsAuthority  *authority,
-                  JSObject                  *obj,
+                  JS::HandleObject           obj,
                   const gchar               *name,
                   const gchar               *value)
 {
-  JSString *value_jsstr;
-  jsval value_jsval;
-  value_jsstr = JS_NewStringCopyZ (authority->priv->cx, value);
-  value_jsval = STRING_TO_JSVAL (value_jsstr);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS::RootedValue value_jsval(authority->priv->cx);
+  if (value)
+    {
+      JS::ConstUTF8CharsZ chars(value, strlen(value));
+      JS::RootedString str(authority->priv->cx, JS_NewStringCopyUTF8Z(authority->priv->cx, chars));
+      value_jsval = JS::StringValue (str);
+    }
+  else
+    value_jsval = JS::NullValue ();
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* authority->priv->cx must be within a request */
 static void
 set_property_strv (PolkitBackendJsAuthority  *authority,
-                   JSObject                  *obj,
+                   JS::HandleObject           obj,
                    const gchar               *name,
                    GPtrArray                 *value)
 {
-  jsval value_jsval;
-  JSObject *array_object;
+  JS::RootedValue value_jsval(authority->priv->cx);
+  JS::AutoValueVector elems(authority->priv->cx);
   guint n;
 
-  array_object = JS_NewArrayObject (authority->priv->cx, 0, NULL);
-
+  elems.resize(value->len);
   for (n = 0; n < value->len; n++)
     {
-      JSString *jsstr;
-      jsval val;
-
-      jsstr = JS_NewStringCopyZ (authority->priv->cx, (char *)g_ptr_array_index(value, n));
-      val = STRING_TO_JSVAL (jsstr);
-      JS_SetElement (authority->priv->cx, array_object, n, &val);
+      const char *c_string = (const char *) g_ptr_array_index(value, n);
+      if (c_string)
+        {
+          JS::ConstUTF8CharsZ chars(c_string, strlen(c_string));
+          JS::RootedString str(authority->priv->cx, JS_NewStringCopyUTF8Z(authority->priv->cx, chars));
+          elems[n].setString(str);
+        }
+      else
+        elems[n].setNull ();
     }
 
-  value_jsval = OBJECT_TO_JSVAL (array_object);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS::RootedObject array_object(authority->priv->cx, JS_NewArrayObject (authority->priv->cx, elems));
+
+  value_jsval = JS::ObjectValue (*array_object);
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* authority->priv->cx must be within a request */
 static void
 set_property_int32 (PolkitBackendJsAuthority  *authority,
-                    JSObject                  *obj,
+                    JS::HandleObject           obj,
                     const gchar               *name,
                     gint32                     value)
 {
-  jsval value_jsval;
-  value_jsval = INT_TO_JSVAL ((gint32) value);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS::RootedValue value_jsval(authority->priv->cx);
+  value_jsval = JS::Int32Value ((gint32) value);
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* authority->priv->cx must be within a request */
 static void
 set_property_bool (PolkitBackendJsAuthority  *authority,
-                   JSObject                  *obj,
+                   JS::HandleObject           obj,
                    const gchar               *name,
                    gboolean                   value)
 {
-  jsval value_jsval;
-  value_jsval = BOOLEAN_TO_JSVAL ((JSBool) value);
-  JS_SetProperty (authority->priv->cx, obj, name, &value_jsval);
+  JS::RootedValue value_jsval(authority->priv->cx);
+  value_jsval = JS::BooleanValue ((bool) value);
+  JS_SetProperty (authority->priv->cx, obj, name, value_jsval);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -721,13 +737,13 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
                   PolkitIdentity            *user_for_subject,
                   gboolean                   subject_is_local,
                   gboolean                   subject_is_active,
-                  jsval                     *out_jsval,
+                  JS::MutableHandleValue     out_jsval,
                   GError                   **error)
 {
   gboolean ret = FALSE;
-  jsval ret_jsval;
+  JS::CompileOptions options(authority->priv->cx, JSVERSION_UNKNOWN);
   const char *src;
-  JSObject *obj;
+  JS::RootedObject obj(authority->priv->cx);
   pid_t pid;
   uid_t uid;
   gchar *user_name = NULL;
@@ -735,19 +751,19 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   struct passwd *passwd;
   char *seat_str = NULL;
   char *session_str = NULL;
+  JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Subject();";
-  if (!JS_EvaluateScript (authority->priv->cx,
-                          authority->priv->js_global,
-                          src, strlen (src),
-                          __FILE__, __LINE__,
-                          &ret_jsval))
+  if (!JS::Evaluate (authority->priv->cx,
+                     options,
+                     src, strlen (src),
+                     out_jsval))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
     }
 
-  obj = JSVAL_TO_OBJECT (ret_jsval);
+  obj = out_jsval.toObjectOrNull();
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
@@ -838,9 +854,6 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   if (groups != NULL)
     g_ptr_array_unref (groups);
 
-  if (ret && out_jsval != NULL)
-    *out_jsval = ret_jsval;
-
   return ret;
 }
 
@@ -851,28 +864,29 @@ static gboolean
 action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
                              const gchar               *action_id,
                              PolkitDetails             *details,
-                             jsval                     *out_jsval,
+                             JS::MutableHandleValue     out_jsval,
                              GError                   **error)
 {
   gboolean ret = FALSE;
-  jsval ret_jsval;
+  JS::CompileOptions options(authority->priv->cx, JSVERSION_UNKNOWN);
   const char *src;
-  JSObject *obj;
+  JS::RootedObject obj(authority->priv->cx);
   gchar **keys;
   guint n;
+  JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Action();";
-  if (!JS_EvaluateScript (authority->priv->cx,
-                          authority->priv->js_global,
-                          src, strlen (src),
-                          __FILE__, __LINE__,
-                          &ret_jsval))
+
+  if (!JS::Evaluate (authority->priv->cx,
+                     options,
+                     src, strlen (src),
+                     out_jsval))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
     }
 
-  obj = JSVAL_TO_OBJECT (ret_jsval);
+  obj = out_jsval.toObjectOrNull();
 
   set_property_str (authority, obj, "id", action_id);
 
@@ -891,9 +905,6 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
   ret = TRUE;
 
  out:
-  if (ret && out_jsval != NULL)
-    *out_jsval = ret_jsval;
-
   return ret;
 }
 
@@ -912,12 +923,12 @@ runaway_killer_thread_func (gpointer user_data)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static JSBool
+static bool
 js_operation_callback (JSContext *cx)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   JSString *val_str;
-  jsval val;
+  JS::RootedValue val(cx);
 
   /* This callback can be called by the runtime at any time without us causing
    * it by JS_TriggerOperationCallback().
@@ -926,7 +937,7 @@ js_operation_callback (JSContext *cx)
   if (!authority->priv->rkt_timeout_pending)
     {
       g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
-      return JS_TRUE;
+      return true;
     }
   authority->priv->rkt_timeout_pending = FALSE;
   g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
@@ -935,12 +946,12 @@ js_operation_callback (JSContext *cx)
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority), "Terminating runaway script");
 
   /* Throw an exception - this way the JS code can ignore the runaway script handling */
-  JS_SetOperationCallback (authority->priv->cx, NULL);
+  JS_ResetInterruptCallback (authority->priv->cx, TRUE);
   val_str = JS_NewStringCopyZ (cx, "Terminating runaway script");
-  val = STRING_TO_JSVAL (val_str);
+  val = JS::StringValue (val_str);
   JS_SetPendingException (authority->priv->cx, val);
-  JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
-  return JS_FALSE;
+  JS_ResetInterruptCallback (authority->priv->cx, FALSE);
+  return false;
 }
 
 static gboolean
@@ -953,7 +964,7 @@ rkt_on_timeout (gpointer user_data)
   g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
 
   /* Supposedly this is thread-safe... */
-  JS_TriggerOperationCallback (authority->priv->rt);
+  JS_RequestInterruptCallback (authority->priv->cx);
 
   /* keep source around so we keep trying to kill even if the JS bit catches the exception
    * thrown in js_operation_callback()
@@ -977,13 +988,15 @@ runaway_killer_setup (PolkitBackendJsAuthority *authority)
   /* ... rkt_on_timeout() will then poke the JSContext so js_operation_callback() is
    * called... and from there we throw an exception
    */
-  JS_SetOperationCallback (authority->priv->cx, js_operation_callback);
+  JS_AddInterruptCallback (authority->priv->cx, js_operation_callback);
+  JS_ResetInterruptCallback (authority->priv->cx, FALSE);
 }
 
 static void
 runaway_killer_teardown (PolkitBackendJsAuthority *authority)
 {
-  JS_SetOperationCallback (authority->priv->cx, NULL);
+  JS_ResetInterruptCallback (authority->priv->cx, TRUE);
+
   g_source_destroy (authority->priv->rkt_source);
   g_source_unref (authority->priv->rkt_source);
   authority->priv->rkt_source = NULL;
@@ -1021,16 +1034,15 @@ runaway_killer_terminate (PolkitBackendJsAuthority *authority)
   g_thread_join (authority->priv->runaway_killer_thread);
 }
 
-static JSBool
+static bool
 execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
-                                    JSScript                 *script,
-                                    jsval                    *rval)
+                                    JS::HandleScript                 script,
+                                    JS::MutableHandleValue           rval)
 {
-  JSBool ret;
+  bool ret;
 
   runaway_killer_setup (authority);
   ret = JS_ExecuteScript (authority->priv->cx,
-                          authority->priv->js_global,
                           script,
                           rval);
   runaway_killer_teardown (authority);
@@ -1038,20 +1050,20 @@ execute_script_with_runaway_killer (PolkitBackendJsAuthority *authority,
   return ret;
 }
 
-static JSBool
+static bool
 call_js_function_with_runaway_killer (PolkitBackendJsAuthority *authority,
                                       const char               *function_name,
-                                      unsigned                  argc,
-                                      jsval                    *argv,
-                                      jsval                    *rval)
+                                      const JS::HandleValueArray     &args,
+                                      JS::RootedValue          *rval)
 {
-  JSBool ret;
+  bool ret;
+  JS::RootedObject js_polkit(authority->priv->cx, authority->priv->js_polkit->get ());
+
   runaway_killer_setup (authority);
   ret = JS_CallFunctionName(authority->priv->cx,
-                            authority->priv->js_polkit,
+                            js_polkit,
                             function_name,
-                            argc,
-                            argv,
+                            args,
                             rval);
   runaway_killer_teardown (authority);
   return ret;
@@ -1071,17 +1083,17 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   GList *ret = NULL;
-  jsval argv[2] = {JSVAL_NULL, JSVAL_NULL};
-  jsval rval = JSVAL_NULL;
+  JS::AutoValueArray<2> args(authority->priv->cx);
+  JS::RootedValue rval(authority->priv->cx);
   guint n;
   GError *error = NULL;
-  JSString *ret_jsstr;
+  JS::RootedString ret_jsstr (authority->priv->cx);
   gchar *ret_str = NULL;
   gchar **ret_strs = NULL;
 
   JS_BeginRequest (authority->priv->cx);
 
-  if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
+  if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error converting action and details to JS object: %s",
@@ -1095,7 +1107,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
                          user_for_subject,
                          subject_is_local,
                          subject_is_active,
-                         &argv[1],
+                         args[1],
                          &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1107,8 +1119,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
   if (!call_js_function_with_runaway_killer (authority,
                                              "_runAdminRules",
-                                             G_N_ELEMENTS (argv),
-                                             argv,
+                                             args,
                                              &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1116,17 +1127,17 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  if (!JSVAL_IS_STRING (rval))
+  if (!rval.isString())
     {
       g_warning ("Expected a string");
       goto out;
     }
 
-  ret_jsstr = JSVAL_TO_STRING (rval);
-  ret_str = g_utf16_to_utf8 (JS_GetStringCharsZ (authority->priv->cx, ret_jsstr), -1, NULL, NULL, NULL);
+  ret_jsstr = rval.toString();
+  ret_str = JS_EncodeStringToUTF8 (authority->priv->cx, ret_jsstr);
   if (ret_str == NULL)
     {
-      g_warning ("Error converting resulting string to UTF-8: %s", error->message);
+      g_warning ("Error converting resulting string to UTF-8");
       goto out;
     }
 
@@ -1180,17 +1191,16 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (_authority);
   PolkitImplicitAuthorization ret = implicit;
-  jsval argv[2] = {JSVAL_NULL, JSVAL_NULL};
-  jsval rval = JSVAL_NULL; 
+  JS::AutoValueArray<2> args(authority->priv->cx);
+  JS::RootedValue rval(authority->priv->cx);
   GError *error = NULL;
-  JSString *ret_jsstr;
-  const jschar *ret_utf16;
+  JS::RootedString ret_jsstr (authority->priv->cx);
   gchar *ret_str = NULL;
   gboolean good = FALSE;
 
   JS_BeginRequest (authority->priv->cx);
 
-  if (!action_and_details_to_jsval (authority, action_id, details, &argv[0], &error))
+  if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error converting action and details to JS object: %s",
@@ -1204,7 +1214,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
                          user_for_subject,
                          subject_is_local,
                          subject_is_active,
-                         &argv[1],
+                         args[1],
                          &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1216,8 +1226,7 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
   if (!call_js_function_with_runaway_killer (authority,
                                              "_runRules",
-                                             G_N_ELEMENTS (argv),
-                                             argv,
+                                             args,
                                              &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -1225,26 +1234,24 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  if (JSVAL_IS_NULL (rval))
+  if (rval.isNull())
     {
       /* this fine, means there was no match, use implicit authorizations */
       good = TRUE;
       goto out;
     }
 
-  if (!JSVAL_IS_STRING (rval))
+  if (!rval.isString())
     {
       g_warning ("Expected a string");
       goto out;
     }
 
-  ret_jsstr = JSVAL_TO_STRING (rval);
-  ret_utf16 = JS_GetStringCharsZ (authority->priv->cx, ret_jsstr);
-  ret_str = g_utf16_to_utf8 (ret_utf16, -1, NULL, NULL, &error);
+  ret_jsstr = rval.toString();
+  ret_str = JS_EncodeStringToUTF8 (authority->priv->cx, ret_jsstr);
   if (ret_str == NULL)
     {
-      g_warning ("Error converting resulting string to UTF-8: %s", error->message);
-      g_clear_error (&error);
+      g_warning ("Error converting resulting string to UTF-8");
       goto out;
     }
 
@@ -1273,27 +1280,25 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static JSBool
+static bool
 js_polkit_log (JSContext  *cx,
                unsigned    argc,
-               jsval      *vp)
+               JS::Value      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
-  JSBool ret = JS_FALSE;
-  JSString *str;
+  bool ret = false;
   char *s;
 
-  if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "S", &str))
-    goto out;
+  JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
-  s = JS_EncodeString (cx, str);
-  JS_ReportWarning (cx, s);
+  s = JS_EncodeString (cx, args[0].toString ());
+  JS_ReportWarningUTF8 (cx, s);
   JS_free (cx, s);
 
-  ret = JS_TRUE;
+  ret = true;
 
-  JS_SET_RVAL (cx, vp, JSVAL_VOID);  /* return undefined */
- out:
+  args.rval ().setUndefined (); /* return undefined */
+
   return ret;
 }
 
@@ -1358,14 +1363,14 @@ spawn_cb (GObject       *source_object,
   g_main_loop_quit (data->loop);
 }
 
-static JSBool
+static bool
 js_polkit_spawn (JSContext  *cx,
                  unsigned    js_argc,
-                 jsval      *vp)
+                 JS::Value      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
-  JSBool ret = JS_FALSE;
-  JSObject *array_object;
+  bool ret = false;
+  JS::RootedObject array_object(cx);
   gchar *standard_output = NULL;
   gchar *standard_error = NULL;
   gint exit_status;
@@ -1378,32 +1383,32 @@ js_polkit_spawn (JSContext  *cx,
   SpawnData data = {0};
   guint n;
 
-  if (!JS_ConvertArguments (cx, js_argc, JS_ARGV (cx, vp), "o", &array_object))
-    goto out;
+  JS::CallArgs args = JS::CallArgsFromVp (js_argc, vp);
+  array_object = &args[0].toObject();
 
   if (!JS_GetArrayLength (cx, array_object, &array_len))
     {
-      JS_ReportError (cx, "Failed to get array length");
+      JS_ReportErrorUTF8 (cx, "Failed to get array length");
       goto out;
     }
 
   argv = g_new0 (gchar*, array_len + 1);
   for (n = 0; n < array_len; n++)
     {
-      jsval elem_val;
+      JS::RootedValue elem_val(cx);
       char *s;
 
       if (!JS_GetElement (cx, array_object, n, &elem_val))
         {
-          JS_ReportError (cx, "Failed to get element %d", n);
+          JS_ReportErrorUTF8 (cx, "Failed to get element %d", n);
           goto out;
         }
-      if (!JSVAL_IS_STRING (elem_val))
+      if (!elem_val.isString())
 	{
-          JS_ReportError (cx, "Element %d is not a string", n);
+          JS_ReportErrorUTF8 (cx, "Element %d is not a string", n);
           goto out;
 	}
-      s = JS_EncodeString (cx, JSVAL_TO_STRING (elem_val));
+      s = JS_EncodeString (cx, elem_val.toString());
       argv[n] = g_strdup (s);
       JS_free (cx, s);
     }
@@ -1430,7 +1435,7 @@ js_polkit_spawn (JSContext  *cx,
                            &standard_error,
                            &error))
     {
-      JS_ReportError (cx,
+      JS_ReportErrorUTF8 (cx,
                       "Error spawning helper: %s (%s, %d)",
                       error->message, g_quark_to_string (error->domain), error->code);
       g_clear_error (&error);
@@ -1456,15 +1461,15 @@ js_polkit_spawn (JSContext  *cx,
         }
       g_string_append_printf (gstr, ", stdout=`%s', stderr=`%s'",
                               standard_output, standard_error);
-      JS_ReportError (cx, gstr->str);
+      JS_ReportErrorUTF8 (cx, "%s", gstr->str);
       g_string_free (gstr, TRUE);
       goto out;
     }
 
-  ret = JS_TRUE;
+  ret = true;
 
   ret_jsstr = JS_NewStringCopyZ (cx, standard_output);
-  JS_SET_RVAL (cx, vp, STRING_TO_JSVAL (ret_jsstr));
+  args.rval ().setString (ret_jsstr);
 
  out:
   g_strfreev (argv);
@@ -1481,40 +1486,37 @@ js_polkit_spawn (JSContext  *cx,
 /* ---------------------------------------------------------------------------------------------------- */
 
 
-static JSBool
+static bool
 js_polkit_user_is_in_netgroup (JSContext  *cx,
                                unsigned    argc,
-                               jsval      *vp)
+                               JS::Value      *vp)
 {
   /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
-  JSBool ret = JS_FALSE;
-  JSString *user_str;
-  JSString *netgroup_str;
+  bool ret = false;
   char *user;
   char *netgroup;
-  JSBool is_in_netgroup = JS_FALSE;
+  bool is_in_netgroup = false;
 
-  if (!JS_ConvertArguments (cx, argc, JS_ARGV (cx, vp), "SS", &user_str, &netgroup_str))
-    goto out;
+  JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
-  user = JS_EncodeString (cx, user_str);
-  netgroup = JS_EncodeString (cx, netgroup_str);
+  user = JS_EncodeString (cx, args[0].toString());
+  netgroup = JS_EncodeString (cx, args[1].toString());
 
   if (innetgr (netgroup,
                NULL,  /* host */
                user,
                NULL)) /* domain */
     {
-      is_in_netgroup =  JS_TRUE;
+      is_in_netgroup =  true;
     }
 
   JS_free (cx, netgroup);
   JS_free (cx, user);
 
-  ret = JS_TRUE;
+  ret = true;
 
-  JS_SET_RVAL (cx, vp, BOOLEAN_TO_JSVAL (is_in_netgroup));
- out:
+  args.rval ().setBoolean (is_in_netgroup);
+
   return ret;
 }
 
