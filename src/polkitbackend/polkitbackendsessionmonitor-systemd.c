@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include <polkit/polkit.h>
+#include <polkit/polkitprivate.h>
 #include "polkitbackendsessionmonitor.h"
 
 /* <internal>
@@ -246,26 +247,40 @@ polkit_backend_session_monitor_get_sessions (PolkitBackendSessionMonitor *monito
  * polkit_backend_session_monitor_get_user:
  * @monitor: A #PolkitBackendSessionMonitor.
  * @subject: A #PolkitSubject.
+ * @result_matches: If not %NULL, set to indicate whether the return value matches current (RACY) state.
  * @error: Return location for error.
  *
  * Gets the user corresponding to @subject or %NULL if no user exists.
+ *
+ * NOTE: For a #PolkitUnixProcess, the UID is read from @subject (which may
+ * come from e.g. a D-Bus client), so it may not correspond to the actual UID
+ * of the referenced process (at any point in time).  This is indicated by
+ * setting @result_matches to %FALSE; the caller may reject such subjects or
+ * require additional privileges. @result_matches == %TRUE only indicates that
+ * the UID matched the underlying process at ONE point in time, it may not match
+ * later.
  *
  * Returns: %NULL if @error is set otherwise a #PolkitUnixUser that should be freed with g_object_unref().
  */
 PolkitIdentity *
 polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor  *monitor,
                                                      PolkitSubject                *subject,
+                                                     gboolean                     *result_matches,
                                                      GError                      **error)
 {
   PolkitIdentity *ret;
-  guint32 uid;
+  gboolean matches;
 
   ret = NULL;
+  matches = FALSE;
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
-      uid = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject));
-      if ((gint) uid == -1)
+      gint subject_uid, current_uid;
+      GError *local_error;
+
+      subject_uid = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject));
+      if (subject_uid == -1)
         {
           g_set_error (error,
                        POLKIT_ERROR,
@@ -273,14 +288,24 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
                        "Unix process subject does not have uid set");
           goto out;
         }
-      ret = polkit_unix_user_new (uid);
+      local_error = NULL;
+      current_uid = polkit_unix_process_get_racy_uid__ (POLKIT_UNIX_PROCESS (subject), &local_error);
+      if (local_error != NULL)
+	{
+	  g_propagate_error (error, local_error);
+	  goto out;
+	}
+      ret = polkit_unix_user_new (subject_uid);
+      matches = (subject_uid == current_uid);
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
       ret = (PolkitIdentity*)polkit_system_bus_name_get_user_sync (POLKIT_SYSTEM_BUS_NAME (subject), NULL, error);
+      matches = TRUE;
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
+      uid_t uid;
 
       if (sd_session_get_uid (polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (subject)), &uid) < 0)
         {
@@ -292,9 +317,14 @@ polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor
         }
 
       ret = polkit_unix_user_new (uid);
+      matches = TRUE;
     }
 
  out:
+  if (result_matches != NULL)
+    {
+      *result_matches = matches;
+    }
   return ret;
 }
 

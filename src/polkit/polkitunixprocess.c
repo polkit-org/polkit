@@ -56,6 +56,14 @@
  * To uniquely identify processes, both the process id and the start
  * time of the process (a monotonic increasing value representing the
  * time since the kernel was started) is used.
+ *
+ * NOTE: This object stores, and provides access to, the real UID of the
+ * process.  That value can change over time (with set*uid*(2) and exec*(2)).
+ * Checks whether an operation is allowed need to take care to use the UID
+ * value as of the time when the operation was made (or, following the open()
+ * privilege check model, when the connection making the operation possible
+ * was initiated).  That is usually done by initializing this with
+ * polkit_unix_process_new_for_owner() with trusted data.
  */
 
 /**
@@ -89,9 +97,6 @@ static void subject_iface_init (PolkitSubjectIface *subject_iface);
 
 static guint64 get_start_time_for_pid (gint    pid,
                                        GError **error);
-
-static gint _polkit_unix_process_get_owner (PolkitUnixProcess  *process,
-                                            GError            **error);
 
 #if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
 static gboolean get_kinfo_proc (gint pid,
@@ -182,7 +187,7 @@ polkit_unix_process_constructed (GObject *object)
     {
       GError *error;
       error = NULL;
-      process->uid = _polkit_unix_process_get_owner (process, &error);
+      process->uid = polkit_unix_process_get_racy_uid__ (process, &error);
       if (error != NULL)
         {
           process->uid = -1;
@@ -270,6 +275,12 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
  *
  * Gets the user id for @process. Note that this is the real user-id,
  * not the effective user-id.
+ *
+ * NOTE: The UID may change over time, so the returned value may not match the
+ * current state of the underlying process; or the UID may have been set by
+ * polkit_unix_process_new_for_owner() or polkit_unix_process_set_uid(),
+ * in which case it may not correspond to the actual UID of the referenced
+ * process at all (at any point in time).
  *
  * Returns: The user id for @process or -1 if unknown.
  */
@@ -708,13 +719,20 @@ out:
   return start_time;
 }
 
-static gint
-_polkit_unix_process_get_owner (PolkitUnixProcess  *process,
-                                GError            **error)
+/*
+ * Private: Return the "current" UID.  Note that this is inherently racy,
+ * and the value may already be obsolete by the time this function returns;
+ * this function only guarantees that the UID was valid at some point during
+ * its execution.
+ */
+gint
+polkit_unix_process_get_racy_uid__ (PolkitUnixProcess  *process,
+                                    GError            **error)
 {
   gint result;
   gchar *contents;
   gchar **lines;
+  guint64 start_time;
 #if defined(HAVE_FREEBSD) || defined(HAVE_OPENBSD)
   struct kinfo_proc p;
 #elif defined(HAVE_NETBSD)
@@ -722,6 +740,7 @@ _polkit_unix_process_get_owner (PolkitUnixProcess  *process,
 #else
   gchar filename[64];
   guint n;
+  GError *local_error;
 #endif
 
   g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
@@ -745,8 +764,10 @@ _polkit_unix_process_get_owner (PolkitUnixProcess  *process,
 
 #if defined(HAVE_FREEBSD)
   result = p.ki_uid;
+  start_time = (guint64) p.ki_start.tv_sec;
 #else
   result = p.p_uid;
+  start_time = (guint64) p.p_ustart_sec;
 #endif
 #else
 
@@ -781,16 +802,36 @@ _polkit_unix_process_get_owner (PolkitUnixProcess  *process,
       else
         {
           result = real_uid;
-          goto out;
+          goto found;
         }
     }
-
   g_set_error (error,
                POLKIT_ERROR,
                POLKIT_ERROR_FAILED,
                "Didn't find any line starting with `Uid:' in file %s",
                filename);
+  goto out;
+
+found:
+  /* The UID and start time are, sadly, not available in a single file.  So,
+   * read the UID first, and then the start time; if the start time is the same
+   * before and after reading the UID, it couldn't have changed.
+   */
+  local_error = NULL;
+  start_time = get_start_time_for_pid (process->pid, &local_error);
+  if (local_error != NULL)
+    {
+      g_propagate_error (error, local_error);
+      goto out;
+    }
 #endif
+
+  if (process->start_time != start_time)
+    {
+      g_set_error (error, POLKIT_ERROR, POLKIT_ERROR_FAILED,
+		   "process with PID %d has been replaced", process->pid);
+      goto out;
+    }
 
 out:
   g_strfreev (lines);
@@ -810,5 +851,5 @@ gint
 polkit_unix_process_get_owner (PolkitUnixProcess  *process,
                                GError            **error)
 {
-  return _polkit_unix_process_get_owner (process, error);
+  return polkit_unix_process_get_racy_uid__ (process, error);
 }

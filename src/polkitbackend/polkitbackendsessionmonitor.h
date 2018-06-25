@@ -47,6 +47,7 @@ GList                       *polkit_backend_session_monitor_get_sessions (Polkit
 
 PolkitIdentity              *polkit_backend_session_monitor_get_user_for_subject (PolkitBackendSessionMonitor *monitor,
                                                                                   PolkitSubject               *subject,
+                                                                                  gboolean                    *result_matches,
                                                                                   GError                     **error);
 
 PolkitSubject               *polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMonitor *monitor,

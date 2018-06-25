@@ -44,6 +44,8 @@ GVariant *polkit_action_description_to_gvariant (PolkitActionDescription *action
 GVariant *polkit_subject_to_gvariant (PolkitSubject *subject);
 GVariant *polkit_identity_to_gvariant (PolkitIdentity *identity);
 
+gint polkit_unix_process_get_racy_uid__ (PolkitUnixProcess *process, GError **error);
+
 PolkitSubject  *polkit_subject_new_for_gvariant (GVariant *variant, GError **error);
 PolkitIdentity *polkit_identity_new_for_gvariant (GVariant *variant, GError **error);
 
