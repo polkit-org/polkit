@@ -9,24 +9,33 @@ some security review. Use at your own risk.
 This is polkit 0.115.
 
 Highlights:
- TODO
+ Fixes CVE-2018-1116, a local information disclosure and denial of service
+ caused by trusting client-submitted UIDs when referencing processes.
+ Thanks to Matthias Gerstner of the SUSE security team for reporting
+ this issue.
 
 Build requirements
 
  glib, gobject, gio    >= 2.32
- mozjs185 or mozjs-17.0
+ mozjs-52
  gobject-introspection >= 0.6.2 (optional)
  pam (optional)
  ConsoleKit OR systemd
 
 Changes since polkit 0.114:
 
- TODO
+Miloslav Trmač (1):
+      Fix CVE-2018-1116: Trusting client-supplied UID
+
+Ray Strode (3):
+      Post-release version bump to 0.115
+      jsauthority: pass "%s" format string to remaining report function
+      NEWS: fix date from 2017 to 2018 for 0.114 entry
 
 Thanks to our contributors.
 
 Colin Walters and Miloslav Trmač,
-$DATE
+July 10, 2018
 
 --------------
 polkit 0.114
