@@ -439,6 +439,7 @@ polkit_agent_listener_register_with_options (PolkitAgentListener      *listener,
           server->thread_initialization_error = NULL;
           g_thread_join (server->thread);
           server_free (server);
+          server = NULL;
           goto out;
         }
     }
