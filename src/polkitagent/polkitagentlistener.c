@@ -178,10 +178,10 @@ on_notify_authority_owner (GObject    *object,
   owner = polkit_authority_get_owner (server->authority);
   if (owner == NULL)
     {
-      g_printerr ("PolicyKit daemon disconnected from the bus.\n");
+      g_debug ("PolicyKit daemon disconnected from the bus.\n");
 
       if (server->is_registered)
-        g_printerr ("We are no longer a registered authentication agent.\n");
+        g_debug ("We are no longer a registered authentication agent.\n");
 
       server->is_registered = FALSE;
     }
@@ -192,17 +192,17 @@ on_notify_authority_owner (GObject    *object,
         {
           GError *error;
 
-          g_printerr ("PolicyKit daemon reconnected to bus.\n");
-          g_printerr ("Attempting to re-register as an authentication agent.\n");
+          g_debug ("PolicyKit daemon reconnected to bus.\n");
+          g_debug ("Attempting to re-register as an authentication agent.\n");
 
           error = NULL;
           if (server_register (server, &error))
             {
-              g_printerr ("We are now a registered authentication agent.\n");
+              g_debug ("We are now a registered authentication agent.\n");
             }
           else
             {
-              g_printerr ("Failed to register as an authentication agent: %s\n", error->message);
+              g_debug ("Failed to register as an authentication agent: %s\n", error->message);
               g_error_free (error);
             }
         }
