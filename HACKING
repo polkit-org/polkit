@@ -91,3 +91,13 @@ Coding Style
    heuristically parse a file and accept not-well-formed
    data). Avoiding heuristics is also important for security reasons;
    if it looks funny, ignore it (or exit, or disconnect).
+
+Code of Conduct
+===
+As with other projects hosted on freedesktop.org, Polkit follows its
+Code of Conduct, based on the Contributor Covenant. Please conduct
+yourself in a respectful and civilized manner when using the above
+mailing lists, bug trackers, etc:
+
+       https://www.freedesktop.org/wiki/CodeOfConduct
+
