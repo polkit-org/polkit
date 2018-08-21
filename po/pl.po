@@ -1,14 +1,17 @@
-# translation of pl.po to Polish
-# Piotr Drąg <piotrdrag@gmail.com>, 2010, 2015.
+# Polish translation for polkit.
+# Copyright © 2010-2018 the polkit authors.
+# This file is distributed under the same license as the polkit package.
+# Piotr Drąg <piotrdrag@gmail.com>, 2010-2018.
+# Aviary.pl <community-poland@mozilla.org>, 2018.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-08-28 15:31+0200\n"
-"PO-Revision-Date: 2015-08-28 15:32+0200\n"
+"POT-Creation-Date: 2018-08-21 20:44+0200\n"
+"PO-Revision-Date: 2018-08-21 20:50+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
-"Language-Team: Polish <trans-pl@lists.fedoraproject.org>\n"
+"Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -39,42 +42,42 @@ msgstr ""
 "„Frobnicate” (user=$(user), user.gecos=$(user.gecos), user.display=$(user."
 "display), program=$(program), command_line=$(command_line))"
 
-#: ../src/programs/pkaction.c:100
+#: ../src/programs/pkaction.c:101
 msgid "Only output information about ACTION"
-msgstr "Wyświetla tylko informacje o DZIAŁANIU"
+msgstr "Wyświetla tylko informacje o DZIAŁANIU"
 
-#: ../src/programs/pkaction.c:100
+#: ../src/programs/pkaction.c:101
 msgid "ACTION"
 msgstr "DZIAŁANIE"
 
-#: ../src/programs/pkaction.c:104
+#: ../src/programs/pkaction.c:105
 msgid "Output detailed action information"
-msgstr "Wyświetla szczegółowe informacje o działaniu"
+msgstr "Wyświetla szczegółowe informacje o działaniu"
 
-#: ../src/programs/pkaction.c:108 ../src/programs/pkttyagent.c:61
+#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
 msgid "Show version"
 msgstr "Wyświetla wersję"
 
-#: ../src/programs/pkaction.c:130
+#: ../src/programs/pkaction.c:132
 msgid "[--action-id ACTION]"
 msgstr "[--action-id DZIAŁANIE]"
 
-#: ../src/programs/pkaction.c:131 ../src/programs/pkttyagent.c:81
+#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:83
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
 "%s home page: <%s>"
 msgstr ""
-"Prosimy zgłaszać błędy na (w języku angielskim): %s\n"
+"Prosimy zgłaszać błędy na (w języku angielskim): %s\n"
 "Strona domowa programu %s: <%s>"
 
-#: ../src/programs/pkaction.c:145 ../src/programs/pkcheck.c:491
-#: ../src/programs/pkttyagent.c:95
+#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
+#: ../src/programs/pkttyagent.c:97
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: nieoczekiwany parametr „%s”\n"
 
-#: ../src/programs/pkcheck.c:35
+#: ../src/programs/pkcheck.c:36
 #, c-format
 msgid ""
 "Usage:\n"
@@ -114,7 +117,7 @@ msgstr ""
 "                                         DZIAŁANIA\n"
 "  -u, --allow-user-interaction           Pyta użytkownika, jeśli trzeba\n"
 "  -d, --details=KLUCZ WARTOŚĆ            Dodaje (KLUCZ, WARTOŚĆ) do\n"
-"                                         informacji o działaniu\n"
+"                                         informacji o działaniu\n"
 "  --enable-internal-agent                Używa wewnętrznego agenta\n"
 "                                         uwierzytelniania, jeśli trzeba\n"
 "  --list-temp                            Wyświetla listę tymczasowych\n"
@@ -127,26 +130,26 @@ msgstr ""
 "                                         NAZWY_MAGISTRALI\n"
 "  --version                              Wyświetla wersję\n"
 "\n"
-"Prosimy zgłaszać błędy na (w języku angielskim): %s\n"
+"Prosimy zgłaszać błędy na (w języku angielskim): %s\n"
 "Strona domowa programu %s: <%s>\n"
 
-#: ../src/programs/pkcheck.c:391 ../src/programs/pkcheck.c:424
-#: ../src/programs/pkcheck.c:436
+#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
+#: ../src/programs/pkcheck.c:438
 #, c-format
 msgid "%s: Argument expected after `%s'\n"
 msgstr "%s: oczekiwano parametru po opcji „%s”\n"
 
-#: ../src/programs/pkcheck.c:414
+#: ../src/programs/pkcheck.c:416
 #, c-format
 msgid "%s: Invalid --process value `%s'\n"
 msgstr "%s: nieprawidłowa wartość „%s” opcji --process\n"
 
-#: ../src/programs/pkcheck.c:451 ../src/programs/pkcheck.c:460
+#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
 #, c-format
 msgid "%s: Two arguments expected after `--detail'\n"
 msgstr "%s: oczekiwano dwóch parametrów po opcji „--detail”\n"
 
-#: ../src/programs/pkcheck.c:521
+#: ../src/programs/pkcheck.c:523
 #, c-format
 msgid "%s: Subject not specified\n"
 msgstr "%s: nie podano tematu\n"
@@ -155,7 +158,7 @@ msgstr "%s: nie podano tematu\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:794
+#: ../src/programs/pkexec.c:790
 msgid "Authentication is needed to run `$(program)' as the super user"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby uruchomić program „$(program)” jako "
@@ -166,41 +169,41 @@ msgstr ""
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:804
+#: ../src/programs/pkexec.c:800
 msgid "Authentication is needed to run `$(program)' as user $(user.display)"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby uruchomić program „$(program)” jako "
 "użytkownik $(user.display)"
 
-#: ../src/programs/pkttyagent.c:44
+#: ../src/programs/pkttyagent.c:45
 msgid "Don't replace existing agent if any"
 msgstr "Bez zastępowania istniejących agentów, jeśli jakieś są"
 
-#: ../src/programs/pkttyagent.c:48
+#: ../src/programs/pkttyagent.c:49
 msgid "Close FD when the agent is registered"
 msgstr "Zamyka deskryptor pliku po zarejestrowaniu agenta"
 
-#: ../src/programs/pkttyagent.c:48
+#: ../src/programs/pkttyagent.c:49
 msgid "FD"
 msgstr "DP"
 
-#: ../src/programs/pkttyagent.c:52
+#: ../src/programs/pkttyagent.c:53
 msgid "Register the agent for the specified process"
 msgstr "Rejestruje agenta dla podanego procesu"
 
-#: ../src/programs/pkttyagent.c:53
+#: ../src/programs/pkttyagent.c:54
 msgid "PID[,START_TIME]"
 msgstr "PID[,CZAS_STARTOWY]"
 
-#: ../src/programs/pkttyagent.c:57
-msgid "Register the agent owner of BUS_NAME"
-msgstr "Rejestruje właściciela agenta NAZWY_MAGISTRALI"
+#: ../src/programs/pkttyagent.c:58
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Rejestruje agenta dla właściciela NAZWY_MAGISTRALI"
 
-#: ../src/programs/pkttyagent.c:57
+#: ../src/programs/pkttyagent.c:58
 msgid "BUS_NAME"
 msgstr "NAZWA_MAGISTRALI"
 
-#: ../src/programs/pkttyagent.c:127
+#: ../src/programs/pkttyagent.c:129
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: nieprawidłowe określenie procesu „%s”\n"
