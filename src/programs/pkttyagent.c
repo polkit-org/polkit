@@ -160,7 +160,8 @@ main (int argc, char *argv[])
   authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
   if (authority == NULL)
     {
-      g_printerr ("Error getting authority: %s (%s, %d)\n",
+      g_printerr ("Authorization not available. Check if polkit service is running or see debug message for more information.\n");
+      g_debug ("Error getting authority: %s (%s, %d)\n",
                   error->message, g_quark_to_string (error->domain), error->code);
       g_error_free (error);
       ret = 127;
