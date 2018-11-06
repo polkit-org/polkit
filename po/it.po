@@ -1,0 +1,212 @@
+# Italian translation for polkit.
+# Copyright (C) 2018 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Milo Casagrande <milo@milo.name>, 2018.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit master\n"
+"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
+"POT-Creation-Date: 2018-09-11 03:25+0000\n"
+"PO-Revision-Date: 2018-09-11 11:51+0200\n"
+"Language-Team: Italian <gnome-it-list@gnome.org>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Last-Translator: Milo Casagrande <milo@milo.name>\n"
+"X-Generator: Poedit 2.1.1\n"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:1
+msgid "Run a program as another user"
+msgstr "Lancia un programma come un altro utente"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:2
+msgid "Authentication is required to run a program as another user"
+msgstr ""
+"È richiesto autenticarsi per lanciare un programma come un altro utente"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+msgid "Run the polkit example program Frobnicate"
+msgstr "Lancia il programma di esempio Frobnicate"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"È richiesto autenticarsi per lanciare il programma di esempio Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+
+#: ../src/programs/pkaction.c:101
+msgid "Only output information about ACTION"
+msgstr "Stampa informazioni solo riguardo all'AZIONE"
+
+#: ../src/programs/pkaction.c:101
+msgid "ACTION"
+msgstr "AZIONE"
+
+#: ../src/programs/pkaction.c:105
+msgid "Output detailed action information"
+msgstr "Stampa informazioni dettagliate dell'azione"
+
+#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
+msgid "Show version"
+msgstr "Mostra la versione"
+
+#: ../src/programs/pkaction.c:132
+msgid "[--action-id ACTION]"
+msgstr "[--action-id AZIONE]"
+
+#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:83
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Segnalare problemi a: %s\n"
+"Sito web di %s: <%s>"
+
+#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
+#: ../src/programs/pkttyagent.c:97
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: argomento «%s» non atteso\n"
+
+#: ../src/programs/pkcheck.c:36
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Uso:\n"
+"  pkcheck [OPZIONE...]\n"
+"\n"
+"Opzioni d'aiuto:\n"
+"  -h, --help                         Mostra opzioni di aiuto\n"
+"\n"
+"Opzioni dell'applicazione:\n"
+"  -a, --action-id=AZIONE             Controlla l'autorizzazione per "
+"eseguire\n"
+"                                     AZIONE\n"
+"  -u, --allow-user-interaction       Interagisce con l'utente, se "
+"necessario\n"
+"  -d, --details=CHIAVE VALORE        Aggiunge (CHIAVE, VALORE) alle "
+"informazioni\n"
+"                                     riguardo all'azione\n"
+"  --enable-internal-agent            Usa un agente di autenticazione "
+"interna,\n"
+"                                     se necessario\n"
+"  --list-temp                        Elenca autorizzazione temporane per la\n"
+"                                     sessione corrente\n"
+"  -p, --process=PID[,START_TIME,UID] Controlla l'autorizzazione del "
+"processo\n"
+"                                     specificato\n"
+"  --revoke-temp                      Revoca tutte le autorizzazione "
+"temporane\n"
+"                                     per la sessione corrente\n"
+"  -s, --system-bus-name=NOME_BUS     Controlla l'autorizzazione per il\n"
+"                                     proprietario di NOME_BUS\n"
+"  --version                          Mostra la versione\n"
+"\n"
+"Segnalare problemi a: %s\n"
+"Sito web di %s: <%s>\n"
+
+#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
+#: ../src/programs/pkcheck.c:438
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: atteso un argomento dopo «%s»\n"
+
+#: ../src/programs/pkcheck.c:416
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: valore «%s» di --process non valido\n"
+
+#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: attesi due argomenti dopo «--detail»\n"
+
+#: ../src/programs/pkcheck.c:523
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: oggetto non specificato\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: ../src/programs/pkexec.c:790
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr "È richiesto autenticarsi per lanciare «$(program)» come super utente"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: ../src/programs/pkexec.c:800
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgstr ""
+"È richiesto autenticarsi per lanciare «$(program)» come l'utente $(user."
+"display)"
+
+#: ../src/programs/pkttyagent.c:45
+msgid "Don't replace existing agent if any"
+msgstr "Non sostituisce l'agente esistente"
+
+#: ../src/programs/pkttyagent.c:49
+msgid "Close FD when the agent is registered"
+msgstr "Chiude il FD quando l'agente viene registrato"
+
+#: ../src/programs/pkttyagent.c:49
+msgid "FD"
+msgstr "FD"
+
+#: ../src/programs/pkttyagent.c:53
+msgid "Register the agent for the specified process"
+msgstr "Registra l'agente per il processo specificato"
+
+#: ../src/programs/pkttyagent.c:54
+msgid "PID[,START_TIME]"
+msgstr "PID[,TEMPO_INIZIO]"
+
+#: ../src/programs/pkttyagent.c:58
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Registra l'agente per il proprietario di NOME_BUS"
+
+#: ../src/programs/pkttyagent.c:58
+msgid "BUS_NAME"
+msgstr "NOME_BUS"
+
+#: ../src/programs/pkttyagent.c:129
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: indicatore di processo «%s» non valido\n"
