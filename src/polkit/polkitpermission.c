@@ -137,10 +137,13 @@ polkit_permission_finalize (GObject *object)
   g_free (permission->tmp_authz_id);
   g_object_unref (permission->subject);
 
-  g_signal_handlers_disconnect_by_func (permission->authority,
-                                        on_authority_changed,
-                                        permission);
-  g_object_unref (permission->authority);
+  if (permission->authority != NULL)
+    {
+      g_signal_handlers_disconnect_by_func (permission->authority,
+                                            on_authority_changed,
+                                            permission);
+      g_object_unref (permission->authority);
+    }
 
   if (G_OBJECT_CLASS (polkit_permission_parent_class)->finalize != NULL)
     G_OBJECT_CLASS (polkit_permission_parent_class)->finalize (object);
