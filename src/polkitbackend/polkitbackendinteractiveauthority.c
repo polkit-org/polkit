@@ -935,7 +935,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
     }
 
   /* Not anyone is allowed to check that process XYZ is allowed to do ABC.
-   * We only allow this if, and only if,
+   * We allow this if, and only if,
    *
    *  - processes may check for another process owned by the *same* user but not
    *    if details are passed (otherwise you'd be able to spoof the dialog);
@@ -947,7 +947,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
    *
    *  - if the action_id has the "org.freedesktop.policykit.owner" annotation
    *    then any uid referenced by that annotation is also allowed to check
-   *    to check anything and pass any details
+   *    anything and pass any details
    */
   if (!user_of_subject_matches
       || !polkit_identity_equal (user_of_caller, user_of_subject)
