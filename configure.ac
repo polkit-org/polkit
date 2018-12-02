@@ -201,7 +201,7 @@ fi
 
 AS_IF([test "x$cross_compiling" != "xyes" ], [
   AS_IF([test "$have_libsystemd" = "yes"], [
-    AS_IF([test ! -d /sys/fs/cgroup/systemd/ ], [
+    AS_IF([test ! -d /sys/fs/cgroup/systemd/ -a ! -d /sys/fs/cgroup/init.scope ], [
       AS_IF([test "$enable_libsystemd_login" = "yes"], [
         AC_MSG_WARN([libsystemd requested but system does not appear to be using systemd])
       ], [
