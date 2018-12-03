@@ -159,9 +159,14 @@ polkit_unix_process_set_property (GObject      *object,
       polkit_unix_process_set_pid (unix_process, g_value_get_int (value));
       break;
 
-    case PROP_UID:
-      polkit_unix_process_set_uid (unix_process, g_value_get_int (value));
+    case PROP_UID: {
+      gint val;
+
+      val = g_value_get_int (value);
+      g_return_if_fail (val != -1);
+      polkit_unix_process_set_uid (unix_process, val);
       break;
+    }
 
     case PROP_START_TIME:
       polkit_unix_process_set_start_time (unix_process, g_value_get_uint64 (value));
@@ -239,7 +244,7 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
                                    g_param_spec_int ("uid",
                                                      "User ID",
                                                      "The UNIX user ID",
-                                                     -1,
+                                                     G_MININT,
                                                      G_MAXINT,
                                                      -1,
                                                      G_PARAM_CONSTRUCT |
@@ -303,7 +308,6 @@ polkit_unix_process_set_uid (PolkitUnixProcess *process,
                              gint               uid)
 {
   g_return_if_fail (POLKIT_IS_UNIX_PROCESS (process));
-  g_return_if_fail (uid >= -1);
   process->uid = uid;
 }
 
