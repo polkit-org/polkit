@@ -330,6 +330,78 @@ static const RulesTestCase rules_test_cases[] = {
     NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
   },
+
+  {
+    /* highuid1 is not a member of group 'users', see test/data/etc/group */
+    "group_membership_with_non_member(highuid22)",
+    "net.company.group.only_group_users",
+    "unix-user:highuid2",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+  },
+
+  {
+    /* highuid2 is not a member of group 'users', see test/data/etc/group */
+    "group_membership_with_non_member(highuid21)",
+    "net.company.group.only_group_users",
+    "unix-user:highuid2",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+  },
+
+  {
+    /* highuid1 is not a member of group 'users', see test/data/etc/group */
+    "group_membership_with_non_member(highuid24)",
+    "net.company.group.only_group_users",
+    "unix-user:2147483648",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+  },
+
+  {
+    /* highuid2 is not a member of group 'users', see test/data/etc/group */
+    "group_membership_with_non_member(highuid23)",
+    "net.company.group.only_group_users",
+    "unix-user:4000000000",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+  },
+
+  {
+    /* john is authorized to do this, see 10-testing.rules */
+    "john_action",
+    "net.company.john_action",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+  },
+
+  {
+    /* only john is authorized to do this, see 10-testing.rules */
+    "jane_action",
+    "net.company.john_action",
+    "unix-user:jane",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+  },
+
+  {
+    /* highuid2 is authorized to do this, see 10-testing.rules */
+    "highuid2_action",
+    "net.company.highuid2_action",
+    "unix-user:highuid2",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+  },
+
+  {
+    /* only highuid2 is authorized to do this, see 10-testing.rules */
+    "highuid1_action",
+    "net.company.highuid2_action",
+    "unix-user:highuid1",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+  },
 };
 
 /* ---------------------------------------------------------------------------------------------------- */

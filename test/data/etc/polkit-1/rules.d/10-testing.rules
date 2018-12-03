@@ -53,6 +53,27 @@ polkit.addRule(function(action, subject) {
     }
 });
 
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.john_action") {
+        if (subject.user == "john") {
+            return polkit.Result.YES;
+        } else {
+            return polkit.Result.NO;
+        }
+    }
+});
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.highuid2_action") {
+        if (subject.user == "highuid2") {
+            return polkit.Result.YES;
+        } else {
+            return polkit.Result.NO;
+        }
+    }
+});
+
+
 // ---------------------------------------------------------------------
 // variables
 
