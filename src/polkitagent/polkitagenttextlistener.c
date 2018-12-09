@@ -62,6 +62,17 @@ struct _PolkitAgentTextListener
   GCancellable *cancellable;
 
   FILE *tty;
+
+  gboolean use_color;
+  gboolean use_alternate_buffer;
+  guint delay;
+};
+
+enum {
+  PROP_ZERO,
+  PROP_USE_COLOR,
+  PROP_USE_ALTERNATE_BUFFER,
+  PROP_DELAY
 };
 
 typedef struct
@@ -92,6 +103,9 @@ G_DEFINE_TYPE_WITH_CODE (PolkitAgentTextListener, polkit_agent_text_listener, PO
 static void
 polkit_agent_text_listener_init (PolkitAgentTextListener *listener)
 {
+  listener->use_color = TRUE;
+  listener->use_alternate_buffer = FALSE;
+  listener->delay = 1;
 }
 
 static void
@@ -110,6 +124,56 @@ polkit_agent_text_listener_finalize (GObject *object)
 }
 
 static void
+polkit_agent_text_listener_set_property (GObject      *object,
+                                         guint         prop_id,
+                                         const GValue *value,
+                                         GParamSpec   *pspec)
+{
+  PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (object);
+
+  switch (prop_id)
+    {
+    case PROP_USE_COLOR:
+      listener->use_color = g_value_get_boolean (value);
+      break;
+    case PROP_USE_ALTERNATE_BUFFER:
+      listener->use_alternate_buffer = g_value_get_boolean (value);
+      break;
+    case PROP_DELAY:
+      listener->delay = g_value_get_uint (value);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
+polkit_agent_text_listener_get_property (GObject    *object,
+                                         guint       prop_id,
+                                         GValue     *value,
+                                         GParamSpec *pspec)
+{
+  PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (object);
+
+  switch (prop_id)
+    {
+    case PROP_USE_COLOR:
+      g_value_set_boolean (value, listener->use_color);
+      break;
+    case PROP_USE_ALTERNATE_BUFFER:
+      g_value_set_boolean (value, listener->use_alternate_buffer);
+      break;
+    case PROP_DELAY:
+      g_value_set_uint (value, listener->delay);
+      break;
+    default:
+      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+      break;
+    }
+}
+
+static void
 polkit_agent_text_listener_class_init (PolkitAgentTextListenerClass *klass)
 {
   GObjectClass *gobject_class;
@@ -117,10 +181,30 @@ polkit_agent_text_listener_class_init (PolkitAgentTextListenerClass *klass)
 
   gobject_class = G_OBJECT_CLASS (klass);
   gobject_class->finalize = polkit_agent_text_listener_finalize;
+  gobject_class->get_property = polkit_agent_text_listener_get_property;
+  gobject_class->set_property = polkit_agent_text_listener_set_property;
 
   listener_class = POLKIT_AGENT_LISTENER_CLASS (klass);
   listener_class->initiate_authentication        = polkit_agent_text_listener_initiate_authentication;
   listener_class->initiate_authentication_finish = polkit_agent_text_listener_initiate_authentication_finish;
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_USE_COLOR,
+                                   g_param_spec_boolean ("use-color", "", "",
+                                                         TRUE,
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_USE_ALTERNATE_BUFFER,
+                                   g_param_spec_boolean ("use-alternate-buffer", "", "",
+                                                         FALSE,
+                                                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+  g_object_class_install_property (gobject_class,
+                                   PROP_DELAY,
+                                   g_param_spec_uint ("delay", "", "",
+                                                      0, G_MAXUINT, 1,
+                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 }
 
 /**
@@ -204,12 +288,19 @@ on_completed (PolkitAgentSession *session,
 {
   PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (user_data);
 
-  fprintf (listener->tty, "\x1B[1;31m");
+  if (listener->use_color)
+    fprintf (listener->tty, "\x1B[1;31m");
   if (gained_authorization)
     fprintf (listener->tty, "==== AUTHENTICATION COMPLETE ====\n");
   else
     fprintf (listener->tty, "==== AUTHENTICATION FAILED ====\n");
-  fprintf (listener->tty, "\x1B[0m");
+  if (listener->use_color)
+    fprintf (listener->tty, "\x1B[0m");
+  if (listener->use_alternate_buffer)
+    {
+      sleep (listener->delay);
+      fprintf (listener->tty, "\x1B[?1049l");
+    }
   fflush (listener->tty);
 
   g_simple_async_result_complete_in_idle (listener->simple);
@@ -471,11 +562,15 @@ polkit_agent_text_listener_initiate_authentication (PolkitAgentListener  *_liste
 
   g_assert (g_list_length (identities) >= 1);
 
-  fprintf (listener->tty, "\x1B[1;31m");
+  if (listener->use_alternate_buffer)
+    fprintf (listener->tty, "\x1B[?1049h");
+  if (listener->use_color)
+    fprintf (listener->tty, "\x1B[1;31m");
   fprintf (listener->tty,
            "==== AUTHENTICATING FOR %s ====\n",
            action_id);
-  fprintf (listener->tty, "\x1B[0m");
+  if (listener->use_color)
+    fprintf (listener->tty, "\x1B[0m");
   fprintf (listener->tty,
            "%s\n",
            message);
@@ -486,9 +581,11 @@ polkit_agent_text_listener_initiate_authentication (PolkitAgentListener  *_liste
       identity = choose_identity (listener, identities);
       if (identity == NULL)
         {
-          fprintf (listener->tty, "\x1B[1;31m");
+          if (listener->use_color)
+            fprintf (listener->tty, "\x1B[1;31m");
           fprintf (listener->tty, "==== AUTHENTICATION CANCELED ====\n");
-          fprintf (listener->tty, "\x1B[0m");
+          if (listener->use_color)
+            fprintf (listener->tty, "\x1B[0m");
           fflush (listener->tty);
           g_simple_async_result_set_error (simple,
                                            POLKIT_ERROR,
