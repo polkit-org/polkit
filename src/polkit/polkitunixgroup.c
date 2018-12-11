@@ -71,7 +71,7 @@ G_DEFINE_TYPE_WITH_CODE (PolkitUnixGroup, polkit_unix_group, G_TYPE_OBJECT,
 static void
 polkit_unix_group_init (PolkitUnixGroup *unix_group)
 {
-  unix_group->gid = -1; /* (git_t) -1 is not a valid GID under Linux */
+  unix_group->gid = -1; /* (gid_t) -1 is not a valid GID under Linux */
 }
 
 static void
