@@ -3046,6 +3046,36 @@ temporary_authorization_store_free (TemporaryAuthorizationStore *store)
   g_free (store);
 }
 
+/* XXX: for now, prefer to store the process; see
+ * https://bugs.freedesktop.org/show_bug.cgi?id=23867
+ */
+static PolkitSubject *
+convert_temporary_authorization_subject (PolkitSubject *subject)
+{
+  PolkitSubject *ret;
+  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    {
+      GError *error = NULL;
+      ret = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
+                                                     NULL,
+                                                     &error);
+      if (ret == NULL)
+        {
+          g_printerr ("Error getting process for system bus name `%s': %s\n",
+                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
+                      error->message);
+          g_error_free (error);
+          return g_object_ref (subject);
+        }
+      else
+        return ret;
+    }
+  else
+    {
+      return g_object_ref (subject);
+    }
+}
+
 /* See the comment at the top of polkitunixprocess.c */
 static gboolean
 subject_equal_for_authz (PolkitSubject *a,
@@ -3095,27 +3125,7 @@ temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *st
   g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
   g_return_val_if_fail (action_id != NULL, FALSE);
 
-  /* XXX: for now, prefer to store the process */
-  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
-    {
-      GError *error;
-      error = NULL;
-      subject_to_use = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
-                                                                NULL,
-                                                                &error);
-      if (subject_to_use == NULL)
-        {
-          g_printerr ("Error getting process for system bus name `%s': %s\n",
-                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
-                      error->message);
-          g_error_free (error);
-          subject_to_use = g_object_ref (subject);
-        }
-    }
-  else
-    {
-      subject_to_use = g_object_ref (subject);
-    }
+  subject_to_use = convert_temporary_authorization_subject (subject);
 
   ret = FALSE;
 
@@ -3256,27 +3266,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   g_return_val_if_fail (action_id != NULL, NULL);
   g_return_val_if_fail (!temporary_authorization_store_has_authorization (store, subject, action_id, NULL), NULL);
 
-  /* XXX: for now, prefer to store the process */
-  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
-    {
-      GError *error;
-      error = NULL;
-      subject_to_use = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject),
-                                                                NULL,
-                                                                &error);
-      if (subject_to_use == NULL)
-        {
-          g_printerr ("Error getting process for system bus name `%s': %s\n",
-                      polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (subject)),
-                      error->message);
-          g_error_free (error);
-          subject_to_use = g_object_ref (subject);
-        }
-    }
-  else
-    {
-      subject_to_use = g_object_ref (subject);
-    }
+  subject_to_use = convert_temporary_authorization_subject (subject);
 
   /* TODO: right now the time the temporary authorization is kept is hard-coded - we
    *       could make it a propery on the PolkitBackendInteractiveAuthority class (so
