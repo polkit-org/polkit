@@ -99,6 +99,8 @@ polkit_subject_hash (PolkitSubject *subject)
  * @b: A #PolkitSubject.
  *
  * Checks if @a and @b are equal, ie. represent the same subject.
+ * However, avoid calling polkit_subject_equal() to compare two processes;
+ * for more information see the `PolkitUnixProcess` documentation.
  *
  * This function can be used in e.g. g_hash_table_new().
  *
