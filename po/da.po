@@ -1,17 +1,17 @@
 # Danish translations for PolicyKit.
 # Copyright (C) 2009 Red Hat, Inc.
-# This file is distributed under the same license as the PolicyKit package.
+# This file is distributed under the same license as the polkit package.
 # David Zeuthen <davidz@redhat.com>, 2009.
+# scootergrisen, 2019.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: DeviceKit-disks\n"
-"Report-Msgid-Bugs-To: \n"
+"Project-Id-Version: polkit\n"
+"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
 "POT-Creation-Date: 2011-03-03 13:03-0500\n"
-"PO-Revision-Date: 2011-03-03 13:05-0500\n"
-"Last-Translator: David Zeuthen <davidz@redhat.com>\n"
-"Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
+"PO-Revision-Date: 2019-02-04 21:06+0200\n"
+"Last-Translator: scootergrisen\n"
+"Language-Team: Danish\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -19,47 +19,186 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:1
-msgid "Authentication is required to configure lock down policy"
-msgstr "Autorisering er påkrævet for at konfigurer lock down"
+msgid "Run a program as another user"
+msgstr "Kør et program som en anden bruger"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:2
 msgid "Authentication is required to run a program as another user"
-msgstr "Autorisering er påkrævet for at afvikle et program som en anden bruger"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:3
-msgid "Configure lock down for an action"
-msgstr "Konfigurer lock down for en action"
-
-#: ../actions/org.freedesktop.policykit.policy.in.h:4
-msgid "Run programs as another user"
-msgstr "Kør et program som en anden bruger"
+msgstr "Der kræves autentifikation for at køre et program som en anden bruger"
 
 #: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
-msgid ""
-"Authentication is required to run the PolicyKit example program Frobnicate "
-"(user=$(user), program=$(program), command_line=$(command_line))"
-msgstr ""
-"Autorisering er påkrævet for at afvikle PolicyKit eksemplet Frobnicate (user="
-"$(user), program=$(program), command_line=$(command_line))"
+msgid "Run the polkit example program Frobnicate"
+msgstr "Kør polkits Frobnicate-eksempelprogram"
 
 #: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
-msgid "Run the PolicyKit example program Frobnicate"
-msgstr "Kør PolicyKit eksemplet Frobnicate"
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"Der kræves autentifikation for at køre polkits Frobnicate-eksempelprogram "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+
+#: ../src/programs/pkaction.c:101
+msgid "Only output information about ACTION"
+msgstr "Output kun information om HANDLING"
+
+#: ../src/programs/pkaction.c:101
+msgid "ACTION"
+msgstr "HANDLING"
+
+#: ../src/programs/pkaction.c:105
+msgid "Output detailed action information"
+msgstr "Output detaljeret handlingsinformation"
+
+#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
+msgid "Show version"
+msgstr "Vis version"
+
+#: ../src/programs/pkaction.c:132
+msgid "[--action-id ACTION]"
+msgstr "[--action-id HANDLING]"
+
+#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:83
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Rapportér fejl til: %s\n"
+"%s hjemmeside: <%s>"
+
+#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
+#: ../src/programs/pkttyagent.c:97
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: Uventet argument `%s'\n"
+
+#: ../src/programs/pkcheck.c:36
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Anvendelse:\n"
+"  pkcheck [TILVALG...]\n"
+"\n"
+"Tilvalg for hjælp:\n"
+"  -h, --help                         Vis tilvalg for hjælp\n"
+"\n"
+"Tilvalg for program:\n"
+"  -a, --action-id=HANDLING           Tjek autorisation til at udføre "
+"HANDLING\n"
+"  -u, --allow-user-interaction       Interager med brugeren, hvis det er "
+"nødvendigt\n"
+"  -d, --details=NØGLE VÆRDI          Tilføj (NØGLE, VÆRDI) til information "
+"om handlingen\n"
+"  --enable-internal-agent            Brug en intern autentifikationsagent, "
+"hvis det er nødvendigt\n"
+"  --list-temp                        Oplist midlertidige autorisationer for "
+"den nuværende session\n"
+"  -p, --process=PID[,STARTTID,UID]   Tjek autorisation af den angive proces\n"
+"  --revoke-temp                      Tilbagekald alle midlertidige "
+"autorisationer for den nuværende session\n"
+"  -s, --system-bus-name=BUSNAVN      Tjek autorisation for ejeren af BUSNAVN\n"
+"  --version                          Vis version\n"
+"\n"
+"Rapportér fejl til: %s\n"
+"%s hjemmeside: <%s>\n"
+
+#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
+#: ../src/programs/pkcheck.c:438
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: Argument ventet efter `%s'\n"
+
+#: ../src/programs/pkcheck.c:416
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: Ugyldig --process-værdi `%s'\n"
+
+#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: To argumenter ventet after `--detail'\n"
+
+#: ../src/programs/pkcheck.c:523
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: Emne ikke angivet\n"
 
 #. Translators: message shown when trying to run a program as root. Do not
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:666
+#: ../src/programs/pkexec.c:790
 msgid "Authentication is needed to run `$(program)' as the super user"
-msgstr "Autorisering er påkrævet for at afvikle `$(program)' som super bruger"
+msgstr "Der kræves autentifikation for at køre `$(program)' som superbrugeren"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:676
-msgid "Authentication is needed to run `$(program)' as user $(user)"
+#: ../src/programs/pkexec.c:800
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
 msgstr ""
-"Autorisering er påkrævet for at afvikle `$(program)' som bruger $(user)"
+"Der kræves autentifikation for at køre `$(program)' som brugeren "
+"$(user.display)"
+
+#: ../src/programs/pkttyagent.c:45
+msgid "Don't replace existing agent if any"
+msgstr "Erstat ikke den eksisterende agent hvis der er en"
+
+#: ../src/programs/pkttyagent.c:49
+msgid "Close FD when the agent is registered"
+msgstr "Luk FD når agenten registreres"
+
+#: ../src/programs/pkttyagent.c:49
+msgid "FD"
+msgstr "FD"
+
+#: ../src/programs/pkttyagent.c:53
+msgid "Register the agent for the specified process"
+msgstr "Registrer agenten for den angivne proces"
+
+#: ../src/programs/pkttyagent.c:54
+msgid "PID[,START_TIME]"
+msgstr "PID[,STARTTID]"
+
+#: ../src/programs/pkttyagent.c:58
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Registrer agenten for ejeren af BUSNAVN"
+
+#: ../src/programs/pkttyagent.c:58
+msgid "BUS_NAME"
+msgstr "BUSNAVN"
+
+#: ../src/programs/pkttyagent.c:129
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: Ugyldig procesangiver `%s'\n"
