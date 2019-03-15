@@ -25,10 +25,43 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <termios.h>
 #include <glib/gi18n.h>
 #include <polkit/polkit.h>
 #define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE
 #include <polkitagent/polkitagent.h>
+
+
+static volatile sig_atomic_t tty_flags_saved;
+struct termios ts;
+FILE *tty = NULL;
+struct sigaction savesigterm, savesigint, savesigtstp;
+
+
+static void tty_handler(int signal)
+{
+  switch (signal)
+  {
+    case SIGTERM:
+      sigaction (SIGTERM, &savesigterm, NULL);
+      break;
+    case SIGINT:
+      sigaction (SIGINT, &savesigint, NULL);
+      break;
+    case SIGTSTP:
+      sigaction (SIGTSTP, &savesigtstp, NULL);
+      break;
+  }
+
+  if (tty_flags_saved)
+  {
+    tcsetattr (fileno (tty), TCSAFLUSH, &ts);
+  }
+
+  kill(getpid(), signal);
+}
+
 
 int
 main (int argc, char *argv[])
@@ -74,6 +107,8 @@ main (int argc, char *argv[])
   GMainLoop *loop = NULL;
   guint ret = 126;
   GVariantBuilder builder;
+  struct sigaction sa;
+  const char *tty_name = NULL;
 
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
@@ -211,6 +246,27 @@ main (int argc, char *argv[])
           goto out;
         }
     }
+
+/* Bash leaves tty echo disabled if SIGINT/SIGTERM comes to polkitagenttextlistener.c::on_request(),
+   but due to threading the handlers cannot take care of the signal there.
+   Though if controlling terminal cannot be found, the world won't stop spinning.
+*/
+  tty_name = ctermid(NULL);
+  if (tty_name != NULL)
+  {
+    tty = fopen(tty_name, "r+");
+  }
+
+  if (tty != NULL && !tcgetattr (fileno (tty), &ts))
+  {
+	  tty_flags_saved = TRUE;
+  }
+
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = &tty_handler;
+  sigaction (SIGTERM, &sa, &savesigterm);
+  sigaction (SIGINT, &sa, &savesigint);
+  sigaction (SIGTSTP, &sa, &savesigtstp);
 
   loop = g_main_loop_new (NULL, FALSE);
   g_main_loop_run (loop);
