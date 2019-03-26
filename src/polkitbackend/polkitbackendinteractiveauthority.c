@@ -3043,9 +3043,7 @@ subject_equal_for_authz (PolkitSubject *a,
    * pid reuse by including the UID.
    */
   if (POLKIT_IS_UNIX_PROCESS (a) && POLKIT_IS_UNIX_PROCESS (b)) {
-    PolkitUnixProcess *ap = (PolkitUnixProcess*)a;
     int uid_a = polkit_unix_process_get_uid ((PolkitUnixProcess*)a);
-    PolkitUnixProcess *bp = (PolkitUnixProcess*)b;
     int uid_b = polkit_unix_process_get_uid ((PolkitUnixProcess*)b);
 
     if (uid_a != -1 && uid_b != -1)
@@ -3057,7 +3055,7 @@ subject_equal_for_authz (PolkitSubject *a,
         else
           {
             g_printerr ("denying slowfork; pid %d uid %d != %d!\n",
-                        polkit_unix_process_get_pid (ap),
+                        polkit_unix_process_get_pid ((PolkitUnixProcess*)a),
                         uid_a, uid_b);
             return FALSE;
           }
