@@ -701,7 +701,7 @@ RegisterAuthenticationAgent (IN  <link linkend="eggdbus-struct-Subject">Subject<
                              IN  String   object_path)
     </programlisting>
     <para>
-<para>Register an authentication agent.</para><para>Note that this should be called by same effective UID which will be passed to <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2">AuthenticationAgentResponse2()</link>.</para>
+<para>Register an authentication agent.</para>
     </para>
 <variablelist role="params">
   <varlistentry>

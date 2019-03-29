@@ -283,7 +283,7 @@
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <method name="RegisterAuthenticationAgent">
-      <annotation name="org.gtk.EggDBus.DocString" value="<para>Register an authentication agent.</para><para>Note that this should be called by the same effective UID which will be passed to org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2().</para>"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="<para>Register an authentication agent.</para>"/>
 
       <arg name="subject" direction="in" type="(sa{sv})">
         <annotation name="org.gtk.EggDBus.Type" value="Subject"/>
