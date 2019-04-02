@@ -1284,13 +1284,15 @@ js_polkit_log (JSContext  *cx,
                unsigned    argc,
                JS::Value      *vp)
 {
-  /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
+  PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   bool ret = false;
   char *s;
 
   JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
-  s = JS_EncodeString (cx, args[0].toString ());
+  JS::RootedString jsstr (authority->priv->cx);
+  jsstr = args[0].toString ();
+  s = JS_EncodeStringToUTF8 (cx, jsstr);
   JS_ReportWarningUTF8 (cx, "%s", s);
   JS_free (cx, s);
 
@@ -1367,7 +1369,7 @@ js_polkit_spawn (JSContext  *cx,
                  unsigned    js_argc,
                  JS::Value      *vp)
 {
-  /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
+  PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   bool ret = false;
   JS::RootedObject array_object(cx);
   gchar *standard_output = NULL;
@@ -1407,7 +1409,9 @@ js_polkit_spawn (JSContext  *cx,
           JS_ReportErrorUTF8 (cx, "Element %d is not a string", n);
           goto out;
 	}
-      s = JS_EncodeString (cx, elem_val.toString());
+      JS::RootedString jsstr (authority->priv->cx);
+      jsstr = elem_val.toString();
+      s = JS_EncodeStringToUTF8 (cx, jsstr);
       argv[n] = g_strdup (s);
       JS_free (cx, s);
     }
@@ -1490,7 +1494,7 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
                                unsigned    argc,
                                JS::Value      *vp)
 {
-  /* PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx)); */
+  PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   bool ret = false;
   char *user;
   char *netgroup;
@@ -1498,8 +1502,12 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
 
   JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
-  user = JS_EncodeString (cx, args[0].toString());
-  netgroup = JS_EncodeString (cx, args[1].toString());
+  JS::RootedString usrstr (authority->priv->cx);
+  usrstr = args[0].toString();
+  user = JS_EncodeStringToUTF8 (cx, usrstr);
+  JS::RootedString netgstr (authority->priv->cx);
+  netgstr = args[1].toString();
+  netgroup = JS_EncodeStringToUTF8 (cx, netgstr);
 
   if (innetgr (netgroup,
                NULL,  /* host */
