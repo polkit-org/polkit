@@ -5,39 +5,50 @@ polkit is a toolkit for defining and handling authorizations.  It is
 used for allowing unprivileged processes to speak to privileged
 processes.
 
+
+DOCUMENTATION
+=============
+
+Latest documentation, reference manual and API description of polkit can be found at
+
+ https://www.freedesktop.org/software/polkit/docs/latest/
+
+
 RELEASES
 ========
 
-Releases of polkit are available in compressed tarballs from
+Older releases of polkit (until 0.115) are available in compressed tarballs from
 
  http://www.freedesktop.org/software/polkit/releases/
+
+Latest releases are available in compressed tarballs from
+
+ https://gitlab.freedesktop.org/polkit/polkit/releases
+
 
 To verify the authenticity of the compressed tarball, use this command
 
  $ gpg --verify polkit-$(VERSION).tar.gz.sign polkit-$(VERSION).tar.gz
- gpg: Signature made Sat 10 Mar 2012 03:00:30 PM EST using RSA key ID 3418A891
- gpg: Good signature from "David Zeuthen <zeuthen@gmail.com>"
- gpg:                 aka "[jpeg image of size 5237]"
+ gpg: Signature made Tue 23 Apr 2019 04:19:29 PM CEST using RSA key ID FFDCE258
+ gpg: Good signature from "Jan Rybar (Red Hat) <jrybar@redhat.com>"
+
+Public key available here
+ http://keys.gnupg.net/pks/lookup?op=get&search=0x8CEB3030FFDCE258
+
 
 BUGS and DEVELOPMENT
 ====================
 
-Please report non-security bugs via the freedesktop.org bugzilla at
+Please report non-security bugs via the freedesktop.org GitLab at
 
- https://bugs.freedesktop.org/enter_bug.cgi?product=PolicyKit
+ https://gitlab.freedesktop.org/polkit/polkit/issues
+
 
 SECURITY ISSUES
 ===============
 
-polkit uses the same mechanism for reporting security issues as dbus,
-the most recent copy of instructions can be found in the DBus git
-repository:
+Please report any security issues not yet known to public
+by creating new issue and checking the "This issue is confidential" checkbox.
 
-http://cgit.freedesktop.org/dbus/dbus/tree/HACKING
+ https://gitlab.freedesktop.org/polkit/polkit/issues
 
-A copy of the instructions as of 2015-06-04:
-
-If you find a security vulnerability that is not known to the public,
-please report it privately to dbus-security@lists.freedesktop.org
-or by reporting a freedesktop.org bug that is marked as
-restricted to the "D-BUS security group".
