@@ -9,24 +9,54 @@ some security review. Use at your own risk.
 This is polkit 0.116.
 
 Highlights:
- TODO
+ Fix of CVE-2018-19788, high UIDs caused overflow in polkit;
+ Fix of CVE-2019-6133, kernel vulnerability (Slowfork) allowed local privilege escalation.
 
 Build requirements
 
  glib, gobject, gio    >= 2.32
- mozjs-52
+ mozjs-60
  gobject-introspection >= 0.6.2 (optional)
  pam (optional)
  ConsoleKit OR systemd
 
-Changes since polkit 0.114:
+Changes since polkit 0.115:
 
- TODO
+ Kyle Walker:
+    Leaking zombie child processes
 
-Thanks to our contributors.
+ Jan Rybar:
+    Possible resource leak found by static analyzer
+    Output messages tuneup
+    Sanity fixes
+    pkttyagent tty echo disabled on SIGINT
 
-Colin Walters and Miloslav Trmač,
-$DATE
+ Ray Strode:
+    HACKING: add link to Code of Conduct
+
+ Philip Withnall:
+    polkitbackend: comment typos fix
+
+ Zbigniew Jędrzejewski-Szmek:
+    configure.ac: fix detection of systemd with cgroups v2
+    CVE-2018-19788 High UIDs overflow fix
+
+ Colin Walters:
+    CVE-2019-6133 Slowfork vulnerability fix
+
+ Matthew Leeds:
+    Allow unset process-uid
+
+ Emmanuele Bassi
+    Port the JS authority to mozjs-60
+
+ Göran Uddeborg:
+    Use JS_EncodeStringToUTF8
+
+Many thanks to all contributors!
+
+Jan Rybar et al.,
+April 25, 2019
 
 ---------------
 polkit 0.115
