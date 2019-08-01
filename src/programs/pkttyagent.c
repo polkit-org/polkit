@@ -264,6 +264,12 @@ main (int argc, char *argv[])
 
   memset (&sa, 0, sizeof (sa));
   sa.sa_handler = &tty_handler;
+/* If tty_handler() resets terminal while pkttyagent is run in background job,
+   the process gets stopped by SIGTTOU. This impacts systemctl, hence it must
+   be blocked for a while and then the process gets killed anyway.
+ */
+  sigemptyset(&sa.sa_mask);
+  sigaddset(&sa.sa_mask, SIGTTOU);
   sigaction (SIGTERM, &sa, &savesigterm);
   sigaction (SIGINT, &sa, &savesigint);
   sigaction (SIGTSTP, &sa, &savesigtstp);
