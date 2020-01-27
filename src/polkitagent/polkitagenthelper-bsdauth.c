@@ -45,7 +45,7 @@ main (int argc, char *argv[])
 {
   struct passwd *pw;
   const char *user_to_auth;
-  char *cookie;
+  char *cookie = NULL;
 
   /* clear the entire environment to avoid attacks with
      libraries honoring environment variables */
