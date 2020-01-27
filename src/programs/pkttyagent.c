@@ -56,7 +56,7 @@ static void tty_handler(int signal)
 
   if (tty_flags_saved)
   {
-    tcsetattr (fileno (tty), TCSAFLUSH, &ts);
+    tcsetattr (fileno (tty), TCSADRAIN, &ts);
   }
 
   kill(getpid(), signal);
