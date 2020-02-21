@@ -101,7 +101,7 @@ test_get_admin_identities_for_action_id (const gchar         *action_id,
       g_assert_cmpstr (expected_admins[n], ==, s);
       g_free (s);
     }
-  g_assert (expected_admins[n] == NULL);
+  g_assert_cmpstr (expected_admins[n], ==, NULL);
 
   g_list_free_full (admin_identities, g_object_unref);
   g_clear_object (&details);
