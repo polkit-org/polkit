@@ -33,16 +33,16 @@ TEST_PROGS =
 
 # ----------------------------------------------------------------------------------------------------
 
-TEST_PROGS += polkitbackendjsauthoritytest
 polkitbackendjsauthoritytest_SOURCES = test-polkitbackendjsauthority.c
 # force C++ link via dummy C++ file, (see GNU automake manual section 8.3.5)
 nodist_EXTRA_polkitbackendjsauthoritytest_SOURCES = dummy-force-cpp-link.cxx
 
+TESTS_ENVIRONMENT = TOP_BUILD_DIR="$(top_builddir)"
+TEST_PROGS += polkitbackendjsauthoritytest-wrapper.py
 
 # ----------------------------------------------------------------------------------------------------
 
-noinst_PROGRAMS = $(TEST_PROGS)
-check_PROGRAMS = $(TEST_PROGS)
+noinst_PROGRAMS = polkitbackendjsauthoritytest
 TESTS = $(TEST_PROGS)
 
 clean-local :

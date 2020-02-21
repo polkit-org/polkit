@@ -1153,8 +1153,9 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       if (identity == NULL)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        "Identity `%s' is not valid, ignoring",
-                                        identity_str);
+                                        "Identity `%s' is not valid, ignoring (%s)",
+                                        identity_str, error->message);
+          g_clear_error (&error);
         }
       else
         {

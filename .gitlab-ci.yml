@@ -1,0 +1,44 @@
+image: fedora:rawhide
+
+variables:
+  DEPENDENCIES: gcc
+                gcc-c++
+                libtool
+                autoconf
+                automake
+                gtk-doc
+                intltool
+                gobject-introspection-devel
+                make
+                libxslt
+                pkgconfig(gio-2.0)
+                pkgconfig(mozjs-60)
+                expat-devel
+                pkgconfig(libsystemd)
+                pkgconfig(systemd)
+                pam-devel
+                python3-dbusmock
+
+build_stable:
+  before_script:
+    - dnf upgrade -y --nogpgcheck fedora-release fedora-repos*
+    - dnf update -y && dnf install -y $DEPENDENCIES
+  script:
+    - mkdir _build
+    - cd _build
+    - CPPFLAGS='-D_FORTIFY_SOURCE=2' ../autogen.sh
+      --disable-dependency-tracking
+      --enable-ansi
+      --enable-man-pages
+      --enable-test
+      --enable-libsystemd-login=yes
+      --enable-libelogind=no
+    - make
+    - make check
+    - make install
+  artifacts:
+    name: 'test logs'
+    when: 'always'
+    paths:
+      - '_build/test/*/*.log'
+
