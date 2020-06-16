@@ -5,6 +5,7 @@ AC_INIT([polkit], [0.116], [http://lists.freedesktop.org/mailman/listinfo/polkit
 AM_INIT_AUTOMAKE([])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_MACRO_DIR([buildutil])
+m4_include([buildutil/ax_cxx_compile_stdcxx.m4])
 AM_MAINTAINER_MODE
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -33,7 +34,7 @@ AC_PROG_LN_S
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
 AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX_11()
+AX_CXX_COMPILE_STDCXX([14], [], [mandatory])
 
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
@@ -79,7 +80,7 @@ PKG_CHECK_MODULES(GLIB, [gmodule-2.0 gio-unix-2.0 >= 2.30.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(LIBJS, [mozjs-60])
+PKG_CHECK_MODULES(LIBJS, [mozjs-68])
 
 AC_SUBST(LIBJS_CFLAGS)
 AC_SUBST(LIBJS_CXXFLAGS)

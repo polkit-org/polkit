@@ -12,7 +12,7 @@ variables:
                 make
                 libxslt
                 pkgconfig(gio-2.0)
-                pkgconfig(mozjs-60)
+                pkgconfig(mozjs-68)
                 expat-devel
                 pkgconfig(libsystemd)
                 pkgconfig(systemd)

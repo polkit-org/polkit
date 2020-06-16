@@ -43,7 +43,12 @@
 #include <systemd/sd-login.h>
 #endif /* HAVE_LIBSYSTEMD */
 
+#include <js/CompilationAndEvaluation.h>
+#include <js/ContextOptions.h>
 #include <js/Initialization.h>
+#include <js/Realm.h>
+#include <js/SourceText.h>
+#include <js/Warnings.h>
 #include <jsapi.h>
 
 #include "initjs.h" /* init.js */
@@ -76,7 +81,7 @@ struct _PolkitBackendJsAuthorityPrivate
 
   JSContext *cx;
   JS::Heap<JSObject*> *js_global;
-  JSAutoCompartment *ac;
+  JSAutoRealm *ac;
   JS::Heap<JSObject*> *js_polkit;
 
   GThread *runaway_killer_thread;
@@ -298,14 +303,39 @@ load_scripts (PolkitBackendJsAuthority  *authority)
   for (l = files; l != NULL; l = l->next)
     {
       const gchar *filename = (gchar *)l->data;
-      JS::RootedScript script(authority->priv->cx);
-      JS::CompileOptions options(authority->priv->cx);
-      options.setUTF8(true);
-      if (!JS::Compile (authority->priv->cx, options, filename, &script))
+      GFile *file = g_file_new_for_path (filename);
+      char *contents;
+      gsize len;
+      if (!g_file_load_contents (file, NULL, &contents, &len, NULL, NULL))
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Error compiling script %s",
                                         filename);
+          g_object_unref (file);
+          continue;
+        }
+
+      g_object_unref (file);
+
+      JS::SourceText<mozilla::Utf8Unit> source;
+      if (!source.init (authority->priv->cx, contents, len,
+                        JS::SourceOwnership::Borrowed))
+        {
+          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        "Error compiling script %s",
+                                        filename);
+          g_free (contents);
+          continue;
+        }
+      JS::CompileOptions options(authority->priv->cx);
+      JS::RootedScript script(authority->priv->cx,
+                              JS::Compile (authority->priv->cx, options, source));
+      if (!script)
+        {
+          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        "Error compiling script %s",
+                                        filename);
+          g_free (contents);
           continue;
         }
 
@@ -318,11 +348,13 @@ load_scripts (PolkitBackendJsAuthority  *authority)
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Error executing script %s",
                                         filename);
+          g_free (contents);
           continue;
         }
 
       //g_print ("Successfully loaded and evaluated script `%s'\n", filename);
 
+      g_free (contents);
       num_scripts++;
     }
 
@@ -335,8 +367,6 @@ load_scripts (PolkitBackendJsAuthority  *authority)
 static void
 reload_scripts (PolkitBackendJsAuthority *authority)
 {
-  JS_BeginRequest (authority->priv->cx);
-
   JS::AutoValueArray<1> args(authority->priv->cx);
   JS::RootedValue rval(authority->priv->cx);
 
@@ -351,7 +381,7 @@ reload_scripts (PolkitBackendJsAuthority *authority)
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Error deleting old rules, not loading new ones");
-      goto out;
+      return;
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
@@ -362,8 +392,6 @@ reload_scripts (PolkitBackendJsAuthority *authority)
 
   /* Let applications know we have new rules... */
   g_signal_emit_by_name (authority, "changed");
- out:
-  JS_EndRequest (authority->priv->cx);
 }
 
 static void
@@ -446,7 +474,6 @@ static void
 polkit_backend_js_authority_constructed (GObject *object)
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (object);
-  gboolean entered_request = FALSE;
 
   authority->priv->cx = JS_NewContext (8L * 1024L * 1024L);
   if (authority->priv->cx == NULL)
@@ -462,11 +489,9 @@ polkit_backend_js_authority_constructed (GObject *object)
   JS::SetWarningReporter(authority->priv->cx, report_error);
   JS_SetContextPrivate (authority->priv->cx, authority);
 
-  JS_BeginRequest(authority->priv->cx);
-  entered_request = TRUE;
 
   {
-    JS::CompartmentOptions compart_opts;
+    JS::RealmOptions compart_opts;
 
     JS::RootedObject global(authority->priv->cx);
 
@@ -476,12 +501,12 @@ polkit_backend_js_authority_constructed (GObject *object)
     if (!global)
       goto fail;
 
-    authority->priv->ac = new JSAutoCompartment(authority->priv->cx,  global);
+    authority->priv->ac = new JSAutoRealm(authority->priv->cx, global);
 
     if (!authority->priv->ac)
       goto fail;
 
-    if (!JS_InitStandardClasses (authority->priv->cx, global))
+    if (!JS::InitRealmStandardClasses (authority->priv->cx))
       goto fail;
 
     JS::RootedObject polkit(authority->priv->cx);
@@ -503,13 +528,13 @@ polkit_backend_js_authority_constructed (GObject *object)
 
     JS::CompileOptions options(authority->priv->cx);
     JS::RootedValue rval(authority->priv->cx);
-    if (!JS::Evaluate (authority->priv->cx,
-                       options,
-                       init_js, strlen (init_js), /* init.js */
-                       &rval)) /* rval */
-      {
-        goto fail;
-      }
+    JS::SourceText<mozilla::Utf8Unit> source;
+    if (!source.init (authority->priv->cx, init_js, strlen (init_js),
+                      JS::SourceOwnership::Borrowed))
+      goto fail;
+
+    if (!JS::Evaluate (authority->priv->cx, options, source, &rval))
+      goto fail;
 
     if (authority->priv->rules_dirs == NULL)
       {
@@ -529,16 +554,12 @@ polkit_backend_js_authority_constructed (GObject *object)
     setup_file_monitors (authority);
     load_scripts (authority);
   }
-  JS_EndRequest (authority->priv->cx);
-  entered_request = FALSE;
 
   G_OBJECT_CLASS (polkit_backend_js_authority_parent_class)->constructed (object);
 
   return;
 
  fail:
-  if (entered_request)
-    JS_EndRequest (authority->priv->cx);
   g_critical ("Error initializing JavaScript environment");
   g_assert_not_reached ();
 }
@@ -680,7 +701,7 @@ set_property_strv (PolkitBackendJsAuthority  *authority,
                    GPtrArray                 *value)
 {
   JS::RootedValue value_jsval(authority->priv->cx);
-  JS::AutoValueVector elems(authority->priv->cx);
+  JS::RootedValueVector elems(authority->priv->cx);
   guint n;
 
   if (!elems.resize(value->len))
@@ -755,10 +776,15 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Subject();";
-  if (!JS::Evaluate (authority->priv->cx,
-                     options,
-                     src, strlen (src),
-                     out_jsval))
+  JS::SourceText<mozilla::Utf8Unit> source;
+  if (!source.init (authority->priv->cx, src, strlen (src),
+                    JS::SourceOwnership::Borrowed))
+  {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
+      goto out;
+  }
+
+  if (!JS::Evaluate (authority->priv->cx, options, source, out_jsval))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
@@ -877,11 +903,15 @@ action_and_details_to_jsval (PolkitBackendJsAuthority  *authority,
   JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Action();";
+  JS::SourceText<mozilla::Utf8Unit> source;
+  if (!source.init (authority->priv->cx, src, strlen (src),
+                    JS::SourceOwnership::Borrowed))
+  {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
+      goto out;
+  }
 
-  if (!JS::Evaluate (authority->priv->cx,
-                     options,
-                     src, strlen (src),
-                     out_jsval))
+  if (!JS::Evaluate (authority->priv->cx, options, source, out_jsval))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Evaluating '%s' failed", src);
       goto out;
@@ -1089,10 +1119,8 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
   guint n;
   GError *error = NULL;
   JS::RootedString ret_jsstr (authority->priv->cx);
-  gchar *ret_str = NULL;
+  JS::UniqueChars ret_str;
   gchar **ret_strs = NULL;
-
-  JS_BeginRequest (authority->priv->cx);
 
   if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
@@ -1142,7 +1170,7 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
       goto out;
     }
 
-  ret_strs = g_strsplit (ret_str, ",", -1);
+  ret_strs = g_strsplit (ret_str.get(), ",", -1);
   for (n = 0; ret_strs != NULL && ret_strs[n] != NULL; n++)
     {
       const gchar *identity_str = ret_strs[n];
@@ -1166,14 +1194,11 @@ polkit_backend_js_authority_get_admin_auth_identities (PolkitBackendInteractiveA
 
  out:
   g_strfreev (ret_strs);
-  g_free (ret_str);
   /* fallback to root password auth */
   if (ret == NULL)
     ret = g_list_prepend (ret, polkit_unix_user_new (0));
 
   JS_MaybeGC (authority->priv->cx);
-
-  JS_EndRequest (authority->priv->cx);
 
   return ret;
 }
@@ -1197,10 +1222,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
   JS::RootedValue rval(authority->priv->cx);
   GError *error = NULL;
   JS::RootedString ret_jsstr (authority->priv->cx);
-  gchar *ret_str = NULL;
+  JS::UniqueChars ret_str;
   gboolean good = FALSE;
-
-  JS_BeginRequest (authority->priv->cx);
 
   if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
@@ -1257,12 +1280,12 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
       goto out;
     }
 
-  g_strstrip (ret_str);
-  if (!polkit_implicit_authorization_from_string (ret_str, &ret))
+  g_strstrip (ret_str.get());
+  if (!polkit_implicit_authorization_from_string (ret_str.get(), &ret))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     "Returned result `%s' is not valid",
-                                    ret_str);
+                                    ret_str.get());
       goto out;
     }
 
@@ -1271,11 +1294,8 @@ polkit_backend_js_authority_check_authorization_sync (PolkitBackendInteractiveAu
  out:
   if (!good)
     ret = POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED;
-  g_free (ret_str);
 
   JS_MaybeGC (authority->priv->cx);
-
-  JS_EndRequest (authority->priv->cx);
 
   return ret;
 }
@@ -1289,15 +1309,14 @@ js_polkit_log (JSContext  *cx,
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   bool ret = false;
-  char *s;
+  JS::UniqueChars s;
 
   JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
   JS::RootedString jsstr (authority->priv->cx);
   jsstr = args[0].toString ();
   s = JS_EncodeStringToUTF8 (cx, jsstr);
-  JS_ReportWarningUTF8 (cx, "%s", s);
-  JS_free (cx, s);
+  JS::WarnUTF8 (cx, "%s", s.get());
 
   ret = true;
 
@@ -1400,7 +1419,7 @@ js_polkit_spawn (JSContext  *cx,
   for (n = 0; n < array_len; n++)
     {
       JS::RootedValue elem_val(cx);
-      char *s;
+      JS::UniqueChars s;
 
       if (!JS_GetElement (cx, array_object, n, &elem_val))
         {
@@ -1415,8 +1434,7 @@ js_polkit_spawn (JSContext  *cx,
       JS::RootedString jsstr (authority->priv->cx);
       jsstr = elem_val.toString();
       s = JS_EncodeStringToUTF8 (cx, jsstr);
-      argv[n] = g_strdup (s);
-      JS_free (cx, s);
+      argv[n] = g_strdup (s.get());
     }
 
   context = g_main_context_new ();
@@ -1499,8 +1517,8 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   bool ret = false;
-  char *user;
-  char *netgroup;
+  JS::UniqueChars user;
+  JS::UniqueChars netgroup;
   bool is_in_netgroup = false;
 
   JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
@@ -1512,16 +1530,13 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
   netgstr = args[1].toString();
   netgroup = JS_EncodeStringToUTF8 (cx, netgstr);
 
-  if (innetgr (netgroup,
+  if (innetgr (netgroup.get(),
                NULL,  /* host */
-               user,
+               user.get(),
                NULL)) /* domain */
     {
       is_in_netgroup =  true;
     }
-
-  JS_free (cx, netgroup);
-  JS_free (cx, user);
 
   ret = true;
 
