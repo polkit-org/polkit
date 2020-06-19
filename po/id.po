@@ -6,17 +6,16 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit master\n"
-"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?"
-"product=PolicyKit&keywords=I18N+L10N&component=libpolkit\n"
-"POT-Creation-Date: 2016-07-10 02:28+0000\n"
-"PO-Revision-Date: 2016-07-10 17:27+0700\n"
+"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
+"POT-Creation-Date: 2020-03-22 03:56+0000\n"
+"PO-Revision-Date: 2020-03-31 20:21+0700\n"
+"Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <gnome-l10n-id@googlegroups.com>\n"
 "Language: id\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Lorenz Adam Damara <lorenzrenz@gmail.com>\n"
-"X-Generator: Poedit 1.8.7.1\n"
+"X-Generator: Poedit 2.3\n"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:1
 msgid "Run a program as another user"
@@ -52,15 +51,15 @@ msgstr "ACTION"
 msgid "Output detailed action information"
 msgstr "Informasi detil aksi keluaran"
 
-#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
+#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:95
 msgid "Show version"
 msgstr "Tampilkan versi"
 
-#: ../src/programs/pkaction.c:134
+#: ../src/programs/pkaction.c:132
 msgid "[--action-id ACTION]"
 msgstr "[--action-id ACTION]"
 
-#: ../src/programs/pkaction.c:135 ../src/programs/pkttyagent.c:85
+#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:118
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
@@ -69,8 +68,8 @@ msgstr ""
 "Laporkan kutu ke: %s\n"
 "halaman beranda %s: <%s>"
 
-#: ../src/programs/pkaction.c:149 ../src/programs/pkcheck.c:495
-#: ../src/programs/pkttyagent.c:99
+#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
+#: ../src/programs/pkttyagent.c:132
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: argumen yang tak terduga `%s'\n"
@@ -130,23 +129,23 @@ msgstr ""
 "Laporkan kutu ke: %s\n"
 "halaman beranda %s: <%s>\n"
 
-#: ../src/programs/pkcheck.c:395 ../src/programs/pkcheck.c:428
-#: ../src/programs/pkcheck.c:440
+#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
+#: ../src/programs/pkcheck.c:438
 #, c-format
 msgid "%s: Argument expected after `%s'\n"
 msgstr "%s: Argumen diharapkan setelah `%s'\n"
 
-#: ../src/programs/pkcheck.c:418
+#: ../src/programs/pkcheck.c:416
 #, c-format
 msgid "%s: Invalid --process value `%s'\n"
 msgstr "%s: kesalahan nilai --process `%s'\n"
 
-#: ../src/programs/pkcheck.c:455 ../src/programs/pkcheck.c:464
+#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
 #, c-format
 msgid "%s: Two arguments expected after `--detail'\n"
 msgstr "%s: Dua argumen diharapkan setelah `--detail'\n"
 
-#: ../src/programs/pkcheck.c:525
+#: ../src/programs/pkcheck.c:523
 #, c-format
 msgid "%s: Subject not specified\n"
 msgstr "%s: Subyek tidak dispesifikasikan\n"
@@ -155,7 +154,7 @@ msgstr "%s: Subyek tidak dispesifikasikan\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:797
+#: ../src/programs/pkexec.c:790
 msgid "Authentication is needed to run `$(program)' as the super user"
 msgstr ""
 "Otentikasi dibutuhkan untuk menjalankan `$(program)' sebagai super user"
@@ -165,41 +164,41 @@ msgstr ""
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:807
+#: ../src/programs/pkexec.c:800
 msgid "Authentication is needed to run `$(program)' as user $(user.display)"
 msgstr ""
 "Otentikasi dibutuhkan untuk menjalankan `$(program)' sebagai pengguna $(user."
 "display)"
 
-#: ../src/programs/pkttyagent.c:45
+#: ../src/programs/pkttyagent.c:78
 msgid "Don't replace existing agent if any"
 msgstr "Jangan ganti agen yang sudah ada"
 
-#: ../src/programs/pkttyagent.c:49
+#: ../src/programs/pkttyagent.c:82
 msgid "Close FD when the agent is registered"
 msgstr "Tutup FD ketika agen sudah terdaftar"
 
-#: ../src/programs/pkttyagent.c:49
+#: ../src/programs/pkttyagent.c:82
 msgid "FD"
 msgstr "FD"
 
-#: ../src/programs/pkttyagent.c:53
+#: ../src/programs/pkttyagent.c:86
 msgid "Register the agent for the specified process"
 msgstr "Daftarkan agen untuk proses yang spesifik"
 
-#: ../src/programs/pkttyagent.c:54
+#: ../src/programs/pkttyagent.c:87
 msgid "PID[,START_TIME]"
 msgstr "PID,[,START_TIME]"
 
-#: ../src/programs/pkttyagent.c:58
-msgid "Register the agent owner of BUS_NAME"
-msgstr "Daftarkan agen pemilik BUS_NAME"
+#: ../src/programs/pkttyagent.c:91
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Daftarkan agen bagi pemilik BUS_NAME"
 
-#: ../src/programs/pkttyagent.c:58
+#: ../src/programs/pkttyagent.c:91
 msgid "BUS_NAME"
 msgstr "BUS_NAME"
 
-#: ../src/programs/pkttyagent.c:131
+#: ../src/programs/pkttyagent.c:164
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: Kesalahan spesifikasi proses `%s'\n"
