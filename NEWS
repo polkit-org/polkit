@@ -1,4 +1,45 @@
 --------------
+polkit 0.117
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+This is polkit 0.117.
+
+Highlights:
+ Gitlab CI activation - all merge requests are tested before merged
+ New Norwegian translation, several other language updates
+
+Build requirements
+
+ glib, gobject, gio    >= 2.32
+ mozjs-68
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.116:
+
+ Bastien Nocera:
+    Activated Gitlab CI
+
+ Xi Ruoyao:
+    Updated dependency to mozjs68
+
+ Kalev Lember, Jan Rybar
+    Memory management fixes
+
+ Anders Jonsson, Karl Ove Hufthammer, Andika Triwidada, Yuri Chornoivan:
+    Language updates
+
+Many thanks to all contributors!
+
+Jan Rybar et al.,
+July 24, 2020
+
+--------------
 polkit 0.116
 --------------
 
