@@ -34,7 +34,7 @@ AC_PROG_LN_S
 AC_SYS_LARGEFILE
 AM_PROG_CC_C_O
 AC_PROG_CXX
-AX_CXX_COMPILE_STDCXX([14], [], [mandatory])
+AX_CXX_COMPILE_STDCXX([17], [], [mandatory])
 
 # Taken from dbus
 AC_ARG_ENABLE(ansi,             [  --enable-ansi           enable -ansi -pedantic gcc flags],enable_ansi=$enableval,enable_ansi=no)
@@ -80,7 +80,7 @@ PKG_CHECK_MODULES(GLIB, [gmodule-2.0 gio-unix-2.0 >= 2.30.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(LIBJS, [mozjs-68])
+PKG_CHECK_MODULES(LIBJS, [mozjs-78])
 
 AC_SUBST(LIBJS_CFLAGS)
 AC_SUBST(LIBJS_CXXFLAGS)
