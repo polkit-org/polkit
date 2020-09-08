@@ -1,4 +1,39 @@
 --------------
+polkit 0.118
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+This is polkit 0.118.
+
+Highlights:
+ move to mozjs78
+ tarball CI fix
+
+Build requirements
+
+ glib, gobject, gio    >= 2.32
+ mozjs-78
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.117:
+
+ Xi Ruoyao:
+    tarball fixup for distcheck
+
+ Valentin David:
+    updated dependency to mozjs78
+
+Many thanks to all contributors!
+
+Jan Rybar et al.,
+September 8, 2020
+
+--------------
 polkit 0.117
 --------------
 
