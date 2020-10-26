@@ -59,7 +59,10 @@ dist_polkit_action_DATA = org.freedesktop.policykit.examples.pkexec.policy
 
 DISTCLEANFILES = org.freedesktop.policykit.examples.pkexec.policy
 
-EXTRA_DIST = org.freedesktop.policykit.examples.pkexec.policy.in
+EXTRA_DIST =							\
+	org.freedesktop.policykit.examples.pkexec.policy.in	\
+	meson.build						\
+	$(NULL)
 
 # ----------------------------------------------------------------------------------------------------
 

@@ -28,13 +28,22 @@ class TestPolkitBackendJsAuthority(dbusmock.DBusTestCase):
     @classmethod
     def setUpClass(klass):
         klass.start_system_bus()
+        klass.mocklibc_path = None
 
-        klass.top_build_dir = '../../'
         if 'TOP_BUILD_DIR' in os.environ:
             klass.top_build_dir = os.environ['TOP_BUILD_DIR']
-        klass.mocklibc_path = klass.top_build_dir + '/test/mocklibc/bin/mocklibc'
-        assert(os.path.exists(klass.mocklibc_path))
+            klass.mocklibc_path = klass.top_build_dir  + '/subprojects/mocklibc-1.0/bin/mocklibc'
+
+        # suppose autotools over meson
+        if not os.path.exists(klass.mocklibc_path):
+            klass.top_build_dir = '../../'
+            klass.mocklibc_path = klass.top_build_dir + '/test/mocklibc/bin/mocklibc'
         print ('Top build dir: %s' % klass.top_build_dir)
+        print ('mocklibc path: %s' % klass.mocklibc_path)
+        assert(os.path.exists(klass.mocklibc_path))
+
+        # WORKAROUND - unzipped mocklibc does not preserve file permissions
+        os.chmod(klass.mocklibc_path, 0o755)
 
         klass.top_src_dir = os.path.dirname(os.path.realpath(__file__)) + '/../../'
         if 'TOP_SRC_DIR' in os.environ:
@@ -54,7 +63,13 @@ class TestPolkitBackendJsAuthority(dbusmock.DBusTestCase):
     def test_polkitbackendjsauthoritytest(self):
         # Add '; exit 0' at the end of the cmd line if launching fails and you
         # want to capture the error output
-        out = subprocess.check_output(self.mocklibc_path + ' ' + self.top_build_dir + '/test/polkitbackend/polkitbackendjsauthoritytest',
+        test_path = self.top_build_dir + '/test/polkitbackend/test-polkitbackendjsauthority'
+
+        if not os.path.exists(test_path):
+            print('\n %s... not found' % test_path)
+            test_path = self.top_build_dir + '/test/polkitbackend/polkitbackendjsauthoritytest'
+
+        out = subprocess.check_output(self.mocklibc_path + ' ' + test_path,
                                       stderr=subprocess.STDOUT,
                                       shell=True,
                                       universal_newlines=True)

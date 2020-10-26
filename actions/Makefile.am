@@ -13,6 +13,9 @@ clean-local :
 
 DISTCLEANFILES = org.freedesktop.policykit.policy
 
-EXTRA_DIST = org.freedesktop.policykit.policy.in
+EXTRA_DIST =					\
+	org.freedesktop.policykit.policy.in	\
+	meson.build				\
+	$(NULL)
 
 -include $(top_srcdir)/git.mk

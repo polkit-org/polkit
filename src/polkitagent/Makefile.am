@@ -150,7 +150,13 @@ install-data-hook:
 	-chown root $(DESTDIR)$(libprivdir)/polkit-agent-helper-1
 	-chmod 4755 $(DESTDIR)$(libprivdir)/polkit-agent-helper-1
 
-EXTRA_DIST = polkitagentmarshal.list polkitagentenumtypes.h.template polkitagentenumtypes.c.template
+EXTRA_DIST =				\
+	polkitagentmarshal.list		\
+	polkitagentenumtypes.h.template	\
+	polkitagentenumtypes.c.template	\
+	meson.build			\
+	$(NULL)
+
 CLEANFILES = $(gir_DATA) $(typelibs_DATA)
 
 dist-hook :

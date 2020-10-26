@@ -86,6 +86,8 @@ else
 CLEANFILES =
 endif
 
+EXTRA_DIST = meson.build
+
 CLEANFILES +=   *~				\
 		polkit-1-scan.*			\
 		polkit-1.args			\

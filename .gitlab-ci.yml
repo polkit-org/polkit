@@ -1,4 +1,4 @@
-image: fedora:rawhide
+image: fedora:latest
 
 variables:
   DEPENDENCIES: gcc
@@ -18,27 +18,34 @@ variables:
                 pkgconfig(systemd)
                 pam-devel
                 python3-dbusmock
+                meson
+                git
+                dbus-devel
 
 build_stable:
   before_script:
     - dnf upgrade -y --nogpgcheck fedora-release fedora-repos*
     - dnf update -y && dnf install -y $DEPENDENCIES
+    - getent group polkitd >/dev/null || groupadd -r polkitd
+    - getent passwd polkitd >/dev/null || useradd -r -g polkitd -d / -s /sbin/nologin -c "User for polkitd" polkitd
+
   script:
-    - mkdir _build
-    - cd _build
-    - CPPFLAGS='-D_FORTIFY_SOURCE=2' ../autogen.sh
-      --disable-dependency-tracking
-      --enable-ansi
-      --enable-man-pages
-      --enable-test
-      --enable-libsystemd-login=yes
-      --enable-libelogind=no
-    - make
-    - make check
-    - make install
+    - meson setup 
+      -D authfw=pam
+      -D examples=true
+      -D gtk_doc=true
+      -D introspection=true
+      -D man=true
+      -D session_tracking=libsystemd-login
+      -D tests=true
+      -D cpp_args="-D_FORTIFY_SOURCE=2"
+      builddir
+    - meson compile -C builddir
+    - meson test    -C builddir
+    - meson install -C builddir
   artifacts:
     name: 'test logs'
     when: 'always'
     paths:
-      - '_build/test/*/*.log'
+      - 'builddir/meson-logs/*.txt'
 

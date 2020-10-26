@@ -99,6 +99,7 @@ CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST =								\
 	init.js								\
 	toarray.pl							\
+	meson.build							\
 	$(rules_DATA)							\
 	$(NULL)
 
