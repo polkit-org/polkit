@@ -24,6 +24,7 @@ EXTRA_DIST = 				\
 	pkcheck.xml			\
 	pkaction.xml			\
 	pkttyagent.xml			\
+	meson.build			\
 	$(NULL)
 
 clean-local:

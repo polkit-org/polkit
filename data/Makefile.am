@@ -57,6 +57,7 @@ CLEANFILES = $(BUILT_SOURCES)
 EXTRA_DIST = 							\
 	org.freedesktop.PolicyKit1.Authority.xml 		\
 	org.freedesktop.PolicyKit1.AuthenticationAgent.xml 	\
+	meson.build						\
 	$(service_in_files) 					\
 	$(dbusconf_in_files) 					\
 	$(systemdservice_in_files) 				\

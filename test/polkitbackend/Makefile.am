@@ -48,6 +48,8 @@ TEST_PROGS += polkitbackendjsauthoritytest-wrapper.py
 noinst_PROGRAMS = polkitbackendjsauthoritytest
 TESTS = $(TEST_PROGS)
 
+EXTRA_DIST = meson.build
+
 clean-local :
 	rm -f *~
 

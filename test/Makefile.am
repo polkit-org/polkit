@@ -6,7 +6,10 @@ noinst_LTLIBRARIES = libpolkit-test-helper.la
 libpolkit_test_helper_la_SOURCES = polkittesthelper.c polkittesthelper.h
 libpolkit_test_helper_la_LIBADD = $(GLIB_LIBS)
 
-EXTRA_DIST = data
+EXTRA_DIST =		\
+	data		\
+	meson.build	\
+	$(NULL)
 
 # Use mocklibc to override NSS services for tests
 export MOCK_PASSWD   := $(abs_top_srcdir)/test/data/etc/passwd

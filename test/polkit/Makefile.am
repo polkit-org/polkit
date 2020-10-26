@@ -48,6 +48,8 @@ polkitidentitytest_SOURCES = polkitidentitytest.c
 check_PROGRAMS = $(TEST_PROGS)
 TESTS = $(TEST_PROGS)
 
+EXTRA_DIST = meson.build
+
 clean-local :
 	rm -f *~
 

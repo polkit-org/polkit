@@ -5,6 +5,11 @@ if BUILD_EXAMPLES
 SUBDIRS += examples
 endif
 
+EXTRA_DIST =		\
+	meson.build	\
+	symbol.map	\
+	$(NULL)
+
 clean-local :
 	rm -f *~
 

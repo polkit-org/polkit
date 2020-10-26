@@ -129,7 +129,12 @@ include $(INTROSPECTION_MAKEFILE)
 
 endif # HAVE_INTROSPECTION
 
-EXTRA_DIST = polkitenumtypes.h.template polkitenumtypes.c.template
+EXTRA_DIST =				\
+	polkitenumtypes.h.template	\
+	polkitenumtypes.c.template	\
+	meson.build			\
+	$(NULL)
+
 CLEANFILES = $(gir_DATA) $(typelibs_DATA)
 
 dist-hook :

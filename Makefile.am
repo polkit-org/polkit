@@ -10,6 +10,10 @@ NULL =
 
 EXTRA_DIST = 			\
 	HACKING 		\
+	meson.build		\
+	meson_options.txt	\
+	meson_post_install.py	\
+	po/meson.build		\
 	$(NULL)
 
 # xsltproc barfs on 'make distcheck'; disable for now
