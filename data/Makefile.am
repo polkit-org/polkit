@@ -36,11 +36,6 @@ pkgconfig_DATA = polkit-gobject-1.pc polkit-agent-1.pc
 
 # ----------------------------------------------------------------------------------------------------
 
-itsdir = $(datadir)/gettext/its
-dist_its_DATA = polkit.loc polkit.its
-
-# ----------------------------------------------------------------------------------------------------
-
 systemdservice_in_files = polkit.service.in
 
 if HAVE_SYSTEMD

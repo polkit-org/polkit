@@ -1,10 +1,11 @@
 policy = 'org.freedesktop.policykit.examples.pkexec.policy'
 
-custom_target(
+i18n.merge_file(
   policy,
   input: policy + '.in',
   output: '@BASENAME@',
-  command: intltool_xml_cmd,
+  po_dir: po_dir,
+  data_dirs: its_dir,
   install: true,
   install_dir: pk_pkgactiondir,
 )

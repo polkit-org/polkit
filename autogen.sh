@@ -69,6 +69,13 @@ test -n "$NO_AUTOMAKE" || (autoreconf --version) < /dev/null > /dev/null 2>&1 ||
   DIE=1
 }
 
+# if no automake, don't bother testing for autopoint
+test -n "$NO_AUTOMAKE" || (autopoint --version) < /dev/null > /dev/null 2>&1 || {
+  echo
+  echo "**Error**: You must have autopoint installed."
+  echo "You can get autopoint from ..."
+  DIE=1
+}
 
 if test "$DIE" -eq 1; then
   exit 1
@@ -103,12 +110,11 @@ esac
 	echo "Running autoheader..."
 	autoheader
       fi
+      autopoint --force
       echo "Running automake --gnu -Wno-portability $am_opt ..."
       automake --add-missing --gnu -Wno-portability $am_opt
       echo "Running autoconf ..."
       autoconf
-
-intltoolize --copy --force --automake                  || exit 1
 
 cd "$olddir"
 

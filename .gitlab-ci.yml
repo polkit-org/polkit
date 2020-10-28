@@ -6,8 +6,9 @@ variables:
                 libtool
                 autoconf
                 automake
+                gettext
+                gettext-devel
                 gtk-doc
-                intltool
                 gobject-introspection-devel
                 make
                 libxslt

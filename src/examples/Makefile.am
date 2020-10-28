@@ -49,10 +49,11 @@ pk_example_frobnicate_LDADD =  	                      		\
 	$(NULL)
 
 polkit_actiondir = $(datadir)/polkit-1/actions
+polkit_action_in_files = org.freedesktop.policykit.examples.pkexec.policy.in
+dist_polkit_action_DATA = $(polkit_action_in_files:.policy.in=.policy)
 
-dist_polkit_action_DATA = org.freedesktop.policykit.examples.pkexec.policy
-
-@INTLTOOL_POLICY_RULE@
+org.freedesktop.policykit.examples.pkexec.policy: org.freedesktop.policykit.examples.pkexec.policy.in
+	$(AM_V_GEN) GETTEXTDATADIR=$(top_srcdir)/gettext $(MSGFMT) --xml --template $< -d $(top_srcdir)/po -o $@
 
 #check:
 #       $(top_builddir)/tools/polkit-policy-file-validate-1 $(top_srcdir)/policy/$(dist_polkit_action_DATA)

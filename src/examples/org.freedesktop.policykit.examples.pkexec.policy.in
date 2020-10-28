@@ -7,8 +7,8 @@
   <vendor_url>http://www.freedesktop.org/wiki/Software/polkit/</vendor_url>
 
   <action id="org.freedesktop.policykit.example.pkexec.run-frobnicate">
-    <_description>Run the polkit example program Frobnicate</_description>
-    <_message>Authentication is required to run the polkit example program Frobnicate (user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), program=$(program), command_line=$(command_line))</_message>
+    <description>Run the polkit example program Frobnicate</description>
+    <message>Authentication is required to run the polkit example program Frobnicate (user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), program=$(program), command_line=$(command_line))</message>
     <icon_name>audio-x-generic</icon_name> <!-- just an example -->
     <defaults>
       <allow_any>no</allow_any>

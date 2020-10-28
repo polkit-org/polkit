@@ -519,11 +519,13 @@ AM_CONDITIONAL(BUILD_EXAMPLES, test "x$enable_examples" = "xyes")
 # Internationalization
 # ********************
 
-IT_PROG_INTLTOOL([0.40.0])
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.19.8])
+AM_GNU_GETTEXT_REQUIRE_VERSION([0.19.8])
+
 GETTEXT_PACKAGE=polkit-1
-AC_SUBST([GETTEXT_PACKAGE])
-AM_GLIB_GNU_GETTEXT
-AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[gettext domain])
+AC_SUBST(GETTEXT_PACKAGE)
+AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE,"$GETTEXT_PACKAGE",[gettext domain])
 
 AC_ARG_VAR([SUID_CFLAGS],
            [CFLAGS used for binaries which are usually with the suid bit])
@@ -537,6 +539,8 @@ data/Makefile
 data/polkit-1
 data/polkit-gobject-1.pc
 data/polkit-agent-1.pc
+gettext/Makefile
+gettext/its/Makefile
 src/Makefile
 src/polkit/Makefile
 src/polkitbackend/Makefile

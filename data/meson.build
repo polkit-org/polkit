@@ -26,16 +26,6 @@ if enable_pam
   )
 endif
 
-its_data = files(
-  'polkit.its',
-  'polkit.loc',
-)
-
-install_data(
-  its_data,
-  install_dir: pk_datadir / 'gettext/its',
-)
-
 if enable_logind
   configure_file(
     input: 'polkit.service.in',
