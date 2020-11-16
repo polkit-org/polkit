@@ -4,6 +4,7 @@ project(
   license: 'LGPL2+',
   default_options: [
     'buildtype=debugoptimized',
+    'prefix=/usr',
     'cpp_std=c++17',
   ],
   meson_version: '>= 0.50.0',
