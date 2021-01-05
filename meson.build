@@ -129,8 +129,8 @@ assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t fin
 mozjs_dep = dependency('mozjs-78')
 
 dbus_dep = dependency('dbus-1')
-dbus_sysconfdir = dbus_dep.get_pkgconfig_variable('sysconfdir', define_variable: ['sysconfdir', pk_prefix / pk_sysconfdir])
-dbus_policydir = dbus_sysconfdir / 'dbus-1/system.d'
+dbus_confdir = dbus_dep.get_pkgconfig_variable('datadir', define_variable: ['datadir', pk_prefix / pk_datadir])   #changed from sysconfdir with respect to commit#8eada3836465838
+dbus_policydir = dbus_confdir / 'dbus-1/system.d'
 dbus_system_bus_services_dir = dbus_dep.get_pkgconfig_variable('system_bus_services_dir', define_variable: ['datadir', pk_prefix / pk_datadir])
 
 # check OS
