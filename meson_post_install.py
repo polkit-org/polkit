@@ -2,7 +2,7 @@
 
 import getpass
 import os
-import subprocess
+import pwd
 import sys
 
 prefix = os.environ['MESON_INSTALL_DESTDIR_PREFIX']
@@ -12,9 +12,9 @@ pkgdatadir = os.path.join(prefix, sys.argv[2])
 pkglibdir = os.path.join(prefix, sys.argv[3])
 pkgsysconfdir = os.path.join(prefix, sys.argv[4])
 
-polkitd_user = sys.argv[5]
+polkitd_uid = pwd.getpwnam(sys.argv[5]).pw_uid
 
-subprocess.check_call(['chmod', '4755', os.path.join(bindir, 'pkexec')])
+os.chmod(os.path.join(bindir, 'pkexec'), 0o4775)
 
 dst_dirs = [
     os.path.join(pkgsysconfdir, 'rules.d'),
@@ -23,15 +23,14 @@ dst_dirs = [
 
 for dst in dst_dirs:
     if not os.path.exists(dst):
-        os.makedirs(dst)
-        subprocess.check_call(['chmod', '700', dst])
+        os.makedirs(dst, mode=0o700)
         if getpass.getuser() == "root":
-            subprocess.check_call(['chown', polkitd_user, dst])
+            os.chown(dst, polkitd_uid, -1)
 
 # polkit-agent-helper-1 need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root
 # and/or other users.
 dst = os.path.join(pkglibdir, 'polkit-agent-helper-1')
-subprocess.check_call(['chmod', '4755', dst])
+os.chmod(dst, 0o4755)
 if getpass.getuser() == "root":
-    subprocess.check_call(['chown', 'root', dst])
+    os.chown(dst, 0, -1)
