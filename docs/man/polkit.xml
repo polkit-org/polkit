@@ -6,7 +6,7 @@
 <refentry id="polkit.8" xmlns:xi="http://www.w3.org/2003/XInclude">
   <refentryinfo>
     <title>polkit</title>
-    <date>January 2009</date>
+    <date>February 2021</date>
     <productname>polkit</productname>
   </refentryinfo>
 
@@ -119,14 +119,14 @@ System Context         |                        |
       library wraps the polkit D-Bus API and is usable from any C/C++
       program as well as higher-level languages supporting <ulink
       url="https://live.gnome.org/GObjectIntrospection">GObjectIntrospection</ulink>
-      such as Javascript and Python.  A mechanism can also use the
+      such as JavaScript and Python.  A mechanism can also use the
       D-Bus API or the <link
       linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
       command to check authorizations. The
       <literal>libpolkit-agent-1</literal> library provides an
       abstraction of the native authentication system, e.g.
       <citerefentry><refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      and also facilities registration and communication with the
+      and also facilities for registration and communication with the
       polkit D-Bus service.
     </para>
 
@@ -143,7 +143,7 @@ System Context         |                        |
       An authentication agent is used to make the user of a session
       prove that the user of the session really is the user (by
       authenticating as the user) or an administrative user (by
-      authenticating as a administrator). In order to integrate well
+      authenticating as an administrator). In order to integrate well
       with the rest of the user session (e.g. match the look and
       feel), authentication agents are meant to be provided by the
       user session that the user uses. For example, an authentication
@@ -173,7 +173,7 @@ System Context         |                        |
     </mediaobject>
     <para>
       If the system is configured without a <emphasis>root</emphasis>
-      account it may prompt for a specific user designated as the
+      account, it may prompt for a specific user designated as the
       administrative user:
     </para>
     <mediaobject id="polkit-authentication-agent-example-wheel">
@@ -200,9 +200,9 @@ System Context         |                        |
     </mediaobject>
     <para>
       Applications that do not run under a desktop environment (for
-      example, if launched from a
+      example, if launched from an
       <citerefentry><refentrytitle>ssh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-      login) may not have have an authentication agent associated with
+      login) may not have an authentication agent associated with
       them. Such applications may use the <link
       linkend="PolkitAgentTextListener-struct">PolkitAgentTextListener</link>
       type or the
@@ -213,7 +213,7 @@ System Context         |                        |
 
   <refsect1 id="polkit-declaring-actions"><title>DECLARING ACTIONS</title>
     <para>
-      A mechanism need to declare a set of <emphasis>actions</emphasis> in
+      A mechanism needs to declare a set of <emphasis>actions</emphasis> in
       order to use polkit. Actions correspond to operations that
       clients can request the mechanism to carry out and are defined
       in XML files that the mechanism installs into the <filename
@@ -223,7 +223,7 @@ System Context         |                        |
 
     <para>
       polkit actions are namespaced and can only contain the
-      characters <literal>[A-Z][a-z][0-9].-</literal> e.g. ASCII,
+      characters "<literal>[A-Z][a-z][0-9].-</literal>", e.g. ASCII,
       digits, period and hyphen. Each XML file can contain more than
       one action but all actions need to be in the same namespace and
       the file needs to be named after the namespace and have the
@@ -280,8 +280,8 @@ System Context         |                        |
           <para>
             Declares an action. The action name is specified using the
             <literal>id</literal> attribute and can only contain the
-            characters <literal>[A-Z][a-z][0-9].-</literal>
-            e.g. ASCII, digits, period and hyphen.
+            characters "<literal>[A-Z][a-z][0-9].-</literal>
+            ", e.g. ASCII, digits, period and hyphen.
           </para>
         </listitem>
       </varlistentry>
@@ -385,7 +385,7 @@ System Context         |                        |
         <listitem>
           <para>
             Used for annotating an action with a key/value pair. The
-            key is specified using the the <literal>key</literal>
+            key is specified using the <literal>key</literal>
             attribute and the value is specified using the
             <literal>value</literal> attribute. This element may
             appear zero or more times. See below for known
@@ -443,7 +443,7 @@ System Context         |                        |
       </para>
       <para>
         The <literal>org.freedesktop.policykit.imply</literal>
-        annotation (its value is a string containing a space separated
+        annotation (its value is a string containing a space-separated
         list of action identifiers) can be used to define
         <emphasis>meta actions</emphasis>. The way it works is that if
         a subject is authorized for an action with this annotation,
@@ -456,10 +456,10 @@ System Context         |                        |
         The <literal>org.freedesktop.policykit.owner</literal>
         annotation can be used to define a set of users who can query
         whether a client is authorized to perform this action.  If
-        this annotation is not specified then only root can query
+        this annotation is not specified, then only root can query
         whether a client running as a different user is authorized for
         an action.  The value of this annotation is a string
-        containing a space separated list of <link
+        containing a space-separated list of <link
         linkend="PolkitIdentity-struct">PolkitIdentity</link> entries,
         for example <literal>"unix-user:42
         unix-user:colord"</literal>.  A typical use of this annotation
@@ -604,15 +604,15 @@ polkit.Result = {
         <constant>"*_KEEP"</constant> constants (if similar functionality
         is required, the authorization rule can easily implement
         temporary authorizations using the
-        <ulink url="https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Date"><type>Date</type></ulink>
+        <ulink url="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date"><type>Date</type></ulink>
         type for timestamps).
       </para>
 
       <para>
         The <function>addAdminRule()</function> method is used for
-        adding a function may be called whenever administrator
+        adding a function that may be called whenever administrator
         authentication is required. The function is used to specify what
-        identies may be used for administrator authentication for the
+        identities may be used for administrator authentication for the
         authorization check identified by <parameter>action</parameter>
         and <parameter>subject</parameter>. Functions added are called in
         the order they have been added until one of the functions
@@ -630,13 +630,13 @@ polkit.Result = {
         There is no guarantee that a function registered with
         <function>addRule()</function> or
         <function>addAdminRule()</function> is ever called - for example
-        an early rules file could register a function that always return
+        an early rules file could register a function that always returns
         a value, hence ensuring that functions added later are never
         called.
       </para>
 
       <para>
-        If user-provided code takes a long time to execute an exception
+        If user-provided code takes a long time to execute, an exception
         will be thrown which normally results in the function being
         terminated (the current limit is 15 seconds). This is used to
         catch runaway scripts.
@@ -648,7 +648,7 @@ polkit.Result = {
         <parameter>argv</parameter> and waits for it to terminate. If an
         error occurs or the helper doesn't exit normally with exit code
         0, an exception is thrown. If the helper does not exit within 10
-        seconds it is killed. Otherwise, the program's
+        seconds, it is killed. Otherwise, the program's
         <emphasis>standard output</emphasis> is returned as a string.
         The <function>spawn()</function> method should be used sparingly
         as helpers may take a very long or indeterminate amount of time
@@ -728,7 +728,7 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
         polkit variables passed from the mechanism. For example, the
         <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
         mechanism sets the variable <parameter>program</parameter>
-        which can be obtained in Javascript using the expression
+        which can be obtained in JavaScript using the expression
         <literal>action.lookup("program")</literal>. If there is
         no value for the given <parameter>key</parameter>,
         then <constant>undefined</constant> is returned.
