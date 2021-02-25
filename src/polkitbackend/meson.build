@@ -29,6 +29,7 @@ c_flags = [
   '-D_POLKIT_BACKEND_COMPILATION',
   '-DPACKAGE_DATA_DIR="@0@"'.format(pk_prefix / pk_datadir),
   '-DPACKAGE_SYSCONF_DIR="@0@"'.format(pk_prefix / pk_sysconfdir),
+  '-DPACKAGE_PREFIX="@0@"'.format(pk_prefix),
 ]
 
 if enable_logind

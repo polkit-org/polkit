@@ -40,12 +40,13 @@ static PolkitBackendJsAuthority *get_authority (void);
 static PolkitBackendJsAuthority *
 get_authority (void)
 {
-  gchar *rules_dirs[3] = {0};
+  gchar *rules_dirs[4] = {0};
   PolkitBackendJsAuthority *authority;
 
   rules_dirs[0] = polkit_test_get_data_path ("etc/polkit-1/rules.d");
-  rules_dirs[1] = polkit_test_get_data_path ("usr/share/polkit-1/rules.d");
-  rules_dirs[2] = NULL;
+  rules_dirs[1] = polkit_test_get_data_path ("usr/local/share/polkit-1/rules.d");
+  rules_dirs[2] = polkit_test_get_data_path ("usr/share/polkit-1/rules.d");
+  rules_dirs[3] = NULL;
   g_assert (rules_dirs[0] != NULL);
   g_assert (rules_dirs[1] != NULL);
 
@@ -182,7 +183,7 @@ static const RulesTestCase rules_test_cases[] = {
     NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED,
   },
-  /* actions without explict rules aren't automatically NOT_AUTHORIZED */
+  /* actions without explicit rules aren't automatically NOT_AUTHORIZED */
   {
     "basic2",
     "net.company.productA.action2",
@@ -191,18 +192,20 @@ static const RulesTestCase rules_test_cases[] = {
     POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN,
   },
 
-  /* Ordering tests ... we have four rules files, check they are
+  /* Ordering tests ... we have six rules files, check they are
    * evaluated in order by checking the detail set by each rules
    *
-   * -       etc/polkit-1/rules.d/10-testing.rules (file a)
-   * - usr/share/polkit-1/rules.d/10-testing.rules (file b)
-   * -       etc/polkit-1/rules.d/15-testing.rules (file c)
-   * - usr/share/polkit-1/rules.d/20-testing.rules (file d)
+   * -             etc/polkit-1/rules.d/10-testing.rules (file a)
+   * - usr/local/share/polkit-1/rules.d/10-testing.rules (file b)
+   * -       usr/share/polkit-1/rules.d/10-testing.rules (file c)
+   * -             etc/polkit-1/rules.d/15-testing.rules (file d)
+   * -       usr/share/polkit-1/rules.d/20-testing.rules (file e)
+   * - usr/local/share/polkit-1/rules.d/25-testing.rules (file f)
    *
    * file.
    */
   {
-    /* defined in file a, b, c, d - should pick file a */
+    /* defined in file a, b, c, d, e, f - should pick file a */
     "order0",
     "net.company.order0",
     "unix-user:root",
@@ -210,7 +213,7 @@ static const RulesTestCase rules_test_cases[] = {
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
   },
   {
-    /* defined in file b, c, d - should pick file b */
+    /* defined in file b, c, d, e, f - should pick file b */
     "order1",
     "net.company.order1",
     "unix-user:root",
@@ -218,9 +221,25 @@ static const RulesTestCase rules_test_cases[] = {
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
   },
   {
-    /* defined in file c, d - should pick file c */
+    /* defined in file c, d, e, f - should pick file c */
     "order2",
     "net.company.order2",
+    "unix-user:root",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+  },
+  {
+    /* defined in file d, e, f - should pick file d */
+    "order3",
+    "net.company.order3",
+    "unix-user:root",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+  },
+  {
+    /* defined in file e, f - should pick file e */
+    "order4",
+    "net.company.order4",
     "unix-user:root",
     NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,

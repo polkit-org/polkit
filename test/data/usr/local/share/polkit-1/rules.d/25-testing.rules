@@ -2,8 +2,6 @@
 
 /* see test/polkitbackend/test-polkitbackendjsauthority.c */
 
-/* NOTE: this is the /usr/share/polkit-1/rules.d version of 10-testing.rules */
-
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.order0") {
         return polkit.Result.NO; // earlier rule should win
@@ -18,6 +16,24 @@ polkit.addRule(function(action, subject) {
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.order2") {
-        return polkit.Result.YES;
+        return polkit.Result.NO; // earlier rule should win
+    }
+});
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order3") {
+        return polkit.Result.NO; // earlier rule should win
+    }
+});
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order4") {
+        return polkit.Result.NO; // earlier rule should win
+    }
+});
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.order5") {
+        return polkit.Result.NO; // earlier rule should win
     }
 });
