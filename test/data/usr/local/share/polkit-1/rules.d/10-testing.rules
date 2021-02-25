@@ -2,7 +2,7 @@
 
 /* see test/polkitbackend/test-polkitbackendjsauthority.c */
 
-/* NOTE: this is the /usr/share/polkit-1/rules.d version of 10-testing.rules */
+/* NOTE: this is the /usr/local/share/polkit-1/rules.d version of 10-testing.rules */
 
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.order0") {
@@ -21,3 +21,4 @@ polkit.addRule(function(action, subject) {
         return polkit.Result.YES;
     }
 });
+
