@@ -15,7 +15,6 @@ AM_CPPFLAGS =                                                   \
         -DPACKAGE_LOCALSTATE_DIR=\""$(localstatedir)"\"         \
         -DPACKAGE_LOCALE_DIR=\""$(localedir)"\"                 \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
-        -DPACKAGE_PREFIX=\""$(prefix)"\"                        \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
         $(NULL)
@@ -114,9 +113,6 @@ install-data-hook:
 	mkdir -p $(DESTDIR)$(sysconfdir)/polkit-1/rules.d
 	-chmod 700 $(DESTDIR)$(sysconfdir)/polkit-1/rules.d
 	-chown $(POLKITD_USER) $(DESTDIR)$(sysconfdir)/polkit-1/rules.d
-	mkdir -p $(DESTDIR)$(prefix)/local/share/polkit-1/rules.d
-	-chmod 700 $(DESTDIR)$(prefix)/local/share/polkit-1/rules.d
-	-chown $(POLKITD_USER) $(DESTDIR)$(prefix)/local/share/polkit-1/rules.d
 	mkdir -p $(DESTDIR)$(datadir)/polkit-1/rules.d
 	-chmod 700 $(DESTDIR)$(datadir)/polkit-1/rules.d
 	-chown $(POLKITD_USER) $(DESTDIR)$(datadir)/polkit-1/rules.d

@@ -18,8 +18,7 @@ subprocess.check_call(['chmod', '4755', os.path.join(bindir, 'pkexec')])
 
 dst_dirs = [
     os.path.join(pkgsysconfdir, 'rules.d'),
-    os.path.join(pkgdatadir, 'rules.d'),
-    os.path.join(prefix, 'local', sys.argv[2], 'rules.d')
+    os.path.join(pkgdatadir, 'rules.d')
 ]
 
 for dst in dst_dirs:
