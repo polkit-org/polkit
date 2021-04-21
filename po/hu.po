@@ -1,22 +1,22 @@
-# Hungarian translation for polkit
-# Copyright (C) 2016. Free Software Foundation, Inc.
+# Hungarian translation for polkit.
+# Copyright (C) 2016, 2021. Free Software Foundation, Inc.
 # This file is distributed under the same license as the polkit package.
 #
 # Gabor Kelemen <kelemeng at ubuntu dot com>, 2016.
+# Balázs Úr <ur.balazs at fsf dot hu>, 2021.
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit\n"
-"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?"
-"product=PolicyKit&keywords=I18N+L10N&component=libpolkit\n"
-"POT-Creation-Date: 2016-01-23 02:19+0000\n"
-"PO-Revision-Date: 2016-01-23 14:43+0100\n"
-"Last-Translator: Gabor Kelemen <kelemeng at ubuntu dot com>\n"
-"Language-Team: Hungarian <translation-team-hu@lists.sourceforge.net>\n"
+"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
+"POT-Creation-Date: 2020-05-26 15:36+0000\n"
+"PO-Revision-Date: 2021-03-18 01:19+0100\n"
+"Last-Translator: Balázs Úr <ur.balazs at fsf dot hu>\n"
+"Language-Team: Hungarian <gnome-hu-list at gnome dot org>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.5\n"
+"X-Generator: Lokalize 19.12.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:1
@@ -37,31 +37,31 @@ msgid ""
 "(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
 "program=$(program), command_line=$(command_line))"
 msgstr ""
-"Hitelesítés szükséges a Frobnicate polkit példaprogram futtatásához "
-"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
-"program=$(program), command_line=$(command_line))"
+"Hitelesítés szükséges a Frobnicate polkit példaprogram futtatásához (user="
+"$(user), user.gecos=$(user.gecos), user.display=$(user.display), program="
+"$(program), command_line=$(command_line))"
 
-#: ../src/programs/pkaction.c:100
+#: ../src/programs/pkaction.c:101
 msgid "Only output information about ACTION"
 msgstr "Csak a MŰVELETRŐL írjon ki információkat"
 
-#: ../src/programs/pkaction.c:100
+#: ../src/programs/pkaction.c:101
 msgid "ACTION"
 msgstr "MŰVELET"
 
-#: ../src/programs/pkaction.c:104
+#: ../src/programs/pkaction.c:105
 msgid "Output detailed action information"
 msgstr "Részletes műveletinformációk megjelenítése"
 
-#: ../src/programs/pkaction.c:108 ../src/programs/pkttyagent.c:61
+#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:95
 msgid "Show version"
 msgstr "Verziószám megjelenítése"
 
-#: ../src/programs/pkaction.c:130
+#: ../src/programs/pkaction.c:132
 msgid "[--action-id ACTION]"
 msgstr "[--action-id MŰVELET]"
 
-#: ../src/programs/pkaction.c:131 ../src/programs/pkttyagent.c:81
+#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:118
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
@@ -70,13 +70,13 @@ msgstr ""
 "A hibák itt jelenthetők: %s\n"
 "A %s honlapja: <%s>"
 
-#: ../src/programs/pkaction.c:145 ../src/programs/pkcheck.c:491
-#: ../src/programs/pkttyagent.c:95
+#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
+#: ../src/programs/pkttyagent.c:132
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: váratlan argumentum: „%s”\n"
 
-#: ../src/programs/pkcheck.c:35
+#: ../src/programs/pkcheck.c:36
 #, c-format
 msgid ""
 "Usage:\n"
@@ -140,23 +140,23 @@ msgstr ""
 "A hibák itt jelenthetők: %s\n"
 "A %s honlapja: <%s>\n"
 
-#: ../src/programs/pkcheck.c:391 ../src/programs/pkcheck.c:424
-#: ../src/programs/pkcheck.c:436
+#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
+#: ../src/programs/pkcheck.c:438
 #, c-format
 msgid "%s: Argument expected after `%s'\n"
 msgstr "%s: argumentum szükséges a következő után: „%s”\n"
 
-#: ../src/programs/pkcheck.c:414
+#: ../src/programs/pkcheck.c:416
 #, c-format
 msgid "%s: Invalid --process value `%s'\n"
 msgstr "%s: Érvénytelen --process érték: „%s”\n"
 
-#: ../src/programs/pkcheck.c:451 ../src/programs/pkcheck.c:460
+#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
 #, c-format
 msgid "%s: Two arguments expected after `--detail'\n"
 msgstr "%s: Két argumentum szükséges a „--detail” után\n"
 
-#: ../src/programs/pkcheck.c:521
+#: ../src/programs/pkcheck.c:523
 #, c-format
 msgid "%s: Subject not specified\n"
 msgstr "%s: Nincs megadva az alany\n"
@@ -165,7 +165,7 @@ msgstr "%s: Nincs megadva az alany\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:794
+#: ../src/programs/pkexec.c:790
 msgid "Authentication is needed to run `$(program)' as the super user"
 msgstr "Hitelesítés szükséges a(z) „$(program)” futtatásához rendszergazdaként"
 
@@ -174,47 +174,41 @@ msgstr "Hitelesítés szükséges a(z) „$(program)” futtatásához rendszerg
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:804
+#: ../src/programs/pkexec.c:800
 msgid "Authentication is needed to run `$(program)' as user $(user.display)"
 msgstr ""
 "Hitelesítés szükséges a(z) „$(program)” futtatásához $(user.display) "
 "felhasználóként"
 
-#: ../src/programs/pkttyagent.c:44
+#: ../src/programs/pkttyagent.c:78
 msgid "Don't replace existing agent if any"
 msgstr "Ne cserélje a meglévő ügynököt, ha van"
 
-#: ../src/programs/pkttyagent.c:48
+#: ../src/programs/pkttyagent.c:82
 msgid "Close FD when the agent is registered"
 msgstr "Fájlleíró lezárása az ügynök regisztrálásakor"
 
-#: ../src/programs/pkttyagent.c:48
+#: ../src/programs/pkttyagent.c:82
 msgid "FD"
 msgstr "FD"
 
-#: ../src/programs/pkttyagent.c:52
+#: ../src/programs/pkttyagent.c:86
 msgid "Register the agent for the specified process"
 msgstr "Az ügynök regisztrálása a megadott folyamathoz"
 
-#: ../src/programs/pkttyagent.c:53
+#: ../src/programs/pkttyagent.c:87
 msgid "PID[,START_TIME]"
 msgstr "PID[,INDÍTÁSI_IDŐ]"
 
-#: ../src/programs/pkttyagent.c:57
-msgid "Register the agent owner of BUS_NAME"
-msgstr "Az ügynök regisztrálása a BUSZNÉV tulajdonosaként"
+#: ../src/programs/pkttyagent.c:91
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Az ügynök regisztrálása a BUSZNÉV tulajdonosánál"
 
-#: ../src/programs/pkttyagent.c:57
+#: ../src/programs/pkttyagent.c:91
 msgid "BUS_NAME"
 msgstr "BUSZNÉV"
 
-#: ../src/programs/pkttyagent.c:127
+#: ../src/programs/pkttyagent.c:164
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: Érvénytelen folyamatmegadás: „%s”\n"
-
-#~ msgid "Configure lock down for an action"
-#~ msgstr "Művelet zárolásának beállítása"
-
-#~ msgid "Authentication is required to configure lock down policy"
-#~ msgstr "Hitelesítés szükséges a zárolási házirend beállításáhozv"
