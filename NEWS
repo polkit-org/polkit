@@ -1,4 +1,51 @@
 --------------
+polkit 0.119
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+This is polkit 0.119.
+
+Highlights:
+ meson build system added
+ CVE-2021-3560 mitigation
+
+Build requirements
+
+ glib, gobject, gio    >= 2.32
+ mozjs-78
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+
+Changes since polkit 0.118:
+
+ Inigo Martinez:
+    meson build system added alongside autotools (many thanks!!)
+
+ Matthias Classen:
+    properties in text listener
+
+ René Genz:
+    typos fixups
+
+ Balázs Úr:
+    Update Hungarian translation
+
+ Hendrik Werner:
+    meson post-install script mod to avoid calling external processes
+
+ Kevin Backhouse, Jan Rybar:
+    CVE-2021-3560 mitigation
+
+Many thanks to all contributors!
+
+Jan Rybar et al.,
+June 3, 2021
+
+--------------
 polkit 0.118
 --------------
 
