@@ -84,9 +84,10 @@ if ENABLE_GTK_DOC
 include $(top_srcdir)/gtk-doc.make
 else
 CLEANFILES =
+EXTRA_DIST =
 endif
 
-EXTRA_DIST = meson.build
+EXTRA_DIST += meson.build
 
 CLEANFILES +=   *~				\
 		polkit-1-scan.*			\
