@@ -115,5 +115,5 @@ executable(
   dependencies: deps,
   c_args: '-D_POLKIT_COMPILATION',
   install: true,
-  install_dir: pk_pkglibdir,
+  install_dir: pk_libprivdir,
 )

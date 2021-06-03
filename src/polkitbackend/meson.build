@@ -68,5 +68,5 @@ executable(
   c_args: c_flags,
   link_with: libpolkit_backend,
   install: true,
-  install_dir: pk_pkglibdir,
+  install_dir: pk_libprivdir,
 )

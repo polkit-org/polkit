@@ -27,7 +27,8 @@ pk_sysconfdir = get_option('sysconfdir')
 
 pk_pkgdatadir = pk_datadir / pk_api_name
 pk_pkgincludedir = pk_includedir / pk_api_name
-pk_pkglibdir = pk_libdir / pk_api_name
+# note that this is always 'lib', not lib64 or lib/x86_64-linux-gnu
+pk_libprivdir = 'lib' / pk_api_name
 pk_pkgsysconfdir = pk_sysconfdir / pk_api_name
 
 pk_actiondir = pk_api_name / 'actions'
@@ -324,7 +325,7 @@ meson.add_install_script(
   'meson_post_install.py',
   get_option('bindir'),
   pk_pkgdatadir,
-  pk_pkglibdir,
+  pk_libprivdir,
   pk_pkgsysconfdir,
   polkitd_user,
 )
