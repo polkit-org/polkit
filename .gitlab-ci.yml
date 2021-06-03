@@ -67,6 +67,7 @@ build_autotools:
     - make
     - make check
     - make install
+    - make distcheck
   artifacts:
     name: 'test logs'
     when: 'always'
