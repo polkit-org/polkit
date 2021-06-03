@@ -19,8 +19,8 @@ EXTRA_DIST = 			\
 # xsltproc barfs on 'make distcheck'; disable for now
 DISTCHECK_CONFIGURE_FLAGS=							\
 	--disable-man-pages 							\
-	--disable-gtk-doc 							\
 	--disable-introspection							\
+	--enable-gtk-doc 							\
 	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)	\
 	$(NULL)
 
