@@ -135,9 +135,14 @@ assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t fin
 
 mozjs_dep = dependency('mozjs-78')
 
-dbus_dep = dependency('dbus-1')
+dbus_dep = dependency('dbus-1', required: false)
 dbus_policydir = pk_prefix / pk_datadir / 'dbus-1/system.d'
-dbus_system_bus_services_dir = dbus_dep.get_pkgconfig_variable('system_bus_services_dir', define_variable: ['datadir', pk_prefix / pk_datadir])
+if dbus_dep.found()
+  dbus_system_bus_services_dir = dbus_dep.get_pkgconfig_variable('system_bus_services_dir', define_variable: ['datadir', pk_prefix / pk_datadir])
+else
+  # libdbus development files not installed, assume a standard layout
+  dbus_system_bus_services_dir = pk_prefix / pk_datadir / 'dbus-1' / 'system-services'
+endif
 
 # check OS
 host_system = host_machine.system()
