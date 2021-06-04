@@ -1,0 +1,211 @@
+# Romanian translation for polkit
+# Copyright (C) 2021 polkit authors
+# This file is distributed under the same license as the polkit package.
+#
+# Sergiu Bivol <sergiu@cip.md>, 2021.
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-06-03 22:41+0100\n"
+"PO-Revision-Date: 2021-06-04 00:15+0100\n"
+"Last-Translator: Sergiu Bivol <sergiu@cip.md>\n"
+"Language-Team: Romanian\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 <"
+" 20)) ? 1 : 2;\n"
+"X-Generator: Lokalize 19.12.3\n"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:1
+msgid "Run a program as another user"
+msgstr "Rulează un program ca alt utilizator"
+
+#: ../actions/org.freedesktop.policykit.policy.in.h:2
+msgid "Authentication is required to run a program as another user"
+msgstr ""
+"Este necesară autentificarea pentru a rula un program ca alt utilizator"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+msgid "Run the polkit example program Frobnicate"
+msgstr "Rulează programul polkit exemplificator Frobnicate"
+
+#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"Este necesară autentificarea pentru a rula programul polkit exemplificator"
+" Frobnicate (user=$(user), user.gecos=$(user.gecos),"
+" user.display=$(user.display), program=$(program),"
+" command_line=$(command_line))"
+
+#: ../src/programs/pkaction.c:101
+msgid "Only output information about ACTION"
+msgstr "Afișează numai informații despre ACȚIUNE"
+
+#: ../src/programs/pkaction.c:101
+msgid "ACTION"
+msgstr "ACȚIUNE"
+
+#: ../src/programs/pkaction.c:105
+msgid "Output detailed action information"
+msgstr "Afișează informații detaliate despre acțiune"
+
+#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:95
+msgid "Show version"
+msgstr "Arată versiunea"
+
+#: ../src/programs/pkaction.c:132
+msgid "[--action-id ACTION]"
+msgstr "[--action-id ACȚIUNE]"
+
+#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:118
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Raportați defecte la: %s\n"
+"Pagina %s: <%s>"
+
+#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
+#: ../src/programs/pkttyagent.c:132
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: Argument neașteptat „%s”\n"
+
+#: ../src/programs/pkcheck.c:36
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Utilizare:\n"
+"  pkcheck [OPȚIUNE...]\n"
+"\n"
+"Opțiuni pentru ajutor:\n"
+"  -h, --help                         Arată opțiunile pentru ajutor\n"
+"\n"
+"Opțiuni pentru aplicație:\n"
+"  -a, --action-id=ACȚIUNE            Verifică autorizarea pentru efectuarea"
+" ACȚIUNII\n"
+"  -u, --allow-user-interaction       Interacționează cu utilizatorul dacă e"
+" necesar\n"
+"  -d, --details=CHEIE VALOARE        Adaugă (CHEIE, VALOARE) la informațiile"
+" despre acțiune\n"
+"  --enable-internal-agent            Folosește un agent de autentificare"
+" intern dacă e necesar\n"
+"  --list-temp                        Enumeră autorizările temporare pentru"
+" sesiunea actuală\n"
+"  -p, --process=PID[,TIMP_PORNIRE,UID] Verifică autorizarea procesului"
+" specificat\n"
+"  --revoke-temp                      Revocă toate autorizările temporare din"
+" sesiunea actuală\n"
+"  -s, --system-bus-name=DENUMIRE_MAGISTRALĂ "
+"                                     Verifică autorizarea proprietarului"
+" DENUMIRE_MAGISTRALĂ\n"
+"  --version                          Arată versiunea\n"
+"\n"
+"Raportați defecte la: %s\n"
+"Pagina %s: <%s>\n"
+
+#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
+#: ../src/programs/pkcheck.c:438
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: Argument așteptat după „%s”\n"
+
+#: ../src/programs/pkcheck.c:416
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: Valoare nevalidă pentru --process „%s”\n"
+
+#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: Două argumente așteptate după „--detail”\n"
+
+#: ../src/programs/pkcheck.c:523
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: Subiect nespecificat\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: ../src/programs/pkexec.c:790
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr ""
+"Este necesară autentificarea pentru a rula „$(program)” ca administrator"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: ../src/programs/pkexec.c:800
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgstr ""
+"Este necesară autentificarea pentru a rula „$(program)” ca utilizatorul"
+" $(user.display)"
+
+#: ../src/programs/pkttyagent.c:78
+msgid "Don't replace existing agent if any"
+msgstr "Nu înlocui agentul existent dacă există"
+
+#: ../src/programs/pkttyagent.c:82
+msgid "Close FD when the agent is registered"
+msgstr "Închide descriptorul de fișier la înregistrarea agentului"
+
+#: ../src/programs/pkttyagent.c:82
+msgid "FD"
+msgstr "DF"
+
+#: ../src/programs/pkttyagent.c:86
+msgid "Register the agent for the specified process"
+msgstr "Înregistrează agentul pentru procesul specificat"
+
+#: ../src/programs/pkttyagent.c:87
+msgid "PID[,START_TIME]"
+msgstr "PID[,TIMP_PORNIRE]"
+
+#: ../src/programs/pkttyagent.c:91
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Înregistrează agentul pentru proprietarul DENUMIRE_MAGISTRALĂ"
+
+#: ../src/programs/pkttyagent.c:91
+msgid "BUS_NAME"
+msgstr "DENUMIRE_MAGISTRALĂ"
+
+#: ../src/programs/pkttyagent.c:164
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: Specificator de proces nevalid „%s”\n"
