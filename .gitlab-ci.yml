@@ -26,8 +26,6 @@ build_stable:
   before_script:
     - dnf upgrade -y --nogpgcheck fedora-release fedora-repos*
     - dnf update -y && dnf install -y $DEPENDENCIES
-    - getent group polkitd >/dev/null || groupadd -r polkitd
-    - getent passwd polkitd >/dev/null || useradd -r -g polkitd -d / -s /sbin/nologin -c "User for polkitd" polkitd
 
   script:
     - meson setup 
@@ -43,6 +41,7 @@ build_stable:
     - meson compile -C builddir
     - meson test    -C builddir
     - meson install -C builddir
+    - DESTDIR=$(pwd)/DESTDIR meson install -C builddir
   artifacts:
     name: 'test logs'
     when: 'always'
