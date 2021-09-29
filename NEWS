@@ -1,4 +1,57 @@
 --------------
+polkit 0.120
+--------------
+
+WARNING WARNING WARNING: This is a prerelease on the road to polkit
+1.0. Public API might change and certain parts of the code still needs
+some security review. Use at your own risk.
+
+
+NOTICE:
+This is the LAST version to support AUTOTOOLS build system, as it has been obsoleted
+by meson build system.
+The next release of polkit will REQUIRE meson build system.
+
+
+Highlights:
+ tarball fix-ups
+ re-enabled documentation
+ Intltool to gettext migration
+ new translations
+
+Build requirements
+
+ glib, gobject, gio    >= 2.32
+ mozjs-78
+ gobject-introspection >= 0.6.2 (optional)
+ pam (optional)
+ ConsoleKit OR systemd
+ gettext
+ meson (optional)
+ autotools (DEPRECATED)
+
+Changes since polkit 0.119:
+
+ Inigo Martinez:
+    transition from Intltool to gettext
+
+ Simon McVittie:
+    several tarball, meson and pipeline fixups
+
+ Hugo Carvalho:
+    Portuguese translation
+
+ Sergiu Bivol:
+    Romanian translation
+
+
+Many thanks to all contributors!
+
+Jan Rybar et al.,
+September 30, 2021
+
+
+--------------
 polkit 0.119
 --------------
 
