@@ -30,8 +30,8 @@ except KeyError:
 dst = os.path.join(bindir, 'pkexec')
 
 if os.geteuid() == 0:
-    os.chmod(dst, 0o4755)
     os.chown(dst, 0, -1)
+    os.chmod(dst, 0o4755)
 else:
     print(
         'Owner and mode of {} need to be setuid root (04755) after '
@@ -63,8 +63,8 @@ for dst in dst_dirs:
 dst = os.path.join(pkglibdir, 'polkit-agent-helper-1')
 
 if os.geteuid() == 0:
-    os.chmod(dst, 0o4755)
     os.chown(dst, 0, -1)
+    os.chmod(dst, 0o4755)
 else:
     print(
         'Owner and mode of {} need to be setuid root (04755) after '
