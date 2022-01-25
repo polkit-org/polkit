@@ -4,8 +4,8 @@ sources = files(
   'polkitbackendactionlookup.c',
   'polkitbackendactionpool.c',
   'polkitbackendauthority.c',
+  'polkitbackendcommon.c',
   'polkitbackendinteractiveauthority.c',
-  'polkitbackendjsauthority.cpp',
 )
 
 output = 'initjs.h'
@@ -21,7 +21,7 @@ sources += custom_target(
 deps = [
   expat_dep,
   libpolkit_gobject_dep,
-  mozjs_dep,
+  js_dep,
 ]
 
 c_flags = [
@@ -29,7 +29,17 @@ c_flags = [
   '-D_POLKIT_BACKEND_COMPILATION',
   '-DPACKAGE_DATA_DIR="@0@"'.format(pk_prefix / pk_datadir),
   '-DPACKAGE_SYSCONF_DIR="@0@"'.format(pk_prefix / pk_sysconfdir),
+  '-D_XOPEN_SOURCE=700',
+  '-D_GNU_SOURCE=1',
 ]
+
+if js_engine == 'duktape'
+  sources += files('polkitbackendduktapeauthority.c')
+  deps += libm_dep
+  deps += thread_dep
+elif js_engine == 'mozjs'
+  sources += files('polkitbackendjsauthority.cpp')
+endif
 
 if enable_logind
   sources += files('polkitbackendsessionmonitor-systemd.c')

@@ -17,6 +17,8 @@ AM_CPPFLAGS =                                                   \
         -DPACKAGE_LIB_DIR=\""$(libdir)"\"                       \
         -D_POSIX_PTHREAD_SEMANTICS                              \
         -D_REENTRANT                                            \
+        -D_XOPEN_SOURCE=700                                     \
+        -D_GNU_SOURCE=1                                         \
         $(NULL)
 
 noinst_LTLIBRARIES=libpolkit-backend-1.la
@@ -31,9 +33,10 @@ libpolkit_backend_1_la_SOURCES =                                   			\
         polkitbackend.h									\
 	polkitbackendtypes.h								\
 	polkitbackendprivate.h								\
+	polkitbackendcommon.h			polkitbackendcommon.c			\
 	polkitbackendauthority.h		polkitbackendauthority.c		\
 	polkitbackendinteractiveauthority.h	polkitbackendinteractiveauthority.c	\
-	polkitbackendjsauthority.h		polkitbackendjsauthority.cpp		\
+	polkitbackendjsauthority.h				\
 	polkitbackendactionpool.h		polkitbackendactionpool.c		\
 	polkitbackendactionlookup.h		polkitbackendactionlookup.c		\
         $(NULL)
@@ -51,18 +54,26 @@ libpolkit_backend_1_la_CFLAGS =                                        	\
         -D_POLKIT_BACKEND_COMPILATION                                  	\
         $(GLIB_CFLAGS)							\
 	$(LIBSYSTEMD_CFLAGS)						\
-	$(LIBJS_CFLAGS)							\
+	$(LIBJS_CFLAGS)						\
         $(NULL)
 
 libpolkit_backend_1_la_CXXFLAGS = $(libpolkit_backend_1_la_CFLAGS)
 
 libpolkit_backend_1_la_LIBADD =                               		\
         $(GLIB_LIBS)							\
+        $(DUKTAPE_LIBS)							\
 	$(LIBSYSTEMD_LIBS)						\
 	$(top_builddir)/src/polkit/libpolkit-gobject-1.la		\
 	$(EXPAT_LIBS)							\
-	$(LIBJS_LIBS)							\
+	$(LIBJS_LIBS)                                                   \
         $(NULL)
+
+if USE_DUKTAPE
+libpolkit_backend_1_la_SOURCES += polkitbackendduktapeauthority.c
+libpolkit_backend_1_la_LIBADD += -lm
+else
+libpolkit_backend_1_la_SOURCES += polkitbackendjsauthority.cpp
+endif
 
 rulesdir = $(sysconfdir)/polkit-1/rules.d
 rules_DATA = 50-default.rules

@@ -80,11 +80,22 @@ PKG_CHECK_MODULES(GLIB, [gmodule-2.0 gio-unix-2.0 >= 2.30.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-PKG_CHECK_MODULES(LIBJS, [mozjs-78])
+dnl ---------------------------------------------------------------------------
+dnl - Check javascript backend
+dnl ---------------------------------------------------------------------------
+AC_ARG_WITH(duktape, AS_HELP_STRING([--with-duktape],[Use Duktape as javascript backend]),with_duktape=yes,with_duktape=no)
+AS_IF([test x${with_duktape} == xyes], [
+  PKG_CHECK_MODULES(LIBJS, [duktape >= 2.2.0 ])
+  AC_SUBST(LIBJS_CFLAGS)
+  AC_SUBST(LIBJS_LIBS)
+], [
+  PKG_CHECK_MODULES(LIBJS, [mozjs-78])
 
-AC_SUBST(LIBJS_CFLAGS)
-AC_SUBST(LIBJS_CXXFLAGS)
-AC_SUBST(LIBJS_LIBS)
+  AC_SUBST(LIBJS_CFLAGS)
+  AC_SUBST(LIBJS_CXXFLAGS)
+  AC_SUBST(LIBJS_LIBS)
+])
+AM_CONDITIONAL(USE_DUKTAPE, [test x$with_duktape == xyes], [Using duktape as javascript engine library])
 
 EXPAT_LIB=""
 AC_ARG_WITH(expat, [  --with-expat=<dir>      Use expat from here],
@@ -99,6 +110,12 @@ AC_CHECK_HEADERS(expat.h, [AC_DEFINE(HAVE_EXPAT_H)],
 AC_CHECK_LIB(expat,XML_ParserCreate,[EXPAT_LIBS="-lexpat"],
 	     [AC_MSG_ERROR([Can't find expat library. Please install expat.])])
 AC_SUBST(EXPAT_LIBS)
+
+AX_PTHREAD([], [AC_MSG_ERROR([Cannot find the way to enable pthread support.])])
+LIBS="$PTHREAD_LIBS $LIBS"
+CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+CC="$PTHREAD_CC"
+AC_CHECK_FUNCS([pthread_condattr_setclock])
 
 AC_CHECK_FUNCS(clearenv fdatasync)
 
@@ -585,6 +602,13 @@ echo "
         PAM support:                ${have_pam}
         systemdsystemunitdir:       ${systemdsystemunitdir}
         polkitd user:               ${POLKITD_USER}"
+if test "x${with_duktape}" = xyes; then
+echo "
+        Javascript engine:          Duktape"
+else
+echo "
+        Javascript engine:          Mozjs"
+fi
 
 if test "$have_pam" = yes ; then
 echo "

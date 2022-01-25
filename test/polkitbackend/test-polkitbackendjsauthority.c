@@ -328,7 +328,7 @@ static const RulesTestCase rules_test_cases[] = {
     "net.company.run_away_script",
     "unix-user:root",
     NULL,
-    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
   },
 
   {

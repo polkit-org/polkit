@@ -639,7 +639,9 @@ polkit.Result = {
         If user-provided code takes a long time to execute, an exception
         will be thrown which normally results in the function being
         terminated (the current limit is 15 seconds). This is used to
-        catch runaway scripts.
+        catch runaway scripts. If the duktape JavaScript backend is
+        compiled in, instead of mozjs, no exception will be thrown—the
+        script will be killed right away (same timeout).
       </para>
 
       <para>

@@ -189,8 +189,10 @@ polkit.addRule(function(action, subject) {
                 ;
         } catch (error) {
             if (error == "Terminating runaway script")
-                return polkit.Result.YES;
-            return polkit.Result.NO;
+                // Inverted logic to accomodate Duktape's model as well, which
+                // will always fail with negation, on timeouts
+                return polkit.Result.NO;
+            return polkit.Result.YES;
         }
     }
 });

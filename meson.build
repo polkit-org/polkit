@@ -133,7 +133,18 @@ expat_dep = dependency('expat')
 assert(cc.has_header('expat.h', dependencies: expat_dep), 'Can\'t find expat.h. Please install expat.')
 assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t find expat library. Please install expat.')
 
-mozjs_dep = dependency('mozjs-78')
+duktape_req_version = '>= 2.2.0'
+
+js_engine = get_option('js_engine')
+if js_engine == 'duktape'
+  js_dep = dependency('duktape', version: duktape_req_version)
+  libm_dep = cc.find_library('m')
+  thread_dep = dependency('threads')
+  func = 'pthread_condattr_setclock'
+  config_h.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
+elif js_engine == 'mozjs'
+  js_dep = dependency('mozjs-78')
+endif
 
 dbus_dep = dependency('dbus-1', required: false)
 dbus_policydir = pk_prefix / pk_datadir / 'dbus-1/system.d'
@@ -361,6 +372,9 @@ if enable_logind
   output += '        systemdsystemunitdir:     ' + systemd_systemdsystemunitdir + '\n'
 endif
 output += '        polkitd user:             ' + polkitd_user + ' \n'
+output += '        Javascript engine:        ' + js_engine + '\n'
+if enable_logind
+endif
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
 if enable_pam
   output += '        PAM file auth:            ' + pam_conf['PAM_FILE_INCLUDE_AUTH'] + '\n'
