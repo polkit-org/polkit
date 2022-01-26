@@ -404,7 +404,7 @@ validate_environment_variable (const gchar *key,
       if (!is_valid_shell (value))
         {
           log_message (LOG_CRIT, TRUE,
-                       "The value for the SHELL variable was not found the /etc/shells file");
+                       "The value for the SHELL variable was not found in the /etc/shells file");
           g_printerr ("\n"
                       "This incident has been reported.\n");
           goto out;
@@ -415,7 +415,7 @@ validate_environment_variable (const gchar *key,
            strstr (value, "..") != NULL)
     {
       log_message (LOG_CRIT, TRUE,
-                   "The value for environment variable %s contains suscipious content",
+                   "The value for environment variable %s contains suspicious content",
                    key);
       g_printerr ("\n"
                   "This incident has been reported.\n");
