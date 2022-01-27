@@ -22,6 +22,8 @@ DISTCHECK_CONFIGURE_FLAGS=							\
 	--disable-introspection							\
 	--enable-gtk-doc 							\
 	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)	\
+        --enable-libsystemd-login=yes						\
+        --enable-libelogind=no							\
 	$(NULL)
 
 sign : dist

@@ -143,7 +143,7 @@ if js_engine == 'duktape'
   func = 'pthread_condattr_setclock'
   config_h.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
 elif js_engine == 'mozjs'
-  js_dep = dependency('mozjs-78')
+  js_dep = dependency('mozjs-91')
 endif
 
 dbus_dep = dependency('dbus-1', required: false)
