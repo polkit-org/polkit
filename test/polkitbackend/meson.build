@@ -29,4 +29,5 @@ test(
   prog,
   env: test_env,
   is_parallel: false,
+  timeout: 90,
 )
