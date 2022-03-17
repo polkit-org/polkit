@@ -17,29 +17,28 @@ Latest documentation, reference manual and API description of polkit can be foun
 RELEASES
 ========
 
-Older releases of polkit (until 0.120) are available in compressed tarballs from
-
- http://www.freedesktop.org/software/polkit/releases/
-
 Latest releases are available in compressed tarballs from
 
- https://gitlab.freedesktop.org/polkit/polkit/releases
+ https://www.freedesktop.org/software/polkit/releases/
 
 
 To verify the authenticity of the compressed tarball, use this command
 
- $ gpg --verify polkit-$(VERSION).tar.gz.sign polkit-$(VERSION).tar.gz
- gpg: Signature made Tue 23 Apr 2019 04:19:29 PM CEST using RSA key ID FFDCE258
- gpg: Good signature from "Jan Rybar (Red Hat) <jrybar@redhat.com>"
+``` bash
+$ gpg --verify polkit-$(VERSION).tar.gz.sign polkit-$(VERSION).tar.gz
+$ gpg: Signature made Tue 23 Apr 2019 04:19:29 PM CEST using RSA key ID FFDCE258
+$ gpg: Good signature from "Jan Rybar (Red Hat) <jrybar@redhat.com>"
+```
 
-Public key available here
- http://keys.gnupg.net/pks/lookup?op=get&search=0x8CEB3030FFDCE258
+Public key available at
+
+ https://keys.openpgp.org/vks/v1/by-fingerprint/7FFB7D6BD83147D74284E3178CEB3030FFDCE258
 
 
 BUGS and DEVELOPMENT
 ====================
 
-Please report non-security bugs via the freedesktop.org GitLab at
+Please report non-security bugs via the polkit's freedesktop.org GitLab at
 
  https://gitlab.freedesktop.org/polkit/polkit/issues
 
@@ -48,7 +47,7 @@ SECURITY ISSUES
 ===============
 
 Please report any security issues not yet known to public
-by creating new issue and checking the "This issue is confidential" checkbox.
+by creating new issue and checking the ***This issue is confidential*** checkbox.
 
  https://gitlab.freedesktop.org/polkit/polkit/issues
 

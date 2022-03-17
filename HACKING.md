@@ -3,45 +3,47 @@ SCM
 
  - anonymous checkouts
 
-   $ git clone git://git.freedesktop.org/git/PolicyKit.git
+   `$ git clone git://git.freedesktop.org/git/PolicyKit.git`
 
  - checkouts if you got an ssh account on fd.o (username@ is optional)
 
-   $ git clone ssh://[username@]git.freedesktop.org/git/PolicyKit.git
+   `$ git clone ssh://[username@]git.freedesktop.org/git/PolicyKit.git`
 
  - commit to local repository
 
-   $ git commit -a
+   `$ git commit -a`
 
  - push local repository to master repository at fd.o (remember most patches
    requires review at the mailing list)
 
-   $ git push
+   `$ git push`
 
  - pull changes from master repository at fd.o
 
-   $ git pull
+   `$ git pull`
 
  - diff of working tree versus local repository
 
-   $ git diff
+   `$ git diff`
 
  - diff of local repository vs. master repository at fd.o
 
    synchronize with upstream repo:
-   $ git pull
+   `$ git pull`
 
    (possibly merge changes)
 
    generate the diff:
-   $ git diff origin HEAD
+   `$ git diff origin HEAD`
 
  - influential environment variables (set these in e.g. .bash_profile)
 
+```bash
    export GIT_AUTHOR_NAME='Your Full Name'
    export GIT_COMMITTER_NAME='Your Full Name'
    export GIT_COMMITTER_EMAIL=youremail@domain.net
    export GIT_AUTHOR_EMAIL=youremail@domain.net
+```
 
  - see also
 
@@ -54,13 +56,15 @@ Committing code
  - Commit messages should be of the form (the five lines between the
    lines starting with ===)
 
-=== begin example commit ===
-short explanation of the commit
-
-Longer explanation explaining exactly what's changed, whether any
-external or private interfaces changed, what bugs were fixed (with bug
-tracker reference if applicable) and so forth. Be concise but not too brief.
-=== end example commit ===
+> === **begin example commit** ===
+> short explanation of the commit
+>
+>
+>
+> Longer explanation explaining exactly what's changed, whether any
+> external or private interfaces changed, what bugs were fixed (with bug
+> tracker reference if applicable) and so forth. Be concise but not too brief.
+> === **end example commit** ===
 
  - Always add a brief description of the commit to the _first_ line of
    the commit and terminate by two newlines (it will work without the
@@ -75,6 +79,7 @@ tracker reference if applicable) and so forth. Be concise but not too brief.
    sent to a mailing list it's copied from there.
 
  - When committing code on behalf of others use the --author option, e.g.
+   ```bash
    git commit -a --author "Joe Coder <joe@coder.org>"
 
 Coding Style
@@ -99,5 +104,5 @@ Code of Conduct, based on the Contributor Covenant. Please conduct
 yourself in a respectful and civilized manner when using the above
 mailing lists, bug trackers, etc:
 
-       https://www.freedesktop.org/wiki/CodeOfConduct
+  `https://www.freedesktop.org/wiki/CodeOfConduct`
 

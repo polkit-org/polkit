@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59c)
 AC_INIT([polkit], [0.120], [http://lists.freedesktop.org/mailman/listinfo/polkit-devel], , [http://www.freedesktop.org/wiki/Software/polkit])
-AM_INIT_AUTOMAKE([])
+AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_MACRO_DIR([buildutil])
 m4_include([buildutil/ax_cxx_compile_stdcxx.m4])

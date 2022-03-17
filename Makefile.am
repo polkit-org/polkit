@@ -9,7 +9,7 @@ endif
 NULL =
 
 EXTRA_DIST = 			\
-	HACKING 		\
+	HACKING.md 		\
 	meson.build		\
 	meson_options.txt	\
 	meson_post_install.py	\
