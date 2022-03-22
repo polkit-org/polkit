@@ -1,7 +1,6 @@
 policy = 'org.freedesktop.policykit.examples.pkexec.policy'
 
 i18n.merge_file(
-  policy,
   input: policy + '.in',
   output: '@BASENAME@',
   po_dir: po_dir,
