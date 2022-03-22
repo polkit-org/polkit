@@ -47,6 +47,11 @@ endif
 
 # ----------------------------------------------------------------------------------------------------
 
+dtddir = $(datadir)/polkit-1
+dtd_DATA = policyconfig-1.dtd
+
+# ----------------------------------------------------------------------------------------------------
+
 CLEANFILES = $(BUILT_SOURCES)
 
 EXTRA_DIST = 							\
@@ -56,6 +61,7 @@ EXTRA_DIST = 							\
 	$(service_in_files) 					\
 	$(dbusconf_in_files) 					\
 	$(systemdservice_in_files) 				\
+	$(dtd_DATA)						\
 	$(NULL)
 
 

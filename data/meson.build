@@ -35,3 +35,8 @@ if enable_logind
     install_dir: systemd_systemdsystemunitdir,
   )
 endif
+
+install_data(
+  'policyconfig-1.dtd',
+  install_dir: pk_datadir / 'polkit-1'
+)

@@ -1,0 +1,26 @@
+<!ELEMENT policyconfig (vendor?, vendor_url?, icon_name?, action+)>
+
+<!ELEMENT vendor (#PCDATA)>
+<!ELEMENT vendor_url (#PCDATA)>
+<!ELEMENT icon_name (#PCDATA)>
+
+<!ELEMENT action (vendor?, vendor_url?, description+, message+, icon_name?, defaults, annotate*)>
+<!ATTLIST action id CDATA #REQUIRED>
+
+<!ELEMENT description (#PCDATA)>
+<!ATTLIST description gettext-domain CDATA #IMPLIED>
+<!ATTLIST description xml:lang CDATA #IMPLIED>
+
+<!ELEMENT message (#PCDATA)>
+<!ATTLIST message gettext-domain CDATA #IMPLIED>
+<!ATTLIST message xml:lang CDATA #IMPLIED>
+
+<!ELEMENT defaults (allow_any|allow_inactive|allow_active)*>
+
+<!-- CDATA must be one of no, auth_self, auth_admin, auth_self_keep, auth_admin_keep, yes -->
+<!ELEMENT allow_any (#PCDATA)>
+<!ELEMENT allow_inactive (#PCDATA)>
+<!ELEMENT allow_active (#PCDATA)>
+
+<!ELEMENT annotate (#PCDATA)>
+<!ATTLIST annotate key CDATA #REQUIRED>
