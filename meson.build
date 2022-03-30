@@ -137,7 +137,11 @@ duktape_req_version = '>= 2.2.0'
 
 js_engine = get_option('js_engine')
 if js_engine == 'duktape'
-  js_dep = dependency('duktape', version: duktape_req_version)
+  js_dep = dependency('duktape', version: duktape_req_version, required: false)
+  if not js_dep.found()
+    message('Falling back to looking for library and header...')
+    js_dep = cc.find_library('duktape', has_headers: ['duktape.h'], required: true)
+  endif
   libm_dep = cc.find_library('m')
   thread_dep = dependency('threads')
   func = 'pthread_condattr_setclock'
