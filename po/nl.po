@@ -1,0 +1,209 @@
+# Dutch translation for polkit.
+# Copyright (C) 2022 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Nathan Follens <nfollens@gnome.org>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit master\n"
+"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
+"POT-Creation-Date: 2022-03-27 15:28+0000\n"
+"PO-Revision-Date: 2022-03-27 20:29+0200\n"
+"Last-Translator: Nathan Follens <nfollens@gnome.org>\n"
+"Language-Team: Dutch <gnome-nl-list@gnome.org>\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.0.1\n"
+
+#: actions/org.freedesktop.policykit.policy.in:12
+msgid "Run a program as another user"
+msgstr "Voer een programma uit als een andere gebruiker"
+
+#: actions/org.freedesktop.policykit.policy.in:13
+msgid "Authentication is required to run a program as another user"
+msgstr ""
+"Authenticatie is vereist om een programma als een andere gebruiker uit te "
+"voeren"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
+msgid "Run the polkit example program Frobnicate"
+msgstr "Polkit-voorbeeldprogramma Frobnicate uitvoeren"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"Authenticatie is vereist om het Polkit-voorbeeldprogramma Frobnicate uit te "
+"voeren (user=$(user), user.gecos=$(user.gecos), user.display=$(user."
+"display), program=$(program), command_line=$(command_line))"
+
+#: src/programs/pkaction.c:101
+msgid "Only output information about ACTION"
+msgstr "Enkel informatie over ACTIE uitvoeren"
+
+#: src/programs/pkaction.c:101
+msgid "ACTION"
+msgstr "ACTIE"
+
+#: src/programs/pkaction.c:105
+msgid "Output detailed action information"
+msgstr "Gedetailleerde actie-informatie tonen"
+
+#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:95
+msgid "Show version"
+msgstr "Versie tonen"
+
+#: src/programs/pkaction.c:132
+msgid "[--action-id ACTION]"
+msgstr "[--action-id ACTIE]"
+
+#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:118
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Gelieve problemen te melden aan: %s\n"
+"%s projectwebsite: <%s>"
+
+#: src/programs/pkaction.c:147 src/programs/pkcheck.c:498
+#: src/programs/pkttyagent.c:132
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: Onverwachte parameter `%s'\n"
+
+#: src/programs/pkcheck.c:36
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Gebruik:\n"
+"  pkcheck [OPTIE...]\n"
+"\n"
+"Hulpopties:\n"
+"  -h, --help                         Hulpopties tonen\n"
+"\n"
+"Toepassingsopties:\n"
+"  -a, --action-id=ACTIE             Controleer vereiste autorisatie voor "
+"ACTIE\n"
+"  -u, --allow-user-interaction       Interageer indien nodig met de "
+"gebruiker\n"
+"  -d, --details=SLEUTEL WAARDE            Voeg (SLEUTEL, WAARDE) toe aan "
+"informatie over de actie\n"
+"  --enable-internal-agent            Gebruik indien nodig een interne "
+"authenticatieagent\n"
+"  --list-temp                        Lijst tijdelijke autorisaties voor "
+"huidige sessies op\n"
+"  -p, --process=PID[,BEGINTIJD,UID] Controleer autorisatie van opgegeven "
+"proces\n"
+"  --revoke-temp                      Trek alle tijdelijke autorisaties voor "
+"huidige sessie in\n"
+"  -s, --system-bus-name=BUSNAAM     Controleer autorisatie van eigenaar van "
+"BUSNAAM\n"
+"  --version                          Versie tonen\n"
+"\n"
+"Gelieve problemen te melden aan: %s\n"
+"%s projectwebsite: <%s>\n"
+
+#: src/programs/pkcheck.c:398 src/programs/pkcheck.c:431
+#: src/programs/pkcheck.c:443
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: Parameter verwacht na `%s'\n"
+
+#: src/programs/pkcheck.c:421
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: Ongeldige --process-waarde `%s'\n"
+
+#: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
+#, c-format
+msgid "%s: Two arguments expected after `--detail'\n"
+msgstr "%s: Twee parameters verwacht na `--detail'\n"
+
+#: src/programs/pkcheck.c:528
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: Onderwerp niet opgegeven\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: src/programs/pkexec.c:807
+msgid "Authentication is needed to run `$(program)' as the super user"
+msgstr ""
+"Authenticatie is vereist om `$(program)' uit te voeren als de rootgebruiker"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: src/programs/pkexec.c:817
+msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgstr ""
+"Authenticatie is vereist om `$(program)' uit te voeren als gebruiker $(user."
+"display)"
+
+#: src/programs/pkttyagent.c:78
+msgid "Don't replace existing agent if any"
+msgstr "Indien er reeds een bestaande agent is, deze niet vervangen"
+
+#: src/programs/pkttyagent.c:82
+msgid "Close FD when the agent is registered"
+msgstr "FD sluiten wanneer de agent geregistreerd is"
+
+#: src/programs/pkttyagent.c:82
+msgid "FD"
+msgstr "FD"
+
+#: src/programs/pkttyagent.c:86
+msgid "Register the agent for the specified process"
+msgstr "Registreer de agent voor het opgegeven proces"
+
+#: src/programs/pkttyagent.c:87
+msgid "PID[,START_TIME]"
+msgstr "PID[,BEGINTIJD]"
+
+#: src/programs/pkttyagent.c:91
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Registreer de agent voor de eigenaar van BUSNAAM"
+
+#: src/programs/pkttyagent.c:91
+msgid "BUS_NAME"
+msgstr "BUSNAAM"
+
+#: src/programs/pkttyagent.c:164
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: Ongeldige processpecificeerder `%s'\n"
