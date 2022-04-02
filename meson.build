@@ -1,5 +1,5 @@
 project(
-  'polkit', ['c', 'cpp'],
+  'polkit', ['c'],
   version: '0.120',
   license: 'LGPL2+',
   default_options: [

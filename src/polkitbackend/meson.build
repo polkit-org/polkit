@@ -38,6 +38,7 @@ if js_engine == 'duktape'
   deps += libm_dep
   deps += thread_dep
 elif js_engine == 'mozjs'
+  add_languages('cpp')
   sources += files('polkitbackendjsauthority.cpp')
 endif
 
