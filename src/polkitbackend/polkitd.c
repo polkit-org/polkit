@@ -37,6 +37,7 @@
 static PolkitBackendAuthority *authority = NULL;
 static gpointer                registration_id = NULL;
 static GMainLoop              *loop = NULL;
+static gint                    exit_status = EXIT_FAILURE;
 static gboolean                opt_replace = FALSE;
 static gboolean                opt_no_debug = FALSE;
 static GOptionEntry            opt_entries[] = {
@@ -84,6 +85,8 @@ on_name_acquired (GDBusConnection *connection,
                   const gchar     *name,
                   gpointer         user_data)
 {
+  exit_status = EXIT_SUCCESS;
+
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                 "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
 }
@@ -159,11 +162,9 @@ main (int    argc,
 {
   GError *error;
   GOptionContext *opt_context;
-  gint ret;
   guint name_owner_id;
   guint sigint_id;
 
-  ret = 1;
   loop = NULL;
   opt_context = NULL;
   name_owner_id = 0;
@@ -237,8 +238,6 @@ main (int    argc,
   g_print ("Entering main event loop\n");
   g_main_loop_run (loop);
 
-  ret = 0;
-
   g_print ("Shutting down\n");
  out:
   if (sigint_id > 0)
@@ -254,6 +253,6 @@ main (int    argc,
   if (opt_context != NULL)
     g_option_context_free (opt_context);
 
-  g_print ("Exiting with code %d\n", ret);
-  return ret;
+  g_print ("Exiting with code %d\n", exit_status);
+  return exit_status;
 }
