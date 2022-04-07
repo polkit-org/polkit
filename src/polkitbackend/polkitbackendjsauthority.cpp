@@ -216,39 +216,16 @@ load_scripts (PolkitBackendJsAuthority  *authority)
   for (l = files; l != NULL; l = l->next)
     {
       const gchar *filename = (gchar *)l->data;
-      GFile *file = g_file_new_for_path (filename);
-      char *contents;
-      gsize len;
-      if (!g_file_load_contents (file, NULL, &contents, &len, NULL, NULL))
-        {
-          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        "Error compiling script %s",
-                                        filename);
-          g_object_unref (file);
-          continue;
-        }
-
-      g_object_unref (file);
-
-      JS::SourceText<mozilla::Utf8Unit> source;
-      if (!source.init (authority->priv->cx, contents, len,
-                        JS::SourceOwnership::Borrowed))
-        {
-          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        "Error compiling script %s",
-                                        filename);
-          g_free (contents);
-          continue;
-        }
       JS::CompileOptions options(authority->priv->cx);
       JS::RootedScript script(authority->priv->cx,
-                              JS::Compile (authority->priv->cx, options, source));
+                              JS::CompileUtf8Path (authority->priv->cx,
+                                                   options,
+                                                   filename));
       if (!script)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Error compiling script %s",
                                         filename);
-          g_free (contents);
           continue;
         }
 
@@ -261,13 +238,11 @@ load_scripts (PolkitBackendJsAuthority  *authority)
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                         "Error executing script %s",
                                         filename);
-          g_free (contents);
           continue;
         }
 
       //g_print ("Successfully loaded and evaluated script `%s'\n", filename);
 
-      g_free (contents);
       num_scripts++;
     }
 
