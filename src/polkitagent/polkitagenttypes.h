@@ -39,6 +39,12 @@ typedef struct _PolkitAgentTextListener PolkitAgentTextListener;
 struct _PolkitAgentSession;
 typedef struct _PolkitAgentSession PolkitAgentSession;
 
+#if GLIB_CHECK_VERSION(2, 44, 0)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitAgentListener, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitAgentTextListener, g_object_unref)
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (PolkitAgentSession, g_object_unref)
+#endif
+
 G_END_DECLS
 
 #endif /* __POLKIT_AGENT_TYPES_H */
