@@ -2181,9 +2181,11 @@ add_pid (PolkitDetails *details,
 
 static GList *
 get_users_in_group (PolkitIdentity                    *group,
+                    PolkitIdentity                    *user_of_subject,
                     gboolean                           include_root)
 {
   gid_t gid;
+  uid_t uid_of_subject;
   struct group *grp;
   GList *ret;
   guint n;
@@ -2191,6 +2193,19 @@ get_users_in_group (PolkitIdentity                    *group,
   ret = NULL;
 
   gid = polkit_unix_group_get_gid (POLKIT_UNIX_GROUP (group));
+
+  /* Check if group is subject's primary group. */
+  uid_of_subject = polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_of_subject));
+  if (uid_of_subject != 0 || include_root)
+    {
+      struct passwd *pwd;
+
+      pwd = getpwuid (uid_of_subject);
+      if (pwd != NULL && pwd->pw_gid == gid)
+        ret = g_list_prepend (ret, g_object_ref (user_of_subject));
+    }
+
+  /* Add supplemental group members. */
   grp = getgrgid (gid);
   if (grp == NULL)
     {
@@ -2367,7 +2382,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
         }
       else if (POLKIT_IS_UNIX_GROUP (identity))
         {
-          user_identities = g_list_concat (user_identities, get_users_in_group (identity, FALSE));
+          user_identities = g_list_concat (user_identities, get_users_in_group (identity, user_of_subject, FALSE));
         }
       else if (POLKIT_IS_UNIX_NETGROUP (identity))
         {
