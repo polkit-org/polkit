@@ -73,7 +73,7 @@ usage (int argc, char *argv[])
   g_printerr ("pkexec --version |\n"
               "       --help |\n"
               "       --disable-internal-agent |\n"
-              "       [--user username] [PROGRAM] [ARGUMENTS...]\n"
+              "       [--keep-cwd] [--user username] [PROGRAM] [ARGUMENTS...]\n"
               "\n"
               "See the pkexec manual page for more details.\n"
 	      "\n"
@@ -440,6 +440,7 @@ main (int argc, char *argv[])
   gboolean opt_show_help;
   gboolean opt_show_version;
   gboolean opt_disable_internal_agent;
+  gboolean opt_keep_cwd;
   PolkitAuthority *authority;
   PolkitAuthorizationResult *result;
   PolkitSubject *subject;
@@ -540,6 +541,7 @@ main (int argc, char *argv[])
   opt_show_help = FALSE;
   opt_show_version = FALSE;
   opt_disable_internal_agent = FALSE;
+  opt_keep_cwd = FALSE;
   for (n = 1; n < (guint) argc; n++)
     {
       if (strcmp (argv[n], "--help") == 0)
@@ -569,6 +571,10 @@ main (int argc, char *argv[])
       else if (strcmp (argv[n], "--disable-internal-agent") == 0)
         {
           opt_disable_internal_agent = TRUE;
+        }
+      else if (strcmp (argv[n], "--keep-cwd") == 0)
+        {
+          opt_keep_cwd = TRUE;
         }
       else
         {
@@ -1007,10 +1013,13 @@ main (int argc, char *argv[])
     }
 
   /* change to home directory */
-  if (chdir (pw->pw_dir) != 0)
-    {
-      g_printerr ("Error changing to home directory %s: %s\n", pw->pw_dir, g_strerror (errno));
-      goto out;
+  if (!opt_keep_cwd)
+    {  
+      if (chdir (pw->pw_dir) != 0)
+        {
+          g_printerr ("Error changing to home directory %s: %s\n", pw->pw_dir, g_strerror (errno));
+          goto out;
+        }
     }
 
   /* Log the fact that we're executing a command */

@@ -31,6 +31,9 @@
 
     <cmdsynopsis>
       <command>pkexec</command>
+      <arg choise="plain">
+		<option>--keep-cwd</option>
+      </arg>
       <group>
         <arg choice="plain">
           <option>--user</option>
@@ -104,6 +107,12 @@
       if the <emphasis>org.freedesktop.policykit.exec.allow_gui</emphasis> annotation
       on an action is set to a nonempty value; this is discouraged, though, and
       should only be used for legacy programs.
+    </para>
+
+    <para>
+      <command>pkexec</command> will run <replaceable>PROGRAM</replaceable>
+      in <replaceable>username</replaceable>'s home directory, unless
+      <option>--keep-cwd</option> is used to override this behavior
     </para>
 
     <para>
