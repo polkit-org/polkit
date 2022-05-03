@@ -514,27 +514,6 @@ main (int argc, char *argv[])
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
 
-  /* check for correct invocation */
-  if (geteuid () != 0)
-    {
-      g_printerr ("pkexec must be setuid root\n");
-      goto out;
-    }
-
-  original_user_name = g_strdup (g_get_user_name ());
-  if (original_user_name == NULL)
-    {
-      g_printerr ("Error getting user name.\n");
-      goto out;
-    }
-
-  if ((original_cwd = g_get_current_dir ()) == NULL)
-    {
-      g_printerr ("Error getting cwd: %s\n",
-                  g_strerror (errno));
-      goto out;
-    }
-
   /* First process options and find the command-line to invoke. Avoid using fancy library routines
    * that depend on environtment variables since we haven't cleared the environment just yet.
    */
@@ -592,6 +571,27 @@ main (int argc, char *argv[])
     {
       g_print ("pkexec version %s\n", PACKAGE_VERSION);
       ret = 0;
+      goto out;
+    }
+
+  /* check for correct invocation */
+  if (geteuid () != 0)
+    {
+      g_printerr ("pkexec must be setuid root\n");
+      goto out;
+    }
+
+  original_user_name = g_strdup (g_get_user_name ());
+  if (original_user_name == NULL)
+    {
+      g_printerr ("Error getting user name.\n");
+      goto out;
+    }
+
+  if ((original_cwd = g_get_current_dir ()) == NULL)
+    {
+      g_printerr ("Error getting cwd: %s\n",
+                  g_strerror (errno));
       goto out;
     }
 
