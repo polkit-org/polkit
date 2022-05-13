@@ -3068,7 +3068,9 @@ convert_temporary_authorization_subject (PolkitSubject *subject)
           return g_object_ref (subject);
         }
       else
-        return ret;
+        {
+          return ret;
+        }
     }
   else
     {
