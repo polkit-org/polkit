@@ -69,7 +69,9 @@ int
 main (int argc, char *argv[])
 {
   g_test_init (&argc, &argv, NULL);
+#ifdef HAVE_SETNETGRENT
   g_test_add_func ("/PolkitUnixNetgroup/new", test_new);
   g_test_add_func ("/PolkitUnixNetgroup/set_name", test_set_name);
+#endif
   return g_test_run ();
 }

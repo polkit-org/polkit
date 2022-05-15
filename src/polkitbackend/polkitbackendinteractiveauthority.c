@@ -2248,25 +2248,26 @@ get_users_in_net_group (PolkitIdentity                    *group,
   GList *ret;
 
   ret = NULL;
+#ifdef HAVE_SETNETGRENT
   name = polkit_unix_netgroup_get_name (POLKIT_UNIX_NETGROUP (group));
 
-#ifdef HAVE_SETNETGRENT_RETURN
+# ifdef HAVE_SETNETGRENT_RETURN
   if (setnetgrent (name) == 0)
     {
       g_warning ("Error looking up net group with name %s: %s", name, g_strerror (errno));
       goto out;
     }
-#else
+# else
   setnetgrent (name);
-#endif
+# endif /* HAVE_SETNETGRENT_RETURN */
 
   for (;;)
     {
-#if defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
+# if defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
       const char *hostname, *username, *domainname;
-#else
+# else
       char *hostname, *username, *domainname;
-#endif
+# endif /* defined(HAVE_NETBSD) || defined(HAVE_OPENBSD) */
       PolkitIdentity *user;
       GError *error = NULL;
 
@@ -2297,6 +2298,7 @@ get_users_in_net_group (PolkitIdentity                    *group,
 
  out:
   endnetgrent ();
+#endif /* HAVE_SETNETGRENT */
   return ret;
 }
 

@@ -1271,6 +1271,7 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
 
   JS::CallArgs args = JS::CallArgsFromVp (argc, vp);
 
+#ifdef HAVE_SETNETGRENT
   JS::RootedString usrstr (authority->priv->cx);
   usrstr = args[0].toString();
   user = JS_EncodeStringToUTF8 (cx, usrstr);
@@ -1285,6 +1286,7 @@ js_polkit_user_is_in_netgroup (JSContext  *cx,
     {
       is_in_netgroup =  true;
     }
+#endif
 
   ret = true;
 

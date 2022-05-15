@@ -89,6 +89,7 @@ config_h.set('_GNU_SOURCE', true)
 check_functions = [
   'clearenv',
   'fdatasync',
+  'setnetgrent',
 ]
 
 foreach func: check_functions

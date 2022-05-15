@@ -137,12 +137,14 @@ test_get_admin_identities (void)
         "unix-group:users"
       }
     },
+#ifdef HAVE_SETNETGRENT
     {
       "net.company.action3",
       {
         "unix-netgroup:foo"
       }
     },
+#endif
   };
   guint n;
 

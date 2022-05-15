@@ -182,7 +182,15 @@ polkit_identity_from_string  (const gchar   *str,
     }
   else if (g_str_has_prefix (str, "unix-netgroup:"))
     {
+#ifndef HAVE_SETNETGRENT
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Netgroups are not available on this machine ('%s')",
+                   str);
+#else
       identity = polkit_unix_netgroup_new (str + sizeof "unix-netgroup:" - 1);
+#endif
     }
 
   if (identity == NULL && (error != NULL && *error == NULL))
@@ -344,6 +352,14 @@ polkit_identity_new_for_gvariant (GVariant  *variant,
       GVariant *v;
       const char *name;
 
+#ifndef HAVE_SETNETGRENT
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Netgroups are not available on this machine");
+      goto out;
+#else
+
       v = lookup_asv (details_gvariant, "name", G_VARIANT_TYPE_STRING, error);
       if (v == NULL)
         {
@@ -353,6 +369,7 @@ polkit_identity_new_for_gvariant (GVariant  *variant,
       name = g_variant_get_string (v, NULL);
       ret = polkit_unix_netgroup_new (name);
       g_variant_unref (v);
+#endif
     }
   else
     {

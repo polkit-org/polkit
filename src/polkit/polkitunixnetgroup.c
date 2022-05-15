@@ -194,6 +194,9 @@ polkit_unix_netgroup_set_name (PolkitUnixNetgroup *group,
 PolkitIdentity *
 polkit_unix_netgroup_new (const gchar *name)
 {
+#ifndef HAVE_SETNETGRENT
+  g_assert_not_reached();
+#endif
   g_return_val_if_fail (name != NULL, NULL);
   return POLKIT_IDENTITY (g_object_new (POLKIT_TYPE_UNIX_NETGROUP,
                                        "name", name,

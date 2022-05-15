@@ -145,11 +145,15 @@ struct ComparisonTestData comparison_test_data [] = {
   {"unix-group:root", "unix-group:jane", FALSE},
   {"unix-group:jane", "unix-group:jane", TRUE},
 
+#ifdef HAVE_SETNETGRENT
   {"unix-netgroup:foo", "unix-netgroup:foo", TRUE},
   {"unix-netgroup:foo", "unix-netgroup:bar", FALSE},
+#endif
 
   {"unix-user:root", "unix-group:root", FALSE},
+#ifdef HAVE_SETNETGRENT
   {"unix-user:jane", "unix-netgroup:foo", FALSE},
+#endif
 
   {NULL},
 };
@@ -181,11 +185,13 @@ main (int argc, char *argv[])
   g_test_add_data_func ("/PolkitIdentity/group_string_2", "unix-group:jane", test_string);
   g_test_add_data_func ("/PolkitIdentity/group_string_3", "unix-group:users", test_string);
 
+#ifdef HAVE_SETNETGRENT
   g_test_add_data_func ("/PolkitIdentity/netgroup_string", "unix-netgroup:foo", test_string);
+  g_test_add_data_func ("/PolkitIdentity/netgroup_gvariant", "unix-netgroup:foo", test_gvariant);
+#endif
 
   g_test_add_data_func ("/PolkitIdentity/user_gvariant", "unix-user:root", test_gvariant);
   g_test_add_data_func ("/PolkitIdentity/group_gvariant", "unix-group:root", test_gvariant);
-  g_test_add_data_func ("/PolkitIdentity/netgroup_gvariant", "unix-netgroup:foo", test_gvariant);
 
   add_comparison_tests ();
 
