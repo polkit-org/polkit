@@ -61,7 +61,7 @@ libpolkit_backend = static_library(
 
 install_data(
   '50-default.rules',
-  install_dir: pk_pkgsysconfdir / 'rules.d',
+  install_dir: pk_pkgdatadir / 'rules.d',
 )
 
 program = 'polkitd'
