@@ -51,3 +51,25 @@ by creating new issue and checking the ***This issue is confidential*** checkbox
 
  https://gitlab.freedesktop.org/polkit/polkit/issues
 
+
+BUILD INSTRUCTIONS
+==================
+
+**polkit** uses [meson build system](https://mesonbuild.com/) for configuration with *ninja* as backend and *gcc* as compiler.  
+To configure and compile your copy of polkit tarball, simply follow meson build instructions in the following manner:
+```
+$ meson setup [[-D option]...] target_directory
+$ meson compile -C target_directory
+...
+# meson install -C target_directory
+```
+
+List of available configuration options can be obtained with `meson configure` command.
+
+I WANT TO CONTRIBUTE
+====================
+Your merge requests and patch suggestions are welcome! If you want to contribute, a merge request on this Gitlab instance is a preferred way, yet not the only one. Please consult other options with this upsteam's maintainers.
+
+Should you already have a freedesktop.org Gitlab account, please file your merge request. In this case, please **don't force-push any further changes** into the merge request and add a new commit into the MR instead.
+
+Thank you in advance.
