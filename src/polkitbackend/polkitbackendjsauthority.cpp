@@ -103,7 +103,6 @@ static const struct JSClassOps js_global_class_ops = {
   nullptr,  // mayResolve
   nullptr,  // finalize
   nullptr,  // call
-  nullptr,  // hasInstance
   nullptr,  // construct
   JS_GlobalObjectTraceHook
 };
@@ -124,7 +123,6 @@ static const struct JSClassOps js_polkit_class_ops = {
   nullptr,  // mayResolve
   nullptr,  // finalize
   nullptr,  // call
-  nullptr,  // hasInstance
   nullptr,  // construct
   nullptr   // trace
 };
