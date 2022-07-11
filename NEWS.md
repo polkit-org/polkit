@@ -1,3 +1,54 @@
+## polkit 121
+
+### Highlights:
+- new versioning
+- duktape added as backend JS engine
+- autotools build system removed
+- new translations
+
+### Build requirements
+- glib, gobject, gio >= 2.32
+- mozjs-91 OR duktape
+- gobject-introspection >= 0.6.2 (optional)
+- pam (optional)
+- ConsoleKit OR systemd
+- gettext
+- meson
+
+### Changes since polkit 0.120:
+
+* Simon McVittie
+    * meson and testsuite fixes
+* Bastien Nocera
+    * add ability to create policyconfig-1.dtd file
+* Xi Ruoyao
+    * port to newer mozjs-91, jsauthority tweaks
+* Wu Xiaotian and Gustavo Lima Chaves
+    * Add duktape as javascript engine
+* Nathan Follens
+    * Dutch translation
+* Daniel E
+    * duktape fixup
+* Fabrice Fontaine
+    * fix build without C++
+* Dan Nicholson
+    * fixup in group permision checking (backend)
+* Phaedrus Leeds
+    * typo fix
+* Adrian Vovk
+    * add option (--keep-cwd) for pkexec
+* Matt Turner
+    * Allow --version and --help even if not setuid root
+* Benedikt Ames
+    * fixes in polkitagent
+* Vincent Mihalkovic
+    * development support
+
+Thanks to everyone involved for making this possible!
+
+Jan Rybar & polkit team
+June 27, 2022
+
 ## polkit 0.120
 
 **WARNING**: This is a prerelease on the road to polkit
