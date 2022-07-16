@@ -378,8 +378,6 @@ if enable_logind
 endif
 output += '        polkitd user:             ' + polkitd_user + ' \n'
 output += '        Javascript engine:        ' + js_engine + '\n'
-if enable_logind
-endif
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
 if enable_pam
   output += '        PAM file auth:            ' + pam_conf['PAM_FILE_INCLUDE_AUTH'] + '\n'
