@@ -590,7 +590,7 @@ runaway_killer_thread_call_js (gpointer user_data)
   if (duk_pcall_prop (cx, 0, 2) != DUK_EXEC_SUCCESS)
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
-                                    "Error evaluating admin rules: ",
+                                    "Error evaluating admin rules: %s",
                                     duk_safe_to_string (cx, -1));
       goto err;
     }
