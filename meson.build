@@ -242,7 +242,7 @@ if enable_pam
 
   pam_prefix = get_option('pam_prefix')
   if pam_prefix == ''
-    pam_prefix = pk_sysconfdir
+    pam_prefix = pk_sysconfdir / 'pam.d'
   else
     message('PAM files will be installed in prefix ' + pam_prefix)
   endif

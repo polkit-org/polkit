@@ -22,7 +22,7 @@ if enable_pam
     output: '@BASENAME@',
     configuration: pam_conf,
     install: true,
-    install_dir: pk_sysconfdir / 'pam.d',
+    install_dir: pam_prefix,
   )
 endif
 
