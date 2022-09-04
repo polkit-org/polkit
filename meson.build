@@ -204,7 +204,7 @@ if enable_logind
 
   # systemd unit / service files
   systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
-  if systemd_systemdsystemunitdir == ''
+  if systemd_systemdsystemunitdir == '' and session_tracking == 'libsystemd-login'
     systemd_dep = dependency('systemd', not_found_message: 'systemd required but not found, please provide a valid systemd user unit dir or disable it')
     # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
     systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')

@@ -26,7 +26,7 @@ if enable_pam
   )
 endif
 
-if enable_logind
+if session_tracking == 'libsystemd-login'
   configure_file(
     input: 'polkit.service.in',
     output: '@BASENAME@',
