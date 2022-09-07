@@ -23,4 +23,6 @@ test_env.set('MOCK_NETGROUP', test_etc_dir / 'netgroup')
 test_env.set('POLKIT_TEST_DATA', test_data_dir)
 
 subdir('polkit')
-subdir('polkitbackend')
+if not get_option('libs-only')
+  subdir('polkitbackend')
+endif

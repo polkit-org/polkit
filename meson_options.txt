@@ -1,6 +1,7 @@
 option('session_tracking', type: 'combo', choices: ['libsystemd-login', 'libelogind', 'ConsoleKit'], value: 'ConsoleKit', description: 'session tracking (libsystemd-login/libelogind/ConsoleKit)')
 option('systemdsystemunitdir', type: 'string', value: '', description: 'custom directory for systemd system units')
 
+option('libs-only', type: 'boolean', value: false, description: 'Only build libraries (skips building polkitd)')
 option('polkitd_user', type: 'string', value: 'polkitd', description: 'User for running polkitd (polkitd)')
 
 option('authfw', type: 'combo', choices: ['pam', 'shadow', 'bsdauth'], value: 'pam', description: 'Authentication framework (pam/shadow)')

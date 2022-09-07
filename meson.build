@@ -137,6 +137,11 @@ assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t fin
 duktape_req_version = '>= 2.2.0'
 
 js_engine = get_option('js_engine')
+libs_only = get_option('libs-only')
+if libs_only
+  js_engine = ''
+endif
+
 if js_engine == 'duktape'
   js_dep = dependency('duktape', version: duktape_req_version, required: false)
   if not js_dep.found()
@@ -387,6 +392,9 @@ endif
 output += '        polkitd user:             ' + polkitd_user + ' \n'
 output += '        Javascript engine:        ' + js_engine + '\n'
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
+if libs_only
+  output += '    !!! Only building polkit libraries, not polkitd !!!\n\n'
+endif
 if enable_pam
   output += '        PAM file auth:            ' + pam_conf['PAM_FILE_INCLUDE_AUTH'] + '\n'
   output += '        PAM file acount:          ' + pam_conf['PAM_FILE_INCLUDE_ACCOUNT'] + '\n'
