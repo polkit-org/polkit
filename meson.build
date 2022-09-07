@@ -276,6 +276,7 @@ if os_type == ''
     ['debian', '/etc/debian_version'],
     ['gentoo', '/etc/gentoo-release'],
     ['pardus', '/etc/pardus-release'],
+    ['lfs', '/etc/lfs-release'],
   ]
 
   foreach os_path: os_paths
@@ -305,6 +306,13 @@ if pam_include == ''
       'PAM_FILE_INCLUDE_ACCOUNT': 'system',
       'PAM_FILE_INCLUDE_PASSWORD': 'system',
       'PAM_FILE_INCLUDE_SESSION': 'system',
+    }
+  elif os_type == 'lfs'
+    pam_conf = {
+      'PAM_FILE_INCLUDE_AUTH': 'system-auth',
+      'PAM_FILE_INCLUDE_ACCOUNT': 'system-account',
+      'PAM_FILE_INCLUDE_PASSWORD': 'system-password',
+      'PAM_FILE_INCLUDE_SESSION': 'system-session',
     }
   #if ['redhat', 'gentoo', 'pardus'].contains(os_type)
   else

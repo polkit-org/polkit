@@ -4,7 +4,7 @@ option('systemdsystemunitdir', type: 'string', value: '', description: 'custom d
 option('polkitd_user', type: 'string', value: 'polkitd', description: 'User for running polkitd (polkitd)')
 
 option('authfw', type: 'combo', choices: ['pam', 'shadow', 'bsdauth'], value: 'pam', description: 'Authentication framework (pam/shadow)')
-option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', ''], value: '', description: 'distribution or OS')
+option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', 'lfs', ''], value: '', description: 'distribution or OS')
 
 option('pam_include', type: 'string', value: '', description: 'pam file to include')
 option('pam_module_dir', type: 'string', value: '', description: 'directory to install PAM security module')
