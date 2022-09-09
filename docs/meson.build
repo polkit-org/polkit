@@ -19,11 +19,5 @@ if enable_gtk_doc
     configuration: {'VERSION': pk_version},
   )
 
-  html_images = files(
-    'polkit-architecture.png',
-    'polkit-authentication-agent-example.png',
-    'polkit-authentication-agent-example-wheel.png',
-  )
-
   subdir('polkit')
 endif
