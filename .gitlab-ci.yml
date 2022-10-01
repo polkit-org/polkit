@@ -24,13 +24,15 @@ variables:
                 git
                 dbus-devel
 
-build_stable:
-  before_script:
-    - dnf upgrade -y --nogpgcheck fedora-release fedora-repos*
-    - dnf update -y && dnf install -y $DEPENDENCIES
+before_script:
+  - dnf upgrade -y --nogpgcheck fedora-release fedora-repos*
+  - dnf update -y && dnf install -y $DEPENDENCIES
 
+
+build_stable:
+  stage: test
   script:
-    - meson setup 
+    - meson setup
       -D authfw=pam
       -D examples=true
       -D gtk_doc=true
@@ -49,3 +51,20 @@ build_stable:
     when: 'always'
     paths:
       - 'builddir/meson-logs/*.txt'
+
+
+pages:
+  stage: deploy
+  script:
+    - meson setup
+      -D gtk_doc=true
+      -D man=true
+      builddir
+    - meson compile -C builddir polkit-1-doc:custom
+    - rm -rf public && mkdir public
+    - cp -r builddir/docs/polkit/html/* public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_TAG
