@@ -150,6 +150,12 @@ main (int argc, char *argv[])
       goto out;
     }
 
+  if (opt_process != NULL && opt_system_bus_name != NULL)
+    {
+      g_printerr (_("%s: Options --process and --system-bus-name are mutually exclusive\n"),
+                  g_get_prgname());
+      goto out;
+    }
   if (opt_process != NULL)
     {
       gint pid;
