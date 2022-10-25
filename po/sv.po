@@ -1,14 +1,14 @@
 # Swedish translation for polkit.
-# Copyright © 2015 polkit's COPYRIGHT HOLDER
+# Copyright © 2015-2022 polkit's COPYRIGHT HOLDER
 # This file is distributed under the same license as the polkit package.
-# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2015.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2015, 2019, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit master\n"
 "Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2018-09-12 18:28+0000\n"
-"PO-Revision-Date: 2019-09-14 14:10+0200\n"
+"POT-Creation-Date: 2022-10-25 15:28+0000\n"
+"PO-Revision-Date: 2022-10-25 21:16+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -16,21 +16,21 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 3.1.1\n"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:1
+#: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
 msgstr "Kör ett program som en annan användare"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:2
+#: actions/org.freedesktop.policykit.policy.in:13
 msgid "Authentication is required to run a program as another user"
 msgstr "Autentisering krävs för att köra ett program som en annan användare"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
 msgid "Run the polkit example program Frobnicate"
 msgstr "Kör polkit-exempelprogrammet Frobnicate"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
 msgid ""
 "Authentication is required to run the polkit example program Frobnicate "
 "(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
@@ -40,27 +40,27 @@ msgstr ""
 "$(user), user.gecos=$(user.gecos), user.display=$(user.display), program="
 "$(program), command_line=$(command_line))"
 
-#: ../src/programs/pkaction.c:101
+#: src/programs/pkaction.c:101
 msgid "Only output information about ACTION"
 msgstr "Visa endast information om ÅTGÄRD"
 
-#: ../src/programs/pkaction.c:101
+#: src/programs/pkaction.c:101
 msgid "ACTION"
 msgstr "ÅTGÄRD"
 
-#: ../src/programs/pkaction.c:105
+#: src/programs/pkaction.c:105
 msgid "Output detailed action information"
 msgstr "Visa detaljerad åtgärdsinformation"
 
-#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
+#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:104
 msgid "Show version"
 msgstr "Visa version"
 
-#: ../src/programs/pkaction.c:132
+#: src/programs/pkaction.c:132
 msgid "[--action-id ACTION]"
 msgstr "[--action-id ÅTGÄRD]"
 
-#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:83
+#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:127
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
@@ -69,13 +69,13 @@ msgstr ""
 "Rapportera fel till: %s\n"
 "Webbplats för %s: <%s>"
 
-#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
-#: ../src/programs/pkttyagent.c:97
+#: src/programs/pkaction.c:147 src/programs/pkcheck.c:498
+#: src/programs/pkttyagent.c:141
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: Oväntat argument ”%s”\n"
 
-#: ../src/programs/pkcheck.c:36
+#: src/programs/pkcheck.c:36
 #, c-format
 msgid ""
 "Usage:\n"
@@ -132,23 +132,23 @@ msgstr ""
 "Rapportera fel till: %s\n"
 "Webbplats för %s: <%s>\n"
 
-#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
-#: ../src/programs/pkcheck.c:438
+#: src/programs/pkcheck.c:398 src/programs/pkcheck.c:431
+#: src/programs/pkcheck.c:443
 #, c-format
 msgid "%s: Argument expected after `%s'\n"
 msgstr "%s: Argument förväntades efter ”%s”\n"
 
-#: ../src/programs/pkcheck.c:416
+#: src/programs/pkcheck.c:421
 #, c-format
 msgid "%s: Invalid --process value `%s'\n"
 msgstr "%s: Ogiltigt värde ”%s” för --process\n"
 
-#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
+#: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
 msgid "%s: Two arguments expected after `--detail'\n"
 msgstr "%s: Två argument förväntades efter ”--detail”\n"
 
-#: ../src/programs/pkcheck.c:523
+#: src/programs/pkcheck.c:528
 #, c-format
 msgid "%s: Subject not specified\n"
 msgstr "%s: Subjekt ej angivet\n"
@@ -157,7 +157,7 @@ msgstr "%s: Subjekt ej angivet\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:790
+#: src/programs/pkexec.c:813
 msgid "Authentication is needed to run `$(program)' as the super user"
 msgstr "Autentisering krävs för att köra ”$(program)” som superanvändaren"
 
@@ -166,40 +166,46 @@ msgstr "Autentisering krävs för att köra ”$(program)” som superanvändare
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:800
+#: src/programs/pkexec.c:823
 msgid "Authentication is needed to run `$(program)' as user $(user.display)"
 msgstr ""
 "Autentisering krävs för att köra ”$(program)” som användaren $(user.display)"
 
-#: ../src/programs/pkttyagent.c:45
+#: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
-msgstr "Ersätt inte existerande agent om sådan finns"
+msgstr "Ersätt inte befintlig agent om sådan finns"
 
-#: ../src/programs/pkttyagent.c:49
+#: src/programs/pkttyagent.c:91
 msgid "Close FD when the agent is registered"
 msgstr "Stäng FD då agenten registrerats"
 
-#: ../src/programs/pkttyagent.c:49
+#: src/programs/pkttyagent.c:91
 msgid "FD"
 msgstr "FD"
 
-#: ../src/programs/pkttyagent.c:53
+#: src/programs/pkttyagent.c:95
 msgid "Register the agent for the specified process"
 msgstr "Registrera agenten för den angivna processen"
 
-#: ../src/programs/pkttyagent.c:54
+#: src/programs/pkttyagent.c:96
 msgid "PID[,START_TIME]"
 msgstr "PID[,STARTTID]"
 
-#: ../src/programs/pkttyagent.c:58
+#: src/programs/pkttyagent.c:100
 msgid "Register the agent for the owner of BUS_NAME"
 msgstr "Registrera agenten för ägaren av BUSSNAMN"
 
-#: ../src/programs/pkttyagent.c:58
+#: src/programs/pkttyagent.c:100
 msgid "BUS_NAME"
 msgstr "BUSSNAMN"
 
-#: ../src/programs/pkttyagent.c:129
+#: src/programs/pkttyagent.c:155
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr ""
+"%s: Flaggorna --process och --system-bus-name är ömsesidigt uteslutande\n"
+
+#: src/programs/pkttyagent.c:179
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: Ogiltig processbeskrivare ”%s”\n"
