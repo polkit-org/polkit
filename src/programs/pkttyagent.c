@@ -34,6 +34,7 @@
 
 
 static volatile sig_atomic_t tty_flags_saved;
+static volatile sig_atomic_t tty_flags_changed;
 struct termios ts;
 FILE *tty = NULL;
 struct sigaction savesigterm, savesigint, savesigtstp;
@@ -54,12 +55,20 @@ static void tty_handler(int signal)
       break;
   }
 
-  if (tty_flags_saved)
+  if (tty_flags_saved && tty_flags_changed)
   {
     tcsetattr (fileno (tty), TCSADRAIN, &ts);
   }
 
   kill(getpid(), signal);
+}
+
+
+static void tty_attrs_changed(PolkitAgentListener *listener G_GNUC_UNUSED,
+                              gboolean changed,
+                              gpointer user_data G_GNUC_UNUSED)
+{
+  tty_flags_changed = changed;
 }
 
 
@@ -221,6 +230,9 @@ main (int argc, char *argv[])
       ret = 127;
       goto out;
     }
+  g_signal_connect(G_OBJECT(listener), "tty_attrs_changed",
+                   G_CALLBACK(tty_attrs_changed), NULL);
+
   local_agent_handle = polkit_agent_listener_register_with_options (listener,
                                                                     POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
                                                                     subject,

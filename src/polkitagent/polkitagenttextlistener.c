@@ -205,6 +205,12 @@ polkit_agent_text_listener_class_init (PolkitAgentTextListenerClass *klass)
                                    g_param_spec_uint ("delay", "", "",
                                                       0, G_MAXUINT, 1,
                                                       G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+  g_signal_new("tty_attrs_changed",
+               G_TYPE_FROM_CLASS(gobject_class),
+               G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+               0, NULL, NULL, NULL,
+               G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
 }
 
 /**
@@ -359,6 +365,7 @@ on_request (PolkitAgentSession *session,
    *       the problem.
    */
 
+  g_signal_emit_by_name(listener, "tty_attrs_changed", TRUE);
   tcgetattr (fileno (listener->tty), &ts);
   ots = ts;
   ts.c_lflag &= ~(ECHO | ECHOE | ECHOK | ECHONL);
@@ -387,6 +394,7 @@ on_request (PolkitAgentSession *session,
         }
     }
   tcsetattr (fileno (listener->tty), TCSAFLUSH, &ots);
+  g_signal_emit_by_name(listener, "tty_attrs_changed", FALSE);
   putc ('\n', listener->tty);
 
   polkit_agent_session_response (session, str->str);
