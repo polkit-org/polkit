@@ -10,7 +10,8 @@ DOCUMENTATION
 =============
 
 Latest documentation, reference manual and API description of polkit can be found  
-on project's Gitlab Pages.
+on project's Gitlab Pages  
+ https://polkit.pages.freedesktop.org/polkit
 
 
 Old reference can be found at  
