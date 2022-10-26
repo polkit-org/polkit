@@ -1,3 +1,49 @@
+## polkit 122
+
+### Highlights:
+- new Georgian translation
+- port to mozjs-102
+- daemon-less build (support for e.g. flatpak deps)
+- re-enable of (API) documentation build
+
+### Build requirements
+- glib, gobject, gio >= 2.32
+- mozjs-102 OR duktape
+- gobject-introspection >= 0.6.2 (optional)
+- pam (optional)
+- ConsoleKit OR systemd
+- gettext
+- meson
+
+### Changes since polkit 121:
+
+* Anders Jonsson
+    * Swedish translation
+* NorwayFun
+    * Georgian translation
+* Martin Kletzander
+    * several pkttyagent fixes and improvements
+* A. Wilcox
+    * optional netgroup support
+* Luca Boccassi
+    * move 50-default.rules to /usr/share
+* Michael Biebl
+    * remove useless ifclause from meson.build
+* Jordan Petridis
+    * improve error message
+* Luciano Santos
+    * honour pam_prefix meson option
+* Xi Ruoyao
+    * meson: lfs autodetection
+    * port to mozjs-102
+* Peter Eisenmann
+    * daemonless build option
+
+Thanks to everyone involved for making this possible!
+
+The polkit team & polkit community
+October 26, 2022
+
 ## polkit 121
 
 ### Highlights:
