@@ -9,16 +9,22 @@ processes.
 DOCUMENTATION
 =============
 
-Latest documentation, reference manual and API description of polkit can be found at
+Latest documentation, reference manual and API description of polkit can be found  
+on project's Gitlab Pages.
 
+
+Old reference can be found at  
  https://www.freedesktop.org/software/polkit/docs/latest/
 
 
 RELEASES
 ========
 
-Latest releases are available in compressed tarballs from
+Latest releases are available at polkit's Gitlab Releases page:  
+ https://gitlab.freedesktop.org/polkit/polkit/-/releases
 
+
+Older releases are still available as tarballs at  
  https://www.freedesktop.org/software/polkit/releases/
 
 
