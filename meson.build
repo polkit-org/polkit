@@ -154,6 +154,11 @@ if js_engine == 'duktape'
   config_h.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
 elif js_engine == 'mozjs'
   js_dep = dependency('mozjs-102')
+
+  _system = host_machine.system().to_lower()
+  if _system.contains('freebsd')
+    config_h.set('__BSD_VISIBLE', 1)
+  endif
 endif
 
 dbus_dep = dependency('dbus-1', required: false)
