@@ -291,17 +291,20 @@ static void
 polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *authority)
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
-  GFile *directory;
   GError *error;
+
+  const gchar* directories[] = {
+    PACKAGE_SYSCONF_DIR "/polkit-1/actions",
+    PACKAGE_DATA_DIR "/polkit-1/actions",
+    NULL
+  };
 
   /* Force registering error domain */
   (void)POLKIT_ERROR;
 
   priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
 
-  directory = g_file_new_for_path (PACKAGE_DATA_DIR "/polkit-1/actions");
-  priv->action_pool = polkit_backend_action_pool_new (directory);
-  g_object_unref (directory);
+  priv->action_pool = polkit_backend_action_pool_new (directories);
   g_signal_connect (priv->action_pool,
                     "changed",
                     (GCallback) action_pool_changed,

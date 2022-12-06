@@ -1,3 +1,7 @@
+
+* Arvin Schnell
+    * read actions also from /etc/polkit-1/actions
+
 ## polkit 122
 
 ### Highlights:

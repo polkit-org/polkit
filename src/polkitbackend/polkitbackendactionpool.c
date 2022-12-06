@@ -89,15 +89,16 @@ static const gchar *_localize (GHashTable *translations,
 
 typedef struct
 {
-  /* directory with .policy files, e.g. /usr/share/polkit-1/actions */
-  GFile *directory;
+  /* directories with .policy files, e.g. /usr/share/polkit-1/actions */
+  GList *directories;
 
-  GFileMonitor *dir_monitor;
+  /* GFileMonitor instances for directories */
+  GList *dir_monitors;
 
   /* maps from action_id to a ParsedAction struct */
   GHashTable *parsed_actions;
 
-  /* maps from URI of parsed file to nothing */
+  /* maps from basename of parsed file to nothing */
   GHashTable *parsed_files;
 
   /* is TRUE only when we've read all files */
@@ -108,7 +109,7 @@ typedef struct
 enum
 {
   PROP_0,
-  PROP_DIRECTORY,
+  PROP_DIRECTORIES,
 };
 
 #define POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_ACTION_POOL, PolkitBackendActionPoolPrivate))
@@ -150,11 +151,11 @@ polkit_backend_action_pool_finalize (GObject *object)
   pool = POLKIT_BACKEND_ACTION_POOL (object);
   priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
 
-  if (priv->directory != NULL)
-    g_object_unref (priv->directory);
+  if (priv->directories != NULL)
+    g_list_free_full (priv->directories, g_object_unref);
 
-  if (priv->dir_monitor != NULL)
-    g_object_unref (priv->dir_monitor);
+  if (priv->dir_monitors != NULL)
+    g_list_free_full (priv->dir_monitors, g_object_unref);
 
   if (priv->parsed_actions != NULL)
     g_hash_table_unref (priv->parsed_actions);
@@ -221,33 +222,49 @@ polkit_backend_action_pool_set_property (GObject       *object,
 {
   PolkitBackendActionPool *pool;
   PolkitBackendActionPoolPrivate *priv;
-  GError *error;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
   priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
 
   switch (prop_id)
     {
-    case PROP_DIRECTORY:
-      priv->directory = g_value_dup_object (value);
+    case PROP_DIRECTORIES:
 
-      error = NULL;
-      priv->dir_monitor = g_file_monitor_directory (priv->directory,
-                                                    G_FILE_MONITOR_NONE,
-                                                    NULL,
-                                                    &error);
-      if (priv->dir_monitor == NULL)
-        {
-          g_warning ("Error monitoring actions directory: %s", error->message);
-          g_error_free (error);
-        }
-      else
-        {
-          g_signal_connect (priv->dir_monitor,
-                            "changed",
-                            (GCallback) dir_monitor_changed,
-                            pool);
-        }
+      const gchar **dir_names = (const gchar**) g_value_get_boxed (value);
+
+      for (int n = 0; dir_names[n] != NULL; n++)
+      {
+	GFile *file;
+	GFileMonitor *monitor;
+	GError *error = NULL;
+
+	const gchar *dir_name = dir_names[n];
+
+	file = g_file_new_for_path (dir_name);
+	priv->directories = g_list_prepend (priv->directories, file);
+
+	monitor = g_file_monitor_directory (file,
+					    G_FILE_MONITOR_NONE,
+					    NULL,
+					    &error);
+	if (monitor == NULL)
+	{
+	  g_warning ("Error monitoring actions directory: %s", error->message);
+	  g_error_free (error);
+	}
+	else
+	{
+	  g_signal_connect (monitor,
+			    "changed",
+			    (GCallback) dir_monitor_changed,
+			    pool);
+	  priv->dir_monitors = g_list_prepend (priv->dir_monitors, monitor);
+	}
+      }
+
+      priv->directories = g_list_reverse(priv->directories);
+      priv->dir_monitors = g_list_reverse(priv->dir_monitors);
+
       break;
 
     default:
@@ -272,16 +289,16 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
    * The directory to load action description files from.
    */
   g_object_class_install_property (gobject_class,
-                                   PROP_DIRECTORY,
-                                   g_param_spec_object ("directory",
-                                                        "Directory",
-                                                        "Directory to load action description files from",
-                                                        G_TYPE_FILE,
-                                                        G_PARAM_WRITABLE |
-                                                        G_PARAM_CONSTRUCT_ONLY |
-                                                        G_PARAM_STATIC_NAME |
-                                                        G_PARAM_STATIC_NICK |
-                                                        G_PARAM_STATIC_BLURB));
+                                   PROP_DIRECTORIES,
+                                   g_param_spec_boxed ("directories",
+                                                       "Directories",
+                                                       "Directories to load action description files from",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_WRITABLE |
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_STATIC_NAME |
+                                                       G_PARAM_STATIC_NICK |
+                                                       G_PARAM_STATIC_BLURB));
 
   /**
    * PolkitBackendActionPool::changed:
@@ -309,12 +326,12 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
  * Returns: A #PolkitBackendActionPool. Free with g_object_unref().
  **/
 PolkitBackendActionPool *
-polkit_backend_action_pool_new (GFile *directory)
+polkit_backend_action_pool_new (const gchar **directories)
 {
   PolkitBackendActionPool *pool;
 
   pool = POLKIT_BACKEND_ACTION_POOL (g_object_new (POLKIT_BACKEND_TYPE_ACTION_POOL,
-                                                   "directory", directory,
+                                                   "directories", directories,
                                                    NULL));
 
   return pool;
@@ -434,17 +451,18 @@ ensure_file (PolkitBackendActionPool *pool,
 {
   PolkitBackendActionPoolPrivate *priv;
   gchar *contents;
-  GError *error;
-  gchar *uri;
+  GError *error = NULL;
+  gchar *path;
+  gchar *basename;
 
   priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
 
-  uri = g_file_get_uri (file);
+  path = g_file_get_path (file);
+  basename = g_file_get_basename (file);
 
-  if (g_hash_table_lookup (priv->parsed_files, uri) != NULL)
+  if (g_hash_table_lookup_extended (priv->parsed_files, basename, NULL, NULL) == TRUE)
     goto out;
 
-  error = NULL;
   if (!g_file_load_contents (file,
                              NULL,
                              &contents,
@@ -452,7 +470,7 @@ ensure_file (PolkitBackendActionPool *pool,
                              NULL,
                              &error))
     {
-      g_warning ("Error loading file with URI '%s': %s", uri, error->message);
+      g_warning ("Error loading file with path '%s': %s", path, error->message);
       goto out;
     }
 
@@ -460,75 +478,85 @@ ensure_file (PolkitBackendActionPool *pool,
                             contents,
                             &error))
     {
-      g_warning ("Error parsing file with URI '%s': %s", uri, error->message);
+      g_warning ("Error parsing file with path '%s': %s", path, error->message);
       g_free (contents);
       goto out;
     }
 
   g_free (contents);
 
-  /* steal uri */
-  g_hash_table_insert (priv->parsed_files, uri, NULL);
-  uri = NULL;
+  /* steal basename */
+  g_hash_table_insert (priv->parsed_files, basename, NULL);
+  basename = NULL;
 
  out:
-  g_free (uri);
+  g_free (basename);
+  g_free (path);
 }
 
 static void
 ensure_all_files (PolkitBackendActionPool *pool)
 {
   PolkitBackendActionPoolPrivate *priv;
-  GFileEnumerator *e;
-  GFileInfo *file_info;
-  GError *error;
+
+  GList *files = NULL;
 
   priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
-
-  e = NULL;
 
   if (priv->has_loaded_all_files)
     goto out;
 
-  error = NULL;
-  e = g_file_enumerate_children (priv->directory,
-                                 "standard::name",
-                                 G_FILE_QUERY_INFO_NONE,
-                                 NULL,
-                                 &error);
-  if (error != NULL)
+  for (GList *l = priv->directories; l != NULL; l = l->next)
+  {
+    GError *error = NULL;
+    GFileEnumerator *enumerator;
+
+    GFile* file = l->data;
+
+    char *dir_name = g_file_get_path(file);
+
+    enumerator = g_file_enumerate_children (file,
+                                            G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                            G_FILE_QUERY_INFO_NONE,
+                                            NULL,
+                                            &error);
+    if (error != NULL)
     {
-      g_warning ("Error enumerating files: %s", error->message);
-      goto out;
+      g_warning ("Error enumerating files in %s: %s", dir_name, error->message);
+    }
+    else
+    {
+      GFileInfo *file_info;
+      while ((file_info = g_file_enumerator_next_file (enumerator, NULL, &error)) != NULL)
+      {
+	const gchar *name = g_file_info_get_name (file_info);
+	/* only consider files with the right suffix */
+	if (g_str_has_suffix (name, ".policy"))
+	  files = g_list_prepend (files, g_strdup_printf ("%s/%s", dir_name, name));
+
+	g_object_unref (file_info);
+      } /* for all files */
     }
 
-  while ((file_info = g_file_enumerator_next_file (e, NULL, &error)) != NULL)
+    g_object_unref (enumerator);
+    g_free (dir_name);
+  }
+
+  /* standard sorting places /etc before /usr as desired */
+  files = g_list_sort (files, (GCompareFunc) g_strcmp0);
+
+  for (GList *l = files; l != NULL; l = l->next)
     {
-      const gchar *name;
+      GFile *file = g_file_new_for_path((gchar *)l->data);
+      ensure_file (pool, file);
+      g_object_unref (file);
+    }
 
-      name = g_file_info_get_name (file_info);
-      /* only consider files with the right suffix */
-      if (g_str_has_suffix (name, ".policy"))
-        {
-          GFile *file;
-
-          file = g_file_get_child (priv->directory, name);
-
-          ensure_file (pool, file);
-
-          g_object_unref (file);
-        }
-
-      g_object_unref (file_info);
-
-    } /* for all files */
+  g_list_free_full (files, g_free);
 
   priv->has_loaded_all_files = TRUE;
 
  out:
-
-  if (e != NULL)
-    g_object_unref (e);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
