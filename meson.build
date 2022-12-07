@@ -360,14 +360,17 @@ configure_file(
   configuration: config_h,
 )
 
-meson.add_install_script(
-  'meson_post_install.py',
-  get_option('bindir'),
-  pk_pkgdatadir,
-  pk_libprivdir,
-  pk_pkgsysconfdir,
-  polkitd_user,
-)
+
+if not libs_only
+  meson.add_install_script(
+    'meson_post_install.py',
+    get_option('bindir'),
+    pk_pkgdatadir,
+    pk_libprivdir,
+    pk_pkgsysconfdir,
+    polkitd_user,
+  )
+endif
 
 output = '\n        ' + meson.project_name() + ' ' + meson.project_version() + '\n'
 output += '        ============\n\n'
