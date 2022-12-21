@@ -13,6 +13,10 @@ upstream_package_name: polkit
 # downstream (Fedora) RPM package name
 downstream_package_name: polkit
 
+srpm_build_deps:
+  - wget
+  - sed
+
 actions:
   post-upstream-clone:
     - "wget https://src.fedoraproject.org/rpms/polkit/raw/rawhide/f/polkit.spec -O polkit.spec"
