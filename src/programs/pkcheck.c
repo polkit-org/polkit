@@ -554,7 +554,7 @@ main (int argc, char *argv[])
     {
       g_printerr ("Error checking for authorization %s: %s\n",
                   action_id,
-                  error->message);
+                  error ? error->message : "Could not verify; error object not present.");
       ret = 127;
       goto out;
     }
