@@ -166,30 +166,6 @@ polkit_backend_action_pool_finalize (GObject *object)
 }
 
 static void
-polkit_backend_action_pool_get_property (GObject     *object,
-                                         guint        prop_id,
-                                         GValue      *value,
-                                         GParamSpec  *pspec)
-{
-  PolkitBackendActionPool *pool;
-  PolkitBackendActionPoolPrivate *priv;
-
-  pool = POLKIT_BACKEND_ACTION_POOL (object);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
-
-  switch (prop_id)
-    {
-    case PROP_DIRECTORY:
-      g_value_set_object (value, priv->directory);
-      break;
-
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
-    }
-}
-
-static void
 dir_monitor_changed (GFileMonitor     *monitor,
                      GFile            *file,
                      GFile            *other_file,
@@ -285,7 +261,6 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
 {
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 
-  gobject_class->get_property = polkit_backend_action_pool_get_property;
   gobject_class->set_property = polkit_backend_action_pool_set_property;
   gobject_class->finalize     = polkit_backend_action_pool_finalize;
 
@@ -302,7 +277,7 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
                                                         "Directory",
                                                         "Directory to load action description files from",
                                                         G_TYPE_FILE,
-                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_WRITABLE |
                                                         G_PARAM_CONSTRUCT_ONLY |
                                                         G_PARAM_STATIC_NAME |
                                                         G_PARAM_STATIC_NICK |
