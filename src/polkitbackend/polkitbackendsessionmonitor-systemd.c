@@ -351,6 +351,9 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
 #if HAVE_SD_UID_GET_DISPLAY
   uid_t uid;
 #endif
+#if HAVE_SD_PIDFD_GET_SESSION
+  int pidfd;
+#endif
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     process = POLKIT_UNIX_PROCESS (subject); /* We already have a process */
@@ -371,6 +374,19 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
                    g_type_name (G_TYPE_FROM_INSTANCE (subject)));
     }
 
+#if HAVE_SD_PIDFD_GET_SESSION
+  /* First try to get the session from the pidfd (systemd version 253) */
+  pidfd = polkit_unix_process_get_pidfd (process);
+  if (pidfd >= 0)
+    {
+      if (sd_pidfd_get_session (pidfd, &session_id) >= 0)
+        {
+          session = polkit_unix_session_new (session_id);
+          goto out;
+        }
+    }
+#endif
+
   /* Now do process -> pid -> same session */
   g_assert (process != NULL);
   pid = polkit_unix_process_get_pid (process);
@@ -380,6 +396,22 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
       session = polkit_unix_session_new (session_id);
       goto out;
     }
+
+#if HAVE_SD_PIDFD_GET_SESSION
+  /* Now do process fd -> uid -> graphical session (systemd version 253) */
+  pidfd = polkit_unix_process_get_pidfd (process);
+  if (pidfd >= 0)
+    {
+      if (sd_pidfd_get_owner_uid (pidfd, &uid) < 0)
+        goto out;
+
+      if (sd_uid_get_display (uid, &session_id) >= 0)
+        {
+          session = polkit_unix_session_new (session_id);
+          goto out;
+        }
+    }
+#endif
 
 #if HAVE_SD_UID_GET_DISPLAY
   /* Now do process -> uid -> graphical session (systemd version 213)*/

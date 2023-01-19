@@ -206,6 +206,8 @@ if enable_logind
 
   func = 'sd_uid_get_display'
   config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
+  func = 'sd_pidfd_get_session'
+  config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
 
   # systemd unit / service files
   systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
@@ -216,6 +218,8 @@ if enable_logind
   endif
 endif
 config_h.set('HAVE_LIBSYSTEMD', enable_logind)
+
+config_h.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#include <sys/syscall.h>') != '')
 
 # User for running polkitd
 polkitd_user = get_option('polkitd_user')

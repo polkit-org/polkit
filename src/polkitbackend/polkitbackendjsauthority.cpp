@@ -574,8 +574,10 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   JS::CompileOptions options(authority->priv->cx);
   const char *src;
   JS::RootedObject obj(authority->priv->cx);
-  pid_t pid;
+  gint pidfd = -1;
+  pid_t pid_early, pid_late;
   uid_t uid;
+  PolkitSubject *process = NULL;
   gchar *user_name = NULL;
   GPtrArray *groups = NULL;
   struct passwd *passwd;
@@ -602,30 +604,31 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
 
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
-      pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject));
+      process = subject;
     }
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
-      PolkitSubject *process;
       process = polkit_system_bus_name_get_process_sync (POLKIT_SYSTEM_BUS_NAME (subject), NULL, error);
       if (process == NULL)
         goto out;
-      pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
-      g_object_unref (process);
     }
   else
     {
       g_assert_not_reached ();
     }
 
+  pid_early = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
+  pidfd = polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (process));
+
 #ifdef HAVE_LIBSYSTEMD
-  if (sd_pid_get_session (pid, &session_str) == 0)
-    {
-      if (sd_session_get_seat (session_str, &seat_str) == 0)
-        {
-          /* do nothing */
-        }
-    }
+#if HAVE_SD_PIDFD_GET_SESSION
+  if (pidfd >= 0)
+    sd_pidfd_get_session (pidfd, &session_str);
+  else
+#endif /* HAVE_SD_PIDFD_GET_SESSION */
+    sd_pid_get_session (pid_early, &session_str);
+  if (session_str)
+    sd_session_get_seat (session_str, &seat_str);
 #endif /* HAVE_LIBSYSTEMD */
 
   g_assert (POLKIT_IS_UNIX_USER (user_for_subject));
@@ -672,7 +675,17 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
         }
     }
 
-  set_property_int32 (authority, obj, "pid", pid);
+  /* In case we are using PIDFDs, check that the PID still matches to avoid race
+   * conditions and PID recycle attacks.
+   */
+  pid_late = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
+  if (pid_late != pid_early)
+    {
+      g_warning ("pid changed from %d to %d, ignoring", (gint) pid_early, (gint) pid_late);
+      pid_early = -1;
+    }
+
+  set_property_int32 (authority, obj, "pid", pid_early);
   set_property_str (authority, obj, "user", user_name);
   set_property_strv (authority, obj, "groups", groups);
   set_property_str (authority, obj, "seat", seat_str);
@@ -683,6 +696,8 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   ret = TRUE;
 
  out:
+  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+    g_object_unref (process);
   free (session_str);
   free (seat_str);
   g_free (user_name);

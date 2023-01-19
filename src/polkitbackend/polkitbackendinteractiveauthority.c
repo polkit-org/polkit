@@ -513,6 +513,11 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
     }
 
   pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
+  if (pid <= 0)
+    {
+      g_debug ("Process is no longer active, cannot fetch cmdline.");
+      goto out;
+    }
 
   filename = g_strdup_printf ("/proc/%d/cmdline", pid);
 
@@ -3090,9 +3095,21 @@ subject_equal_for_authz (PolkitSubject *a,
     return FALSE;
 
   /* Now special case unix processes, as we want to protect against
-   * pid reuse by including the UID.
+   * pid reuse by including the PID FDs or UIDs as a fallback.
    */
   if (POLKIT_IS_UNIX_PROCESS (a) && POLKIT_IS_UNIX_PROCESS (b)) {
+    /* If both objects are tracking via PID FD then we can rely on that,
+     * as the PID is resolved on-the-fly via the pinned file descriptor,
+     * and it will be -1 if the process exited in the meanwhile. */
+    if (polkit_unix_process_get_pidfd ((PolkitUnixProcess*)a) >= 0 &&
+        polkit_unix_process_get_pidfd ((PolkitUnixProcess*)b) >= 0)
+      {
+        int pid_a = polkit_unix_process_get_pid ((PolkitUnixProcess*)a);
+        int pid_b = polkit_unix_process_get_pid ((PolkitUnixProcess*)b);
+
+        return pid_a > 0 && pid_b > 0 && pid_a == pid_b;
+      }
+
     int uid_a = polkit_unix_process_get_uid ((PolkitUnixProcess*)a);
     int uid_b = polkit_unix_process_get_uid ((PolkitUnixProcess*)b);
 
