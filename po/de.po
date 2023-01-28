@@ -3,38 +3,38 @@
 # This file is distributed under the same license as the polkit package.
 # Christian Kirbach <Christian.Kirbach@gmail.com>, 2015.
 # Wolfgang Stöggl <c72578@yahoo.de>, 2015.
+# Jürgen Benvenuti <gastornis@posteo.org>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit master\n"
-"Report-Msgid-Bugs-To: https://bugs.freedesktop.org/enter_bug.cgi?"
-"product=PolicyKit&keywords=I18N+L10N&component=libpolkit\n"
-"POT-Creation-Date: 2015-11-18 14:14+0000\n"
-"PO-Revision-Date: 2015-11-18 22:03+0100\n"
-"Last-Translator: Wolfgang Stoeggl <c72578@yahoo.de>\n"
+"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
+"POT-Creation-Date: 2023-01-28 03:27+0000\n"
+"PO-Revision-Date: 2023-01-28 14:37+0100\n"
+"Last-Translator: Jürgen Benvenuti <gastornis@posteo.org>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.8.6\n"
+"X-Generator: Poedit 3.1.1\n"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:1
+#: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
 msgstr "Ein Programm als ein anderer Benutzer ausführen"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:2
+#: actions/org.freedesktop.policykit.policy.in:13
 msgid "Authentication is required to run a program as another user"
 msgstr ""
-"Legitimierung ist erforderlich, um ein Programme als ein anderer Benutzer "
-"auszuführen."
+"Legitimierung ist erforderlich, um ein Programm als ein anderer Benutzer "
+"auszuführen"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
 msgid "Run the polkit example program Frobnicate"
 msgstr "Das polkit-Beispielprogramm Frobnicate ausführen"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
 msgid ""
 "Authentication is required to run the polkit example program Frobnicate "
 "(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
@@ -44,27 +44,27 @@ msgstr ""
 "auszuführen (user=$(user), user.gecos=$(user.gecos), user.display=$(user."
 "display), program=$(program), command_line=$(command_line))"
 
-#: ../src/programs/pkaction.c:100
+#: src/programs/pkaction.c:101
 msgid "Only output information about ACTION"
 msgstr "Nur Informationen zu AKTION ausgeben"
 
-#: ../src/programs/pkaction.c:100
+#: src/programs/pkaction.c:101
 msgid "ACTION"
 msgstr "AKTION"
 
-#: ../src/programs/pkaction.c:104
+#: src/programs/pkaction.c:105
 msgid "Output detailed action information"
 msgstr "Detaillierte Aktions-Informationen ausgeben"
 
-#: ../src/programs/pkaction.c:108 ../src/programs/pkttyagent.c:61
+#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:104
 msgid "Show version"
 msgstr "Version anzeigen"
 
-#: ../src/programs/pkaction.c:130
+#: src/programs/pkaction.c:132
 msgid "[--action-id ACTION]"
 msgstr "[--action-id AKTION]"
 
-#: ../src/programs/pkaction.c:131 ../src/programs/pkttyagent.c:81
+#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:127
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
@@ -73,13 +73,13 @@ msgstr ""
 "Fehler melden an: %s\n"
 "%s Homepage: <%s>"
 
-#: ../src/programs/pkaction.c:145 ../src/programs/pkcheck.c:491
-#: ../src/programs/pkttyagent.c:95
+#: src/programs/pkaction.c:147 src/programs/pkcheck.c:498
+#: src/programs/pkttyagent.c:141
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: Unerwartetes Argument »%s«\n"
 
-#: ../src/programs/pkcheck.c:35
+#: src/programs/pkcheck.c:36
 #, c-format
 msgid ""
 "Usage:\n"
@@ -109,7 +109,7 @@ msgid ""
 "%s home page: <%s>\n"
 msgstr ""
 "Aufruf:\n"
-"  pkcheck [OPTION...]\n"
+"  pkcheck [OPTION …]\n"
 "\n"
 "Hilfeoptionen:\n"
 "  -h, --help                         Hilfeoptionen anzeigen\n"
@@ -136,23 +136,23 @@ msgstr ""
 "Fehler melden an: %s\n"
 "%s Homepage: <%s>\n"
 
-#: ../src/programs/pkcheck.c:391 ../src/programs/pkcheck.c:424
-#: ../src/programs/pkcheck.c:436
+#: src/programs/pkcheck.c:398 src/programs/pkcheck.c:431
+#: src/programs/pkcheck.c:443
 #, c-format
 msgid "%s: Argument expected after `%s'\n"
 msgstr "%s: Argument erwartet nach »%s«\n"
 
-#: ../src/programs/pkcheck.c:414
+#: src/programs/pkcheck.c:421
 #, c-format
 msgid "%s: Invalid --process value `%s'\n"
-msgstr "%s: unerwarteter Wert »%s« für »--process«\n"
+msgstr "%s: Ungültiger Wert »%s« für »--process«\n"
 
-#: ../src/programs/pkcheck.c:451 ../src/programs/pkcheck.c:460
+#: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
 msgid "%s: Two arguments expected after `--detail'\n"
 msgstr "%s: Es werden zwei Argumente nach »--detail« erwartet\n"
 
-#: ../src/programs/pkcheck.c:521
+#: src/programs/pkcheck.c:528
 #, c-format
 msgid "%s: Subject not specified\n"
 msgstr "%s: Betreff nicht angegeben\n"
@@ -161,7 +161,7 @@ msgstr "%s: Betreff nicht angegeben\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:794
+#: src/programs/pkexec.c:813
 msgid "Authentication is needed to run `$(program)' as the super user"
 msgstr ""
 "Legitimierung ist erforderlich, um »$(program)« als Superuser auszuführen"
@@ -171,42 +171,49 @@ msgstr ""
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:804
+#: src/programs/pkexec.c:823
 msgid "Authentication is needed to run `$(program)' as user $(user.display)"
 msgstr ""
 "Legitimierung ist erforderlich, um »$(program)« als Benutzer $(user.display) "
 "auszuführen"
 
-#: ../src/programs/pkttyagent.c:44
+#: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
 msgstr "Vorhandenen Agenten nicht ersetzen"
 
-#: ../src/programs/pkttyagent.c:48
+#: src/programs/pkttyagent.c:91
 msgid "Close FD when the agent is registered"
 msgstr "Dateideskriptor (FD) schließen, sobald der Agent registriert ist"
 
 # file descriptor
-#: ../src/programs/pkttyagent.c:48
+#: src/programs/pkttyagent.c:91
 msgid "FD"
 msgstr "FD"
 
-#: ../src/programs/pkttyagent.c:52
+#: src/programs/pkttyagent.c:95
 msgid "Register the agent for the specified process"
 msgstr "Agenten des angegebenen Prozesses registrieren"
 
-#: ../src/programs/pkttyagent.c:53
+#: src/programs/pkttyagent.c:96
 msgid "PID[,START_TIME]"
 msgstr "PID[,STARTZEIT]"
 
-#: ../src/programs/pkttyagent.c:57
-msgid "Register the agent owner of BUS_NAME"
-msgstr "Eigentümer des Agenten von BUS_NAME registrieren"
+#: src/programs/pkttyagent.c:100
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Den Agenten für den Besitzer von BUS_NAME registrieren"
 
-#: ../src/programs/pkttyagent.c:57
+#: src/programs/pkttyagent.c:100
 msgid "BUS_NAME"
 msgstr "BUS_NAME"
 
-#: ../src/programs/pkttyagent.c:127
+#: src/programs/pkttyagent.c:155
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr ""
+"%s: Die Optionen »--process« und »--system-bus-name« schließen sich "
+"gegenseitig aus\n"
+
+#: src/programs/pkttyagent.c:179
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: Ungültige Prozessangabe »%s«\n"
