@@ -2076,7 +2076,8 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
     {
       g_printerr ("Invalid locale '%s'\n", locale);
     }
-  g_setenv ("LANG", locale, TRUE);
+  /* if LANGUAGE have been set in /etc/default, set LANG is invalid. */
+  g_setenv ("LANGUAGE", locale, TRUE);
 
   gettext_domain = polkit_details_lookup (details, "polkit.gettext_domain");
   message_to_use = polkit_details_lookup (details, "polkit.message");
@@ -2107,7 +2108,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
 
   /* Back to C! */
   setlocale (LC_ALL, "C");
-  g_setenv ("LANG", "C", TRUE);
+  g_setenv ("LANGUAGE", "C", TRUE);
 
  out:
   if (message == NULL)
