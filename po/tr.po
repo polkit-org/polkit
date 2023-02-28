@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: polkit master\n"
 "Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
 "POT-Creation-Date: 2019-09-07 15:28+0000\n"
-"PO-Revision-Date: 2019-09-07 22:27+0300\n"
+"PO-Revision-Date: 2023-02-15 16:09+0300\n"
 "Last-Translator: Sabri Ünal <libreajans@gmail.com>\n"
 "Language-Team: Türkçe <gnome-turk@gnome.org>\n"
 "Language: tr\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 3.1.1\n"
 
 #: ../actions/org.freedesktop.policykit.policy.in.h:1
 msgid "Run a program as another user"
@@ -204,7 +204,7 @@ msgstr "Vekili, VERİYOLU_ADI sahibi için kaydet"
 
 #: ../src/programs/pkttyagent.c:91
 msgid "BUS_NAME"
-msgstr "VEKİL_ADI"
+msgstr "VERİYOLU_ADI"
 
 #: ../src/programs/pkttyagent.c:164
 #, c-format
