@@ -1,15 +1,15 @@
 # Polish translation for polkit.
-# Copyright © 2010-2018 the polkit authors.
+# Copyright © 2010-2018, 2023 the polkit authors.
 # This file is distributed under the same license as the polkit package.
-# Piotr Drąg <piotrdrag@gmail.com>, 2010-2018.
-# Aviary.pl <community-poland@mozilla.org>, 2018.
+# Piotr Drąg <piotrdrag@gmail.com>, 2010-2018, 2023.
+# Aviary.pl <community-poland@mozilla.org>, 2018, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-08-21 20:44+0200\n"
-"PO-Revision-Date: 2018-08-21 20:50+0200\n"
+"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
+"POT-Creation-Date: 2022-10-25 15:28+0000\n"
+"PO-Revision-Date: 2023-03-04 14:17+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -19,20 +19,20 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:1
+#: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
 msgstr "Uruchomienie programu jako inny użytkownik"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:2
+#: actions/org.freedesktop.policykit.policy.in:13
 msgid "Authentication is required to run a program as another user"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby uruchomić program jako inny użytkownik"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
 msgid "Run the polkit example program Frobnicate"
 msgstr "Uruchomienie przykładowego programu polkit „Frobnicate”"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
 msgid ""
 "Authentication is required to run the polkit example program Frobnicate "
 "(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
@@ -42,27 +42,27 @@ msgstr ""
 "„Frobnicate” (user=$(user), user.gecos=$(user.gecos), user.display=$(user."
 "display), program=$(program), command_line=$(command_line))"
 
-#: ../src/programs/pkaction.c:101
+#: src/programs/pkaction.c:101
 msgid "Only output information about ACTION"
 msgstr "Wyświetla tylko informacje o DZIAŁANIU"
 
-#: ../src/programs/pkaction.c:101
+#: src/programs/pkaction.c:101
 msgid "ACTION"
 msgstr "DZIAŁANIE"
 
-#: ../src/programs/pkaction.c:105
+#: src/programs/pkaction.c:105
 msgid "Output detailed action information"
 msgstr "Wyświetla szczegółowe informacje o działaniu"
 
-#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
+#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:104
 msgid "Show version"
 msgstr "Wyświetla wersję"
 
-#: ../src/programs/pkaction.c:132
+#: src/programs/pkaction.c:132
 msgid "[--action-id ACTION]"
 msgstr "[--action-id DZIAŁANIE]"
 
-#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:83
+#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:127
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
@@ -71,13 +71,13 @@ msgstr ""
 "Prosimy zgłaszać błędy na (w języku angielskim): %s\n"
 "Strona domowa programu %s: <%s>"
 
-#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
-#: ../src/programs/pkttyagent.c:97
+#: src/programs/pkaction.c:147 src/programs/pkcheck.c:498
+#: src/programs/pkttyagent.c:141
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: nieoczekiwany parametr „%s”\n"
 
-#: ../src/programs/pkcheck.c:36
+#: src/programs/pkcheck.c:36
 #, c-format
 msgid ""
 "Usage:\n"
@@ -122,7 +122,7 @@ msgstr ""
 "                                         uwierzytelniania, jeśli trzeba\n"
 "  --list-temp                            Wyświetla listę tymczasowych\n"
 "                                         upoważnień dla bieżącej sesji\n"
-"  -p, --process=PID[,CZAS_STARTOWY,UID]  Sprawdza upoważnienie podanego\n"
+"  -p, --process=PID[,CZAS_POCZĄTKOWY,UID] Sprawdza upoważnienie podanego\n"
 "                                         procesu\n"
 "  --revoke-temp                          Unieważnia wszystkie tymczasowe\n"
 "                                         upoważnienia dla bieżącej sesji\n"
@@ -133,23 +133,23 @@ msgstr ""
 "Prosimy zgłaszać błędy na (w języku angielskim): %s\n"
 "Strona domowa programu %s: <%s>\n"
 
-#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
-#: ../src/programs/pkcheck.c:438
+#: src/programs/pkcheck.c:398 src/programs/pkcheck.c:431
+#: src/programs/pkcheck.c:443
 #, c-format
 msgid "%s: Argument expected after `%s'\n"
 msgstr "%s: oczekiwano parametru po opcji „%s”\n"
 
-#: ../src/programs/pkcheck.c:416
+#: src/programs/pkcheck.c:421
 #, c-format
 msgid "%s: Invalid --process value `%s'\n"
 msgstr "%s: nieprawidłowa wartość „%s” opcji --process\n"
 
-#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
+#: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
 msgid "%s: Two arguments expected after `--detail'\n"
 msgstr "%s: oczekiwano dwóch parametrów po opcji „--detail”\n"
 
-#: ../src/programs/pkcheck.c:523
+#: src/programs/pkcheck.c:528
 #, c-format
 msgid "%s: Subject not specified\n"
 msgstr "%s: nie podano tematu\n"
@@ -158,7 +158,7 @@ msgstr "%s: nie podano tematu\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:790
+#: src/programs/pkexec.c:813
 msgid "Authentication is needed to run `$(program)' as the super user"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby uruchomić program „$(program)” jako "
@@ -169,41 +169,46 @@ msgstr ""
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:800
+#: src/programs/pkexec.c:823
 msgid "Authentication is needed to run `$(program)' as user $(user.display)"
 msgstr ""
 "Wymagane jest uwierzytelnienie, aby uruchomić program „$(program)” jako "
 "użytkownik $(user.display)"
 
-#: ../src/programs/pkttyagent.c:45
+#: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
 msgstr "Bez zastępowania istniejących agentów, jeśli jakieś są"
 
-#: ../src/programs/pkttyagent.c:49
+#: src/programs/pkttyagent.c:91
 msgid "Close FD when the agent is registered"
 msgstr "Zamyka deskryptor pliku po zarejestrowaniu agenta"
 
-#: ../src/programs/pkttyagent.c:49
+#: src/programs/pkttyagent.c:91
 msgid "FD"
 msgstr "DP"
 
-#: ../src/programs/pkttyagent.c:53
+#: src/programs/pkttyagent.c:95
 msgid "Register the agent for the specified process"
 msgstr "Rejestruje agenta dla podanego procesu"
 
-#: ../src/programs/pkttyagent.c:54
+#: src/programs/pkttyagent.c:96
 msgid "PID[,START_TIME]"
-msgstr "PID[,CZAS_STARTOWY]"
+msgstr "PID[,CZAS_POCZĄTKOWY]"
 
-#: ../src/programs/pkttyagent.c:58
+#: src/programs/pkttyagent.c:100
 msgid "Register the agent for the owner of BUS_NAME"
 msgstr "Rejestruje agenta dla właściciela NAZWY_MAGISTRALI"
 
-#: ../src/programs/pkttyagent.c:58
+#: src/programs/pkttyagent.c:100
 msgid "BUS_NAME"
 msgstr "NAZWA_MAGISTRALI"
 
-#: ../src/programs/pkttyagent.c:129
+#: src/programs/pkttyagent.c:155
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr "%s: opcje --process i --system-bus-name wzajemnie się wykluczają\n"
+
+#: src/programs/pkttyagent.c:179
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: nieprawidłowe określenie procesu „%s”\n"
