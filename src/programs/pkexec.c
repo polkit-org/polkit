@@ -801,6 +801,14 @@ main (int argc, char *argv[])
   g_free (s);
   polkit_details_insert (details, "program", path);
   polkit_details_insert (details, "command_line", command_line);
+
+  gchar *cmdline_short = NULL;
+  cmdline_short = g_strdup(command_line);
+  if (strlen(command_line) > 80)
+      g_stpcpy(g_stpcpy( cmdline_short + 38, " ... " ),
+               command_line + strlen(command_line) - 37 );
+  polkit_details_insert (details, "cmdline_short", cmdline_short);
+
   if (g_strcmp0 (action_id, "org.freedesktop.policykit.exec") == 0)
     {
       if (pw->pw_uid == 0)
@@ -810,7 +818,7 @@ main (int argc, char *argv[])
                                   * translate the $(program) fragment - it will be expanded to the path
                                   * of the program e.g.  /bin/bash.
                                   */
-                                 N_("Authentication is needed to run `$(program)' as the super user"));
+                                 N_("Authentication is needed to run `$(cmdline_short)' as the super user"));
         }
       else
         {
@@ -820,7 +828,7 @@ main (int argc, char *argv[])
                                   * be expanded to the path of the program e.g. "/bin/bash" and the latter
                                   * to the user e.g. "John Doe (johndoe)" or "johndoe".
                                   */
-                                 N_("Authentication is needed to run `$(program)' as user $(user.display)"));
+                                 N_("Authentication is needed to run `$(cmdline_short)' as user $(user.display)"));
         }
     }
   polkit_details_insert (details, "polkit.gettext_domain", GETTEXT_PACKAGE);
@@ -1063,6 +1071,7 @@ main (int argc, char *argv[])
   g_free (original_cwd);
   g_free (path);
   g_free (command_line);
+  g_free (cmdline_short);
   g_free (opt_user);
   g_free (original_user_name);
 
