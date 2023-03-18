@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: polkit\n"
 "Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2022-10-25 15:28+0000\n"
-"PO-Revision-Date: 2023-03-04 14:17+0100\n"
+"POT-Creation-Date: 2023-03-16 03:28+0000\n"
+"PO-Revision-Date: 2023-03-18 13:28+0100\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -158,22 +158,23 @@ msgstr "%s: nie podano tematu\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: src/programs/pkexec.c:813
-msgid "Authentication is needed to run `$(program)' as the super user"
+#: src/programs/pkexec.c:821
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
-"Wymagane jest uwierzytelnienie, aby uruchomić program „$(program)” jako "
-"superużytkownik"
+"Wymagane jest uwierzytelnienie, aby uruchomić program „$(cmdline_short)” "
+"jako superużytkownik"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: src/programs/pkexec.c:823
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+#: src/programs/pkexec.c:831
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"Wymagane jest uwierzytelnienie, aby uruchomić program „$(program)” jako "
-"użytkownik $(user.display)"
+"Wymagane jest uwierzytelnienie, aby uruchomić program „$(cmdline_short)” "
+"jako użytkownik $(user.display)"
 
 #: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
