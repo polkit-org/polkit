@@ -1,14 +1,14 @@
 # Swedish translation for polkit.
-# Copyright © 2015-2022 polkit's COPYRIGHT HOLDER
+# Copyright © 2015-2023 polkit's COPYRIGHT HOLDER
 # This file is distributed under the same license as the polkit package.
-# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2015, 2019, 2022.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2015, 2019, 2022, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit master\n"
 "Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2022-10-25 15:28+0000\n"
-"PO-Revision-Date: 2022-10-25 21:16+0200\n"
+"POT-Creation-Date: 2023-03-17 03:27+0000\n"
+"PO-Revision-Date: 2023-03-17 16:09+0100\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
@@ -36,9 +36,9 @@ msgid ""
 "(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
 "program=$(program), command_line=$(command_line))"
 msgstr ""
-"Autentisering krävs för att köra polkit-exempelprogrammet Frobnicate (user="
-"$(user), user.gecos=$(user.gecos), user.display=$(user.display), program="
-"$(program), command_line=$(command_line))"
+"Autentisering krävs för att köra polkit-exempelprogrammet Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
 
 #: src/programs/pkaction.c:101
 msgid "Only output information about ACTION"
@@ -157,19 +157,22 @@ msgstr "%s: Subjekt ej angivet\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: src/programs/pkexec.c:813
-msgid "Authentication is needed to run `$(program)' as the super user"
-msgstr "Autentisering krävs för att köra ”$(program)” som superanvändaren"
+#: src/programs/pkexec.c:821
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr ""
+"Autentisering krävs för att köra ”$(cmdline_short)” som superanvändaren"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: src/programs/pkexec.c:823
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+#: src/programs/pkexec.c:831
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"Autentisering krävs för att köra ”$(program)” som användaren $(user.display)"
+"Autentisering krävs för att köra ”$(cmdline_short)” som användaren $(user."
+"display)"
 
 #: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
