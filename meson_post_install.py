@@ -22,9 +22,9 @@ pkgsysconfdir = destdir_path(sys.argv[3])
 polkitd_user = sys.argv[4]
 
 try:
-    polkitd_uid = pwd.getpwnam(polkitd_user).pw_uid
+    polkitd_gid = pwd.getpwnam(polkitd_user).pw_gid
 except KeyError:
-    polkitd_uid = None
+    polkitd_gid = None
 
 dst = os.path.join(bindir, 'pkexec')
 
@@ -42,12 +42,12 @@ else:
 dst = os.path.join(pkgsysconfdir, 'rules.d')
 
 if not os.path.exists(dst):
-    os.makedirs(dst, mode=0o700)
-    if os.geteuid() == 0 and polkitd_uid is not None:
-        os.chown(dst, polkitd_uid, -1)
+    os.makedirs(dst, mode=0o750)
+    if os.geteuid() == 0 and polkitd_gid is not None:
+        os.chown(dst, 0, polkitd_gid)
     else:
         print(
-            'Owner of {} needs to be set to {} after installation'.format(
+            'Owner of {} needs to be set to root and group to {} after installation'.format(
                 dst, polkitd_user,
             )
         )
