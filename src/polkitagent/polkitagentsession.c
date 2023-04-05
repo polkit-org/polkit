@@ -540,7 +540,7 @@ polkit_agent_session_response (PolkitAgentSession *session,
 
   response_len = strlen (response);
 
-  add_newline = (response[response_len] != '\n');
+  add_newline = (response_len == 0 || response[response_len - 1] != '\n');
 
   (void) g_output_stream_write_all (session->child_stdin, response, response_len, NULL, NULL, NULL);
   if (add_newline)
