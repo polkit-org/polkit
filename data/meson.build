@@ -1,4 +1,4 @@
-service_conf = {'libprivdir': pk_prefix / pk_libprivdir}
+service_conf = {'libprivdir': pk_prefix / pk_libprivdir, 'polkitd_user': polkitd_user}
 
 configure_file(
   input: 'org.freedesktop.PolicyKit1.service.in',

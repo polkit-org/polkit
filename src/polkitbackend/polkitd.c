@@ -117,6 +117,14 @@ become_user (const gchar  *user,
       goto out;
     }
 
+  if ((geteuid () == pw->pw_uid) && (getuid () == pw->pw_uid) &&
+      (getegid () == pw->pw_gid) && (getgid () == pw->pw_gid))
+    {
+      /* already running as user */
+      ret = TRUE;
+      goto out;
+    }
+
   if (setgroups (0, NULL) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
@@ -151,6 +159,7 @@ become_user (const gchar  *user,
 
 
   ret = TRUE;
+  g_print ("Successfully changed to user %s\n", user);
 
  out:
   return ret;
@@ -211,8 +220,6 @@ main (int    argc,
       g_clear_error (&error);
       goto out;
     }
-
-  g_print ("Successfully changed to user %s\n", POLKITD_USER);
 
   if (g_getenv ("PATH") == NULL)
     g_setenv ("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", TRUE);

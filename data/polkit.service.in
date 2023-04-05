@@ -6,3 +6,5 @@ Documentation=man:polkit(8)
 Type=dbus
 BusName=org.freedesktop.PolicyKit1
 ExecStart=@libprivdir@/polkitd --no-debug
+User=@polkitd_user@
+Group=@polkitd_user@
