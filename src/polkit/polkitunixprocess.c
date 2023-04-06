@@ -157,6 +157,7 @@ struct _PolkitUnixProcess
   guint64 start_time;
   gint uid;
   gint pidfd;
+  GArray *gids;
 };
 
 struct _PolkitUnixProcessClass
@@ -171,6 +172,7 @@ enum
   PROP_START_TIME,
   PROP_UID,
   PROP_PIDFD,
+  PROP_GIDS,
 };
 
 static void subject_iface_init (PolkitSubjectIface *subject_iface);
@@ -216,6 +218,10 @@ polkit_unix_process_get_property (GObject    *object,
       g_value_set_int (value, unix_process->uid);
       break;
 
+    case PROP_GIDS:
+      g_value_set_boxed (value, unix_process->gids);
+      break;
+
     case PROP_PIDFD:
       g_value_set_int (value, unix_process->pidfd);
       break;
@@ -246,6 +252,10 @@ polkit_unix_process_set_property (GObject      *object,
 
     case PROP_UID:
       polkit_unix_process_set_uid (unix_process, g_value_get_int (value));
+      break;
+
+    case PROP_GIDS:
+      polkit_unix_process_set_gids (unix_process, g_value_get_boxed (value));
       break;
 
     case PROP_PIDFD:
@@ -366,6 +376,9 @@ polkit_unix_process_finalize (GObject *object)
       process->pidfd = -1;
     }
 
+  if (process->gids)
+    g_array_unref (process->gids);
+
   if (G_OBJECT_CLASS (polkit_unix_process_parent_class)->finalize != NULL)
     G_OBJECT_CLASS (polkit_unix_process_parent_class)->finalize (object);
 }
@@ -457,6 +470,23 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
                                                      G_PARAM_STATIC_NAME |
                                                      G_PARAM_STATIC_BLURB |
                                                      G_PARAM_STATIC_NICK));
+
+  /**
+   * PolkitUnixProcess:gids:
+   *
+   * The UNIX group ids of the process.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_GIDS,
+                                   g_param_spec_boxed ("gids",
+                                                       "Group IDs",
+                                                       "The UNIX group IDs",
+                                                       G_TYPE_ARRAY,
+                                                       G_PARAM_CONSTRUCT |
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_STATIC_NAME |
+                                                       G_PARAM_STATIC_BLURB |
+                                                       G_PARAM_STATIC_NICK));
 }
 
 /**
@@ -494,6 +524,44 @@ polkit_unix_process_set_uid (PolkitUnixProcess *process,
 {
   g_return_if_fail (POLKIT_IS_UNIX_PROCESS (process));
   process->uid = uid;
+}
+
+/**
+ * polkit_unix_process_get_gids:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Gets the group ids for @process. Note that this is the real group-ids,
+ * not the effective group-ids.
+ *
+ * Returns: (element-type GArray) (transfer full) (allow-none): a #GArray
+ *          of #gid_t containing the group ids for @process or NULL if unknown,
+ *          as a new reference to the array, caller must deref it when done.
+ */
+GArray *
+polkit_unix_process_get_gids (PolkitUnixProcess *process)
+{
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), NULL);
+  return process->gids ? g_array_ref (process->gids) : NULL;
+}
+
+/**
+ * polkit_unix_process_set_gids:
+ * @process: A #PolkitUnixProcess.
+ * @gids: (element-type GArray): A #GList of #gid_t containing the group
+ *        ids to set for @process or NULL to unset them.
+ *        A reference to @gids is taken.
+ *
+ * Sets the (real, not effective) group ids for @process.
+ */
+void
+polkit_unix_process_set_gids (PolkitUnixProcess *process,
+                              GArray            *gids)
+{
+  g_return_if_fail (POLKIT_IS_UNIX_PROCESS (process));
+  if (process->gids)
+    g_array_unref (g_steal_pointer (&process->gids));
+  if (gids)
+    process->gids = g_array_ref (gids);
 }
 
 /**
@@ -689,6 +757,7 @@ polkit_unix_process_new_for_owner (gint    pid,
  * polkit_unix_process_new_pidfd:
  * @pidfd: The process id file descriptor.
  * @uid: The (real, not effective) uid of the owner of @pid or -1 to look it up in e.g. <filename>/proc</filename>.
+ * @gids: (element-type gint) (allow-none): The (real, not effective) gids of the owner of @pid or %NULL.
  *
  * Creates a new #PolkitUnixProcess object for @pidfd and @uid.
  *
@@ -696,11 +765,13 @@ polkit_unix_process_new_for_owner (gint    pid,
  */
 PolkitSubject *
 polkit_unix_process_new_pidfd (gint    pidfd,
-                               gint    uid)
+                               gint    uid,
+                               GArray *gids)
 {
   return POLKIT_SUBJECT (g_object_new (POLKIT_TYPE_UNIX_PROCESS,
                                        "pidfd", pidfd,
                                        "uid", uid,
+                                       "gids", gids,
                                        NULL));
 }
 

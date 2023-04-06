@@ -580,6 +580,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   PolkitSubject *process = NULL;
   gchar *user_name = NULL;
   GPtrArray *groups = NULL;
+  GArray *gids_from_dbus = NULL;
   struct passwd *passwd;
   char *seat_str = NULL;
   char *session_str = NULL;
@@ -635,41 +636,64 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   uid = polkit_unix_user_get_uid (POLKIT_UNIX_USER (user_for_subject));
 
   groups = g_ptr_array_new_with_free_func (g_free);
+  gids_from_dbus = polkit_unix_process_get_gids (POLKIT_UNIX_PROCESS (process));
 
-  passwd = getpwuid (uid);
-  if (passwd == NULL)
+  /* D-Bus will give us supplementary groups too, so prefer that to looking up
+   * the group from the uid. */
+  if (gids_from_dbus && gids_from_dbus->len > 0)
     {
-      user_name = g_strdup_printf ("%d", (gint) uid);
-      g_warning ("Error looking up info for uid %d: %m", (gint) uid);
+      gint n;
+      for (n = 0; n < gids_from_dbus->len; n++)
+        {
+          struct group *group;
+          group = getgrgid (g_array_index (gids_from_dbus, gid_t, n));
+          if (group == NULL)
+            {
+              g_ptr_array_add (groups, g_strdup_printf ("%d", (gint) g_array_index (gids_from_dbus, gid_t, n)));
+            }
+          else
+            {
+              g_ptr_array_add (groups, g_strdup (group->gr_name));
+            }
+        }
     }
   else
     {
-      gid_t gids[512];
-      int num_gids = 512;
-
-      user_name = g_strdup (passwd->pw_name);
-
-      if (getgrouplist (passwd->pw_name,
-                        passwd->pw_gid,
-                        gids,
-                        &num_gids) < 0)
+      passwd = getpwuid (uid);
+      if (passwd == NULL)
         {
-          g_warning ("Error looking up groups for uid %d: %m", (gint) uid);
+          user_name = g_strdup_printf ("%d", (gint) uid);
+          g_warning ("Error looking up info for uid %d: %m", (gint) uid);
         }
       else
         {
-          gint n;
-          for (n = 0; n < num_gids; n++)
+          gid_t gids[512];
+          int num_gids = 512;
+
+          user_name = g_strdup (passwd->pw_name);
+
+          if (getgrouplist (passwd->pw_name,
+                            passwd->pw_gid,
+                            gids,
+                            &num_gids) < 0)
             {
-              struct group *group;
-              group = getgrgid (gids[n]);
-              if (group == NULL)
+              g_warning ("Error looking up groups for uid %d: %m", (gint) uid);
+            }
+          else
+            {
+              gint n;
+              for (n = 0; n < num_gids; n++)
                 {
-                  g_ptr_array_add (groups, g_strdup_printf ("%d", (gint) gids[n]));
-                }
-              else
-                {
-                  g_ptr_array_add (groups, g_strdup (group->gr_name));
+                  struct group *group;
+                  group = getgrgid (gids[n]);
+                  if (group == NULL)
+                    {
+                      g_ptr_array_add (groups, g_strdup_printf ("%d", (gint) gids[n]));
+                    }
+                  else
+                    {
+                      g_ptr_array_add (groups, g_strdup (group->gr_name));
+                    }
                 }
             }
         }
@@ -703,6 +727,8 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   g_free (user_name);
   if (groups != NULL)
     g_ptr_array_unref (groups);
+  if (gids_from_dbus != NULL)
+    g_array_unref (gids_from_dbus);
 
   return ret;
 }
