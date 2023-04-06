@@ -157,6 +157,7 @@ struct _PolkitUnixProcess
   guint64 start_time;
   gint uid;
   gint pidfd;
+  gboolean pidfd_is_safe;
   GArray *gids;
 };
 
@@ -172,6 +173,7 @@ enum
   PROP_START_TIME,
   PROP_UID,
   PROP_PIDFD,
+  PROP_PIDFD_IS_SAFE,
   PROP_GIDS,
 };
 
@@ -224,6 +226,10 @@ polkit_unix_process_get_property (GObject    *object,
 
     case PROP_PIDFD:
       g_value_set_int (value, unix_process->pidfd);
+      break;
+
+    case PROP_PIDFD_IS_SAFE:
+      g_value_set_boolean (value, unix_process->pidfd_is_safe);
       break;
 
     case PROP_START_TIME:
@@ -333,6 +339,11 @@ polkit_unix_process_constructed (GObject *object)
   PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (object);
 
   /* sets pidfd, start_time and uid in case they are unset */
+
+  /* We didn't open it ourselves here, so we must have got it
+   * from D-Bus, mark it as safe to use */
+  if (process->pidfd >= 0)
+    process->pidfd_is_safe = TRUE;
 
 #ifdef HAVE_PIDFD_OPEN
   if (process->pid > 0 && process->pidfd < 0)
@@ -470,6 +481,23 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
                                                      G_PARAM_STATIC_NAME |
                                                      G_PARAM_STATIC_BLURB |
                                                      G_PARAM_STATIC_NICK));
+
+  /**
+   * PolkitUnixProcess:pidfd_is_safe:
+   *
+   * Whether the UNIX process id file descriptor is safe end-to-end
+   * or it was opened locally.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_PIDFD_IS_SAFE,
+                                   g_param_spec_boolean ("pidfd-is-safe",
+                                                         "Process ID FD",
+                                                         "Whether the UNIX process ID file descriptor is safe",
+                                                         FALSE,
+                                                         G_PARAM_READABLE |
+                                                         G_PARAM_STATIC_NAME |
+                                                         G_PARAM_STATIC_BLURB |
+                                                         G_PARAM_STATIC_NICK));
 
   /**
    * PolkitUnixProcess:gids:
@@ -640,12 +668,14 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
     {
       close (process->pidfd);
       process->pidfd = -1;
+      process->pidfd_is_safe = FALSE;
     }
   if (pid > 0)
     {
       gint pidfd = (int) syscall (SYS_pidfd_open, process->pid, 0);
       if (pidfd >= 0)
         {
+          process->pidfd_is_safe = FALSE;
           process->pidfd = pidfd;
           process->pid = 0;
           return;
@@ -672,6 +702,22 @@ polkit_unix_process_get_pidfd (PolkitUnixProcess *process)
 }
 
 /**
+ * polkit_unix_process_get_pidfd_is_safe:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Checks if the process id file descriptor for @process is safe
+ * or if it was opened locally and thus vulnerable to reuse.
+ *
+ * Returns: TRUE or FALSE.
+ */
+gboolean
+polkit_unix_process_get_pidfd_is_safe (PolkitUnixProcess *process)
+{
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), FALSE);
+  return process->pidfd_is_safe;
+}
+
+/**
  * polkit_unix_process_set_pidfd:
  * @process: A #PolkitUnixProcess.
  * @pidfd: A process id file descriptor.
@@ -684,7 +730,10 @@ polkit_unix_process_set_pidfd (PolkitUnixProcess *process,
 {
   g_return_if_fail (POLKIT_IS_UNIX_PROCESS (process));
   if (process->pidfd >= 0)
-    close (process->pidfd);
+    {
+      close (process->pidfd);
+      process->pidfd_is_safe = FALSE;
+    }
   process->pidfd = pidfd;
 }
 

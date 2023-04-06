@@ -366,6 +366,7 @@ push_subject (duk_context               *cx,
               GError                   **error)
 {
   gboolean ret = FALSE;
+  gboolean no_new_privs = FALSE;
   gint pidfd = -1;
   pid_t pid_early, pid_late;
   uid_t uid;
@@ -376,6 +377,7 @@ push_subject (duk_context               *cx,
   struct passwd *passwd;
   char *seat_str = NULL;
   char *session_str = NULL;
+  char *system_unit = NULL;
 
   if (!duk_get_global_string (cx, "Subject")) {
     return FALSE;
@@ -479,6 +481,13 @@ push_subject (duk_context               *cx,
         }
     }
 
+  /* Query the unit, will work only if we got the pidfd from dbus-daemon/broker.
+   * Best-effort operation, will log on failure, but we don't bail here. But
+   * only do so if the pidfd was marked as safe, i.e.: we got it from D-Bus so
+   * it can be trusted end-to-end, with no reuse attack window.  */
+  if (polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (process)))
+    polkit_backend_common_pidfd_to_systemd_unit (pidfd, &system_unit, &no_new_privs);
+
   /* In case we are using PIDFDs, check that the PID still matches to avoid race
    * conditions and PID recycle attacks.
    */
@@ -509,6 +518,10 @@ push_subject (duk_context               *cx,
   set_property_strv (cx, "groups", groups);
   set_property_str (cx, "seat", seat_str);
   set_property_str (cx, "session", session_str);
+  set_property_str (cx, "system_unit", system_unit);
+  /* If we have a unit, also record if it has the NoNewPrivileges setting enabled */
+  if (system_unit)
+    set_property_bool (cx, "no_new_privileges", no_new_privs);
   set_property_bool (cx, "local", subject_is_local);
   set_property_bool (cx, "active", subject_is_active);
 
@@ -519,6 +532,7 @@ push_subject (duk_context               *cx,
     g_object_unref (process);
   free (session_str);
   free (seat_str);
+  free (system_unit);
   g_free (user_name);
   if (groups != NULL)
     g_ptr_array_unref (groups);

@@ -37,6 +37,7 @@ install_headers(
 
 common_deps = [
   gio_dep,
+  gio_unix_dep,
   glib_dep,
 ]
 

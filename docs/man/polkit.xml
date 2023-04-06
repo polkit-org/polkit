@@ -798,10 +798,36 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
         </varlistentry>
 
         <varlistentry>
+          <term><type>string</type> system_unit</term>
+          <listitem>
+            <para>
+              The systemd unit that the subject's process is part of (if any). Note that
+              this can only match on system units, as user units can be created with any
+              name without privileges (unlike system units which require root to create).
+              A process running in a user unit will return the user session unit in this
+              attribute (e.g.: <literal>user-1000.service</literal>).
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><type>boolean</type> local</term>
           <listitem>
             <para>
               Set to <constant>true</constant> only if seat is local.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
+          <term><type>boolean</type> no_new_privileges</term>
+          <listitem>
+            <para>
+              Set only if <parameter>system_unit</parameter> is not empty, and set to
+              <constant>true</constant> only if the referenced systemd service unit
+              has the <parameter>NoNewPrivileges=</parameter> setting enabled. This
+              ensures that the process cannot gain any new privileges via executing
+              setuid binaries.
             </para>
           </listitem>
         </varlistentry>
@@ -943,6 +969,21 @@ polkit.addRule(function(action, subject) {
         subject.isInGroup("engineers")) {
             return polkit.Result.YES;
         }
+    }
+});
+]]></programlisting>
+
+      <para>
+        Allow all processes running as part of the <literal>admin.service</literal>
+        systemd system unit to perform user administration, as long as they cannot
+        gain new privileges:
+      </para>
+      <programlisting><![CDATA[
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.accounts.user-administration" &&
+        subject.system_unit == "admin.service" &&
+        subject.no_new_privileges) {
+        return polkit.Result.YES;
     }
 });
 ]]></programlisting>

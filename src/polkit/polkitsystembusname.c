@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <gio/gunixfdlist.h>
 #include "polkitsystembusname.h"
 #include "polkitunixuser.h"
 #include "polkitsubject.h"
@@ -483,6 +484,7 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
 				       guint32                       *out_uid,
 				       GArray                       **out_gids,
 				       guint32                       *out_pid,
+				       gint                          *out_pidfd,
 				       GCancellable                  *cancellable,
 				       GError                       **error)
 {
@@ -491,9 +493,11 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
   GMainContext *tmp_context = NULL;
   GVariantIter *iter;
   GVariant *result, *value;
+  GUnixFDList *fd_list;
   GError *dbus_error = NULL;
   const gchar *key;
   guint32 uid = G_MAXUINT32, pid = 0;
+  gint pidfd = -1;
   GArray *gids = NULL;
 
   connection = g_bus_get_sync (G_BUS_TYPE_SYSTEM, cancellable, error);
@@ -505,8 +509,10 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
 
   /* If the new unified API is available (since dbus-daemon 1.10.4) use it,
    * or fallback to the old separate calls.
+   * Since dbus-daemon 1.15.7 and dbus-broker 34, the new API will return
+   * a ProcessFD that we can use to pin the caller against PID reuse.
    */
-  result = g_dbus_connection_call_sync (connection,
+  result = g_dbus_connection_call_with_unix_fd_list_sync (connection,
 			  "org.freedesktop.DBus",       /* name */
 			  "/org/freedesktop/DBus",      /* object path */
 			  "org.freedesktop.DBus",       /* interface name */
@@ -515,6 +521,8 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
 			  G_VARIANT_TYPE ("(a{sv})"),
 			  G_DBUS_CALL_FLAGS_NONE,
 			  -1,
+			  NULL,
+			  &fd_list,
 			  cancellable,
 			  &dbus_error);
 
@@ -554,6 +562,11 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
             g_array_append_val (gids, gid);
           g_variant_iter_free (group_iter);
         }
+      else if (g_strcmp0 (key, "ProcessFD") == 0)
+        {
+          gint32 index = g_variant_get_handle (value);
+          pidfd = g_unix_fd_list_get (fd_list, index, error);
+        }
     }
 
   g_variant_unref (result);
@@ -564,6 +577,10 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
     *out_gids = g_array_ref(gids);
   if (out_pid)
     *out_pid = pid;
+  if (out_pidfd)
+    *out_pidfd = pidfd;
+  else if (pidfd >= 0)
+    close (pidfd);
   ret = TRUE;
  out:
   if (tmp_context)
@@ -573,6 +590,8 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
     }
   if (connection != NULL)
     g_object_unref (connection);
+  if (!ret && pidfd >= 0)
+    close (pidfd);
   if (dbus_error && error)
     g_propagate_error (error, dbus_error);
   else if (dbus_error)
@@ -600,6 +619,7 @@ polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,
                                          GError              **error)
 {
   PolkitSubject *ret = NULL;
+  gint pidfd = -1;
   guint32 pid;
   guint32 uid;
   GArray *gids = NULL;
@@ -608,11 +628,15 @@ polkit_system_bus_name_get_process_sync (PolkitSystemBusName  *system_bus_name,
   g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-  if (!polkit_system_bus_name_get_creds_sync (system_bus_name, &uid, &gids, &pid,
+  if (!polkit_system_bus_name_get_creds_sync (system_bus_name, &uid, &gids, &pid, &pidfd,
 					      cancellable, error))
     goto out;
 
-  ret = polkit_unix_process_new_for_owner (pid, 0, uid);
+  if (pidfd >= 0)
+    ret = polkit_unix_process_new_pidfd (pidfd, uid, gids);
+  else
+    ret = polkit_unix_process_new_for_owner (pid, 0, uid);
+
   polkit_unix_process_set_gids (POLKIT_UNIX_PROCESS (ret), gids);
 
  out:
@@ -644,7 +668,7 @@ polkit_system_bus_name_get_user_sync (PolkitSystemBusName  *system_bus_name,
   g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), NULL);
   g_return_val_if_fail (error == NULL || *error == NULL, NULL);
 
-  if (!polkit_system_bus_name_get_creds_sync (system_bus_name, &uid, NULL, NULL,
+  if (!polkit_system_bus_name_get_creds_sync (system_bus_name, &uid, NULL, NULL, NULL,
 					      cancellable, error))
     goto out;
 

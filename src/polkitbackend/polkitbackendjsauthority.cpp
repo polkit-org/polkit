@@ -571,6 +571,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
                   GError                   **error)
 {
   gboolean ret = FALSE;
+  gboolean no_new_privs = FALSE;
   JS::CompileOptions options(authority->priv->cx);
   const char *src;
   JS::RootedObject obj(authority->priv->cx);
@@ -584,6 +585,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   struct passwd *passwd;
   char *seat_str = NULL;
   char *session_str = NULL;
+  char *system_unit = NULL;
   JS::RootedObject global(authority->priv->cx, authority->priv->js_global->get ());
 
   src = "new Subject();";
@@ -699,6 +701,13 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
         }
     }
 
+  /* Query the unit, will work only if we got the pidfd from dbus-daemon/broker.
+   * Best-effort operation, will log on failure, but we don't bail here. But
+   * only do so if the pidfd was marked as safe, i.e.: we got it from D-Bus so
+   * it can be trusted end-to-end, with no reuse attack window.  */
+  if (polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (process)))
+    polkit_backend_common_pidfd_to_systemd_unit (pidfd, &system_unit, &no_new_privs);
+
   /* In case we are using PIDFDs, check that the PID still matches to avoid race
    * conditions and PID recycle attacks.
    */
@@ -714,6 +723,10 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
   set_property_strv (authority, obj, "groups", groups);
   set_property_str (authority, obj, "seat", seat_str);
   set_property_str (authority, obj, "session", session_str);
+  set_property_str (authority, obj, "system_unit", system_unit);
+  /* If we have a unit, also record if it has the NoNewPrivileges setting enabled */
+  if (system_unit)
+    set_property_bool (authority, obj, "no_new_privileges", no_new_privs);
   set_property_bool (authority, obj, "local", subject_is_local);
   set_property_bool (authority, obj, "active", subject_is_active);
 
@@ -724,6 +737,7 @@ subject_to_jsval (PolkitBackendJsAuthority  *authority,
     g_object_unref (process);
   free (session_str);
   free (seat_str);
+  free (system_unit);
   g_free (user_name);
   if (groups != NULL)
     g_ptr_array_unref (groups);

@@ -76,6 +76,7 @@ gint            polkit_unix_process_get_owner      (PolkitUnixProcess  *process,
 gint            polkit_unix_process_get_pidfd      (PolkitUnixProcess  *process);
 void            polkit_unix_process_set_pidfd      (PolkitUnixProcess  *process,
                                                     gint                pidfd);
+gboolean        polkit_unix_process_get_pidfd_is_safe (PolkitUnixProcess *process);
 
 G_END_DECLS
 
