@@ -84,7 +84,7 @@
     <para>
       Please send bug reports to either the distribution or the
       polkit-devel mailing list,
-      see the link <ulink url="http://lists.freedesktop.org/mailman/listinfo/polkit-devel"/>
+      see the link <ulink url="https://gitlab.freedesktop.org/polkit/polkit/-/issues/"/>
       on how to subscribe.
     </para>
   </refsect1>

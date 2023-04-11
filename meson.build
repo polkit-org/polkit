@@ -69,7 +69,7 @@ config_h = configuration_data()
 # defines
 set_defines = [
   # package
-  ['PACKAGE_BUGREPORT', 'http://lists.freedesktop.org/mailman/listinfo/polkit-devel'],
+  ['PACKAGE_BUGREPORT', 'https://gitlab.freedesktop.org/polkit/polkit/-/issues/'],
   ['PACKAGE_NAME', meson.project_name()],
   ['PACKAGE_URL', 'http://www.freedesktop.org/wiki/Software/polkit'],
   ['PACKAGE_VERSION', pk_version],
