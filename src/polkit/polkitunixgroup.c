@@ -203,7 +203,7 @@ polkit_unix_group_new (gint gid)
  * Creates a new #PolkitUnixGroup object for a group with the group name
  * @name.
  *
- * Returns: (transfer full): (allow-none): A #PolkitUnixGroup object or %NULL if @error
+ * Returns: (transfer full) (allow-none): A #PolkitUnixGroup object or %NULL if @error
  * is set.
  */
 PolkitIdentity *
