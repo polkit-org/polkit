@@ -556,17 +556,36 @@ runaway_killer_thread_execute_js (gpointer user_data)
   }
   g_free(contents);
 
+  if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
+    polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  "Error locking mutex: %s",
+                                  strerror(pthread_err));
+    return NULL;
+  }
+
   ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_SUCCESS;
   goto end;
 
 free_err:
   g_free(contents);
 err:
+  if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
+    polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  "Error locking mutex: %s",
+                                  strerror(pthread_err));
+    return NULL;
+  }
   ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
 end:
   if ((pthread_err = pthread_cond_signal(&ctx->cond))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
                                   "Error signaling on condition variable: %s",
+                                  strerror(pthread_err));
+    ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
+  }
+  if ((pthread_err = pthread_mutex_unlock(&ctx->mutex))) {
+    polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  "Error unlocking mutex: %s",
                                   strerror(pthread_err));
     ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
   }
@@ -595,10 +614,23 @@ runaway_killer_thread_call_js (gpointer user_data)
       goto err;
     }
 
+  if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
+    polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  "Error locking mutex: %s",
+                                  strerror(pthread_err));
+    return NULL;
+  }
+
   ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_SUCCESS;
   goto end;
 
 err:
+  if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
+    polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  "Error locking mutex: %s",
+                                  strerror(pthread_err));
+    return NULL;
+  }
   ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
 end:
   if ((pthread_err = pthread_cond_signal(&ctx->cond))) {
@@ -607,6 +639,13 @@ end:
                                   strerror(pthread_err));
     ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
   }
+  if ((pthread_err = pthread_mutex_unlock(&ctx->mutex))) {
+    polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  "Error unlocking mutex: %s",
+                                  strerror(pthread_err));
+    ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
+  }
+
   return NULL;
 }
 
