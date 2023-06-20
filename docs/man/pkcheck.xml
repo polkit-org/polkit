@@ -25,7 +25,7 @@
     <cmdsynopsis>
       <command>pkcheck</command>
       <arg><option>--version</option></arg>
-      <arg><option>--help</option></arg>
+      <arg><option>--help|-h</option></arg>
     </cmdsynopsis>
 
     <cmdsynopsis>
@@ -41,13 +41,13 @@
     <cmdsynopsis>
       <command>pkcheck</command>
       <arg choice="plain">
-        <option>--action-id</option>
+        <option>--action-id|-a</option>
         <replaceable>action</replaceable>
       </arg>
 
       <group choice="req">
         <arg choice="plain">
-          <option>--process</option>
+          <option>--process|-p</option>
           <group choice="req">
             <arg choice="plain">
               <replaceable>pid</replaceable>
@@ -61,14 +61,14 @@
           </group>
         </arg>
         <arg choice="plain">
-          <option>--system-bus-name</option>
+          <option>--system-bus-name|-s</option>
           <replaceable>busname</replaceable>
         </arg>
       </group>
 
       <group>
         <arg choice="plain">
-          <option>--allow-user-interaction</option>
+          <option>--allow-user-interaction|-u</option>
         </arg>
       </group>
 
@@ -80,7 +80,7 @@
 
       <group rep="repeat">
         <arg choice="plain">
-          <option>--detail</option>
+          <option>--detail|-d</option>
           <replaceable>key</replaceable>
           <replaceable>value</replaceable>
         </arg>

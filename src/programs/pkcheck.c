@@ -378,7 +378,7 @@ main (int argc, char *argv[])
   g_set_prgname ("pkcheck");
   for (n = 1; n < (guint) argc; n++)
     {
-      if (g_strcmp0 (argv[n], "--help") == 0)
+      if (g_strcmp0 (argv[n], "--help") == 0 || g_strcmp0 (argv[n], "-h") == 0)
         {
           opt_show_help = TRUE;
         }
@@ -396,7 +396,7 @@ main (int argc, char *argv[])
           if (n >= (guint) argc)
             {
 	      g_printerr (_("%s: Argument expected after `%s'\n"),
-			  g_get_prgname (), "--process");
+			  g_get_prgname (), "--process, -p");
               goto out;
             }
 
@@ -429,7 +429,7 @@ main (int argc, char *argv[])
           if (n >= (guint) argc)
             {
 	      g_printerr (_("%s: Argument expected after `%s'\n"),
-			  g_get_prgname (), "--system-bus-name");
+			  g_get_prgname (), "--system-bus-name, -s");
               goto out;
             }
 
@@ -441,7 +441,7 @@ main (int argc, char *argv[])
           if (n >= (guint) argc)
             {
 	      g_printerr (_("%s: Argument expected after `%s'\n"),
-			  g_get_prgname (), "--action-id");
+			  g_get_prgname (), "--action-id, -a");
               goto out;
             }
 
@@ -455,7 +455,7 @@ main (int argc, char *argv[])
           n++;
           if (n >= (guint) argc)
             {
-	      g_printerr (_("%s: Two arguments expected after `--detail'\n"),
+	      g_printerr (_("%s: Two arguments expected after `--detail, -d'\n"),
 			  g_get_prgname ());
               goto out;
             }
@@ -464,7 +464,7 @@ main (int argc, char *argv[])
           n++;
           if (n >= (guint) argc)
             {
-	      g_printerr (_("%s: Two arguments expected after `--detail'\n"),
+	      g_printerr (_("%s: Two arguments expected after `--detail, -d'\n"),
 			  g_get_prgname ());
               goto out;
             }
