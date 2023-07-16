@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: polkit\n"
 "Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2023-03-16 03:28+0000\n"
-"PO-Revision-Date: 2023-03-18 13:28+0100\n"
+"POT-Creation-Date: 2023-06-20 15:27+0000\n"
+"PO-Revision-Date: 2023-07-16 12:44+0200\n"
 "Last-Translator: Piotr Drąg <piotrdrag@gmail.com>\n"
 "Language-Team: Polish <community-poland@mozilla.org>\n"
 "Language: pl\n"
@@ -146,8 +146,8 @@ msgstr "%s: nieprawidłowa wartość „%s” opcji --process\n"
 
 #: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
-msgid "%s: Two arguments expected after `--detail'\n"
-msgstr "%s: oczekiwano dwóch parametrów po opcji „--detail”\n"
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr "%s: oczekiwano dwóch parametrów po opcji „--detail, -d”\n"
 
 #: src/programs/pkcheck.c:528
 #, c-format
