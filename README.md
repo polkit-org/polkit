@@ -49,6 +49,9 @@ Please report non-security bugs via the polkit's freedesktop.org GitLab at
 
  https://gitlab.freedesktop.org/polkit/polkit/issues
 
+The other way, in case of **non**-security issues, is to contact developers via official polkit's FreeDesktop.org mailing list at
+
+polkit-devel@lists.freedesktop.org  
 
 SECURITY ISSUES
 ===============
