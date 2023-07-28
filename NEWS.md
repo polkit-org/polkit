@@ -1,3 +1,47 @@
+## polkit 123
+
+### Highlights:
+- better safety with deeper resctiction of the configuration files
+- better safety with restricting the daemon's owner under systemd
+- better safety with the systemd unit sandboxing
+- less thread races during upload of the configuration
+
+### Build requirements
+- glib, gobject, gio >= 2.32
+- mozjs-102 OR duktape
+- gobject-introspection >= 0.6.2 (optional)
+- pam (optional)
+- ConsoleKit OR systemd
+- gettext
+- meson
+
+### Changes since polkit 122:
+
+* Laurent Gauthier
+    * prevent wrongful termination of runaway thread
+* Luca Boccassi
+    * Stop installing /usr/share/polkit-1/rules.d as 700/polkitd
+    * set User/Group and don't change uid/gid if already set
+* bboy_vi, liudun, Marco Trevisan, Marius Bakke, Matej Focko, Olivier Duchateau, Sam James, Val Packett
+    * general and/or buildsystem fixes
+* Topi Miettinen
+    * systemd service hardening
+* Vincent Mihalkovic
+    * Packit service integration
+    * pkcheck: manpage and help sync
+    * general fixes
+* Jan Rybar
+    * Packit service integration
+    * change of ownership of custom configs
+    * general fixes
+* Aleksandr Melman, Anders Jonsson, Jürgen Benvenuti, Piotr Drąg, Sabri Unal
+    * localization
+
+
+**Thanks to everyone involved for making this possible!**
+
+The polkit team & polkit community
+July 28, 2023
 ## polkit 122
 
 ### Highlights:
