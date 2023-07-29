@@ -56,7 +56,16 @@
 static class JsInitHelperType
 {
 public:
-	JsInitHelperType() { JS_Init(); }
+	JsInitHelperType()
+	{
+	  /* Disable JIT because it needs W/X mapping, which is not allowed by
+	   * our systemd hardening setting.
+	   */
+	  JS::DisableJitBackend();
+
+	  JS_Init();
+	}
+
 	~JsInitHelperType() { JS_ShutDown(); }
 } JsInitHelper;
 
