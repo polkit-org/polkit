@@ -82,4 +82,9 @@ Your merge requests and patch suggestions are welcome! If you want to contribute
 
 Should you already have a freedesktop.org Gitlab account, please file your merge request. In this case, please **don't force-push any further changes** into the merge request and add a new commit into the MR instead.
 
+Please note that there are restrictions in effect on FreeDesktop.org's instance of Gitlab, therefore new users need to take action before contributing directly via their own fork:  
+https://gitlab.freedesktop.org/freedesktop/freedesktop/-/wikis/home#warning-restrictions-due-to-spam-warning  
+
+
+
 Thank you in advance.
