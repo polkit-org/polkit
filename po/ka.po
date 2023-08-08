@@ -1,22 +1,22 @@
-# Georgian translation for polkit.
-# Copyright (C) 2022 polkit's COPYRIGHT HOLDER
+# Georgian translation of polkit
+# Copyright (C) 2023 Polkit's authors
 # This file is distributed under the same license as the polkit package.
-# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2022.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2023.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: polkit master\n"
-"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2022-03-27 15:28+0000\n"
-"PO-Revision-Date: 2022-09-14 09:24+0200\n"
+"Project-Id-Version: polkit\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-08-07 21:51+0200\n"
+"PO-Revision-Date: 2023-08-07 21:55+0200\n"
 "Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
-"Language-Team: Georgian (<nothing>)\n"
+"Language-Team: Georgian <(nothing)>\n"
 "Language: ka\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
@@ -52,7 +52,7 @@ msgstr "[ქმედება]"
 msgid "Output detailed action information"
 msgstr "ქმედების დეტალური ინფორმაციის გამოტანა"
 
-#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:95
+#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:104
 msgid "Show version"
 msgstr "ვერსიის ჩვენება"
 
@@ -60,7 +60,7 @@ msgstr "ვერსიის ჩვენება"
 msgid "[--action-id ACTION]"
 msgstr "[--action-id ACTION]"
 
-#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:118
+#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:127
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
@@ -70,7 +70,7 @@ msgstr ""
 "%s ვებგვერდი: <%s>"
 
 #: src/programs/pkaction.c:147 src/programs/pkcheck.c:498
-#: src/programs/pkttyagent.c:132
+#: src/programs/pkttyagent.c:141
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: მოულოდნელი არგუმენტი `%s'\n"
@@ -142,8 +142,8 @@ msgstr "%s: --process -ის არასწორი მნიშვნელ�
 
 #: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
-msgid "%s: Two arguments expected after `--detail'\n"
-msgstr "%s: `--detail'-ის შემდეგ საჭიროა ორი არგუმენტის მითთება\n"
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr "%s: `--detail'-ის და '-d-ის შემდეგ საჭიროა ორი არგუმენტის მითითება\n"
 
 #: src/programs/pkcheck.c:528
 #, c-format
@@ -154,48 +154,56 @@ msgstr "%s: თემა მითითებული არაა\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: src/programs/pkexec.c:807
-msgid "Authentication is needed to run `$(program)' as the super user"
-msgstr "`$(program)'-ის სხვა სახელით გაშვებას ავთენტიკაცია სჭირდება"
+#: src/programs/pkexec.c:821
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr "'$(cmdlne_short)'-ის ზემომხმარებლით გაშვებას ავთენტიკაცია სჭირდება"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: src/programs/pkexec.c:817
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
-msgstr "`$(program)'-ის $(user.display)-ით გაშვებას ავთენტიკაცია სჭირდება"
+#: src/programs/pkexec.c:831
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
+msgstr ""
+"'$(cmdlne_short)'-ის მომხმარებლით '$(user.display)' გაშვებას ავთენტიკაცია "
+"სჭირდება"
 
-#: src/programs/pkttyagent.c:78
+#: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
 msgstr "თუ აგენტი არსებობს, ის არ ჩანაცვლდება"
 
-#: src/programs/pkttyagent.c:82
+#: src/programs/pkttyagent.c:91
 msgid "Close FD when the agent is registered"
 msgstr "FD-ის დახურვა აგენტის რეგისტრაციის შემდეგ"
 
-#: src/programs/pkttyagent.c:82
+#: src/programs/pkttyagent.c:91
 msgid "FD"
 msgstr "FD"
 
-#: src/programs/pkttyagent.c:86
+#: src/programs/pkttyagent.c:95
 msgid "Register the agent for the specified process"
 msgstr "აგენტის რეგისტრაცია მითითებული პროცესისთვის"
 
-#: src/programs/pkttyagent.c:87
+#: src/programs/pkttyagent.c:96
 msgid "PID[,START_TIME]"
 msgstr "PID[,START_TIME]"
 
-#: src/programs/pkttyagent.c:91
+#: src/programs/pkttyagent.c:100
 msgid "Register the agent for the owner of BUS_NAME"
 msgstr "აგენტის რეგისტრაცია BUS_NAME-ის მფლობელისთვის"
 
-#: src/programs/pkttyagent.c:91
+#: src/programs/pkttyagent.c:100
 msgid "BUS_NAME"
 msgstr "BUS_NAME"
 
-#: src/programs/pkttyagent.c:164
+#: src/programs/pkttyagent.c:155
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr "%s: პარამეტრები --process და --system-bus-name ურთიერთგამომრიცხავია\n"
+
+#: src/programs/pkttyagent.c:179
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: პროცესის არასწორი მიმთითებელი: %s\n"
