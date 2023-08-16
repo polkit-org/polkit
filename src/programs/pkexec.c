@@ -53,6 +53,7 @@
 static gchar *original_user_name = NULL;
 static gchar *original_cwd;
 static gchar *command_line = NULL;
+static gchar *cmdline_short = NULL;
 static struct passwd *pw;
 
 #ifndef HAVE_CLEARENV
@@ -508,6 +509,7 @@ main (int argc, char *argv[])
   path = NULL;
   exec_argv = NULL;
   command_line = NULL;
+  cmdline_short = NULL;
   opt_user = NULL;
   local_agent_handle = NULL;
 
@@ -802,7 +804,6 @@ main (int argc, char *argv[])
   polkit_details_insert (details, "program", path);
   polkit_details_insert (details, "command_line", command_line);
 
-  gchar *cmdline_short = NULL;
   cmdline_short = g_strdup(command_line);
   if (strlen(command_line) > 80)
       g_stpcpy(g_stpcpy( cmdline_short + 38, " ... " ),
