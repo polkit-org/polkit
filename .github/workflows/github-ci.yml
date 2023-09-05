@@ -1,0 +1,68 @@
+name: Fedora CI build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:latest
+    env:
+      DEPENDENCIES: gcc
+                    gcc-c++
+                    libtool
+                    autoconf
+                    automake
+                    gettext
+                    gettext-devel
+                    gtk-doc
+                    gobject-introspection-devel
+                    make
+                    libxslt
+                    pkgconfig(gio-2.0)
+                    pkgconfig(mozjs-91)
+                    pkgconfig(duktape)
+                    expat-devel
+                    pkgconfig(libsystemd)
+                    pkgconfig(systemd)
+                    pam-devel
+                    python3-dbusmock
+                    meson
+                    git
+                    dbus-devel
+    steps:
+      - name: Checkout Git Repository
+        uses: actions/checkout@v3
+      - name: Install packages required for build
+        run: |
+          dnf upgrade -y --nogpgcheck fedora-release fedora-repos* && \
+          dnf update -y && dnf install -y $DEPENDENCIES
+      - name: meson setup
+        run: |
+          meson setup \
+           -D authfw=pam \
+           -D examples=true \
+           -D gtk_doc=true \
+           -D introspection=true \
+           -D man=true \
+           -D session_tracking=libsystemd-login \
+           -D tests=true \
+           -D cpp_args="-D_FORTIFY_SOURCE=2" \
+           builddir
+      - name: meson compile
+        run: meson compile -C builddir
+      - name: meson test
+        run: meson test    -C builddir
+      - name: meson install
+        run: meson install -C builddir
+      - name: meson DESTDIR install
+        run: DESTDIR=$(pwd)/DESTDIR meson install -C builddir
+      - name: test logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: meson-logs
+          path: builddir/meson-logs/*.txt
