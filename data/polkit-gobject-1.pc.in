@@ -2,6 +2,7 @@ prefix=@prefix@
 exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
+rulesdir=@datarootdir@/polkit-1/rules.d/
 policydir=@datarootdir@/polkit-1/actions/
 actiondir=@datarootdir@/polkit-1/actions/
 
