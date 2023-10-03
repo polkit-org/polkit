@@ -20,6 +20,7 @@ srpm_build_deps:
 actions:
   post-upstream-clone:
     - "wget https://src.fedoraproject.org/rpms/polkit/raw/rawhide/f/polkit.spec -O polkit.spec"
+    - "wget https://src.fedoraproject.org/rpms/polkit/raw/rawhide/f/polkit.sysusers -O polkit.sysusers"
     - "sed -ri '/^Patch[0-9]+/d' polkit.spec"
 
 jobs:
