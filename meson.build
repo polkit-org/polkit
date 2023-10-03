@@ -177,19 +177,21 @@ config_h.set('HAVE_' + host_system.to_upper(), true)
 # Check whether setnetgrent has a return value
 config_h.set('HAVE_NETGROUP_H', cc.has_header('netgroup.h'))
 
-setnetgrent_return_src = '''
-  #include <stddef.h>
-  #ifdef HAVE_NETGROUP_H
-  #include <netgroup.h>
-  #else
-  #include <netdb.h>
-  #endif
-  int main() {
-      int r = setnetgrent (NULL);
-  };
-'''
+if config_h.get('HAVE_SETNETGRENT', false)
+  setnetgrent_return_src = '''
+    #include <stddef.h>
+    #ifdef HAVE_NETGROUP_H
+    #include <netgroup.h>
+    #else
+    #include <netdb.h>
+    #endif
+    int main() {
+        int r = setnetgrent (NULL);
+    };
+  '''
 
-config_h.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, name: 'setnetgrent return support'))
+  config_h.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, name: 'setnetgrent return support'))
+endif
 
 # Select wether to use libsystemd-login, libelogind or ConsoleKit for session tracking
 session_tracking = get_option('session_tracking')
