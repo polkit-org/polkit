@@ -5,7 +5,7 @@ Documentation=man:polkit(8)
 [Service]
 Type=dbus
 BusName=org.freedesktop.PolicyKit1
-CapabilityBoundingSet=
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID
 DeviceAllow=/dev/null rw
 DevicePolicy=strict
 ExecStart=@libprivdir@/polkitd --no-debug
