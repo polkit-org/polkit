@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: polkit master\n"
 "Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2023-01-28 03:27+0000\n"
-"PO-Revision-Date: 2023-01-28 14:37+0100\n"
+"POT-Creation-Date: 2023-09-12 15:27+0000\n"
+"PO-Revision-Date: 2023-09-12 19:52+0200\n"
 "Last-Translator: Jürgen Benvenuti <gastornis@posteo.org>\n"
 "Language-Team: German <gnome-de@gnome.org>\n"
 "Language: de\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.1.1\n"
+"X-Generator: Poedit 3.3.1\n"
 
 #: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
@@ -149,8 +149,8 @@ msgstr "%s: Ungültiger Wert »%s« für »--process«\n"
 
 #: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
-msgid "%s: Two arguments expected after `--detail'\n"
-msgstr "%s: Es werden zwei Argumente nach »--detail« erwartet\n"
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr "%s: Es werden zwei Argumente nach »--detail, -d« erwartet\n"
 
 #: src/programs/pkcheck.c:528
 #, c-format
@@ -161,21 +161,23 @@ msgstr "%s: Betreff nicht angegeben\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: src/programs/pkexec.c:813
-msgid "Authentication is needed to run `$(program)' as the super user"
+#: src/programs/pkexec.c:822
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
-"Legitimierung ist erforderlich, um »$(program)« als Superuser auszuführen"
+"Legitimierung ist erforderlich, um »$(cmdline_short)« als Superuser "
+"auszuführen"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: src/programs/pkexec.c:823
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+#: src/programs/pkexec.c:832
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"Legitimierung ist erforderlich, um »$(program)« als Benutzer $(user.display) "
-"auszuführen"
+"Legitimierung ist erforderlich, um »$(cmdline_short)« als Benutzer $(user."
+"display) auszuführen"
 
 #: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
