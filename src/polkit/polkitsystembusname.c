@@ -493,7 +493,7 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
   GMainContext *tmp_context = NULL;
   GVariantIter *iter;
   GVariant *result, *value;
-  GUnixFDList *fd_list;
+  GUnixFDList *fd_list = NULL;
   GError *dbus_error = NULL;
   const gchar *key;
   guint32 uid = G_MAXUINT32, pid = 0;
@@ -598,6 +598,8 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
     g_error_free (dbus_error);
   if (gids)
     g_array_unref (gids);
+  if (fd_list != NULL)
+    g_object_unref (fd_list);
 
   return ret;
 }
