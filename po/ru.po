@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: polkit master\n"
 "Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2023-04-06 03:28+0000\n"
-"PO-Revision-Date: 2023-04-06 15:06+0300\n"
+"POT-Creation-Date: 2023-11-28 03:27+0000\n"
+"PO-Revision-Date: 2023-11-28 14:40+0300\n"
 "Last-Translator: Aleksandr Melman <Alexmelman88@gmail.com>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.4.1\n"
 
 #: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
@@ -147,8 +147,8 @@ msgstr "%s: Недопустимое значение --process `%s'\n"
 
 #: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
-msgid "%s: Two arguments expected after `--detail'\n"
-msgstr "%s: Ожидается два аргумента после `--detail'\n"
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr "%s: Ожидается два аргумента после `--detail, -d'\n"
 
 #: src/programs/pkcheck.c:528
 #, c-format
@@ -159,7 +159,7 @@ msgstr "%s: Субъект не указан\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: src/programs/pkexec.c:821
+#: src/programs/pkexec.c:822
 msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
 "Необходима аутентификация для запуска `$(cmdline_short)' от имени "
@@ -170,7 +170,7 @@ msgstr ""
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: src/programs/pkexec.c:831
+#: src/programs/pkexec.c:832
 msgid ""
 "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
