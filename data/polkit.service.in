@@ -10,7 +10,6 @@ DeviceAllow=/dev/null rw
 DevicePolicy=strict
 ExecStart=@libprivdir@/polkitd --no-debug
 User=@polkitd_user@
-Group=@polkitd_user@
 LimitMEMLOCK=0
 LockPersonality=yes
 MemoryDenyWriteExecute=yes

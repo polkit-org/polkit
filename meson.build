@@ -218,6 +218,8 @@ if enable_logind
     # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
     systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
   endif
+
+  systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
 endif
 config_h.set('HAVE_LIBSYSTEMD', enable_logind)
 
@@ -226,6 +228,9 @@ config_h.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#includ
 # User for running polkitd
 polkitd_user = get_option('polkitd_user')
 config_h.set_quoted('POLKITD_USER', polkitd_user)
+
+polkitd_uid = get_option('polkitd_uid')
+config_h.set('POLKITD_UID', polkitd_uid)
 
 # Select which authentication framework to use
 auth_deps = []
@@ -403,6 +408,9 @@ if enable_logind
   output += '        systemdsystemunitdir:     ' + systemd_systemdsystemunitdir + '\n'
 endif
 output += '        polkitd user:             ' + polkitd_user + ' \n'
+if polkitd_uid != '-'
+  output += '        polkitd UID:              ' + polkitd_uid + ' \n'
+endif
 output += '        Javascript engine:        ' + js_engine + '\n'
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
 if libs_only

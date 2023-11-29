@@ -1,4 +1,8 @@
-service_conf = {'libprivdir': pk_prefix / pk_libprivdir, 'polkitd_user': polkitd_user}
+service_conf = {
+  'libprivdir': pk_prefix / pk_libprivdir,
+  'polkitd_user': polkitd_user,
+  'polkitd_uid': polkitd_uid,
+}
 
 configure_file(
   input: 'org.freedesktop.PolicyKit1.service.in',
@@ -33,6 +37,14 @@ if session_tracking == 'libsystemd-login'
     configuration: service_conf,
     install: true,
     install_dir: systemd_systemdsystemunitdir,
+  )
+
+  configure_file(
+    input: 'polkit.conf.in',
+    output: '@BASENAME@',
+    configuration: service_conf,
+    install: true,
+    install_dir: systemd_sysusers_dir,
   )
 endif
 
