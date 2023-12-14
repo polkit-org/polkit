@@ -243,7 +243,14 @@ polkit_subject_from_string  (const gchar   *str,
       gint scanned_pid;
       guint64 scanned_starttime;
       gint scanned_uid;
-      if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT ":%d", &scanned_pid, &scanned_starttime, &scanned_uid) == 3)
+      gint scanned_pidfd;
+      if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT ":%d:%d", &scanned_pid, &scanned_starttime, &scanned_uid, &scanned_pidfd) == 4)
+        {
+          subject = polkit_unix_process_new_pidfd (scanned_pidfd, scanned_uid, NULL);
+          if (subject)
+            polkit_unix_process_set_start_time (POLKIT_UNIX_PROCESS (subject), scanned_starttime);
+        }
+      else if (sscanf (str, "unix-process:%d:%" G_GUINT64_FORMAT ":%d", &scanned_pid, &scanned_starttime, &scanned_uid) == 3)
         {
           subject = polkit_unix_process_new_for_owner (scanned_pid, scanned_starttime, scanned_uid);
         }
@@ -312,6 +319,9 @@ polkit_subject_to_gvariant (PolkitSubject *subject)
                              g_variant_new_uint64 (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject))));
       g_variant_builder_add (&builder, "{sv}", "uid",
                              g_variant_new_int32 (polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject))));
+      if (polkit_unix_process_get_pidfd_is_safe(POLKIT_UNIX_PROCESS (subject)))
+        g_variant_builder_add (&builder, "{sv}", "pidfd",
+                               g_variant_new_handle (polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (subject))));
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
@@ -391,8 +401,9 @@ lookup_asv (GVariant            *dict,
 }
 
 PolkitSubject *
-polkit_subject_new_for_gvariant (GVariant  *variant,
-                                 GError    **error)
+polkit_subject_new_for_gvariant_invocation (GVariant              *variant,
+                                            GDBusMethodInvocation *invocation,
+                                            GError                **error)
 {
   PolkitSubject *ret;
   const gchar *kind;
@@ -407,28 +418,12 @@ polkit_subject_new_for_gvariant (GVariant  *variant,
 
   if (g_strcmp0 (kind, "unix-process") == 0)
     {
+      GUnixFDList *fd_list;
       GVariant *v;
+      gint index, pidfd;
       guint32 pid;
       guint64 start_time;
       gint32 uid;
-
-      v = lookup_asv (details_gvariant, "pid", G_VARIANT_TYPE_UINT32, error);
-      if (v == NULL)
-        {
-          g_prefix_error (error, "Error parsing unix-process subject: ");
-          goto out;
-        }
-      pid = g_variant_get_uint32 (v);
-      g_variant_unref (v);
-
-      v = lookup_asv (details_gvariant, "start-time", G_VARIANT_TYPE_UINT64, error);
-      if (v == NULL)
-        {
-          g_prefix_error (error, "Error parsing unix-process subject: ");
-          goto out;
-        }
-      start_time = g_variant_get_uint64 (v);
-      g_variant_unref (v);
 
       v = lookup_asv (details_gvariant, "uid", G_VARIANT_TYPE_INT32, NULL);
       if (v != NULL)
@@ -441,7 +436,42 @@ polkit_subject_new_for_gvariant (GVariant  *variant,
           uid = -1;
         }
 
-      ret = polkit_unix_process_new_for_owner (pid, start_time, uid);
+      fd_list = g_dbus_message_get_unix_fd_list (g_dbus_method_invocation_get_message (invocation));
+      if (fd_list)
+        {
+          v = lookup_asv (details_gvariant, "pidfd", G_VARIANT_TYPE_HANDLE, NULL);
+          if (v != NULL)
+            {
+              index = g_variant_get_handle (v);
+              pidfd = g_unix_fd_list_get (fd_list, index, NULL);
+              g_variant_unref (v);
+
+              ret = polkit_unix_process_new_pidfd (pidfd, uid, NULL);
+            }
+        }
+
+      if (!ret)
+        {
+          v = lookup_asv (details_gvariant, "pid", G_VARIANT_TYPE_UINT32, error);
+          if (v == NULL)
+            {
+              g_prefix_error (error, "Error parsing unix-process subject: ");
+              goto out;
+            }
+          pid = g_variant_get_uint32 (v);
+          g_variant_unref (v);
+
+          v = lookup_asv (details_gvariant, "start-time", G_VARIANT_TYPE_UINT64, error);
+          if (v == NULL)
+            {
+              g_prefix_error (error, "Error parsing unix-process subject: ");
+              goto out;
+            }
+          start_time = g_variant_get_uint64 (v);
+          g_variant_unref (v);
+
+          ret = polkit_unix_process_new_for_owner (pid, start_time, uid);
+        }
     }
   else if (g_strcmp0 (kind, "unix-session") == 0)
     {
@@ -494,4 +524,11 @@ polkit_subject_new_for_gvariant (GVariant  *variant,
  out:
   g_variant_unref (details_gvariant);
   return ret;
+}
+
+PolkitSubject *
+polkit_subject_new_for_gvariant (GVariant  *variant,
+                                 GError    **error)
+{
+  return polkit_subject_new_for_gvariant_invocation (variant, NULL, error);
 }

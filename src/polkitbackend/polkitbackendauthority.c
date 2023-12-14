@@ -742,7 +742,7 @@ server_handle_check_authorization (Server                 *server,
                  &cancellation_id);
 
   error = NULL;
-  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
+  subject = polkit_subject_new_for_gvariant_invocation (subject_gvariant, invocation, &error);
   if (subject == NULL)
     {
       g_prefix_error (&error, "Error getting subject: ");
