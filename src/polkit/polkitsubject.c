@@ -442,6 +442,15 @@ polkit_subject_new_for_gvariant_invocation (GVariant              *variant,
           v = lookup_asv (details_gvariant, "pidfd", G_VARIANT_TYPE_HANDLE, NULL);
           if (v != NULL)
             {
+              if (uid == -1)
+                {
+                  g_set_error (error,
+                               POLKIT_ERROR,
+                               POLKIT_ERROR_FAILED,
+                               "Error parsing unix-process subject: 'pidfd' specified withtout 'uid'");
+                  goto out;
+                }
+
               index = g_variant_get_handle (v);
               pidfd = g_unix_fd_list_get (fd_list, index, NULL);
               g_variant_unref (v);
