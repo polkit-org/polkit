@@ -148,6 +148,9 @@ load_scripts (PolkitBackendJsAuthority  *authority)
 
       if (!execute_script_with_runaway_killer(authority, filename))
           continue;
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    "Successfully loaded and evaluated script %s",
+                                    filename);
       num_scripts++;
     }
 
