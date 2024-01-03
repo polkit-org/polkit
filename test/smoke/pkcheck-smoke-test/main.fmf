@@ -1,0 +1,13 @@
+summary: vmihalkos smoke test
+description: |
+    SMOKE TEST
+contact: vmihalko
+component:
+  - polkit
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - polkit
+duration: 2m
+extra-summary: ''
+extra-task: ''
