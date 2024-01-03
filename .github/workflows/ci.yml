@@ -1,0 +1,37 @@
+---
+# vi: ts=2 sw=2 et:
+
+name: Build & test
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: registry.fedoraproject.org/fedora:latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [BUILD_GCC, GCC, GCC_ASAN_UBSAN, BUILD_CLANG, CLANG]
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v4
+
+      - name: Install build & test dependencies
+        run: |
+          sudo dnf install -y dnf-plugins-core python3-dbusmock clang compiler-rt libasan libubsan
+          sudo dnf builddep -y polkit
+
+      - name: Build & test
+        run: sudo --preserve-env=GITHUB_ACTIONS,CI .github/workflows/ci.sh ${{ matrix.phase }}
