@@ -32,6 +32,8 @@
 #include <grp.h>
 #include <pwd.h>
 #include <errno.h>
+#include <paths.h>
+#include <spawn.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>
@@ -488,7 +490,7 @@ main (int argc, char *argv[])
   GPtrArray *saved_env;
   gchar *opt_user;
   pid_t pid_of_caller;
-  gpointer local_agent_handle;
+  pid_t pid_of_local_agent;
 
 
   /*
@@ -511,7 +513,7 @@ main (int argc, char *argv[])
   command_line = NULL;
   cmdline_short = NULL;
   opt_user = NULL;
-  local_agent_handle = NULL;
+  pid_of_local_agent = 0;
 
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
@@ -752,28 +754,6 @@ main (int argc, char *argv[])
       goto out;
     }
 
-  /* This process we want to check an authorization for is the process
-   * that launched us - our parent process.
-   *
-   * At the time the parent process fork()'ed and exec()'ed us, the
-   * process had the same real-uid that we have now. So we use this
-   * real-uid instead of of looking it up to avoid TOCTTOU issues
-   * (consider the parent process exec()'ing a setuid helper).
-   *
-   * On the other hand, the monotonic process start-time is guaranteed
-   * to never change so it's safe to look that up given only the PID
-   * since we are guaranteed to be nuked if the parent goes away
-   * (cf. the prctl(2) call above).
-   */
-  subject = polkit_unix_process_new_for_owner (pid_of_caller,
-                                               0, /* 0 means "look up start-time in /proc" */
-                                               getuid ());
-  /* really double-check the invariants guaranteed by the PolkitUnixProcess class */
-  g_assert (subject != NULL);
-  g_assert (polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)) == pid_of_caller);
-  g_assert (polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject)) >= 0);
-  g_assert (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) > 0);
-
   error = NULL;
   authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
   if (authority == NULL)
@@ -790,6 +770,23 @@ main (int argc, char *argv[])
                                     exec_argv[1],
                                     &allow_gui);
   g_assert (action_id != NULL);
+
+  if (!opt_disable_internal_agent)
+    {
+       char arg0[] = _PATH_BSHELL;
+       char arg1[] = "-c";
+       char arg2[] = "pkttyagent --fallback";
+
+       if (posix_spawn (&pid_of_local_agent,
+                        arg0,
+                        NULL,
+                        NULL,
+                        (char *const[4]) { arg0, arg1, arg2 },
+                        environ))
+         {
+           pid_of_local_agent = 0;
+         }
+    }
 
   details = polkit_details_new ();
   polkit_details_insert (details, "user", pw->pw_name);
@@ -834,7 +831,29 @@ main (int argc, char *argv[])
     }
   polkit_details_insert (details, "polkit.gettext_domain", GETTEXT_PACKAGE);
 
+  /* This process we want to check an authorization for is the process
+   * that launched us - our parent process.
+   *
+   * At the time the parent process fork()'ed and exec()'ed us, the
+   * process had the same real-uid that we have now. So we use this
+   * real-uid instead of of looking it up to avoid TOCTTOU issues
+   * (consider the parent process exec()'ing a setuid helper).
+   *
+   * On the other hand, the monotonic process start-time is guaranteed
+   * to never change so it's safe to look that up given only the PID
+   * since we are guaranteed to be nuked if the parent goes away
+   * (cf. the prctl(2) call above).
+   */
  try_again:
+  subject = polkit_unix_process_new_for_owner (pid_of_caller,
+                                               0, /* 0 means "look up start-time in /proc" */
+                                               getuid ());
+  /* really double-check the invariants guaranteed by the PolkitUnixProcess class */
+  g_assert (subject != NULL);
+  g_assert (polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)) == pid_of_caller);
+  g_assert (polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject)) >= 0);
+  g_assert (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject)) > 0);
+
   error = NULL;
   result = polkit_authority_check_authorization_sync (authority,
                                                       subject,
@@ -857,40 +876,16 @@ main (int argc, char *argv[])
     }
   else if (polkit_authorization_result_get_is_challenge (result))
     {
-      if (local_agent_handle == NULL && !opt_disable_internal_agent)
-        {
-          PolkitAgentListener *listener;
-          error = NULL;
-          /* this will fail if we can't find a controlling terminal */
-          listener = polkit_agent_text_listener_new (NULL, &error);
-          if (listener == NULL)
-            {
-              g_printerr ("Error creating textual authentication agent: %s\n", error->message);
-              g_error_free (error);
-              goto out;
-            }
-          local_agent_handle = polkit_agent_listener_register (listener,
-                                                               POLKIT_AGENT_REGISTER_FLAGS_RUN_IN_THREAD,
-                                                               subject,
-                                                               NULL, /* object_path */
-                                                               NULL, /* GCancellable */
-                                                               &error);
-          g_object_unref (listener);
-          if (local_agent_handle == NULL)
-            {
-              g_printerr ("Error registering local authentication agent: %s\n", error->message);
-              g_error_free (error);
-              goto out;
-            }
-          g_object_unref (result);
-          result = NULL;
-          goto try_again;
-        }
-      else
+      if (pid_of_local_agent < 2 || kill (pid_of_local_agent, 0))
         {
           g_printerr ("Error executing command as another user: No authentication agent found.\n");
           goto out;
         }
+
+      g_object_unref (result);
+      g_object_unref (subject);
+      pid_of_caller = getpid ();
+      goto try_again;
     }
   else
     {
@@ -908,6 +903,11 @@ main (int argc, char *argv[])
                       "This incident has been reported.\n");
         }
       goto out;
+    }
+
+  if (pid_of_local_agent > 1)
+    {
+      kill (pid_of_local_agent, SIGTERM);
     }
 
   /* Set PATH to a safe list */
@@ -1046,8 +1046,10 @@ main (int argc, char *argv[])
 
  out:
   /* if applicable, nuke the local authentication agent */
-  if (local_agent_handle != NULL)
-    polkit_agent_listener_unregister (local_agent_handle);
+  if (pid_of_local_agent > 1)
+    {
+      kill (pid_of_local_agent, SIGTERM);
+    }
 
   if (result != NULL)
     g_object_unref (result);
