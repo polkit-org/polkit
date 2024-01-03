@@ -69,11 +69,10 @@ class TestPolkitBackendJsAuthority(dbusmock.DBusTestCase):
             print('\n %s... not found' % test_path)
             test_path = self.top_build_dir + '/test/polkitbackend/polkitbackendjsauthoritytest'
 
-        out = subprocess.check_output(self.mocklibc_path + ' ' + test_path,
-                                      stderr=subprocess.STDOUT,
-                                      shell=True,
-                                      universal_newlines=True)
-        print(out)
+        subprocess.run(self.mocklibc_path + ' ' + test_path,
+                       check=True,
+                       shell=True,
+                       universal_newlines=True)
 
 if __name__ == '__main__':
     # avoid writing to stderr
