@@ -24,10 +24,14 @@ exe = executable(
 
 prog = find_program('polkitbackendjsauthoritytest-wrapper.py')
 
-test(
-  test_unit,
-  prog,
-  env: test_env,
-  is_parallel: false,
-  timeout: 90,
-)
+if not get_option('b_sanitize').split(',').contains('address')
+  test(
+    test_unit,
+    prog,
+    env: test_env,
+    is_parallel: false,
+    timeout: 90,
+  )
+else
+  warning('@0@ is not (yet) compatible with AddressSanitizer, skipping'.format(test_unit))
+endif
