@@ -1,3 +1,43 @@
+## polkit 124
+
+### Highlights:
+- PIDFDs are used if available to track processes
+- pidfd parameter available for CheckAuthorization()
+- systemd-sysuser enabled for polkit
+
+### Build requirements
+- glib, gobject, gio >= 2.32
+- mozjs-115 OR duktape
+- gobject-introspection >= 0.6.2 (optional)
+- pam (optional)
+- ConsoleKit OR systemd
+- gettext
+- meson
+
+### Changes since polkit 123:
+
+* Luca Boccassi
+    * PIDFD implementation and fixes/extensions around it
+    * new systemd_unit and no_new_privileges subject attributes 
+* Ray Strode, Sam James
+    * general and/or buildsystem fixes
+* Vincent Mihalkovic
+    * uninitialized pointer warning fix
+* Xi Ruoyao
+    * mozjs 115 dependency upgrade and fixes
+* Jan Rybar
+    * general fixes
+* Zbigniew Jędrzejewski-Szmek
+    * systemd-sysuser implementation
+* Aleksandr Melman, Anders Jonsson, AsciiWolf, Christian K, NorwayFun, Sabri Unal
+    * localization
+
+
+**Many thanks to the people involved, the contributors and enthusiasts!**
+
+The polkit team & polkit community  
+Jan 17, 2024
+
 ## polkit 123
 
 ### Highlights:
