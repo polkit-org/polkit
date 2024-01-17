@@ -163,7 +163,7 @@ polkit_identity_from_string  (const gchar   *str,
       val = g_ascii_strtoull (str + sizeof "unix-user:" - 1,
                               &endptr,
                               10);
-      if (*endptr == '\0')
+      if (*endptr == '\0' && getpwuid((gint) val))
         identity = polkit_unix_user_new ((gint) val);
       else
         identity = polkit_unix_user_new_for_name (str + sizeof "unix-user:" - 1,
