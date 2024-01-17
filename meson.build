@@ -263,7 +263,7 @@ if enable_pam
 
   pam_prefix = get_option('pam_prefix')
   if pam_prefix == ''
-    pam_prefix = pk_sysconfdir / 'pam.d'
+    pam_prefix = pk_prefix / 'lib/pam.d'
   else
     message('PAM files will be installed in prefix ' + pam_prefix)
   endif
@@ -420,7 +420,8 @@ if enable_pam
   output += '        PAM file auth:            ' + pam_conf['PAM_FILE_INCLUDE_AUTH'] + '\n'
   output += '        PAM file acount:          ' + pam_conf['PAM_FILE_INCLUDE_ACCOUNT'] + '\n'
   output += '        PAM file password:        ' + pam_conf['PAM_FILE_INCLUDE_PASSWORD'] + '\n'
-  output += '        PAM file session:         ' + pam_conf['PAM_FILE_INCLUDE_SESSION'] + '\n\n'
+  output += '        PAM file session:         ' + pam_conf['PAM_FILE_INCLUDE_SESSION'] + '\n'
+  output += '        PAM config location:      ' + pam_prefix + '\n\n'
 endif
 output += '        Building api docs:        ' + enable_gtk_doc.to_string() + '\n'
 output += '        Building man pages:       ' + enable_man.to_string() + '\n'
