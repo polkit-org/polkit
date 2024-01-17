@@ -1,6 +1,6 @@
 project(
   'polkit', ['c'],
-  version: '124',
+  version: '125',
   license: 'LGPL2+',
   default_options: [
     'buildtype=debugoptimized',
