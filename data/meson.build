@@ -30,25 +30,28 @@ if enable_pam
   )
 endif
 
-if session_tracking == 'logind'
-  configure_file(
-    input: 'polkit.service.in',
-    output: '@BASENAME@',
-    configuration: service_conf,
-    install: true,
-    install_dir: systemd_systemdsystemunitdir,
-  )
+configure_file(
+  input: 'polkit.service.in',
+  output: '@BASENAME@',
+  configuration: service_conf,
+  install: true,
+  install_dir: systemdsystemunitdir,
+)
 
-  configure_file(
-    input: 'polkit.conf.in',
-    output: '@BASENAME@',
-    configuration: service_conf,
-    install: true,
-    install_dir: systemd_sysusers_dir,
-  )
-endif
+configure_file(
+  input: 'polkit.conf.in',
+  output: '@BASENAME@',
+  configuration: service_conf,
+  install: true,
+  install_dir: sysusers_dir,
+)
 
 install_data(
   'policyconfig-1.dtd',
   install_dir: pk_datadir / 'polkit-1'
+)
+
+install_data(
+  'polkit-tmpfiles.conf',
+  install_dir: tmpfiles_dir
 )
