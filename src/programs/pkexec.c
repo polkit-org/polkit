@@ -952,7 +952,7 @@ main (int argc, char *argv[])
   /* set close_on_exec on all file descriptors except stdin, stdout, stderr */
   if (!fdwalk (set_close_on_exec, GINT_TO_POINTER (3)))
     {
-      g_printerr ("Error setting close-on-exec for file desriptors\n");
+      g_printerr ("Error setting close-on-exec for file descriptors\n");
       goto out;
     }
 
