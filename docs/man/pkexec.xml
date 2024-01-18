@@ -64,7 +64,7 @@
       Upon successful completion, the return value is the return value
       of <replaceable>PROGRAM</replaceable>. If the calling process is
       not authorized or an authorization could not be obtained through
-      authentication or an error occured, <command>pkexec</command>
+      authentication or an error occurred, <command>pkexec</command>
       exits with a return value of 127. If the authorization could not
       be obtained because the user dismissed the authentication
       dialog, <command>pkexec</command> exits with a return value of
