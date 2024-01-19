@@ -21,13 +21,10 @@ Older reference can be found at
 RELEASES
 ========
 
-Latest releases are available at polkit's Gitlab Releases page:  
- https://gitlab.freedesktop.org/polkit/polkit/-/releases
-
+Latest releases are available at [the Release page](https://github.com/polkit-org/polkit/releases).
 
 Older releases are still available as tarballs at  
  https://www.freedesktop.org/software/polkit/releases/
-
 
 To verify the authenticity of the compressed tarball, use this command
 
