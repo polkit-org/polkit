@@ -9,12 +9,12 @@ processes.
 DOCUMENTATION
 =============
 
-Latest documentation, reference manual and API description of polkit can be found  
-on project's Gitlab Pages  
- https://polkit.pages.freedesktop.org/polkit
+Latest documentation, reference manual and API description of polkit can be still found  
+on project's previous instance of Gitlab Pages  
+https://polkit.pages.freedesktop.org/polkit
 
 
-Old reference can be found at  
+Older reference can be found at  
  https://www.freedesktop.org/software/polkit/docs/latest/
 
 
@@ -45,9 +45,8 @@ Public key available at
 BUGS and DEVELOPMENT
 ====================
 
-Please report non-security bugs via the polkit's freedesktop.org GitLab at
-
- https://gitlab.freedesktop.org/polkit/polkit/issues
+Please report non-security bugs via the polkit's GitHub issues at
+https://github.com/polkit-org/polkit/issues
 
 The other way, in case of **non**-security issues, is to contact developers via official polkit's FreeDesktop.org mailing list at
 
@@ -57,9 +56,8 @@ SECURITY ISSUES
 ===============
 
 Please report any security issues not yet known to public
-by creating new issue and checking the ***This issue is confidential*** checkbox.
-
- https://gitlab.freedesktop.org/polkit/polkit/issues
+by sending mail to polkit-security@redhat.com.  
+Thank you.
 
 
 BUILD INSTRUCTIONS
@@ -78,13 +76,6 @@ List of available configuration options can be obtained with `meson configure` c
 
 I WANT TO CONTRIBUTE
 ====================
-Your merge requests and patch suggestions are welcome! If you want to contribute, a merge request on this Gitlab instance is a preferred way, yet not the only one. Please consult other options with this upsteam's maintainers.
-
-Should you already have a freedesktop.org Gitlab account, please file your merge request. In this case, please **don't force-push any further changes** into the merge request and add a new commit into the MR instead.
-
-Please note that there are restrictions in effect on FreeDesktop.org's instance of Gitlab, therefore new users need to take action before contributing directly via their own fork:  
-https://gitlab.freedesktop.org/freedesktop/freedesktop/-/wikis/home#warning-restrictions-due-to-spam-warning  
-
-
+Your pull requests and patch suggestions are welcome! If you want to contribute, a pull request on this GitHub project is a preferred way, yet not the only one. Please consult other options with this upsteam's maintainers.
 
 Thank you in advance.
