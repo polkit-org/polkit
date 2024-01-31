@@ -1,0 +1,52 @@
+---
+# vi: ts=2 sw=2 et:
+name: "CodeQL"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.ref }}-${{ matrix.language }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['c-cpp', 'javascript-typescript', 'python']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: +security-extended,security-and-quality
+
+    - name: Install dependencies
+      if: ${{ matrix.language == 'c-cpp' }}
+      run: |
+        sudo add-apt-repository -y --no-update --enable-source
+        sudo apt update
+        sudo apt build-dep -y policykit-1
+        # polkit in Ubuntu Jammy (ATTOW) doesn't have the latest build dependencies yet
+        sudo apt install -y duktape-dev meson
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
