@@ -372,7 +372,7 @@ is_valid_shell (const gchar *shell)
   shells = g_strsplit (contents, "\n", 0);
   for (n = 0; shells != NULL && shells[n] != NULL; n++)
     {
-      if (g_strcmp0 (shell, shells[n]) == 0)
+      if (shells[n][0] == '/' && g_strcmp0 (shell, shells[n]) == 0)
         {
           ret = TRUE;
           goto out;
