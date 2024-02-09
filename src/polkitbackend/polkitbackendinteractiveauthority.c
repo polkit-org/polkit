@@ -2611,7 +2611,8 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   priv->agent_serial++;
   agent = authentication_agent_new (priv->agent_serial,
                                     subject,
-                                    user_of_caller,
+                                    user_of_subject,/*fix pkexec fails with No session for cookie,
+                                    upstream issue:https://gitlab.freedesktop.org/polkit/polkit/issues/17*/
                                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                     locale,
                                     object_path,
