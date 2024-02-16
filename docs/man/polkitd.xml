@@ -24,6 +24,9 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>polkitd</command>
+      <arg><option>--replace|-r</option></arg>
+      <arg><option>--no-debug|-n</option></arg>
+      <arg><option>--help|-h</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -38,6 +41,12 @@
       or
       <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       whenever an application calls into the service.
+    </para>
+
+    <para>
+      Passing the <option>--no-debug</option> to <command>polkitd</command>
+      will discard the messages from usages of <literal>polkit.log()</literal>
+      in rules.
     </para>
 
     <para>
