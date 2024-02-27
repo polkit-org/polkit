@@ -606,12 +606,12 @@ main (int argc, char *argv[])
   rc = getpwnam_r (opt_user, &pwstruct, pwbuf, sizeof pwbuf, &pw);
   if (rc == 0 && pw == NULL)
     {
-      g_printerr ("User `%s' does not exist.\n", opt_user);
+      g_printerr ("User '%s' does not exist.\n", opt_user);
       goto out;
     }
   else if (pw == NULL)
     {
-      g_printerr ("Error getting information for user `%s': %s\n", opt_user, g_strerror (rc));
+      g_printerr ("Error getting information for user '%s': %s\n", opt_user, g_strerror (rc));
       goto out;
     }
 
