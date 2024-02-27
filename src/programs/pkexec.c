@@ -819,7 +819,7 @@ main (int argc, char *argv[])
                                   * translate the $(program) fragment - it will be expanded to the path
                                   * of the program e.g.  /bin/bash.
                                   */
-                                 N_("Authentication is needed to run `$(cmdline_short)' as the super user"));
+                                 N_("Authentication is needed to run '$(cmdline_short)' as the super user"));
         }
       else
         {
@@ -829,7 +829,7 @@ main (int argc, char *argv[])
                                   * be expanded to the path of the program e.g. "/bin/bash" and the latter
                                   * to the user e.g. "John Doe (johndoe)" or "johndoe".
                                   */
-                                 N_("Authentication is needed to run `$(cmdline_short)' as user $(user.display)"));
+                                 N_("Authentication is needed to run '$(cmdline_short)' as user $(user.display)"));
         }
     }
   polkit_details_insert (details, "polkit.gettext_domain", GETTEXT_PACKAGE);
