@@ -72,17 +72,6 @@ static char *parser_copy_word(char **cur) {
 }
 
 /**
- * Print a varaible indentation to the stream.
- * @param stream Stream to print to
- * @param indent Number of indents to use
- */
-void print_indent(FILE *stream, unsigned int indent) {
-  int i;
-  for (i = 0; i < indent; i++)
-    fprintf(stream, "  ");
-}
-
-/**
  * Connect entries with 'child' type to their child entries.
  * @param headentry Head of list of entries that need to be connected
  * @param headgroup Head of list of netgroups to connect child entries to
