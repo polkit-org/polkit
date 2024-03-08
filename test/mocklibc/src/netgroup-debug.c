@@ -21,6 +21,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * Print a varaible indentation to the stream.
+ * @param stream Stream to print to
+ * @param indent Number of indents to use
+ */
+static void print_indent(FILE *stream, unsigned int indent) {
+  int i;
+  for (i = 0; i < indent; i++)
+    fprintf(stream, "  ");
+}
+
 void netgroup_debug_print_entry(struct entry *entry, FILE *stream, unsigned int indent) {
   print_indent(stream, indent);
 
