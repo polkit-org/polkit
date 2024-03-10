@@ -1,5 +1,6 @@
 option('session_tracking', type: 'combo', choices: ['libsystemd-login', 'libelogind', 'ConsoleKit'], value: 'ConsoleKit', description: 'session tracking (libsystemd-login/libelogind/ConsoleKit)')
 option('systemdsystemunitdir', type: 'string', value: '', description: 'custom directory for systemd system units')
+option('systemdsysusersdir', type: 'string', value: '', description: 'custom directory for systemd sysusers')
 
 option('libs-only', type: 'boolean', value: false, description: 'Only build libraries (skips building polkitd)')
 option('polkitd_user', type: 'string', value: 'polkitd', description: 'User for running polkitd (polkitd)')

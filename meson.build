@@ -219,7 +219,10 @@ if enable_logind
     systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
   endif
 
-  systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
+  systemd_sysusers_dir = get_option('systemdsysusersdir')
+  if systemd_sysusers_dir == '' and session_tracking == 'libsystemd-login'
+    systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
+  endif
 endif
 config_h.set('HAVE_LIBSYSTEMD', enable_logind)
 
