@@ -1,0 +1,33 @@
+# EditorConfig configuration for polkit
+# http://EditorConfig.org
+
+# NOTE: If you update this file make sure to update .dir-locals.el and .vimrc,
+# too.
+
+# Top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file, utf-8 charset
+[*]
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+
+[NEWS]
+indent_style = space
+indent_size = 2
+
+[*.{c,h}]
+indent_style = space
+indent_size = 2
+max_line_length = 109
+
+[meson.build]
+indent_style = space
+indent_size = 2
+
+[*.{html,xml}]
+indent_size = 2
+indent_style = space
+
