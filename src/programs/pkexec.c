@@ -517,7 +517,7 @@ main (int argc, char *argv[])
   setenv ("GIO_USE_VFS", "local", 1);
 
   /* First process options and find the command-line to invoke. Avoid using fancy library routines
-   * that depend on environtment variables since we haven't cleared the environment just yet.
+   * that depend on environment variables since we haven't cleared the environment just yet.
    */
   opt_show_help = FALSE;
   opt_show_version = FALSE;
