@@ -198,10 +198,7 @@ session_tracking = get_option('session_tracking')
 enable_logind = (session_tracking != 'ConsoleKit')
 if enable_logind
   if session_tracking == 'logind'
-    logind_dep = dependency('libsystemd', required: false)
-    if not logind_dep.found()
-      logind_dep = dependency('libsystemd-login', not_found_message: 'logind support requested but libsystemd or libsystemd-login library not found')
-    endif
+    logind_dep = dependency('libsystemd', not_found_message: 'logind support requested but libsystemd library not found')
   else
     logind_dep = dependency('libelogind', not_found_message: 'elogind support requested but libelogind library not found')
   endif
