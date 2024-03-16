@@ -1,0 +1,27 @@
+From: Colin Walters <walters@verbum.org>
+Date: Wed, 3 Jun 2015 16:31:12 -0400
+Subject: [PATCH 2/3] tests: Correct boundary test for overflow
+
+The offset has to be strictly less than the max.
+
+https://bugs.freedesktop.org/show_bug.cgi?id=87716
+---
+ src/netgroup.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/netgroup.c b/src/netgroup.c
+index bc99555..06a8a89 100644
+--- a/src/netgroup.c
++++ b/src/netgroup.c
+@@ -326,7 +326,7 @@ struct entry *netgroup_iter_next(struct netgroup_iter *iter) {
+ 
+       // Grow the stack
+       iter->depth++;
+-      if (iter->depth > NETGROUP_MAX_DEPTH) {
++      if (iter->depth >= NETGROUP_MAX_DEPTH) {
+         iter->depth = -1;
+         return NULL; // Too much recursion
+       }
+-- 
+2.43.0
+
