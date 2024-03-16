@@ -7,7 +7,7 @@ project(
     'prefix=/usr',
     'cpp_std=c++17',
   ],
-  meson_version: '>= 0.50.0',
+  meson_version: '>= 0.63.0',
 )
 
 pk_version = meson.project_version()
