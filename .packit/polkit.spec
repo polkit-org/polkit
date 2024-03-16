@@ -87,7 +87,7 @@ Libraries files for polkit.
        -D gtk_doc=true \
        -D introspection=true \
        -D man=true \
-       -D session_tracking=libsystemd-login \
+       -D session_tracking=logind \
        -D tests=false
 
 %meson_build

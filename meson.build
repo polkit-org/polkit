@@ -193,17 +193,17 @@ if config_h.get('HAVE_SETNETGRENT', false)
   config_h.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, name: 'setnetgrent return support'))
 endif
 
-# Select wether to use libsystemd-login, libelogind or ConsoleKit for session tracking
+# Select wether to use logind, elogind or ConsoleKit for session tracking
 session_tracking = get_option('session_tracking')
 enable_logind = (session_tracking != 'ConsoleKit')
 if enable_logind
-  if session_tracking == 'libsystemd-login'
+  if session_tracking == 'logind'
     logind_dep = dependency('libsystemd', required: false)
     if not logind_dep.found()
-      logind_dep = dependency('libsystemd-login', not_found_message: 'libsystemd support requested but libsystemd or libsystemd-login library not found')
+      logind_dep = dependency('libsystemd-login', not_found_message: 'logind support requested but libsystemd or libsystemd-login library not found')
     endif
   else
-    logind_dep = dependency('libelogind', not_found_message: 'libelogind support requested but libelogind library not found')
+    logind_dep = dependency('libelogind', not_found_message: 'elogind support requested but libelogind library not found')
   endif
 
   func = 'sd_uid_get_display'
@@ -213,7 +213,7 @@ if enable_logind
 
   # systemd unit / service files
   systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
-  if systemd_systemdsystemunitdir == '' and session_tracking == 'libsystemd-login'
+  if systemd_systemdsystemunitdir == '' and session_tracking == 'logind'
     systemd_dep = dependency('systemd', not_found_message: 'systemd required but not found, please provide a valid systemd user unit dir or disable it')
     # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
     systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
