@@ -19,7 +19,7 @@ COMMON_BUILD_OPTS=(
     -Dexamples=true
     -Dgtk_doc=true
     -Dintrospection=true
-    -Dsession_tracking=libsystemd-login
+    -Dsession_tracking=logind
     -Dtests=true
 )
 
