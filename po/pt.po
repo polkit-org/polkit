@@ -160,9 +160,9 @@ msgstr "%s: Sujeito não especificado\n"
 #. * of the program e.g.  /bin/bash.
 #.
 #: ../src/programs/pkexec.c:790
-msgid "Authentication is needed to run `$(program)' as the super user"
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
-"A autenticação é necessária para executar `$(program)' como o superutilizador"
+"A autenticação é necessária para executar `$(cmdline_short)' como o superutilizador"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
@@ -170,9 +170,9 @@ msgstr ""
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
 #: ../src/programs/pkexec.c:800
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgid "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"A autenticação é necessária para executar `$(program)' como o utilizador "
+"A autenticação é necessária para executar `$(cmdline_short)' como o utilizador "
 "$(user.display)"
 
 #: ../src/programs/pkttyagent.c:45
