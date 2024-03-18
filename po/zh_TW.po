@@ -150,8 +150,8 @@ msgstr "%s：未指定目標\n"
 #. * of the program e.g.  /bin/bash.
 #.
 #: ../src/programs/pkexec.c:797
-msgid "Authentication is needed to run `$(program)' as the super user"
-msgstr "必須先核對身份才能以超級使用者執行「$(program)」"
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr "必須先核對身份才能以超級使用者執行「$(cmdline_short)」"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
@@ -159,8 +159,8 @@ msgstr "必須先核對身份才能以超級使用者執行「$(program)」"
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
 #: ../src/programs/pkexec.c:807
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
-msgstr "必須先核對身份才能以 $(user.display) 使用者執行「$(program)」"
+msgid "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
+msgstr "必須先核對身份才能以 $(user.display) 使用者執行「$(cmdline_short)」"
 
 #: ../src/programs/pkttyagent.c:45
 msgid "Don't replace existing agent if any"

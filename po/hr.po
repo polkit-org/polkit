@@ -157,8 +157,8 @@ msgstr "%s: Subjekt nije određen\n"
 #. * of the program e.g.  /bin/bash.
 #.
 #: ../src/programs/pkexec.c:797
-msgid "Authentication is needed to run `$(program)' as the super user"
-msgstr "Potrebna je ovjera za pokretanje `$(program)' kao super korisnika"
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr "Potrebna je ovjera za pokretanje `$(cmdline_short)' kao super korisnika"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
@@ -166,9 +166,9 @@ msgstr "Potrebna je ovjera za pokretanje `$(program)' kao super korisnika"
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
 #: ../src/programs/pkexec.c:807
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgid "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"Potrebna je ovjera za pokretanje `$(program)' kao korisnika $(user.display)"
+"Potrebna je ovjera za pokretanje `$(cmdline_short)' kao korisnika $(user.display)"
 
 #: ../src/programs/pkttyagent.c:45
 msgid "Don't replace existing agent if any"

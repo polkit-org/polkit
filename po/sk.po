@@ -160,9 +160,9 @@ msgstr "%s: Predmet nebol určený\n"
 #. * of the program e.g.  /bin/bash.
 #.
 #: ../src/programs/pkexec.c:797
-msgid "Authentication is needed to run `$(program)' as the super user"
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
-"Na spustenie programu „$(program)“ ako superpoužívateľ sa vyžaduje overenie "
+"Na spustenie programu „$(cmdline_short)“ ako superpoužívateľ sa vyžaduje overenie "
 "totožnosti"
 
 #. Translators: message shown when trying to run a program as another user.
@@ -171,9 +171,9 @@ msgstr ""
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
 #: ../src/programs/pkexec.c:807
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgid "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"Na spustenie programu „$(program)“ ako používateľ $(user.display) sa "
+"Na spustenie programu „$(cmdline_short)“ ako používateľ $(user.display) sa "
 "vyžaduje overenie totožnosti"
 
 #: ../src/programs/pkttyagent.c:45
