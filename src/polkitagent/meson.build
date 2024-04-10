@@ -36,7 +36,6 @@ sources = enum_sources + marshal_sources + files(
 )
 
 deps = [
-  expat_dep,
   gio_unix_dep,
   libpolkit_gobject_dep,
 ]
