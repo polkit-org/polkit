@@ -130,16 +130,16 @@ gio_unix_dep = dependency('gio-unix-2.0', version: glib_req_version)
 glib_dep = dependency('glib-2.0', version: glib_req_version)
 gobject_dep = dependency('gobject-2.0', version: glib_req_version)
 
-expat_dep = dependency('expat')
-assert(cc.has_header('expat.h', dependencies: expat_dep), 'Can\'t find expat.h. Please install expat.')
-assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t find expat library. Please install expat.')
-
 duktape_req_version = '>= 2.2.0'
 
 js_engine = get_option('js_engine')
 libs_only = get_option('libs-only')
 if libs_only
   js_engine = ''
+else
+  expat_dep = dependency('expat')
+  assert(cc.has_header('expat.h', dependencies: expat_dep), 'Can\'t find expat.h. Please install expat.')
+  assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t find expat library. Please install expat.')
 endif
 
 if js_engine == 'duktape'
