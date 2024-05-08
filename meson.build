@@ -199,6 +199,16 @@ enable_logind = (session_tracking != 'ConsoleKit')
 if enable_logind
   if session_tracking == 'logind'
     logind_dep = dependency('libsystemd', not_found_message: 'logind support requested but libsystemd library not found')
+
+    # systemd unit / service files
+    systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
+    if systemd_systemdsystemunitdir == ''
+      systemd_dep = dependency('systemd', not_found_message: 'systemd required but not found, please provide a valid systemd user unit dir or disable it')
+      # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
+      systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
+    endif
+
+    systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
   else
     logind_dep = dependency('libelogind', not_found_message: 'elogind support requested but libelogind library not found')
   endif
@@ -207,16 +217,6 @@ if enable_logind
   config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
   func = 'sd_pidfd_get_session'
   config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
-
-  # systemd unit / service files
-  systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
-  if systemd_systemdsystemunitdir == '' and session_tracking == 'logind'
-    systemd_dep = dependency('systemd', not_found_message: 'systemd required but not found, please provide a valid systemd user unit dir or disable it')
-    # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
-    systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
-  endif
-
-  systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
 endif
 config_h.set('HAVE_LIBSYSTEMD', enable_logind)
 
@@ -401,7 +401,7 @@ output += '        introspection:            ' + enable_introspection.to_string(
 output += '        Distribution/OS:          ' + os_type + '\n'
 output += '        Authentication framework: ' + auth_fw + '\n'
 output += '        Session tracking:         ' + session_tracking + '\n'
-if enable_logind
+if session_tracking == 'logind'
   output += '        systemdsystemunitdir:     ' + systemd_systemdsystemunitdir + '\n'
 endif
 output += '        polkitd user:             ' + polkitd_user + ' \n'
