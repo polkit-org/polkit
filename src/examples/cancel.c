@@ -32,7 +32,6 @@
  * authentication dialog is removed.
  */
 
-#include "config.h"
 #include <polkit/polkit.h>
 
 static gboolean

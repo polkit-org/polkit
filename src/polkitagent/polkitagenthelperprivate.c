@@ -20,7 +20,6 @@
  *          Andrew Psaltis <ampsaltis@gmail.com>
  */
 
-#include "config.h"
 #include "polkitagenthelperprivate.h"
 #include <stdio.h>
 #include <string.h>

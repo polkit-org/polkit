@@ -5,9 +5,10 @@ project(
   default_options: [
     'buildtype=debugoptimized',
     'prefix=/usr',
+    'c_std=c99',
     'cpp_std=c++17',
   ],
-  meson_version: '>= 0.63.0',
+  meson_version: '>= 1.4.0',
 )
 
 pk_version = meson.project_version()
@@ -64,7 +65,7 @@ top_inc = include_directories('.')
 
 cc = meson.get_compiler('c')
 
-config_h = configuration_data()
+config_data = configuration_data()
 
 # defines
 set_defines = [
@@ -79,11 +80,8 @@ set_defines = [
 ]
 
 foreach define: set_defines
-  config_h.set_quoted(define[0], define[1])
+  config_data.set_quoted(define[0], define[1])
 endforeach
-
-# Globally define_GNU_SOURCE and therefore enable the GNU extensions
-config_h.set('_GNU_SOURCE', true)
 
 # functions
 check_functions = [
@@ -93,19 +91,19 @@ check_functions = [
 ]
 
 foreach func: check_functions
-  config_h.set('HAVE_' + func.to_upper(), cc.has_function(func))
+  config_data.set('HAVE_' + func.to_upper(), cc.has_function(func))
 endforeach
 
-# compiler flags
-common_c_flags = [
-  # FIXME: this should go as 'c_std=c99' in project's default_options.
-  #        https://github.com/mesonbuild/meson/issues/1889
-  #        https://github.com/mesonbuild/meson/pull/6729
-  '-std=c99',
-  '-DHAVE_CONFIG_H',
+# compiler flags shared by C and C++ compilers
+compiler_common_flags = [
+  '-D_GNU_SOURCE',
 ]
-compiler_flags = []
+
+# C compiler flags
 compiler_c_flags = []
+
+# C++ compiler flags
+compiler_cpp_flags = []
 
 if get_option('buildtype').contains('debug')
   compiler_c_flags += cc.get_supported_arguments([
@@ -120,8 +118,6 @@ if get_option('buildtype').contains('debug')
     '-Wstrict-prototypes',
   ])
 endif
-
-add_project_arguments(common_c_flags + compiler_c_flags, language: 'c')
 
 glib_req_version = '>= 2.30.0'
 
@@ -151,13 +147,13 @@ if js_engine == 'duktape'
   libm_dep = cc.find_library('m')
   thread_dep = dependency('threads')
   func = 'pthread_condattr_setclock'
-  config_h.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
+  config_data.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
 elif js_engine == 'mozjs'
   js_dep = dependency('mozjs-115')
 
   _system = host_machine.system().to_lower()
   if _system.contains('freebsd')
-    config_h.set('__BSD_VISIBLE', 1)
+    config_data.set('__BSD_VISIBLE', 1)
   endif
 endif
 
@@ -172,12 +168,12 @@ endif
 
 # check OS
 host_system = host_machine.system()
-config_h.set('HAVE_' + host_system.to_upper(), true)
+config_data.set('HAVE_' + host_system.to_upper(), true)
 
 # Check whether setnetgrent has a return value
-config_h.set('HAVE_NETGROUP_H', cc.has_header('netgroup.h'))
+config_data.set('HAVE_NETGROUP_H', cc.has_header('netgroup.h'))
 
-if config_h.get('HAVE_SETNETGRENT', false)
+if config_data.get('HAVE_SETNETGRENT', false)
   setnetgrent_return_src = '''
     #include <stddef.h>
     #ifdef HAVE_NETGROUP_H
@@ -190,7 +186,7 @@ if config_h.get('HAVE_SETNETGRENT', false)
     };
   '''
 
-  config_h.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, name: 'setnetgrent return support'))
+  config_data.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, name: 'setnetgrent return support'))
 endif
 
 # Select wether to use logind, elogind or ConsoleKit for session tracking
@@ -204,9 +200,9 @@ if enable_logind
   endif
 
   func = 'sd_uid_get_display'
-  config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
+  config_data.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
   func = 'sd_pidfd_get_session'
-  config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
+  config_data.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
 
   # systemd unit / service files
   systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
@@ -218,16 +214,16 @@ if enable_logind
 
   systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
 endif
-config_h.set('HAVE_LIBSYSTEMD', enable_logind)
+config_data.set('HAVE_LIBSYSTEMD', enable_logind)
 
-config_h.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#include <sys/syscall.h>') != '')
+config_data.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#include <sys/syscall.h>') != '')
 
 # User for running polkitd
 polkitd_user = get_option('polkitd_user')
-config_h.set_quoted('POLKITD_USER', polkitd_user)
+config_data.set_quoted('POLKITD_USER', polkitd_user)
 
 polkitd_uid = get_option('polkitd_uid')
-config_h.set('POLKITD_UID', polkitd_uid)
+config_data.set('POLKITD_UID', polkitd_uid)
 
 # Select which authentication framework to use
 auth_deps = []
@@ -253,7 +249,7 @@ if enable_pam
   # FIXME: Not necessary anymore?
   if cc.compiles(pam_strerror_src.format('pam_handle_t *pamh = 0; char *s = pam_strerror(pamh, PAM_SUCCESS);'))
     # FIXME: unused?
-    config_h.set('PAM_STRERROR_TWO_ARGS', true)
+    config_data.set('PAM_STRERROR_TWO_ARGS', true)
   else
     message('how to call pam_strerror: ' + cc.compiles(pam_strerror_src.format('char *s = pam_strerror(PAM_SUCCESS);')).to_string('1', 'unknown'))
   endif
@@ -274,7 +270,7 @@ if enable_pam
 elif auth_fw == 'shadow'
   auth_deps += cc.find_library('crypt')
 endif
-config_h.set('POLKIT_AUTHFW_' + auth_fw.to_upper(), true)
+config_data.set('POLKIT_AUTHFW_' + auth_fw.to_upper(), true)
 
 # FIXME: sigtimedwait is not used anywhere?
 '''
@@ -357,6 +353,16 @@ endif
 
 content_files = files('COPYING')
 
+config_h = configure_file(
+  output: 'config.h',
+  configuration: config_data,
+)
+
+compiler_common_flags += ['-include', config_h.full_path()]
+
+add_project_arguments(compiler_common_flags + compiler_c_flags, language: 'c')
+add_project_arguments(compiler_common_flags + compiler_cpp_flags, language: 'cpp')
+
 subdir('actions')
 subdir('data')
 subdir('src')
@@ -367,12 +373,6 @@ enable_tests = get_option('tests')
 if enable_tests
   subdir('test')
 endif
-
-configure_file(
-  output: 'config.h',
-  configuration: config_h,
-)
-
 
 if not libs_only
   meson.add_install_script(

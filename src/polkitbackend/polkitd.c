@@ -19,8 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
-
 #include <signal.h>
 #include <stdlib.h>
 

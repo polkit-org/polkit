@@ -26,7 +26,6 @@
 #ifndef __POLKIT_BACKEND_COMMON_H
 #define __POLKIT_BACKEND_COMMON_H
 
-#include "config.h"
 #include <sys/wait.h>
 #include <errno.h>
 #include <pwd.h>

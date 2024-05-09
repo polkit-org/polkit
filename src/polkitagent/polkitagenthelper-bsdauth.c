@@ -23,7 +23,6 @@
  *          David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include "polkitagenthelperprivate.h"
 
 #include <stdio.h>
