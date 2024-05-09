@@ -110,8 +110,6 @@ enum
   PROP_DIRECTORY,
 };
 
-#define POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_ACTION_POOL, PolkitBackendActionPoolPrivate))
-
 enum
 {
   CHANGED_SIGNAL,
@@ -120,14 +118,14 @@ enum
 
 static guint signals[LAST_SIGNAL] = {0};
 
-G_DEFINE_TYPE (PolkitBackendActionPool, polkit_backend_action_pool, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (PolkitBackendActionPool, polkit_backend_action_pool, G_TYPE_OBJECT);
 
 static void
 polkit_backend_action_pool_init (PolkitBackendActionPool *pool)
 {
   PolkitBackendActionPoolPrivate *priv;
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   priv->parsed_actions = g_hash_table_new_full (g_str_hash,
                                                 g_str_equal,
@@ -147,7 +145,7 @@ polkit_backend_action_pool_finalize (GObject *object)
   PolkitBackendActionPoolPrivate *priv;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   if (priv->directory != NULL)
     g_object_unref (priv->directory);
@@ -174,7 +172,7 @@ polkit_backend_action_pool_get_property (GObject     *object,
   PolkitBackendActionPoolPrivate *priv;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   switch (prop_id)
     {
@@ -199,7 +197,7 @@ dir_monitor_changed (GFileMonitor     *monitor,
   PolkitBackendActionPoolPrivate *priv;
 
   pool = POLKIT_BACKEND_ACTION_POOL (user_data);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   /* TODO: maybe rate-limit so storms of events are collapsed into one with a 500ms resolution?
    *       Because when editing a file with emacs we get 4-8 events..
@@ -247,7 +245,7 @@ polkit_backend_action_pool_set_property (GObject       *object,
   GError *error;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   switch (prop_id)
     {
@@ -287,8 +285,6 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
   gobject_class->get_property = polkit_backend_action_pool_get_property;
   gobject_class->set_property = polkit_backend_action_pool_set_property;
   gobject_class->finalize     = polkit_backend_action_pool_finalize;
-
-  g_type_class_add_private (klass, sizeof (PolkitBackendActionPoolPrivate));
 
   /**
    * PolkitBackendActionPool:directory:
@@ -368,7 +364,7 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
 
   g_return_val_if_fail (POLKIT_BACKEND_IS_ACTION_POOL (pool), NULL);
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   /* TODO: just compute the name of the expected file and ensure it's parsed */
   ensure_all_files (pool);
@@ -426,7 +422,7 @@ polkit_backend_action_pool_get_all_actions (PolkitBackendActionPool *pool,
 
   g_return_val_if_fail (POLKIT_BACKEND_IS_ACTION_POOL (pool), NULL);
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   ensure_all_files (pool);
 
@@ -461,7 +457,7 @@ ensure_file (PolkitBackendActionPool *pool,
   GError *error;
   gchar *uri;
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   uri = g_file_get_uri (file);
 
@@ -507,7 +503,7 @@ ensure_all_files (PolkitBackendActionPool *pool)
   GFileInfo *file_info;
   GError *error;
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   e = NULL;
 
@@ -970,7 +966,7 @@ _end (void *data, const char *el)
         ParsedAction *action;
         PolkitBackendActionPoolPrivate *priv;
 
-        priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pd->pool);
+        priv = polkit_backend_action_pool_get_instance_private (pd->pool);
 
         vendor = pd->vendor;
         if (vendor == NULL)
