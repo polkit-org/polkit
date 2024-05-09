@@ -99,7 +99,9 @@ static bool execute_script_with_runaway_killer (PolkitBackendJsAuthority *author
 static gpointer runaway_killer_thread_func (gpointer user_data);
 static void runaway_killer_terminate (PolkitBackendJsAuthority *authority);
 
-G_DEFINE_TYPE (PolkitBackendJsAuthority, polkit_backend_js_authority, POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY);
+G_DEFINE_TYPE_WITH_PRIVATE (PolkitBackendJsAuthority,
+                            polkit_backend_js_authority,
+                            POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -170,9 +172,7 @@ static void report_error (JSContext     *cx,
 static void
 polkit_backend_js_authority_init (PolkitBackendJsAuthority *authority)
 {
-  authority->priv = G_TYPE_INSTANCE_GET_PRIVATE (authority,
-                                                 POLKIT_BACKEND_TYPE_JS_AUTHORITY,
-                                                 PolkitBackendJsAuthorityPrivate);
+  authority->priv = (PolkitBackendJsAuthorityPrivate*) polkit_backend_js_authority_get_instance_private (authority);
 }
 
 /* authority->priv->cx must be within a request */
@@ -476,8 +476,6 @@ static void
 polkit_backend_js_authority_class_init (PolkitBackendJsAuthorityClass *klass)
 {
   polkit_backend_common_js_authority_class_init_common (klass);
-
-  g_type_class_add_private (klass, sizeof (PolkitBackendJsAuthorityPrivate));
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

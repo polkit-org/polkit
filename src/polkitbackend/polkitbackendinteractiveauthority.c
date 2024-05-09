@@ -224,11 +224,9 @@ typedef struct
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-G_DEFINE_TYPE (PolkitBackendInteractiveAuthority,
-               polkit_backend_interactive_authority,
-               POLKIT_BACKEND_TYPE_AUTHORITY);
-
-#define POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY, PolkitBackendInteractiveAuthorityPrivate))
+G_DEFINE_TYPE_WITH_PRIVATE (PolkitBackendInteractiveAuthority,
+                            polkit_backend_interactive_authority,
+                            POLKIT_BACKEND_TYPE_AUTHORITY);
 
 static gboolean
 identity_is_root_user (PolkitIdentity *user)
@@ -296,7 +294,7 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
   /* Force registering error domain */
   (void)POLKIT_ERROR;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   directory = g_file_new_for_path (PACKAGE_DATA_DIR "/polkit-1/actions");
   priv->action_pool = polkit_backend_action_pool_new (directory);
@@ -350,7 +348,7 @@ polkit_backend_interactive_authority_finalize (GObject *object)
   PolkitBackendInteractiveAuthorityPrivate *priv;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (object);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   if (priv->name_owner_changed_signal_id > 0)
     g_dbus_connection_signal_unsubscribe (priv->system_bus_connection, priv->name_owner_changed_signal_id);
@@ -412,10 +410,6 @@ polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthori
   authority_class->enumerate_temporary_authorizations = polkit_backend_interactive_authority_enumerate_temporary_authorizations;
   authority_class->revoke_temporary_authorizations = polkit_backend_interactive_authority_revoke_temporary_authorizations;
   authority_class->revoke_temporary_authorization_by_id = polkit_backend_interactive_authority_revoke_temporary_authorization_by_id;
-
-
-
-  g_type_class_add_private (klass, sizeof (PolkitBackendInteractiveAuthorityPrivate));
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -431,7 +425,7 @@ polkit_backend_interactive_authority_enumerate_actions (PolkitBackendAuthority  
   GList *actions;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   actions = polkit_backend_action_pool_get_all_actions (priv->action_pool, interactivee);
 
@@ -573,7 +567,7 @@ log_result (PolkitBackendInteractiveAuthority    *authority,
   gchar *subject_cmdline;
   gchar *caller_cmdline;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   log_result_str = "DENYING";
   if (polkit_authorization_result_get_is_authorized (result))
@@ -640,7 +634,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   gchar *subject_cmdline;
   gboolean is_temp;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   result = NULL;
 
@@ -783,7 +777,7 @@ may_identity_check_authorization (PolkitBackendInteractiveAuthority   *interacti
                                   const gchar                         *action_id,
                                   PolkitIdentity                      *identity)
 {
-  PolkitBackendInteractiveAuthorityPrivate *priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  PolkitBackendInteractiveAuthorityPrivate *priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
   gboolean ret = FALSE;
   PolkitActionDescription *action_desc = NULL;
   const gchar *owners = NULL;
@@ -862,7 +856,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
   gchar **detail_keys;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   error = NULL;
   caller_str = NULL;
@@ -1086,7 +1080,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   GList *l;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   result = NULL;
 
@@ -1702,7 +1696,7 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
   AuthenticationAgent *agent_fallback = NULL;
   gboolean fallback = FALSE;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
 
@@ -1775,7 +1769,7 @@ get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority
 
   /* TODO: perhaps use a hash on the cookie to speed this up */
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -1828,7 +1822,7 @@ get_authentication_sessions_initiated_by_system_bus_unique_name (PolkitBackendIn
 
   /* TODO: perhaps use a hash on the cookie to speed this up */
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -1862,7 +1856,7 @@ get_authentication_sessions_for_system_bus_unique_name_subject (PolkitBackendInt
 
   /* TODO: perhaps use a hash on the cookie to speed this up */
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -1894,7 +1888,7 @@ get_authentication_agent_by_unique_system_bus_name (PolkitBackendInteractiveAuth
   GHashTableIter hash_iter;
   AuthenticationAgent *agent;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -2058,7 +2052,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
   const gchar *gettext_domain;
   gchar *s;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   message = NULL;
   icon_name = NULL;
@@ -2322,7 +2316,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          AuthenticationAgentCallback  callback,
                                          gpointer                     user_data)
 {
-  PolkitBackendInteractiveAuthorityPrivate *priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  PolkitBackendInteractiveAuthorityPrivate *priv = polkit_backend_interactive_authority_get_instance_private (authority);
   AuthenticationSession *session;
   GList *l;
   GList *identities;
@@ -2525,7 +2519,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   agent = NULL;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   if (POLKIT_IS_UNIX_SESSION (subject))
     {
@@ -2681,7 +2675,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
   gchar *scope_str;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   session_for_caller = NULL;
@@ -2841,7 +2835,7 @@ polkit_backend_interactive_authority_authentication_agent_response (PolkitBacken
   gboolean ret;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   user_of_caller = NULL;
@@ -2925,7 +2919,7 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
   PolkitBackendInteractiveAuthorityPrivate *priv;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   //g_debug ("name-owner-changed: '%s' '%s' '%s'", name, old_owner, new_owner);
 
@@ -3365,7 +3359,7 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
   GTimeVal real_now;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = NULL;
   session_for_caller = NULL;
@@ -3449,7 +3443,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorizations (PolkitBack
   guint num_removed;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   session_for_caller = NULL;
@@ -3529,7 +3523,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorization_by_id (Polki
   guint num_removed;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   session_for_caller = NULL;
