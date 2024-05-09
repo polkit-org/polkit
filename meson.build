@@ -164,7 +164,7 @@ endif
 dbus_dep = dependency('dbus-1', required: false)
 dbus_policydir = pk_prefix / pk_datadir / 'dbus-1/system.d'
 if dbus_dep.found()
-  dbus_system_bus_services_dir = dbus_dep.get_pkgconfig_variable('system_bus_services_dir', define_variable: ['datadir', pk_prefix / pk_datadir])
+  dbus_system_bus_services_dir = dbus_dep.get_variable(pkgconfig: 'system_bus_services_dir', pkgconfig_define: ['datadir', pk_prefix / pk_datadir])
 else
   # libdbus development files not installed, assume a standard layout
   dbus_system_bus_services_dir = pk_prefix / pk_datadir / 'dbus-1' / 'system-services'
@@ -205,10 +205,10 @@ if enable_logind
     if systemd_systemdsystemunitdir == ''
       systemd_dep = dependency('systemd', not_found_message: 'systemd required but not found, please provide a valid systemd user unit dir or disable it')
       # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
-      systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
+      systemd_systemdsystemunitdir = systemd_dep.get_variable(pkgconfig: 'systemdsystemunitdir')
     endif
 
-    systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
+    systemd_sysusers_dir = systemd_dep.get_variable(pkgconfig: 'sysusers_dir', default_value: '/usr/lib/sysusers.d')
   else
     logind_dep = dependency('libelogind', not_found_message: 'elogind support requested but libelogind library not found')
   endif
@@ -298,7 +298,7 @@ if os_type == ''
   ]
 
   foreach os_path: os_paths
-    if run_command('test', '-e', os_path[1]).returncode() == 0
+    if run_command('test', '-e', os_path[1], check: false).returncode() == 0
       os_type = os_path[0]
       break
     endif
@@ -395,7 +395,7 @@ output += '        source code location:     ' + source_root + '\n'
 output += '        compiler:                 ' + cc.get_id() + '\n'
 output += '        c_flags:                  ' + ' '.join(compiler_c_flags) + '\n\n'
 if enable_man
-  output += '        xsltproc:                 ' + xsltproc.path() + '\n'
+  output += '        xsltproc:                 ' + xsltproc.full_path() + '\n'
 endif
 output += '        introspection:            ' + enable_introspection.to_string() + '\n'
 output += '        Distribution/OS:          ' + os_type + '\n'
