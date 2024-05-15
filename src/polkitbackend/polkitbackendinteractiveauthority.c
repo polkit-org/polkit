@@ -1130,7 +1130,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       goto out;
 
   /* special case: uid 0, root, is _always_ authorized for anything */
-  if (identity_is_root_user (user_of_subject))
+  if (!(flags & POLKIT_CHECK_AUTHORIZATION_FLAGS_ALWAYS_CHECK) && identity_is_root_user (user_of_subject))
     {
       result = polkit_authorization_result_new (TRUE, FALSE, NULL);
       goto out;

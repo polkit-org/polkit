@@ -111,6 +111,9 @@
       <annotation name="org.gtk.EggDBus.Flags.Member" value="AllowUserInteraction">
         <annotation name="org.gtk.EggDBus.DocString" value="If the #Subject can obtain the authorization through authentication, and an authentication agent is available, then attempt to do so. Note, this means that the org.freedesktop.PolicyKit1.Authority.CheckAuthorization() method will block while the user is being asked to authenticate."/>
       </annotation>
+      <annotation name="org.gtk.EggDBus.Flags.Member" value="AlwaysCheck">
+        <annotation name="org.gtk.EggDBus.DocString" value="Check access against policy even if the #Subject is the root user."/>
+      </annotation>
     </annotation>
 
     <!-- ---------------------------------------------------------------------------------------------------- -->
