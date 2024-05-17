@@ -8,7 +8,7 @@ project(
     'c_std=c99',
     'cpp_std=c++17',
   ],
-  meson_version: '>= 0.63.0',
+  meson_version: '>= 1.4.0',
 )
 
 pk_version = meson.project_version()
