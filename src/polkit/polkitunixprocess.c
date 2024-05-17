@@ -19,10 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include <sys/types.h>
 #ifdef HAVE_FREEBSD
 #include <sys/param.h>

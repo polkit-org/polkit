@@ -20,10 +20,6 @@
  * Author: Nikki VonHollen <vonhollen@google.com>
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include <string.h>
 #include <errno.h>
 #include "polkitunixnetgroup.h"
