@@ -48,6 +48,7 @@
 enum
 {
   CHANGED_SIGNAL,
+  SESSIONS_CHANGED_SIGNAL,
   LAST_SIGNAL,
 };
 
@@ -70,6 +71,15 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
    * Emitted when actions and/or authorizations change.
    */
   signals[CHANGED_SIGNAL] = g_signal_new ("changed",
+                                          POLKIT_BACKEND_TYPE_AUTHORITY,
+                                          G_SIGNAL_RUN_LAST,
+                                          G_STRUCT_OFFSET (PolkitBackendAuthorityClass, changed),
+                                          NULL,                   /* accumulator      */
+                                          NULL,                   /* accumulator data */
+                                          g_cclosure_marshal_VOID__VOID,
+                                          G_TYPE_NONE,
+                                          0);
+  signals[SESSIONS_CHANGED_SIGNAL] = g_signal_new ("sessions-changed",
                                           POLKIT_BACKEND_TYPE_AUTHORITY,
                                           G_SIGNAL_RUN_LAST,
                                           G_STRUCT_OFFSET (PolkitBackendAuthorityClass, changed),
@@ -501,6 +511,8 @@ typedef struct
 
   gulong authority_changed_id;
 
+  gulong authority_session_monitor_signaller;
+
   gchar *object_path;
 
   GHashTable *cancellation_id_to_check_auth_data;
@@ -523,6 +535,9 @@ server_free (Server *server)
   if (server->authority != NULL && server->authority_changed_id > 0)
     g_signal_handler_disconnect (server->authority, server->authority_changed_id);
 
+  if (server->authority != NULL && server->authority_session_monitor_signaller > 0)
+    g_signal_handler_disconnect (server->authority, server->authority_session_monitor_signaller);
+
   if (server->cancellation_id_to_check_auth_data != NULL)
     g_hash_table_unref (server->cancellation_id_to_check_auth_data);
 
@@ -531,26 +546,52 @@ server_free (Server *server)
   g_free (server);
 }
 
-static void
-on_authority_changed (PolkitBackendAuthority *authority,
-                      gpointer                user_data)
+static void changed_dbus_call_handler(PolkitBackendAuthority *authority,
+                                      gpointer                user_data,
+                                      guint16                 msg_mask)
 {
   Server *server = user_data;
   GError *error;
+  GVariant *parameters;
 
   error = NULL;
+
+  parameters = g_variant_new("(q)", msg_mask);
   if (!g_dbus_connection_emit_signal (server->connection,
                                       NULL, /* destination bus name */
                                       server->object_path,
                                       "org.freedesktop.PolicyKit1.Authority",
                                       "Changed",
-                                      NULL,
+                                      parameters,
                                       &error))
     {
       g_warning ("Error emitting Changed() signal: %s", error->message);
       g_error_free (error);
     }
 }
+
+
+static void
+on_authority_changed (PolkitBackendAuthority *authority,
+                      gpointer                user_data)
+{
+  guint16 msg_mask = 0;
+
+  msg_mask = (guint16) CHANGED_SIGNAL;
+  changed_dbus_call_handler(authority, user_data, msg_mask);
+}
+
+
+static void
+on_sessions_changed (PolkitBackendAuthority *authority,
+                      gpointer                user_data)
+{
+  guint16 msg_mask = 0;
+
+  msg_mask = (guint16) SESSIONS_CHANGED_SIGNAL;
+  changed_dbus_call_handler(authority, user_data, msg_mask);
+}
+
 
 static const gchar *server_introspection_data =
   "<node>"
@@ -1395,6 +1436,11 @@ polkit_backend_authority_register (PolkitBackendAuthority   *authority,
   server->authority_changed_id = g_signal_connect (server->authority,
                                                    "changed",
                                                    G_CALLBACK (on_authority_changed),
+                                                   server);
+
+  server->authority_session_monitor_signaller = g_signal_connect (server->authority,
+                                                   "sessions-changed",
+                                                   G_CALLBACK (on_sessions_changed),
                                                    server);
 
   return server;

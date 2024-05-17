@@ -431,7 +431,7 @@ Must match the effective UID of the caller of org.freedesktop.PolicyKit1.Authori
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <signal name="Changed">
-      <annotation name="org.gtk.EggDBus.DocString" value="This signal is emitted when actions and/or authorizations change"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="This signal is emitted when actions, sessions and/or authorizations change, carrying information about the change."/>
     </signal>
 
   </interface>
