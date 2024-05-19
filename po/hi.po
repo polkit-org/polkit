@@ -1,0 +1,215 @@
+# Hindi translation for polkit.
+# Copyright (C) 2024 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Scrambled 777 <weblate.scrambled777@simplelogin.com>, 2024.
+# Scrambled777 <weblate.scrambled777@simplelogin.com>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit main\n"
+"Report-Msgid-Bugs-To: https://github.com/polkit-org/polkit/issues\n"
+"POT-Creation-Date: 2024-05-19 03:27+0000\n"
+"PO-Revision-Date: 2024-05-19 15:12+0530\n"
+"Last-Translator: Scrambled777 <weblate.scrambled777@simplelogin.com>\n"
+"Language-Team: Hindi <indlinux-hindi@lists.sourceforge.net>\n"
+"Language: hi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Gtranslator 46.1\n"
+
+#: actions/org.freedesktop.policykit.policy.in:12
+msgid "Run a program as another user"
+msgstr "किसी प्रोग्राम को दूसरे उपयोक्ता के रूप में चलाएं"
+
+#: actions/org.freedesktop.policykit.policy.in:13
+msgid "Authentication is required to run a program as another user"
+msgstr ""
+"किसी प्रोग्राम को किसी अन्य उपयोक्ता के रूप में चलाने के लिए प्रमाणीकरण की आवश्यकता होती "
+"है"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
+msgid "Run the polkit example program Frobnicate"
+msgstr "polkit उदाहरण प्रोग्राम Frobnicate चलाएं"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"polkit उदाहरण प्रोग्राम Frobnicate को चलाने के लिए प्रमाणीकरण आवश्यक है "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+
+#: src/programs/pkaction.c:101
+msgid "Only output information about ACTION"
+msgstr "केवल कार्रवाई के बारे में जानकारी आउटपुट करें"
+
+#: src/programs/pkaction.c:101
+msgid "ACTION"
+msgstr "कार्रवाई"
+
+#: src/programs/pkaction.c:105
+msgid "Output detailed action information"
+msgstr "विस्तृत कार्रवाई की जानकारी आउटपुट करें"
+
+#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:104
+msgid "Show version"
+msgstr "संस्करण दिखाएं"
+
+#: src/programs/pkaction.c:132
+msgid "[--action-id ACTION]"
+msgstr "[--action-id कार्रवाई]"
+
+#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:127
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"बग यहां रिपोर्ट करें: %s\n"
+"%s मुखपृष्ठ: <%s>"
+
+#: src/programs/pkaction.c:147 src/programs/pkcheck.c:498
+#: src/programs/pkttyagent.c:141
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: अप्रत्याशित तर्क `%s'\n"
+
+#: src/programs/pkcheck.c:36
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"उपयोग:\n"
+"  pkcheck [विकल्प...]\n"
+"\n"
+"सहायता विकल्प:\n"
+"  -h, --help                         सहायता विकल्प दिखाएं\n"
+"\n"
+"अनुप्रयोग विकल्प:\n"
+"  -a, --action-id=कार्रवाई                                   कार्रवाई करने के "
+"लिए प्राधिकरण की जांच करें\n"
+"  -u, --allow-user-interaction       यदि आवश्यक हो तो उपयोक्ता के साथ बातचीत "
+"करें\n"
+"  -d, --details=मौलिक मान                                  कार्रवाई के बारे में "
+"जानकारी में (मौलिक, मान) जोड़ें\n"
+"  --enable-internal-agent            यदि आवश्यक हो तो आंतरिक प्रमाणीकरण एजेंट का "
+"उपयोग करें\n"
+"  --list-temp                        वर्तमान सत्र के लिए अस्थायी प्राधिकरणों की "
+"सूची बनाएं\n"
+"  -p, --process=PID[,शुरू_समय,UID]     निर्दिष्ट प्रक्रिया के प्राधिकरण की जांच करें\n"
+"  --revoke-temp                      वर्तमान सत्र के लिए सभी अस्थायी प्राधिकरण "
+"रद्द करें\n"
+"  -s, --system-bus-name=बस_नाम                   बस_नाम के मालिक का प्राधिकरण "
+"जाँचें\n"
+"  --version                          संस्करण दिखाएं\n"
+"\n"
+"बग यहां रिपोर्ट करें: %s\n"
+"%s मुखपृष्ठ: <%s>\n"
+
+#: src/programs/pkcheck.c:398 src/programs/pkcheck.c:431
+#: src/programs/pkcheck.c:443
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: `%s' के बाद तर्क अपेक्षित\n"
+
+#: src/programs/pkcheck.c:421
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: अमान्य --process मान `%s'\n"
+
+#: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
+#, c-format
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr "%s: `--detail, -d' के बाद दो तर्क अपेक्षित हैं\n"
+
+#: src/programs/pkcheck.c:528
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: विषय निर्दिष्ट नहीं\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: src/programs/pkexec.c:822
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr ""
+"`$(cmdline_short)' को सुपर उपयोक्ता के रूप में चलाने के लिए प्रमाणीकरण की आवश्यकता है"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: src/programs/pkexec.c:832
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
+msgstr ""
+"`$(cmdline_short)' को उपयोक्ता $(user.display) के रूप में चलाने के लिए प्रमाणीकरण की "
+"आवश्यकता है"
+
+#: src/programs/pkttyagent.c:87
+msgid "Don't replace existing agent if any"
+msgstr "यदि कोई मौजूदा एजेंट है तो उसे न बदलें"
+
+#: src/programs/pkttyagent.c:91
+msgid "Close FD when the agent is registered"
+msgstr "एजेंट पंजीकृत होने पर FD बंद कर दें"
+
+#: src/programs/pkttyagent.c:91
+msgid "FD"
+msgstr "FD"
+
+#: src/programs/pkttyagent.c:95
+msgid "Register the agent for the specified process"
+msgstr "निर्दिष्ट प्रक्रिया के लिए एजेंट को पंजीकृत करें"
+
+#: src/programs/pkttyagent.c:96
+msgid "PID[,START_TIME]"
+msgstr "PID[,शुरू_समय]"
+
+#: src/programs/pkttyagent.c:100
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "बस_नाम के मालिक के लिए एजेंट पंजीकृत करें"
+
+#: src/programs/pkttyagent.c:100
+msgid "BUS_NAME"
+msgstr "बस_नाम"
+
+#: src/programs/pkttyagent.c:155
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr "%s: विकल्प --process और --system-bus-name परस्पर अनन्य हैं\n"
+
+#: src/programs/pkttyagent.c:179
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: अमान्य प्रक्रिया विनिर्देशक `%s'\n"
