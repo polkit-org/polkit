@@ -80,14 +80,14 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
                                           G_TYPE_NONE,
                                           0);
   signals[SESSIONS_CHANGED_SIGNAL] = g_signal_new ("sessions-changed",
-                                          POLKIT_BACKEND_TYPE_AUTHORITY,
-                                          G_SIGNAL_RUN_LAST,
-                                          G_STRUCT_OFFSET (PolkitBackendAuthorityClass, changed),
-                                          NULL,                   /* accumulator      */
-                                          NULL,                   /* accumulator data */
-                                          g_cclosure_marshal_VOID__VOID,
-                                          G_TYPE_NONE,
-                                          0);
+                                                   POLKIT_BACKEND_TYPE_AUTHORITY,
+                                                   G_SIGNAL_RUN_LAST,
+                                                   G_STRUCT_OFFSET (PolkitBackendAuthorityClass, changed),
+                                                   NULL,                   /* accumulator      */
+                                                   NULL,                   /* accumulator data */
+                                                   g_cclosure_marshal_VOID__VOID,
+                                                   G_TYPE_NONE,
+                                                   0);
 }
 
 /**
@@ -575,7 +575,7 @@ static void
 on_authority_changed (PolkitBackendAuthority *authority,
                       gpointer                user_data)
 {
-  guint16 msg_mask = 0;
+  guint16 msg_mask;
 
   msg_mask = (guint16) CHANGED_SIGNAL;
   changed_dbus_call_handler(authority, user_data, msg_mask);
@@ -586,7 +586,7 @@ static void
 on_sessions_changed (PolkitBackendAuthority *authority,
                       gpointer                user_data)
 {
-  guint16 msg_mask = 0;
+  guint16 msg_mask;
 
   msg_mask = (guint16) SESSIONS_CHANGED_SIGNAL;
   changed_dbus_call_handler(authority, user_data, msg_mask);
@@ -1439,9 +1439,9 @@ polkit_backend_authority_register (PolkitBackendAuthority   *authority,
                                                    server);
 
   server->authority_session_monitor_signaller = g_signal_connect (server->authority,
-                                                   "sessions-changed",
-                                                   G_CALLBACK (on_sessions_changed),
-                                                   server);
+                                                                  "sessions-changed",
+                                                                  G_CALLBACK (on_sessions_changed),
+                                                                  server);
 
   return server;
 

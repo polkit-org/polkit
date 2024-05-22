@@ -438,9 +438,9 @@ polkit_permission_initable_init (GInitable     *initable,
                     permission);
 
   g_signal_connect (permission->authority,
-                      "sessions-changed",
-                      G_CALLBACK (on_sessions_changed),
-                      permission);
+                    "sessions-changed",
+                    G_CALLBACK (on_sessions_changed),
+                    permission);
 
   result = polkit_authority_check_authorization_sync (permission->authority,
                                                       permission->subject,
@@ -502,21 +502,21 @@ static char *get_session_state()
   uid_t uid;
 
   if ( sd_pid_get_session(getpid(), &session) < 0 )
-  {
-    if ( sd_pid_get_owner_uid(getpid(), &uid) < 0)
     {
-      goto out;
+      if ( sd_pid_get_owner_uid(getpid(), &uid) < 0)
+        {
+          goto out;
+        }
+      if (sd_uid_get_display(uid, &session) < 0)
+        {
+          goto out;
+        }
     }
-    if (sd_uid_get_display(uid, &session) < 0)
-    {
-      goto out;
-    }
-  }
 
   if (session != NULL)
-  {
-    sd_session_get_state(session, &state);
-  }
+    {
+      sd_session_get_state(session, &state);
+    }
 out:
   g_free(session);
   return state;
@@ -555,20 +555,20 @@ static void on_sessions_changed (PolkitAuthority *authority,
 
   /* if we cannot tell the session state, we should do CheckAuthorization anyway */
   if ((new_session_state == NULL) || ( g_strcmp0(new_session_state, permission->session_state) != 0 ))
-  {
-    last_state = permission->session_state;
-    permission->session_state = new_session_state;
-    g_free(last_state);
+    {
+      last_state = permission->session_state;
+      permission->session_state = new_session_state;
+      g_free(last_state);
 
-    polkit_authority_check_authorization (permission->authority,
-                                      permission->subject,
-                                      permission->action_id,
-                                      NULL, /* PolkitDetails */
-                                      POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE,
-                                      NULL /* cancellable */,
-                                      changed_check_cb,
-                                      g_object_ref (permission));
-  }
+      polkit_authority_check_authorization (permission->authority,
+                                            permission->subject,
+                                            permission->action_id,
+                                            NULL, /* PolkitDetails */
+                                            POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE,
+                                            NULL /* cancellable */,
+                                            changed_check_cb,
+                                            g_object_ref (permission));
+    }
 #else
   on_authority_changed(authority, user_data);  /* TODO: resolve the "too many session signals" issue for non-systemd systems later */
 #endif
