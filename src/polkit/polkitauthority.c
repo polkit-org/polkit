@@ -84,6 +84,7 @@ static PolkitAuthority *the_authority = NULL;
 enum
 {
   CHANGED_SIGNAL,
+  SESSIONS_CHANGED_SIGNAL,
   LAST_SIGNAL,
 };
 
@@ -113,9 +114,23 @@ on_proxy_signal (GDBusProxy   *proxy,
                  gpointer      user_data)
 {
   PolkitAuthority *authority = POLKIT_AUTHORITY (user_data);
+  guint16 msg_mask;
+
   if (g_strcmp0 (signal_name, "Changed") == 0)
     {
-      g_signal_emit_by_name (authority, "changed");
+      if ((parameters != NULL) && g_variant_check_format_string(parameters, "(q)", FALSE))
+      {
+        g_variant_get(parameters, "(q)", &msg_mask);
+        if (msg_mask >= LAST_SIGNAL)
+        {
+          msg_mask = CHANGED_SIGNAL;  /* If signal not valid, we send generic "changed". */
+        }
+        g_signal_emit (authority, signals[msg_mask], 0);
+      }
+      else
+      {
+        g_signal_emit_by_name (authority, "changed");
+      }
     }
 }
 
@@ -287,6 +302,21 @@ polkit_authority_class_init (PolkitAuthorityClass *klass)
                                           g_cclosure_marshal_VOID__VOID,
                                           G_TYPE_NONE,
                                           0);
+  /**
+   * PolkitAuthority::sessions-changed:
+   * @authority: A #PolkitAuthority.
+   *
+   * Emitted when sessions change
+   */
+  signals[SESSIONS_CHANGED_SIGNAL] = g_signal_new ("sessions-changed",
+                                                   POLKIT_TYPE_AUTHORITY,
+                                                   G_SIGNAL_RUN_LAST,
+                                                   0,                      /* class offset     */
+                                                   NULL,                   /* accumulator      */
+                                                   NULL,                   /* accumulator data */
+                                                   g_cclosure_marshal_VOID__VOID,
+                                                   G_TYPE_NONE,
+                                                   0);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
