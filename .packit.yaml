@@ -22,3 +22,11 @@ jobs:
   - fedora-all-ppc64le
   - fedora-all-s390x
   - fedora-all-x86_64
+
+- job: tests
+  trigger: pull_request
+  fmf_path: test/integration/
+  tmt_plan: upstream-ci
+  targets:
+  - fedora-all-aarch64
+  - fedora-all-x86_64
