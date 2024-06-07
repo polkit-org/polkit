@@ -18,4 +18,7 @@ jobs:
 - job: copr_build
   trigger: pull_request
   targets:
-  - fedora-all
+  - fedora-all-aarch64
+  - fedora-all-ppc64le
+  - fedora-all-s390x
+  - fedora-all-x86_64
