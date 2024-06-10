@@ -16,7 +16,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: registry.fedoraproject.org/fedora:latest
+    container:
+      image: registry.fedoraproject.org/fedora:latest
+      options: "--privileged"
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}-${{ matrix.js_engine }}
       cancel-in-progress: true
