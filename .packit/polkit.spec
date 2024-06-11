@@ -23,6 +23,8 @@ BuildRequires: dbus-devel
 BuildRequires: pkgconfig(duktape)
 BuildRequires: meson
 BuildRequires: git
+BuildRequires: python3-dbus
+BuildRequires: python3-dbusmock
 
 Requires: dbus, polkit-pkla-compat
 Requires: %{name}-libs%{?_isa} = %{version}-%{release}
@@ -88,9 +90,10 @@ Libraries files for polkit.
        -D introspection=true \
        -D man=true \
        -D session_tracking=logind \
-       -D tests=false
+       -D tests=true
 
 %meson_build
+%meson_test
 
 %install
 %meson_install
