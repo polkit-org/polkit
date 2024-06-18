@@ -172,13 +172,14 @@ utils_child_watch_cb (GPid     pid,
   if (g_io_channel_read_to_end (data->child_stdout_channel, &buf, &buf_size, NULL) == G_IO_STATUS_NORMAL)
     {
       g_string_append_len (data->child_stdout, buf, buf_size);
-      g_free (buf);
     }
+  g_free (buf);
+
   if (g_io_channel_read_to_end (data->child_stderr_channel, &buf, &buf_size, NULL) == G_IO_STATUS_NORMAL)
     {
       g_string_append_len (data->child_stderr, buf, buf_size);
-      g_free (buf);
     }
+  g_free (buf);
 
   data->exit_status = status;
 
