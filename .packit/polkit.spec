@@ -137,6 +137,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_bindir}/pkttyagent
 %dir %{_prefix}/lib/polkit-1
 %{_prefix}/lib/polkit-1/polkitd
+%{_tmpfilesdir}/polkit-tmpfiles.conf
 
 # see upstream docs for why these permissions are necessary
 %attr(4755,root,root) %{_bindir}/pkexec

@@ -220,6 +220,18 @@ if enable_logind
 endif
 config_h.set('HAVE_LIBSYSTEMD', enable_logind)
 
+systemd_dep = dependency('systemd').found()
+if systemd_dep
+  tmpfiles_conf = files(
+    'data/polkit-tmpfiles.conf'
+  )
+
+  install_data(
+    tmpfiles_conf,
+    install_dir: pk_prefix / 'lib/tmpfiles.d/'
+  )
+endif
+
 config_h.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#include <sys/syscall.h>') != '')
 
 # User for running polkitd
@@ -404,6 +416,10 @@ output += '        Session tracking:         ' + session_tracking + '\n'
 if session_tracking == 'logind'
   output += '        systemdsystemunitdir:     ' + systemd_systemdsystemunitdir + '\n'
 endif
+if systemd_dep
+  output += '        systemdtmpfilesdir:       ' + pk_prefix + '/lib/tmpfiles.d' + '\n'
+endif
+
 output += '        polkitd user:             ' + polkitd_user + ' \n'
 if polkitd_uid != '-'
   output += '        polkitd UID:              ' + polkitd_uid + ' \n'
