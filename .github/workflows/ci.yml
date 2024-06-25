@@ -18,20 +18,21 @@ jobs:
     runs-on: ubuntu-latest
     container: registry.fedoraproject.org/fedora:latest
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}-${{ matrix.js_engine }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
         phase: [BUILD_GCC, GCC, GCC_ASAN_UBSAN, BUILD_CLANG, CLANG]
+        js_engine: [mozjs, duktape]
     steps:
       - name: Repository checkout
         uses: actions/checkout@v4
 
       - name: Install build & test dependencies
         run: |
-          sudo dnf install -y dnf-plugins-core python3-dbusmock clang compiler-rt libasan libubsan
+          sudo dnf install -y dnf-plugins-core python3-dbusmock clang compiler-rt libasan libubsan mozjs115-devel
           sudo dnf builddep -y polkit
 
       - name: Build & test
-        run: sudo --preserve-env=GITHUB_ACTIONS,CI .github/workflows/ci.sh ${{ matrix.phase }}
+        run: sudo --preserve-env=GITHUB_ACTIONS,CI .github/workflows/ci.sh ${{ matrix.phase }} ${{ matrix.js_engine }}
