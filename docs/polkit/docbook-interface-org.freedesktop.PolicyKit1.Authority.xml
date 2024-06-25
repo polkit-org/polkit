@@ -78,7 +78,8 @@ This D-Bus interface is implemented by the <literal>/org/freedesktop/PolicyKit1/
           <programlisting>
 {
   None                 = 0x00000000,
-  AllowUserInteraction = 0x00000001
+  AllowUserInteraction = 0x00000001,
+  AlwaysCheck          = 0x00000002
 }
           </programlisting>
           <para>
@@ -98,6 +99,14 @@ No flags set.
     <listitem>
       <para>
 If the <link linkend="eggdbus-struct-Subject">Subject</link> can obtain the authorization through authentication, and an authentication agent is available, then attempt to do so. Note, this means that the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">CheckAuthorization()</link> method will block while the user is being asked to authenticate.
+      </para>
+    </listitem>
+  </varlistentry>
+  <varlistentry id="eggdbus-constant-CheckAuthorizationFlags.AlwaysCheck" role="constant">
+    <term><literal>AlwaysCheck</literal></term>
+    <listitem>
+      <para>
+Check access against policy even if the <link linkend="eggdbus-struct-Subject">Subject</link> is the root user.
       </para>
     </listitem>
   </varlistentry>

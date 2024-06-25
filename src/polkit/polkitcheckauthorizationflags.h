@@ -36,6 +36,7 @@ G_BEGIN_DECLS
  * @POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION: If the subject can obtain the authorization
  * through authentication, and an authentication agent is available, then attempt to do so. Note, this
  * means that the method used for checking authorization is likely to block for a long time.
+ * @POLKIT_CHECK_AUTHORIZATION_FLAGS_ALWAYS_CHECK: Check access against policy even for root user.
  *
  * Possible flags when checking authorizations.
  */
@@ -43,6 +44,7 @@ typedef enum
 {
   POLKIT_CHECK_AUTHORIZATION_FLAGS_NONE = 0,
   POLKIT_CHECK_AUTHORIZATION_FLAGS_ALLOW_USER_INTERACTION = (1<<0),
+  POLKIT_CHECK_AUTHORIZATION_FLAGS_ALWAYS_CHECK = (1<<1),
 } PolkitCheckAuthorizationFlags;
 
 G_END_DECLS
