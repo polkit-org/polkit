@@ -17,7 +17,7 @@ jobs:
     permissions:
       security-events: write
     concurrency:
-      group: ${{ github.workflow }}-${{ matrix.ref }}-${{ matrix.language }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.language }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
