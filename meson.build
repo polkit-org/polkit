@@ -375,12 +375,12 @@ if gettext
   config_data.set('ENABLE_GETTEXT', 1)
 endif
 
-configure_file(
+config_h = configure_file(
   output: 'config.h',
   configuration: config_data,
 )
 
-compiler_common_flags += ['-include', 'config.h']
+compiler_common_flags += ['-include', config_h.full_path()]
 
 add_project_arguments(compiler_common_flags + compiler_c_flags, language: 'c')
 add_project_arguments(compiler_common_flags + compiler_cpp_flags, language: 'cpp')
