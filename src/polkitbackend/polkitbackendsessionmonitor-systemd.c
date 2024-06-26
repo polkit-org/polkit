@@ -19,7 +19,6 @@
  * Author: Matthias Clasen
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>

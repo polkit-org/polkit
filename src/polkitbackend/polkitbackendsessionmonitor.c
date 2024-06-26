@@ -19,7 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>

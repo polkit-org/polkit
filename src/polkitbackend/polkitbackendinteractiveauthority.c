@@ -19,7 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
@@ -1488,10 +1487,10 @@ authentication_agent_generate_cookie (AuthenticationAgent *agent)
   GString *buf = g_string_new ("");
 
   g_string_append (buf, agent->cookie_prefix);
-  
+
   g_string_append_c (buf, '-');
   agent->cookie_serial++;
-  g_string_append_printf (buf, "%" G_GUINT64_FORMAT, 
+  g_string_append_printf (buf, "%" G_GUINT64_FORMAT,
                           agent->cookie_serial);
   g_string_append_c (buf, '-');
   append_rand_u128_str (buf, agent->cookie_pool);
@@ -1685,7 +1684,7 @@ authentication_agent_new (guint64      serial,
     g_rand_free (agent_private_rand);
 
     agent->cookie_prefix = g_string_free (cookie_prefix, FALSE);
-    
+
     /* And a newly seeded pool for per-session cookies */
     agent->cookie_pool = g_rand_new ();
   }
@@ -1787,7 +1786,7 @@ get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority
        * due to wrapping, that the cookie used is matched to the user
        * who called AuthenticationAgentResponse2.  See
        * http://lists.freedesktop.org/archives/polkit-devel/2015-June/000425.html
-       * 
+       *
        * Except if the legacy AuthenticationAgentResponse is invoked,
        * we don't know the uid and hence use -1.  Continue to support
        * the old behavior for backwards compatibility, although everyone

@@ -19,8 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
-
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>

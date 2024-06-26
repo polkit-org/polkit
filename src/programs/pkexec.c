@@ -19,10 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -206,7 +202,7 @@ open_session (const gchar *user_to_auth,
       for (n = 0; envlist[n]; n++)
 	{
 	  const char *envitem = envlist[n];
-	  
+
 	  if (g_str_has_prefix (envitem, "XDG_RUNTIME_DIR="))
 	    {
 	      const char *eq = strchr (envitem, '=');
@@ -1035,7 +1031,7 @@ main (int argc, char *argv[])
 
   /* change to home directory */
   if (!opt_keep_cwd)
-    {  
+    {
       if (chdir (pw->pw_dir) != 0)
         {
           g_printerr ("Error changing to home directory %s: %s\n", pw->pw_dir, g_strerror (errno));

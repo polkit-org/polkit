@@ -49,7 +49,6 @@
  * be emitted with the @gained_authorization paramter set to %FALSE.
  */
 
-#include "config.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
