@@ -20,8 +20,8 @@ foreach test_unit: test_units
 
   test(
     test_unit,
-    exe,
-    env: test_env,
-    is_parallel: false,
+    test_wrapper,
+    args: ['--data-dir', test_data_dir, exe.full_path()],
+    timeout: 30,
   )
 endforeach

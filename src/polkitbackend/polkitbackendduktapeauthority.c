@@ -1130,7 +1130,12 @@ js_polkit_spawn (duk_context *cx)
     g_main_context_unref (context);
 
   if (err_str)
-    duk_error (cx, DUK_ERR_ERROR, err_str);
+    {
+      duk_push_error_object (cx, DUK_ERR_ERROR, err_str);
+      free (err_str);
+      duk_throw (cx);
+      g_assert_not_reached ();
+    }
 
   return ret;
 }

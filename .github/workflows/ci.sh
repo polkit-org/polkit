@@ -75,8 +75,7 @@ case "$PHASE" in
             -Db_lundef=false \
             "${COMMON_BUILD_OPTS[@]}"
 
-        # Note: we need to set verify_asan_link_order=0 as polkit LD_PRELOADs libmocklibc in unit tests
-        export ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:verify_asan_link_order=0
+        export ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1
         export UBSAN_OPTIONS=print_stacktrace=1:print_summary=1:halt_on_error=1
 
         meson compile -C build -v
