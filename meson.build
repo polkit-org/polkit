@@ -5,6 +5,7 @@ project(
   default_options: [
     'buildtype=debugoptimized',
     'prefix=/usr',
+    'c_std=c99',
     'cpp_std=c++17',
   ],
   meson_version: '>= 0.63.0',
@@ -97,12 +98,7 @@ foreach func: check_functions
 endforeach
 
 compiler_common_flags = []
-compiler_c_flags = [
-  # FIXME: this should go as 'c_std=c99' in project's default_options.
-  #        https://github.com/mesonbuild/meson/issues/1889
-  #        https://github.com/mesonbuild/meson/pull/6729
-  '-std=c99',
-]
+compiler_c_flags = []
 compiler_cpp_flags = []
 
 if get_option('buildtype').contains('debug')
