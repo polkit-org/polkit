@@ -502,6 +502,7 @@ polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuth
 typedef struct
 {
   guint authority_registration_id;
+  guint log_control_registration_id;
 
   GDBusNodeInfo *introspection_info;
 
@@ -525,6 +526,9 @@ server_free (Server *server)
 
   if (server->authority_registration_id > 0)
     g_dbus_connection_unregister_object (server->connection, server->authority_registration_id);
+
+  if (server->log_control_registration_id > 0)
+    g_dbus_connection_unregister_object (server->connection, server->log_control_registration_id);
 
   if (server->connection != NULL)
     g_object_unref (server->connection);
@@ -649,6 +653,17 @@ static const gchar *server_introspection_data =
   "    <property type='s' name='BackendName' access='read'/>"
   "    <property type='s' name='BackendVersion' access='read'/>"
   "    <property type='u' name='BackendFeatures' access='read'/>"
+  "  </interface>"
+  "  <interface name='org.freedesktop.LogControl1'>"
+  "    <property type='s' name='LogLevel' access='readwrite'>"
+  "      <annotation name='org.freedesktop.DBus.Property.EmitsChangedSignal' value='false'/>"
+  "    </property>"
+  "    <property type='s' name='LogTarget' access='readwrite'>"
+  "      <annotation name='org.freedesktop.DBus.Property.EmitsChangedSignal' value='false'/>"
+  "    </property>"
+  "    <property type='s' name='SyslogIdentifier' access='read'>"
+  "      <annotation name='org.freedesktop.DBus.Property.EmitsChangedSignal' value='false'/>"
+  "    </property>"
   "  </interface>"
   "</node>";
 
@@ -1349,22 +1364,95 @@ server_handle_get_property (GDBusConnection  *connection,
 
   result = NULL;
 
-  if (g_strcmp0 (property_name, "BackendName") == 0)
+  if (g_strcmp0 (interface_name, "org.freedesktop.PolicyKit1.Authority") == 0)
     {
-      result = g_variant_new_string (polkit_backend_authority_get_name (server->authority));
+      if (g_strcmp0 (property_name, "BackendName") == 0)
+        {
+          result = g_variant_new_string (polkit_backend_authority_get_name (server->authority));
+        }
+      else if (g_strcmp0 (property_name, "BackendVersion") == 0)
+        {
+          result = g_variant_new_string (polkit_backend_authority_get_version (server->authority));
+        }
+      else if (g_strcmp0 (property_name, "BackendFeatures") == 0)
+        {
+          result = g_variant_new_uint32 (polkit_backend_authority_get_features (server->authority));
+        }
+      else
+        g_assert_not_reached ();
     }
-  else if (g_strcmp0 (property_name, "BackendVersion") == 0)
+  else if (g_strcmp0 (interface_name, "org.freedesktop.LogControl1") == 0)
     {
-      result = g_variant_new_string (polkit_backend_authority_get_version (server->authority));
+      if (g_strcmp0 (property_name, "LogLevel") == 0)
+        {
+          switch (polkit_authority_log_level)
+            {
+            case LOG_LEVEL_EMERG:
+              result = g_variant_new_string ("emerg");
+              break;
+            case LOG_LEVEL_ALERT:
+              result = g_variant_new_string ("alert");
+              break;
+            case LOG_LEVEL_CRIT:
+              result = g_variant_new_string ("crit");
+              break;
+            case LOG_LEVEL_ERROR:
+              result = g_variant_new_string ("err");
+              break;
+            case LOG_LEVEL_WARNING:
+              result = g_variant_new_string ("warn");
+              break;
+            case LOG_LEVEL_NOTICE:
+              result = g_variant_new_string ("notice");
+              break;
+            case LOG_LEVEL_INFO:
+              result = g_variant_new_string ("info");
+              break;
+            case LOG_LEVEL_DEBUG:
+              result = g_variant_new_string ("debug");
+              break;
+            }
+        }
+      else if (g_strcmp0 (property_name, "LogTarget") == 0)
+        {
+          result = g_variant_new_string ("syslog");
+        }
+      else if (g_strcmp0 (property_name, "SyslogIdentifier") == 0)
+        {
+          result = g_variant_new_string ("polkitd");
+        }
+      else
+        g_assert_not_reached ();
+
     }
-  else if (g_strcmp0 (property_name, "BackendFeatures") == 0)
-    {
-      result = g_variant_new_uint32 (polkit_backend_authority_get_features (server->authority));
-    }
-  else
-    g_assert_not_reached ();
 
   return result;
+}
+
+static gboolean
+server_handle_set_property (GDBusConnection  *connection,
+                            const gchar      *sender,
+                            const gchar      *object_path,
+                            const gchar      *interface_name,
+                            const gchar      *property_name,
+                            GVariant         *value,
+                            GError          **error,
+                            gpointer          user_data)
+{
+  if (g_strcmp0 (interface_name, "org.freedesktop.LogControl1") != 0)
+    return FALSE;
+
+  if (g_strcmp0 (property_name, "LogLevel") == 0)
+    {
+      const gchar *level;
+
+      g_variant_get (value, "&s", &level);
+      polkit_backend_authority_set_log_level (level);
+    }
+  else
+    return FALSE;
+
+  return TRUE;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1374,6 +1462,13 @@ static const GDBusInterfaceVTable server_vtable =
   server_handle_method_call,
   server_handle_get_property,
   NULL, /* server_handle_set_property */
+};
+
+static const GDBusInterfaceVTable logcontrol_vtable =
+{
+  NULL, /* server_handle_method_call */
+  server_handle_get_property,
+  server_handle_set_property,
 };
 
 /**
@@ -1427,6 +1522,18 @@ polkit_backend_authority_register (PolkitBackendAuthority   *authority,
                                                                          NULL,
                                                                          error);
   if (server->authority_registration_id == 0)
+    {
+      goto error;
+    }
+
+  server->log_control_registration_id = g_dbus_connection_register_object (server->connection,
+                                                                           "/org/freedesktop/LogControl1",
+                                                                           g_dbus_node_info_lookup_interface (server->introspection_info, "org.freedesktop.LogControl1"),
+                                                                           &logcontrol_vtable,
+                                                                           server,
+                                                                           NULL,
+                                                                           error);
+  if (server->log_control_registration_id == 0)
     {
       goto error;
     }
