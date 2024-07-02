@@ -191,16 +191,6 @@ enable_logind = (session_tracking != 'ConsoleKit')
 if enable_logind
   if session_tracking == 'logind'
     logind_dep = dependency('libsystemd', not_found_message: 'logind support requested but libsystemd library not found')
-
-    # systemd unit / service files
-    systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
-    if systemd_systemdsystemunitdir == ''
-      systemd_dep = dependency('systemd', not_found_message: 'systemd required but not found, please provide a valid systemd user unit dir or disable it')
-      # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
-      systemd_systemdsystemunitdir = systemd_dep.get_variable(pkgconfig: 'systemdsystemunitdir')
-    endif
-
-    systemd_sysusers_dir = systemd_dep.get_variable(pkgconfig: 'sysusers_dir', default_value: '/usr/lib/sysusers.d')
   else
     logind_dep = dependency('libelogind', not_found_message: 'elogind support requested but libelogind library not found')
   endif
@@ -212,19 +202,25 @@ if enable_logind
 endif
 config_data.set('HAVE_LIBSYSTEMD', enable_logind)
 
-systemd_dep = dependency('systemd').found()
-if systemd_dep
-  tmpfiles_conf = files(
-    'data/polkit-tmpfiles.conf'
-  )
-
-  install_data(
-    tmpfiles_conf,
-    install_dir: pk_prefix / 'lib/tmpfiles.d/'
-  )
-endif
-
 config_data.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#include <sys/syscall.h>') != '')
+
+# systemd unit / sysuser / tmpfiles.d file installation directories
+systemdsystemunitdir = get_option('systemdsystemunitdir')
+systemd_dep = dependency('systemd', required : false)
+if systemd_dep.found()
+  if systemdsystemunitdir == ''
+    # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
+    systemdsystemunitdir = systemd_dep.get_variable(pkgconfig : 'systemdsystemunitdir')
+  endif
+  sysusers_dir = systemd_dep.get_variable(pkgconfig : 'sysusers_dir')
+  tmpfiles_dir = systemd_dep.get_variable(pkgconfig : 'tmpfiles_dir')
+else
+  if systemdsystemunitdir == ''
+    systemdsystemunitdir = '/usr/lib/systemd/system'
+  endif
+  sysusers_dir = '/usr/lib/sysusers.d'
+  tmpfiles_dir = '/usr/lib/tmpfiles.d'
+endif
 
 # User for running polkitd
 polkitd_user = get_option('polkitd_user')
@@ -409,12 +405,9 @@ output += '        introspection:            ' + enable_introspection.to_string(
 output += '        Distribution/OS:          ' + os_type + '\n'
 output += '        Authentication framework: ' + auth_fw + '\n'
 output += '        Session tracking:         ' + session_tracking + '\n'
-if session_tracking == 'logind'
-  output += '        systemdsystemunitdir:     ' + systemd_systemdsystemunitdir + '\n'
-endif
-if systemd_dep
-  output += '        systemdtmpfilesdir:       ' + pk_prefix + '/lib/tmpfiles.d' + '\n'
-endif
+output += '        system unit directory:    ' + systemdsystemunitdir + '\n'
+output += '        sysusers.d directory:     ' + sysusers_dir + '\n'
+output += '        tmpfiles.d directory:     ' + tmpfiles_dir + '\n'
 
 output += '        polkitd user:             ' + polkitd_user + ' \n'
 if polkitd_uid != '-'
