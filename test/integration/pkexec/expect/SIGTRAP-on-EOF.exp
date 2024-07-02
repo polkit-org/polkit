@@ -1,0 +1,26 @@
+# Issue: EOF in password input causes a coredump
+# See:
+#   - https://github.com/polkit-org/polkit/pull/431
+
+set timeout 10
+expect_before timeout { send_error "Timeout!\n"; exit 124 }
+
+spawn pkexec echo "Hello world"
+expect "Password: "
+sleep .5
+# Send EOF
+send -- "\x04"
+expect eof
+
+catch wait result
+set signal [lindex $result 5]
+set ec [lindex $result 3]
+
+if { $signal != "" } {
+    send_error "pkexec died with signal $signal\n"
+    exit 128
+}
+
+send_error "pkexec exited with EC $ec\n"
+# We expect exit code 127 (failed authentication), if it's anything else propagate it further
+exit [expr $ec == 127 ? 0 : $ec]

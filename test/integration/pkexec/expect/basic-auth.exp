@@ -1,0 +1,34 @@
+# Do a basic password authentication via pkexec
+#
+# Usage: expect basic-auth.exp <password> <list of arguments for pexec>
+
+set timeout 10
+expect_before timeout { send_error "Timeout!\n"; exit 124 }
+
+set password [lindex $argv 0]
+
+# We need at least two arguments: a password and a command to run
+if { [llength $argv] < 2 } {
+    send_error "Missing required arguments\n"
+    exit 1
+}
+
+# The expression below skips over the first argument in $argv (password), and {*} expands
+# the resulting list into separate arguments to spawn()
+spawn pkexec {*}[lrange $argv 1 end]
+expect "Password: "
+sleep .5
+send -- "$password\r"
+expect eof
+
+catch wait result
+set signal [lindex $result 5]
+set ec [lindex $result 3]
+
+if { $signal != "" } {
+    send_error "pkexec died with signal $signal\n"
+    exit 128
+}
+
+send_error "pkexec exited with EC $ec\n"
+exit $ec
