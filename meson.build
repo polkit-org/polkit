@@ -212,7 +212,7 @@ if enable_logind
 endif
 config_data.set('HAVE_LIBSYSTEMD', enable_logind)
 
-systemd_dep = dependency('systemd').found()
+systemd_dep = dependency('systemd', required: false).found()
 if systemd_dep
   tmpfiles_conf = files(
     'data/polkit-tmpfiles.conf'
