@@ -107,7 +107,7 @@ sd_source_new (void)
 
   if ((ret = sd_login_monitor_new ("session", &sd_source->monitor)) < 0)
     {
-      g_printerr ("Error getting login monitor: %d", ret);
+      g_printerr ("Error getting login monitor: %d\n", ret);
     }
   else
     {
