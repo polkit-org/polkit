@@ -83,9 +83,6 @@ foreach define: set_defines
   config_data.set_quoted(define[0], define[1])
 endforeach
 
-# Globally define_GNU_SOURCE and therefore enable the GNU extensions
-config_data.set('_GNU_SOURCE', true)
-
 # functions
 check_functions = [
   'clearenv',
@@ -97,7 +94,9 @@ foreach func: check_functions
   config_data.set('HAVE_' + func.to_upper(), cc.has_function(func))
 endforeach
 
-compiler_common_flags = []
+compiler_common_flags = [
+  '-D_GNU_SOURCE',
+]
 compiler_c_flags = []
 compiler_cpp_flags = []
 
