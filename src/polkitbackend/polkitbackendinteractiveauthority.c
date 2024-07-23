@@ -592,6 +592,7 @@ log_result (PolkitBackendInteractiveAuthority    *authority,
     caller_cmdline = g_strdup ("<unknown>");
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTIFY,
                                 "%s action %s for %s [%s] owned by %s (check requested by %s [%s])",
                                 log_result_str,
                                 action_id,
@@ -700,6 +701,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
       if (is_temp)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_NOTIFY,
                                         "Operator of %s successfully authenticated as %s to gain "
                                         "TEMPORARY authorization for action %s for %s [%s] (owned by %s)",
                                         scope_str,
@@ -712,6 +714,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
       else
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_NOTIFY,
                                         "Operator of %s successfully authenticated as %s to gain "
                                         "ONE-SHOT authorization for action %s for %s [%s] (owned by %s)",
                                         scope_str,
@@ -725,6 +728,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   else
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_NOTIFY,
                                     "Operator of %s FAILED to authenticate to gain "
                                     "authorization for action %s for %s [%s] (owned by %s)",
                                     scope_str,
@@ -1972,6 +1976,7 @@ append_property (GString *dest,
   else
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error substituting value for property $(%s) when preparing message `%s' for action-id %s",
                                     key,
                                     message,
@@ -2632,6 +2637,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
            locale);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTIFY,
                                 "Registered Authentication Agent for %s "
                                 "(system bus name %s [%s], object path %s, locale %s)",
                                 subject_as_string,
@@ -2789,6 +2795,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
            agent->locale);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTIFY,
                                 "Unregistered Authentication Agent for %s "
                                 "(system bus name %s, object path %s, locale %s)",
                                 scope_str,
@@ -2941,6 +2948,7 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
                    agent->object_path);
 
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_NOTIFY,
                                         "Unregistered Authentication Agent for %s "
                                         "(system bus name %s, object path %s, locale %s) (disconnected from bus)",
                                         scope_str,

@@ -74,6 +74,7 @@ on_name_lost (GDBusConnection *connection,
               gpointer         user_data)
 {
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_WARNING,
                                 "Lost the name org.freedesktop.PolicyKit1 - exiting");
   g_main_loop_quit (loop);
 }
@@ -86,6 +87,7 @@ on_name_acquired (GDBusConnection *connection,
   exit_status = EXIT_SUCCESS;
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTIFY,
                                 "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
 }
 
