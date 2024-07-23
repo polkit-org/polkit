@@ -38,9 +38,12 @@ static GMainLoop              *loop = NULL;
 static gint                    exit_status = EXIT_FAILURE;
 static gboolean                opt_replace = FALSE;
 static gboolean                opt_no_debug = FALSE;
+static gchar                  *opt_log_level = "err";
 static GOptionEntry            opt_entries[] = {
   {"replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
-  {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information", NULL},
+  {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information to stderr and stdout", NULL},
+  {"log-level", 'l', 0, G_OPTION_ARG_STRING, &opt_log_level, "Set a level of logging (syslog style). Defaults to 'err'.",
+          "[emerg|alert|crit|err|warning|notice|info|debug]"},
   {NULL }
 };
 
@@ -74,6 +77,7 @@ on_name_lost (GDBusConnection *connection,
               gpointer         user_data)
 {
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_WARNING,
                                 "Lost the name org.freedesktop.PolicyKit1 - exiting");
   g_main_loop_quit (loop);
 }
@@ -86,6 +90,7 @@ on_name_acquired (GDBusConnection *connection,
   exit_status = EXIT_SUCCESS;
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTICE,
                                 "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
 }
 
@@ -221,6 +226,8 @@ main (int    argc,
 
   if (g_getenv ("PATH") == NULL)
     g_setenv ("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", TRUE);
+
+  polkit_backend_authority_set_log_level (opt_log_level);
 
   authority = polkit_backend_authority_get ();
 

@@ -86,6 +86,7 @@ static void report_error (void     *udata,
 {
     PolkitBackendJsAuthority *authority = udata;
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                  LOG_LEVEL_ERROR,
                                   "fatal Duktape JS backend error: %s",
                                   (msg ? msg : "no message"));
 }
@@ -113,6 +114,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       GDir *dir = NULL;
 
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_NOTICE,
                                     "Loading rules from directory %s",
                                     dir_name);
 
@@ -122,6 +124,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       if (dir == NULL)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_ERROR,
                                         "Error opening rules directory: %s (%s, %d)",
                                         error->message, g_quark_to_string (error->domain), error->code);
           g_clear_error (&error);
@@ -147,9 +150,14 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       if (!execute_script_with_runaway_killer(authority, filename))
           continue;
       num_scripts++;
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                      LOG_LEVEL_DEBUG,
+                                      "Loaded and executed script in file %s",
+                                      filename);
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTICE,
                                 "Finished loading, compiling and executing %d rules",
                                 num_scripts);
   g_list_free_full (files, g_free);
@@ -163,6 +171,7 @@ polkit_backend_common_reload_scripts (PolkitBackendJsAuthority *authority)
   duk_set_top (cx, 0);
   if (!duk_get_global_string (cx, "polkit")) {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error deleting old rules, not loading new ones");
       return;
   }
@@ -171,6 +180,7 @@ polkit_backend_common_reload_scripts (PolkitBackendJsAuthority *authority)
   duk_call_prop (cx, 0, 0);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTICE,
                                 "Collecting garbage unconditionally...");
 
   load_scripts (authority);
@@ -596,6 +606,7 @@ runaway_killer_thread_execute_js (gpointer user_data)
 
   if ((pthread_err = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error setting thread cancel type: %s",
                                   strerror(pthread_err));
     goto err;
@@ -607,6 +618,7 @@ runaway_killer_thread_execute_js (gpointer user_data)
 
   if (!g_file_load_contents(file, NULL, &contents, &len, NULL, NULL)) {
     polkit_backend_authority_log(POLKIT_BACKEND_AUTHORITY(ctx->authority),
+                                 LOG_LEVEL_ERROR,
                                  "Error loading script %s", ctx->filename);
     g_object_unref(file);
     goto err;
@@ -619,6 +631,7 @@ runaway_killer_thread_execute_js (gpointer user_data)
   if (duk_peval_lstring(cx, contents, len) != 0)
   {
     polkit_backend_authority_log(POLKIT_BACKEND_AUTHORITY(ctx->authority),
+                                 LOG_LEVEL_ERROR,
                                  "Error compiling script %s: %s", ctx->filename,
                                  duk_safe_to_string(cx, -1));
     duk_pop(cx);
@@ -628,6 +641,7 @@ runaway_killer_thread_execute_js (gpointer user_data)
 
   if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error locking mutex: %s",
                                   strerror(pthread_err));
     return NULL;
@@ -641,6 +655,7 @@ free_err:
 err:
   if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error locking mutex: %s",
                                   strerror(pthread_err));
     return NULL;
@@ -649,12 +664,14 @@ err:
 end:
   if ((pthread_err = pthread_cond_signal(&ctx->cond))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error signaling on condition variable: %s",
                                   strerror(pthread_err));
     ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
   }
   if ((pthread_err = pthread_mutex_unlock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error unlocking mutex: %s",
                                   strerror(pthread_err));
     ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
@@ -671,6 +688,7 @@ runaway_killer_thread_call_js (gpointer user_data)
 
   if ((pthread_err = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error setting thread cancel type: %s",
                                   strerror(pthread_err));
     goto err;
@@ -679,6 +697,7 @@ runaway_killer_thread_call_js (gpointer user_data)
   if (duk_pcall_prop (cx, 0, 2) != DUK_EXEC_SUCCESS)
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error evaluating admin rules: %s",
                                     duk_safe_to_string (cx, -1));
       goto err;
@@ -686,6 +705,7 @@ runaway_killer_thread_call_js (gpointer user_data)
 
   if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error locking mutex: %s",
                                   strerror(pthread_err));
     return NULL;
@@ -697,6 +717,7 @@ runaway_killer_thread_call_js (gpointer user_data)
 err:
   if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error locking mutex: %s",
                                   strerror(pthread_err));
     return NULL;
@@ -705,12 +726,14 @@ err:
 end:
   if ((pthread_err = pthread_cond_signal(&ctx->cond))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error signaling on condition variable: %s",
                                   strerror(pthread_err));
     ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
   }
   if ((pthread_err = pthread_mutex_unlock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (ctx->authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error unlocking mutex: %s",
                                   strerror(pthread_err));
     ctx->ret = RUNAWAY_KILLER_THREAD_EXIT_STATUS_FAILURE;
@@ -765,6 +788,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
 
   if ((pthread_err = pthread_mutex_lock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error locking mutex: %s",
                                   strerror(pthread_err));
     goto err_clean_cond;
@@ -772,6 +796,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
 
   if (clock_gettime(PK_CLOCK, &abs_time)) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error getting system's monotonic time: %s",
                                   strerror(errno));
     goto err_clean_cond;
@@ -781,6 +806,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
   if ((pthread_err = pthread_create(&authority->priv->runaway_killer_thread, NULL,
                                     js_context_cb, ctx))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error creating runaway JS killer thread: %s",
                                   strerror(pthread_err));
     goto err_clean_cond;
@@ -792,6 +818,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
 
       /* Log that we are terminating the script */
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_WARNING,
                                     "Terminating runaway script after %d seconds",
                                     RUNAWAY_KILLER_TIMEOUT);
 
@@ -800,6 +827,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
 
   if ((pthread_err = pthread_mutex_unlock(&ctx->mutex))) {
     polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                  LOG_LEVEL_ERROR,
                                   "Error unlocking mutex: %s",
                                   strerror(pthread_err));
     goto err_clean_cond;
@@ -808,6 +836,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
   if (cancel) {
     if ((pthread_err = pthread_cancel (authority->priv->runaway_killer_thread))) {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error cancelling runaway JS killer thread: %s",
                                     strerror(pthread_err));
       goto err_clean_cond;
@@ -815,6 +844,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
   }
   if ((pthread_err = pthread_join (authority->priv->runaway_killer_thread, NULL))) {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error joining runaway JS killer thread: %s",
                                     strerror(pthread_err));
       goto err_clean_cond;
@@ -884,6 +914,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
   duk_set_top (cx, 0);
   if (!duk_get_global_string (cx, "polkit")) {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error deleting old rules, not loading new ones");
       goto out;
   }
@@ -893,6 +924,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
   if (!push_action_and_details (cx, action_id, details, &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting action and details to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -902,6 +934,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
   if (!push_subject (cx, subject, user_for_subject, subject_is_local, subject_is_active, &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting subject to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -924,6 +957,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
       if (identity == NULL)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_WARNING,
                                         "Identity `%s' is not valid, ignoring: %s",
                                         identity_str, error->message);
           g_clear_error (&error);
@@ -974,6 +1008,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
   if (!push_action_and_details (cx, action_id, details, &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting action and details to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -983,6 +1018,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
   if (!push_subject (cx, subject, user_for_subject, subject_is_local, subject_is_active, &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting subject to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -1005,6 +1041,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
   if (!polkit_implicit_authorization_from_string (ret_str, &ret))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_WARNING,
                                     "Returned result `%s' is not valid",
                                     ret_str);
       goto out;
