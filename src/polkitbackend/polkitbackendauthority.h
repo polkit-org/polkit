@@ -53,6 +53,21 @@ struct _PolkitBackendAuthority
 };
 
 /**
+ * Log levels aligned with those used in syslog and LogControl
+ */
+enum
+{
+	LOG_LEVEL_EMERG,
+	LOG_LEVEL_ALERT,
+	LOG_LEVEL_CRIT,
+	LOG_LEVEL_ERROR,
+	LOG_LEVEL_WARNING,
+	LOG_LEVEL_NOTICE,
+	LOG_LEVEL_INFO,
+	LOG_LEVEL_DEBUG
+};
+
+/**
  * PolkitBackendAuthorityClass:
  * @parent_class: The parent class.
  * @get_name: Function pointer for the polkit_backend_authority_get_name() function.
@@ -212,8 +227,12 @@ const gchar             *polkit_backend_authority_get_version  (PolkitBackendAut
 PolkitAuthorityFeatures  polkit_backend_authority_get_features (PolkitBackendAuthority *authority);
 
 void     polkit_backend_authority_log (PolkitBackendAuthority *authority,
+                                       const guint message_log_level,
                                        const gchar *format,
                                        ...);
+
+void
+polkit_backend_authority_set_log_level (const gchar *level);
 
 GList   *polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,

@@ -163,6 +163,7 @@ static void report_error (JSContext     *cx,
 {
   PolkitBackendJsAuthority *authority = POLKIT_BACKEND_JS_AUTHORITY (JS_GetContextPrivate (cx));
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_ERROR,
                                 "%s:%u: %s",
                                 report->filename ? report->filename : "<no filename>",
                                 (unsigned int) report->lineno,
@@ -193,6 +194,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       GDir *dir = NULL;
 
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_NOTICE,
                                     "Loading rules from directory %s",
                                     dir_name);
 
@@ -202,6 +204,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       if (dir == NULL)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_ERROR,
                                         "Error opening rules directory: %s (%s, %d)",
                                         error->message, g_quark_to_string (error->domain), error->code);
           g_clear_error (&error);
@@ -231,6 +234,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       if (!script)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_ERROR,
                                         "Error compiling script %s",
                                         filename);
           continue;
@@ -243,6 +247,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
                                                &rval))
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_ERROR,
                                         "Error executing script %s",
                                         filename);
           continue;
@@ -254,6 +259,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTICE,
                                 "Finished loading, compiling and executing %d rules",
                                 num_scripts);
   g_list_free_full (files, g_free);
@@ -275,11 +281,13 @@ polkit_backend_common_reload_scripts (PolkitBackendJsAuthority *authority)
                            &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error deleting old rules, not loading new ones");
       return;
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_NOTICE,
                                 "Collecting garbage unconditionally...");
   JS_GC (authority->priv->cx);
 
@@ -838,7 +846,7 @@ js_operation_callback (JSContext *cx)
   g_mutex_unlock (&authority->priv->rkt_timeout_pending_mutex);
 
   /* Log that we are terminating the script */
-  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority), "Terminating runaway script");
+  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority), LOG_LEVEL_WARNING, "Terminating runaway script");
 
   /* Throw an exception - this way the JS code can ignore the runaway script handling */
   JS_ResetInterruptCallback (authority->priv->cx, TRUE);
@@ -995,6 +1003,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
   if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting action and details to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -1010,6 +1019,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
                          &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting subject to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -1022,6 +1032,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
                                              &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error evaluating admin rules");
       goto out;
     }
@@ -1051,6 +1062,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
       if (identity == NULL)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_WARNING,
                                         "Identity `%s' is not valid, ignoring (%s)",
                                         identity_str, error->message);
           g_clear_error (&error);
@@ -1098,6 +1110,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
   if (!action_and_details_to_jsval (authority, action_id, details, args[0], &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting action and details to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -1113,6 +1126,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
                          &error))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error converting subject to JS object: %s",
                                     error->message);
       g_clear_error (&error);
@@ -1125,6 +1139,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
                                              &rval))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error evaluating authorization rules");
       goto out;
     }
@@ -1154,6 +1169,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
   if (!polkit_implicit_authorization_from_string (ret_str.get(), &ret))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_WARNING,
                                     "Returned result `%s' is not valid",
                                     ret_str.get());
       goto out;

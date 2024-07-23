@@ -52,6 +52,7 @@ enum
 };
 
 static guint signals[LAST_SIGNAL] = {0};
+static guint polkit_authority_log_level = LOG_LEVEL_ERROR;
 
 G_DEFINE_ABSTRACT_TYPE (PolkitBackendAuthority, polkit_backend_authority, G_TYPE_OBJECT);
 
@@ -1561,6 +1562,7 @@ _color_get (_Color color)
 
 void
 polkit_backend_authority_log (PolkitBackendAuthority *authority,
+                              const guint message_log_level,
                               const gchar *format,
                               ...)
 {
@@ -1571,13 +1573,18 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
   gchar *message;
   va_list var_args;
 
+  if (message_log_level > polkit_authority_log_level)
+  {
+	  return;
+  }
+
   g_return_if_fail (POLKIT_BACKEND_IS_AUTHORITY (authority));
 
   va_start (var_args, format);
   message = g_strdup_vprintf (format, var_args);
   va_end (var_args);
 
-  syslog (LOG_NOTICE, "%s", message);
+  syslog (message_log_level, "%s", message);
 
   g_get_current_time (&now);
   now_time = (time_t) now.tv_sec;
@@ -1590,4 +1597,27 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
            message);
 
   g_free (message);
+}
+
+void
+polkit_backend_authority_set_log_level (const gchar *level)
+  {
+    /* Match syslog names so that they are the same across journalct, systemctl
+     * et al, but also accept more readable aliases for abbreviated levels. */
+    if (g_strcmp0 (level, "debug") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_DEBUG;
+    else if (g_strcmp0 (level, "info") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_INFO;
+    else if (g_strcmp0 (level, "notice") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_NOTICE;
+    else if (g_strcmp0 (level, "warning") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_WARNING;
+    else if (g_strcmp0 (level, "err") == 0 || g_strcmp0 (level, "error") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_ERROR;
+    else if (g_strcmp0 (level, "crit") == 0 || g_strcmp0 (level, "critical") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_CRIT;
+    else if (g_strcmp0 (level, "alert") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_ALERT;
+    else if (g_strcmp0 (level, "emerg") == 0 || g_strcmp0 (level, "emergency") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_EMERG;
 }
