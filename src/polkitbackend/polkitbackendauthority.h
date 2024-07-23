@@ -52,6 +52,14 @@ struct _PolkitBackendAuthority
   GObject parent_instance;
 };
 
+enum
+{
+	LOG_LEVEL_ERROR,	// log errors only
+	LOG_LEVEL_WARNING,	// errors and warnings
+	LOG_LEVEL_NOTIFY,   // like "all" interesting
+	LOG_LEVEL_VERBOSE  //  log every heartbeat, cough and fallen leaf. This is unlikely, but for future's sake...
+};
+
 /**
  * PolkitBackendAuthorityClass:
  * @parent_class: The parent class.

@@ -52,6 +52,7 @@ enum
 };
 
 static guint signals[LAST_SIGNAL] = {0};
+static guint polkit_authority_log_level = LOG_LEVEL_ERROR;
 
 G_DEFINE_ABSTRACT_TYPE (PolkitBackendAuthority, polkit_backend_authority, G_TYPE_OBJECT);
 
@@ -1561,6 +1562,7 @@ _color_get (_Color color)
 
 void
 polkit_backend_authority_log (PolkitBackendAuthority *authority,
+                              const guint message_log_level,
                               const gchar *format,
                               ...)
 {
@@ -1571,6 +1573,8 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
   gchar *message;
   va_list var_args;
 
+
+  g_return_if_fail (message_log_level <= polkit_authority_log_level);
   g_return_if_fail (POLKIT_BACKEND_IS_AUTHORITY (authority));
 
   va_start (var_args, format);
@@ -1590,4 +1594,13 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
            message);
 
   g_free (message);
+}
+
+void
+polkit_backend_authority_set_log_level (const guint level)
+  {
+    if (level <= LOG_LEVEL_VERBOSE)
+    {
+        polkit_authority_log_level = level;
+    }
 }
