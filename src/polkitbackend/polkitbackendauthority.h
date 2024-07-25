@@ -220,8 +220,12 @@ const gchar             *polkit_backend_authority_get_version  (PolkitBackendAut
 PolkitAuthorityFeatures  polkit_backend_authority_get_features (PolkitBackendAuthority *authority);
 
 void     polkit_backend_authority_log (PolkitBackendAuthority *authority,
+                                       const guint message_log_level,
                                        const gchar *format,
                                        ...);
+
+void
+polkit_backend_authority_set_log_level (const guint level);
 
 GList   *polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,
