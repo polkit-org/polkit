@@ -1573,8 +1573,11 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
   gchar *message;
   va_list var_args;
 
+  if (message_log_level > polkit_authority_log_level)
+  {
+	  return;
+  }
 
-  g_return_if_fail (message_log_level <= polkit_authority_log_level);
   g_return_if_fail (POLKIT_BACKEND_IS_AUTHORITY (authority));
 
   va_start (var_args, format);
