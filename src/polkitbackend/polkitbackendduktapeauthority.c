@@ -150,6 +150,10 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       if (!execute_script_with_runaway_killer(authority, filename))
           continue;
       num_scripts++;
+      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                      LOG_LEVEL_VERBOSE,
+                                      "Loaded and executed script in file %s",
+                                      filename);
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
