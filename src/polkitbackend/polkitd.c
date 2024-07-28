@@ -42,8 +42,8 @@ static gint                    opt_log_level = (gint) LOG_LEVEL_ERROR;
 static GOptionEntry            opt_entries[] = {
   {"replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
   {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information to stderr and stdout", NULL},
-  {"log-level", 'l', 0, G_OPTION_ARG_INT, &opt_log_level, "Set a level of logging (default: errors only)",
-          "Log level with the following values: 0 - errors only, 1 - include warnings, 2 - include regular notifications, 3 - verbose."},
+  {"log-level", 'l', 0, G_OPTION_ARG_INT, &opt_log_level, "Set a level of logging. Values (0-3): errors, warnings, notifications, verbose.",
+          "[0,1,2,3]"},
   {NULL }
 };
 
@@ -227,7 +227,7 @@ main (int    argc,
   if (g_getenv ("PATH") == NULL)
     g_setenv ("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", TRUE);
 
-  polkit_backend_authority_set_log_level( (guint) opt_log_level);
+  polkit_backend_authority_set_log_level( opt_log_level);
 
   authority = polkit_backend_authority_get ();
 

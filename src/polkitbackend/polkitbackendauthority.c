@@ -1600,10 +1600,10 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
 }
 
 void
-polkit_backend_authority_set_log_level (const guint level)
+polkit_backend_authority_set_log_level (const gint level)
   {
-    if (level <= LOG_LEVEL_VERBOSE)
+    if ((level >= 0) && (level <= LOG_LEVEL_VERBOSE))
     {
-        polkit_authority_log_level = level;
+        polkit_authority_log_level = (guint) level;
     }
 }

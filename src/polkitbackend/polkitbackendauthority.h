@@ -225,7 +225,7 @@ void     polkit_backend_authority_log (PolkitBackendAuthority *authority,
                                        ...);
 
 void
-polkit_backend_authority_set_log_level (const guint level);
+polkit_backend_authority_set_log_level (const gint level);
 
 GList   *polkit_backend_authority_enumerate_actions         (PolkitBackendAuthority    *authority,
                                                              PolkitSubject             *caller,
