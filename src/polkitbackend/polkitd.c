@@ -42,7 +42,7 @@ static gint                    opt_log_level = (gint) LOG_LEVEL_ERROR;
 static GOptionEntry            opt_entries[] = {
   {"replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
   {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information to stderr and stdout", NULL},
-  {"log_level", 'l', 0, G_OPTION_ARG_INT, &opt_log_level, "Set a level of logging (default: errors only)",
+  {"log-level", 'l', 0, G_OPTION_ARG_INT, &opt_log_level, "Set a level of logging (default: errors only)",
           "Log level with the following values: 0 - errors only, 1 - include warnings, 2 - include regular notifications, 3 - verbose."},
   {NULL }
 };
