@@ -227,8 +227,9 @@ main (int    argc,
   if (g_getenv ("PATH") == NULL)
     g_setenv ("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", TRUE);
 
-  authority = polkit_backend_authority_get ();
   polkit_backend_authority_set_log_level( (guint) opt_log_level);
+
+  authority = polkit_backend_authority_get ();
 
   loop = g_main_loop_new (NULL, FALSE);
 
