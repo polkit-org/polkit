@@ -52,12 +52,19 @@ struct _PolkitBackendAuthority
   GObject parent_instance;
 };
 
+/**
+ * Log levels aligned with those used in syslog and LogControl
+ */
 enum
 {
-	LOG_LEVEL_ERROR,	// log errors only
-	LOG_LEVEL_WARNING,	// errors and warnings
-	LOG_LEVEL_NOTIFY,   // like "all" interesting
-	LOG_LEVEL_VERBOSE  //  log every heartbeat, cough and fallen leaf. This is unlikely, but for future's sake...
+	LOG_LEVEL_EMERG,
+	LOG_LEVEL_ALERT,
+	LOG_LEVEL_CRIT,
+	LOG_LEVEL_ERROR,
+	LOG_LEVEL_WARNING,
+	LOG_LEVEL_NOTICE,
+	LOG_LEVEL_INFO,
+	LOG_LEVEL_DEBUG
 };
 
 /**

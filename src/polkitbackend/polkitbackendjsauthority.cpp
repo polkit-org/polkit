@@ -194,7 +194,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       GDir *dir = NULL;
 
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    LOG_LEVEL_NOTIFY,
+                                    LOG_LEVEL_NOTICE,
                                     "Loading rules from directory %s",
                                     dir_name);
 
@@ -259,7 +259,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_NOTIFY,
+                                LOG_LEVEL_NOTICE,
                                 "Finished loading, compiling and executing %d rules",
                                 num_scripts);
   g_list_free_full (files, g_free);
@@ -287,7 +287,7 @@ polkit_backend_common_reload_scripts (PolkitBackendJsAuthority *authority)
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_NOTIFY,
+                                LOG_LEVEL_NOTICE,
                                 "Collecting garbage unconditionally...");
   JS_GC (authority->priv->cx);
 

@@ -349,7 +349,7 @@ polkit_backend_common_on_dir_monitor_changed (GFileMonitor     *monitor,
            event_type == G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT))
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        LOG_LEVEL_NOTIFY,
+                                        LOG_LEVEL_NOTICE,
                                         "Reloading rules");
           polkit_backend_common_reload_scripts (authority);
         }

@@ -42,8 +42,8 @@ static gint                    opt_log_level = (gint) LOG_LEVEL_ERROR;
 static GOptionEntry            opt_entries[] = {
   {"replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
   {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information to stderr and stdout", NULL},
-  {"log-level", 'l', 0, G_OPTION_ARG_INT, &opt_log_level, "Set a level of logging. Values (0-3): errors, warnings, notifications, verbose.",
-          "[0,1,2,3]"},
+  {"log-level", 'l', 0, G_OPTION_ARG_INT, &opt_log_level, "Set a level of logging (syslog style). Levels (0-7): emergenencies, alerts, criticals, errors (default if not set), warnings, notices, infos, debug (verbose).",
+          "[0-7]"},
   {NULL }
 };
 
@@ -90,7 +90,7 @@ on_name_acquired (GDBusConnection *connection,
   exit_status = EXIT_SUCCESS;
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_NOTIFY,
+                                LOG_LEVEL_NOTICE,
                                 "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
 }
 
