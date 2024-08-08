@@ -116,6 +116,7 @@ endif
 
 compiler_c_flags += cc.get_supported_arguments([
   '-Wno-format-y2k',
+  '-Wno-declaration-after-statement',
 ])
 
 glib_req_version = '>= 2.30.0'
