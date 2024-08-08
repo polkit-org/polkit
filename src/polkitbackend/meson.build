@@ -59,8 +59,13 @@ libpolkit_backend = static_library(
   cpp_args: c_flags,
 )
 
-install_data(
-  '50-default.rules',
+configure_file(
+  input: '50-default.rules.in',
+  output: '@BASENAME@',
+  configuration: {
+    'PRIVILEGED_GROUP': get_option('privileged_group'),
+  },
+  install: true,
   install_dir: pk_pkgdatadir / 'rules.d',
 )
 
