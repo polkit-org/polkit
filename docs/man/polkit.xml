@@ -666,8 +666,18 @@ polkit.Result = {
         with the JavaScript filename and line number. Log entries are
         emitted using the <constant>LOG_AUTHPRIV</constant> flag meaning
         that the log entries usually ends up in the file
-        <filename>/var/log/secure</filename>. The
-        <function>log()</function> method is usually only used when
+        <filename>/var/log/secure</filename> or in
+        <command>journalctl -b SYSLOG_FACILITY=10</command> on systemd.
+      </para>
+      <para>
+        On some distributions, the flag <literal>--no-debug</literal> is passed
+        to <command>polkitd</command> by default, discarding log output. This
+        means that to debug a rule, it must removed first, say with
+        <command>systemctl edit --runtime polkit.service</command>, for the
+        current boot.
+      </para>
+      <para>
+        The <function>log()</function> method is usually only used when
         debugging rules. The <type>Action</type> and
         <type>Subject</type> types has suitable
         <function>toString()</function> methods defined for easy
