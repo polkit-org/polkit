@@ -76,7 +76,7 @@ enum
 static void process_result (PolkitPermission          *permission,
                             PolkitAuthorizationResult *result);
 
-static char *get_session_state();
+static char *get_session_state(void);
 
 static void on_authority_changed (PolkitAuthority *authority,
                                   gpointer         user_data);
@@ -490,7 +490,7 @@ changed_check_cb (GObject       *source_object,
   g_object_unref (permission);
 }
 
-static char *get_session_state()
+static char *get_session_state(void)
 {
 #ifdef HAVE_LIBSYSTEMD
   char *session = NULL;
