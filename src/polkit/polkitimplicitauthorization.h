@@ -58,7 +58,7 @@ const gchar                 *polkit_implicit_authorization_to_string   (PolkitIm
 /**
  * polkit_implicit_authorization_from_string:
  * @string: A string
- * @out_implicit_authorization: (out caller-allocates optional): The location of the resulting deserialization
+ * @out_implicit_authorization: (out caller-allocates): The location of the resulting deserialization
  */
 gboolean                     polkit_implicit_authorization_from_string (const gchar *string,
                                                                         PolkitImplicitAuthorization *out_implicit_authorization);
