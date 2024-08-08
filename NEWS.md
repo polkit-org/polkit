@@ -1,3 +1,50 @@
+## polkit 125
+
+### Highlights:
+- introduction of CodeQL and a new integration test suite (Frantisek Sumsal)
+- dropped mocklibc (Frantisek Sumsal)
+- syslog-style log-levels introduction (Jan Rybar)
+- LogControl integration (Luca Boccassi)
+- pkexec: "No session for cookie" finally fixed (huxiaodong)
+- resources optimizations: only instances affected by sessions-change recalculate authorizations (Jan Rybar, thanks to Michal Sekletar and Milan Crha)
+- meson tweaks (Alyssa Ross, Luca Boccassi, Michael Biebl, Michael Olbrich)
+- build warnings cleanup (peelz)
+- Packit service configuration for the new upstream platform (Vincent Mihalkovic)
+- systemd-tmpfiles.d integration (Vincent Mihalkovic)
+- other fixes and changes (Gleb Popov, heather7283, Tianyu Chen, Tobias Stoeckmann)
+- internationalization: Slovenian (filmsi), Hindi (Scrambled777)
+
+### Build requirements
+- glib, gobject, gio >= 2.32
+- mozjs-115 OR duktape
+- gobject-introspection >= 0.6.2 (optional)
+- pam (optional)
+- ConsoleKit OR systemd-logind OR elogind
+- gettext
+- meson
+
+### People who made this version possible:
+Alyssa Ross
+filmsi
+Frantisek Sumsal
+Gleb Popov
+heather7283
+huxiaodong
+Jan Rybar
+Luca Boccassi
+Michael Biebl
+Michael Olbrich
+peelz
+Scrambled777
+Tianyu Chen
+Tobias Stoeckmann
+Vincent Mihalkovic
+
+**Many thanks to the people involved, the contributors and enthusiasts!**
+
+The polkit team & polkit community  
+Aug 8, 2024
+
 ## polkit 124
 
 ### Highlights:
