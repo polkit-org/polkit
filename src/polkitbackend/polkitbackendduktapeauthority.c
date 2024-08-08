@@ -253,9 +253,11 @@ polkit_backend_common_js_authority_constructed (GObject *object)
 
   if (authority->priv->rules_dirs == NULL)
     {
-      authority->priv->rules_dirs = g_new0 (gchar *, 3);
+      authority->priv->rules_dirs = g_new0 (gchar *, 5);
       authority->priv->rules_dirs[0] = g_strdup (PACKAGE_SYSCONF_DIR "/polkit-1/rules.d");
-      authority->priv->rules_dirs[1] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
+      authority->priv->rules_dirs[1] = g_strdup ("/run/polkit-1/rules.d");
+      authority->priv->rules_dirs[2] = g_strdup ("/usr/local/lib/polkit-1/rules.d");
+      authority->priv->rules_dirs[3] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
     }
 
   setup_file_monitors (authority);
