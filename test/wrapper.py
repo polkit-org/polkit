@@ -32,6 +32,9 @@ def setup_test_namespace(data_dir):
     except PermissionError:
         print("Lacking permissions to set up test harness, skipping")
         sys.exit(77)
+    except AttributeError:
+        print("Python 3.12 is required for os.unshare(), skipping")
+        sys.exit(77)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
