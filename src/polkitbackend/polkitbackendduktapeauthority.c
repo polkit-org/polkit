@@ -860,9 +860,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
     err_clean_cond:
 #ifdef HAVE_PTHREAD_CONDATTR_SETCLOCK
   pthread_cond_destroy(&ctx->cond);
-#endif
     err_clean_condattr:
-#ifdef HAVE_PTHREAD_CONDATTR_SETCLOCK
   pthread_condattr_destroy(&attr);
 #endif
   return FALSE;
