@@ -8,5 +8,5 @@
 // about configuring polkit.
 
 polkit.addAdminRule(function(action, subject) {
-    return ["unix-group:wheel"];
+    return ["unix-group:@PRIVILEGED_GROUP@"];
 });
