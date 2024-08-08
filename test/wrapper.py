@@ -17,17 +17,21 @@ def setup_test_namespace(data_dir):
     # Setup a new mount & user namespace, so we can use mount() unprivileged (see user_namespaces(7))
     euid = os.geteuid()
     egid = os.getegid()
-    os.unshare(os.CLONE_NEWNS|os.CLONE_NEWUSER)
-    # Map root to the original EUID and EGID, so we can actually call mount() inside our namespace
-    with open("/proc/self/uid_map", "w") as f:
-        f.write(f"0 {euid} 1")
-    with open("/proc/self/setgroups", "w") as f:
-        f.write("deny")
-    with open("/proc/self/gid_map", "w") as f:
-        f.write(f"0 {egid} 1")
+    try:
+        os.unshare(os.CLONE_NEWNS|os.CLONE_NEWUSER)
+        # Map root to the original EUID and EGID, so we can actually call mount() inside our namespace
+        with open("/proc/self/uid_map", "w") as f:
+            f.write(f"0 {euid} 1")
+        with open("/proc/self/setgroups", "w") as f:
+            f.write("deny")
+        with open("/proc/self/gid_map", "w") as f:
+            f.write(f"0 {egid} 1")
 
-    # Overmount /etc with our own version
-    subprocess.check_call(["mount", "--bind", os.path.join(data_dir, "etc"), "/etc"])
+        # Overmount /etc with our own version
+        subprocess.check_call(["mount", "--bind", os.path.join(data_dir, "etc"), "/etc"])
+    except PermissionError:
+        print("Lacking permissions to set up test harness, skipping")
+        sys.exit(77)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
