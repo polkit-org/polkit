@@ -19,3 +19,4 @@ option('introspection', type: 'boolean', value: true, description: 'Enable intro
 
 option('gtk_doc', type: 'boolean', value: false, description: 'use gtk-doc to build documentation')
 option('man', type: 'boolean', value: false, description: 'build manual pages')
+option('gettext', type: 'boolean', value: false, description: 'use gettext for translations')

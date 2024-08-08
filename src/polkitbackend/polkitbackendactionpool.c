@@ -24,6 +24,11 @@
 #include <string.h>
 #include <expat.h>
 
+#ifdef ENABLE_GETTEXT
+#include <locale.h>
+#include <glib/gi18n.h>
+#endif
+
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
 
@@ -43,7 +48,9 @@ typedef struct
   gchar *vendor_url;
   gchar *icon_name;
   gchar *description;
+  gchar *description_domain;
   gchar *message;
+  gchar *message_domain;
 
   PolkitImplicitAuthorization implicit_authorization_any;
   PolkitImplicitAuthorization implicit_authorization_inactive;
@@ -64,7 +71,9 @@ parsed_action_free (ParsedAction *action)
   g_free (action->vendor_url);
   g_free (action->icon_name);
   g_free (action->description);
+  g_free (action->description_domain);
   g_free (action->message);
+  g_free (action->message_domain);
 
   g_hash_table_unref (action->localized_description);
   g_hash_table_unref (action->localized_message);
@@ -84,6 +93,7 @@ static void ensure_all_files (PolkitBackendActionPool *pool);
 
 static const gchar *_localize (GHashTable *translations,
                                const gchar *untranslated,
+                               const gchar *domain,
                                const gchar *lang);
 
 typedef struct
@@ -380,9 +390,11 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
 
   description = _localize (parsed_action->localized_description,
                            parsed_action->description,
+                           parsed_action->description_domain,
                            locale);
   message = _localize (parsed_action->localized_message,
                        parsed_action->message,
+                       parsed_action->message_domain,
                        locale);
 
   ret = polkit_action_description_new (action_id,
@@ -598,10 +610,15 @@ typedef struct {
   GHashTable *policy_messages;
 
   char *policy_description_nolang;
+  char *policy_description_domain;
   char *policy_message_nolang;
+  char *policy_message_domain;
 
   /* the value of xml:lang for the thing we're reading in _cdata() */
   char *elem_lang;
+
+  /* the value of gettext-domain for the thing we're reading in _cdata() */
+  char *elem_domain;
 
   char *annotate_key;
   GHashTable *annotations;
@@ -624,8 +641,12 @@ pd_unref_action_data (ParserData *pd)
 
   g_free (pd->policy_description_nolang);
   pd->policy_description_nolang = NULL;
+  g_free (pd->policy_description_domain);
+  pd->policy_description_domain = NULL;
   g_free (pd->policy_message_nolang);
   pd->policy_message_nolang = NULL;
+  g_free (pd->policy_message_domain);
+  pd->policy_message_domain = NULL;
   if (pd->policy_descriptions != NULL)
     {
       g_hash_table_unref (pd->policy_descriptions);
@@ -645,6 +666,8 @@ pd_unref_action_data (ParserData *pd)
     }
   g_free (pd->elem_lang);
   pd->elem_lang = NULL;
+  g_free (pd->elem_domain);
+  pd->elem_domain = NULL;
 }
 
 static void
@@ -732,6 +755,10 @@ _start (void *data, const char *el, const char **attr)
             {
               pd->elem_lang = g_strdup (attr[1]);
             }
+          if (num_attr == 2 && strcmp (attr[0], "gettext-domain") == 0)
+            {
+              pd->elem_domain = g_strdup (attr[1]);
+            }
           state = STATE_IN_ACTION_DESCRIPTION;
         }
       else if (strcmp (el, "message") == 0)
@@ -739,6 +766,10 @@ _start (void *data, const char *el, const char **attr)
           if (num_attr == 2 && strcmp (attr[0], "xml:lang") == 0)
             {
               pd->elem_lang = g_strdup (attr[1]);
+            }
+          if (num_attr == 2 && strcmp (attr[0], "gettext-domain") == 0)
+            {
+              pd->elem_domain = g_strdup (attr[1]);
             }
           state = STATE_IN_ACTION_MESSAGE;
         }
@@ -842,6 +873,7 @@ _cdata (void *data, const char *s, int len)
         {
           g_free (pd->policy_description_nolang);
           pd->policy_description_nolang = str;
+          pd->policy_description_domain = g_strdup (pd->elem_domain);
           str = NULL;
         }
       else
@@ -858,6 +890,7 @@ _cdata (void *data, const char *s, int len)
         {
           g_free (pd->policy_message_nolang);
           pd->policy_message_nolang = str;
+          pd->policy_message_domain = g_strdup (pd->elem_domain);
           str = NULL;
         }
       else
@@ -955,6 +988,8 @@ _end (void *data, const char *el)
 
   g_free (pd->elem_lang);
   pd->elem_lang = NULL;
+  g_free (pd->elem_domain);
+  pd->elem_domain = NULL;
 
   switch (pd->state)
     {
@@ -985,7 +1020,9 @@ _end (void *data, const char *el)
         action->vendor_url = g_strdup (vendor_url);
         action->icon_name = g_strdup (icon_name);
         action->description = g_strdup (pd->policy_description_nolang);
+        action->description_domain = g_strdup (pd->policy_description_domain);
         action->message = g_strdup (pd->policy_message_nolang);
+        action->message_domain = g_strdup (pd->policy_message_domain);
 
         action->localized_description = pd->policy_descriptions;
         action->localized_message     = pd->policy_messages;
@@ -1088,6 +1125,7 @@ error:
  * _localize:
  * @translations: a mapping from xml:lang to the value, e.g. 'da' -> 'Smadre', 'en_CA' -> 'Punch, Aye!'
  * @untranslated: the untranslated value, e.g. 'Punch'
+ * @domain: the gettext domain for this string. May be NULL.
  * @lang: the locale we're interested in, e.g. 'da_DK', 'da', 'en_CA', 'en_US'; basically just $LANG
  * with the encoding cut off. Maybe be NULL.
  *
@@ -1098,6 +1136,7 @@ error:
 static const gchar *
 _localize (GHashTable *translations,
            const gchar *untranslated,
+           const gchar *domain,
            const gchar *lang)
 {
   const gchar *result;
@@ -1109,6 +1148,23 @@ _localize (GHashTable *translations,
       result = untranslated;
       goto out;
     }
+
+  /* If configured at build time, check gettext */
+#ifdef ENABLE_GETTEXT
+  if (domain != NULL)
+    {
+      gchar *old_locale;
+
+      old_locale = g_strdup (setlocale (LC_ALL, NULL));
+      setlocale (LC_ALL, lang);
+      result = dgettext (domain, untranslated);
+      setlocale (LC_ALL, old_locale);
+      g_free (old_locale);
+
+      if (result != NULL)
+        goto out;
+    }
+#endif
 
   /* first see if we have the translation */
   result = (const char *) g_hash_table_lookup (translations, (void *) lang);

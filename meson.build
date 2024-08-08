@@ -342,6 +342,11 @@ if enable_introspection
   dependency('gobject-introspection-1.0', version: '>= 0.6.2')
 endif
 
+gettext = get_option('gettext')
+if gettext
+  config_data.set('ENABLE_GETTEXT', 1)
+endif
+
 configure_file(
   output: 'config.h',
   configuration: config_data,
