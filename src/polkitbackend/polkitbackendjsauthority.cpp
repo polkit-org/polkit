@@ -165,7 +165,8 @@ static void report_error (JSContext     *cx,
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                 LOG_LEVEL_ERROR,
                                 "%s:%u: %s",
-                                report->filename ? report->filename : "<no filename>",
+                                report->filename ? report->filename.c_str()
+                                                 : "<no filename>",
                                 (unsigned int) report->lineno,
                                 report->message().c_str());
 }

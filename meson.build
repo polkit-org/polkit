@@ -145,7 +145,7 @@ if js_engine == 'duktape'
   func = 'pthread_condattr_setclock'
   config_data.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
 elif js_engine == 'mozjs'
-  js_dep = dependency('mozjs-115')
+  js_dep = dependency('mozjs-128')
 
   _system = host_machine.system().to_lower()
   if _system.contains('freebsd')
