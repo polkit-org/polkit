@@ -8,7 +8,7 @@ project(
     'c_std=c99',
     'cpp_std=c++17',
   ],
-  meson_version: '>= 0.63.0',
+  meson_version: '>= 1.4.0',
 )
 
 pk_version = meson.project_version()
@@ -355,12 +355,12 @@ if enable_introspection
   dependency('gobject-introspection-1.0', version: '>= 0.6.2')
 endif
 
-configure_file(
+config_h = configure_file(
   output: 'config.h',
   configuration: config_data,
 )
 
-compiler_common_flags += ['-include', 'config.h']
+compiler_common_flags += ['-include', config_h.full_path()]
 
 add_project_arguments(compiler_common_flags + compiler_c_flags, language: 'c')
 add_project_arguments(compiler_common_flags + compiler_cpp_flags, language: 'cpp')
