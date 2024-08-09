@@ -71,7 +71,8 @@ sd_source_dispatch (GSource     *source,
   SdSource *sd_source = (SdSource *)source;
   gboolean ret;
 
-  g_warn_if_fail (callback != NULL);
+  if (callback == NULL)
+    return G_SOURCE_CONTINUE;
 
   ret = (*callback) (user_data);
 

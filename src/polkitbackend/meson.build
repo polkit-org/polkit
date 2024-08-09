@@ -30,7 +30,6 @@ c_flags = [
   '-DPACKAGE_DATA_DIR="@0@"'.format(pk_prefix / pk_datadir),
   '-DPACKAGE_SYSCONF_DIR="@0@"'.format(pk_prefix / pk_sysconfdir),
   '-D_XOPEN_SOURCE=700',
-  '-D_GNU_SOURCE=1',
 ]
 
 if js_engine == 'duktape'

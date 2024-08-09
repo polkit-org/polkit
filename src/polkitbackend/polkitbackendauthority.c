@@ -1673,7 +1673,7 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
                               const gchar *format,
                               ...)
 {
-  GTimeVal now;
+  guint64 now;
   time_t now_time;
   struct tm *now_tm;
   gchar time_buf[128];
@@ -1693,13 +1693,13 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
 
   syslog (message_log_level, "%s", message);
 
-  g_get_current_time (&now);
-  now_time = (time_t) now.tv_sec;
+  now = g_get_real_time ();
+  now_time = (time_t) now / G_TIME_SPAN_SECOND;
   now_tm = localtime (&now_time);
   strftime (time_buf, sizeof time_buf, "%H:%M:%S", now_tm);
   g_print ("%s%s%s.%03d%s: %s\n",
            _color_get (_COLOR_BOLD_ON), _color_get (_COLOR_FG_YELLOW),
-           time_buf, (gint) now.tv_usec / 1000,
+           time_buf, (gint) (now % G_TIME_SPAN_SECOND / G_TIME_SPAN_MILLISECOND),
            _color_get (_COLOR_RESET),
            message);
 
