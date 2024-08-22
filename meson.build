@@ -123,17 +123,12 @@ gobject_dep = dependency('gobject-2.0', version: glib_req_version)
 
 duktape_req_version = '>= 2.2.0'
 
-js_engine = get_option('js_engine')
 libs_only = get_option('libs-only')
-if libs_only
-  js_engine = ''
-else
+if not libs_only
   expat_dep = dependency('expat')
   assert(cc.has_header('expat.h', dependencies: expat_dep), 'Can\'t find expat.h. Please install expat.')
   assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t find expat library. Please install expat.')
-endif
 
-if js_engine == 'duktape'
   js_dep = dependency('duktape', version: duktape_req_version, required: false)
   if not js_dep.found()
     message('Falling back to looking for library and header...')
@@ -143,13 +138,6 @@ if js_engine == 'duktape'
   thread_dep = dependency('threads')
   func = 'pthread_condattr_setclock'
   config_data.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
-elif js_engine == 'mozjs'
-  js_dep = dependency('mozjs-115')
-
-  _system = host_machine.system().to_lower()
-  if _system.contains('freebsd')
-    config_data.set('__BSD_VISIBLE', 1)
-  endif
 endif
 
 dbus_dep = dependency('dbus-1', required: false)
@@ -412,7 +400,6 @@ output += '        polkitd user:             ' + polkitd_user + ' \n'
 if polkitd_uid != '-'
   output += '        polkitd UID:              ' + polkitd_uid + ' \n'
 endif
-output += '        Javascript engine:        ' + js_engine + '\n'
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
 if libs_only
   output += '    !!! Only building polkit libraries, not polkitd !!!\n\n'

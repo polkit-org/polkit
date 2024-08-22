@@ -31,14 +31,9 @@ c_flags = [
   '-DPACKAGE_SYSCONF_DIR="@0@"'.format(pk_prefix / pk_sysconfdir),
 ]
 
-if js_engine == 'duktape'
-  sources += files('polkitbackendduktapeauthority.c')
-  deps += libm_dep
-  deps += thread_dep
-elif js_engine == 'mozjs'
-  add_languages('cpp')
-  sources += files('polkitbackendjsauthority.cpp')
-endif
+sources += files('polkitbackendduktapeauthority.c')
+deps += libm_dep
+deps += thread_dep
 
 if enable_logind
   sources += files('polkitbackendsessionmonitor-systemd.c')
