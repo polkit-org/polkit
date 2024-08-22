@@ -20,13 +20,12 @@ jobs:
       image: registry.fedoraproject.org/fedora:latest
       options: "--privileged"
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}-${{ matrix.js_engine }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:
         phase: [BUILD_GCC, GCC, GCC_ASAN_UBSAN, BUILD_CLANG, CLANG]
-        js_engine: [mozjs, duktape]
     steps:
       - name: Repository checkout
         uses: actions/checkout@v4
@@ -37,4 +36,4 @@ jobs:
           sudo dnf builddep -y polkit
 
       - name: Build & test
-        run: sudo --preserve-env=GITHUB_ACTIONS,CI .github/workflows/ci.sh ${{ matrix.phase }} ${{ matrix.js_engine }}
+        run: sudo --preserve-env=GITHUB_ACTIONS,CI .github/workflows/ci.sh ${{ matrix.phase }}

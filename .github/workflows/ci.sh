@@ -14,7 +14,6 @@ set -o pipefail
 #         requires another set of tweaks to the environment
 
 PHASE="${1:?}"
-JS_ENGINE="${2:?}"
 COMMON_BUILD_OPTS=(
     -Dauthfw=pam
     -Dexamples=true
@@ -22,7 +21,6 @@ COMMON_BUILD_OPTS=(
     -Dintrospection=true
     -Dsession_tracking=logind
     -Dtests=true
-    -Djs_engine="$JS_ENGINE"
 )
 
 if [[ "$PHASE" =~ ^CLANG_ ]]; then

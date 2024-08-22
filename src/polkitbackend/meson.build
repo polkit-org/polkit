@@ -33,14 +33,9 @@ c_flags = [
   '-D_GNU_SOURCE=1',
 ]
 
-if js_engine == 'duktape'
-  sources += files('polkitbackendduktapeauthority.c')
-  deps += libm_dep
-  deps += thread_dep
-elif js_engine == 'mozjs'
-  add_languages('cpp')
-  sources += files('polkitbackendjsauthority.cpp')
-endif
+sources += files('polkitbackendduktapeauthority.c')
+deps += libm_dep
+deps += thread_dep
 
 if enable_logind
   sources += files('polkitbackendsessionmonitor-systemd.c')
