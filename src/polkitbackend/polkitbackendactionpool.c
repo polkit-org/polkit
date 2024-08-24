@@ -446,6 +446,28 @@ polkit_backend_action_pool_get_all_actions (PolkitBackendActionPool *pool,
   return ret;
 }
 
+/**
+ * polkit_backend_action_pool_reload:
+ * @pool: A #PolkitBackendActionPool.
+ *
+ * Reload all PolicyKit actions in @pool.
+ **/
+void
+polkit_backend_action_pool_reload (PolkitBackendActionPool *pool)
+{
+  PolkitBackendActionPoolPrivate *priv;
+
+  if (!POLKIT_BACKEND_IS_ACTION_POOL (pool))
+    return;
+
+  priv = polkit_backend_action_pool_get_instance_private (pool);
+
+  g_hash_table_remove_all (priv->parsed_files);
+  g_hash_table_remove_all (priv->parsed_actions);
+  priv->has_loaded_all_files = FALSE;
+  ensure_all_files (pool);
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void

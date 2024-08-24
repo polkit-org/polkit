@@ -34,6 +34,7 @@
 #include <polkit/polkit.h>
 #include "polkitbackendinteractiveauthority.h"
 #include "polkitbackendactionpool.h"
+#include "polkitbackendcommon.h"
 #include "polkitbackendsessionmonitor.h"
 
 #include <polkit/polkitprivate.h>
@@ -1402,6 +1403,28 @@ polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInte
     }
 
   return ret;
+}
+
+/**
+ * polkit_backend_interactive_authority_reload:
+ * @authority: A #PolkitBackendInteractiveAuthority.
+ *
+ * Reload configuration files.
+ */
+void
+polkit_backend_interactive_authority_reload (PolkitBackendInteractiveAuthority *authority)
+{
+  PolkitBackendInteractiveAuthorityPrivate *priv;
+  PolkitBackendJsAuthority *jsauthority;
+
+  if (!authority)
+    return;
+
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
+  polkit_backend_action_pool_reload (priv->action_pool);
+
+  jsauthority = POLKIT_BACKEND_JS_AUTHORITY (authority);
+  polkit_backend_common_reload_scripts (jsauthority);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
