@@ -298,7 +298,7 @@ endif
 
 pam_include = get_option('pam_include')
 if pam_include == ''
-  if ['suse', 'solaris'].contains(os_type)
+  if ['suse', 'solaris', 'openembedded'].contains(os_type)
     pam_conf = {
       'PAM_FILE_INCLUDE_AUTH': 'common-auth',
       'PAM_FILE_INCLUDE_ACCOUNT': 'common-account',
