@@ -30,28 +30,30 @@ if enable_pam
   )
 endif
 
-configure_file(
-  input: 'polkit.service.in',
-  output: '@BASENAME@',
-  configuration: service_conf,
-  install: true,
-  install_dir: systemdsystemunitdir,
-)
+if not get_option('libs-only')
+  configure_file(
+    input: 'polkit.service.in',
+    output: '@BASENAME@',
+    configuration: service_conf,
+    install: true,
+    install_dir: systemdsystemunitdir,
+  )
 
-configure_file(
-  input: 'polkit.conf.in',
-  output: '@BASENAME@',
-  configuration: service_conf,
-  install: true,
-  install_dir: sysusers_dir,
-)
+  configure_file(
+    input: 'polkit.conf.in',
+    output: '@BASENAME@',
+    configuration: service_conf,
+    install: true,
+    install_dir: sysusers_dir,
+  )
 
-install_data(
-  'policyconfig-1.dtd',
-  install_dir: pk_datadir / 'polkit-1'
-)
+  install_data(
+    'policyconfig-1.dtd',
+    install_dir: pk_datadir / 'polkit-1'
+  )
 
-install_data(
-  'polkit-tmpfiles.conf',
-  install_dir: tmpfiles_dir
-)
+  install_data(
+    'polkit-tmpfiles.conf',
+    install_dir: tmpfiles_dir
+  )
+endif
