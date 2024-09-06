@@ -78,10 +78,11 @@ read_cookie (int argc, char **argv)
 }
 
 gboolean
-send_dbus_message (const char *cookie, const char *user)
+send_dbus_message (const char *cookie, const char *user, int pidfd, int uid)
 {
   PolkitAuthority *authority = NULL;
   PolkitIdentity *identity = NULL;
+  PolkitSubject *subject = NULL;
   GError *error;
   gboolean ret;
 
@@ -104,11 +105,23 @@ send_dbus_message (const char *cookie, const char *user)
       goto out;
     }
 
-  if (!polkit_authority_authentication_agent_response_sync (authority,
-                                                            cookie,
-                                                            identity,
-                                                            NULL,
-                                                            &error))
+  if (pidfd >= 0 && uid >= 0)
+    {
+      subject = polkit_unix_process_new_pidfd (pidfd, uid, NULL);
+      ret = polkit_authority_authentication_agent_response_with_subject_sync (authority,
+                                                                              cookie,
+                                                                              identity,
+                                                                              subject,
+                                                                              NULL,
+                                                                              &error);
+    }
+  else
+    ret = polkit_authority_authentication_agent_response_sync (authority,
+                                                              cookie,
+                                                              identity,
+                                                              NULL,
+                                                              &error);
+  if (!ret)
     {
       g_printerr ("polkit-agent-helper-1: error response to PolicyKit daemon: %s\n", error->message);
       g_error_free (error);
@@ -124,6 +137,9 @@ send_dbus_message (const char *cookie, const char *user)
 
   if (authority != NULL)
     g_object_unref (authority);
+
+  if (subject != NULL)
+    g_object_unref (subject);
 
   return ret;
 }

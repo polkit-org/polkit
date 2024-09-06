@@ -39,7 +39,7 @@ int _polkit_clearenv (void);
 
 char *read_cookie (int argc, char **argv);
 
-gboolean send_dbus_message (const char *cookie, const char *user);
+gboolean send_dbus_message (const char *cookie, const char *user, int pidfd, int uid);
 
 void flush_and_wait ();
 

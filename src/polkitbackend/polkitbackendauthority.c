@@ -639,6 +639,11 @@ static const gchar *server_introspection_data =
   "      <arg type='s' name='cookie' direction='in'/>"
   "      <arg type='(sa{sv})' name='identity' direction='in'/>"
   "    </method>"
+  "    <method name='AuthenticationAgentResponse3'>"
+  "      <arg type='s' name='cookie' direction='in'/>"
+  "      <arg type='(sa{sv})' name='identity' direction='in'/>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "    </method>"
   "    <method name='EnumerateTemporaryAuthorizations'>"
   "      <arg type='(sa{sv})' name='subject' direction='in'/>"
   "      <arg type='a(ss(sa{sv})tt)' name='temporary_authorizations' direction='out'/>"
@@ -1166,6 +1171,87 @@ server_handle_authentication_agent_response2 (Server                 *server,
     g_object_unref (identity);
 }
 
+static void
+server_handle_authentication_agent_response3 (Server                 *server,
+                                              GVariant               *parameters,
+                                              PolkitSubject          *caller,
+                                              GDBusMethodInvocation  *invocation)
+{
+  const gchar *cookie;
+  GVariant *identity_gvariant;
+  GVariant *subject_gvariant;
+  PolkitIdentity *identity;
+  PolkitSubject *subject;
+  GError *error;
+
+  identity = NULL;
+  subject = NULL;
+
+  g_variant_get (parameters,
+                 "(&s@(sa{sv})@(sa{sv}))",
+                 &cookie,
+                 &identity_gvariant,
+                 &subject_gvariant);
+
+  error = NULL;
+  identity = polkit_identity_new_for_gvariant (identity_gvariant, &error);
+  if (identity == NULL)
+    {
+      g_prefix_error (&error, "Error getting identity: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
+  if (subject == NULL)
+    {
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  if (polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (subject)) < 0 ||
+      polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)) <= 0)
+    {
+      g_set_error (&error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Subject's PIDFD '%d' for PID '%d' is no longer valid.",
+                   polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (subject)),
+                   polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)));
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  if (!polkit_backend_authority_authentication_agent_response (server->authority,
+                                                               caller,
+                                                               polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject)),
+                                                               cookie,
+                                                               identity,
+                                                               &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
+
+ out:
+  g_variant_unref (identity_gvariant);
+  g_variant_unref (subject_gvariant);
+  if (identity != NULL)
+    g_object_unref (identity);
+  if (subject != NULL)
+    g_object_unref (subject);
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
@@ -1338,6 +1424,8 @@ server_handle_method_call (GDBusConnection        *connection,
     server_handle_authentication_agent_response (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "AuthenticationAgentResponse2") == 0)
     server_handle_authentication_agent_response2 (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "AuthenticationAgentResponse3") == 0)
+    server_handle_authentication_agent_response3 (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "EnumerateTemporaryAuthorizations") == 0)
     server_handle_enumerate_temporary_authorizations (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "RevokeTemporaryAuthorizations") == 0)

@@ -125,6 +125,8 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 %{_datadir}/dbus-1/system.d/org.freedesktop.PolicyKit1.conf
 %{_datadir}/dbus-1/system-services/*
 %{_unitdir}/polkit.service
+%{_unitdir}/polkit-agent-helper.socket
+%{_unitdir}/polkit-agent-helper@.service
 %dir %{_datadir}/polkit-1/
 %dir %{_datadir}/polkit-1/actions
 %attr(0750,root,polkitd) %dir %{_datadir}/polkit-1/rules.d
