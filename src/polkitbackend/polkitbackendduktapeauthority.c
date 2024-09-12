@@ -121,15 +121,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       dir = g_dir_open (dir_name,
                         0,
                         &error);
-      if (dir == NULL)
-        {
-          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        LOG_LEVEL_ERROR,
-                                        "Error opening rules directory: %s (%s, %d)",
-                                        error->message, g_quark_to_string (error->domain), error->code);
-          g_clear_error (&error);
-        }
-      else
+      if (dir != NULL)
         {
           const gchar *name;
           while ((name = g_dir_read_name (dir)) != NULL)
@@ -138,6 +130,14 @@ load_scripts (PolkitBackendJsAuthority  *authority)
                 files = g_list_prepend (files, g_strdup_printf ("%s/%s", dir_name, name));
             }
           g_dir_close (dir);
+        }
+      else
+        {
+          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_DEBUG,
+                                        "Error opening rules directory: %s (%s, %d)",
+                                        error->message, g_quark_to_string (error->domain), error->code);
+          g_clear_error (&error);
         }
     }
 
@@ -253,9 +253,11 @@ polkit_backend_common_js_authority_constructed (GObject *object)
 
   if (authority->priv->rules_dirs == NULL)
     {
-      authority->priv->rules_dirs = g_new0 (gchar *, 3);
+      authority->priv->rules_dirs = g_new0 (gchar *, 5);
       authority->priv->rules_dirs[0] = g_strdup (PACKAGE_SYSCONF_DIR "/polkit-1/rules.d");
-      authority->priv->rules_dirs[1] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
+      authority->priv->rules_dirs[1] = g_strdup ("/run/polkit-1/rules.d");
+      authority->priv->rules_dirs[2] = g_strdup ("/usr/local/lib/polkit-1/rules.d");
+      authority->priv->rules_dirs[3] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
     }
 
   setup_file_monitors (authority);
