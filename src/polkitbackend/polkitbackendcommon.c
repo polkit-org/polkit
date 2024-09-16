@@ -609,31 +609,38 @@ polkit_backend_common_pidfd_to_systemd_unit (gint      pidfd,
 
   /* Check for NoNewPrivileges property being set on the unit via D-Bus, and
    * return if it is not. This protects against PID changes, as if unset the
-   * unit could use a setuid binary. */
-  no_new_privs_result = g_dbus_connection_call_sync (connection,
-        "org.freedesktop.systemd1",         /* name */
-        unit_path,                          /* object path */
-        "org.freedesktop.DBus.Properties",  /* interface name */
-        "Get",                              /* method */
-        g_variant_new ("(ss)", "org.freedesktop.systemd1.Service", "NoNewPrivileges"),
-        G_VARIANT_TYPE ("(v)"),
-        G_DBUS_CALL_FLAGS_NONE,
-        -1,
-        NULL,
-        &error);
-
-  if (no_new_privs_result == NULL)
+   * unit could use a setuid binary. It is only valid for service units. */
+  if (g_str_has_suffix (unit, ".service"))
     {
-      g_warning ("Error calling Get on NoNewPrivileges property for unit %s: %s", unit, error->message);
-      goto out;
-    }
+      no_new_privs_result = g_dbus_connection_call_sync (connection,
+            "org.freedesktop.systemd1",         /* name */
+            unit_path,                          /* object path */
+            "org.freedesktop.DBus.Properties",  /* interface name */
+            "Get",                              /* method */
+            g_variant_new ("(ss)", "org.freedesktop.systemd1.Service", "NoNewPrivileges"),
+            G_VARIANT_TYPE ("(v)"),
+            G_DBUS_CALL_FLAGS_NONE,
+            -1,
+            NULL,
+            &error);
 
-  g_variant_get (no_new_privs_result, "(v)", &no_new_privis_value);
-  if (no_new_privis_value == NULL)
-    {
-      g_warning ("Error getting value for NoNewPrivileges property for unit %s", unit);
-      goto out;
+      if (no_new_privs_result == NULL)
+        {
+          g_warning ("Error calling Get on NoNewPrivileges property for unit %s: %s", unit, error->message);
+          goto out;
+        }
+
+      g_variant_get (no_new_privs_result, "(v)", &no_new_privis_value);
+      if (no_new_privis_value == NULL)
+        {
+          g_warning ("Error getting value for NoNewPrivileges property for unit %s", unit);
+          goto out;
+        }
+
+     *ret_no_new_privs = g_variant_get_boolean (no_new_privis_value);
     }
+  else
+    *ret_no_new_privs = FALSE;
 
   *ret_unit = strdup (unit);
   if (!*ret_unit)
@@ -641,8 +648,6 @@ polkit_backend_common_pidfd_to_systemd_unit (gint      pidfd,
       g_warning ("Failed to allocate memory for systemd unit ID");
       goto out;
     }
-
-  *ret_no_new_privs = g_variant_get_boolean (no_new_privis_value);
 
  out:
   if (tmp_context)
