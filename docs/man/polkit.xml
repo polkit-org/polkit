@@ -107,10 +107,12 @@ System Context         |                        |
           |            | /usr/share/polkit-1/actions/*.policy |
           |            +--------------------------------------+
           |
-   +--------------------------------------+
-   | /etc/polkit-1/rules.d/*.rules        |
-   | /usr/share/polkit-1/rules.d/*.rules  |
-   +--------------------------------------+
+   +--------------------------------------------+
+   | /etc/polkit-1/rules.d/*.rules              |
+   | /run/polkit-1/rules.d/*.rules              |
+   | /usr/local/share/polkit-1/rules.d/*.rules  |
+   | /usr/share/polkit-1/rules.d/*.rules        |
+   +--------------------------------------------+
 ]]></programlisting>
       </textobject>
     </mediaobject>
