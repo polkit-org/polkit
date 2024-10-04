@@ -52,8 +52,7 @@ polkit-devel@lists.freedesktop.org
 SECURITY ISSUES
 ===============
 
-Please report any security issues not yet known to public
-by sending mail to polkit-security@redhat.com.  
+Please report any security issues not yet known to public by sending mail to polkit-security@redhat.com or use GitHub's button for reporting a vulnerability when creating an issue.  
 Thank you.
 
 
