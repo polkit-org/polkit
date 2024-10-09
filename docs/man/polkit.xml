@@ -103,9 +103,12 @@ System Context         |                        |
 |    PolicyKit1    |<---------+
 +------------------+          |
           ^                   |
-          |            +--------------------------------------+
-          |            | /usr/share/polkit-1/actions/*.policy |
-          |            +--------------------------------------+
+          |            +--------------------------------------------+
+          |            | /etc/polkit-1/actions/*.policy             |
+          |            | /run/polkit-1/actions/*.policy             |
+          |            | /usr/local/share/polkit-1/actions/*.policy |
+          |            | /usr/share/polkit-1/actions/*.policy       |
+          |            +--------------------------------------------+
           |
    +--------------------------------------------+
    | /etc/polkit-1/rules.d/*.rules              |
