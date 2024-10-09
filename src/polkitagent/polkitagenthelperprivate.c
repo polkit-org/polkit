@@ -129,7 +129,7 @@ send_dbus_message (const char *cookie, const char *user)
 }
 
 void
-flush_and_wait ()
+flush_and_wait (void)
 {
   fflush (stdout);
   fflush (stderr);

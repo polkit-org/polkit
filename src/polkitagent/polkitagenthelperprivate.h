@@ -41,6 +41,6 @@ char *read_cookie (int argc, char **argv);
 
 gboolean send_dbus_message (const char *cookie, const char *user);
 
-void flush_and_wait ();
+void flush_and_wait (void);
 
 #endif /* __POLKIT_AGENT_HELPER_PRIVATE_H */

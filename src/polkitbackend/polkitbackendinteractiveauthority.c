@@ -3392,7 +3392,7 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
   GList *ret;
   GList *l;
   gint64 monotonic_now;
-  GTimeVal real_now;
+  gint64 real_now;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
@@ -3431,7 +3431,7 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
     }
 
   monotonic_now = g_get_monotonic_time ();
-  g_get_current_time (&real_now);
+  real_now = g_get_real_time () / G_TIME_SPAN_SECOND;
 
   for (l = priv->temporary_authorization_store->authorizations; l != NULL; l = l->next)
     {
@@ -3443,8 +3443,8 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
       if (!polkit_subject_equal (ta->scope, subject))
         continue;
 
-      real_granted = (ta->time_granted - monotonic_now) / G_USEC_PER_SEC + real_now.tv_sec;
-      real_expires = (ta->time_expires - monotonic_now) / G_USEC_PER_SEC + real_now.tv_sec;
+      real_granted = (ta->time_granted - monotonic_now) / G_USEC_PER_SEC + real_now;
+      real_expires = (ta->time_expires - monotonic_now) / G_USEC_PER_SEC + real_now;
 
       tmp_authz = polkit_temporary_authorization_new (ta->id,
                                                       ta->action_id,

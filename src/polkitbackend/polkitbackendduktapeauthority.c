@@ -763,7 +763,9 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
 {
   int pthread_err;
   gboolean cancel = FALSE;
+#ifdef HAVE_PTHREAD_CONDATTR_SETCLOCK
   pthread_condattr_t attr;
+#endif
   struct timespec abs_time;
 
 #ifdef HAVE_PTHREAD_CONDATTR_SETCLOCK
@@ -860,9 +862,7 @@ runaway_killer_common(PolkitBackendJsAuthority *authority, RunawayKillerCtx *ctx
     err_clean_cond:
 #ifdef HAVE_PTHREAD_CONDATTR_SETCLOCK
   pthread_cond_destroy(&ctx->cond);
-#endif
     err_clean_condattr:
-#ifdef HAVE_PTHREAD_CONDATTR_SETCLOCK
   pthread_condattr_destroy(&attr);
 #endif
   return FALSE;

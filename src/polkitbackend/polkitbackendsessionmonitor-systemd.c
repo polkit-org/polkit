@@ -73,6 +73,9 @@ sd_source_dispatch (GSource     *source,
 
   g_warn_if_fail (callback != NULL);
 
+  if (callback == NULL)
+    return G_SOURCE_CONTINUE;
+
   ret = (*callback) (user_data);
 
   sd_login_monitor_flush (sd_source->monitor);
