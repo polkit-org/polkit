@@ -30,6 +30,10 @@
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackend.h>
 
+#ifdef HAVE_LIBSYSTEMD
+#  include <systemd/sd-daemon.h>
+#endif
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static PolkitBackendAuthority *authority = NULL;
@@ -99,6 +103,34 @@ on_sigint (gpointer user_data)
 {
   g_print ("Handling SIGINT\n");
   g_main_loop_quit (loop);
+  return TRUE;
+}
+
+static gboolean
+on_sighup (gpointer user_data)
+{
+#ifdef HAVE_LIBSYSTEMD
+  gchar reload_message[sizeof("RELOADING=1\nMONOTONIC_USEC=18446744073709551615")];
+  gint64 monotonic_now;
+
+  /* Notify systemd that we are reloading, including a CLOCK_MONOTONIC timestamp in usec
+   * so that the program is compatible with a Type=notify-reload service. */
+
+  monotonic_now = g_get_monotonic_time ();
+  g_snprintf (reload_message, sizeof(reload_message), "RELOADING=1\nMONOTONIC_USEC=%" G_GINT64_FORMAT, monotonic_now);
+
+  sd_notify (0, reload_message);
+#endif
+
+  g_print ("Handling SIGHUP\n");
+
+  polkit_backend_interactive_authority_reload (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority));
+
+#ifdef HAVE_LIBSYSTEMD
+  /* Notify systemd that we have finished reloading. */
+  sd_notify (0, "READY=1\nSTATUS=Processing requests...");
+#endif
+
   return TRUE;
 }
 
@@ -176,11 +208,13 @@ main (int    argc,
   GOptionContext *opt_context;
   guint name_owner_id;
   guint sigint_id;
+  guint sighup_id;
 
   loop = NULL;
   opt_context = NULL;
   name_owner_id = 0;
   sigint_id = 0;
+  sighup_id = 0;
   registration_id = NULL;
 
   /* Disable remote file access from GIO. */
@@ -237,6 +271,10 @@ main (int    argc,
                                  on_sigint,
                                  NULL);
 
+  sighup_id = g_unix_signal_add (SIGHUP,
+                                 on_sighup,
+                                 NULL);
+
   name_owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
                                   "org.freedesktop.PolicyKit1",
                                   G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT |
@@ -248,12 +286,23 @@ main (int    argc,
                                   NULL);
 
   g_print ("Entering main event loop\n");
+
+#ifdef HAVE_LIBSYSTEMD
+  sd_notify (0, "READY=1\nSTATUS=Processing requests...");
+#endif
+
   g_main_loop_run (loop);
+
+#ifdef HAVE_LIBSYSTEMD
+  sd_notify (0, "STOPPING=1");
+#endif
 
   g_print ("Shutting down\n");
  out:
   if (sigint_id > 0)
     g_source_remove (sigint_id);
+  if (sighup_id > 0)
+    g_source_remove (sighup_id);
   if (name_owner_id != 0)
     g_bus_unown_name (name_owner_id);
   if (registration_id != NULL)

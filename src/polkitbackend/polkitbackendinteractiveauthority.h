@@ -143,6 +143,7 @@ PolkitImplicitAuthorization polkit_backend_interactive_authority_check_authoriza
                                                           const gchar                       *action_id,
                                                           PolkitDetails                     *details,
                                                           PolkitImplicitAuthorization        implicit);
+void polkit_backend_interactive_authority_reload (PolkitBackendInteractiveAuthority *authority);
 
 G_END_DECLS
 

@@ -71,6 +71,7 @@ GList                   *polkit_backend_action_pool_get_all_actions  (PolkitBack
 PolkitActionDescription *polkit_backend_action_pool_get_action       (PolkitBackendActionPool  *pool,
                                                                       const gchar              *action_id,
                                                                       const gchar              *locale);
+void                     polkit_backend_action_pool_reload           (PolkitBackendActionPool *pool);
 
 G_END_DECLS
 

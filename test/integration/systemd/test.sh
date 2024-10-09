@@ -12,7 +12,7 @@ at_exit() {
     : "Cleanup"
     userdel -rf "$TEST_USER"
     rm -f /etc/polkit-1/rules.d/99-test.rules
-    systemctl restart polkit
+    systemctl reload polkit
 }
 
 trap at_exit EXIT
@@ -34,7 +34,7 @@ EOF
 systemctl daemon-reload
 # Copy the test polkit rule in place
 cp -fv "$TEST_RULES/start-restart-stop-unit.rules" /etc/polkit-1/rules.d/99-test.rules
-systemctl restart polkit
+systemctl reload polkit
 # Following systemctl invocations should not trigger polkit's authentication prompt
 sudo -u "$TEST_USER" systemctl start start-restart-stop.service
 sudo -u "$TEST_USER" systemctl restart start-restart-stop.service
