@@ -134,7 +134,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       else
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        LOG_LEVEL_DEBUG,
+                                        LOG_LEVEL_NOTICE,
                                         "Error opening rules directory: %s (%s, %d)",
                                         error->message, g_quark_to_string (error->domain), error->code);
           g_clear_error (&error);
