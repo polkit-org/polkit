@@ -40,6 +40,19 @@ if not get_option('libs-only')
   )
 
   configure_file(
+    input: 'polkit-agent-helper@.service.in',
+    output: '@BASENAME@',
+    configuration: service_conf,
+    install: true,
+    install_dir: systemdsystemunitdir,
+  )
+
+  install_data(
+    'polkit-agent-helper.socket',
+    install_dir: systemdsystemunitdir,
+  )
+
+  configure_file(
     input: 'polkit.conf.in',
     output: '@BASENAME@',
     configuration: service_conf,

@@ -103,6 +103,13 @@ gboolean                   polkit_authority_authentication_agent_response_sync (
                                                                                 GCancellable        *cancellable,
                                                                                 GError             **error);
 
+gboolean                   polkit_authority_authentication_agent_response_with_subject_sync (PolkitAuthority     *authority,
+                                                                                             const gchar         *cookie,
+                                                                                             PolkitIdentity      *identity,
+                                                                                             PolkitSubject       *subject,
+                                                                                             GCancellable        *cancellable,
+                                                                                             GError             **error);
+
 GList                     *polkit_authority_enumerate_temporary_authorizations_sync (PolkitAuthority     *authority,
                                                                                      PolkitSubject       *subject,
                                                                                      GCancellable        *cancellable,
@@ -185,6 +192,14 @@ void                       polkit_authority_authentication_agent_response (Polki
                                                                            GCancellable        *cancellable,
                                                                            GAsyncReadyCallback  callback,
                                                                            gpointer             user_data);
+
+void                       polkit_authority_authentication_agent_response_with_subject (PolkitAuthority     *authority,
+                                                                                        const gchar         *cookie,
+                                                                                        PolkitIdentity      *identity,
+                                                                                        PolkitSubject       *subject,
+                                                                                        GCancellable        *cancellable,
+                                                                                        GAsyncReadyCallback  callback,
+                                                                                        gpointer             user_data);
 
 gboolean                   polkit_authority_authentication_agent_response_finish (PolkitAuthority *authority,
                                                                                   GAsyncResult    *res,
