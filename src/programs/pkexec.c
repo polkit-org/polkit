@@ -664,6 +664,28 @@ main (int argc, char *argv[])
         argv[n] = path;
       }
     }
+  if (1)
+    {
+#if _POSIX_C_SOURCE >= 200809L
+      s = realpath(path, NULL);
+#else
+      s = NULL;
+# error We have to deal with realpath(3) PATH_MAX madness
+#endif
+      if (s)
+        {
+          g_free (path);
+          path = g_strdup (s);
+          free (s);
+          /* argc<2 and pkexec runs just shell, argv is guaranteed to be null-terminated.
+           * /-less shell shouldn't happen, but let's be defensive and don't write to null-termination
+           */
+          if (argv[n] != NULL)
+          {
+            argv[n] = path;
+          }
+        }
+    }
   if (access (path, F_OK) != 0)
     {
       g_printerr ("Error accessing %s: %s\n", path, g_strerror (errno));
