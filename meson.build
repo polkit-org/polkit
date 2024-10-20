@@ -159,7 +159,8 @@ host_system = host_machine.system()
 config_data.set('HAVE_' + host_system.to_upper(), true)
 
 # Check whether setnetgrent has a return value
-config_data.set('HAVE_NETGROUP_H', cc.has_header('netgroup.h'))
+have_netgroup_h = cc.has_header('netgroup.h')
+config_data.set('HAVE_NETGROUP_H', have_netgroup_h)
 
 if config_data.get('HAVE_SETNETGRENT', false)
   setnetgrent_return_src = '''
@@ -174,7 +175,11 @@ if config_data.get('HAVE_SETNETGRENT', false)
     };
   '''
 
-  config_data.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, name: 'setnetgrent return support'))
+  args = ['-D_GNU_SOURCE']
+  if have_netgroup_h
+    args += '-DHAVE_NETGROUP_H'
+  endif
+  config_data.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, args: args, name: 'setnetgrent return support'))
 endif
 
 # Select wether to use logind, elogind or ConsoleKit for session tracking
