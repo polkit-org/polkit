@@ -1,0 +1,11 @@
+[Unit]
+Description=Authorization Manager Agent Helper
+Documentation=man:polkit(8)
+
+[Socket]
+Accept=yes
+RemoveOnStop=yes
+ListenStream=/run/polkit/agent-helper.socket
+
+[Install]
+WantedBy=sockets.target
