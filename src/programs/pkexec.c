@@ -451,6 +451,7 @@ main (int argc, char *argv[])
   gchar *action_id;
   gboolean allow_gui;
   gchar **exec_argv;
+  gchar *path_abs;
   gchar *path;
   struct passwd pwstruct;
   gchar pwbuf[8192];
@@ -507,6 +508,7 @@ main (int argc, char *argv[])
   result = NULL;
   action_id = NULL;
   saved_env = NULL;
+  path_abs = NULL;
   path = NULL;
   exec_argv = NULL;
   command_line = NULL;
@@ -623,6 +625,8 @@ main (int argc, char *argv[])
    * but do check this is the case.
    *
    * We also try to locate the program in the path if a non-absolute path is given.
+   *
+   * And then we resolve the real path of the program.
    */
   g_assert (argv[argc] == NULL);
   path = g_strdup (argv[n]);
@@ -646,7 +650,7 @@ main (int argc, char *argv[])
     }
   if (path[0] != '/')
     {
-      /* g_find_program_in_path() is not suspectible to attacks via the environment */
+      /* g_find_program_in_path() is not susceptible to attacks via the environment */
       s = g_find_program_in_path (path);
       if (s == NULL)
         {
@@ -661,8 +665,28 @@ main (int argc, char *argv[])
        */
       if (argv[n] != NULL)
       {
-        argv[n] = path;
+        /* Must copy because we might replace path later on. */
+        path_abs = g_strdup(path);
+        /* argv[n:] is used as argv arguments to execv(). The called program
+         * sees the original called path, but we make sure it's absolute. */
+        if (path_abs != NULL)
+          argv[n] = path_abs;
       }
+    }
+#if _POSIX_C_SOURCE >= 200809L
+  s = realpath(path, NULL);
+#else
+  s = NULL;
+# error We have to deal with realpath(3) PATH_MAX madness
+#endif
+  if (s != NULL)
+    {
+      /* The called program resolved to the canonical location. We don't update
+       * argv[n] this time. The called program still sees the original
+       * called path. This is very important for multi-call binaries like
+       * busybox. */
+      g_free (path);
+      path = s;
     }
   if (access (path, F_OK) != 0)
     {
@@ -1078,6 +1102,7 @@ main (int argc, char *argv[])
     }
 
   g_free (original_cwd);
+  g_free (path_abs);
   g_free (path);
   g_free (command_line);
   g_free (cmdline_short);
