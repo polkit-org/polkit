@@ -1439,18 +1439,48 @@ server_handle_set_property (GDBusConnection  *connection,
                             GError          **error,
                             gpointer          user_data)
 {
+  PolkitSubject *caller_subject;
+  PolkitUnixUser *caller_user;
+  const gchar *level;
+
   if (g_strcmp0 (interface_name, "org.freedesktop.LogControl1") != 0)
-    return FALSE;
-
-  if (g_strcmp0 (property_name, "LogLevel") == 0)
     {
-      const gchar *level;
-
-      g_variant_get (value, "&s", &level);
-      polkit_backend_authority_set_log_level (level);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Only properties of org.freedesktop.LogControl1 can be modified");
+      return FALSE;
     }
-  else
-    return FALSE;
+
+  if (g_strcmp0 (property_name, "LogLevel") != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Only LogLevel can be modified");
+      return FALSE;
+    }
+
+  caller_subject = polkit_system_bus_name_new (sender);
+  if (!caller_subject)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Could not obtain caller's credentials");
+      return FALSE;
+    }
+  caller_user = polkit_system_bus_name_get_user_sync (POLKIT_SYSTEM_BUS_NAME (caller_subject), NULL, error);
+  if (!caller_user)
+    {
+      g_object_unref (caller_subject);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Could not obtain caller's credentials");
+      return FALSE;
+    }
+  if ((uid_t)polkit_unix_user_get_uid (caller_user) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED, "Only root can change the log level");
+      g_object_unref (caller_user);
+      g_object_unref (caller_subject);
+      return FALSE;
+    }
+
+  g_variant_get (value, "&s", &level);
+  polkit_backend_authority_set_log_level (level);
+
+  g_object_unref (caller_user);
+  g_object_unref (caller_subject);
 
   return TRUE;
 }
