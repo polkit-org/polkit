@@ -4,13 +4,6 @@ set -o pipefail
 
 # TODO
 #   - drop -Wno-deprecated-declarations
-#   - re-enable test-polkitbackendjsauthority
-#       - mocklibc overrides LD_PRELOAD, causing ASan to report false positives
-#         (with asan_verify_no_link=0)
-#   - re-enable unit tests built with ASan + sanitizers
-#       - currently polkit fails to build with clang >= 17 completely, and
-#         with older clang it needs to be built with -shared-libasan, which
-#         requires another set of tweaks to the environment
 
 PHASE="${1:?}"
 COMMON_BUILD_OPTS=(
