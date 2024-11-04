@@ -1697,6 +1697,7 @@ _color_get (_Color color)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+G_GNUC_PRINTF(3, 4)
 void
 polkit_backend_authority_log (PolkitBackendAuthority *authority,
                               const guint message_log_level,

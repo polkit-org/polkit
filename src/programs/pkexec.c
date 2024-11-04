@@ -86,6 +86,7 @@ usage (int argc, char *argv[])
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+G_GNUC_PRINTF(3, 4)
 static void
 log_message (gint     level,
              gboolean print_to_stderr,
