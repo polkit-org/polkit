@@ -119,6 +119,14 @@ compiler_c_flags += cc.get_supported_arguments([
   '-Wno-declaration-after-statement',
 ])
 
+if cc.get_id() == 'gcc'
+  compiler_c_flags += cc.get_supported_arguments([
+    # -Wunused-result can't be suppressed by using (void) in gcc, so let's disable it for now
+    # See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66425
+    '-Wno-unused-result',
+  ])
+endif
+
 glib_req_version = '>= 2.30.0'
 
 gio_dep = dependency('gio-2.0', version: glib_req_version)

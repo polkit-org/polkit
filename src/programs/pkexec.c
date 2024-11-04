@@ -968,7 +968,7 @@ main (int argc, char *argv[])
   /* if not changing to uid 0, become uid 0 before changing to the user */
   if (pw->pw_uid != 0)
     {
-      setreuid (0, 0);
+      (void) setreuid (0, 0);
       if ((geteuid () != 0) || (getuid () != 0))
         {
           g_printerr ("Error becoming uid 0: %s\n", g_strerror (errno));
@@ -1021,8 +1021,8 @@ main (int argc, char *argv[])
       g_printerr ("Error initializing groups for %s: %s\n", pw->pw_name, g_strerror (errno));
       goto out;
     }
-  setregid (pw->pw_gid, pw->pw_gid);
-  setreuid (pw->pw_uid, pw->pw_uid);
+  (void) setregid (pw->pw_gid, pw->pw_gid);
+  (void) setreuid (pw->pw_uid, pw->pw_uid);
   if ((geteuid () != pw->pw_uid) || (getuid () != pw->pw_uid) ||
       (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
     {
