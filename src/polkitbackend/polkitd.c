@@ -173,8 +173,8 @@ become_user (const gchar  *user,
       goto out;
     }
 
-  setregid (pw->pw_gid, pw->pw_gid);
-  setreuid (pw->pw_uid, pw->pw_uid);
+  (void) setregid (pw->pw_gid, pw->pw_gid);
+  (void) setreuid (pw->pw_uid, pw->pw_uid);
   if ((geteuid () != pw->pw_uid) || (getuid () != pw->pw_uid) ||
       (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
     {
