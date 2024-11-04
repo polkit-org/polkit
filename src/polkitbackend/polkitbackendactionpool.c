@@ -260,44 +260,44 @@ polkit_backend_action_pool_set_property (GObject       *object,
   switch (prop_id)
     {
     case PROP_DIRECTORIES:
-
-      const gchar **dir_names = (const gchar**) g_value_get_boxed (value);
-
-      for (int n = 0; dir_names[n] != NULL; n++)
       {
-        GFile *file;
-        GFileMonitor *monitor;
-        GError *error = NULL;
+        const gchar **dir_names = (const gchar**) g_value_get_boxed (value);
 
-        const gchar *dir_name = dir_names[n];
+        for (int n = 0; dir_names[n] != NULL; n++)
+        {
+          GFile *file;
+          GFileMonitor *monitor;
+          GError *error = NULL;
 
-        file = g_file_new_for_path (dir_name);
-        priv->directories = g_list_prepend (priv->directories, file);
+          const gchar *dir_name = dir_names[n];
 
-        monitor = g_file_monitor_directory (file,
-                                            G_FILE_MONITOR_NONE,
-                                            NULL,
-                                            &error);
-        if (monitor == NULL)
-          {
-            g_warning ("Error monitoring actions directory: %s", error->message);
-            g_error_free (error);
-          }
-        else
-          {
-            g_signal_connect (monitor,
-                              "changed",
-                              (GCallback) dir_monitor_changed,
-                              pool);
-            priv->dir_monitors = g_list_prepend (priv->dir_monitors, monitor);
-          }
-      }
+          file = g_file_new_for_path (dir_name);
+          priv->directories = g_list_prepend (priv->directories, file);
 
-      priv->directories = g_list_reverse(priv->directories);
-      priv->dir_monitors = g_list_reverse(priv->dir_monitors);
+          monitor = g_file_monitor_directory (file,
+                                              G_FILE_MONITOR_NONE,
+                                              NULL,
+                                              &error);
+          if (monitor == NULL)
+            {
+              g_warning ("Error monitoring actions directory: %s", error->message);
+              g_error_free (error);
+            }
+          else
+            {
+              g_signal_connect (monitor,
+                                "changed",
+                                (GCallback) dir_monitor_changed,
+                                pool);
+              priv->dir_monitors = g_list_prepend (priv->dir_monitors, monitor);
+            }
+        }
 
-      break;
+        priv->directories = g_list_reverse(priv->directories);
+        priv->dir_monitors = g_list_reverse(priv->dir_monitors);
 
+        break;
+    }
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
