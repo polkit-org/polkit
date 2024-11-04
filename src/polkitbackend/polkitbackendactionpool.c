@@ -577,6 +577,7 @@ ensure_all_files (PolkitBackendActionPool *pool)
     if (error != NULL)
     {
       g_warning ("Error enumerating files in %s: %s", dir_name, error->message);
+      g_error_free (error);
     }
     else
     {
