@@ -99,9 +99,9 @@ on_name_acquired (GDBusConnection *connection,
 }
 
 static gboolean
-on_sigint (gpointer user_data)
+on_sigint_sigterm (gpointer user_data)
 {
-  g_print ("Handling SIGINT\n");
+  g_print ("Handling %s\n", (const char *) user_data);
   g_main_loop_quit (loop);
   return TRUE;
 }
@@ -268,8 +268,12 @@ main (int    argc,
   loop = g_main_loop_new (NULL, FALSE);
 
   sigint_id = g_unix_signal_add (SIGINT,
-                                 on_sigint,
-                                 NULL);
+                                 on_sigint_sigterm,
+                                 "SIGINT");
+
+  sigint_id = g_unix_signal_add (SIGTERM,
+                                 on_sigint_sigterm,
+                                 "SIGTERM");
 
   sighup_id = g_unix_signal_add (SIGHUP,
                                  on_sighup,
