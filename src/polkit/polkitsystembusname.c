@@ -566,6 +566,7 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
     }
 
   g_variant_unref (result);
+  g_variant_iter_free (iter);
 
   if (out_uid)
     *out_uid = uid;
