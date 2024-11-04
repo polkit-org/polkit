@@ -3,8 +3,7 @@ set -eux
 set -o pipefail
 
 # TODO
-#   - enable --werror
-#       - currently there's a lot of warnings which need to be taken care of first
+#   - drop -Wno-deprecated-declarations
 #   - re-enable test-polkitbackendjsauthority
 #       - mocklibc overrides LD_PRELOAD, causing ASan to report false positives
 #         (with asan_verify_no_link=0)
@@ -40,9 +39,17 @@ case "$PHASE" in
         )
 
         for opt in "${BUILD_TEST_FLAGS[@]}"; do
+            COMPILER_FLAGS=(-Wno-deprecated-declarations)
+
+            if [[ "$opt" != --optimization=0 ]]; then
+                COMPILER_FLAGS+=(-D_FORTIFY_SOURCE=2)
+            fi
+
             meson setup build \
                 -Dman=true \
-                -Dcpp_args="-D_FORTIFY_SOURCE=2" \
+                --werror \
+                -Dc_args="${COMPILER_FLAGS[*]}" \
+                -Dcpp_args="${COMPILER_FLAGS[*]}" \
                 "${COMMON_BUILD_OPTS[@]}" \
                 "$opt"
             meson compile -C build -v
@@ -55,6 +62,7 @@ case "$PHASE" in
 
         meson setup build \
             -Dman=true \
+            -Dc_args="-D_FORTIFY_SOURCE=2" \
             -Dcpp_args="-D_FORTIFY_SOURCE=2" \
             "${COMMON_BUILD_OPTS[@]}"
 
