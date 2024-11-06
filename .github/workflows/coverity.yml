@@ -1,0 +1,36 @@
+---
+# vi: ts=2 sw=2 et:
+
+name: Coverity
+
+on:
+  schedule:
+    # Run Coverity daily at midnight
+    - cron:  '0 0 * * *'
+  pull_request:
+    paths:
+      - ".github/workflows/coverity.*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    if: github.repository == 'polkit-org/polkit'
+    env:
+      # Set in repo settings -> Secrets and variables -> Actions -> Repository secrets
+      COVERITY_SCAN_TOKEN:              "${{ secrets.COVERITY_SCAN_TOKEN }}"
+      COVERITY_SCAN_NOTIFICATION_EMAIL: "${{ secrets.COVERITY_SCAN_NOTIFICATION_EMAIL }}"
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo sed -i 's/^Types: deb/Types: deb deb-src/g' /etc/apt/sources.list.d/*.sources
+          sudo apt update
+          sudo apt build-dep -y policykit-1
+
+      - name: Build & upload the results
+        run: .github/workflows/coverity.sh
