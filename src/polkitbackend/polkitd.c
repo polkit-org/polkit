@@ -42,11 +42,11 @@ static GMainLoop              *loop = NULL;
 static gint                    exit_status = EXIT_FAILURE;
 static gboolean                opt_replace = FALSE;
 static gboolean                opt_no_debug = FALSE;
-static gchar                  *opt_log_level = "err";
+static gchar                  *opt_log_level = "notice";
 static GOptionEntry            opt_entries[] = {
   {"replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
   {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information to stderr and stdout", NULL},
-  {"log-level", 'l', 0, G_OPTION_ARG_STRING, &opt_log_level, "Set a level of logging (syslog style). Defaults to 'err'.",
+  {"log-level", 'l', 0, G_OPTION_ARG_STRING, &opt_log_level, "Set a level of logging (syslog style). Defaults to 'notice'.",
           "[emerg|alert|crit|err|warning|notice|info|debug]"},
   {NULL }
 };
