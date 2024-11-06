@@ -52,7 +52,7 @@ enum
 };
 
 static guint signals[LAST_SIGNAL] = {0};
-static guint polkit_authority_log_level = LOG_LEVEL_ERROR;
+static guint polkit_authority_log_level = LOG_LEVEL_NOTICE;
 
 G_DEFINE_ABSTRACT_TYPE (PolkitBackendAuthority, polkit_backend_authority, G_TYPE_OBJECT);
 
