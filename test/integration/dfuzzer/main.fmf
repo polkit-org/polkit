@@ -1,0 +1,30 @@
+summary: Run dfuzzer against polkit's D-Bus interface
+test: ./test.sh
+require:
+    - clang
+    - compiler-rt
+    - coreutils
+    - dbus
+    - dbus-devel
+    - dfuzzer
+    - expat-devel
+    - gcc-c++
+    - gdb
+    - gettext-devel
+    - git
+    - glib2-devel
+    - glibc-devel
+    - gobject-introspection-devel
+    - gtk-doc
+    - libasan
+    - libubsan
+    - llvm
+    - meson
+    - pam-devel
+    - pkgconfig(duktape)
+    - python3-dbusmock
+    - systemd
+    - systemd-container
+    - systemd-devel
+    - util-linux
+duration: 30m
