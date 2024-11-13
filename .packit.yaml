@@ -16,6 +16,12 @@ downstream_package_name: polkit
 
 jobs:
 - job: copr_build
+  trigger: commit
+  preserve_project: true
+  targets:
+  - fedora-rawhide-x86_64
+
+- job: copr_build
   trigger: pull_request
   targets:
   - fedora-all-aarch64
