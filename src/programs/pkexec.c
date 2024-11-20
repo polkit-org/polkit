@@ -814,6 +814,11 @@ main (int argc, char *argv[])
   polkit_details_insert (details, "command_line", command_line);
 
   cmdline_short = g_strdup(command_line);
+  if (cmdline_short == NULL)
+    {
+      g_printerr ("Failed to allocate memory for shortened command line.\n");
+      goto out;
+    }
   if (strlen(command_line) > 80)
       g_stpcpy(g_stpcpy( cmdline_short + 38, " ... " ),
                command_line + strlen(command_line) - 37 );
