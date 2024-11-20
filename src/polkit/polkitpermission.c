@@ -482,6 +482,7 @@ changed_check_cb (GObject       *source_object,
       /* this really should never fail (since we are not passing any
        * details) so log to stderr if it happens
        */
+      g_assert (error != NULL);
       g_warning ("Error checking authorization for action id %s: %s",
                  permission->action_id,
                  error->message);
