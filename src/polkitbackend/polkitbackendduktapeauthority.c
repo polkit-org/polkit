@@ -559,8 +559,7 @@ else
 static gboolean
 push_action_and_details (duk_context               *cx,
                          const gchar               *action_id,
-                         PolkitDetails             *details,
-                         GError                   **error)
+                         PolkitDetails             *details)
 {
   gchar **keys;
   guint n;
@@ -926,13 +925,11 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
 
   duk_push_string (cx, "_runAdminRules");
 
-  if (!push_action_and_details (cx, action_id, details, &error))
+  if (!push_action_and_details (cx, action_id, details))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     LOG_LEVEL_ERROR,
-                                    "Error converting action and details to JS object: %s",
-                                    error->message);
-      g_clear_error (&error);
+                                    "Error converting action and details to JS object");
       goto out;
     }
 
@@ -1010,13 +1007,11 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
 
   duk_push_string (cx, "_runRules");
 
-  if (!push_action_and_details (cx, action_id, details, &error))
+  if (!push_action_and_details (cx, action_id, details))
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     LOG_LEVEL_ERROR,
-                                    "Error converting action and details to JS object: %s",
-                                    error->message);
-      g_clear_error (&error);
+                                    "Error converting action and details to JS object");
       goto out;
     }
 
