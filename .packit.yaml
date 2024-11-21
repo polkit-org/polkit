@@ -13,6 +13,14 @@ files_to_sync:
 upstream_package_name: polkit
 # downstream (Fedora) RPM package name
 downstream_package_name: polkit
+# arguments for OpenScanHub
+#
+# Note: GCC analyzer in some cases depends on information provided by LTO to
+#       generate accurate results, but the LTO support in GCC analyzer is still
+#       experimental, so it's not enabled by default. In Polkit, however, this
+#       seems to work pretty well, so let's tell OSH to build our code with LTO
+#       when running GCC analyzer.
+csmock_args: --gcc-add-flag=-flto=auto
 
 jobs:
 - job: copr_build
