@@ -142,3 +142,26 @@ sudo -u "$TEST_USER" expect "$TMP_DIR/SIGTRAP-on-EOF.exp" | tee "$TMP_DIR/SIGTRA
 grep -q "AUTHENTICATION FAILED" "$TMP_DIR/SIGTRAP-on-EOF.log"
 grep -q "Not authorized" "$TMP_DIR/SIGTRAP-on-EOF.log"
 rm -f "$TMP_DIR/SIGTRAP-on-EOF.log"
+
+: "Check absolute (but not canonicalized) path"
+BASH_ABS=$(command -v bash)
+ln -s "$BASH_ABS" ./my-bash
+sudo -u "$TEST_USER" expect "$TMP_DIR/basic-auth.exp" "$TEST_USER_PASSWORD" ./my-bash -c true | tee "$TMP_DIR/absolute-path.log"
+grep -Eq "Authentication is needed to run \`/.*/${PWD##*/}/./my-bash -c true' as the super user" "$TMP_DIR/absolute-path.log"
+grep -q "AUTHENTICATION COMPLETE" "$TMP_DIR/absolute-path.log"
+rm -f "$TMP_DIR/absolute-path.log"
+rm -f "./my-bash"
+
+: "Check canonicalized path"
+if command -v strace; then
+    BASH_ABS=$(command -v bash)
+    ln -s "$BASH_ABS" ./my-bash
+    sudo -u "$TEST_USER" strace -s 512 -o "$TMP_DIR/canonical-path.strace" -feexecve \
+	expect "$TMP_DIR/basic-auth.exp" "$TEST_USER_PASSWORD" ./my-bash -c true | tee "$TMP_DIR/canonical-path.log"
+    cat "$TMP_DIR/canonical-path.strace"
+    grep -qF "execve(\"$BASH_ABS\", [\"$PWD/./my-bash\"," "$TMP_DIR/canonical-path.strace"
+    grep -q "AUTHENTICATION COMPLETE" "$TMP_DIR/canonical-path.log"
+    rm -f "$TMP_DIR/canonical-path.log" "$TMP_DIR/canonical-path.strace"
+    rm -f "./my-bash"
+    rm -f "$TMP_DIR/preload.c" "$TMP_DIR/preload.so"
+fi
