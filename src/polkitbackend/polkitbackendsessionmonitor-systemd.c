@@ -374,6 +374,7 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
                    POLKIT_ERROR_NOT_SUPPORTED,
                    "Cannot get session for subject of type %s",
                    g_type_name (G_TYPE_FROM_INSTANCE (subject)));
+      goto out;
     }
 
 #if HAVE_SD_PIDFD_GET_SESSION
