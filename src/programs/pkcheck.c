@@ -156,6 +156,8 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
     }
 
   pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
+  if (pid <= 0)
+    goto out;
 
   filename = g_strdup_printf ("/proc/%d/cmdline", pid);
 
