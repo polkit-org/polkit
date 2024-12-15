@@ -30,6 +30,10 @@
 #include <string.h>
 #include <glib/gstdio.h>
 #include <locale.h>
+#ifdef __linux__
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif
 
 #include <polkit/polkit.h>
 #include "polkitbackendinteractiveauthority.h"
@@ -3115,13 +3119,162 @@ convert_temporary_authorization_subject (PolkitSubject *subject)
     }
 }
 
+#ifdef __linux__
+static time_t
+parse_boottime (void)
+{
+  static time_t btime = 0;
+  gchar *contents;
+  gchar **lines;
+  guint n;
+
+  if (btime != 0)
+    return btime;
+
+  lines = NULL;
+  contents = NULL;
+
+  if (!g_file_get_contents ("/proc/stat", &contents, NULL, NULL))
+    return -1;
+
+  lines = g_strsplit (contents, "\n", -1);
+  for (n = 0; lines != NULL && lines[n] != NULL; n++)
+    {
+      if (!g_str_has_prefix (lines[n], "btime "))
+        continue;
+      if (sscanf (lines[n] + 6, "%ld", &btime) != 1)
+      {
+        g_strfreev (lines);
+        g_free (contents);
+        return -1;
+      }
+      break;
+    }
+
+  g_strfreev (lines);
+  g_free (contents);
+
+  return btime;
+}
+#endif /* __linux__ */
+
 /* See the comment at the top of polkitunixprocess.c */
 static gboolean
 subject_equal_for_authz (PolkitSubject *a,
                          PolkitSubject *b)
 {
   if (!polkit_subject_equal (a, b))
-    return FALSE;
+    {
+#ifdef __linux__
+      PolkitSubject *parent = NULL;
+      gchar *ctty_path = NULL;
+
+      /*
+       * If we have two processes, and we can safely track them via PID FDs,
+       * then we also consider them equal for auth purposes if they share the
+       * same UID, PPID, Control Group and controlling terminal.
+       */
+      if (!POLKIT_IS_UNIX_PROCESS (a) || !POLKIT_IS_UNIX_PROCESS (b))
+        goto error;
+
+      if (!polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (a)) ||
+          !polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (b)))
+        goto error;
+
+      int uid_a = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (a));
+      int uid_b = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (b));
+      if (uid_a == -1 || uid_b == -1 || uid_a != uid_b)
+        goto error;
+
+      if (polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (a)) < 0 ||
+          polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (b)) < 0)
+        goto error;
+
+      /* Ensure the parent process is still running and still the same, and not PID 1
+       * (due to reparenting) */
+      gint ppid_a = polkit_unix_process_get_ppid (POLKIT_UNIX_PROCESS (a));
+      gint ppid_b = polkit_unix_process_get_ppid (POLKIT_UNIX_PROCESS (b));
+      if (ppid_a <= 1 || ppid_a != ppid_b)
+        goto error;
+
+      gint ppid_fd = polkit_unix_process_get_ppidfd (POLKIT_UNIX_PROCESS (a));
+      if (ppid_fd < 0)
+        goto error;
+
+      parent = polkit_unix_process_new_pidfd (ppid_fd, -1, NULL);
+      if (!parent)
+        goto error;
+
+      /* Ensure all processes are in the same cgroup */
+      if (polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (a)) != polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (b)) ||
+          polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (a)) != polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (parent)) ||
+          polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (a)) == 0)
+        goto error;
+
+      /*
+       * Ensure the controlling terminal is the same and older than both processes,
+       * otherwise it might have simply been reopened with the same number.
+       */
+
+      guint ttynr_parent = polkit_unix_process_get_ctty (POLKIT_UNIX_PROCESS (parent));
+      if (ttynr_parent != polkit_unix_process_get_ctty (POLKIT_UNIX_PROCESS (a)) ||
+          ttynr_parent != polkit_unix_process_get_ctty (POLKIT_UNIX_PROCESS (b)) ||
+          ttynr_parent == 0)
+        goto error;
+
+      ctty_path = g_strdup_printf ("/dev/pts/%u", ((ttynr_parent & 0xfff00000) >> 12) | (ttynr_parent & 0xff));
+
+      struct statx st;
+      if (statx (AT_FDCWD, ctty_path, 0, STATX_CTIME, &st) != 0)
+        goto error;
+
+      time_t btime = parse_boottime ();
+      if (btime < 0)
+        goto error;
+
+      if (st.stx_ctime.tv_sec < btime)
+        goto error;
+
+      /* TTY creation time is a unix timestamp, while process start time is monotonic,
+       * subtract the boot timestamp to compare them */
+      st.stx_ctime.tv_sec -= btime;
+
+      /* Process start time is in jiffies, so get the jiffies-per-second to
+       * compare it with the TTY ctime */
+      int jiffies = sysconf(_SC_CLK_TCK);
+      if (jiffies <= 0)
+        goto error;
+
+      struct statx_timestamp start_time_a;
+      struct statx_timestamp start_time_b;
+
+      start_time_a.tv_sec = polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (a)) / jiffies;
+      start_time_a.tv_nsec = (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (a)) % jiffies) * 1000000000 / jiffies;
+      start_time_b.tv_sec = polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (b)) / jiffies;
+      start_time_b.tv_nsec = (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (b)) % jiffies) * 1000000000 / jiffies;
+
+      if (start_time_a.tv_sec < st.stx_ctime.tv_sec ||
+          (start_time_a.tv_sec == st.stx_ctime.tv_sec && start_time_a.tv_nsec < st.stx_ctime.tv_nsec) ||
+           start_time_b.tv_sec < st.stx_ctime.tv_sec ||
+          (start_time_b.tv_sec == st.stx_ctime.tv_sec && start_time_b.tv_nsec < st.stx_ctime.tv_nsec))
+        goto error;
+
+      /* Check that the parent is still running at the very end, to avoid races */
+      if (polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (parent)) <= 0)
+        goto error;
+
+      g_free (ctty_path);
+      g_object_unref (parent);
+      return TRUE;
+
+error:
+      g_free (ctty_path);
+      g_object_unref (parent);
+      return FALSE;
+#else /* __linux__ */
+      return FALSE;
+#endif /* __linux__ */
+    }
 
   /* Now special case unix processes, as we want to protect against
    * pid reuse by including the PID FDs or UIDs as a fallback.
@@ -3340,7 +3493,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
                                                         on_expiration_timeout,
                                                         authorization);
 
-  if (POLKIT_IS_UNIX_PROCESS (authorization->subject))
+  if (POLKIT_IS_UNIX_PROCESS (authorization->subject) && !polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (authorization->subject)))
     {
       /* For now, set up a timer to poll every two seconds - this is used to determine
        * when the process vanishes. We want to do this so we can remove the temporary
