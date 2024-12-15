@@ -610,7 +610,7 @@ polkit_unix_process_get_pid (PolkitUnixProcess *process)
         return pid;
 
       g_error_free (error);
-      return -1;
+      return 0;
     }
 
   return process->pid;

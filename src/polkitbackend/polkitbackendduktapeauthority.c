@@ -506,7 +506,7 @@ else
   pid_late = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
   if (pid_late != pid_early)
     {
-      if (pid_late == -1)
+      if (pid_late <= 0)
         {
           g_warning ("Process %d terminated", (gint) pid_early);
           g_set_error (error,
