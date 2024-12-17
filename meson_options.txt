@@ -7,7 +7,7 @@ option('polkitd_uid', type: 'string', value: '-', description: 'Fixed UID for us
 option('privileged_group', type: 'string', value: 'wheel', description: 'Group to use for default privileged access')
 
 option('authfw', type: 'combo', choices: ['pam', 'shadow', 'bsdauth'], value: 'pam', description: 'Authentication framework (pam/shadow)')
-option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', 'lfs', 'openembedded', ''], value: '', description: 'distribution or OS')
+option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', 'lfs', 'openembedded', 'debian', ''], value: '', description: 'distribution or OS')
 
 option('pam_include', type: 'string', value: '', description: 'pam file to include')
 option('pam_module_dir', type: 'string', value: '', description: 'directory to install PAM security module')
