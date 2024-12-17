@@ -314,6 +314,16 @@ if os_type == ''
   endif
 endif
 
+# The default privileged group differs between distributions, set it accordingly if not specified
+privileged_group = get_option('privileged_group')
+if privileged_group == ''
+  if os_type == 'debian'
+    privileged_group = 'sudo'
+  else
+    privileged_group = 'wheel'
+  endif
+endif
+
 pam_include = get_option('pam_include')
 if pam_include == ''
   if ['suse', 'solaris', 'openembedded'].contains(os_type)

@@ -56,7 +56,7 @@ configure_file(
   input: '50-default.rules.in',
   output: '@BASENAME@',
   configuration: {
-    'PRIVILEGED_GROUP': get_option('privileged_group'),
+    'PRIVILEGED_GROUP': privileged_group,
   },
   install: true,
   install_dir: pk_pkgdatadir / 'rules.d',
