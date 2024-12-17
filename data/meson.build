@@ -21,13 +21,21 @@ configure_file(
 )
 
 if enable_pam
-  configure_file(
-    input: 'polkit-1.in',
-    output: '@BASENAME@',
-    configuration: pam_conf,
-    install: true,
-    install_dir: pam_prefix,
-  )
+  if os_type == 'debian' and pam_include == ''
+    install_data(
+      'polkit-1.debian',
+      rename: 'polkit-1',
+      install_dir: pam_prefix
+    )
+  else
+    configure_file(
+      input: 'polkit-1.in',
+      output: '@BASENAME@',
+      configuration: pam_conf,
+      install: true,
+      install_dir: pam_prefix,
+    )
+  endif
 endif
 
 if not get_option('libs-only')
