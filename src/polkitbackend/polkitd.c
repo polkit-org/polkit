@@ -184,10 +184,10 @@ become_user (const gchar  *user,
       goto out;
     }
 
-  if (chdir (pw->pw_dir) != 0)
+  if (chdir ("/") != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Error changing to home directory %s: %m",
+                   "Error changing to root directory %s: %m",
                    pw->pw_dir);
       goto out;
     }
