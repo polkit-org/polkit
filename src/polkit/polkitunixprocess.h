@@ -60,6 +60,7 @@ PolkitSubject  *polkit_unix_process_new_pidfd      (gint               pidfd,
                                                     GArray            *gids);
 GArray         *polkit_unix_process_get_gids       (PolkitUnixProcess *process);
 gint            polkit_unix_process_get_pid        (PolkitUnixProcess *process);
+gint            polkit_unix_process_get_ppid       (PolkitUnixProcess *process);
 guint64         polkit_unix_process_get_start_time (PolkitUnixProcess *process);
 gint            polkit_unix_process_get_uid        (PolkitUnixProcess *process);
 void            polkit_unix_process_set_gids       (PolkitUnixProcess *process,
@@ -73,6 +74,9 @@ void            polkit_unix_process_set_start_time (PolkitUnixProcess *process,
 
 gint            polkit_unix_process_get_owner      (PolkitUnixProcess  *process,
                                                     GError            **error) G_GNUC_DEPRECATED_FOR (polkit_unix_process_get_uid);
+gint            polkit_unix_process_get_ppidfd     (PolkitUnixProcess  *process);
+guint           polkit_unix_process_get_ctty       (PolkitUnixProcess  *process);
+guint64         polkit_unix_process_get_cgroupid   (PolkitUnixProcess  *process);
 gint            polkit_unix_process_get_pidfd      (PolkitUnixProcess  *process);
 void            polkit_unix_process_set_pidfd      (PolkitUnixProcess  *process,
                                                     gint                pidfd);
