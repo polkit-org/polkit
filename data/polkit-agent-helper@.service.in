@@ -1,0 +1,34 @@
+[Unit]
+Description=Authorization Manager Agent Helper
+Documentation=man:polkit(8)
+
+[Service]
+Type=oneshot
+DeviceAllow=/dev/null rw
+DevicePolicy=strict
+ExecStart=@libprivdir@/polkit-agent-helper-1 --socket-activated
+StandardInput=socket
+StandardOutput=socket
+LimitMEMLOCK=0
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+PrivateTmp=yes
+ProtectControlGroups=yes
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectKernelTunables=yes
+ProtectSystem=strict
+ProtectClock=yes
+ProtectHostname=yes
+RemoveIPC=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+UMask=0077
