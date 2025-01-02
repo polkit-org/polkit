@@ -114,7 +114,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       GDir *dir = NULL;
 
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    LOG_LEVEL_NOTICE,
+                                    LOG_LEVEL_INFO,
                                     "Loading rules from directory %s",
                                     dir_name);
 
@@ -134,7 +134,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
       else
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        LOG_LEVEL_NOTICE,
+                                        LOG_LEVEL_WARNING,
                                         "Error opening rules directory: %s (%s, %d)",
                                         error->message, g_quark_to_string (error->domain), error->code);
           g_clear_error (&error);
@@ -157,7 +157,7 @@ load_scripts (PolkitBackendJsAuthority  *authority)
     }
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_NOTICE,
+                                LOG_LEVEL_INFO,
                                 "Finished loading, compiling and executing %d rules",
                                 num_scripts);
   g_list_free_full (files, g_free);
@@ -180,7 +180,7 @@ polkit_backend_common_reload_scripts (PolkitBackendJsAuthority *authority)
   duk_call_prop (cx, 0, 0);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_NOTICE,
+                                LOG_LEVEL_INFO,
                                 "Collecting garbage unconditionally...");
 
   load_scripts (authority);

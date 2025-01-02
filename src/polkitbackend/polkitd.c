@@ -94,7 +94,7 @@ on_name_acquired (GDBusConnection *connection,
   exit_status = EXIT_SUCCESS;
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_NOTICE,
+                                LOG_LEVEL_INFO,
                                 "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
 }
 
