@@ -236,9 +236,6 @@ endif
 polkitd_user = get_option('polkitd_user')
 config_data.set_quoted('POLKITD_USER', polkitd_user)
 
-polkitd_uid = get_option('polkitd_uid')
-config_data.set('POLKITD_UID', polkitd_uid)
-
 # Select which authentication framework to use
 auth_deps = []
 
@@ -317,6 +314,18 @@ if os_type == ''
   if os_type == ''
     message('Linux distribution autodetection failed, specify the distribution to target using -Dos_type=')
   endif
+endif
+
+# The default UID differs between distributions, set it accordingly if not specified
+polkitd_uid = get_option('polkitd_uid')
+if polkitd_uid == ''
+  polkitd_uid = '-'
+endif
+
+# The default GID differs between distributions, set it accordingly if not specified
+polkitd_gid = get_option('polkitd_gid')
+if polkitd_gid == ''
+  polkitd_gid = '-'
 endif
 
 # The default privileged group differs between distributions, set it accordingly if not specified
@@ -410,6 +419,7 @@ if not libs_only
     pk_libprivdir,
     pk_pkgsysconfdir,
     polkitd_user,
+    polkitd_gid,
   )
 endif
 
@@ -434,9 +444,12 @@ output += '        system unit directory:    ' + systemdsystemunitdir + '\n'
 output += '        sysusers.d directory:     ' + sysusers_dir + '\n'
 output += '        tmpfiles.d directory:     ' + tmpfiles_dir + '\n'
 
-output += '        polkitd user:             ' + polkitd_user + ' \n'
+output += '        polkitd user:             ' + polkitd_user + '\n'
 if polkitd_uid != '-'
-  output += '        polkitd UID:              ' + polkitd_uid + ' \n'
+  output += '        polkitd UID:              ' + polkitd_uid + '\n'
+endif
+if polkitd_gid != '-'
+  output += '        polkitd GID:              ' + polkitd_gid + '\n'
 endif
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
 if libs_only

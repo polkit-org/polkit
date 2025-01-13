@@ -20,11 +20,15 @@ bindir = destdir_path(sys.argv[1])
 pkglibdir = destdir_path(sys.argv[2])
 pkgsysconfdir = destdir_path(sys.argv[3])
 polkitd_user = sys.argv[4]
+polkitd_gid = sys.argv[5]
 
-try:
-    polkitd_gid = pwd.getpwnam(polkitd_user).pw_gid
-except KeyError:
-    polkitd_gid = None
+if polkitd_gid == '-':
+    try:
+        polkitd_gid = pwd.getpwnam(polkitd_user).pw_gid
+    except KeyError:
+        polkitd_gid = None
+else:
+    polkitd_gid = int(polkitd_gid)
 
 dst = os.path.join(bindir, 'pkexec')
 
@@ -32,12 +36,7 @@ if os.geteuid() == 0:
     os.chown(dst, 0, -1)
     os.chmod(dst, 0o4755)
 else:
-    print(
-        'Owner and mode of {} need to be setuid root (04755) after '
-        'installation'.format(
-            dst,
-        )
-    )
+    print(f'Owner and mode of {dst} need to be setuid root (04755) after installation')
 
 dst = os.path.join(pkgsysconfdir, 'rules.d')
 
@@ -46,11 +45,7 @@ if not os.path.exists(dst):
     if os.geteuid() == 0 and polkitd_gid is not None:
         os.chown(dst, 0, polkitd_gid)
     else:
-        print(
-            'Owner of {} needs to be set to root and group to {} after installation'.format(
-                dst, polkitd_user,
-            )
-        )
+        print(f'Owner of {dst} needs to be set to root and group to {polkitd_user} after installation')
 
 # polkit-agent-helper-1 need to be setuid root because it's used to
 # authenticate not only the invoking user, but possibly also root
