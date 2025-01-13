@@ -301,6 +301,7 @@ if os_type == ''
     ['debian', '/etc/debian_version'],
     ['gentoo', '/etc/gentoo-release'],
     ['pardus', '/etc/pardus-release'],
+    ['arch', '/etc/arch-release'],
     ['lfs', '/etc/lfs-release'],
   ]
 
@@ -319,13 +320,21 @@ endif
 # The default UID differs between distributions, set it accordingly if not specified
 polkitd_uid = get_option('polkitd_uid')
 if polkitd_uid == ''
-  polkitd_uid = '-'
+  if os_type == 'arch'
+    polkitd_uid = '102'
+  else
+    polkitd_uid = '-'
+  endif
 endif
 
 # The default GID differs between distributions, set it accordingly if not specified
 polkitd_gid = get_option('polkitd_gid')
 if polkitd_gid == ''
-  polkitd_gid = '-'
+  if os_type == 'arch'
+    polkitd_gid = '102'
+  else
+    polkitd_gid = '-'
+  endif
 endif
 
 # The default privileged group differs between distributions, set it accordingly if not specified
@@ -341,7 +350,11 @@ endif
 # The way the helper is activated differs between distributions, set it accordingly if not specified
 activated_helper = get_option('activated_helper')
 if activated_helper == ''
-  activated_helper = 'false'
+  if os_type == 'arch'
+    activated_helper = 'true'
+  else
+    activated_helper = 'false'
+  endif
 endif
 
 pam_include = get_option('pam_include')
@@ -367,7 +380,7 @@ if pam_include == ''
       'PAM_FILE_INCLUDE_PASSWORD': 'system-password',
       'PAM_FILE_INCLUDE_SESSION': 'system-session',
     }
-  #if ['redhat', 'gentoo', 'pardus'].contains(os_type)
+  #if ['redhat', 'gentoo', 'pardus', 'arch'].contains(os_type)
   else
     pam_conf = {
       'PAM_FILE_INCLUDE_AUTH': 'system-auth',

@@ -9,7 +9,7 @@ option('privileged_group', type: 'string', value: '', description: 'Group to use
 option('activated_helper', type: 'combo', choices: ['false', 'true', ''], value: '', description: 'Enable socket-activated agent helper (default: false)')
 
 option('authfw', type: 'combo', choices: ['pam', 'shadow', 'bsdauth'], value: 'pam', description: 'Authentication framework (pam/shadow)')
-option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', 'lfs', 'openembedded', 'debian', ''], value: '', description: 'distribution or OS')
+option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', 'lfs', 'openembedded', 'debian', 'arch', ''], value: '', description: 'distribution or OS')
 
 option('pam_include', type: 'string', value: '', description: 'pam file to include')
 option('pam_module_dir', type: 'string', value: '', description: 'directory to install PAM security module')
