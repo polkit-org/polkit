@@ -1,3 +1,44 @@
+## polkit 126
+
+### Highlights:
+- many code fixes detected either by CI or the author himself (Frantisek Sumsal)
+- shellcheck and dependabot integration (Jan Macku)
+- search for rules in /usr/local/share rather than /usr/local/lib (Luca Boccassi)
+- Implement LogControl1 protocol for dynamic log level changes (Luca Boccassi)
+- read actions also from /etc/, /run/ and /usr/local/share/ (Luca Boccassi)
+- mozjs dropped in favor of duktape (Xi Ruoyao)
+- many other fixes in build system and polkit code (Many thanks to all the authors.)
+
+### Build requirements
+- glib, gobject, gio >= 2.32
+- duktape
+- gobject-introspection >= 0.6.2 (optional)
+- pam (optional)
+- ConsoleKit OR systemd-logind OR elogind
+- gettext
+- meson
+
+### People who made this version possible:
+Bastien Nocera
+Eli Schwartz
+Frantisek Sumsal
+Jan Macku
+KT-lcz
+Luca Boccassi
+Michael Biebl
+peelz
+Rafael Fontenelle
+Robert Ancell
+Sertonix
+Vincent Mihalkovic
+Xi Ruoyao
+Yoann Congal
+
+**Many thanks to the people involved, the contributors and enthusiasts!**
+
+The polkit team & polkit community
+Jan 13, 2025
+
 ## polkit 125
 
 ### Highlights:
