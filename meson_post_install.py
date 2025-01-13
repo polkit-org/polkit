@@ -20,11 +20,15 @@ bindir = destdir_path(sys.argv[1])
 pkglibdir = destdir_path(sys.argv[2])
 pkgsysconfdir = destdir_path(sys.argv[3])
 polkitd_user = sys.argv[4]
+polkitd_gid = sys.argv[5]
 
-try:
-    polkitd_gid = pwd.getpwnam(polkitd_user).pw_gid
-except KeyError:
-    polkitd_gid = None
+if polkitd_gid != '-':
+    polkitd_gid = int(polkitd_gid)
+else:
+    try:
+        polkitd_gid = pwd.getpwnam(polkitd_user).pw_gid
+    except KeyError:
+        polkitd_gid = None
 
 dst = os.path.join(bindir, 'pkexec')
 

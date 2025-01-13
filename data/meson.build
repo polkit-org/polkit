@@ -2,6 +2,7 @@ service_conf = {
   'libprivdir': pk_prefix / pk_libprivdir,
   'polkitd_user': polkitd_user,
   'polkitd_uid': polkitd_uid,
+  'polkitd_gid': polkitd_gid,
 }
 
 configure_file(
@@ -60,8 +61,14 @@ if not get_option('libs-only')
     install_dir: systemdsystemunitdir,
   )
 
+  if polkitd_gid != '-'
+    sysusers_template = 'polkit.conf.in-with-gid'
+  else
+    sysusers_template = 'polkit.conf.in'
+  endif
+
   configure_file(
-    input: 'polkit.conf.in',
+    input: sysusers_template,
     output: '@BASENAME@',
     configuration: service_conf,
     install: true,
