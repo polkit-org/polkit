@@ -32,7 +32,7 @@ jobs:
 
       - name: Install build & test dependencies
         run: |
-          dnf install -y dnf-plugins-core python3-dbusmock clang compiler-rt libasan libubsan mozjs115-devel
+          dnf install -y dnf-plugins-core python3-dbusmock clang compiler-rt libasan libubsan
           dnf builddep -y polkit
 
       - name: Build & test
