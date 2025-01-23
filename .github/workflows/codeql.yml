@@ -28,12 +28,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        queries: +security-extended,security-and-quality
-
     - name: Install dependencies
       if: ${{ matrix.language == 'c-cpp' }}
       run: |
@@ -42,6 +36,12 @@ jobs:
         sudo apt build-dep -y policykit-1
         # polkit in Ubuntu Jammy (ATTOW) doesn't have the latest build dependencies yet
         sudo apt install -y duktape-dev meson
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: +security-extended,security-and-quality
 
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3
