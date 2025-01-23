@@ -32,8 +32,8 @@ jobs:
 
       - name: Install build & test dependencies
         run: |
-          sudo dnf install -y dnf-plugins-core python3-dbusmock clang compiler-rt libasan libubsan mozjs115-devel
-          sudo dnf builddep -y polkit
+          dnf install -y dnf-plugins-core python3-dbusmock clang compiler-rt libasan libubsan mozjs115-devel
+          dnf builddep -y polkit
 
       - name: Build & test
-        run: sudo --preserve-env=GITHUB_ACTIONS,CI .github/workflows/ci.sh ${{ matrix.phase }}
+        run: .github/workflows/ci.sh ${{ matrix.phase }}
