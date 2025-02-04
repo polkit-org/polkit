@@ -23,7 +23,7 @@
 #include <polkit/polkit.h>
 #include <string.h>
 
-
+#ifdef HAVE_SETNETGRENT
 static void
 test_new (void)
 {
@@ -63,7 +63,7 @@ test_set_name (void)
 
   g_object_unref (netgroup);
 }
-
+#endif
 
 int
 main (int argc, char *argv[])
