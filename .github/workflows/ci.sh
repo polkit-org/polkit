@@ -15,7 +15,7 @@ COMMON_BUILD_OPTS=(
     -Dtests=true
 )
 
-if [[ "$PHASE" =~ ^CLANG_ ]]; then
+if [[ "$PHASE" =~ CLANG ]]; then
     export CC=clang
     export CXX=clang++
 fi
