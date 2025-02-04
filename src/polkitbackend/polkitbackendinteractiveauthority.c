@@ -2276,11 +2276,10 @@ static GList *
 get_users_in_net_group (PolkitIdentity                    *group,
                         gboolean                           include_root)
 {
-  const gchar *name;
-  GList *ret;
-
-  ret = NULL;
+  GList *ret = NULL;
 #ifdef HAVE_SETNETGRENT
+  const gchar *name;
+
   name = polkit_unix_netgroup_get_name (POLKIT_UNIX_NETGROUP (group));
 
 # ifdef HAVE_SETNETGRENT_RETURN

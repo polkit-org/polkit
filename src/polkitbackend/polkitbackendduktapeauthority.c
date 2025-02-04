@@ -1180,13 +1180,13 @@ js_polkit_spawn (duk_context *cx)
 static duk_ret_t
 js_polkit_user_is_in_netgroup (duk_context *cx)
 {
+  gboolean is_in_netgroup = FALSE;
+#ifdef HAVE_SETNETGRENT
   const char *user;
   const char *netgroup;
-  gboolean is_in_netgroup = FALSE;
 
   user = duk_require_string (cx, 0);
   netgroup = duk_require_string (cx, 1);
-#ifdef HAVE_SETNETGRENT
   if (innetgr (netgroup,
                NULL,  /* host */
                user,
