@@ -14,13 +14,14 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  # glibc + systemd-logind
+  fedora:
     runs-on: ubuntu-latest
     container:
       image: registry.fedoraproject.org/fedora:latest
       options: "--privileged"
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
+      group: fedora-${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
       cancel-in-progress: true
     strategy:
       fail-fast: false
@@ -36,4 +37,36 @@ jobs:
           dnf builddep -y polkit
 
       - name: Build & test
-        run: .github/workflows/ci.sh ${{ matrix.phase }}
+        run: .github/workflows/ci.sh ${{ matrix.phase }} logind
+
+  # musl + elogind
+  alpine:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+      options: "--privileged"
+    concurrency:
+      group: alpine-${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        # There's no libasan/libubsan on Alpine, hence the missing GCC_ASAN_UBSAN phase
+        # See: https://gitlab.alpinelinux.org/alpine/aports/-/issues/10304
+        # Future FIXME: add clang + sanitizers to both jobs
+        phase: [BUILD_GCC, GCC, BUILD_CLANG, CLANG]
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v4
+
+      - name: Install build & test dependencies
+        run: |
+          apk update
+          apk add bash gcc g++ clang meson ninja-build pkgconf glib-dev duktape-dev elogind-dev dbus-dev \
+                  expat-dev linux-pam-dev gobject-introspection-dev perl py3-dbusmock gtk-doc
+          # Alpine's elogind package creates compatibility symlinks to act as a drop-in replacement for
+          # systemd/systemd-logind. Remove them to test build with _pure_ elogind installation
+          rm -f /usr/include/systemd /usr/lib/pkgconfig/libsystemd{,-logind}.pc
+
+      - name: Build & test
+        run: .github/workflows/ci.sh ${{ matrix.phase }} elogind

@@ -6,12 +6,13 @@ set -o pipefail
 #   - drop -Wno-deprecated-declarations
 
 PHASE="${1:?}"
+SESSION_TRACKING="${2:?}"
 COMMON_BUILD_OPTS=(
     -Dauthfw=pam
     -Dexamples=true
     -Dgtk_doc=true
     -Dintrospection=true
-    -Dsession_tracking=logind
+    -Dsession_tracking="$SESSION_TRACKING"
     -Dtests=true
 )
 
