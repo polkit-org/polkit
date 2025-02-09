@@ -83,12 +83,20 @@ main (int argc, char *argv[])
   rc = 0;
   pam_h = NULL;
 
+  char *lang = getenv("LANG");
+  char *language = getenv("LANGUAGE");
+
   /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
   if (_polkit_clearenv () != 0)
     goto error;
 
   /* set a minimal environment */
   setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
+
+  if(lang)
+      setenv("LANG",lang,0);
+  if(language)
+      setenv("LANGUAGE",language,0);
 
   /* check that we are setuid root */
   if (geteuid () != 0)
