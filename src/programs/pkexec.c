@@ -674,7 +674,7 @@ main (int argc, char *argv[])
           argv[n] = path_abs;
       }
     }
-#if _POSIX_C_SOURCE >= 200809L
+#if _XOPEN_SOURCE >= 700
   s = realpath(path, NULL);
 #else
   s = NULL;
