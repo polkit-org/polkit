@@ -6,6 +6,7 @@ set -o pipefail
 EXPECT_SCRIPTS="$PWD/expect"
 TEST_USER="polkit-testuser"
 TEST_USER_PASSWORD="hello-world-$SRANDOM" # notsecret
+TEST_ACTIONS="/run/polkit-1/actions/org.freedesktop.PolicyKit1.test.policy"
 TEST_RULES="/run/polkit-1/rules.d/00-test.rules"
 
 TMP_DIR="$(mktemp -d)"
@@ -16,7 +17,7 @@ at_exit() {
     : "Cleanup"
     userdel -rf "$TEST_USER"
     systemctl restart polkit
-    rm -rf "$TMP_DIR" "$TEST_RULES"
+    rm -rf "$TMP_DIR" "$TEST_RULES" "$TEST_ACTIONS"
 }
 
 trap at_exit EXIT
@@ -146,25 +147,49 @@ grep -q "AUTHENTICATION FAILED" "$TMP_DIR/SIGTRAP-on-EOF.log"
 grep -q "Not authorized" "$TMP_DIR/SIGTRAP-on-EOF.log"
 rm -f "$TMP_DIR/SIGTRAP-on-EOF.log"
 
-: "Check absolute (but not canonicalized) path"
-BASH_ABS=$(command -v bash)
-ln -s "$BASH_ABS" ./my-bash
-sudo -u "$TEST_USER" expect "$TMP_DIR/basic-auth.exp" "$TEST_USER_PASSWORD" ./my-bash -c true | tee "$TMP_DIR/absolute-path.log"
-grep -Eq "Authentication is needed to run \`/.*/${PWD##*/}/./my-bash -c true' as the super user" "$TMP_DIR/absolute-path.log"
-grep -q "AUTHENTICATION COMPLETE" "$TMP_DIR/absolute-path.log"
-rm -f "$TMP_DIR/absolute-path.log"
-rm -f "./my-bash"
+: "Check path canonicalization - setup"
+cp -v "$(command -v bash)" "$TMP_DIR/test-binary"
+# Sanity check before adding a custom action (this should attempt to ask for a password and fail)
+(! sudo -u "$TEST_USER" pkexec --disable-internal-agent "$TMP_DIR/test-binary" -c 'echo success' | tee "$TMP_DIR/canon-sanity.log")
+(! grep -q "success" "$TMP_DIR/canon-sanity.log")
+rm -f "$TMP_DIR/canon-sanity.log"
+# Prepare a custom action that allows anyone to run a test binary as root via pkexec
+cat >"$TEST_ACTIONS" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
+<policyconfig>
+  <vendor>polkit</vendor>
 
-: "Check canonicalized path"
-if command -v strace; then
-    BASH_ABS=$(command -v bash)
-    ln -s "$BASH_ABS" ./my-bash
-    sudo -u "$TEST_USER" strace -s 512 -o "$TMP_DIR/canonical-path.strace" -feexecve \
-	expect "$TMP_DIR/basic-auth.exp" "$TEST_USER_PASSWORD" ./my-bash -c true | tee "$TMP_DIR/canonical-path.log"
-    cat "$TMP_DIR/canonical-path.strace"
-    grep -qF "execve(\"$BASH_ABS\", [\"$PWD/./my-bash\"," "$TMP_DIR/canonical-path.strace"
-    grep -q "AUTHENTICATION COMPLETE" "$TMP_DIR/canonical-path.log"
-    rm -f "$TMP_DIR/canonical-path.log" "$TMP_DIR/canonical-path.strace"
-    rm -f "./my-bash"
-    rm -f "$TMP_DIR/preload.c" "$TMP_DIR/preload.so"
-fi
+  <action id="org.freedesktop.PolicyKit1.test.run">
+    <defaults>
+      <allow_any>yes</allow_any>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">$TMP_DIR/test-binary</annotate>
+  </action>
+</policyconfig>
+EOF
+systemctl restart polkit
+# Since the path to the binary should get canonicalized by pkexec, all following cases should be equal (and work)
+: "Check path canonicalization - absolute path"
+sudo -u "$TEST_USER" pkexec --disable-internal-agent "$TMP_DIR/test-binary" -c 'echo absolute path as $USER' | tee "$TMP_DIR/canon-abs.log"
+grep -q "^absolute path as root$" "$TMP_DIR/canon-abs.log"
+rm -f "$TMP_DIR/canon-abs.log"
+
+: "Check path canonicalization - relative path"
+pushd "$TMP_DIR"
+sudo -u "$TEST_USER" pkexec --disable-internal-agent ./test-binary -c 'echo relative path as $USER' | tee "$TMP_DIR/canon-rel.log"
+grep -q "^relative path as root$" "$TMP_DIR/canon-rel.log"
+rm -f "$TMP_DIR/canon-rel.log"
+popd
+
+: "Check path canonicalization - non-canonical path"
+sudo -u "$TEST_USER" pkexec --disable-internal-agent "$TMP_DIR/./././test-binary" -c 'echo non-canonical path as $USER' | tee "$TMP_DIR/canon-noncanon.log"
+grep -q "^non-canonical path as root$" "$TMP_DIR/canon-noncanon.log"
+rm -f "$TMP_DIR/canon-noncanon.log"
+
+: "Check path canonicalization - symlink"
+ln -sv "$TMP_DIR/test-binary" "$TMP_DIR/test-symlink"
+sudo -u "$TEST_USER" pkexec --disable-internal-agent "$TMP_DIR/test-symlink" -c 'echo symlink as $USER' | tee "$TMP_DIR/canon-sym.log"
+grep -q "^symlink as root$" "$TMP_DIR/canon-sym.log"
+rm -f "$TMP_DIR/canon-sym" "$TMP_DIR/test-binary"
