@@ -6,6 +6,8 @@ set -o pipefail
 EXPECT_SCRIPTS="$PWD/expect"
 TEST_USER="polkit-testuser"
 TEST_USER_PASSWORD="hello-world-$SRANDOM" # notsecret
+TEST_RULES="/run/polkit-1/rules.d/00-test.rules"
+
 TMP_DIR="$(mktemp -d)"
 
 at_exit() {
@@ -14,24 +16,25 @@ at_exit() {
     : "Cleanup"
     userdel -rf "$TEST_USER"
     systemctl restart polkit
-    rm -rf "$TMP_DIR"
-    rm -f /etc/polkit-1/rules.d/00-test.rules
+    rm -rf "$TMP_DIR" "$TEST_RULES"
 }
 
 trap at_exit EXIT
 
 : "Setup"
+mkdir -p /run/polkit-1/{actions,rules.d}
 useradd "$TEST_USER"
 echo "$TEST_USER_PASSWORD" | passwd --stdin "$TEST_USER"
 # We need the Expect scripts to be somewhere accessible to the $TEST_USER
 cp -r "$EXPECT_SCRIPTS"/* "$TMP_DIR/"
 chown -R "$TEST_USER" "$TMP_DIR"
 # Temporarily allow $TEST_USER to gain root privileges
-cat >/etc/polkit-1/rules.d/00-test.rules <<EOF
+cat >"$TEST_RULES" <<EOF
 polkit.addAdminRule(function(action, subject) {
     return ["unix-user:$TEST_USER"];
 });
 EOF
+systemctl restart polkit
 
 # This a really ugly hack for a particularly annoying Expect's behavior - it closes
 # stdout when it gets EOF from stdin, which happens very quickly in CIs where stdin
