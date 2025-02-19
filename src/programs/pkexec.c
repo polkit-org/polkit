@@ -674,12 +674,8 @@ main (int argc, char *argv[])
           argv[n] = path_abs;
       }
     }
-#if _POSIX_C_SOURCE >= 200809L
+
   s = realpath(path, NULL);
-#else
-  s = NULL;
-# error We have to deal with realpath(3) PATH_MAX madness
-#endif
   if (s != NULL)
     {
       /* The called program resolved to the canonical location. We don't update
