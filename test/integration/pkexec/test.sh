@@ -16,8 +16,8 @@ at_exit() {
 
     : "Cleanup"
     userdel -rf "$TEST_USER"
-    systemctl restart polkit
     rm -rf "$TMP_DIR" "$TEST_RULES" "$TEST_ACTIONS"
+    systemctl restart polkit
 }
 
 trap at_exit EXIT
