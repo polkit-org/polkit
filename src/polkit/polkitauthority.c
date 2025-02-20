@@ -1493,6 +1493,67 @@ polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *auth
  * @authority: A #PolkitAuthority.
  * @cookie: The cookie passed to the authentication agent from the authority.
  * @identity: The identity that was authenticated.
+ * @subject: The subject that requested the authentication.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
+ * @user_data: The data to pass to @callback.
+ *
+ * Asynchronously provide response that @identity successfully authenticated
+ * for the authentication request identified by @cookie as requested by @subject.
+ *
+ * This function is only used by the socket-activated agent helper, running as uiid
+ * 0, and will fail otherwise. The requesting process is identified via @subject
+ * which will contain a PID FD identifying the process.
+ *
+ * When the operation is finished, @callback will be invoked in the
+ * <link linkend="g-main-context-push-thread-default">thread-default
+ * main loop</link> of the thread you are calling this method
+ * from. You can then call
+ * polkit_authority_authentication_agent_response_finish() to get the
+ * result of the operation.
+ **/
+void
+polkit_authority_authentication_agent_response_with_subject (PolkitAuthority      *authority,
+                                                             const gchar          *cookie,
+                                                             PolkitIdentity       *identity,
+                                                             PolkitSubject        *subject,
+                                                             GCancellable         *cancellable,
+                                                             GAsyncReadyCallback   callback,
+                                                             gpointer              user_data)
+{
+  /* Unlike the polkit_authority_authentication_agent_response variant,
+   * this one is called from a socket-activated service, rather than a
+   * setuid helper invoked directly by the authenticating process.
+   */
+  g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
+  g_return_if_fail (cookie != NULL);
+  g_return_if_fail (POLKIT_IS_IDENTITY (identity));
+  g_return_if_fail (POLKIT_IS_SUBJECT (subject));
+  g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
+
+  g_dbus_proxy_call (authority->proxy,
+                     "AuthenticationAgentResponse3",
+                     g_variant_new ("(s@(sa{sv})@(sa{sv}))",
+                                    cookie,
+                                    polkit_identity_to_gvariant (identity), /* Floating value */
+                                    polkit_subject_to_gvariant (subject)), /* Floating value */
+                     G_DBUS_CALL_FLAGS_NONE,
+                     -1,
+                     cancellable,
+                     generic_async_cb,
+                     g_simple_async_result_new (G_OBJECT (authority),
+                                                callback,
+                                                user_data,
+                                                polkit_authority_authentication_agent_response));
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+/**
+ * polkit_authority_authentication_agent_response:
+ * @authority: A #PolkitAuthority.
+ * @cookie: The cookie passed to the authentication agent from the authority.
+ * @identity: The identity that was authenticated.
  * @cancellable: (allow-none): A #GCancellable or %NULL.
  * @callback: A #GAsyncReadyCallback to call when the request is satisfied.
  * @user_data: The data to pass to @callback.
@@ -1623,6 +1684,53 @@ polkit_authority_authentication_agent_response_sync (PolkitAuthority     *author
 
   data = call_sync_new ();
   polkit_authority_authentication_agent_response (authority, cookie, identity, cancellable, call_sync_cb, data);
+  call_sync_block (data);
+  ret = polkit_authority_authentication_agent_response_finish (authority, data->res, error);
+  call_sync_free (data);
+
+  return ret;
+}
+
+
+/**
+ * polkit_authority_authentication_agent_response_with_subject_sync:
+ * @authority: A #PolkitAuthority.
+ * @cookie: The cookie passed to the authentication agent from the authority.
+ * @identity: The identity that was authenticated.
+ * @subject: The subject that requested the authentication.
+ * @cancellable: (allow-none): A #GCancellable or %NULL.
+ * @error: (allow-none): Return location for error or %NULL.
+ *
+ * Provide response that @identity successfully authenticated for the
+ * authentication request identified by @cookie. See polkit_authority_authentication_agent_response_with_subject()
+ * for limitations on who is allowed is to call this method.
+ *
+ * The calling thread is blocked until a reply is received. See
+ * polkit_authority_authentication_agent_response_with_subject() for the
+ * asynchronous version.
+ *
+ * Returns: %TRUE if @authority acknowledged the call, %FALSE if @error is set.
+ **/
+gboolean
+polkit_authority_authentication_agent_response_with_subject_sync (PolkitAuthority     *authority,
+                                                                  const gchar         *cookie,
+                                                                  PolkitIdentity      *identity,
+                                                                  PolkitSubject       *subject,
+                                                                  GCancellable        *cancellable,
+                                                                  GError             **error)
+{
+  gboolean ret;
+  CallSyncData *data;
+
+  g_return_val_if_fail (POLKIT_IS_AUTHORITY (authority), FALSE);
+  g_return_val_if_fail (cookie != NULL, FALSE);
+  g_return_val_if_fail (POLKIT_IS_IDENTITY (identity), FALSE);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
+  g_return_val_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable), FALSE);
+  g_return_val_if_fail (error == NULL || *error == NULL, FALSE);
+
+  data = call_sync_new ();
+  polkit_authority_authentication_agent_response_with_subject (authority, cookie, identity, subject, cancellable, call_sync_cb, data);
   call_sync_block (data);
   ret = polkit_authority_authentication_agent_response_finish (authority, data->res, error);
   call_sync_free (data);
