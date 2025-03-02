@@ -1,1 +1,3 @@
+# Pre-create the subdirectory so that administrator cannot forget to set appropriate mode and ownership.
+# It should have as minimal privileges as possible to ensure polkitd cannot change .rules files if it gets hijacked.
 d /etc/polkit-1/rules.d 0750 root @polkitd_user@ - -
