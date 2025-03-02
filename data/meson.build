@@ -60,8 +60,11 @@ if not get_option('libs-only')
     install_dir: pk_datadir / 'polkit-1'
   )
 
-  install_data(
-    'polkit-tmpfiles.conf',
-    install_dir: tmpfiles_dir
+  configure_file(
+    input: 'polkit-tmpfiles.conf.in',
+    output: '@BASENAME@',
+    configuration: service_conf,
+    install: true,
+    install_dir: tmpfiles_dir,
   )
 endif
