@@ -7,6 +7,7 @@ Type=oneshot
 DeviceAllow=/dev/null rw
 DevicePolicy=strict
 ExecStart=@libprivdir@/polkit-agent-helper-1 --socket-activated
+SuccessExitStatus=2
 StandardInput=socket
 StandardOutput=socket
 LimitMEMLOCK=0

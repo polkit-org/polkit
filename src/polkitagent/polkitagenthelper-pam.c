@@ -87,6 +87,7 @@ main (int argc, char *argv[])
   int rc;
   int pidfd = -1;
   int uid = -1;
+  int errval = 1;
   const char *user_to_auth;
   char *user_to_auth_free = NULL;
   char *cookie = NULL;
@@ -226,6 +227,9 @@ main (int argc, char *argv[])
       const char *err;
       err = pam_strerror (pam_h, rc);
       fprintf (stderr, "polkit-agent-helper-1: pam_authenticate failed: %s\n", err);
+
+      /* if run via systemd socket, failed authentication won't taint the system using SuccessExitStatus=2*/
+      errval = 2;
       goto error;
     }
 
@@ -302,7 +306,7 @@ error:
 
   fprintf (stdout, "FAILURE\n");
   flush_and_wait();
-  return 1;
+  return errval;
 }
 
 static int
