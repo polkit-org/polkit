@@ -1,6 +1,7 @@
 [Unit]
 Description=Authorization Manager Agent Helper
 Documentation=man:polkit(8)
+CollectMode=inactive-or-failed
 
 [Service]
 Type=oneshot
