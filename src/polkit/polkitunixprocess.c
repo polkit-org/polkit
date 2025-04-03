@@ -19,6 +19,13 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#ifdef __linux__
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <sys/vfs.h>
+#endif
 #include <sys/types.h>
 #ifdef HAVE_FREEBSD
 #include <sys/param.h>
@@ -151,8 +158,11 @@ struct _PolkitUnixProcess
 
   gint pid;
   guint64 start_time;
+  guint64 cgroupid;
   gint uid;
   gint pidfd;
+  gint ppidfd;
+  guint ctty;
   gboolean pidfd_is_safe;
   GArray *gids;
 };
@@ -166,10 +176,14 @@ enum
 {
   PROP_0,
   PROP_PID,
+  PROP_PPID,
   PROP_START_TIME,
+  PROP_CGROUPID,
   PROP_UID,
   PROP_PIDFD,
   PROP_PIDFD_IS_SAFE,
+  PROP_PPIDFD,
+  PROP_CTTY,
   PROP_GIDS,
 };
 
@@ -177,6 +191,18 @@ static void subject_iface_init (PolkitSubjectIface *subject_iface);
 
 static guint64 get_start_time_for_pid (gint    pid,
                                        GError **error);
+
+static gint
+get_ppidfd_for_pidfd (gint     pidfd,
+                      GError **error);
+
+static guint
+get_ctty_number_for_pidfd (gint     pidfd,
+                           GError **error);
+
+static guint64
+get_cgroupid_for_pidfd (gint     pidfd,
+                        GError **error);
 
 #if defined(HAVE_FREEBSD) || defined(HAVE_NETBSD) || defined(HAVE_OPENBSD)
 static gboolean get_kinfo_proc (gint pid,
@@ -196,6 +222,7 @@ polkit_unix_process_init (PolkitUnixProcess *unix_process)
 {
   unix_process->uid = -1;
   unix_process->pidfd = -1;
+  unix_process->ppidfd = -1;
 }
 
 static void
@@ -212,6 +239,10 @@ polkit_unix_process_get_property (GObject    *object,
       g_value_set_int (value, polkit_unix_process_get_pid (unix_process));
       break;
 
+    case PROP_PPID:
+      g_value_set_int (value, polkit_unix_process_get_ppid (unix_process));
+      break;
+
     case PROP_UID:
       g_value_set_int (value, unix_process->uid);
       break;
@@ -224,12 +255,24 @@ polkit_unix_process_get_property (GObject    *object,
       g_value_set_int (value, unix_process->pidfd);
       break;
 
+    case PROP_PPIDFD:
+      g_value_set_int (value, unix_process->ppidfd);
+      break;
+
+    case PROP_CTTY:
+      g_value_set_uint (value, unix_process->ctty);
+      break;
+
     case PROP_PIDFD_IS_SAFE:
       g_value_set_boolean (value, unix_process->pidfd_is_safe);
       break;
 
     case PROP_START_TIME:
       g_value_set_uint64 (value, unix_process->start_time);
+      break;
+
+    case PROP_CGROUPID:
+      g_value_set_uint64 (value, unix_process->cgroupid);
       break;
 
     default:
@@ -275,8 +318,8 @@ polkit_unix_process_set_property (GObject      *object,
 }
 
 static gint
-polkit_unix_process_get_pid_from_pidfd (PolkitUnixProcess  *process,
-                                        GError            **error)
+polkit_unix_process_get_pid_from_pidfd (gint   pidfd,
+                                        GError **error)
 {
   gint result;
   gchar *contents;
@@ -284,15 +327,14 @@ polkit_unix_process_get_pid_from_pidfd (PolkitUnixProcess  *process,
   gchar filename[64];
   guint n;
 
-  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), -1);
+  g_return_val_if_fail (pidfd >= 0, -1);
   g_return_val_if_fail (error == NULL || *error == NULL, -1);
-  g_return_val_if_fail (process->pidfd >= 0, -1);
 
   result = -1;
   lines = NULL;
   contents = NULL;
 
-  g_snprintf (filename, sizeof filename, "/proc/self/fdinfo/%d", process->pidfd);
+  g_snprintf (filename, sizeof filename, "/proc/self/fdinfo/%d", pidfd);
   if (!g_file_get_contents (filename,
                             &contents,
                             NULL,
@@ -351,6 +393,31 @@ polkit_unix_process_constructed (GObject *object)
           process->pid = 0;
         }
     }
+
+    if (process->pidfd >= 0)
+      {
+        GError *error;
+        error = NULL;
+
+        process->ppidfd = get_ppidfd_for_pidfd (process->pidfd, &error);
+        if (error != NULL)
+          {
+            g_error_free (error);
+            error = NULL;
+            process->ppidfd = -1;
+          }
+
+        process->cgroupid = get_cgroupid_for_pidfd (process->pidfd, &error);
+        if (error != NULL)
+          {
+            g_error_free (error);
+            error = NULL;
+          }
+
+        process->ctty = get_ctty_number_for_pidfd (process->pidfd, &error);
+        if (error != NULL)
+          g_error_free (error);
+      }
 #endif /* HAVE_PIDFD_OPEN */
 
   if (process->start_time == 0)
@@ -381,6 +448,12 @@ polkit_unix_process_finalize (GObject *object)
     {
       close (process->pidfd);
       process->pidfd = -1;
+    }
+
+  if (process->ppidfd >= 0)
+    {
+      close (process->ppidfd);
+      process->ppidfd = -1;
     }
 
   if (process->gids)
@@ -460,6 +533,24 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
                                                         G_PARAM_STATIC_NICK));
 
   /**
+   * PolkitUnixProcess:cgroupid:
+   *
+   * The start time of the process.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_CGROUPID,
+                                   g_param_spec_uint64 ("cgroupid",
+                                                        "ControlGroup ID",
+                                                        "The ID of the Control Group of the process",
+                                                        0,
+                                                        G_MAXUINT64,
+                                                        0,
+                                                        G_PARAM_READABLE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_BLURB |
+                                                        G_PARAM_STATIC_NICK));
+
+  /**
    * PolkitUnixProcess:pidfd:
    *
    * The UNIX process id file descriptor.
@@ -477,6 +568,42 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
                                                      G_PARAM_STATIC_NAME |
                                                      G_PARAM_STATIC_BLURB |
                                                      G_PARAM_STATIC_NICK));
+
+  /**
+   * PolkitUnixProcess:ppidfd:
+   *
+   * The UNIX process' parent id file descriptor.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_PPIDFD,
+                                   g_param_spec_int ("ppidfd",
+                                                     "Process' parent ID FD",
+                                                     "The UNIX process' parent ID file descriptor",
+                                                     -1,
+                                                     G_MAXINT,
+                                                     -1,
+                                                     G_PARAM_READABLE |
+                                                     G_PARAM_STATIC_NAME |
+                                                     G_PARAM_STATIC_BLURB |
+                                                     G_PARAM_STATIC_NICK));
+
+  /**
+   * PolkitUnixProcess:ctty:
+   *
+   * The UNIX process controlling TTY.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_CTTY,
+                                   g_param_spec_uint ("ctty",
+                                                      "Process controlling TTY",
+                                                      "The UNIX process controlling TTY",
+                                                      0,
+                                                      G_MAXINT,
+                                                      0,
+                                                      G_PARAM_READABLE |
+                                                      G_PARAM_STATIC_NAME |
+                                                      G_PARAM_STATIC_BLURB |
+                                                      G_PARAM_STATIC_NICK));
 
   /**
    * PolkitUnixProcess:pidfd_is_safe:
@@ -604,7 +731,7 @@ polkit_unix_process_get_pid (PolkitUnixProcess *process)
   if (process->pidfd >= 0)
     {
       GError *error = NULL;
-      gint pid = polkit_unix_process_get_pid_from_pidfd(process, &error);
+      gint pid = polkit_unix_process_get_pid_from_pidfd(process->pidfd, &error);
 
       if (pid > 0)
         return pid;
@@ -614,6 +741,48 @@ polkit_unix_process_get_pid (PolkitUnixProcess *process)
     }
 
   return process->pid;
+}
+
+/**
+ * polkit_unix_process_get_ppid:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Gets the process' parent id for @process.
+ *
+ * Returns: The process id for the parent of @process.
+ */
+gint
+polkit_unix_process_get_ppid (PolkitUnixProcess *process)
+{
+  GError *error = NULL;
+  gint ppid;
+
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
+
+  if (process->ppidfd < 0)
+    return 0;
+
+  ppid = polkit_unix_process_get_pid_from_pidfd(process->ppidfd, &error);
+  if (ppid > 0)
+    return ppid;
+
+  g_error_free (error);
+  return 0;
+}
+
+/**
+ * polkit_unix_process_get_cgroupid:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Gets the cgroupid of @process.
+ *
+ * Returns: The cgroupid of @process.
+ */
+guint64
+polkit_unix_process_get_cgroupid (PolkitUnixProcess *process)
+{
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
+  return process->cgroupid;
 }
 
 /**
@@ -671,9 +840,23 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
       gint pidfd = (int) syscall (SYS_pidfd_open, process->pid, 0);
       if (pidfd >= 0)
         {
+          GError *error;
+          error = NULL;
+
           process->pidfd_is_safe = FALSE;
           process->pidfd = pidfd;
           process->pid = 0;
+          if (process->ppidfd >= 0)
+            {
+              close (process->ppidfd);
+              process->ppidfd = -1;
+            }
+          process->ppidfd = get_ppidfd_for_pidfd (process->pidfd, &error);
+          if (error != NULL)
+            {
+              g_error_free (error);
+              process->ppidfd = -1;
+            }
           return;
         }
     }
@@ -695,6 +878,36 @@ polkit_unix_process_get_pidfd (PolkitUnixProcess *process)
 {
   g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), -1);
   return process->pidfd;
+}
+
+/**
+ * polkit_unix_process_get_ppidfd:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Gets the process' parent id file descriptor for @process.
+ *
+ * Returns: The process id file descriptor for the parent of @process.
+ */
+gint
+polkit_unix_process_get_ppidfd (PolkitUnixProcess *process)
+{
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), -1);
+  return process->ppidfd;
+}
+
+/**
+ * polkit_unix_process_get_ctty:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Gets the controlling TTY for @process.
+ *
+ * Returns: The dev_t of the controlling TTY of @process.
+ */
+guint
+polkit_unix_process_get_ctty (PolkitUnixProcess *process)
+{
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
+  return process->ctty;
 }
 
 /**
@@ -731,6 +944,24 @@ polkit_unix_process_set_pidfd (PolkitUnixProcess *process,
       process->pidfd_is_safe = FALSE;
     }
   process->pidfd = pidfd;
+
+  if (process->pidfd >= 0)
+    {
+      GError *error;
+      error = NULL;
+
+      if (process->ppidfd >= 0)
+        {
+          close (process->ppidfd);
+          process->ppidfd = -1;
+        }
+      process->ppidfd = get_ppidfd_for_pidfd (process->pidfd, &error);
+      if (error != NULL)
+        {
+          g_error_free (error);
+          process->ppidfd = -1;
+        }
+    }
 }
 
 /**
@@ -1129,6 +1360,435 @@ out:
 #endif
 
   return start_time;
+}
+
+static guint64
+get_cgroupid_for_pidfd (gint    pidfd,
+                        GError **error)
+{
+#ifdef __linux__
+  guint64 cgroupid;
+  gint pid;
+  gchar *filename;
+  gchar *cgroup_path;
+  gchar *contents;
+  size_t length;
+  gchar *p;
+  struct file_handle *fhp;
+  int mount_id;
+
+  pid = 0;
+  filename = NULL;
+  contents = NULL;
+  cgroup_path = NULL;
+  cgroupid = 0;
+  fhp = NULL;
+
+  g_return_val_if_fail (pidfd >= 0, 0);
+
+  pid = polkit_unix_process_get_pid_from_pidfd (pidfd, error);
+  if (pid <= 0)
+    return 0;
+
+  filename = g_strdup_printf ("/proc/%d/cgroup", pid);
+
+  if (!g_file_get_contents (filename, &contents, &length, error))
+    goto out;
+
+  /* The format is '0::/cgroup/path\n */
+  p = strchr (contents, ':');
+  if (p == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+  p += 2; /* skip '::' */
+  if (p - contents >= (int) length)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+
+  contents[length - 1] = '\0'; /* remove the newline */
+
+  cgroup_path = g_strdup_printf ("/sys/fs/cgroup%s", p);
+
+  /* We know in advance the size of the field, cgroupid is a uint64 */
+  fhp = g_malloc (offsetof(struct file_handle, f_handle) + sizeof(guint64));
+  *fhp = (struct file_handle) {
+    .handle_bytes = sizeof(guint64),
+    .handle_type  = 0xfe, /* FILEID_KERNFS from linux/exportfs.h */
+  };
+
+  if (name_to_handle_at (AT_FDCWD, cgroup_path, fhp, &mount_id, 0) < 0)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error getting cgroup ID for process %d: %s",
+                   pid,
+                   g_strerror (errno));
+      goto out;
+    }
+
+  cgroupid = *(guint64 *) fhp->f_handle;
+
+  /* Ensure the process is still running */
+  if (pid != polkit_unix_process_get_pid_from_pidfd (pidfd, error))
+    {
+      if (error && *error == NULL)
+        g_set_error (error,
+                     POLKIT_ERROR,
+                     POLKIT_ERROR_FAILED,
+                     "Process exited while parsing cgroup id");
+      goto out;
+    }
+
+ out:
+  g_free (contents);
+  g_free (filename);
+  g_free (cgroup_path);
+  free (fhp);
+
+  return cgroupid;
+#else /* !__linux__ */
+  return 0;
+#endif /* __linux__ */
+}
+
+static guint
+get_ctty_number_for_pidfd (gint     pidfd,
+                           GError **error)
+{
+#ifdef __linux__
+  guint tty_nr;
+  gint tty_fd;
+  gint pid;
+  struct stat st;
+  struct statfs stfs;
+  gchar *tty_name;
+  gchar *filename;
+  gchar *contents;
+  size_t length;
+  gchar **tokens;
+  guint num_tokens;
+  gchar *p;
+  gchar *endp;
+
+  tty_nr = 0;
+  tty_fd = -1;
+  pid = 0;
+  tty_name = NULL;
+  contents = NULL;
+  tokens = NULL;
+
+  g_return_val_if_fail (pidfd >= 0, 0);
+
+  pid = polkit_unix_process_get_pid_from_pidfd (pidfd, error);
+  if (pid <= 0)
+    return 0;
+
+  filename = g_strdup_printf ("/proc/%d/stat", pid);
+  if (!filename)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error allocating memory for procfs path");
+      goto out;
+    }
+
+  if (!g_file_get_contents (filename, &contents, &length, error))
+    goto out;
+
+  /* parent's pid is the token at index 1 after the '(process name)' entry - since only this
+   * field can contain the ')' character, search backwards for this to avoid malicious
+   * processes trying to fool us
+   */
+  p = strrchr (contents, ')');
+  if (p == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+  p += 2; /* skip ') ' */
+  if (p - contents >= (int) length)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+
+  tokens = g_strsplit (p, " ", 0);
+
+  num_tokens = g_strv_length (tokens);
+
+  if (num_tokens < 5)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+
+  /*
+   * The string can have negative representation, but it's actually an unsigned int,
+   * cast it to convert it
+   */
+  tty_nr = (guint) strtoll (tokens[4], &endp, 10);
+  if (endp == tokens[4])
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+
+  if (tty_nr == 0)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "No TTY associated with process %d",
+                   pid);
+      goto out;
+    }
+
+  /* Now do some sanity checks to ensure we are really looking at a TTY. */
+
+  tty_name = g_strdup_printf ("/dev/pts/%u", minor (tty_nr));
+
+  tty_fd = open (tty_name, O_CLOEXEC|O_NOCTTY|O_PATH);
+  if (tty_fd < 0)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error opening TTY %s for process %d: %s",
+                   tty_name,
+                   pid,
+                   g_strerror (errno));
+      goto out;
+    }
+
+  if (fstat (tty_fd, &st) < 0)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error getting TTY name for process %d: %s",
+                   pid,
+                   g_strerror (errno));
+      goto out;
+    }
+
+  if (!S_ISCHR (st.st_mode))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "TTY name for process %d is not a character device",
+                   pid);
+      goto out;
+    }
+
+  if (major (tty_nr) != major (st.st_rdev) || minor (tty_nr) != minor (st.st_rdev))
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "TTY device number mismatch for process %d",
+                   pid);
+      goto out;
+    }
+
+  if (fstatfs (tty_fd, &stfs) < 0)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error getting TTY filesystem information for process %d: %s",
+                   pid,
+                   g_strerror (errno));
+      goto out;
+    }
+
+  if (stfs.f_type != 0x1cd1) /* 0x1cd1 is the magic number for devpts */
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "TTY filesystem type mismatch for process %d",
+                   pid);
+      goto out;
+    }
+
+  /*
+   * The ptmx device is weird, it exists twice, once inside and once outside devpts. To detect the
+   * latter case, let's fire off an ioctl() that only works on ptmx devices.
+   */
+  int v;
+  if (ioctl (tty_fd, TIOCGPKT, &v) < 0)
+    {
+      g_set_error (error,
+                  POLKIT_ERROR,
+                  POLKIT_ERROR_FAILED,
+                  "Error getting TTY packet mode for process %d: %s",
+                  pid,
+                  g_strerror (errno));
+      goto out;
+    }
+
+  /* Ensure the process is still running */
+  if (pid != polkit_unix_process_get_pid_from_pidfd (pidfd, error))
+    {
+      if (error && *error == NULL)
+        g_set_error (error,
+                     POLKIT_ERROR,
+                     POLKIT_ERROR_FAILED,
+                     "Process exited while reading TTY name");
+      goto out;
+    }
+
+ out:
+  g_strfreev (tokens);
+  g_free (filename);
+  g_free (contents);
+  g_free (tty_name);
+  if (tty_fd >= 0)
+    close (tty_fd);
+
+  return tty_nr;
+#else /* !__linux__ */
+  return 0;
+#endif /* __linux__ */
+}
+
+static gint
+get_ppidfd_for_pidfd (gint     pidfd,
+                      GError **error)
+{
+  gint ppidfd;
+  gint pid, ppid;
+  gchar *filename;
+  gchar *contents;
+  size_t length;
+  gchar **tokens;
+  guint num_tokens;
+  gchar *p;
+  gchar *endp;
+
+  ppidfd = -1;
+  pid = ppid = 0;
+  contents = NULL;
+
+  g_return_val_if_fail (pidfd >= 0, -1);
+
+  pid = polkit_unix_process_get_pid_from_pidfd (pidfd, error);
+  if (pid <= 0)
+    return -1;
+
+  filename = g_strdup_printf ("/proc/%d/stat", pid);
+
+  if (!g_file_get_contents (filename, &contents, &length, error))
+    goto out;
+
+  /* parent's pid is the token at index 1 after the '(process name)' entry - since only this
+   * field can contain the ')' character, search backwards for this to avoid malicious
+   * processes trying to fool us
+   */
+  p = strrchr (contents, ')');
+  if (p == NULL)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+  p += 2; /* skip ') ' */
+  if (p - contents >= (int) length)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+
+  tokens = g_strsplit (p, " ", 0);
+
+  num_tokens = g_strv_length (tokens);
+
+  if (num_tokens < 2)
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+
+  ppid = strtoull (tokens[1], &endp, 10);
+  if (endp == tokens[1])
+    {
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Error parsing file %s",
+                   filename);
+      goto out;
+    }
+
+  g_strfreev (tokens);
+
+#ifdef HAVE_PIDFD_OPEN
+  /*
+   * Ensure the actual parent hasn't exited, in which case the process would
+   * be reparented to PID 1
+   */
+  if (ppid > 1)
+    {
+      ppidfd = (int) syscall (SYS_pidfd_open, ppid, 0);
+
+      /* Ensure the processes are still running */
+      if (ppidfd >= 0 &&
+          (pid != polkit_unix_process_get_pid_from_pidfd (pidfd, error) ||
+           ppid != polkit_unix_process_get_pid_from_pidfd (ppidfd, error)))
+        {
+          close (ppidfd);
+          ppidfd = -1;
+        }
+    }
+#endif /* HAVE_PIDFD_OPEN */
+
+ out:
+  g_free (filename);
+  g_free (contents);
+
+  return ppidfd;
 }
 
 /*
