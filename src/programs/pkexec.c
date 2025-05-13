@@ -960,6 +960,12 @@ main (int argc, char *argv[])
 
   s = g_strdup_printf ("%d", getuid ());
   g_ptr_array_add (saved_env, g_strdup ("PKEXEC_UID"));
+  g_ptr_array_add (saved_env, g_strdup (s));
+  g_ptr_array_add (saved_env, g_strdup ("SUDO_UID")); /* compat with sudo */
+  g_ptr_array_add (saved_env, s);
+
+  s = g_strdup_printf ("%d", getgid ());
+  g_ptr_array_add (saved_env, g_strdup ("SUDO_GID")); /* compat with sudo */
   g_ptr_array_add (saved_env, s);
 
   /* set the environment */
