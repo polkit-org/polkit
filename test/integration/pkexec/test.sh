@@ -121,6 +121,8 @@ sed -i 's/\r$//g' "$TMP_DIR/environment.log"
 grep -qE "^HOME=/root$" "$TMP_DIR/environment.log"
 grep -qE "^LOGNAME=root$" "$TMP_DIR/environment.log"
 grep -qE "^PKEXEC_UID=$(id -u "$TEST_USER")$" "$TMP_DIR/environment.log"
+grep -qE "^SUDO_UID=$(id -u "$TEST_USER")$" "$TMP_DIR/environment.log"
+grep -qE "^SUDO_GID=$(id -g "$TEST_USER")$" "$TMP_DIR/environment.log"
 grep -qE "^USER=root$" "$TMP_DIR/environment.log"
 # pkexec resets $PATH to a predefined safe list
 (! grep -qE "^PATH=.*nope.*$" "$TMP_DIR/environment.log")
