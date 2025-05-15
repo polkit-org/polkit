@@ -165,6 +165,7 @@ struct _PolkitUnixProcess
   guint ctty;
   gboolean pidfd_is_safe;
   GArray *gids;
+  gboolean constructed;
 };
 
 struct _PolkitUnixProcessClass
@@ -437,6 +438,8 @@ polkit_unix_process_constructed (GObject *object)
           g_error_free (error);
         }
     }
+
+  process->constructed = TRUE;
 
   if (G_OBJECT_CLASS (polkit_unix_process_parent_class)->constructed != NULL)
     G_OBJECT_CLASS (polkit_unix_process_parent_class)->constructed (object);
@@ -832,35 +835,38 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
   g_return_if_fail (POLKIT_IS_UNIX_PROCESS (process));
 
 #ifdef HAVE_PIDFD_OPEN
-  if (process->pidfd >= 0)
+  if (process->constructed)
     {
-      close (process->pidfd);
-      process->pidfd = -1;
-      process->pidfd_is_safe = FALSE;
-    }
-  if (pid > 0)
-    {
-      gint pidfd = (int) syscall (SYS_pidfd_open, pid, 0);
-      if (pidfd >= 0)
+      if (process->pidfd >= 0)
         {
-          GError *error;
-          error = NULL;
-
+          close (process->pidfd);
+          process->pidfd = -1;
           process->pidfd_is_safe = FALSE;
-          process->pidfd = pidfd;
-          process->pid = 0;
-          if (process->ppidfd >= 0)
+        }
+      if (pid > 0)
+        {
+          gint pidfd = (int) syscall (SYS_pidfd_open, pid, 0);
+          if (pidfd >= 0)
             {
-              close (process->ppidfd);
-              process->ppidfd = -1;
+              GError *error;
+              error = NULL;
+
+              process->pidfd_is_safe = FALSE;
+              process->pidfd = pidfd;
+              process->pid = 0;
+              if (process->ppidfd >= 0)
+                {
+                  close (process->ppidfd);
+                  process->ppidfd = -1;
+                }
+              process->ppidfd = get_ppidfd_for_pidfd (process->pidfd, &error);
+              if (error != NULL)
+                {
+                  g_error_free (error);
+                  process->ppidfd = -1;
+                }
+              return;
             }
-          process->ppidfd = get_ppidfd_for_pidfd (process->pidfd, &error);
-          if (error != NULL)
-            {
-              g_error_free (error);
-              process->ppidfd = -1;
-            }
-          return;
         }
     }
 #endif /* HAVE_PIDFD_OPEN */
