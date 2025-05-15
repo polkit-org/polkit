@@ -1065,7 +1065,7 @@ polkit_unix_process_hash (PolkitSubject *subject)
 {
   PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
 
-  return g_direct_hash (GSIZE_TO_POINTER ((polkit_unix_process_get_pid(process) + process->start_time))) ;
+  return g_direct_hash (GSIZE_TO_POINTER ((process->pid + process->start_time))) ;
 }
 
 static gboolean
@@ -1076,6 +1076,9 @@ polkit_unix_process_equal (PolkitSubject *a,
   PolkitUnixProcess *process_b;
   gint pid_a, pid_b;
   gint pidfd_a, pidfd_b;
+
+  if (a == b)
+    return TRUE;
 
   process_a = POLKIT_UNIX_PROCESS (a);
   process_b = POLKIT_UNIX_PROCESS (b);
