@@ -840,7 +840,7 @@ polkit_unix_process_set_pid (PolkitUnixProcess *process,
     }
   if (pid > 0)
     {
-      gint pidfd = (int) syscall (SYS_pidfd_open, process->pid, 0);
+      gint pidfd = (int) syscall (SYS_pidfd_open, pid, 0);
       if (pidfd >= 0)
         {
           GError *error;
