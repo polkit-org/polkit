@@ -399,12 +399,15 @@ polkit_unix_process_constructed (GObject *object)
         GError *error;
         error = NULL;
 
-        process->ppidfd = get_ppidfd_for_pidfd (process->pidfd, &error);
-        if (error != NULL)
+        if (process->ppidfd < 0)
           {
-            g_error_free (error);
-            error = NULL;
-            process->ppidfd = -1;
+            process->ppidfd = get_ppidfd_for_pidfd (process->pidfd, &error);
+            if (error != NULL)
+              {
+                g_error_free (error);
+                error = NULL;
+                process->ppidfd = -1;
+              }
           }
 
         process->cgroupid = get_cgroupid_for_pidfd (process->pidfd, &error);
