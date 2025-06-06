@@ -739,6 +739,12 @@ _start (void *data, const char *el, const char **attr)
   guint num_attr;
   ParserData *pd = data;
 
+  if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH)
+    {
+      g_warning ("XML parsing reached max depth?");
+      goto error;
+    }
+
   for (num_attr = 0; attr[num_attr] != NULL; num_attr++)
     ;
 
