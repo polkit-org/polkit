@@ -127,7 +127,12 @@ if cc.get_id() == 'gcc'
   ])
 endif
 
-glib_req_version = '>= 2.44.0'
+glib_req_version_number = '2.44'
+glib_req_version = '>= ' + glib_req_version_number
+add_project_arguments([
+  '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_' + glib_req_version_number.underscorify(),
+  '-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_' + glib_req_version_number.underscorify(),
+], language: 'c')
 
 gio_dep = dependency('gio-2.0', version: glib_req_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: glib_req_version)
