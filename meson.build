@@ -127,7 +127,7 @@ if cc.get_id() == 'gcc'
   ])
 endif
 
-glib_req_version = '>= 2.30.0'
+glib_req_version = '>= 2.44.0'
 
 gio_dep = dependency('gio-2.0', version: glib_req_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: glib_req_version)
