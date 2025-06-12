@@ -12,7 +12,7 @@ Source1: polkit.sysusers
 
 
 BuildRequires: gcc-c++
-BuildRequires: glib2-devel >= 2.30.0
+BuildRequires: glib2-devel >= 2.44.0
 BuildRequires: expat-devel
 BuildRequires: pam-devel
 BuildRequires: gtk-doc
