@@ -63,7 +63,7 @@ utils_spawn_data_free (UtilsSpawnData *data)
                              (GSourceFunc) utils_child_watch_from_release_cb,
                              source,
                              (GDestroyNotify) g_source_destroy);
-      g_source_attach (source, data->main_context);
+      g_source_attach (source, g_main_context_ref(data->main_context));
       g_source_unref (source);
       data->child_pid = 0;
     }
