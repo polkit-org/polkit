@@ -1,0 +1,68 @@
+# Check authentication caching with auth_keep
+#
+# See:
+#   - https://github.com/polkit-org/polkit/pull/533
+
+set timeout 10
+expect_before timeout { send_error "Timeout!\n"; exit 124 }
+
+# We need at least two arguments: a password and a command to run
+if { [llength $argv] < 2 } {
+    send_error "Missing required arguments\n"
+    exit 1
+}
+
+set password [lindex $argv 0]
+# The expression below skips over the first argument in $argv (password), and joins
+# the rest of arguments into a string suitable for send()
+set command [join [lrange $argv 1 end] " "]
+
+# Prepare a simple shell script with the passed-in command
+set chan [file tempfile script "test-polkit-cache.sh"]
+send_error "Using $script as a temporary script file\n"
+puts $chan "pkexec bash -ec '$command; echo === MARKER 004 ==='"
+close $chan
+
+spawn bash --noprofile --norc -e
+expect "$ "
+
+# First authentication - regular stuff, this should ask for a password
+send -- "pkexec bash -ec '$command; echo === MARKER 001 ==='\r"
+expect "Password: "
+sleep .5
+send -- "$password\r"
+expect "=== AUTHENTICATION COMPLETE ==="
+expect -re "\\s+=== MARKER 001 ===\\s+"
+
+# Run the same command via pkexec again, but this time we shouldn't get asked for a password
+send -- "pkexec bash -ec '$command; echo === MARKER 002 ==='\r"
+expect -re "\\s+=== MARKER 002 ===\\s+"
+
+# Try this again but from a subshell - this should also use the cache
+send -- "(pkexec bash -ec '$command; echo === MARKER 003 ===')\r"
+expect -re "\\s+=== MARKER 003 ===\\s+"
+
+# Finally, try this with a standalone shell script (see above) - this should prompt for a password
+send -- "bash -e $script\r"
+expect "Password: "
+sleep .5
+send -- "$password\r"
+expect "=== AUTHENTICATION COMPLETE ==="
+expect -re "\\s+=== MARKER 004 ===\\s+"
+
+send -- "exit 0\r"
+expect eof
+
+catch wait result
+set signal [lindex $result 5]
+set ec [lindex $result 3]
+
+file delete $script
+
+if { $signal != "" } {
+    send_error "bash died with signal $signal\n"
+    exit 128
+}
+
+send_error "bash exited with EC $ec\n"
+exit $ec
