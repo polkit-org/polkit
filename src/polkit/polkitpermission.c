@@ -554,7 +554,7 @@ static void on_sessions_changed (PolkitAuthority *authority,
   if ((new_session_state == NULL) || ( g_strcmp0(new_session_state, permission->session_state) != 0 ))
     {
       last_state = permission->session_state;
-      permission->session_state = new_session_state;
+      permission->session_state = g_steal_pointer (&new_session_state);
       g_free(last_state);
 
       polkit_authority_check_authorization (permission->authority,
@@ -566,6 +566,8 @@ static void on_sessions_changed (PolkitAuthority *authority,
                                             changed_check_cb,
                                             g_object_ref (permission));
     }
+
+  g_free (new_session_state);
 #else
   on_authority_changed(authority, user_data);  /* TODO: resolve the "too many session signals" issue for non-systemd systems later */
 #endif
