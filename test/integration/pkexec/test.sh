@@ -195,3 +195,24 @@ ln -sv "$TMP_DIR/test-binary" "$TMP_DIR/test-symlink"
 sudo -u "$TEST_USER" pkexec --disable-internal-agent "$TMP_DIR/test-symlink" -c 'echo symlink as $USER' | tee "$TMP_DIR/canon-sym.log"
 grep -q "^symlink as root$" "$TMP_DIR/canon-sym.log"
 rm -f "$TMP_DIR/canon-sym" "$TMP_DIR/test-binary"
+
+# Coverage for https://github.com/polkit-org/polkit/pull/533
+: "Authentication caching with auth_keep"
+cat >"$TEST_ACTIONS" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD polkit Policy Configuration 1.0//EN"
+"http://www.freedesktop.org/software/polkit/policyconfig-1.dtd">
+<policyconfig>
+  <vendor>polkit</vendor>
+
+  <action id="org.freedesktop.PolicyKit1.test.run">
+    <defaults>
+      <allow_any>auth_admin_keep</allow_any>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">$(command -v bash)</annotate>
+  </action>
+</policyconfig>
+EOF
+sudo -u "$TEST_USER" expect "$TMP_DIR/basic-auth-cache.exp" "$TEST_USER_PASSWORD" \
+    'echo I am now user $(id -un) with UID $(id -u)' | tee "$TMP_DIR/basic-cache.log"
+[[ "$(grep -c "I am now user root with UID 0" "$TMP_DIR/basic-cache.log")" -eq 4 ]]
