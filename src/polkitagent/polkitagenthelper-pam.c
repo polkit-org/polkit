@@ -19,7 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include "polkitagenthelperprivate.h"
 
 #include <stdio.h>
@@ -28,10 +27,21 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <syslog.h>
 #include <security/pam_appl.h>
 
 #include <polkit/polkit.h>
+
+#ifndef SO_PEERPIDFD
+#  if defined(__parisc__)
+#    define SO_PEERPIDFD 0x404B
+#  elif defined(__sparc__)
+#    define SO_PEERPIDFD 0x0056
+#  else
+#    define SO_PEERPIDFD 77
+#  endif
+#endif
 
 static int conversation_function (int n, const struct pam_message **msg, struct pam_response **resp, void *data);
 
@@ -44,6 +54,7 @@ send_to_helper (const gchar *str1,
   size_t len2;
 
   tmp2 = g_strdup(str2);
+  g_assert (tmp2 != NULL);
   len2 = strlen(tmp2);
 #ifdef PAH_DEBUG
   fprintf (stderr, "polkit-agent-helper-1: writing `%s ' to stdout\n", str1);
@@ -74,7 +85,11 @@ int
 main (int argc, char *argv[])
 {
   int rc;
+  int pidfd = -1;
+  int uid = -1;
+  int errval = 1;
   const char *user_to_auth;
+  char *user_to_auth_free = NULL;
   char *cookie = NULL;
   struct pam_conv pam_conversation;
   pam_handle_t *pam_h;
@@ -83,12 +98,20 @@ main (int argc, char *argv[])
   rc = 0;
   pam_h = NULL;
 
+  char *lang = getenv("LANG");
+  char *language = getenv("LANGUAGE");
+
   /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
   if (_polkit_clearenv () != 0)
     goto error;
 
   /* set a minimal environment */
   setenv ("PATH", "/usr/sbin:/usr/bin:/sbin:/bin", 1);
+
+  if(lang)
+      setenv("LANG",lang,0);
+  if(language)
+      setenv("LANGUAGE",language,0);
 
   /* check that we are setuid root */
   if (geteuid () != 0)
@@ -114,7 +137,47 @@ main (int argc, char *argv[])
       goto error;
     }
 
-  user_to_auth = argv[1];
+  /* We are socket activated and the socket has been set up as stdio/stdout, read user from it */
+  if (argv[1] != NULL && strcmp (argv[1], "--socket-activated") == 0)
+    {
+      socklen_t socklen = sizeof(int);
+      struct ucred ucred;
+
+      user_to_auth_free = read_cookie (argc, argv);
+      if (!user_to_auth_free)
+        goto error;
+      user_to_auth = user_to_auth_free;
+
+      rc = getsockopt(STDIN_FILENO, SOL_SOCKET, SO_PEERPIDFD, &pidfd, &socklen);
+      if (rc < 0)
+        {
+          if (errno == ENOPROTOOPT || errno == ENODATA)
+            {
+              syslog (LOG_ERR, "Pidfd not supported on this platform, disable polkit-agent-helper.socket and use setuid helper");
+              fprintf (stderr, "polkit-agent-helper-1: pidfd not supported on this platform, disable polkit-agent-helper.socket and use setuid helper.\n");
+            }
+          if (errno == EINVAL)
+            {
+              syslog (LOG_ERR, "Caller already exited, unable to get pidfd");
+              fprintf (stderr, "polkit-agent-helper-1: caller already exited, unable to get pidfd.\n");
+            }
+
+          goto error;
+        }
+
+      socklen = sizeof(ucred);
+      rc = getsockopt(STDIN_FILENO, SOL_SOCKET, SO_PEERCRED, &ucred, &socklen);
+      if (rc < 0)
+        {
+          syslog (LOG_ERR, "Unable to get credentials from socket");
+          fprintf (stderr, "polkit-agent-helper-1: unable to get credentials from socket.\n");
+          goto error;
+        }
+
+      uid = ucred.uid;
+    }
+  else
+    user_to_auth = argv[1];
 
   cookie = read_cookie (argc, argv);
   if (!cookie)
@@ -164,6 +227,9 @@ main (int argc, char *argv[])
       const char *err;
       err = pam_strerror (pam_h, rc);
       fprintf (stderr, "polkit-agent-helper-1: pam_authenticate failed: %s\n", err);
+
+      /* if run via systemd socket, failed authentication won't taint the system using SuccessExitStatus=2*/
+      errval = 2;
       goto error;
     }
 
@@ -206,9 +272,10 @@ main (int argc, char *argv[])
 #endif /* PAH_DEBUG */
 
   /* now send a D-Bus message to the PolicyKit daemon that
-   * includes a) the cookie; and b) the user we authenticated
+   * includes a) the cookie; b) the user we authenticated;
+   * c) the pidfd and uid of the caller, if socket-activated
    */
-  if (!send_dbus_message (cookie, user_to_auth))
+  if (!send_dbus_message (cookie, user_to_auth, pidfd, uid))
     {
 #ifdef PAH_DEBUG
       fprintf (stderr, "polkit-agent-helper-1: error sending D-Bus message to PolicyKit daemon\n");
@@ -217,6 +284,9 @@ main (int argc, char *argv[])
     }
 
   free (cookie);
+  free (user_to_auth_free);
+  if (pidfd >= 0)
+    close (pidfd);
 
 #ifdef PAH_DEBUG
   fprintf (stderr, "polkit-agent-helper-1: successfully sent D-Bus message to PolicyKit daemon\n");
@@ -228,12 +298,15 @@ main (int argc, char *argv[])
 
 error:
   free (cookie);
+  free (user_to_auth_free);
+  if (pidfd >= 0)
+    close (pidfd);
   if (pam_h != NULL)
     pam_end (pam_h, rc);
 
   fprintf (stdout, "FAILURE\n");
   flush_and_wait();
-  return 1;
+  return errval;
 }
 
 static int

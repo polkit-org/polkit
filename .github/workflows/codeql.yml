@@ -1,0 +1,59 @@
+---
+# vi: ts=2 sw=2 et:
+name: "CodeQL"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-24.04
+    permissions:
+      security-events: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.language }}
+      cancel-in-progress: true
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['c-cpp', 'javascript-typescript', 'python']
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      if: ${{ matrix.language == 'c-cpp' }}
+      run: |
+        sudo sed -i 's/^Types: deb/Types: deb deb-src/g' /etc/apt/sources.list.d/*.sources
+        sudo apt update
+        sudo apt build-dep -y policykit-1
+        # polkit in Ubuntu Jammy (ATTOW) doesn't have the latest build dependencies yet
+        sudo apt install -y duktape-dev python3-pip
+
+        # Ubuntu 24.04 ships only meson 1.3.4 (ATTOW), so install a newer one via pip
+        dpkg-query -W meson && sudo apt remove -y meson
+        sudo pip3 install 'meson>=1.4.0'
+        sudo meson --version
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        queries: +security-extended,security-and-quality
+
+    - name: Autobuild
+      uses: github/codeql-action/autobuild@v3
+      env:
+        CODEQL_EXTRACTOR_CPP_AUTOINSTALL_DEPENDENCIES: false
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"

@@ -23,7 +23,6 @@
  *          David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include "polkitagenthelperprivate.h"
 
 #include <stdio.h>
@@ -115,7 +114,7 @@ main (int argc, char *argv[])
   /* now send a D-Bus message to the polkit daemon that
    * includes a) the cookie; and b) the user we authenticated
    */
-  if (!send_dbus_message (cookie, user_to_auth))
+  if (!send_dbus_message (cookie, user_to_auth, -1, -1))
     {
 #ifdef PAH_DEBUG
       fprintf (stderr, "polkit-agent-helper-1: error sending D-Bus message to polkit daemon\n");

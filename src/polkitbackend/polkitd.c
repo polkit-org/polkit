@@ -19,8 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
-
 #include <signal.h>
 #include <stdlib.h>
 
@@ -32,6 +30,10 @@
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackend.h>
 
+#ifdef HAVE_LIBSYSTEMD
+#  include <systemd/sd-daemon.h>
+#endif
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static PolkitBackendAuthority *authority = NULL;
@@ -40,9 +42,12 @@ static GMainLoop              *loop = NULL;
 static gint                    exit_status = EXIT_FAILURE;
 static gboolean                opt_replace = FALSE;
 static gboolean                opt_no_debug = FALSE;
+static gchar                  *opt_log_level = "notice";
 static GOptionEntry            opt_entries[] = {
   {"replace", 'r', 0, G_OPTION_ARG_NONE, &opt_replace, "Replace existing daemon", NULL},
-  {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information", NULL},
+  {"no-debug", 'n', 0, G_OPTION_ARG_NONE, &opt_no_debug, "Don't print debug information to stderr and stdout", NULL},
+  {"log-level", 'l', 0, G_OPTION_ARG_STRING, &opt_log_level, "Set a level of logging (syslog style). Defaults to 'notice'.",
+          "[emerg|alert|crit|err|warning|notice|info|debug]"},
   {NULL }
 };
 
@@ -76,6 +81,7 @@ on_name_lost (GDBusConnection *connection,
               gpointer         user_data)
 {
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_WARNING,
                                 "Lost the name org.freedesktop.PolicyKit1 - exiting");
   g_main_loop_quit (loop);
 }
@@ -88,14 +94,43 @@ on_name_acquired (GDBusConnection *connection,
   exit_status = EXIT_SUCCESS;
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_INFO,
                                 "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
 }
 
 static gboolean
-on_sigint (gpointer user_data)
+on_sigint_sigterm (gpointer user_data)
 {
-  g_print ("Handling SIGINT\n");
+  g_print ("Handling %s\n", (const char *) user_data);
   g_main_loop_quit (loop);
+  return TRUE;
+}
+
+static gboolean
+on_sighup (gpointer user_data)
+{
+#ifdef HAVE_LIBSYSTEMD
+  gchar reload_message[sizeof("RELOADING=1\nMONOTONIC_USEC=18446744073709551615")];
+  gint64 monotonic_now;
+
+  /* Notify systemd that we are reloading, including a CLOCK_MONOTONIC timestamp in usec
+   * so that the program is compatible with a Type=notify-reload service. */
+
+  monotonic_now = g_get_monotonic_time ();
+  g_snprintf (reload_message, sizeof(reload_message), "RELOADING=1\nMONOTONIC_USEC=%" G_GINT64_FORMAT, monotonic_now);
+
+  sd_notify (0, reload_message);
+#endif
+
+  g_print ("Handling SIGHUP\n");
+
+  polkit_backend_interactive_authority_reload (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority));
+
+#ifdef HAVE_LIBSYSTEMD
+  /* Notify systemd that we have finished reloading. */
+  sd_notify (0, "READY=1\nSTATUS=Processing requests...");
+#endif
+
   return TRUE;
 }
 
@@ -138,8 +173,8 @@ become_user (const gchar  *user,
       goto out;
     }
 
-  setregid (pw->pw_gid, pw->pw_gid);
-  setreuid (pw->pw_uid, pw->pw_uid);
+  (void) setregid (pw->pw_gid, pw->pw_gid);
+  (void) setreuid (pw->pw_uid, pw->pw_uid);
   if ((geteuid () != pw->pw_uid) || (getuid () != pw->pw_uid) ||
       (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
     {
@@ -149,10 +184,10 @@ become_user (const gchar  *user,
       goto out;
     }
 
-  if (chdir (pw->pw_dir) != 0)
+  if (chdir ("/") != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Error changing to home directory %s: %m",
+                   "Error changing to root directory %s: %m",
                    pw->pw_dir);
       goto out;
     }
@@ -173,11 +208,13 @@ main (int    argc,
   GOptionContext *opt_context;
   guint name_owner_id;
   guint sigint_id;
+  guint sighup_id;
 
   loop = NULL;
   opt_context = NULL;
   name_owner_id = 0;
   sigint_id = 0;
+  sighup_id = 0;
   registration_id = NULL;
 
   /* Disable remote file access from GIO. */
@@ -224,12 +261,22 @@ main (int    argc,
   if (g_getenv ("PATH") == NULL)
     g_setenv ("PATH", "/usr/bin:/bin:/usr/sbin:/sbin", TRUE);
 
+  polkit_backend_authority_set_log_level (opt_log_level);
+
   authority = polkit_backend_authority_get ();
 
   loop = g_main_loop_new (NULL, FALSE);
 
   sigint_id = g_unix_signal_add (SIGINT,
-                                 on_sigint,
+                                 on_sigint_sigterm,
+                                 "SIGINT");
+
+  sigint_id = g_unix_signal_add (SIGTERM,
+                                 on_sigint_sigterm,
+                                 "SIGTERM");
+
+  sighup_id = g_unix_signal_add (SIGHUP,
+                                 on_sighup,
                                  NULL);
 
   name_owner_id = g_bus_own_name (G_BUS_TYPE_SYSTEM,
@@ -243,12 +290,23 @@ main (int    argc,
                                   NULL);
 
   g_print ("Entering main event loop\n");
+
+#ifdef HAVE_LIBSYSTEMD
+  sd_notify (0, "READY=1\nSTATUS=Processing requests...");
+#endif
+
   g_main_loop_run (loop);
+
+#ifdef HAVE_LIBSYSTEMD
+  sd_notify (0, "STOPPING=1");
+#endif
 
   g_print ("Shutting down\n");
  out:
   if (sigint_id > 0)
     g_source_remove (sigint_id);
+  if (sighup_id > 0)
+    g_source_remove (sighup_id);
   if (name_owner_id != 0)
     g_bus_unown_name (name_owner_id);
   if (registration_id != NULL)

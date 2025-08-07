@@ -29,22 +29,14 @@ c_flags = [
   '-D_POLKIT_BACKEND_COMPILATION',
   '-DPACKAGE_DATA_DIR="@0@"'.format(pk_prefix / pk_datadir),
   '-DPACKAGE_SYSCONF_DIR="@0@"'.format(pk_prefix / pk_sysconfdir),
-  '-D_XOPEN_SOURCE=700',
-  '-D_GNU_SOURCE=1',
 ]
 
-if js_engine == 'duktape'
-  sources += files('polkitbackendduktapeauthority.c')
-  deps += libm_dep
-  deps += thread_dep
-elif js_engine == 'mozjs'
-  add_languages('cpp')
-  sources += files('polkitbackendjsauthority.cpp')
-endif
+sources += files('polkitbackendduktapeauthority.c')
+deps += libm_dep
+deps += thread_dep
 
 if enable_logind
   sources += files('polkitbackendsessionmonitor-systemd.c')
-
   deps += logind_dep
 else
   sources += files('polkitbackendsessionmonitor.c')
@@ -59,8 +51,13 @@ libpolkit_backend = static_library(
   cpp_args: c_flags,
 )
 
-install_data(
-  '50-default.rules',
+configure_file(
+  input: '50-default.rules.in',
+  output: '@BASENAME@',
+  configuration: {
+    'PRIVILEGED_GROUP': privileged_group,
+  },
+  install: true,
   install_dir: pk_pkgdatadir / 'rules.d',
 )
 
@@ -75,7 +72,7 @@ executable(
   program,
   program + '.c',
   include_directories: top_inc,
-  dependencies: libpolkit_gobject_dep,
+  dependencies: deps,
   c_args: c_flags,
   link_with: libpolkit_backend,
   install: true,

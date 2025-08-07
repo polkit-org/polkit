@@ -21,7 +21,6 @@
  *         David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include "glib.h"
 
 #include <locale.h>
@@ -269,6 +268,7 @@ static const RulesTestCase rules_test_cases[] = {
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
   },
 
+#ifdef HAVE_SETNETGRENT
   /* check netgroup membership */
   {
     /* john is a member of netgroup 'foo', see test/etc/netgroup */
@@ -286,6 +286,7 @@ static const RulesTestCase rules_test_cases[] = {
     NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
   },
+#endif
 
   /* spawning */
   {

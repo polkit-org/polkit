@@ -114,7 +114,6 @@ pkg.generate(
   requires: common_deps,
   variables: [
     'exec_prefix=${prefix}',
-    'datadir=' + ('${prefix}' / pk_datadir),
     'policydir=' + ('${datadir}' / pk_actiondir),
     'actiondir=' + ('${datadir}' / pk_actiondir),
     'pkcheck_supports_uid=true',

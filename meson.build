@@ -1,13 +1,14 @@
 project(
   'polkit', ['c'],
-  version: '125',
+  version: '127',
   license: 'LGPL2+',
   default_options: [
     'buildtype=debugoptimized',
     'prefix=/usr',
+    'c_std=c99',
     'cpp_std=c++17',
   ],
-  meson_version: '>= 0.50.0',
+  meson_version: '>= 1.4.0',
 )
 
 pk_version = meson.project_version()
@@ -64,7 +65,7 @@ top_inc = include_directories('.')
 
 cc = meson.get_compiler('c')
 
-config_h = configuration_data()
+config_data = configuration_data()
 
 # defines
 set_defines = [
@@ -79,11 +80,8 @@ set_defines = [
 ]
 
 foreach define: set_defines
-  config_h.set_quoted(define[0], define[1])
+  config_data.set_quoted(define[0], define[1])
 endforeach
-
-# Globally define_GNU_SOURCE and therefore enable the GNU extensions
-config_h.set('_GNU_SOURCE', true)
 
 # functions
 check_functions = [
@@ -93,19 +91,14 @@ check_functions = [
 ]
 
 foreach func: check_functions
-  config_h.set('HAVE_' + func.to_upper(), cc.has_function(func))
+  config_data.set('HAVE_' + func.to_upper(), cc.has_function(func))
 endforeach
 
-# compiler flags
-common_c_flags = [
-  # FIXME: this should go as 'c_std=c99' in project's default_options.
-  #        https://github.com/mesonbuild/meson/issues/1889
-  #        https://github.com/mesonbuild/meson/pull/6729
-  '-std=c99',
-  '-DHAVE_CONFIG_H',
+compiler_common_flags = [
+  '-D_GNU_SOURCE',
 ]
-compiler_flags = []
 compiler_c_flags = []
+compiler_cpp_flags = []
 
 if get_option('buildtype').contains('debug')
   compiler_c_flags += cc.get_supported_arguments([
@@ -121,28 +114,39 @@ if get_option('buildtype').contains('debug')
   ])
 endif
 
-add_project_arguments(common_c_flags + compiler_c_flags, language: 'c')
+compiler_c_flags += cc.get_supported_arguments([
+  '-Wno-format-y2k',
+  '-Wno-declaration-after-statement',
+])
 
-glib_req_version = '>= 2.30.0'
+if cc.get_id() == 'gcc'
+  compiler_c_flags += cc.get_supported_arguments([
+    # -Wunused-result can't be suppressed by using (void) in gcc, so let's disable it for now
+    # See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66425
+    '-Wno-unused-result',
+  ])
+endif
+
+glib_req_version_number = '2.44'
+glib_req_version = '>= ' + glib_req_version_number
+add_project_arguments([
+  '-DGLIB_VERSION_MIN_REQUIRED=GLIB_VERSION_' + glib_req_version_number.underscorify(),
+  '-DGLIB_VERSION_MAX_ALLOWED=GLIB_VERSION_' + glib_req_version_number.underscorify(),
+], language: 'c')
 
 gio_dep = dependency('gio-2.0', version: glib_req_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: glib_req_version)
 glib_dep = dependency('glib-2.0', version: glib_req_version)
 gobject_dep = dependency('gobject-2.0', version: glib_req_version)
 
-expat_dep = dependency('expat')
-assert(cc.has_header('expat.h', dependencies: expat_dep), 'Can\'t find expat.h. Please install expat.')
-assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t find expat library. Please install expat.')
-
 duktape_req_version = '>= 2.2.0'
 
-js_engine = get_option('js_engine')
 libs_only = get_option('libs-only')
-if libs_only
-  js_engine = ''
-endif
+if not libs_only
+  expat_dep = dependency('expat')
+  assert(cc.has_header('expat.h', dependencies: expat_dep), 'Can\'t find expat.h. Please install expat.')
+  assert(cc.has_function('XML_ParserCreate', dependencies: expat_dep), 'Can\'t find expat library. Please install expat.')
 
-if js_engine == 'duktape'
   js_dep = dependency('duktape', version: duktape_req_version, required: false)
   if not js_dep.found()
     message('Falling back to looking for library and header...')
@@ -151,20 +155,13 @@ if js_engine == 'duktape'
   libm_dep = cc.find_library('m')
   thread_dep = dependency('threads')
   func = 'pthread_condattr_setclock'
-  config_h.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
-elif js_engine == 'mozjs'
-  js_dep = dependency('mozjs-115')
-
-  _system = host_machine.system().to_lower()
-  if _system.contains('freebsd')
-    config_h.set('__BSD_VISIBLE', 1)
-  endif
+  config_data.set('HAVE_' + func.to_upper(), cc.has_function(func, prefix : '#include <pthread.h>'))
 endif
 
 dbus_dep = dependency('dbus-1', required: false)
 dbus_policydir = pk_prefix / pk_datadir / 'dbus-1/system.d'
 if dbus_dep.found()
-  dbus_system_bus_services_dir = dbus_dep.get_pkgconfig_variable('system_bus_services_dir', define_variable: ['datadir', pk_prefix / pk_datadir])
+  dbus_system_bus_services_dir = dbus_dep.get_variable(pkgconfig: 'system_bus_services_dir', pkgconfig_define: ['datadir', pk_prefix / pk_datadir])
 else
   # libdbus development files not installed, assume a standard layout
   dbus_system_bus_services_dir = pk_prefix / pk_datadir / 'dbus-1' / 'system-services'
@@ -172,12 +169,13 @@ endif
 
 # check OS
 host_system = host_machine.system()
-config_h.set('HAVE_' + host_system.to_upper(), true)
+config_data.set('HAVE_' + host_system.to_upper(), true)
 
 # Check whether setnetgrent has a return value
-config_h.set('HAVE_NETGROUP_H', cc.has_header('netgroup.h'))
+have_netgroup_h = cc.has_header('netgroup.h')
+config_data.set('HAVE_NETGROUP_H', have_netgroup_h)
 
-if config_h.get('HAVE_SETNETGRENT', false)
+if config_data.get('HAVE_SETNETGRENT', false)
   setnetgrent_return_src = '''
     #include <stddef.h>
     #ifdef HAVE_NETGROUP_H
@@ -190,47 +188,56 @@ if config_h.get('HAVE_SETNETGRENT', false)
     };
   '''
 
-  config_h.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, name: 'setnetgrent return support'))
+  args = ['-D_GNU_SOURCE']
+  if have_netgroup_h
+    args += '-DHAVE_NETGROUP_H'
+  endif
+  config_data.set('HAVE_SETNETGRENT_RETURN', cc.compiles(setnetgrent_return_src, args: args, name: 'setnetgrent return support'))
 endif
 
-# Select wether to use libsystemd-login, libelogind or ConsoleKit for session tracking
+# Select wether to use logind, elogind or ConsoleKit for session tracking
 session_tracking = get_option('session_tracking')
 enable_logind = (session_tracking != 'ConsoleKit')
 if enable_logind
-  if session_tracking == 'libsystemd-login'
-    logind_dep = dependency('libsystemd', required: false)
-    if not logind_dep.found()
-      logind_dep = dependency('libsystemd-login', not_found_message: 'libsystemd support requested but libsystemd or libsystemd-login library not found')
-    endif
+  if session_tracking == 'logind'
+    logind_dep = dependency('libsystemd', not_found_message: 'logind support requested but libsystemd library not found')
   else
-    logind_dep = dependency('libelogind', not_found_message: 'libelogind support requested but libelogind library not found')
+    logind_dep = dependency('libelogind', not_found_message: 'elogind support requested but libelogind library not found')
   endif
 
   func = 'sd_uid_get_display'
-  config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
+  config_data.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
   func = 'sd_pidfd_get_session'
-  config_h.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
-
-  # systemd unit / service files
-  systemd_systemdsystemunitdir = get_option('systemdsystemunitdir')
-  if systemd_systemdsystemunitdir == '' and session_tracking == 'libsystemd-login'
-    systemd_dep = dependency('systemd', not_found_message: 'systemd required but not found, please provide a valid systemd user unit dir or disable it')
-    # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
-    systemd_systemdsystemunitdir = systemd_dep.get_pkgconfig_variable('systemdsystemunitdir')
-  endif
-
-  systemd_sysusers_dir = systemd_dep.get_pkgconfig_variable('sysusers_dir', default: '/usr/lib/sysusers.d')
+  config_data.set10('HAVE_' + func.to_upper(), cc.has_function(func, dependencies: logind_dep))
 endif
-config_h.set('HAVE_LIBSYSTEMD', enable_logind)
+config_data.set('HAVE_LIBSYSTEMD', enable_logind)
 
-config_h.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#include <sys/syscall.h>') != '')
+config_data.set('HAVE_PIDFD_OPEN', cc.get_define('SYS_pidfd_open', prefix: '#include <sys/syscall.h>') != '')
+
+# systemd unit / sysuser / tmpfiles.d file installation directories
+systemdsystemunitdir = get_option('systemdsystemunitdir')
+systemd_dep = dependency('systemd', required : false)
+if systemd_dep.found()
+  if systemdsystemunitdir == ''
+    # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
+    systemdsystemunitdir = systemd_dep.get_variable(pkgconfig : 'systemdsystemunitdir')
+  endif
+  sysusers_dir = systemd_dep.get_variable(pkgconfig : 'sysusers_dir')
+  tmpfiles_dir = systemd_dep.get_variable(pkgconfig : 'tmpfiles_dir')
+else
+  if systemdsystemunitdir == ''
+    systemdsystemunitdir = '/usr/lib/systemd/system'
+  endif
+  sysusers_dir = '/usr/lib/sysusers.d'
+  tmpfiles_dir = '/usr/lib/tmpfiles.d'
+endif
 
 # User for running polkitd
 polkitd_user = get_option('polkitd_user')
-config_h.set_quoted('POLKITD_USER', polkitd_user)
+config_data.set_quoted('POLKITD_USER', polkitd_user)
 
 polkitd_uid = get_option('polkitd_uid')
-config_h.set('POLKITD_UID', polkitd_uid)
+config_data.set('POLKITD_UID', polkitd_uid)
 
 # Select which authentication framework to use
 auth_deps = []
@@ -256,7 +263,7 @@ if enable_pam
   # FIXME: Not necessary anymore?
   if cc.compiles(pam_strerror_src.format('pam_handle_t *pamh = 0; char *s = pam_strerror(pamh, PAM_SUCCESS);'))
     # FIXME: unused?
-    config_h.set('PAM_STRERROR_TWO_ARGS', true)
+    config_data.set('PAM_STRERROR_TWO_ARGS', true)
   else
     message('how to call pam_strerror: ' + cc.compiles(pam_strerror_src.format('char *s = pam_strerror(PAM_SUCCESS);')).to_string('1', 'unknown'))
   endif
@@ -277,7 +284,7 @@ if enable_pam
 elif auth_fw == 'shadow'
   auth_deps += cc.find_library('crypt')
 endif
-config_h.set('POLKIT_AUTHFW_' + auth_fw.to_upper(), true)
+config_data.set('POLKIT_AUTHFW_' + auth_fw.to_upper(), true)
 
 # FIXME: sigtimedwait is not used anywhere?
 '''
@@ -301,7 +308,7 @@ if os_type == ''
   ]
 
   foreach os_path: os_paths
-    if run_command('test', '-e', os_path[1]).returncode() == 0
+    if run_command('test', '-e', os_path[1], check: false).returncode() == 0
       os_type = os_path[0]
       break
     endif
@@ -312,9 +319,19 @@ if os_type == ''
   endif
 endif
 
+# The default privileged group differs between distributions, set it accordingly if not specified
+privileged_group = get_option('privileged_group')
+if privileged_group == ''
+  if os_type == 'debian'
+    privileged_group = 'sudo'
+  else
+    privileged_group = 'wheel'
+  endif
+endif
+
 pam_include = get_option('pam_include')
 if pam_include == ''
-  if ['suse', 'solaris'].contains(os_type)
+  if ['suse', 'solaris', 'openembedded'].contains(os_type)
     pam_conf = {
       'PAM_FILE_INCLUDE_AUTH': 'common-auth',
       'PAM_FILE_INCLUDE_ACCOUNT': 'common-account',
@@ -358,6 +375,21 @@ if enable_introspection
   dependency('gobject-introspection-1.0', version: '>= 0.6.2')
 endif
 
+gettext = get_option('gettext')
+if gettext
+  config_data.set('ENABLE_GETTEXT', 1)
+endif
+
+config_h = configure_file(
+  output: 'config.h',
+  configuration: config_data,
+)
+
+compiler_common_flags += ['-include', config_h.full_path()]
+
+add_project_arguments(compiler_common_flags + compiler_c_flags, language: 'c')
+add_project_arguments(compiler_common_flags + compiler_cpp_flags, language: 'cpp')
+
 content_files = files('COPYING')
 
 subdir('actions')
@@ -370,12 +402,6 @@ enable_tests = get_option('tests')
 if enable_tests
   subdir('test')
 endif
-
-configure_file(
-  output: 'config.h',
-  configuration: config_h,
-)
-
 
 if not libs_only
   meson.add_install_script(
@@ -398,20 +424,20 @@ output += '        source code location:     ' + source_root + '\n'
 output += '        compiler:                 ' + cc.get_id() + '\n'
 output += '        c_flags:                  ' + ' '.join(compiler_c_flags) + '\n\n'
 if enable_man
-  output += '        xsltproc:                 ' + xsltproc.path() + '\n'
+  output += '        xsltproc:                 ' + xsltproc.full_path() + '\n'
 endif
 output += '        introspection:            ' + enable_introspection.to_string() + '\n'
 output += '        Distribution/OS:          ' + os_type + '\n'
 output += '        Authentication framework: ' + auth_fw + '\n'
 output += '        Session tracking:         ' + session_tracking + '\n'
-if enable_logind
-  output += '        systemdsystemunitdir:     ' + systemd_systemdsystemunitdir + '\n'
-endif
+output += '        system unit directory:    ' + systemdsystemunitdir + '\n'
+output += '        sysusers.d directory:     ' + sysusers_dir + '\n'
+output += '        tmpfiles.d directory:     ' + tmpfiles_dir + '\n'
+
 output += '        polkitd user:             ' + polkitd_user + ' \n'
 if polkitd_uid != '-'
   output += '        polkitd UID:              ' + polkitd_uid + ' \n'
 endif
-output += '        Javascript engine:        ' + js_engine + '\n'
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
 if libs_only
   output += '    !!! Only building polkit libraries, not polkitd !!!\n\n'

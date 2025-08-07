@@ -19,7 +19,6 @@
  * Author: Matthias Clasen
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
@@ -74,6 +73,9 @@ sd_source_dispatch (GSource     *source,
 
   g_warn_if_fail (callback != NULL);
 
+  if (callback == NULL)
+    return G_SOURCE_CONTINUE;
+
   ret = (*callback) (user_data);
 
   sd_login_monitor_flush (sd_source->monitor);
@@ -106,9 +108,9 @@ sd_source_new (void)
   source = g_source_new (&sd_source_funcs, sizeof (SdSource));
   sd_source = (SdSource *)source;
 
-  if ((ret = sd_login_monitor_new (NULL, &sd_source->monitor)) < 0)
+  if ((ret = sd_login_monitor_new ("session", &sd_source->monitor)) < 0)
     {
-      g_printerr ("Error getting login monitor: %d", ret);
+      g_printerr ("Error getting login monitor: %d\n", ret);
     }
   else
     {
@@ -372,6 +374,7 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
                    POLKIT_ERROR_NOT_SUPPORTED,
                    "Cannot get session for subject of type %s",
                    g_type_name (G_TYPE_FROM_INSTANCE (subject)));
+      goto out;
     }
 
 #if HAVE_SD_PIDFD_GET_SESSION

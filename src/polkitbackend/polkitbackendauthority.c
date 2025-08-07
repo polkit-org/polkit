@@ -19,7 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <string.h>
@@ -48,10 +47,12 @@
 enum
 {
   CHANGED_SIGNAL,
+  SESSIONS_CHANGED_SIGNAL,
   LAST_SIGNAL,
 };
 
 static guint signals[LAST_SIGNAL] = {0};
+static guint polkit_authority_log_level = LOG_LEVEL_NOTICE;
 
 G_DEFINE_ABSTRACT_TYPE (PolkitBackendAuthority, polkit_backend_authority, G_TYPE_OBJECT);
 
@@ -78,6 +79,15 @@ polkit_backend_authority_class_init (PolkitBackendAuthorityClass *klass)
                                           g_cclosure_marshal_VOID__VOID,
                                           G_TYPE_NONE,
                                           0);
+  signals[SESSIONS_CHANGED_SIGNAL] = g_signal_new ("sessions-changed",
+                                                   POLKIT_BACKEND_TYPE_AUTHORITY,
+                                                   G_SIGNAL_RUN_LAST,
+                                                   G_STRUCT_OFFSET (PolkitBackendAuthorityClass, changed),
+                                                   NULL,                   /* accumulator      */
+                                                   NULL,                   /* accumulator data */
+                                                   g_cclosure_marshal_VOID__VOID,
+                                                   G_TYPE_NONE,
+                                                   0);
 }
 
 /**
@@ -492,6 +502,7 @@ polkit_backend_authority_revoke_temporary_authorization_by_id (PolkitBackendAuth
 typedef struct
 {
   guint authority_registration_id;
+  guint log_control_registration_id;
 
   GDBusNodeInfo *introspection_info;
 
@@ -500,6 +511,8 @@ typedef struct
   GDBusConnection *connection;
 
   gulong authority_changed_id;
+
+  gulong authority_session_monitor_signaller;
 
   gchar *object_path;
 
@@ -514,6 +527,9 @@ server_free (Server *server)
   if (server->authority_registration_id > 0)
     g_dbus_connection_unregister_object (server->connection, server->authority_registration_id);
 
+  if (server->log_control_registration_id > 0)
+    g_dbus_connection_unregister_object (server->connection, server->log_control_registration_id);
+
   if (server->connection != NULL)
     g_object_unref (server->connection);
 
@@ -523,6 +539,9 @@ server_free (Server *server)
   if (server->authority != NULL && server->authority_changed_id > 0)
     g_signal_handler_disconnect (server->authority, server->authority_changed_id);
 
+  if (server->authority != NULL && server->authority_session_monitor_signaller > 0)
+    g_signal_handler_disconnect (server->authority, server->authority_session_monitor_signaller);
+
   if (server->cancellation_id_to_check_auth_data != NULL)
     g_hash_table_unref (server->cancellation_id_to_check_auth_data);
 
@@ -531,26 +550,52 @@ server_free (Server *server)
   g_free (server);
 }
 
-static void
-on_authority_changed (PolkitBackendAuthority *authority,
-                      gpointer                user_data)
+static void changed_dbus_call_handler(PolkitBackendAuthority *authority,
+                                      gpointer                user_data,
+                                      guint16                 msg_mask)
 {
   Server *server = user_data;
   GError *error;
+  GVariant *parameters;
 
   error = NULL;
+
+  parameters = g_variant_new("(q)", msg_mask);
   if (!g_dbus_connection_emit_signal (server->connection,
                                       NULL, /* destination bus name */
                                       server->object_path,
                                       "org.freedesktop.PolicyKit1.Authority",
                                       "Changed",
-                                      NULL,
+                                      parameters,
                                       &error))
     {
       g_warning ("Error emitting Changed() signal: %s", error->message);
       g_error_free (error);
     }
 }
+
+
+static void
+on_authority_changed (PolkitBackendAuthority *authority,
+                      gpointer                user_data)
+{
+  guint16 msg_mask;
+
+  msg_mask = (guint16) CHANGED_SIGNAL;
+  changed_dbus_call_handler(authority, user_data, msg_mask);
+}
+
+
+static void
+on_sessions_changed (PolkitBackendAuthority *authority,
+                      gpointer                user_data)
+{
+  guint16 msg_mask;
+
+  msg_mask = (guint16) SESSIONS_CHANGED_SIGNAL;
+  changed_dbus_call_handler(authority, user_data, msg_mask);
+}
+
 
 static const gchar *server_introspection_data =
   "<node>"
@@ -594,6 +639,11 @@ static const gchar *server_introspection_data =
   "      <arg type='s' name='cookie' direction='in'/>"
   "      <arg type='(sa{sv})' name='identity' direction='in'/>"
   "    </method>"
+  "    <method name='AuthenticationAgentResponse3'>"
+  "      <arg type='s' name='cookie' direction='in'/>"
+  "      <arg type='(sa{sv})' name='identity' direction='in'/>"
+  "      <arg type='(sa{sv})' name='subject' direction='in'/>"
+  "    </method>"
   "    <method name='EnumerateTemporaryAuthorizations'>"
   "      <arg type='(sa{sv})' name='subject' direction='in'/>"
   "      <arg type='a(ss(sa{sv})tt)' name='temporary_authorizations' direction='out'/>"
@@ -608,6 +658,17 @@ static const gchar *server_introspection_data =
   "    <property type='s' name='BackendName' access='read'/>"
   "    <property type='s' name='BackendVersion' access='read'/>"
   "    <property type='u' name='BackendFeatures' access='read'/>"
+  "  </interface>"
+  "  <interface name='org.freedesktop.LogControl1'>"
+  "    <property type='s' name='LogLevel' access='readwrite'>"
+  "      <annotation name='org.freedesktop.DBus.Property.EmitsChangedSignal' value='false'/>"
+  "    </property>"
+  "    <property type='s' name='LogTarget' access='readwrite'>"
+  "      <annotation name='org.freedesktop.DBus.Property.EmitsChangedSignal' value='false'/>"
+  "    </property>"
+  "    <property type='s' name='SyslogIdentifier' access='read'>"
+  "      <annotation name='org.freedesktop.DBus.Property.EmitsChangedSignal' value='false'/>"
+  "    </property>"
   "  </interface>"
   "</node>";
 
@@ -1110,6 +1171,87 @@ server_handle_authentication_agent_response2 (Server                 *server,
     g_object_unref (identity);
 }
 
+static void
+server_handle_authentication_agent_response3 (Server                 *server,
+                                              GVariant               *parameters,
+                                              PolkitSubject          *caller,
+                                              GDBusMethodInvocation  *invocation)
+{
+  const gchar *cookie;
+  GVariant *identity_gvariant;
+  GVariant *subject_gvariant;
+  PolkitIdentity *identity;
+  PolkitSubject *subject;
+  GError *error;
+
+  identity = NULL;
+  subject = NULL;
+
+  g_variant_get (parameters,
+                 "(&s@(sa{sv})@(sa{sv}))",
+                 &cookie,
+                 &identity_gvariant,
+                 &subject_gvariant);
+
+  error = NULL;
+  identity = polkit_identity_new_for_gvariant (identity_gvariant, &error);
+  if (identity == NULL)
+    {
+      g_prefix_error (&error, "Error getting identity: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  subject = polkit_subject_new_for_gvariant (subject_gvariant, &error);
+  if (subject == NULL)
+    {
+      g_prefix_error (&error, "Error getting subject: ");
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  if (polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (subject)) < 0 ||
+      polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)) <= 0)
+    {
+      g_set_error (&error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_FAILED,
+                   "Subject's PIDFD '%d' for PID '%d' is no longer valid.",
+                   polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (subject)),
+                   polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (subject)));
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  error = NULL;
+  if (!polkit_backend_authority_authentication_agent_response (server->authority,
+                                                               caller,
+                                                               polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject)),
+                                                               cookie,
+                                                               identity,
+                                                               &error))
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+      goto out;
+    }
+
+  g_dbus_method_invocation_return_value (invocation, g_variant_new ("()"));
+
+ out:
+  g_variant_unref (identity_gvariant);
+  g_variant_unref (subject_gvariant);
+  if (identity != NULL)
+    g_object_unref (identity);
+  if (subject != NULL)
+    g_object_unref (subject);
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
@@ -1282,6 +1424,8 @@ server_handle_method_call (GDBusConnection        *connection,
     server_handle_authentication_agent_response (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "AuthenticationAgentResponse2") == 0)
     server_handle_authentication_agent_response2 (server, parameters, caller, invocation);
+  else if (g_strcmp0 (method_name, "AuthenticationAgentResponse3") == 0)
+    server_handle_authentication_agent_response3 (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "EnumerateTemporaryAuthorizations") == 0)
     server_handle_enumerate_temporary_authorizations (server, parameters, caller, invocation);
   else if (g_strcmp0 (method_name, "RevokeTemporaryAuthorizations") == 0)
@@ -1308,22 +1452,125 @@ server_handle_get_property (GDBusConnection  *connection,
 
   result = NULL;
 
-  if (g_strcmp0 (property_name, "BackendName") == 0)
+  if (g_strcmp0 (interface_name, "org.freedesktop.PolicyKit1.Authority") == 0)
     {
-      result = g_variant_new_string (polkit_backend_authority_get_name (server->authority));
+      if (g_strcmp0 (property_name, "BackendName") == 0)
+        {
+          result = g_variant_new_string (polkit_backend_authority_get_name (server->authority));
+        }
+      else if (g_strcmp0 (property_name, "BackendVersion") == 0)
+        {
+          result = g_variant_new_string (polkit_backend_authority_get_version (server->authority));
+        }
+      else if (g_strcmp0 (property_name, "BackendFeatures") == 0)
+        {
+          result = g_variant_new_uint32 (polkit_backend_authority_get_features (server->authority));
+        }
+      else
+        g_assert_not_reached ();
     }
-  else if (g_strcmp0 (property_name, "BackendVersion") == 0)
+  else if (g_strcmp0 (interface_name, "org.freedesktop.LogControl1") == 0)
     {
-      result = g_variant_new_string (polkit_backend_authority_get_version (server->authority));
+      if (g_strcmp0 (property_name, "LogLevel") == 0)
+        {
+          switch (polkit_authority_log_level)
+            {
+            case LOG_LEVEL_EMERG:
+              result = g_variant_new_string ("emerg");
+              break;
+            case LOG_LEVEL_ALERT:
+              result = g_variant_new_string ("alert");
+              break;
+            case LOG_LEVEL_CRIT:
+              result = g_variant_new_string ("crit");
+              break;
+            case LOG_LEVEL_ERROR:
+              result = g_variant_new_string ("err");
+              break;
+            case LOG_LEVEL_WARNING:
+              result = g_variant_new_string ("warn");
+              break;
+            case LOG_LEVEL_NOTICE:
+              result = g_variant_new_string ("notice");
+              break;
+            case LOG_LEVEL_INFO:
+              result = g_variant_new_string ("info");
+              break;
+            case LOG_LEVEL_DEBUG:
+              result = g_variant_new_string ("debug");
+              break;
+            }
+        }
+      else if (g_strcmp0 (property_name, "LogTarget") == 0)
+        {
+          result = g_variant_new_string ("syslog");
+        }
+      else if (g_strcmp0 (property_name, "SyslogIdentifier") == 0)
+        {
+          result = g_variant_new_string ("polkitd");
+        }
+      else
+        g_assert_not_reached ();
+
     }
-  else if (g_strcmp0 (property_name, "BackendFeatures") == 0)
-    {
-      result = g_variant_new_uint32 (polkit_backend_authority_get_features (server->authority));
-    }
-  else
-    g_assert_not_reached ();
 
   return result;
+}
+
+static gboolean
+server_handle_set_property (GDBusConnection  *connection,
+                            const gchar      *sender,
+                            const gchar      *object_path,
+                            const gchar      *interface_name,
+                            const gchar      *property_name,
+                            GVariant         *value,
+                            GError          **error,
+                            gpointer          user_data)
+{
+  PolkitSubject *caller_subject;
+  PolkitUnixUser *caller_user;
+  const gchar *level;
+
+  if (g_strcmp0 (interface_name, "org.freedesktop.LogControl1") != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Only properties of org.freedesktop.LogControl1 can be modified");
+      return FALSE;
+    }
+
+  if (g_strcmp0 (property_name, "LogLevel") != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_INVALID_ARGUMENT, "Only LogLevel can be modified");
+      return FALSE;
+    }
+
+  caller_subject = polkit_system_bus_name_new (sender);
+  if (!caller_subject)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Could not obtain caller's credentials");
+      return FALSE;
+    }
+  caller_user = polkit_system_bus_name_get_user_sync (POLKIT_SYSTEM_BUS_NAME (caller_subject), NULL, error);
+  if (!caller_user)
+    {
+      g_object_unref (caller_subject);
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED, "Could not obtain caller's credentials");
+      return FALSE;
+    }
+  if ((uid_t)polkit_unix_user_get_uid (caller_user) != 0)
+    {
+      g_set_error (error, G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED, "Only root can change the log level");
+      g_object_unref (caller_user);
+      g_object_unref (caller_subject);
+      return FALSE;
+    }
+
+  g_variant_get (value, "&s", &level);
+  polkit_backend_authority_set_log_level (level);
+
+  g_object_unref (caller_user);
+  g_object_unref (caller_subject);
+
+  return TRUE;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -1333,6 +1580,13 @@ static const GDBusInterfaceVTable server_vtable =
   server_handle_method_call,
   server_handle_get_property,
   NULL, /* server_handle_set_property */
+};
+
+static const GDBusInterfaceVTable logcontrol_vtable =
+{
+  NULL, /* server_handle_method_call */
+  server_handle_get_property,
+  server_handle_set_property,
 };
 
 /**
@@ -1390,12 +1644,29 @@ polkit_backend_authority_register (PolkitBackendAuthority   *authority,
       goto error;
     }
 
+  server->log_control_registration_id = g_dbus_connection_register_object (server->connection,
+                                                                           "/org/freedesktop/LogControl1",
+                                                                           g_dbus_node_info_lookup_interface (server->introspection_info, "org.freedesktop.LogControl1"),
+                                                                           &logcontrol_vtable,
+                                                                           server,
+                                                                           NULL,
+                                                                           error);
+  if (server->log_control_registration_id == 0)
+    {
+      goto error;
+    }
+
   server->authority = g_object_ref (authority);
 
   server->authority_changed_id = g_signal_connect (server->authority,
                                                    "changed",
                                                    G_CALLBACK (on_authority_changed),
                                                    server);
+
+  server->authority_session_monitor_signaller = g_signal_connect (server->authority,
+                                                                  "sessions-changed",
+                                                                  G_CALLBACK (on_sessions_changed),
+                                                                  server);
 
   return server;
 
@@ -1514,17 +1785,24 @@ _color_get (_Color color)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+G_GNUC_PRINTF(3, 4)
 void
 polkit_backend_authority_log (PolkitBackendAuthority *authority,
+                              const guint message_log_level,
                               const gchar *format,
                               ...)
 {
-  GTimeVal now;
+  guint64 now;
   time_t now_time;
   struct tm *now_tm;
   gchar time_buf[128];
   gchar *message;
   va_list var_args;
+
+  if (message_log_level > polkit_authority_log_level)
+  {
+	  return;
+  }
 
   g_return_if_fail (POLKIT_BACKEND_IS_AUTHORITY (authority));
 
@@ -1532,17 +1810,40 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
   message = g_strdup_vprintf (format, var_args);
   va_end (var_args);
 
-  syslog (LOG_NOTICE, "%s", message);
+  syslog (message_log_level, "%s", message);
 
-  g_get_current_time (&now);
-  now_time = (time_t) now.tv_sec;
+  now = g_get_real_time ();
+  now_time = (time_t) now / G_TIME_SPAN_SECOND;
   now_tm = localtime (&now_time);
   strftime (time_buf, sizeof time_buf, "%H:%M:%S", now_tm);
   g_print ("%s%s%s.%03d%s: %s\n",
            _color_get (_COLOR_BOLD_ON), _color_get (_COLOR_FG_YELLOW),
-           time_buf, (gint) now.tv_usec / 1000,
+           time_buf, (gint) (now % G_TIME_SPAN_SECOND / G_TIME_SPAN_MILLISECOND),
            _color_get (_COLOR_RESET),
            message);
 
   g_free (message);
+}
+
+void
+polkit_backend_authority_set_log_level (const gchar *level)
+  {
+    /* Match syslog names so that they are the same across journalct, systemctl
+     * et al, but also accept more readable aliases for abbreviated levels. */
+    if (g_strcmp0 (level, "debug") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_DEBUG;
+    else if (g_strcmp0 (level, "info") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_INFO;
+    else if (g_strcmp0 (level, "notice") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_NOTICE;
+    else if (g_strcmp0 (level, "warning") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_WARNING;
+    else if (g_strcmp0 (level, "err") == 0 || g_strcmp0 (level, "error") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_ERROR;
+    else if (g_strcmp0 (level, "crit") == 0 || g_strcmp0 (level, "critical") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_CRIT;
+    else if (g_strcmp0 (level, "alert") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_ALERT;
+    else if (g_strcmp0 (level, "emerg") == 0 || g_strcmp0 (level, "emergency") == 0)
+      polkit_authority_log_level = (guint) LOG_LEVEL_EMERG;
 }

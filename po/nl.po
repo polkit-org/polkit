@@ -160,9 +160,9 @@ msgstr "%s: Onderwerp niet opgegeven\n"
 #. * of the program e.g.  /bin/bash.
 #.
 #: src/programs/pkexec.c:807
-msgid "Authentication is needed to run `$(program)' as the super user"
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
-"Authenticatie is vereist om `$(program)' uit te voeren als de rootgebruiker"
+"Authenticatie is vereist om `$(cmdline_short)' uit te voeren als de rootgebruiker"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
@@ -170,9 +170,9 @@ msgstr ""
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
 #: src/programs/pkexec.c:817
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgid "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"Authenticatie is vereist om `$(program)' uit te voeren als gebruiker $(user."
+"Authenticatie is vereist om `$(cmdline_short)' uit te voeren als gebruiker $(user."
 "display)"
 
 #: src/programs/pkttyagent.c:78

@@ -19,10 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib/gi18n.h>
@@ -160,6 +156,8 @@ _polkit_subject_get_cmdline (PolkitSubject *subject)
     }
 
   pid = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
+  if (pid <= 0)
+    goto out;
 
   filename = g_strdup_printf ("/proc/%d/cmdline", pid);
 
@@ -271,7 +269,7 @@ do_list_or_revoke_temp_authz (gboolean revoke)
           gchar *subject_cmdline;
           time_t obtained;
           time_t expires;
-          GTimeVal now;
+          gint64 now;
           gchar *subject_str;
           gchar obtained_str[64];
           gchar expires_str[64];
@@ -287,15 +285,15 @@ do_list_or_revoke_temp_authz (gboolean revoke)
           obtained = polkit_temporary_authorization_get_time_obtained (a);
           expires = polkit_temporary_authorization_get_time_expires (a);
 
-          g_get_current_time (&now);
+          now = g_get_real_time () / G_TIME_SPAN_SECOND;
 
           broken_down = localtime (&obtained);
           strftime (obtained_str, sizeof (obtained_str), "%c", broken_down);
           broken_down = localtime (&expires);
           strftime (expires_str, sizeof (expires_str), "%c", broken_down);
 
-          obtained_rel_str = format_reltime (obtained - now.tv_sec);
-          expires_rel_str = format_reltime (expires - now.tv_sec);
+          obtained_rel_str = format_reltime (obtained - now);
+          expires_rel_str = format_reltime (expires - now);
 
           g_print ("authorization id: %s\n"
                    "action:           %s\n"

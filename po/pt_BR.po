@@ -1,36 +1,37 @@
 # Brazilian Portuguese translation for polkit.
-# Copyright (C) 2018 polkit's COPYRIGHT HOLDER
+# Copyright (C) 2024 polkit's COPYRIGHT HOLDER
 # This file is distributed under the same license as the polkit package.
-# Rafael Fontenelle <rafaelff@gnome.org>, 2015, 2018.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2015-2024.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: polkit master\n"
-"Report-Msgid-Bugs-To: https://gitlab.freedesktop.org/polkit/polkit/issues\n"
-"POT-Creation-Date: 2018-08-20 21:47+0000\n"
-"PO-Revision-Date: 2018-09-02 22:46-0200\n"
+"Report-Msgid-Bugs-To: https://github.com/polkit-org/polkit/issues\n"
+"POT-Creation-Date: 2024-03-19 15:27+0000\n"
+"PO-Revision-Date: 2024-10-09 22:44-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
-"Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
+"Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Virtaal 1.0.0-beta1\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
+"X-Generator: Gtranslator 47.0\n"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:1
+#: actions/org.freedesktop.policykit.policy.in:12
 msgid "Run a program as another user"
-msgstr "Executa um programa como outro usuário"
+msgstr "Executar um programa como outro usuário"
 
-#: ../actions/org.freedesktop.policykit.policy.in.h:2
+#: actions/org.freedesktop.policykit.policy.in:13
 msgid "Authentication is required to run a program as another user"
 msgstr ""
 "A autenticação é necessária para executar um programa como outro usuário"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:1
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
 msgid "Run the polkit example program Frobnicate"
-msgstr "Executa Frobnicate, o programa exemplo do polkit"
+msgstr "Executar Frobnicate, o programa exemplo do polkit"
 
-#: ../src/examples/org.freedesktop.policykit.examples.pkexec.policy.in.h:2
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
 msgid ""
 "Authentication is required to run the polkit example program Frobnicate "
 "(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
@@ -40,27 +41,27 @@ msgstr ""
 "Frobnicate (user=$(user), user.gecos=$(user.gecos), user.display=$(user."
 "display), program=$(program), command_line=$(command_line))"
 
-#: ../src/programs/pkaction.c:101
+#: src/programs/pkaction.c:101
 msgid "Only output information about ACTION"
 msgstr "Exibe apenas informação sobre AÇÃO"
 
-#: ../src/programs/pkaction.c:101
+#: src/programs/pkaction.c:101
 msgid "ACTION"
 msgstr "AÇÃO"
 
-#: ../src/programs/pkaction.c:105
+#: src/programs/pkaction.c:105
 msgid "Output detailed action information"
 msgstr "Exibe informação detalhada da ação"
 
-#: ../src/programs/pkaction.c:109 ../src/programs/pkttyagent.c:62
+#: src/programs/pkaction.c:109 src/programs/pkttyagent.c:104
 msgid "Show version"
 msgstr "Mostra a versão"
 
-#: ../src/programs/pkaction.c:132
+#: src/programs/pkaction.c:132
 msgid "[--action-id ACTION]"
 msgstr "[--action-id AÇÃO]"
 
-#: ../src/programs/pkaction.c:133 ../src/programs/pkttyagent.c:83
+#: src/programs/pkaction.c:133 src/programs/pkttyagent.c:127
 #, c-format
 msgid ""
 "Report bugs to: %s\n"
@@ -69,13 +70,13 @@ msgstr ""
 "Relate erros para: %s\n"
 "Página web do %s: <%s>"
 
-#: ../src/programs/pkaction.c:147 ../src/programs/pkcheck.c:493
-#: ../src/programs/pkttyagent.c:97
+#: src/programs/pkaction.c:147 src/programs/pkcheck.c:498
+#: src/programs/pkttyagent.c:141
 #, c-format
 msgid "%s: Unexpected argument `%s'\n"
 msgstr "%s: Argumento inesperado \"%s\"\n"
 
-#: ../src/programs/pkcheck.c:36
+#: src/programs/pkcheck.c:36
 #, c-format
 msgid ""
 "Usage:\n"
@@ -131,23 +132,23 @@ msgstr ""
 "Relate erros para: %s\n"
 "Página web do %s: <%s>\n"
 
-#: ../src/programs/pkcheck.c:393 ../src/programs/pkcheck.c:426
-#: ../src/programs/pkcheck.c:438
+#: src/programs/pkcheck.c:398 src/programs/pkcheck.c:431
+#: src/programs/pkcheck.c:443
 #, c-format
 msgid "%s: Argument expected after `%s'\n"
 msgstr "%s: Esperava argumento após \"%s\"\n"
 
-#: ../src/programs/pkcheck.c:416
+#: src/programs/pkcheck.c:421
 #, c-format
 msgid "%s: Invalid --process value `%s'\n"
 msgstr "%s: Valor \"%s\" inválido de --process\n"
 
-#: ../src/programs/pkcheck.c:453 ../src/programs/pkcheck.c:462
+#: src/programs/pkcheck.c:458 src/programs/pkcheck.c:467
 #, c-format
-msgid "%s: Two arguments expected after `--detail'\n"
-msgstr "%s: Dois argumentos esperados após \"--detail\"\n"
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr "%s: Dois argumentos esperados após \"--detail, -d\"\n"
 
-#: ../src/programs/pkcheck.c:523
+#: src/programs/pkcheck.c:528
 #, c-format
 msgid "%s: Subject not specified\n"
 msgstr "%s: Sujeito não especificado\n"
@@ -156,51 +157,58 @@ msgstr "%s: Sujeito não especificado\n"
 #. * translate the $(program) fragment - it will be expanded to the path
 #. * of the program e.g.  /bin/bash.
 #.
-#: ../src/programs/pkexec.c:790
-msgid "Authentication is needed to run `$(program)' as the super user"
+#: src/programs/pkexec.c:822
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
-"A autenticação é necessária para executar `$(program)' como o superusuário"
+"A autenticação é necessária para executar `$(cmdline_short)' como o "
+"superusuário"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
 #. * be expanded to the path of the program e.g. "/bin/bash" and the latter
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
-#: ../src/programs/pkexec.c:800
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+#: src/programs/pkexec.c:832
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"A autenticação é necessária para executar `$(program)' como o usuário  "
+"A autenticação é necessária para executar `$(cmdline_short)' como o usuário  "
 "$(user.display)"
 
-#: ../src/programs/pkttyagent.c:45
+#: src/programs/pkttyagent.c:87
 msgid "Don't replace existing agent if any"
 msgstr "Não substitui o agente existente, seu houver"
 
-#: ../src/programs/pkttyagent.c:49
+#: src/programs/pkttyagent.c:91
 msgid "Close FD when the agent is registered"
 msgstr "Fecha o descritor de arquivo FD quando o agente é registrado"
 
-#: ../src/programs/pkttyagent.c:49
+#: src/programs/pkttyagent.c:91
 msgid "FD"
 msgstr "FD"
 
-#: ../src/programs/pkttyagent.c:53
+#: src/programs/pkttyagent.c:95
 msgid "Register the agent for the specified process"
 msgstr "Registra o agente para o processo especificado"
 
-#: ../src/programs/pkttyagent.c:54
+#: src/programs/pkttyagent.c:96
 msgid "PID[,START_TIME]"
 msgstr "PID[,HORÁRIO_INÍCIO]"
 
-#: ../src/programs/pkttyagent.c:58
+#: src/programs/pkttyagent.c:100
 msgid "Register the agent for the owner of BUS_NAME"
 msgstr "Registra o agente para o dono do BARRAMENTO"
 
-#: ../src/programs/pkttyagent.c:58
+#: src/programs/pkttyagent.c:100
 msgid "BUS_NAME"
 msgstr "BARRAMENTO"
 
-#: ../src/programs/pkttyagent.c:129
+#: src/programs/pkttyagent.c:155
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr "%s: As opções --process e --system-bus-name são mutuamente exclusivas\n"
+
+#: src/programs/pkttyagent.c:179
 #, c-format
 msgid "%s: Invalid process specifier `%s'\n"
 msgstr "%s: Especificador do processo \"%s\" inválido\n"

@@ -19,8 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
-
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
@@ -330,6 +328,7 @@ on_request (PolkitAgentSession *session,
   PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (user_data);
   struct termios ts, ots;
   GString *str;
+  gint c;
 
   fprintf (listener->tty, "%s", request);
   fflush (listener->tty);
@@ -374,7 +373,6 @@ on_request (PolkitAgentSession *session,
   str = g_string_new (NULL);
   while (TRUE)
     {
-      gint c;
       c = getc (listener->tty);
       if (c == '\n')
         {
@@ -384,8 +382,7 @@ on_request (PolkitAgentSession *session,
       else if (c == EOF)
         {
           tcsetattr (fileno (listener->tty), TCSAFLUSH, &ots);
-          g_error ("Got unexpected EOF while reading from controlling terminal.");
-          abort ();
+          g_warning ("Got unexpected EOF while reading from controlling terminal.");
           break;
         }
       else
@@ -397,7 +394,15 @@ on_request (PolkitAgentSession *session,
   g_signal_emit_by_name(listener, "tty_attrs_changed", FALSE);
   putc ('\n', listener->tty);
 
-  polkit_agent_session_response (session, str->str);
+  if (c == EOF)
+    {
+      polkit_agent_session_cancel (listener->active_session);
+    }
+  else
+    {
+      polkit_agent_session_response (session, str->str);
+    }
+
   memset (str->str, '\0', str->len);
   g_string_free (str, TRUE);
 }
@@ -512,9 +517,9 @@ choose_identity (PolkitAgentTextListener *listener,
         }
       else if (c == EOF)
         {
-          g_error ("Got unexpected EOF while reading from controlling terminal.");
-          abort ();
-          break;
+          g_warning ("Got unexpected EOF while reading from controlling terminal.");
+          ret = NULL;   /* let' be defensive */
+          goto out;
         }
       else
         {

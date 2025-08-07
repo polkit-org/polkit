@@ -111,6 +111,9 @@
       <annotation name="org.gtk.EggDBus.Flags.Member" value="AllowUserInteraction">
         <annotation name="org.gtk.EggDBus.DocString" value="If the #Subject can obtain the authorization through authentication, and an authentication agent is available, then attempt to do so. Note, this means that the org.freedesktop.PolicyKit1.Authority.CheckAuthorization() method will block while the user is being asked to authenticate."/>
       </annotation>
+      <annotation name="org.gtk.EggDBus.Flags.Member" value="AlwaysCheck">
+        <annotation name="org.gtk.EggDBus.DocString" value="Check access against policy even if the #Subject is the root user."/>
+      </annotation>
     </annotation>
 
     <!-- ---------------------------------------------------------------------------------------------------- -->
@@ -431,7 +434,7 @@ Must match the effective UID of the caller of org.freedesktop.PolicyKit1.Authori
     <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <signal name="Changed">
-      <annotation name="org.gtk.EggDBus.DocString" value="This signal is emitted when actions and/or authorizations change"/>
+      <annotation name="org.gtk.EggDBus.DocString" value="This signal is emitted when actions, sessions and/or authorizations change, carrying information about the change."/>
     </signal>
 
   </interface>

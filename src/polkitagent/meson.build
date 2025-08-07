@@ -36,7 +36,6 @@ sources = enum_sources + marshal_sources + files(
 )
 
 deps = [
-  expat_dep,
   gio_unix_dep,
   libpolkit_gobject_dep,
 ]
@@ -101,19 +100,21 @@ if enable_introspection
   )
 endif
 
-sources = files(
-  'polkitagenthelperprivate.c',
-  'polkitagenthelper-@0@.c'.format(auth_fw),
-)
+if not get_option('libs-only')
+  sources = files(
+    'polkitagenthelperprivate.c',
+    'polkitagenthelper-@0@.c'.format(auth_fw),
+  )
 
-deps = auth_deps + [libpolkit_gobject_dep]
+  deps = auth_deps + [libpolkit_gobject_dep]
 
-executable(
-  '@0@-agent-helper-@1@'.format(meson.project_name(), pk_api_version),
-  sources,
-  include_directories: top_inc,
-  dependencies: deps,
-  c_args: '-D_POLKIT_COMPILATION',
-  install: true,
-  install_dir: pk_libprivdir,
-)
+  executable(
+    '@0@-agent-helper-@1@'.format(meson.project_name(), pk_api_version),
+    sources,
+    include_directories: top_inc,
+    dependencies: deps,
+    c_args: '-D_POLKIT_COMPILATION',
+    install: true,
+    install_dir: pk_libprivdir,
+  )
+endif

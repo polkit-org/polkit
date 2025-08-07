@@ -19,7 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <string.h>
@@ -76,7 +75,7 @@ polkit_backend_action_lookup_get_type (void)
 {
   static volatile gsize g_define_type_id__volatile = 0;
 
-  if (g_once_init_enter (&g_define_type_id__volatile))
+  if (g_once_init_enter ((gsize*) &g_define_type_id__volatile))
     {
       static const GTypeInfo info =
       {

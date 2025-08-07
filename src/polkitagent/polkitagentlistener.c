@@ -19,8 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
-
 #include <polkit/polkitprivate.h>
 
 #include "polkitagentlistener.h"

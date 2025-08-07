@@ -162,9 +162,9 @@ msgstr "%s: Subiect nespecificat\n"
 #. * of the program e.g.  /bin/bash.
 #.
 #: ../src/programs/pkexec.c:790
-msgid "Authentication is needed to run `$(program)' as the super user"
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
 msgstr ""
-"Este necesară autentificarea pentru a rula „$(program)” ca administrator"
+"Este necesară autentificarea pentru a rula „$(cmdline_short)” ca administrator"
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
@@ -172,9 +172,9 @@ msgstr ""
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
 #: ../src/programs/pkexec.c:800
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
+msgid "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
 msgstr ""
-"Este necesară autentificarea pentru a rula „$(program)” ca utilizatorul"
+"Este necesară autentificarea pentru a rula „$(cmdline_short)” ca utilizatorul"
 " $(user.display)"
 
 #: ../src/programs/pkttyagent.c:78

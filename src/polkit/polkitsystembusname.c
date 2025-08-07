@@ -19,10 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include <string.h>
 #include <gio/gunixfdlist.h>
 #include "polkitsystembusname.h"
@@ -570,6 +566,7 @@ polkit_system_bus_name_get_creds_sync (PolkitSystemBusName           *system_bus
     }
 
   g_variant_unref (result);
+  g_variant_iter_free (iter);
 
   if (out_uid)
     *out_uid = uid;

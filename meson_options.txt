@@ -1,12 +1,13 @@
-option('session_tracking', type: 'combo', choices: ['libsystemd-login', 'libelogind', 'ConsoleKit'], value: 'ConsoleKit', description: 'session tracking (libsystemd-login/libelogind/ConsoleKit)')
+option('session_tracking', type: 'combo', choices: ['logind', 'elogind', 'ConsoleKit'], value: 'logind', description: 'session tracking (logind/elogind/ConsoleKit)')
 option('systemdsystemunitdir', type: 'string', value: '', description: 'custom directory for systemd system units')
 
 option('libs-only', type: 'boolean', value: false, description: 'Only build libraries (skips building polkitd)')
 option('polkitd_user', type: 'string', value: 'polkitd', description: 'User for running polkitd (polkitd)')
 option('polkitd_uid', type: 'string', value: '-', description: 'Fixed UID for user running polkitd (polkitd)')
+option('privileged_group', type: 'string', value: '', description: 'Group to use for default privileged access (default: wheel)')
 
 option('authfw', type: 'combo', choices: ['pam', 'shadow', 'bsdauth'], value: 'pam', description: 'Authentication framework (pam/shadow)')
-option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', 'lfs', ''], value: '', description: 'distribution or OS')
+option('os_type', type: 'combo', choices: ['redhat', 'suse', 'gentoo', 'pardus', 'solaris', 'netbsd', 'lfs', 'openembedded', 'debian', ''], value: '', description: 'distribution or OS')
 
 option('pam_include', type: 'string', value: '', description: 'pam file to include')
 option('pam_module_dir', type: 'string', value: '', description: 'directory to install PAM security module')
@@ -18,4 +19,4 @@ option('introspection', type: 'boolean', value: true, description: 'Enable intro
 
 option('gtk_doc', type: 'boolean', value: false, description: 'use gtk-doc to build documentation')
 option('man', type: 'boolean', value: false, description: 'build manual pages')
-option('js_engine', type: 'combo', choices: ['mozjs', 'duktape'], value: 'duktape', description: 'javascript engine')
+option('gettext', type: 'boolean', value: false, description: 'use gettext for translations')

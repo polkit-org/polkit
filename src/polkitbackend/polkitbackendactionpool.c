@@ -19,11 +19,15 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <string.h>
 #include <expat.h>
+
+#ifdef ENABLE_GETTEXT
+#include <locale.h>
+#include <glib/gi18n.h>
+#endif
 
 #include <polkit/polkit.h>
 #include <polkit/polkitprivate.h>
@@ -44,7 +48,9 @@ typedef struct
   gchar *vendor_url;
   gchar *icon_name;
   gchar *description;
+  gchar *description_domain;
   gchar *message;
+  gchar *message_domain;
 
   PolkitImplicitAuthorization implicit_authorization_any;
   PolkitImplicitAuthorization implicit_authorization_inactive;
@@ -65,7 +71,9 @@ parsed_action_free (ParsedAction *action)
   g_free (action->vendor_url);
   g_free (action->icon_name);
   g_free (action->description);
+  g_free (action->description_domain);
   g_free (action->message);
+  g_free (action->message_domain);
 
   g_hash_table_unref (action->localized_description);
   g_hash_table_unref (action->localized_message);
@@ -85,19 +93,21 @@ static void ensure_all_files (PolkitBackendActionPool *pool);
 
 static const gchar *_localize (GHashTable *translations,
                                const gchar *untranslated,
+                               const gchar *domain,
                                const gchar *lang);
 
 typedef struct
 {
-  /* directory with .policy files, e.g. /usr/share/polkit-1/actions */
-  GFile *directory;
+  /* directories with .policy files, e.g. /usr/share/polkit-1/actions */
+  GList *directories;
 
-  GFileMonitor *dir_monitor;
+  /* GFileMonitor instances for directories */
+  GList *dir_monitors;
 
   /* maps from action_id to a ParsedAction struct */
   GHashTable *parsed_actions;
 
-  /* maps from URI of parsed file to nothing */
+  /* maps from basename of parsed file to nothing */
   GHashTable *parsed_files;
 
   /* is TRUE only when we've read all files */
@@ -108,10 +118,8 @@ typedef struct
 enum
 {
   PROP_0,
-  PROP_DIRECTORY,
+  PROP_DIRECTORIES,
 };
-
-#define POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_ACTION_POOL, PolkitBackendActionPoolPrivate))
 
 enum
 {
@@ -121,14 +129,14 @@ enum
 
 static guint signals[LAST_SIGNAL] = {0};
 
-G_DEFINE_TYPE (PolkitBackendActionPool, polkit_backend_action_pool, G_TYPE_OBJECT);
+G_DEFINE_TYPE_WITH_PRIVATE (PolkitBackendActionPool, polkit_backend_action_pool, G_TYPE_OBJECT);
 
 static void
 polkit_backend_action_pool_init (PolkitBackendActionPool *pool)
 {
   PolkitBackendActionPoolPrivate *priv;
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   priv->parsed_actions = g_hash_table_new_full (g_str_hash,
                                                 g_str_equal,
@@ -148,13 +156,13 @@ polkit_backend_action_pool_finalize (GObject *object)
   PolkitBackendActionPoolPrivate *priv;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
-  if (priv->directory != NULL)
-    g_object_unref (priv->directory);
+  if (priv->directories != NULL)
+    g_list_free_full (priv->directories, g_object_unref);
 
-  if (priv->dir_monitor != NULL)
-    g_object_unref (priv->dir_monitor);
+  if (priv->dir_monitors != NULL)
+    g_list_free_full (priv->dir_monitors, g_object_unref);
 
   if (priv->parsed_actions != NULL)
     g_hash_table_unref (priv->parsed_actions);
@@ -175,12 +183,12 @@ polkit_backend_action_pool_get_property (GObject     *object,
   PolkitBackendActionPoolPrivate *priv;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   switch (prop_id)
     {
-    case PROP_DIRECTORY:
-      g_value_set_object (value, priv->directory);
+    case PROP_DIRECTORIES:
+      g_value_set_object (value, priv->directories);
       break;
 
     default:
@@ -200,7 +208,7 @@ dir_monitor_changed (GFileMonitor     *monitor,
   PolkitBackendActionPoolPrivate *priv;
 
   pool = POLKIT_BACKEND_ACTION_POOL (user_data);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   /* TODO: maybe rate-limit so storms of events are collapsed into one with a 500ms resolution?
    *       Because when editing a file with emacs we get 4-8 events..
@@ -245,35 +253,51 @@ polkit_backend_action_pool_set_property (GObject       *object,
 {
   PolkitBackendActionPool *pool;
   PolkitBackendActionPoolPrivate *priv;
-  GError *error;
 
   pool = POLKIT_BACKEND_ACTION_POOL (object);
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   switch (prop_id)
     {
-    case PROP_DIRECTORY:
-      priv->directory = g_value_dup_object (value);
+    case PROP_DIRECTORIES:
+      {
+        const gchar **dir_names = (const gchar**) g_value_get_boxed (value);
 
-      error = NULL;
-      priv->dir_monitor = g_file_monitor_directory (priv->directory,
-                                                    G_FILE_MONITOR_NONE,
-                                                    NULL,
-                                                    &error);
-      if (priv->dir_monitor == NULL)
+        for (int n = 0; dir_names[n] != NULL; n++)
         {
-          g_warning ("Error monitoring actions directory: %s", error->message);
-          g_error_free (error);
-        }
-      else
-        {
-          g_signal_connect (priv->dir_monitor,
-                            "changed",
-                            (GCallback) dir_monitor_changed,
-                            pool);
-        }
-      break;
+          GFile *file;
+          GFileMonitor *monitor;
+          GError *error = NULL;
 
+          const gchar *dir_name = dir_names[n];
+
+          file = g_file_new_for_path (dir_name);
+          priv->directories = g_list_prepend (priv->directories, file);
+
+          monitor = g_file_monitor_directory (file,
+                                              G_FILE_MONITOR_NONE,
+                                              NULL,
+                                              &error);
+          if (monitor == NULL)
+            {
+              g_warning ("Error monitoring actions directory: %s", error->message);
+              g_error_free (error);
+            }
+          else
+            {
+              g_signal_connect (monitor,
+                                "changed",
+                                (GCallback) dir_monitor_changed,
+                                pool);
+              priv->dir_monitors = g_list_prepend (priv->dir_monitors, monitor);
+            }
+        }
+
+        priv->directories = g_list_reverse(priv->directories);
+        priv->dir_monitors = g_list_reverse(priv->dir_monitors);
+
+        break;
+    }
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -289,24 +313,22 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
   gobject_class->set_property = polkit_backend_action_pool_set_property;
   gobject_class->finalize     = polkit_backend_action_pool_finalize;
 
-  g_type_class_add_private (klass, sizeof (PolkitBackendActionPoolPrivate));
-
   /**
    * PolkitBackendActionPool:directory:
    *
    * The directory to load action description files from.
    */
   g_object_class_install_property (gobject_class,
-                                   PROP_DIRECTORY,
-                                   g_param_spec_object ("directory",
-                                                        "Directory",
-                                                        "Directory to load action description files from",
-                                                        G_TYPE_FILE,
-                                                        G_PARAM_READWRITE |
-                                                        G_PARAM_CONSTRUCT_ONLY |
-                                                        G_PARAM_STATIC_NAME |
-                                                        G_PARAM_STATIC_NICK |
-                                                        G_PARAM_STATIC_BLURB));
+                                   PROP_DIRECTORIES,
+                                   g_param_spec_boxed ("directories",
+                                                       "Directories",
+                                                       "Directories to load action description files from",
+                                                       G_TYPE_STRV,
+                                                       G_PARAM_READWRITE |
+                                                       G_PARAM_CONSTRUCT_ONLY |
+                                                       G_PARAM_STATIC_NAME |
+                                                       G_PARAM_STATIC_NICK |
+                                                       G_PARAM_STATIC_BLURB));
 
   /**
    * PolkitBackendActionPool::changed:
@@ -334,12 +356,12 @@ polkit_backend_action_pool_class_init (PolkitBackendActionPoolClass *klass)
  * Returns: A #PolkitBackendActionPool. Free with g_object_unref().
  **/
 PolkitBackendActionPool *
-polkit_backend_action_pool_new (GFile *directory)
+polkit_backend_action_pool_new (const gchar **directories)
 {
   PolkitBackendActionPool *pool;
 
   pool = POLKIT_BACKEND_ACTION_POOL (g_object_new (POLKIT_BACKEND_TYPE_ACTION_POOL,
-                                                   "directory", directory,
+                                                   "directories", directories,
                                                    NULL));
 
   return pool;
@@ -369,7 +391,7 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
 
   g_return_val_if_fail (POLKIT_BACKEND_IS_ACTION_POOL (pool), NULL);
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   /* TODO: just compute the name of the expected file and ensure it's parsed */
   ensure_all_files (pool);
@@ -385,9 +407,11 @@ polkit_backend_action_pool_get_action (PolkitBackendActionPool *pool,
 
   description = _localize (parsed_action->localized_description,
                            parsed_action->description,
+                           parsed_action->description_domain,
                            locale);
   message = _localize (parsed_action->localized_message,
                        parsed_action->message,
+                       parsed_action->message_domain,
                        locale);
 
   ret = polkit_action_description_new (action_id,
@@ -427,7 +451,7 @@ polkit_backend_action_pool_get_all_actions (PolkitBackendActionPool *pool,
 
   g_return_val_if_fail (POLKIT_BACKEND_IS_ACTION_POOL (pool), NULL);
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   ensure_all_files (pool);
 
@@ -451,6 +475,28 @@ polkit_backend_action_pool_get_all_actions (PolkitBackendActionPool *pool,
   return ret;
 }
 
+/**
+ * polkit_backend_action_pool_reload:
+ * @pool: A #PolkitBackendActionPool.
+ *
+ * Reload all PolicyKit actions in @pool.
+ **/
+void
+polkit_backend_action_pool_reload (PolkitBackendActionPool *pool)
+{
+  PolkitBackendActionPoolPrivate *priv;
+
+  if (!POLKIT_BACKEND_IS_ACTION_POOL (pool))
+    return;
+
+  priv = polkit_backend_action_pool_get_instance_private (pool);
+
+  g_hash_table_remove_all (priv->parsed_files);
+  g_hash_table_remove_all (priv->parsed_actions);
+  priv->has_loaded_all_files = FALSE;
+  ensure_all_files (pool);
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 static void
@@ -459,17 +505,18 @@ ensure_file (PolkitBackendActionPool *pool,
 {
   PolkitBackendActionPoolPrivate *priv;
   gchar *contents;
-  GError *error;
-  gchar *uri;
+  GError *error = NULL;
+  gchar *path;
+  gchar *basename;
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
-  uri = g_file_get_uri (file);
+  path = g_file_get_path (file);
+  basename = g_file_get_basename (file);
 
-  if (g_hash_table_lookup (priv->parsed_files, uri) != NULL)
+  if (g_hash_table_lookup_extended (priv->parsed_files, basename, NULL, NULL) == TRUE)
     goto out;
 
-  error = NULL;
   if (!g_file_load_contents (file,
                              NULL,
                              &contents,
@@ -477,7 +524,7 @@ ensure_file (PolkitBackendActionPool *pool,
                              NULL,
                              &error))
     {
-      g_warning ("Error loading file with URI '%s': %s", uri, error->message);
+      g_warning ("Error loading file with path '%s': %s", path, error->message);
       goto out;
     }
 
@@ -485,75 +532,84 @@ ensure_file (PolkitBackendActionPool *pool,
                             contents,
                             &error))
     {
-      g_warning ("Error parsing file with URI '%s': %s", uri, error->message);
+      g_warning ("Error parsing file with path '%s': %s", path, error->message);
       g_free (contents);
       goto out;
     }
 
   g_free (contents);
 
-  /* steal uri */
-  g_hash_table_insert (priv->parsed_files, uri, NULL);
-  uri = NULL;
+  /* steal basename */
+  g_hash_table_insert (priv->parsed_files, basename, NULL);
+  basename = NULL;
 
  out:
-  g_free (uri);
+  g_free (basename);
+  g_free (path);
 }
 
 static void
 ensure_all_files (PolkitBackendActionPool *pool)
 {
   PolkitBackendActionPoolPrivate *priv;
-  GFileEnumerator *e;
-  GFileInfo *file_info;
-  GError *error;
 
-  priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pool);
+  GList *files = NULL;
 
-  e = NULL;
+  priv = polkit_backend_action_pool_get_instance_private (pool);
 
   if (priv->has_loaded_all_files)
-    goto out;
+    return;
 
-  error = NULL;
-  e = g_file_enumerate_children (priv->directory,
-                                 "standard::name",
-                                 G_FILE_QUERY_INFO_NONE,
-                                 NULL,
-                                 &error);
-  if (error != NULL)
+  for (GList *l = priv->directories; l != NULL; l = l->next)
+  {
+    GError *error = NULL;
+    GFileEnumerator *enumerator;
+
+    GFile* file = l->data;
+
+    char *dir_name = g_file_get_path(file);
+
+    enumerator = g_file_enumerate_children (file,
+                                            G_FILE_ATTRIBUTE_STANDARD_NAME,
+                                            G_FILE_QUERY_INFO_NONE,
+                                            NULL,
+                                            &error);
+    if (error != NULL)
     {
-      g_warning ("Error enumerating files: %s", error->message);
-      goto out;
+      g_warning ("Error enumerating files in %s: %s", dir_name, error->message);
+      g_error_free (error);
+    }
+    else
+    {
+      GFileInfo *file_info;
+      while ((file_info = g_file_enumerator_next_file (enumerator, NULL, &error)) != NULL)
+      {
+        const gchar *name = g_file_info_get_name (file_info);
+        /* only consider files with the right suffix */
+        if (g_str_has_suffix (name, ".policy"))
+          files = g_list_prepend (files, g_strdup_printf ("%s/%s", dir_name, name));
+
+        g_object_unref (file_info);
+      } /* for all files */
     }
 
-  while ((file_info = g_file_enumerator_next_file (e, NULL, &error)) != NULL)
+    g_object_unref (enumerator);
+    g_free (dir_name);
+  }
+
+  /* standard sorting places /etc before /usr as desired */
+  files = g_list_sort (files, (GCompareFunc) g_strcmp0);
+
+  for (GList *l = files; l != NULL; l = l->next)
     {
-      const gchar *name;
+      GFile *file = g_file_new_for_path((gchar *)l->data);
+      ensure_file (pool, file);
+      g_object_unref (file);
+    }
 
-      name = g_file_info_get_name (file_info);
-      /* only consider files with the right suffix */
-      if (g_str_has_suffix (name, ".policy"))
-        {
-          GFile *file;
-
-          file = g_file_get_child (priv->directory, name);
-
-          ensure_file (pool, file);
-
-          g_object_unref (file);
-        }
-
-      g_object_unref (file_info);
-
-    } /* for all files */
+  g_list_free_full (files, g_free);
 
   priv->has_loaded_all_files = TRUE;
-
- out:
-
-  if (e != NULL)
-    g_object_unref (e);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -603,10 +659,15 @@ typedef struct {
   GHashTable *policy_messages;
 
   char *policy_description_nolang;
+  char *policy_description_domain;
   char *policy_message_nolang;
+  char *policy_message_domain;
 
   /* the value of xml:lang for the thing we're reading in _cdata() */
   char *elem_lang;
+
+  /* the value of gettext-domain for the thing we're reading in _cdata() */
+  char *elem_domain;
 
   char *annotate_key;
   GHashTable *annotations;
@@ -629,8 +690,12 @@ pd_unref_action_data (ParserData *pd)
 
   g_free (pd->policy_description_nolang);
   pd->policy_description_nolang = NULL;
+  g_free (pd->policy_description_domain);
+  pd->policy_description_domain = NULL;
   g_free (pd->policy_message_nolang);
   pd->policy_message_nolang = NULL;
+  g_free (pd->policy_message_domain);
+  pd->policy_message_domain = NULL;
   if (pd->policy_descriptions != NULL)
     {
       g_hash_table_unref (pd->policy_descriptions);
@@ -650,6 +715,8 @@ pd_unref_action_data (ParserData *pd)
     }
   g_free (pd->elem_lang);
   pd->elem_lang = NULL;
+  g_free (pd->elem_domain);
+  pd->elem_domain = NULL;
 }
 
 static void
@@ -671,6 +738,12 @@ _start (void *data, const char *el, const char **attr)
   guint state;
   guint num_attr;
   ParserData *pd = data;
+
+  if (pd->stack_depth < 0 || pd->stack_depth >= PARSER_MAX_DEPTH)
+    {
+      g_warning ("XML parsing reached max depth?");
+      goto error;
+    }
 
   for (num_attr = 0; attr[num_attr] != NULL; num_attr++)
     ;
@@ -737,6 +810,10 @@ _start (void *data, const char *el, const char **attr)
             {
               pd->elem_lang = g_strdup (attr[1]);
             }
+          if (num_attr == 2 && strcmp (attr[0], "gettext-domain") == 0)
+            {
+              pd->elem_domain = g_strdup (attr[1]);
+            }
           state = STATE_IN_ACTION_DESCRIPTION;
         }
       else if (strcmp (el, "message") == 0)
@@ -744,6 +821,10 @@ _start (void *data, const char *el, const char **attr)
           if (num_attr == 2 && strcmp (attr[0], "xml:lang") == 0)
             {
               pd->elem_lang = g_strdup (attr[1]);
+            }
+          if (num_attr == 2 && strcmp (attr[0], "gettext-domain") == 0)
+            {
+              pd->elem_domain = g_strdup (attr[1]);
             }
           state = STATE_IN_ACTION_MESSAGE;
         }
@@ -847,6 +928,7 @@ _cdata (void *data, const char *s, int len)
         {
           g_free (pd->policy_description_nolang);
           pd->policy_description_nolang = str;
+          pd->policy_description_domain = g_strdup (pd->elem_domain);
           str = NULL;
         }
       else
@@ -863,6 +945,7 @@ _cdata (void *data, const char *s, int len)
         {
           g_free (pd->policy_message_nolang);
           pd->policy_message_nolang = str;
+          pd->policy_message_domain = g_strdup (pd->elem_domain);
           str = NULL;
         }
       else
@@ -960,6 +1043,8 @@ _end (void *data, const char *el)
 
   g_free (pd->elem_lang);
   pd->elem_lang = NULL;
+  g_free (pd->elem_domain);
+  pd->elem_domain = NULL;
 
   switch (pd->state)
     {
@@ -971,7 +1056,7 @@ _end (void *data, const char *el)
         ParsedAction *action;
         PolkitBackendActionPoolPrivate *priv;
 
-        priv = POLKIT_BACKEND_ACTION_POOL_GET_PRIVATE (pd->pool);
+        priv = polkit_backend_action_pool_get_instance_private (pd->pool);
 
         vendor = pd->vendor;
         if (vendor == NULL)
@@ -990,7 +1075,9 @@ _end (void *data, const char *el)
         action->vendor_url = g_strdup (vendor_url);
         action->icon_name = g_strdup (icon_name);
         action->description = g_strdup (pd->policy_description_nolang);
+        action->description_domain = g_strdup (pd->policy_description_domain);
         action->message = g_strdup (pd->policy_message_nolang);
+        action->message_domain = g_strdup (pd->policy_message_domain);
 
         action->localized_description = pd->policy_descriptions;
         action->localized_message     = pd->policy_messages;
@@ -1093,6 +1180,7 @@ error:
  * _localize:
  * @translations: a mapping from xml:lang to the value, e.g. 'da' -> 'Smadre', 'en_CA' -> 'Punch, Aye!'
  * @untranslated: the untranslated value, e.g. 'Punch'
+ * @domain: the gettext domain for this string. May be NULL.
  * @lang: the locale we're interested in, e.g. 'da_DK', 'da', 'en_CA', 'en_US'; basically just $LANG
  * with the encoding cut off. Maybe be NULL.
  *
@@ -1103,6 +1191,7 @@ error:
 static const gchar *
 _localize (GHashTable *translations,
            const gchar *untranslated,
+           const gchar *domain,
            const gchar *lang)
 {
   const gchar *result;
@@ -1114,6 +1203,23 @@ _localize (GHashTable *translations,
       result = untranslated;
       goto out;
     }
+
+  /* If configured at build time, check gettext */
+#ifdef ENABLE_GETTEXT
+  if (domain != NULL)
+    {
+      gchar *old_locale;
+
+      old_locale = g_strdup (setlocale (LC_ALL, NULL));
+      setlocale (LC_ALL, lang);
+      result = dgettext (domain, untranslated);
+      setlocale (LC_ALL, old_locale);
+      g_free (old_locale);
+
+      if (result != NULL)
+        goto out;
+    }
+#endif
 
   /* first see if we have the translation */
   result = (const char *) g_hash_table_lookup (translations, (void *) lang);

@@ -167,6 +167,7 @@ add_comparison_tests (void)
     struct ComparisonTestData *test_data = &comparison_test_data[i];
     gchar *test_name = g_strdup_printf ("/PolkitIdentity/comparison_%d", i);
     g_test_add_data_func (test_name, test_data, test_comparison);
+    g_free(test_name);
   }
 }
 

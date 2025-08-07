@@ -150,8 +150,8 @@ msgstr "%s: 主题未指定\n"
 #. * of the program e.g.  /bin/bash.
 #.
 #: ../src/programs/pkexec.c:794
-msgid "Authentication is needed to run `$(program)' as the super user"
-msgstr "需要授权：作为超级用户身份运行 \"$(program)\" "
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr "需要授权：作为超级用户身份运行 \"$(cmdline_short)\" "
 
 #. Translators: message shown when trying to run a program as another user.
 #. * Do not translate the $(program) or $(user) fragments - the former will
@@ -159,8 +159,8 @@ msgstr "需要授权：作为超级用户身份运行 \"$(program)\" "
 #. * to the user e.g. "John Doe (johndoe)" or "johndoe".
 #.
 #: ../src/programs/pkexec.c:804
-msgid "Authentication is needed to run `$(program)' as user $(user.display)"
-msgstr "需要授权：作为用户 \"$(user.display)\" 运行 \"$(program)\" "
+msgid "Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
+msgstr "需要授权：作为用户 \"$(user.display)\" 运行 \"$(cmdline_short)\" "
 
 #: ../src/programs/pkttyagent.c:44
 msgid "Don't replace existing agent if any"

@@ -19,7 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#include "config.h"
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
@@ -31,10 +30,15 @@
 #include <string.h>
 #include <glib/gstdio.h>
 #include <locale.h>
+#ifdef __linux__
+#include <fcntl.h>
+#include <sys/stat.h>
+#endif
 
 #include <polkit/polkit.h>
 #include "polkitbackendinteractiveauthority.h"
 #include "polkitbackendactionpool.h"
+#include "polkitbackendcommon.h"
 #include "polkitbackendsessionmonitor.h"
 
 #include <polkit/polkitprivate.h>
@@ -225,11 +229,9 @@ typedef struct
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-G_DEFINE_TYPE (PolkitBackendInteractiveAuthority,
-               polkit_backend_interactive_authority,
-               POLKIT_BACKEND_TYPE_AUTHORITY);
-
-#define POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), POLKIT_BACKEND_TYPE_INTERACTIVE_AUTHORITY, PolkitBackendInteractiveAuthorityPrivate))
+G_DEFINE_TYPE_WITH_PRIVATE (PolkitBackendInteractiveAuthority,
+                            polkit_backend_interactive_authority,
+                            POLKIT_BACKEND_TYPE_AUTHORITY);
 
 static gboolean
 identity_is_root_user (PolkitIdentity *user)
@@ -284,24 +286,29 @@ on_session_monitor_changed (PolkitBackendSessionMonitor *monitor,
                             gpointer                     user_data)
 {
   PolkitBackendInteractiveAuthority *authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (user_data);
-  g_signal_emit_by_name (authority, "changed");
+  g_signal_emit_by_name (authority, "sessions-changed");
 }
 
 static void
 polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *authority)
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
-  GFile *directory;
   GError *error;
+
+  const gchar* directories[] = {
+    PACKAGE_SYSCONF_DIR "/polkit-1/actions",
+    "/run/polkit-1/actions",
+    "/usr/local/share/polkit-1/actions",
+    PACKAGE_DATA_DIR "/polkit-1/actions",
+    NULL
+  };
 
   /* Force registering error domain */
   (void)POLKIT_ERROR;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
-  directory = g_file_new_for_path (PACKAGE_DATA_DIR "/polkit-1/actions");
-  priv->action_pool = polkit_backend_action_pool_new (directory);
-  g_object_unref (directory);
+  priv->action_pool = polkit_backend_action_pool_new (directories);
   g_signal_connect (priv->action_pool,
                     "changed",
                     (GCallback) action_pool_changed,
@@ -351,7 +358,7 @@ polkit_backend_interactive_authority_finalize (GObject *object)
   PolkitBackendInteractiveAuthorityPrivate *priv;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (object);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   if (priv->name_owner_changed_signal_id > 0)
     g_dbus_connection_signal_unsubscribe (priv->system_bus_connection, priv->name_owner_changed_signal_id);
@@ -413,10 +420,6 @@ polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthori
   authority_class->enumerate_temporary_authorizations = polkit_backend_interactive_authority_enumerate_temporary_authorizations;
   authority_class->revoke_temporary_authorizations = polkit_backend_interactive_authority_revoke_temporary_authorizations;
   authority_class->revoke_temporary_authorization_by_id = polkit_backend_interactive_authority_revoke_temporary_authorization_by_id;
-
-
-
-  g_type_class_add_private (klass, sizeof (PolkitBackendInteractiveAuthorityPrivate));
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -432,7 +435,7 @@ polkit_backend_interactive_authority_enumerate_actions (PolkitBackendAuthority  
   GList *actions;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   actions = polkit_backend_action_pool_get_all_actions (priv->action_pool, interactivee);
 
@@ -574,7 +577,7 @@ log_result (PolkitBackendInteractiveAuthority    *authority,
   gchar *subject_cmdline;
   gchar *caller_cmdline;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   log_result_str = "DENYING";
   if (polkit_authorization_result_get_is_authorized (result))
@@ -599,6 +602,7 @@ log_result (PolkitBackendInteractiveAuthority    *authority,
     caller_cmdline = g_strdup ("<unknown>");
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_INFO,
                                 "%s action %s for %s [%s] owned by %s (check requested by %s [%s])",
                                 log_result_str,
                                 action_id,
@@ -641,7 +645,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   gchar *subject_cmdline;
   gboolean is_temp;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   result = NULL;
 
@@ -707,6 +711,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
       if (is_temp)
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_INFO,
                                         "Operator of %s successfully authenticated as %s to gain "
                                         "TEMPORARY authorization for action %s for %s [%s] (owned by %s)",
                                         scope_str,
@@ -719,6 +724,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
       else
         {
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_INFO,
                                         "Operator of %s successfully authenticated as %s to gain "
                                         "ONE-SHOT authorization for action %s for %s [%s] (owned by %s)",
                                         scope_str,
@@ -732,6 +738,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
   else
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_NOTICE,
                                     "Operator of %s FAILED to authenticate to gain "
                                     "authorization for action %s for %s [%s] (owned by %s)",
                                     scope_str,
@@ -784,7 +791,7 @@ may_identity_check_authorization (PolkitBackendInteractiveAuthority   *interacti
                                   const gchar                         *action_id,
                                   PolkitIdentity                      *identity)
 {
-  PolkitBackendInteractiveAuthorityPrivate *priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  PolkitBackendInteractiveAuthorityPrivate *priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
   gboolean ret = FALSE;
   PolkitActionDescription *action_desc = NULL;
   const gchar *owners = NULL;
@@ -863,7 +870,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
   gchar **detail_keys;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   error = NULL;
   caller_str = NULL;
@@ -1087,7 +1094,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   GList *l;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   result = NULL;
 
@@ -1130,7 +1137,7 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
       goto out;
 
   /* special case: uid 0, root, is _always_ authorized for anything */
-  if (identity_is_root_user (user_of_subject))
+  if (!(flags & POLKIT_CHECK_AUTHORIZATION_FLAGS_ALWAYS_CHECK) && identity_is_root_user (user_of_subject))
     {
       result = polkit_authorization_result_new (TRUE, FALSE, NULL);
       goto out;
@@ -1407,6 +1414,28 @@ polkit_backend_interactive_authority_check_authorization_sync (PolkitBackendInte
   return ret;
 }
 
+/**
+ * polkit_backend_interactive_authority_reload:
+ * @authority: A #PolkitBackendInteractiveAuthority.
+ *
+ * Reload configuration files.
+ */
+void
+polkit_backend_interactive_authority_reload (PolkitBackendInteractiveAuthority *authority)
+{
+  PolkitBackendInteractiveAuthorityPrivate *priv;
+  PolkitBackendJsAuthority *jsauthority;
+
+  if (!authority)
+    return;
+
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
+  polkit_backend_action_pool_reload (priv->action_pool);
+
+  jsauthority = POLKIT_BACKEND_JS_AUTHORITY (authority);
+  polkit_backend_common_reload_scripts (jsauthority);
+}
+
 /* ---------------------------------------------------------------------------------------------------- */
 
 struct AuthenticationSession
@@ -1488,10 +1517,10 @@ authentication_agent_generate_cookie (AuthenticationAgent *agent)
   GString *buf = g_string_new ("");
 
   g_string_append (buf, agent->cookie_prefix);
-  
+
   g_string_append_c (buf, '-');
   agent->cookie_serial++;
-  g_string_append_printf (buf, "%" G_GUINT64_FORMAT, 
+  g_string_append_printf (buf, "%" G_GUINT64_FORMAT,
                           agent->cookie_serial);
   g_string_append_c (buf, '-');
   append_rand_u128_str (buf, agent->cookie_pool);
@@ -1685,7 +1714,7 @@ authentication_agent_new (guint64      serial,
     g_rand_free (agent_private_rand);
 
     agent->cookie_prefix = g_string_free (cookie_prefix, FALSE);
-    
+
     /* And a newly seeded pool for per-session cookies */
     agent->cookie_pool = g_rand_new ();
   }
@@ -1703,7 +1732,7 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
   AuthenticationAgent *agent_fallback = NULL;
   gboolean fallback = FALSE;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
 
@@ -1776,7 +1805,7 @@ get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority
 
   /* TODO: perhaps use a hash on the cookie to speed this up */
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -1787,7 +1816,7 @@ get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority
        * due to wrapping, that the cookie used is matched to the user
        * who called AuthenticationAgentResponse2.  See
        * http://lists.freedesktop.org/archives/polkit-devel/2015-June/000425.html
-       * 
+       *
        * Except if the legacy AuthenticationAgentResponse is invoked,
        * we don't know the uid and hence use -1.  Continue to support
        * the old behavior for backwards compatibility, although everyone
@@ -1829,7 +1858,7 @@ get_authentication_sessions_initiated_by_system_bus_unique_name (PolkitBackendIn
 
   /* TODO: perhaps use a hash on the cookie to speed this up */
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -1863,7 +1892,7 @@ get_authentication_sessions_for_system_bus_unique_name_subject (PolkitBackendInt
 
   /* TODO: perhaps use a hash on the cookie to speed this up */
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -1895,7 +1924,7 @@ get_authentication_agent_by_unique_system_bus_name (PolkitBackendInteractiveAuth
   GHashTableIter hash_iter;
   AuthenticationAgent *agent;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
@@ -1979,6 +2008,7 @@ append_property (GString *dest,
   else
     {
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                    LOG_LEVEL_ERROR,
                                     "Error substituting value for property $(%s) when preparing message `%s' for action-id %s",
                                     key,
                                     message,
@@ -2059,7 +2089,7 @@ get_localized_data_for_challenge (PolkitBackendInteractiveAuthority *authority,
   const gchar *gettext_domain;
   gchar *s;
 
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   message = NULL;
   icon_name = NULL;
@@ -2250,11 +2280,10 @@ static GList *
 get_users_in_net_group (PolkitIdentity                    *group,
                         gboolean                           include_root)
 {
-  const gchar *name;
-  GList *ret;
-
-  ret = NULL;
+  GList *ret = NULL;
 #ifdef HAVE_SETNETGRENT
+  const gchar *name;
+
   name = polkit_unix_netgroup_get_name (POLKIT_UNIX_NETGROUP (group));
 
 # ifdef HAVE_SETNETGRENT_RETURN
@@ -2323,7 +2352,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                          AuthenticationAgentCallback  callback,
                                          gpointer                     user_data)
 {
-  PolkitBackendInteractiveAuthorityPrivate *priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (authority);
+  PolkitBackendInteractiveAuthorityPrivate *priv = polkit_backend_interactive_authority_get_instance_private (authority);
   AuthenticationSession *session;
   GList *l;
   GList *identities;
@@ -2526,7 +2555,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   agent = NULL;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   if (POLKIT_IS_UNIX_SESSION (subject))
     {
@@ -2611,7 +2640,8 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
   priv->agent_serial++;
   agent = authentication_agent_new (priv->agent_serial,
                                     subject,
-                                    user_of_caller,
+                                    user_of_subject,/*fix pkexec fails with No session for cookie,
+                                    upstream issue:https://gitlab.freedesktop.org/polkit/polkit/issues/17*/
                                     polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                     locale,
                                     object_path,
@@ -2638,6 +2668,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
            locale);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_INFO,
                                 "Registered Authentication Agent for %s "
                                 "(system bus name %s [%s], object path %s, locale %s)",
                                 subject_as_string,
@@ -2681,7 +2712,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
   gchar *scope_str;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   session_for_caller = NULL;
@@ -2795,6 +2826,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
            agent->locale);
 
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                LOG_LEVEL_INFO,
                                 "Unregistered Authentication Agent for %s "
                                 "(system bus name %s, object path %s, locale %s)",
                                 scope_str,
@@ -2841,7 +2873,7 @@ polkit_backend_interactive_authority_authentication_agent_response (PolkitBacken
   gboolean ret;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   user_of_caller = NULL;
@@ -2925,7 +2957,7 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
   PolkitBackendInteractiveAuthorityPrivate *priv;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   //g_debug ("name-owner-changed: '%s' '%s' '%s'", name, old_owner, new_owner);
 
@@ -2947,6 +2979,7 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
                    agent->object_path);
 
           polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
+                                        LOG_LEVEL_INFO,
                                         "Unregistered Authentication Agent for %s "
                                         "(system bus name %s, object path %s, locale %s) (disconnected from bus)",
                                         scope_str,
@@ -3086,13 +3119,162 @@ convert_temporary_authorization_subject (PolkitSubject *subject)
     }
 }
 
+#ifdef __linux__
+static time_t
+parse_boottime (void)
+{
+  static time_t btime = 0;
+  gchar *contents;
+  gchar **lines;
+  guint n;
+
+  if (btime != 0)
+    return btime;
+
+  lines = NULL;
+  contents = NULL;
+
+  if (!g_file_get_contents ("/proc/stat", &contents, NULL, NULL))
+    return -1;
+
+  lines = g_strsplit (contents, "\n", -1);
+  for (n = 0; lines != NULL && lines[n] != NULL; n++)
+    {
+      if (!g_str_has_prefix (lines[n], "btime "))
+        continue;
+      if (sscanf (lines[n] + 6, "%ld", &btime) != 1)
+      {
+        g_strfreev (lines);
+        g_free (contents);
+        return -1;
+      }
+      break;
+    }
+
+  g_strfreev (lines);
+  g_free (contents);
+
+  return btime;
+}
+#endif /* __linux__ */
+
 /* See the comment at the top of polkitunixprocess.c */
 static gboolean
 subject_equal_for_authz (PolkitSubject *a,
                          PolkitSubject *b)
 {
   if (!polkit_subject_equal (a, b))
-    return FALSE;
+    {
+#ifdef __linux__
+      PolkitSubject *parent = NULL;
+      gchar *ctty_path = NULL;
+
+      /*
+       * If we have two processes, and we can safely track them via PID FDs,
+       * then we also consider them equal for auth purposes if they share the
+       * same UID, PPID, Control Group and controlling terminal.
+       */
+      if (!POLKIT_IS_UNIX_PROCESS (a) || !POLKIT_IS_UNIX_PROCESS (b))
+        goto error;
+
+      if (!polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (a)) ||
+          !polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (b)))
+        goto error;
+
+      int uid_a = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (a));
+      int uid_b = polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (b));
+      if (uid_a == -1 || uid_b == -1 || uid_a != uid_b)
+        goto error;
+
+      if (polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (a)) < 0 ||
+          polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (b)) < 0)
+        goto error;
+
+      /* Ensure the parent process is still running and still the same, and not PID 1
+       * (due to reparenting) */
+      gint ppid_a = polkit_unix_process_get_ppid (POLKIT_UNIX_PROCESS (a));
+      gint ppid_b = polkit_unix_process_get_ppid (POLKIT_UNIX_PROCESS (b));
+      if (ppid_a <= 1 || ppid_a != ppid_b)
+        goto error;
+
+      gint ppid_fd = polkit_unix_process_get_ppidfd (POLKIT_UNIX_PROCESS (a));
+      if (ppid_fd < 0)
+        goto error;
+
+      parent = polkit_unix_process_new_pidfd (ppid_fd, -1, NULL);
+      if (!parent)
+        goto error;
+
+      /* Ensure all processes are in the same cgroup */
+      if (polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (a)) != polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (b)) ||
+          polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (a)) != polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (parent)) ||
+          polkit_unix_process_get_cgroupid (POLKIT_UNIX_PROCESS (a)) == 0)
+        goto error;
+
+      /*
+       * Ensure the controlling terminal is the same and older than both processes,
+       * otherwise it might have simply been reopened with the same number.
+       */
+
+      guint ttynr_parent = polkit_unix_process_get_ctty (POLKIT_UNIX_PROCESS (parent));
+      if (ttynr_parent != polkit_unix_process_get_ctty (POLKIT_UNIX_PROCESS (a)) ||
+          ttynr_parent != polkit_unix_process_get_ctty (POLKIT_UNIX_PROCESS (b)) ||
+          ttynr_parent == 0)
+        goto error;
+
+      ctty_path = g_strdup_printf ("/dev/pts/%u", ((ttynr_parent & 0xfff00000) >> 12) | (ttynr_parent & 0xff));
+
+      struct statx st;
+      if (statx (AT_FDCWD, ctty_path, 0, STATX_CTIME, &st) != 0)
+        goto error;
+
+      time_t btime = parse_boottime ();
+      if (btime < 0)
+        goto error;
+
+      if (st.stx_ctime.tv_sec < btime)
+        goto error;
+
+      /* TTY creation time is a unix timestamp, while process start time is monotonic,
+       * subtract the boot timestamp to compare them */
+      st.stx_ctime.tv_sec -= btime;
+
+      /* Process start time is in jiffies, so get the jiffies-per-second to
+       * compare it with the TTY ctime */
+      int jiffies = sysconf(_SC_CLK_TCK);
+      if (jiffies <= 0)
+        goto error;
+
+      struct statx_timestamp start_time_a;
+      struct statx_timestamp start_time_b;
+
+      start_time_a.tv_sec = polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (a)) / jiffies;
+      start_time_a.tv_nsec = (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (a)) % jiffies) * 1000000000 / jiffies;
+      start_time_b.tv_sec = polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (b)) / jiffies;
+      start_time_b.tv_nsec = (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (b)) % jiffies) * 1000000000 / jiffies;
+
+      if (start_time_a.tv_sec < st.stx_ctime.tv_sec ||
+          (start_time_a.tv_sec == st.stx_ctime.tv_sec && start_time_a.tv_nsec < st.stx_ctime.tv_nsec) ||
+           start_time_b.tv_sec < st.stx_ctime.tv_sec ||
+          (start_time_b.tv_sec == st.stx_ctime.tv_sec && start_time_b.tv_nsec < st.stx_ctime.tv_nsec))
+        goto error;
+
+      /* Check that the parent is still running at the very end, to avoid races */
+      if (polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (parent)) <= 0)
+        goto error;
+
+      g_free (ctty_path);
+      g_object_unref (parent);
+      return TRUE;
+
+error:
+      g_free (ctty_path);
+      g_object_unref (parent);
+      return FALSE;
+#else /* __linux__ */
+      return FALSE;
+#endif /* __linux__ */
+    }
 
   /* Now special case unix processes, as we want to protect against
    * pid reuse by including the PID FDs or UIDs as a fallback.
@@ -3311,7 +3493,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
                                                         on_expiration_timeout,
                                                         authorization);
 
-  if (POLKIT_IS_UNIX_PROCESS (authorization->subject))
+  if (POLKIT_IS_UNIX_PROCESS (authorization->subject) && !polkit_unix_process_get_pidfd_is_safe (POLKIT_UNIX_PROCESS (authorization->subject)))
     {
       /* For now, set up a timer to poll every two seconds - this is used to determine
        * when the process vanishes. We want to do this so we can remove the temporary
@@ -3362,10 +3544,10 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
   GList *ret;
   GList *l;
   gint64 monotonic_now;
-  GTimeVal real_now;
+  gint64 real_now;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = NULL;
   session_for_caller = NULL;
@@ -3401,7 +3583,7 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
     }
 
   monotonic_now = g_get_monotonic_time ();
-  g_get_current_time (&real_now);
+  real_now = g_get_real_time () / G_TIME_SPAN_SECOND;
 
   for (l = priv->temporary_authorization_store->authorizations; l != NULL; l = l->next)
     {
@@ -3413,8 +3595,8 @@ polkit_backend_interactive_authority_enumerate_temporary_authorizations (PolkitB
       if (!polkit_subject_equal (ta->scope, subject))
         continue;
 
-      real_granted = (ta->time_granted - monotonic_now) / G_USEC_PER_SEC + real_now.tv_sec;
-      real_expires = (ta->time_expires - monotonic_now) / G_USEC_PER_SEC + real_now.tv_sec;
+      real_granted = (ta->time_granted - monotonic_now) / G_USEC_PER_SEC + real_now;
+      real_expires = (ta->time_expires - monotonic_now) / G_USEC_PER_SEC + real_now;
 
       tmp_authz = polkit_temporary_authorization_new (ta->id,
                                                       ta->action_id,
@@ -3449,7 +3631,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorizations (PolkitBack
   guint num_removed;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   session_for_caller = NULL;
@@ -3529,7 +3711,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorization_by_id (Polki
   guint num_removed;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
-  priv = POLKIT_BACKEND_INTERACTIVE_AUTHORITY_GET_PRIVATE (interactive_authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   ret = FALSE;
   session_for_caller = NULL;

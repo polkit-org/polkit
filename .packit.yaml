@@ -1,30 +1,46 @@
 # See the documentation for more information:
 # https://packit.dev/docs/configuration/
 
-specfile_path: polkit.spec
+specfile_path: .packit/polkit.spec
 
 # add or remove files that should be synced
 files_to_sync:
-    - polkit.spec
-    - .packit.yaml
+    - .packit/polkit.spec
+    - .packit/polkit.sysusers
+    - packit.yaml
 
 # name in upstream package repository or registry (e.g. in PyPI)
 upstream_package_name: polkit
 # downstream (Fedora) RPM package name
 downstream_package_name: polkit
-
-srpm_build_deps:
-  - wget
-  - sed
-
-actions:
-  post-upstream-clone:
-    - "wget https://src.fedoraproject.org/rpms/polkit/raw/rawhide/f/polkit.spec -O polkit.spec"
-    - "wget https://src.fedoraproject.org/rpms/polkit/raw/rawhide/f/polkit.sysusers -O polkit.sysusers"
-    - "sed -ri '/^Patch[0-9]+/d' polkit.spec"
+# arguments for OpenScanHub
+#
+# Note: GCC analyzer in some cases depends on information provided by LTO to
+#       generate accurate results, but the LTO support in GCC analyzer is still
+#       experimental, so it's not enabled by default. In Polkit, however, this
+#       seems to work pretty well, so let's tell OSH to build our code with LTO
+#       when running GCC analyzer.
+csmock_args: --gcc-add-flag=-flto=auto
 
 jobs:
 - job: copr_build
+  trigger: commit
+  preserve_project: true
+  targets:
+  - fedora-rawhide-x86_64
+
+- job: copr_build
   trigger: pull_request
   targets:
-  - fedora-all
+  - fedora-all-aarch64
+  - fedora-all-ppc64le
+  - fedora-all-s390x
+  - fedora-all-x86_64
+
+- job: tests
+  trigger: pull_request
+  fmf_path: test/integration/
+  tmt_plan: upstream-ci
+  targets:
+  - fedora-all-aarch64
+  - fedora-all-x86_64

@@ -103,14 +103,19 @@ System Context         |                        |
 |    PolicyKit1    |<---------+
 +------------------+          |
           ^                   |
-          |            +--------------------------------------+
-          |            | /usr/share/polkit-1/actions/*.policy |
-          |            +--------------------------------------+
+          |            +--------------------------------------------+
+          |            | /etc/polkit-1/actions/*.policy             |
+          |            | /run/polkit-1/actions/*.policy             |
+          |            | /usr/local/share/polkit-1/actions/*.policy |
+          |            | /usr/share/polkit-1/actions/*.policy       |
+          |            +--------------------------------------------+
           |
-   +--------------------------------------+
-   | /etc/polkit-1/rules.d/*.rules        |
-   | /usr/share/polkit-1/rules.d/*.rules  |
-   +--------------------------------------+
+   +--------------------------------------------+
+   | /etc/polkit-1/rules.d/*.rules              |
+   | /run/polkit-1/rules.d/*.rules              |
+   | /usr/local/share/polkit-1/rules.d/*.rules  |
+   | /usr/share/polkit-1/rules.d/*.rules        |
+   +--------------------------------------------+
 ]]></programlisting>
       </textobject>
     </mediaobject>
@@ -472,27 +477,31 @@ System Context         |                        |
   <refsect1 id="polkit-rules"><title>AUTHORIZATION RULES</title>
     <para>
       <command>polkitd</command> reads
-      <filename class='extension'>.rules</filename> files from the
-      <filename class='directory'>/etc/polkit-1/rules.d</filename> and
-      <filename class='directory'>/usr/share/polkit-1/rules.d</filename>
-      directories by sorting the files in lexical order based on the
-      basename on each file (if there's a tie, files in
-      <filename class='directory'>/etc</filename>
-      are processed before files in
-      <filename class='directory'>/usr</filename>).
-      For example, for the following four
-      files, the order is
+      <filename class='extension'>.rules</filename> files from the following
+      directories in this order:
+    </para>
+    <itemizedlist mark='opencircle' spacing='compact'>
+      <listitem><para><filename>/etc/polkit-1/rules.d</filename></para></listitem>
+      <listitem><para><filename>/run/polkit-1/rules.d</filename></para></listitem>
+      <listitem><para><filename>/usr/local/share/polkit-1/rules.d</filename></para></listitem>
+      <listitem><para><filename>/usr/share/polkit-1/rules.d</filename></para></listitem>
+    </itemizedlist>
+    <para>
+      These directories are processed in lexical order based on the basename
+      of each file. If there's a tie, files in directories earlier in the
+      list are processed first. For example, for the following four
+      files, the order is:
     </para>
     <itemizedlist mark='opencircle' spacing='compact'>
       <listitem><para><filename>/etc/polkit-1/rules.d/10-auth.rules</filename></para></listitem>
+      <listitem><para><filename>/run/polkit-1/rules.d/10-auth.rules</filename></para></listitem>
+      <listitem><para><filename>/usr/local/share/polkit-1/rules.d/10-auth.rules</filename></para></listitem>
       <listitem><para><filename>/usr/share/polkit-1/rules.d/10-auth.rules</filename></para></listitem>
-      <listitem><para><filename>/etc/polkit-1/rules.d/15-auth.rules</filename></para></listitem>
-      <listitem><para><filename>/usr/share/polkit-1/rules.d/20-auth.rules</filename></para></listitem>
     </itemizedlist>
     <para>
-      Both directories are monitored so if a rules file is changed,
-      added or removed, existing rules are purged and all files are
-      read and processed again.  Rules files are written in the
+      All of these directories are monitored, so if a rules file is changed,
+      added, or removed, existing rules are purged and all files are
+      read and processed again. Rules files are written in the
       <ulink url="http://en.wikipedia.org/wiki/JavaScript">JavaScript</ulink>
       programming language and interface with <command>polkitd</command>
       through the global
@@ -636,12 +645,10 @@ polkit.Result = {
       </para>
 
       <para>
-        If user-provided code takes a long time to execute, an exception
-        will be thrown which normally results in the function being
-        terminated (the current limit is 15 seconds). This is used to
-        catch runaway scripts. If the duktape JavaScript backend is
-        compiled in, instead of mozjs, no exception will be thrown—the
-        script will be killed right away (same timeout).
+        If user-provided code takes a long time to execute, no exception
+        will be thrown and the script will be killed right away (the
+        current limit is 15 seconds). This is used to catch runaway
+        scripts.
       </para>
 
       <para>

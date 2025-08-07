@@ -3,12 +3,12 @@ Description=Authorization Manager
 Documentation=man:polkit(8)
 
 [Service]
-Type=dbus
+Type=notify-reload
 BusName=org.freedesktop.PolicyKit1
 CapabilityBoundingSet=CAP_SETUID CAP_SETGID
 DeviceAllow=/dev/null rw
 DevicePolicy=strict
-ExecStart=@libprivdir@/polkitd --no-debug
+ExecStart=@libprivdir@/polkitd --no-debug --log-level=notice
 User=@polkitd_user@
 LimitMEMLOCK=0
 LockPersonality=yes

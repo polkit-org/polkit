@@ -49,7 +49,6 @@
  * be emitted with the @gained_authorization paramter set to %FALSE.
  */
 
-#include "config.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -67,7 +66,7 @@ _show_debug (void)
   static volatile gsize has_show_debug = 0;
   static gboolean show_debug_value = FALSE;
 
-  if (g_once_init_enter (&has_show_debug))
+  if (g_once_init_enter ((gsize*) &has_show_debug))
     {
       show_debug_value = (g_getenv ("POLKIT_DEBUG") != NULL);
       g_once_init_leave (&has_show_debug, 1);
@@ -92,6 +91,7 @@ struct _PolkitAgentSession
   GOutputStream *child_stdin;
   int child_stdout;
   GPid child_pid;
+  GSocketConnection *helper_socket;
 
   GSource *child_stdout_watch_source;
   GIOChannel *child_stdout_channel;
@@ -367,6 +367,14 @@ kill_helper (PolkitAgentSession *session)
   if (!session->helper_is_running)
     goto out;
 
+  if (session->helper_socket)
+    {
+      g_io_stream_close (G_IO_STREAM (session->helper_socket), NULL, NULL);
+      g_object_unref (session->helper_socket);
+      session->helper_socket = NULL;
+      session->child_stdout = -1;
+    }
+
   if (session->child_pid > 0)
     {
       gint status;
@@ -596,35 +604,70 @@ polkit_agent_session_initiate (PolkitAgentSession *session)
       goto error;
     }
 
-  helper_argv[0] = PACKAGE_PREFIX "/lib/polkit-1/polkit-agent-helper-1";
-  helper_argv[1] = passwd->pw_name;
-  helper_argv[2] = NULL;
-
   session->child_stdout = -1;
 
-  error = NULL;
-  if (!g_spawn_async_with_pipes (NULL,
-                                 (char **) helper_argv,
-                                 NULL,
-                                 G_SPAWN_DO_NOT_REAP_CHILD |
-                                 0,//G_SPAWN_STDERR_TO_DEV_NULL,
-                                 NULL,
-                                 NULL,
-                                 &session->child_pid,
-                                 &stdin_fd,
-                                 &session->child_stdout,
-                                 NULL,
-                                 &error))
+  /* Let's check if there is a socket, so that we can do the authentication without SETUID */
+  if (g_file_test ("/run/polkit/agent-helper.socket", G_FILE_TEST_EXISTS))
     {
-      g_warning ("Cannot spawn helper: %s\n", error->message);
-      g_error_free (error);
-      goto error;
+      error = NULL;
+      session->helper_socket = g_socket_client_connect (g_socket_client_new (),
+                                                        G_SOCKET_CONNECTABLE (g_unix_socket_address_new ("/run/polkit/agent-helper.socket")),
+                                                        NULL,
+                                                        &error);
+      if (session->helper_socket  == NULL)
+        {
+          g_warning ("Cannot connect to helper via /run/polkit/agent-helper.socket, falling back to spawn suid helper instead: %s\n", error->message);
+          g_error_free (error);
+          /* Fallback to setuid helper */
+        }
+      else
+        {
+          int fd;
+
+          if (G_UNLIKELY (_show_debug ()))
+            g_print ("PolkitAgentSession: connected to helper via /run/polkit/agent-helper.socket\n");
+
+          fd = g_socket_get_fd (g_socket_connection_get_socket (session->helper_socket ));
+          session->child_stdout = fd;
+
+          session->child_stdin = (GOutputStream*)g_unix_output_stream_new (fd, FALSE);
+
+          (void) g_output_stream_write_all (session->child_stdin, passwd->pw_name, strlen (passwd->pw_name),
+                                            NULL, NULL, NULL);
+          (void) g_output_stream_write_all (session->child_stdin, "\n", 1, NULL, NULL, NULL);
+        }
     }
 
-  if (G_UNLIKELY (_show_debug ()))
-    g_print ("PolkitAgentSession: spawned helper with pid %d\n", (gint) session->child_pid);
+  if (session->child_stdout == -1)
+    {
+      helper_argv[0] = PACKAGE_PREFIX "/lib/polkit-1/polkit-agent-helper-1";
+      helper_argv[1] = passwd->pw_name;
+      helper_argv[2] = NULL;
 
-  session->child_stdin = (GOutputStream*)g_unix_output_stream_new (stdin_fd, TRUE);
+      error = NULL;
+      if (!g_spawn_async_with_pipes (NULL,
+                                    (char **) helper_argv,
+                                    NULL,
+                                    G_SPAWN_DO_NOT_REAP_CHILD |
+                                    0,//G_SPAWN_STDERR_TO_DEV_NULL,
+                                    NULL,
+                                    NULL,
+                                    &session->child_pid,
+                                    &stdin_fd,
+                                    &session->child_stdout,
+                                    NULL,
+                                    &error))
+        {
+          g_warning ("Cannot spawn helper: %s\n", error->message);
+          g_error_free (error);
+          goto error;
+        }
+
+      if (G_UNLIKELY (_show_debug ()))
+        g_print ("PolkitAgentSession: spawned helper with pid %d\n", (gint) session->child_pid);
+
+      session->child_stdin = (GOutputStream*)g_unix_output_stream_new (stdin_fd, TRUE);
+    }
 
   /* Write the cookie on stdin so it can't be seen by other processes */
   (void) g_output_stream_write_all (session->child_stdin, session->cookie, strlen (session->cookie),

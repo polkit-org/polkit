@@ -19,10 +19,6 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
-
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -35,6 +31,11 @@
 
 #ifdef __linux__
 #include <sys/prctl.h>
+#endif
+
+#ifdef __FreeBSD__
+#include <signal.h>
+#include <sys/procctl.h>
 #endif
 
 #include <glib/gi18n.h>
@@ -85,6 +86,7 @@ usage (int argc, char *argv[])
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+G_GNUC_PRINTF(3, 4)
 static void
 log_message (gint     level,
              gboolean print_to_stderr,
@@ -201,7 +203,7 @@ open_session (const gchar *user_to_auth,
       for (n = 0; envlist[n]; n++)
 	{
 	  const char *envitem = envlist[n];
-	  
+
 	  if (g_str_has_prefix (envitem, "XDG_RUNTIME_DIR="))
 	    {
 	      const char *eq = strchr (envitem, '=');
@@ -367,7 +369,7 @@ is_valid_shell (const gchar *shell)
   shells = g_strsplit (contents, "\n", 0);
   for (n = 0; shells != NULL && shells[n] != NULL; n++)
     {
-      if (g_strcmp0 (shell, shells[n]) == 0)
+      if (shells[n][0] == '/' && g_strcmp0 (shell, shells[n]) == 0)
         {
           ret = TRUE;
           goto out;
@@ -450,6 +452,7 @@ main (int argc, char *argv[])
   gchar *action_id;
   gboolean allow_gui;
   gchar **exec_argv;
+  gchar *path_abs;
   gchar *path;
   struct passwd pwstruct;
   gchar pwbuf[8192];
@@ -506,6 +509,7 @@ main (int argc, char *argv[])
   result = NULL;
   action_id = NULL;
   saved_env = NULL;
+  path_abs = NULL;
   path = NULL;
   exec_argv = NULL;
   command_line = NULL;
@@ -517,7 +521,7 @@ main (int argc, char *argv[])
   setenv ("GIO_USE_VFS", "local", 1);
 
   /* First process options and find the command-line to invoke. Avoid using fancy library routines
-   * that depend on environtment variables since we haven't cleared the environment just yet.
+   * that depend on environment variables since we haven't cleared the environment just yet.
    */
   opt_show_help = FALSE;
   opt_show_version = FALSE;
@@ -622,6 +626,8 @@ main (int argc, char *argv[])
    * but do check this is the case.
    *
    * We also try to locate the program in the path if a non-absolute path is given.
+   *
+   * And then we resolve the real path of the program.
    */
   g_assert (argv[argc] == NULL);
   path = g_strdup (argv[n]);
@@ -645,7 +651,7 @@ main (int argc, char *argv[])
     }
   if (path[0] != '/')
     {
-      /* g_find_program_in_path() is not suspectible to attacks via the environment */
+      /* g_find_program_in_path() is not susceptible to attacks via the environment */
       s = g_find_program_in_path (path);
       if (s == NULL)
         {
@@ -660,8 +666,24 @@ main (int argc, char *argv[])
        */
       if (argv[n] != NULL)
       {
-        argv[n] = path;
+        /* Must copy because we might replace path later on. */
+        path_abs = g_strdup(path);
+        /* argv[n:] is used as argv arguments to execv(). The called program
+         * sees the original called path, but we make sure it's absolute. */
+        if (path_abs != NULL)
+          argv[n] = path_abs;
       }
+    }
+
+  s = realpath(path, NULL);
+  if (s != NULL)
+    {
+      /* The called program resolved to the canonical location. We don't update
+       * argv[n] this time. The called program still sees the original
+       * called path. This is very important for multi-call binaries like
+       * busybox. */
+      g_free (path);
+      path = s;
     }
   if (access (path, F_OK) != 0)
     {
@@ -731,10 +753,17 @@ main (int argc, char *argv[])
     }
 
   /* make sure we are nuked if the parent process dies */
-#ifdef __linux__
+#if defined(__linux__)
   if (prctl (PR_SET_PDEATHSIG, SIGTERM) != 0)
     {
       g_printerr ("prctl(PR_SET_PDEATHSIG, SIGTERM) failed: %s\n", g_strerror (errno));
+      goto out;
+    }
+#elif defined(__FreeBSD__)
+  int _sig = SIGTERM;
+  if (procctl (P_PID, 0, PROC_PDEATHSIG_CTL, &_sig) != 0)
+    {
+      g_printerr ("procctl(2) failed: %s\n", g_strerror (errno));
       goto out;
     }
 #else
@@ -805,6 +834,11 @@ main (int argc, char *argv[])
   polkit_details_insert (details, "command_line", command_line);
 
   cmdline_short = g_strdup(command_line);
+  if (cmdline_short == NULL)
+    {
+      g_printerr ("Failed to allocate memory for shortened command line.\n");
+      goto out;
+    }
   if (strlen(command_line) > 80)
       g_stpcpy(g_stpcpy( cmdline_short + 38, " ... " ),
                command_line + strlen(command_line) - 37 );
@@ -926,6 +960,12 @@ main (int argc, char *argv[])
 
   s = g_strdup_printf ("%d", getuid ());
   g_ptr_array_add (saved_env, g_strdup ("PKEXEC_UID"));
+  g_ptr_array_add (saved_env, g_strdup (s));
+  g_ptr_array_add (saved_env, g_strdup ("SUDO_UID")); /* compat with sudo */
+  g_ptr_array_add (saved_env, s);
+
+  s = g_strdup_printf ("%d", getgid ());
+  g_ptr_array_add (saved_env, g_strdup ("SUDO_GID")); /* compat with sudo */
   g_ptr_array_add (saved_env, s);
 
   /* set the environment */
@@ -952,14 +992,14 @@ main (int argc, char *argv[])
   /* set close_on_exec on all file descriptors except stdin, stdout, stderr */
   if (!fdwalk (set_close_on_exec, GINT_TO_POINTER (3)))
     {
-      g_printerr ("Error setting close-on-exec for file desriptors\n");
+      g_printerr ("Error setting close-on-exec for file descriptors\n");
       goto out;
     }
 
   /* if not changing to uid 0, become uid 0 before changing to the user */
   if (pw->pw_uid != 0)
     {
-      setreuid (0, 0);
+      (void) setreuid (0, 0);
       if ((geteuid () != 0) || (getuid () != 0))
         {
           g_printerr ("Error becoming uid 0: %s\n", g_strerror (errno));
@@ -1012,8 +1052,8 @@ main (int argc, char *argv[])
       g_printerr ("Error initializing groups for %s: %s\n", pw->pw_name, g_strerror (errno));
       goto out;
     }
-  setregid (pw->pw_gid, pw->pw_gid);
-  setreuid (pw->pw_uid, pw->pw_uid);
+  (void) setregid (pw->pw_gid, pw->pw_gid);
+  (void) setreuid (pw->pw_uid, pw->pw_uid);
   if ((geteuid () != pw->pw_uid) || (getuid () != pw->pw_uid) ||
       (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
     {
@@ -1023,7 +1063,7 @@ main (int argc, char *argv[])
 
   /* change to home directory */
   if (!opt_keep_cwd)
-    {  
+    {
       if (chdir (pw->pw_dir) != 0)
         {
           g_printerr ("Error changing to home directory %s: %s\n", pw->pw_dir, g_strerror (errno));
@@ -1070,6 +1110,7 @@ main (int argc, char *argv[])
     }
 
   g_free (original_cwd);
+  g_free (path_abs);
   g_free (path);
   g_free (command_line);
   g_free (cmdline_short);
