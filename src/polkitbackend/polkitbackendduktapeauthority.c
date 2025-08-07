@@ -516,6 +516,7 @@ else
       goto out;
     }
 
+  set_property_int32 (cx, "uid", uid);
   set_property_int32 (cx, "pid", pid_early);
   set_property_str (cx, "user", user_name);
   set_property_strv (cx, "groups", groups);
