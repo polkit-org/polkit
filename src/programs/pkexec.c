@@ -39,6 +39,7 @@
 #endif
 
 #include <glib/gi18n.h>
+#include <glib-unix.h>
 
 #ifdef POLKIT_AUTHFW_PAM
 #include <security/pam_appl.h>
@@ -226,44 +227,74 @@ out:
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-typedef gboolean (*FdCallback) (gint fd, gpointer user_data);
-
 static gboolean
-set_close_on_exec (gint     fd,
-                   gpointer user_data)
+fdwalk_close_on_exec (guint fd_bottom)
 {
-  gint fd_bottom;
+  /* On Linux we might have a very high FD limit, instead of blindly iterating
+   * try g_fdwalk_set_cloexec() first, then fallback to close_range() second,
+   * and if that also is not available or doesn't work, look at /proc/self/fd/
+   * and iterate over the actual open FDs instead */
+#if GLIB_CHECK_VERSION (2, 80, 0)
+  /* This is newer than baseline so a warning is raised, but it's used with a
+   * compile time check so it's ok */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+  return g_fdwalk_set_cloexec (fd_bottom) == 0;
+#pragma GCC diagnostic pop
+#else
+  /* TODO: drop these fallbacks once the glib baseline is at least 2.80.0 */
 
-  fd_bottom = GPOINTER_TO_INT (user_data);
+#if defined(CLOSE_RANGE_CLOEXEC)
+  if (close_range (fd_bottom, G_MAXINT, CLOSE_RANGE_CLOEXEC) == 0)
+    return TRUE;
+#endif
 
-  if (fd >= fd_bottom)
+#ifdef __linux__
+  GDir *dir;
+  const gchar *file;
+  GError *error;
+
+  dir = g_dir_open ("/proc/self/fd/", 0, &error);
+  if (dir != NULL)
+    {
+      while ((file = g_dir_read_name (dir)) != NULL)
+        {
+          gchar *endptr;
+          guint64 fd;
+
+          fd = g_ascii_strtoull (file, &endptr, 10);
+          if (*endptr != '\0' || fd > G_MAXINT)
+            {
+              g_printerr ("Invalid file descriptor, ignoring: %s\n", file);
+              continue;
+            }
+
+          if (fd < fd_bottom)
+            continue;
+
+          if (fcntl (fd, F_SETFD, FD_CLOEXEC) != 0 && errno != EBADF)
+            {
+              g_dir_close (dir);
+              return FALSE;
+            }
+        }
+
+      g_dir_close (dir);
+      return TRUE;
+    }
+  /* If we can't open procfs for any reason fallback to the old method */
+#endif /* __linux__ */
+
+  gint max_fd = sysconf (_SC_OPEN_MAX);
+
+  for (gint fd = fd_bottom; fd < max_fd; fd++)
     {
       if (fcntl (fd, F_SETFD, FD_CLOEXEC) != 0 && errno != EBADF)
-        {
-          return FALSE;
-        }
-    }
-
-  return TRUE;
-}
-
-static gboolean
-fdwalk (FdCallback callback,
-        gpointer   user_data)
-{
-  gint fd;
-  gint max_fd;
-
-  g_return_val_if_fail (callback != NULL, FALSE);
-
-  max_fd = sysconf (_SC_OPEN_MAX);
-  for (fd = 0; fd < max_fd; fd++)
-    {
-      if (!callback (fd, user_data))
         return FALSE;
     }
 
   return TRUE;
+#endif /* g_fdwalk_set_cloexec () */
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -990,7 +1021,7 @@ main (int argc, char *argv[])
     }
 
   /* set close_on_exec on all file descriptors except stdin, stdout, stderr */
-  if (!fdwalk (set_close_on_exec, GINT_TO_POINTER (3)))
+  if (!fdwalk_close_on_exec (3))
     {
       g_printerr ("Error setting close-on-exec for file descriptors\n");
       goto out;
