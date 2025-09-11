@@ -70,9 +70,9 @@ config_data = configuration_data()
 # defines
 set_defines = [
   # package
-  ['PACKAGE_BUGREPORT', 'https://gitlab.freedesktop.org/polkit/polkit/-/issues/'],
+  ['PACKAGE_BUGREPORT', 'https://github.com/polkit-org/polkit#bugs-and-development'],
   ['PACKAGE_NAME', meson.project_name()],
-  ['PACKAGE_URL', 'http://www.freedesktop.org/wiki/Software/polkit'],
+  ['PACKAGE_URL', 'https://github.com/polkit-org/polkit'],
   ['PACKAGE_VERSION', pk_version],
   ['VERSION', pk_version],
   # i18n
