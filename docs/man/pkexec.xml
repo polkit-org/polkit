@@ -266,8 +266,7 @@ for n in range(len(sys.argv)):
     <para>
       Please send bug reports to either the distribution or the
       polkit-devel mailing list,
-      see the link <ulink url="https://gitlab.freedesktop.org/polkit/polkit/-/issues/"/>
-      on how to subscribe.
+      see <ulink url="https://github.com/polkit-org/polkit#bugs-and-development"/>.
     </para>
   </refsect1>
 
