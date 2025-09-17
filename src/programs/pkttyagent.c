@@ -27,6 +27,7 @@
 #include <polkit/polkit.h>
 #define POLKIT_AGENT_I_KNOW_API_IS_SUBJECT_TO_CHANGE
 #include <polkitagent/polkitagent.h>
+#include <locale.h>
 
 
 static volatile sig_atomic_t tty_flags_saved;
@@ -71,6 +72,8 @@ static void tty_attrs_changed(PolkitAgentListener *listener G_GNUC_UNUSED,
 int
 main (int argc, char *argv[])
 {
+  setlocale (LC_ALL, "");
+
   gboolean opt_show_version = FALSE;
   gboolean opt_fallback = FALSE;
   gchar *opt_process = NULL;
