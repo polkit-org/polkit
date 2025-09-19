@@ -1270,6 +1270,8 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
           polkit_details_insert (details, "polkit.retains_authorization_after_challenge", "1");
         }
 
+      polkit_details_insert (details, "polkit.result", polkit_implicit_authorization_to_string (implicit_authorization));
+
       result = polkit_authorization_result_new (FALSE, TRUE, details);
 
       /* return implicit_authorization so the caller can use an authentication agent if applicable */
