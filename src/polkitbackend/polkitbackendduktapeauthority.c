@@ -1051,6 +1051,8 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
       goto out;
     }
 
+  polkit_details_insert (details, "polkit.result", ret_str);
+
   good = TRUE;
 
  out:
