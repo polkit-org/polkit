@@ -656,7 +656,7 @@ Details describing the action. Keys starting with <literal>polkit.</literal> are
       <para>
         If non-empty, then the request will fail with
         <link linkend="eggdbus-constant-Error.org.freedesktop.PolicyKit1.Error.Failed">org.freedesktop.PolicyKit1.Error.Failed</link>
-        unless the process doing the check itsef is sufficiently authorized (e.g. running as uid 0).
+        unless the process doing the check itself is sufficiently authorized (e.g. running as uid 0).
       </para>
     </listitem>
   </varlistentry>
