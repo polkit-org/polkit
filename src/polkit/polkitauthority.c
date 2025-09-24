@@ -899,7 +899,7 @@ check_authorization_cb (GDBusProxy    *proxy,
  * the <link linkend="eggdbus-method-org.freedesktop.PolicyKit1.Authority.CheckAuthorization">D-Bus method</link> for more details.
  *
  * If @details is non-empty then the request will fail with
- * #POLKIT_ERROR_FAILED unless the process doing the check itsef is
+ * #POLKIT_ERROR_FAILED unless the process doing the check itself is
  * sufficiently authorized (e.g. running as uid 0).
  **/
 void
