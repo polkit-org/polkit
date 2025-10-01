@@ -5,6 +5,8 @@ import atexit
 import os
 import subprocess
 import sys
+import signal
+import time
 
 import dbus
 import dbus.mainloop.glib
@@ -36,6 +38,36 @@ def setup_test_namespace(data_dir):
         print("Python 3.12 is required for os.unshare(), skipping")
         sys.exit(77)
 
+
+def stop_dbus(pid: int) -> None:
+    """Stop a D-Bus daemon
+
+    If DBus daemon is not explicitly killed in the testing environment
+    the test times out and reports as failed.
+    This is a backport of a function dropped from DBusMock source (99c4800e9eed).
+    """
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    for _ in range(50):
+        try:
+            os.kill(pid, signal.SIGTERM)
+            os.waitpid(pid, os.WNOHANG)
+        except ChildProcessError:
+            break
+        except OSError as e:
+            if e.errno == errno.ESRCH:
+                break
+            raise
+        time.sleep(0.1)
+    else:
+        sys.stderr.write("ERROR: timed out waiting for bus process to terminate\n")
+        os.kill(pid, signal.SIGKILL)
+        try:
+            os.waitpid(pid, 0)
+        except ChildProcessError:
+            pass
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("test_executable",
@@ -51,7 +83,7 @@ if __name__ == "__main__":
     if args.mock_dbus:
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
         dbusmock.DBusTestCase.start_system_bus()
-        atexit.register(dbusmock.DBusTestCase.stop_dbus, dbusmock.DBusTestCase.system_bus_pid)
+        atexit.register(stop_dbus, dbusmock.DBusTestCase.system_bus_pid)
 
     print(f"Executing '{args.test_executable}'")
     sys.stdout.flush()
