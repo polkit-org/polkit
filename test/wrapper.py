@@ -7,6 +7,7 @@ import subprocess
 import sys
 import signal
 import time
+import errno
 
 import dbus
 import dbus.mainloop.glib
