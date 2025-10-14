@@ -392,8 +392,8 @@ add_project_arguments(compiler_common_flags + compiler_cpp_flags, language: 'cpp
 
 content_files = files('COPYING')
 
-subdir('actions')
 subdir('data')
+subdir('actions')
 subdir('src')
 subdir('docs')
 subdir('po')

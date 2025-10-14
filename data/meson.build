@@ -81,6 +81,13 @@ if not get_option('libs-only')
     configuration: {'POLKIT_DTD_DIR': get_option('prefix') / xml_dir},
   )
 
+  catalog_xml_uninstalled = configure_file(
+    input: 'catalog.xml.in',
+    output: 'catalog.uninstalled.xml',
+    install: false,
+    configuration: {'POLKIT_DTD_DIR': meson.project_source_root() / 'data'},
+  )
+
   configure_file(
     input: 'polkit-tmpfiles.conf.in',
     output: '@BASENAME@',
