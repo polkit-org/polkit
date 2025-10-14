@@ -68,9 +68,17 @@ if not get_option('libs-only')
     install_dir: sysusers_dir,
   )
 
+  xml_dir = pk_datadir / 'polkit-1'
   install_data(
     'policyconfig-1.dtd',
-    install_dir: pk_datadir / 'polkit-1'
+    install_dir: xml_dir,
+  )
+
+  configure_file(
+    input: 'catalog.xml.in',
+    output: 'catalog.xml',
+    install_dir: xml_dir,
+    configuration: {'POLKIT_DTD_DIR': get_option('prefix') / xml_dir},
   )
 
   configure_file(
