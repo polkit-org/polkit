@@ -68,7 +68,7 @@ if not get_option('libs-only')
     install_dir: sysusers_dir,
   )
 
-  xml_dir = pk_datadir / 'polkit-1'
+  xml_dir = pk_datadir / 'xml' / 'polkit-1'
   install_data(
     'policyconfig-1.dtd',
     install_dir: xml_dir,
