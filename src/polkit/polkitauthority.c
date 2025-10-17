@@ -1489,7 +1489,7 @@ polkit_authority_unregister_authentication_agent_sync (PolkitAuthority     *auth
 /* ---------------------------------------------------------------------------------------------------- */
 
 /**
- * polkit_authority_authentication_agent_response:
+ * polkit_authority_authentication_agent_response_with_subject: (finish-func polkit_authority_authentication_agent_response_finish)
  * @authority: A #PolkitAuthority.
  * @cookie: The cookie passed to the authentication agent from the authority.
  * @identity: The identity that was authenticated.
