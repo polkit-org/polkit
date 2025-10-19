@@ -41,9 +41,10 @@
     </para>
 
     <para>
-      <command>polkitd</command> must be started with superuser
-      privileges but drops privileges early by switching to the
-      unprivileged <emphasis>polkitd</emphasis> system user.
+      <command>polkitd</command> can be started as the
+      <emphasis>polkitd</emphasis> system user directly, or alternatively
+      it can be started with superuser privileges in which case it will drop
+      privileges early by switching to that same system user.
     </para>
 
     <para>
