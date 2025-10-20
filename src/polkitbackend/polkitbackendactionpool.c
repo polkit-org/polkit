@@ -593,7 +593,8 @@ ensure_all_files (PolkitBackendActionPool *pool)
       } /* for all files */
     }
 
-    g_object_unref (enumerator);
+    if (enumerator)
+      g_object_unref (enumerator);
     g_free (dir_name);
   }
 
