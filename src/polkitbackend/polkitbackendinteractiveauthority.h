@@ -145,6 +145,10 @@ PolkitImplicitAuthorization polkit_backend_interactive_authority_check_authoriza
                                                           PolkitImplicitAuthorization        implicit);
 void polkit_backend_interactive_authority_reload (PolkitBackendInteractiveAuthority *authority);
 
+void polkit_backend_interactive_authority_set_expiration_seconds (PolkitBackendInteractiveAuthority *authority,
+                                                                  guint                              seconds);
+guint polkit_backend_interactive_authority_get_expiration_seconds (PolkitBackendInteractiveAuthority *authority);
+
 G_END_DECLS
 
 #endif /* __POLKIT_BACKEND_INTERACTIVE_AUTHORITY_H */
