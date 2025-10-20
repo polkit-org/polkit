@@ -73,6 +73,11 @@ if not get_option('libs-only')
     install_dir: pk_datadir / 'polkit-1'
   )
 
+  install_data(
+    'polkitd.conf',
+    install_dir: pk_datadir / 'polkit-1'
+  )
+
   configure_file(
     input: 'polkit-tmpfiles.conf.in',
     output: '@BASENAME@',
