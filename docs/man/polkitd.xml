@@ -41,6 +41,12 @@
     </para>
 
     <para>
+      <command>polkitd</command> may be configured via the <link
+      linkend="polkitd.conf.5"><citerefentry><refentrytitle>polkitd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry></link>
+      configuration file.
+    </para>
+
+    <para>
       <command>polkitd</command> can be started as the
       <emphasis>polkitd</emphasis> system user directly, or alternatively
       it can be started with superuser privileges in which case it will drop
