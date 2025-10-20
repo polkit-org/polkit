@@ -66,6 +66,7 @@ static gboolean temporary_authorization_store_has_authorization (TemporaryAuthor
                                                                  const gchar                **out_tmp_authz_id);
 
 static const gchar *temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *store,
+                                                                     guint                        expiration_seconds,
                                                                      PolkitSubject               *subject,
                                                                      PolkitSubject               *session,
                                                                      const gchar                 *action_id);
@@ -225,7 +226,14 @@ typedef struct
   guint name_owner_changed_signal_id;
 
   guint64 agent_serial;
+
+  guint expiration_seconds;
 } PolkitBackendInteractiveAuthorityPrivate;
+
+enum
+{
+  PROP_EXPIRATION_SECONDS = 1,
+};
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -352,6 +360,71 @@ polkit_backend_interactive_authority_init (PolkitBackendInteractiveAuthority *au
 }
 
 static void
+polkit_backend_interactive_authority_get_property (GObject    *object,
+                                                   guint       prop_id,
+                                                   GValue     *value,
+                                                   GParamSpec *pspec)
+{
+  PolkitBackendInteractiveAuthority *authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (object);
+
+  if (prop_id == PROP_EXPIRATION_SECONDS)
+    g_value_set_uint (value, polkit_backend_interactive_authority_get_expiration_seconds (authority));
+  else
+    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+}
+
+static void
+polkit_backend_interactive_authority_set_property (GObject      *object,
+                                                   guint         prop_id,
+                                                   const GValue *value,
+                                                   GParamSpec   *pspec)
+{
+  PolkitBackendInteractiveAuthority *authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (object);
+
+  if (prop_id == PROP_EXPIRATION_SECONDS)
+    polkit_backend_interactive_authority_set_expiration_seconds (authority, g_value_get_uint (value));
+   else
+    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+}
+
+
+/**
+ * polkit_backend_interactive_authority_set_expiration_seconds:
+ * @authority: A #PolkitBackendInteractiveAuthority.
+ * @seconds: The expiration time in seconds.
+ *
+ * Sets the expiration time for interactive authorizations by @authority.
+ */
+void
+polkit_backend_interactive_authority_set_expiration_seconds (PolkitBackendInteractiveAuthority   *authority,
+                                                             guint                                seconds)
+{
+  PolkitBackendInteractiveAuthorityPrivate *priv;
+  g_return_if_fail (POLKIT_BACKEND_IS_INTERACTIVE_AUTHORITY (authority));
+
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
+  priv->expiration_seconds = seconds;
+}
+
+/**
+ * polkit_backend_interactive_authority_get_expiration_seconds:
+ * @authority: A #PolkitBackendInteractiveAuthority.
+ *
+ * Gets the expiration time for interactive authorizations by @authority.
+ *
+ * Returns: The expiration time in seconds.
+ */
+guint
+polkit_backend_interactive_authority_get_expiration_seconds (PolkitBackendInteractiveAuthority *authority)
+{
+  PolkitBackendInteractiveAuthorityPrivate *priv;
+  g_return_val_if_fail (POLKIT_BACKEND_IS_INTERACTIVE_AUTHORITY (authority), 0);
+
+  priv = polkit_backend_interactive_authority_get_instance_private (authority);
+  return priv->expiration_seconds;
+}
+
+static void
 polkit_backend_interactive_authority_finalize (GObject *object)
 {
   PolkitBackendInteractiveAuthority *interactive_authority;
@@ -407,6 +480,8 @@ polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthori
   authority_class = POLKIT_BACKEND_AUTHORITY_CLASS (klass);
 
   gobject_class->finalize = polkit_backend_interactive_authority_finalize;
+  gobject_class->get_property = polkit_backend_interactive_authority_get_property;
+  gobject_class->set_property = polkit_backend_interactive_authority_set_property;
 
   authority_class->get_name                        = polkit_backend_interactive_authority_get_name;
   authority_class->get_version                     = polkit_backend_interactive_authority_get_version;
@@ -420,6 +495,25 @@ polkit_backend_interactive_authority_class_init (PolkitBackendInteractiveAuthori
   authority_class->enumerate_temporary_authorizations = polkit_backend_interactive_authority_enumerate_temporary_authorizations;
   authority_class->revoke_temporary_authorizations = polkit_backend_interactive_authority_revoke_temporary_authorizations;
   authority_class->revoke_temporary_authorization_by_id = polkit_backend_interactive_authority_revoke_temporary_authorization_by_id;
+
+  /**
+   * PolkitBackendInteractiveAuthority:expiration_seconds:
+   *
+   * The expiration time of interactive authorizations.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_EXPIRATION_SECONDS,
+                                   g_param_spec_uint ("expiration-seconds",
+                                                      "Expiration Seconds",
+                                                      "The expiration time of interactive authorizations in seconds",
+                                                      0,
+                                                      G_MAXUINT,
+                                                      5 * 60, /* default to 5 minutes */
+                                                      G_PARAM_CONSTRUCT |
+                                                      G_PARAM_READWRITE |
+                                                      G_PARAM_STATIC_NAME |
+                                                      G_PARAM_STATIC_BLURB |
+                                                      G_PARAM_STATIC_NICK));
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -686,6 +780,7 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
           is_temp = TRUE;
 
           id = temporary_authorization_store_add_authorization (priv->temporary_authorization_store,
+                                                                priv->expiration_seconds,
                                                                 subject,
                                                                 authentication_agent_get_scope (agent),
                                                                 action_id);
@@ -3459,12 +3554,12 @@ temporary_authorization_store_remove_authorizations_for_system_bus_name (Tempora
 
 static const gchar *
 temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *store,
+                                                 guint                        expiration_seconds,
                                                  PolkitSubject               *subject,
                                                  PolkitSubject               *scope,
                                                  const gchar                 *action_id)
 {
   TemporaryAuthorization *authorization;
-  guint expiration_seconds;
   PolkitSubject *subject_to_use;
 
   g_return_val_if_fail (store != NULL, NULL);
@@ -3473,13 +3568,6 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   g_return_val_if_fail (!temporary_authorization_store_has_authorization (store, subject, action_id, NULL), NULL);
 
   subject_to_use = convert_temporary_authorization_subject (subject);
-
-  /* TODO: right now the time the temporary authorization is kept is hard-coded - we
-   *       could make it a propery on the PolkitBackendInteractiveAuthority class (so
-   *       the local authority could read it from a config file) or a vfunc
-   *       (so the local authority could read it from an annotation on the action).
-   */
-  expiration_seconds = 5 * 60;
 
   authorization = g_new0 (TemporaryAuthorization, 1);
   authorization->id = g_strdup_printf ("tmpauthz%" G_GUINT64_FORMAT, store->serial++);
