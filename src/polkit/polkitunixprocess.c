@@ -739,7 +739,8 @@ polkit_unix_process_get_pid (PolkitUnixProcess *process)
       if (pid > 0)
         return pid;
 
-      g_error_free (error);
+      if (error)
+        g_error_free (error);
       return 0;
     }
 
@@ -769,7 +770,8 @@ polkit_unix_process_get_ppid (PolkitUnixProcess *process)
   if (ppid > 0)
     return ppid;
 
-  g_error_free (error);
+  if (error)
+    g_error_free (error);
   return 0;
 }
 
