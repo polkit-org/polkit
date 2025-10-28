@@ -33,3 +33,9 @@ RestrictSUIDSGID=yes
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
 UMask=0077
+
+# Mitigate memory leaks
+MemoryMax=32M
+MemorySwapMax=32M
+OOMPolicy=stop
+Restart=on-failure
