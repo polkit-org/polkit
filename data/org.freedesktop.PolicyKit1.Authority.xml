@@ -6,9 +6,6 @@
     <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authority Interface"/>
     <annotation name="org.gtk.EggDBus.DocString" value="This D-Bus interface is implemented by the <literal>/org/freedesktop/PoliycKit1/Authority</literal> object on the well-known name <literal>org.freedesktop.PolicyKit1</literal> on the system message bus."/>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
-    <!-- Subject struct -->
     <annotation name="org.gtk.EggDBus.DeclareStruct" value="Subject">
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Subjects"/>
       <annotation name="org.gtk.EggDBus.DocString" value="<para>This struct describes subjects such as UNIX processes. It is typically used to check if a given process is authorized for an action.</para><para>The following kinds of subjects are known:</para>
@@ -25,8 +22,6 @@
       </annotation>
 
     </annotation>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <!-- Identity struct -->
     <annotation name="org.gtk.EggDBus.DeclareStruct" value="Identity">
@@ -48,8 +43,6 @@
       <!-- TODO: document values in hash map for each identity type-->
 
     </annotation>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <!-- ActionDescription struct -->
     <annotation name="org.gtk.EggDBus.DeclareStruct" value="ActionDescription">
@@ -101,8 +94,6 @@
 
     </annotation>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <!-- Flags used for checking authorizations -->
     <annotation name="org.gtk.EggDBus.DeclareFlags" value="CheckAuthorizationFlags">
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Flags used when checking authorizations"/>
@@ -115,8 +106,6 @@
         <annotation name="org.gtk.EggDBus.DocString" value="Check access against policy even if the #Subject is the root user."/>
       </annotation>
     </annotation>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <!-- An structure containing the results of an authorization check -->
     <annotation name="org.gtk.EggDBus.DeclareStruct" value="AuthorizationResult">
@@ -135,8 +124,6 @@
         <annotation name="org.gtk.EggDBus.DocString" value="Details for the result or empty if not authorized. Known key/value-pairs include <literal>polkit.temporary_authorization_id</literal> (if the authorization is temporary, this is set to the opaque temporary authorization id), <literal>polkit.retains_authorization_after_challenge</literal> (Set to a non-empty string if the authorization will be retained after authentication (if is_challenge is TRUE)) and <literal>polkit.lockdown</literal> (set to a non-empty string if the action is locked down)."/>
       </annotation>
     </annotation>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <!-- An enumeration for implicit authorizations -->
     <annotation name="org.gtk.EggDBus.DeclareEnum" value="ImplicitAuthorization">
@@ -169,8 +156,6 @@
 
     </annotation>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <!-- The error domain used for reporting errors -->
     <annotation name="org.gtk.EggDBus.DeclareErrorDomain" value="Error">
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Errors"/>
@@ -196,8 +181,6 @@
       </annotation>
     </annotation>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <!-- Flags describing what features the Authority implementation supports -->
     <annotation name="org.gtk.EggDBus.DeclareFlags" value="AuthorityFeatures">
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Authority Features"/>
@@ -212,8 +195,6 @@
       </annotation>
     </annotation>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <property name="BackendName" type="s" access="read">
       <annotation name="org.gtk.EggDBus.DocString" value="The name of the currently used Authority backend."/>
     </property>
@@ -227,8 +208,6 @@
       <annotation name="org.gtk.EggDBus.DocString" value="The features supported by the currently used Authority backend."/>
     </property>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <method name="EnumerateActions">
       <annotation name="org.gtk.EggDBus.DocString" value="Enumerates all registered PolicyKit actions."/>
 
@@ -241,8 +220,6 @@
         <annotation name="org.gtk.EggDBus.DocString" value="An array of #ActionDescription structs."/>
       </arg>
     </method>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <method name="CheckAuthorization">
       <annotation name="org.gtk.EggDBus.DocString" value="<para>Checks if @subject is authorized to perform the action with identifier @action_id.</para><para>If @cancellation_id is non-empty and already in use for the caller, the %org.freedesktop.PolicyKit1.Error.CancellationIdNotUnique error is returned.</para><para>Note that %CheckAuthorizationFlags.AllowUserInteraction SHOULD be passed ONLY if the event that triggered the authorization check is stemming from an user action, e.g. the user pressing a button or attaching a device.</para>"/>
@@ -282,8 +259,6 @@
         <annotation name="org.gtk.EggDBus.DocString" value="The @cancellation_id passed to org.freedesktop.PolicyKit1.Authority.CheckAuthorization()."/>
       </arg>
     </method>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <method name="RegisterAuthenticationAgent">
       <annotation name="org.gtk.EggDBus.DocString" value="<para>Register an authentication agent.</para><para>Note that this should be called by the same effective UID which will be passed to org.freedesktop.PolicyKit1.Authority.AuthenticationAgentResponse2().</para>"/>
@@ -353,8 +328,6 @@ Must match the effective UID of the caller of org.freedesktop.PolicyKit1.Authori
       </arg>
     </method>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <!-- TemporaryAuthorization struct -->
     <annotation name="org.gtk.EggDBus.DeclareStruct" value="TemporaryAuthorization">
       <annotation name="org.gtk.EggDBus.DocString.Summary" value="Temporary Authorizations"/>
@@ -381,8 +354,6 @@ Must match the effective UID of the caller of org.freedesktop.PolicyKit1.Authori
         <annotation name="org.gtk.EggDBus.DocString" value="When the temporary authorization is set to expire, in seconds since the Epoch Jan 1, 1970 0:00 UTC."/>
       </annotation>
     </annotation>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <method name="EnumerateTemporaryAuthorizations">
       <annotation name="org.gtk.EggDBus.DocString" value="Retrieves all temporary authorizations that applies to @subject."/>
@@ -415,8 +386,6 @@ Must match the effective UID of the caller of org.freedesktop.PolicyKit1.Authori
       </arg>
     </method>
 
-    <!-- ---------------------------------------------------------------------------------------------------- -->
-
     <method name="AddLockdownForAction">
       <annotation name="org.gtk.EggDBus.DocString" value="Locks down an action so administrator authentication is always needed to obtain a temporary authorization for the action."/>
       <arg name="action_id" direction="in" type="s">
@@ -430,8 +399,6 @@ Must match the effective UID of the caller of org.freedesktop.PolicyKit1.Authori
         <annotation name="org.gtk.EggDBus.DocString" value="Identifier for the action."/>
       </arg>
     </method>
-
-    <!-- ---------------------------------------------------------------------------------------------------- -->
 
     <signal name="Changed">
       <annotation name="org.gtk.EggDBus.DocString" value="This signal is emitted when actions, sessions and/or authorizations change, carrying information about the change."/>
