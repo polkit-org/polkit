@@ -20,6 +20,11 @@ configure_file(
   install_dir: dbus_policydir,
 )
 
+dbus_interface_files = files(
+  'org.freedesktop.PolicyKit1.AuthenticationAgent.xml',
+  'org.freedesktop.PolicyKit1.Authority.xml',
+)
+
 if enable_pam
   if os_type == 'debian' and pam_include == ''
     install_data(
@@ -95,4 +100,19 @@ if not get_option('libs-only')
     install: true,
     install_dir: tmpfiles_dir,
   )
+
+  xmllint = find_program('xmllint', required: false)
+  if xmllint.found()
+    dbus_prefix = dbus_dep.get_variable(pkgconfig: 'prefix')
+    test(
+      'validate-dbus-interfaces', xmllint,
+      env: {
+        'XML_CATALOG_FILES': join_paths(dbus_prefix, 'share', 'xml', 'dbus-1', 'catalog.xml'),
+      },
+      args: [
+        '--nonet', '--noblanks', '--noout', '--valid',
+        dbus_interface_files,
+      ],
+    )
+  endif
 endif
