@@ -115,6 +115,9 @@ SystemCallFilter=
 # possible
 ExecStart=
 ExecStart=/usr/lib/polkit-1/polkitd --log-level=debug
+# Drop memory limits, since running under sanitizers is quite resource hungry
+MemoryMax=
+MemorySwapMax=
 EOF
 
 check_journal_for_sanitizer_errors() {
