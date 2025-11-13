@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="polkitd.conf.5">
+  <refentryinfo>
+    <title>polkitd.conf</title>
+    <date>October 2025</date>
+    <productname>polkit</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>polkitd.conf</refentrytitle>
+    <manvolnum>5</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>polkitd.conf</refname>
+    <refpurpose>The polkit system daemon configuration file</refpurpose>
+  </refnamediv>
+
+  <refsect1 id="polkitd-description"><title>DESCRIPTION</title>
+    <para>
+      The <command>polkitd.conf</command> file is the configuration
+      file for the <command>polkitd</command> system daemon. The configuration
+      format is INI style, with sections and key=value pairs.
+    </para>
+
+    <para>
+      The configuration file located at
+      <filename>/etc/polkit-1/polkitd.conf</filename> has the highest precedence,
+      if found. If not, <filename>/run/polkit-1/polkitd.conf</filename> will be used.
+      If neither file is found, <filename>/usr/lib/polkit-1/polkitd.conf</filename>
+      will be used. If no configuration file is found, default settings
+      compiled into <command>polkitd</command> will be used.
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkitd-section"><title>[Polkitd] SECTION</title>
+    <para>
+      The <literal>[Polkitd]</literal> section accepts the following keys.
+    </para>
+
+    <refsect2 id="polkitd-expiration-seconds"><title>ExpirationSeconds=</title>
+      <para>
+        Specifies the default expiration time, in seconds, for temporary
+        authorizations granted by <command>polkitd</command> via
+        interactive authentication. The default value is 300 (5 minutes).
+      </para>
+    </refsect2>
+  </refsect1>
+
+  <refsect1 id="polkitd-conf-see-also">
+    <title>SEE ALSO</title>
+    <para>
+      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+    </para>
+  </refsect1>
+</refentry>

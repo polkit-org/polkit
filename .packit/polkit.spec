@@ -121,6 +121,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 %files -f polkit-1.lang
 %doc COPYING NEWS.md README.md
 %{_datadir}/man/man1/*
+%{_datadir}/man/man5/*
 %{_datadir}/man/man8/*
 %{_datadir}/dbus-1/system.d/org.freedesktop.PolicyKit1.conf
 %{_datadir}/dbus-1/system-services/*
@@ -132,6 +133,7 @@ rm -f $RPM_BUILD_ROOT%{_libdir}/*.la
 %attr(0750,root,polkitd) %dir %{_datadir}/polkit-1/rules.d
 %{_datadir}/polkit-1/actions/org.freedesktop.policykit.policy
 %{_datadir}/polkit-1/policyconfig-1.dtd
+%{_datadir}/polkit-1/polkitd.conf
 %dir %{_sysconfdir}/polkit-1
 %{_datadir}/polkit-1/rules.d/50-default.rules
 %attr(0750,root,polkitd) %dir %{_sysconfdir}/polkit-1/rules.d

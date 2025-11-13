@@ -51,6 +51,100 @@ static GOptionEntry            opt_entries[] = {
   {NULL }
 };
 
+static gboolean
+load_key_from_config_file (const gchar *filename,
+                           const gchar *section,
+                           const gchar *key,
+                           gchar **ret_value)
+{
+  gboolean r;
+  gchar *value = NULL;
+  GError *error = NULL;
+  GKeyFile *config_file = NULL;
+
+  g_assert (ret_value != NULL);
+
+  config_file = g_key_file_new ();
+  g_assert (config_file != NULL);
+
+  r = g_key_file_load_from_file (config_file, filename, 0, &error);
+  if (!r)
+    {
+      if (!g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOENT))
+        g_printerr ("Error loading config file '%s': %s\n", filename, error->message);
+      goto out;
+    }
+
+  value = g_key_file_get_string (config_file, section, key, &error);
+  if (value == NULL)
+    {
+      r = FALSE;
+      if (!g_error_matches (error, G_KEY_FILE_ERROR, G_KEY_FILE_ERROR_KEY_NOT_FOUND))
+        g_printerr ("Error reading '%s' from config file '%s': %s\n", key, filename, error->message);
+      goto out;
+    }
+
+  *ret_value = value;
+  value = NULL;
+  r = TRUE;
+
+out:
+  if (error)
+    g_error_free (error);
+  g_key_file_free (config_file);
+  g_free (value);
+
+  return r;
+}
+
+static gboolean
+parse_expiration_seconds (guint *ret_expiration_seconds)
+{
+  gboolean r;
+  gchar *value = NULL;
+  gchar *end_ptr = NULL;
+  guint64 expiration_seconds;
+
+  g_assert (ret_expiration_seconds != NULL);
+
+  r = load_key_from_config_file ("/etc/polkit-1/polkitd.conf",
+                                 "Polkitd",
+                                 "ExpirationSeconds",
+                                 &value);
+  if (!r)
+    r = load_key_from_config_file ("/run/polkit-1/polkitd.conf",
+                                   "Polkitd",
+                                   "ExpirationSeconds",
+                                   &value);
+  if (!r)
+    r = load_key_from_config_file ("/usr/share/polkit-1/polkitd.conf",
+                                   "Polkitd",
+                                   "ExpirationSeconds",
+                                   &value);
+  if (!r)
+    goto out;
+
+  expiration_seconds = g_ascii_strtoull (value, &end_ptr, 10);
+  if ((expiration_seconds == G_MAXUINT64 && errno == ERANGE) ||
+      (expiration_seconds == 0 && end_ptr == value) ||
+      (expiration_seconds == 0 && errno == EINVAL) ||
+      expiration_seconds > G_MAXUINT ||
+      *end_ptr != '\0')
+    {
+      g_printerr ("Error parsing ExpirationSeconds value '%s' from config file\n", value);
+      r = FALSE;
+      goto out;
+    }
+
+  *ret_expiration_seconds = (guint) expiration_seconds;
+  r = TRUE;
+
+out:
+  g_free (value);
+
+  return r;
+}
+
 static void
 on_bus_acquired (GDBusConnection *connection,
                  const gchar     *name,
@@ -109,6 +203,8 @@ on_sigint_sigterm (gpointer user_data)
 static gboolean
 on_sighup (gpointer user_data)
 {
+  guint expiration_seconds;
+
 #ifdef HAVE_LIBSYSTEMD
   gchar reload_message[sizeof("RELOADING=1\nMONOTONIC_USEC=18446744073709551615")];
   gint64 monotonic_now;
@@ -125,6 +221,10 @@ on_sighup (gpointer user_data)
   g_print ("Handling SIGHUP\n");
 
   polkit_backend_interactive_authority_reload (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority));
+
+  if (parse_expiration_seconds (&expiration_seconds))
+    polkit_backend_interactive_authority_set_expiration_seconds (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
+                                                                 expiration_seconds);
 
 #ifdef HAVE_LIBSYSTEMD
   /* Notify systemd that we have finished reloading. */
@@ -209,6 +309,7 @@ main (int    argc,
   guint name_owner_id;
   guint sigint_id;
   guint sighup_id;
+  guint expiration_seconds;
 
   loop = NULL;
   opt_context = NULL;
@@ -288,6 +389,10 @@ main (int    argc,
                                   on_name_lost,
                                   NULL,
                                   NULL);
+
+  if (parse_expiration_seconds (&expiration_seconds))
+    polkit_backend_interactive_authority_set_expiration_seconds (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
+                                                                 expiration_seconds);
 
   g_print ("Entering main event loop\n");
 
