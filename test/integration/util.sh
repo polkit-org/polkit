@@ -69,17 +69,11 @@ ExecStart=systemd-nspawn --quiet --network-veth --keep-unit --machine=%i --boot 
 EOF
     systemctl daemon-reload
 
-
     # Prepare the nspawn container overlay
     mkdir "$CONTAINER_OVERLAY"/{etc,usr}/
     # Let systemd-nspawn propagate the machine ID and hostname we passed it
     : >"$CONTAINER_OVERLAY/etc/machine-id"
     : >"$CONTAINER_OVERLAY/etc/hostname"
-    # Create a non-root user, so we can test session bus stuff as well
-    mkdir -p "$CONTAINER_OVERLAY/etc/sysusers.d/"
-    cat >"$CONTAINER_OVERLAY/etc/sysusers.d/testuser.conf" <<EOF
-u testuser - "Test User" /home/testuser
-EOF
 }
 
 # Start the container created by container_prepare() and wait until it boots.
@@ -94,6 +88,15 @@ container_start() {
     # is-system-running returns > 0 if the system is running in degraded mode, but we don't care about that, we
     # just need to wait until the bootup is finished
     container_run systemctl is-system-running -q --wait || :
+    # Create a non-root user, so we can test session bus stuff as well
+    #
+    # We can't use sysusers.d here becaues it's not (yet) designed for creating non-system users (i.e. users
+    # with UID >= 1000). We need a non-system user here, because since v258 systemd doesn't start user
+    # managers automatically for system users (which means a user D-Bus session as well), so we then couldn't
+    # use the test user with `systemd-run -M testuser@... --user` etc.
+    #
+    # See: https://github.com/systemd/systemd/commit/cf8f6cd0571a4f474c449d4b1fda1c4192c01824
+    container_run useradd -m testuser
 }
 
 container_stop() {
