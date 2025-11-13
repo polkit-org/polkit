@@ -34,7 +34,7 @@ To check if the test itself works as expected you can use `tmt run`:
 
 ```
 $ cd test/name
-$ tmt run -vvv --all provision --how local tests --name .
+$ tmt run -vvv --all provision --how local --feeling-safe tests --name .
 ...
 total: 1 test passed
 ```
