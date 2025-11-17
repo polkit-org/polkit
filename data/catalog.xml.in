@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!--
+  SPDX-License-Identifier: LGPL-2.1-or-later
+  SPDX-FileCopyrightText: 2025 GNOME Foundation, Inc.
+-->
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="public">
+  <public publicId="-//freedesktop//DTD polkit Policy Configuration 1.0//EN" uri="@POLKIT_DTD_DIR@/policyconfig-1.dtd"/>
+  <system systemId="http://www.freedesktop.org/software/polkit/policyconfig-1.dtd" uri="@POLKIT_DTD_DIR@/policyconfig-1.dtd"/>
+</catalog>
