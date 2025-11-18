@@ -3470,14 +3470,25 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   g_return_val_if_fail (action_id != NULL, NULL);
   g_return_val_if_fail (!temporary_authorization_store_has_authorization (store, subject, action_id, NULL), NULL);
 
-  subject_to_use = convert_temporary_authorization_subject (subject);
-
   /* TODO: right now the time the temporary authorization is kept is hard-coded - we
    *       could make it a propery on the PolkitBackendInteractiveAuthority class (so
    *       the local authority could read it from a config file) or a vfunc
    *       (so the local authority could read it from an annotation on the action).
    */
   expiration_seconds = 5 * 60;
+
+  /* temporary method to disable auth_keep */
+  gchar *sudoers;
+  if (g_file_get_contents ("/etc/sudoers", &sudoers, NULL, NULL ))
+    {
+      if (strstr( sudoers, "timestamp_timeout=0" ))
+        expiration_seconds = 0;
+      g_free(sudoers);
+    }
+  if (!expiration_seconds)
+    return NULL;
+
+  subject_to_use = convert_temporary_authorization_subject (subject);
 
   authorization = g_new0 (TemporaryAuthorization, 1);
   authorization->id = g_strdup_printf ("tmpauthz%" G_GUINT64_FORMAT, store->serial++);
