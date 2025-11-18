@@ -19,6 +19,7 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#include "glib.h"
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -673,7 +674,7 @@ main (int argc, char *argv[])
           goto out;
         }
       /* If you change this, be sure to change the if (!command_line)
-	 case below too */
+	    case below too */
       command_line = g_strdup (path);
       shell_argv = g_ptr_array_new ();
       g_ptr_array_add (shell_argv, path);
@@ -706,7 +707,8 @@ main (int argc, char *argv[])
       }
     }
 
-  s = realpath(path, NULL);
+  s = g_canonicalize_filename(path, NULL);
+
   if (s != NULL)
     {
       /* The called program resolved to the canonical location. We don't update
