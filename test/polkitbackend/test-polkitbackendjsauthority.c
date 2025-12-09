@@ -405,6 +405,24 @@ static const RulesTestCase rules_test_cases[] = {
     NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
   },
+
+  {
+    /* john (uid 500) is authorized to do this based on uid check, see 10-testing.rules */
+    "john_uid_action",
+    "net.company.john_uid_action",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+  },
+
+  {
+    /* only uid 500 is authorized to do this, jane has uid 501, see 10-testing.rules */
+    "jane_uid_action",
+    "net.company.john_uid_action",
+    "unix-user:jane",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+  },
 };
 
 /* ---------------------------------------------------------------------------------------------------- */

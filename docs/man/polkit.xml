@@ -769,6 +769,15 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
         </varlistentry>
 
         <varlistentry>
+          <term><type>int</type> uid</term>
+          <listitem>
+            <para>
+              The UID of the user of the subject.
+            </para>
+          </listitem>
+        </varlistentry>
+
+        <varlistentry>
           <term><type>string</type> user</term>
           <listitem>
             <para>
