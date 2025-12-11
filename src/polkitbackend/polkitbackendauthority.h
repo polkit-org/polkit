@@ -226,10 +226,9 @@ const gchar             *polkit_backend_authority_get_name     (PolkitBackendAut
 const gchar             *polkit_backend_authority_get_version  (PolkitBackendAuthority *authority);
 PolkitAuthorityFeatures  polkit_backend_authority_get_features (PolkitBackendAuthority *authority);
 
-void     polkit_backend_authority_log (PolkitBackendAuthority *authority,
-                                       const guint message_log_level,
-                                       const gchar *format,
-                                       ...);
+void     polkit_backend_log (const guint message_log_level,
+                             const gchar *format,
+                             ...);
 
 void
 polkit_backend_authority_set_log_level (const gchar *level);
