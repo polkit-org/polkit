@@ -576,7 +576,13 @@ ensure_all_files (PolkitBackendActionPool *pool)
                                             &error);
     if (error != NULL)
     {
-      g_warning ("Error enumerating files in %s: %s", dir_name, error->message);
+      /* These directories are not required, do not print a warning if they are missing */
+      if (!g_error_matches (error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND) ||
+          (g_strcmp0 (dir_name, "/etc/polkit-1/actions") != 0 &&
+           g_strcmp0 (dir_name, "/run/polkit-1/actions") != 0 &&
+           g_strcmp0 (dir_name, "/usr/local/share/polkit-1/actions") != 0 &&
+           g_strcmp0 (dir_name, "/usr/share/polkit-1/actions") != 0))
+        g_warning ("Error enumerating files in %s: %s", dir_name, error->message);
       g_error_free (error);
     }
     else
@@ -593,7 +599,8 @@ ensure_all_files (PolkitBackendActionPool *pool)
       } /* for all files */
     }
 
-    g_object_unref (enumerator);
+    if (enumerator)
+      g_object_unref (enumerator);
     g_free (dir_name);
   }
 
