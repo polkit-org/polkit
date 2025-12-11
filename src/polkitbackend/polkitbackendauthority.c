@@ -1785,12 +1785,11 @@ _color_get (_Color color)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-G_GNUC_PRINTF(3, 4)
+G_GNUC_PRINTF(2, 3)
 void
-polkit_backend_authority_log (PolkitBackendAuthority *authority,
-                              const guint message_log_level,
-                              const gchar *format,
-                              ...)
+polkit_backend_log (const guint message_log_level,
+                    const gchar *format,
+                    ...)
 {
   guint64 now;
   time_t now_time;
@@ -1803,8 +1802,6 @@ polkit_backend_authority_log (PolkitBackendAuthority *authority,
   {
 	  return;
   }
-
-  g_return_if_fail (POLKIT_BACKEND_IS_AUTHORITY (authority));
 
   va_start (var_args, format);
   message = g_strdup_vprintf (format, var_args);

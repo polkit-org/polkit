@@ -695,9 +695,8 @@ log_result (PolkitBackendInteractiveAuthority    *authority,
   if (caller_cmdline == NULL)
     caller_cmdline = g_strdup ("<unknown>");
 
-  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_INFO,
-                                "%s action %s for %s [%s] owned by %s (check requested by %s [%s])",
+  polkit_backend_log (LOG_LEVEL_INFO,
+                      "%s action %s for %s [%s] owned by %s (check requested by %s [%s])",
                                 log_result_str,
                                 action_id,
                                 subject_str,
@@ -805,10 +804,9 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
     {
       if (is_temp)
         {
-          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        LOG_LEVEL_INFO,
-                                        "Operator of %s successfully authenticated as %s to gain "
-                                        "TEMPORARY authorization for action %s for %s [%s] (owned by %s)",
+          polkit_backend_log (LOG_LEVEL_INFO,
+                              "Operator of %s successfully authenticated as %s to gain "
+                              "TEMPORARY authorization for action %s for %s [%s] (owned by %s)",
                                         scope_str,
                                         authenticated_identity_str,
                                         action_id,
@@ -818,10 +816,9 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
         }
       else
         {
-          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        LOG_LEVEL_INFO,
-                                        "Operator of %s successfully authenticated as %s to gain "
-                                        "ONE-SHOT authorization for action %s for %s [%s] (owned by %s)",
+          polkit_backend_log (LOG_LEVEL_INFO,
+                              "Operator of %s successfully authenticated as %s to gain "
+                              "ONE-SHOT authorization for action %s for %s [%s] (owned by %s)",
                                         scope_str,
                                         authenticated_identity_str,
                                         action_id,
@@ -832,10 +829,9 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
     }
   else
     {
-      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    LOG_LEVEL_NOTICE,
-                                    "Operator of %s FAILED to authenticate to gain "
-                                    "authorization for action %s for %s [%s] (owned by %s)",
+      polkit_backend_log (LOG_LEVEL_NOTICE,
+                          "Operator of %s FAILED to authenticate to gain "
+                          "authorization for action %s for %s [%s] (owned by %s)",
                                     scope_str,
                                     action_id,
                                     subject_str,
@@ -2104,9 +2100,8 @@ append_property (GString *dest,
     }
   else
     {
-      polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                    LOG_LEVEL_ERROR,
-                                    "Error substituting value for property $(%s) when preparing message `%s' for action-id %s",
+      polkit_backend_log (LOG_LEVEL_ERROR,
+                          "Error substituting value for property $(%s) when preparing message `%s' for action-id %s",
                                     key,
                                     message,
                                     action_id);
@@ -2764,10 +2759,9 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
            object_path,
            locale);
 
-  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_INFO,
-                                "Registered Authentication Agent for %s "
-                                "(system bus name %s [%s], object path %s, locale %s)",
+  polkit_backend_log (LOG_LEVEL_INFO,
+                      "Registered Authentication Agent for %s "
+                      "(system bus name %s [%s], object path %s, locale %s)",
                                 subject_as_string,
                                 polkit_system_bus_name_get_name (POLKIT_SYSTEM_BUS_NAME (caller)),
                                 caller_cmdline,
@@ -2922,10 +2916,9 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
            agent->object_path,
            agent->locale);
 
-  polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                LOG_LEVEL_INFO,
-                                "Unregistered Authentication Agent for %s "
-                                "(system bus name %s, object path %s, locale %s)",
+  polkit_backend_log (LOG_LEVEL_INFO,
+                      "Unregistered Authentication Agent for %s "
+                      "(system bus name %s, object path %s, locale %s)",
                                 scope_str,
                                 agent->unique_system_bus_name,
                                 agent->object_path,
@@ -3075,10 +3068,9 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
                    agent->unique_system_bus_name,
                    agent->object_path);
 
-          polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
-                                        LOG_LEVEL_INFO,
-                                        "Unregistered Authentication Agent for %s "
-                                        "(system bus name %s, object path %s, locale %s) (disconnected from bus)",
+          polkit_backend_log (LOG_LEVEL_INFO,
+                              "Unregistered Authentication Agent for %s "
+                              "(system bus name %s, object path %s, locale %s) (disconnected from bus)",
                                         scope_str,
                                         agent->unique_system_bus_name,
                                         agent->object_path,
