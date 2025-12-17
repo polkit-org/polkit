@@ -3,7 +3,7 @@
 #
 Summary: An authorization framework
 Name: polkit
-Version: 127
+Version: 128
 Release: 1%{?dist}
 License: LGPL-2.0-or-later
 URL: https://github.com/polkit-org/polkit
