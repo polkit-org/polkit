@@ -1,3 +1,52 @@
+## polkit 127
+
+### Highlights:
+- socket-activated polkit-agent-helper can now run without SETUID (Luca Boccassi)
+- user id (UID) now accessible to JavaScript rules via subject.uid (Rosentti, Jan Rybar)
+- INI config file support for polkitd with configurable auth expiration timer (Luca Boccassi)
+- auth_keep: skip re-authentication if new process shares same UID/parent/cgroup/tty (Luca Boccassi)
+- CheckAuthorization now returns 'polkit.result' in the details dict (Luca Boccassi)
+- pkexec: set $SUDO_UID/$SUDO_GID for compatibility with sudo (Lennart Poettering)
+- pkexec: use realpath when comparing org.freedesktop.policykit.exec.path (Walter Doekes)
+- memory limits added to systemd unit to mitigate memory leaks (Alexander Meshcheryakov)
+- new translations: Bulgarian (twlvnn kraftwerk), Occitan (Mejans)
+
+### Build requirements
+- glib, gobject, gio >= 2.32
+- duktape
+- meson >= 1.4.0
+- gobject-introspection >= 0.6.2 (optional)
+- pam (optional)
+- ConsoleKit OR systemd-logind OR elogind
+- gettext
+
+### People who made this version possible:
+Alexander Meshcheryakov
+Andrew Sayers
+Corentin Noël
+Frantisek Sumsal
+Jan Rybar
+Jan Tojnar
+Lennart Poettering
+liuyuanpeng
+Luca Boccassi
+Med Maatallah
+Mejans
+Myrrh Periwinkle
+peelz
+Philip Withnall
+Rosentti
+shechenglong
+twlvnn kraftwerk
+Vincent Mihalkovic
+Walter Doekes
+zhangkun
+
+**This massive new version wouldn't have been possible without the hard work and dedication of all the contributors and enthusiasts. Many thanks to all!**
+
+The polkit team & polkit community
+Dec 17, 2025
+
 ## polkit 126
 
 ### Highlights:
