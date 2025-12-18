@@ -34,6 +34,7 @@
 #include "polkitagentlistener.h"
 #include "polkitagenttextlistener.h"
 #include "polkitagentsession.h"
+#include <glib/gi18n-lib.h>
 
 /**
  * SECTION:polkitagenttextlistener
@@ -295,9 +296,9 @@ on_completed (PolkitAgentSession *session,
   if (listener->use_color)
     fprintf (listener->tty, "\x1B[1;31m");
   if (gained_authorization)
-    fprintf (listener->tty, "==== AUTHENTICATION COMPLETE ====\n");
+    fprintf (listener->tty, "%s\n", _( "==== AUTHENTICATION COMPLETE ====" ));
   else
-    fprintf (listener->tty, "==== AUTHENTICATION FAILED ====\n");
+    fprintf (listener->tty, "%s\n", _( "==== AUTHENTICATION FAILED ====" ));
   if (listener->use_color)
     fprintf (listener->tty, "\x1B[0m");
   if (listener->use_alternate_buffer)
@@ -413,7 +414,7 @@ on_show_error (PolkitAgentSession *session,
                gpointer            user_data)
 {
   PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (user_data);
-  fprintf (listener->tty, "Error: %s\n", text);
+  fprintf (listener->tty, _( "Error: %s\n" ), text);
   fflush (listener->tty);
 }
 
@@ -423,7 +424,7 @@ on_show_info (PolkitAgentSession *session,
               gpointer            user_data)
 {
   PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (user_data);
-  fprintf (listener->tty, "Info: %s\n", text);
+  fprintf (listener->tty, _( "Info: %s\n" ), text);
   fflush (listener->tty);
 }
 
@@ -432,7 +433,7 @@ on_cancelled (GCancellable *cancellable,
               gpointer      user_data)
 {
   PolkitAgentTextListener *listener = POLKIT_AGENT_TEXT_LISTENER (user_data);
-  fprintf (listener->tty, "Cancelled\n");
+  fprintf (listener->tty, "%s\n", _( "Cancelled" ));
   fflush (listener->tty);
   polkit_agent_session_cancel (listener->active_session);
 }
@@ -580,7 +581,7 @@ polkit_agent_text_listener_initiate_authentication (PolkitAgentListener  *_liste
   if (listener->use_color)
     fprintf (listener->tty, "\x1B[1;31m");
   fprintf (listener->tty,
-           "==== AUTHENTICATING FOR %s ====\n",
+           _( "==== POLKIT TEST AUTH FOR %s\n" ),
            action_id);
   if (listener->use_color)
     fprintf (listener->tty, "\x1B[0m");
@@ -596,7 +597,7 @@ polkit_agent_text_listener_initiate_authentication (PolkitAgentListener  *_liste
         {
           if (listener->use_color)
             fprintf (listener->tty, "\x1B[1;31m");
-          fprintf (listener->tty, "==== AUTHENTICATION CANCELED ====\n");
+          fprintf (listener->tty, "%s\n", _( "==== AUTHENTICATION CANCELED ====" ));
           if (listener->use_color)
             fprintf (listener->tty, "\x1B[0m");
           fflush (listener->tty);
@@ -615,7 +616,7 @@ polkit_agent_text_listener_initiate_authentication (PolkitAgentListener  *_liste
       identity = identities->data;
       s = identity_to_human_readable_string (identity);
       fprintf (listener->tty,
-               "Authenticating as: %s\n",
+               _( "Authenticating as: %s\n" ),
                s);
       g_free (s);
     }

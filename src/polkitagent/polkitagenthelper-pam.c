@@ -100,6 +100,7 @@ main (int argc, char *argv[])
 
   char *lang = getenv("LANG");
   char *language = getenv("LANGUAGE");
+  char *lc_messages = getenv("LC_MESSAGES");
 
   /* clear the entire environment to avoid attacks using with libraries honoring environment variables */
   if (_polkit_clearenv () != 0)
@@ -112,6 +113,8 @@ main (int argc, char *argv[])
       setenv("LANG",lang,0);
   if(language)
       setenv("LANGUAGE",language,0);
+  if(lc_messages)
+      setenv("LC_MESSAGES", lc_messages, 0);
 
   /* check that we are setuid root */
   if (geteuid () != 0)
