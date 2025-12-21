@@ -144,7 +144,9 @@ main (int argc, char *argv[])
   if (argv[1] != NULL && strcmp (argv[1], "--socket-activated") == 0)
     {
       socklen_t socklen = sizeof(int);
+#ifdef SO_PEERCRED
       struct ucred ucred;
+#endif
 
       user_to_auth_free = read_cookie (argc, argv);
       if (!user_to_auth_free)
@@ -168,8 +170,12 @@ main (int argc, char *argv[])
           goto error;
         }
 
+#ifdef SO_PEERCRED
       socklen = sizeof(ucred);
       rc = getsockopt(STDIN_FILENO, SOL_SOCKET, SO_PEERCRED, &ucred, &socklen);
+#else
+      rc = -1;
+#endif
       if (rc < 0)
         {
           syslog (LOG_ERR, "Unable to get credentials from socket");
@@ -177,7 +183,9 @@ main (int argc, char *argv[])
           goto error;
         }
 
+#ifdef SO_PEERCRED
       uid = ucred.uid;
+#endif
     }
   else
     user_to_auth = argv[1];
