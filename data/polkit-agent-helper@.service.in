@@ -4,7 +4,7 @@ Documentation=man:polkit(8)
 
 [Service]
 Type=oneshot
-DevicePolicy=closed
+DevicePolicy=auto
 ExecStart=@libprivdir@/polkit-agent-helper-1 --socket-activated
 SuccessExitStatus=2
 StandardInput=socket
@@ -14,7 +14,7 @@ LimitMEMLOCK=0
 LockPersonality=yes
 MemoryDenyWriteExecute=yes
 NoNewPrivileges=yes
-PrivateDevices=yes
+PrivateDevices=no
 PrivateNetwork=yes
 PrivateTmp=yes
 ProtectControlGroups=yes
