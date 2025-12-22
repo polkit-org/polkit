@@ -10,6 +10,7 @@ ExecStart=@libprivdir@/polkit-agent-helper-1 --socket-activated
 SuccessExitStatus=2
 StandardInput=socket
 StandardOutput=socket
+StandardError=journal
 LimitMEMLOCK=0
 LockPersonality=yes
 MemoryDenyWriteExecute=yes
