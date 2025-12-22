@@ -4,8 +4,7 @@ Documentation=man:polkit(8)
 
 [Service]
 Type=oneshot
-DeviceAllow=/dev/null rw
-DevicePolicy=strict
+DevicePolicy=closed
 ExecStart=@libprivdir@/polkit-agent-helper-1 --socket-activated
 SuccessExitStatus=2
 StandardInput=socket
