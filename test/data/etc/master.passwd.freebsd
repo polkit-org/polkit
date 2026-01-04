@@ -1,0 +1,6 @@
+john:*:500:500::0:0:John Done:/home/john:/bin/bash
+jane:*:501:501::0:0:Jane Smith:/home/jane:/bin/bash
+sally:*:502:502::0:0:Sally Derp:/home/sally:/bin/bash
+henry:*:503:503::0:0:Henry Herp:/home/henry:/bin/bash
+highuid1:*:2147483648:2147483648::0:0:The first high uid:/home/highuid1:/sbin/nologin
+highuid2:*:4000000000:4000000000::0:0:An example high uid:/home/example:/sbin/nologin
