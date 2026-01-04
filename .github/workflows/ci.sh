@@ -20,6 +20,8 @@ if [[ "$PHASE" =~ CLANG ]]; then
     export CC=clang
     export CXX=clang++
 fi
+# Allow to run tests that alter system files since we're running in a CI
+export ALLOW_SYSTEM_DESTRUCTIVE_TESTS=1
 
 case "$PHASE" in
     BUILD_GCC|BUILD_CLANG)
