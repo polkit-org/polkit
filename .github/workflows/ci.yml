@@ -70,3 +70,45 @@ jobs:
 
       - name: Build & test
         run: .github/workflows/ci.sh ${{ matrix.phase }} elogind
+
+  freebsd:
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: freebsd-${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
+      cancel-in-progress: true
+    defaults:
+      run:
+        shell: cpa.sh {0}
+
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v6
+
+      - name: Build & test
+        uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee # v.1.3.0
+        with:
+          operating_system: 'freebsd'
+          version: '15.1'
+          architecture: 'x86_64'
+          run: |
+            # Use latest package set
+            sudo mkdir -p /usr/local/etc/pkg/repos/
+            sudo cp /etc/pkg/FreeBSD.conf /usr/local/etc/pkg/repos/FreeBSD.conf
+            sudo sed -i.bak -e 's|/quarterly|/latest|' /usr/local/etc/pkg/repos/FreeBSD.conf
+
+            echo "::group::Dependencies installation"
+            sudo -E pkg install -y \
+                meson gettext-tools gobject-introspection glib dbus pkgconf \
+                expat duktape-lib consolekit2 py312-dbus py312-python-dbusmock \
+                gtk-doc python3 perl5
+            echo "::endgroup::"
+
+            echo "::group::Build and test"
+            sudo service dbus onestart
+            sudo .github/workflows/ci.sh CLANG ConsoleKit
+            echo "::endgroup::"
+
+            # We carried the build as root, so some policy files are now
+            # unreadable by the regular user. The action tries to rsync build
+            # artifacts out of VM, which fails unless we change files owner.
+            sudo chown -R $USER .
