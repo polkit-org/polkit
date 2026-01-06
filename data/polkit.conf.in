@@ -1,1 +1,1 @@
-u @polkitd_user@ @polkitd_uid@ "User for polkitd"
+u@polkitd_user_lock@ @polkitd_user@ @polkitd_uid@ "User for polkitd"
