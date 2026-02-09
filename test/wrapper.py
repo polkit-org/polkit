@@ -38,6 +38,11 @@ def setup_test_namespace(data_dir):
     except AttributeError:
         print("Python 3.12 is required for os.unshare(), skipping")
         sys.exit(77)
+    except OSError as e:
+        if e.errno == errno.EINVAL:
+            print("os.unshare(os.CLONE_NEWNS|os.CLONE_NEWUSER) not supported, skipping")
+            sys.exit(77)
+        raise
 
 
 def stop_dbus(pid: int) -> None:
