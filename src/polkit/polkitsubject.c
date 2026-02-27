@@ -445,6 +445,7 @@ polkit_subject_new_for_gvariant_invocation (GVariant              *variant,
                                 POLKIT_ERROR,
                                 POLKIT_ERROR_FAILED,
                                 "Error parsing unix-process subject: 'pidfd' specified withtout 'uid'");
+                    g_variant_unref (v);
                     goto out;
                   }
 
