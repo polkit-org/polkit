@@ -1,0 +1,214 @@
+# Kazakh translation for polkit.
+# Copyright (C) 2026 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Baurzhan Muftakhidinov <baurthefirst@gmail.com>,  2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit main\n"
+"Report-Msgid-Bugs-To: https://github.com/polkit-org/polkit/issues\n"
+"POT-Creation-Date: 2025-09-16 16:36+0000\n"
+"PO-Revision-Date: 2026-02-28 21:45+0500\n"
+"Last-Translator: Baurzhan Muftakhidinov <baurthefirst@gmail.com>\n"
+"Language-Team: Kazakh <kk_KZ@googlegroups.com>\n"
+"Language: kk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.8\n"
+
+#: actions/org.freedesktop.policykit.policy.in:12
+msgid "Run a program as another user"
+msgstr "Бағдарламаны басқа пайдаланушы ретінде орындау"
+
+#: actions/org.freedesktop.policykit.policy.in:13
+msgid "Authentication is required to run a program as another user"
+msgstr ""
+"Бағдарламаны басқа пайдаланушы ретінде орындау үшін аутентификация қажет"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
+msgid "Run the polkit example program Frobnicate"
+msgstr "polkit үлгі Frobnicate бағдарламасын орындау"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr ""
+"polkit үлгі Frobnicate бағдарламасын орындау үшін аутентификация керек "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+
+#: src/programs/pkaction.c:97
+msgid "Only output information about ACTION"
+msgstr "Тек ӘРЕКЕТ туралы ақпаратты шығару"
+
+#: src/programs/pkaction.c:97
+msgid "ACTION"
+msgstr "ӘРЕКЕТ"
+
+#: src/programs/pkaction.c:101
+msgid "Output detailed action information"
+msgstr "Әрекет туралы егжей-тегжейлі ақпаратты шығару"
+
+#: src/programs/pkaction.c:105 src/programs/pkttyagent.c:100
+msgid "Show version"
+msgstr "Нұсқасын көрсету"
+
+#: src/programs/pkaction.c:128
+msgid "[--action-id ACTION]"
+msgstr "[--action-id ӘРЕКЕТ]"
+
+#: src/programs/pkaction.c:129 src/programs/pkttyagent.c:123
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Қателер туралы мында хабарлаңыз: %s\n"
+"%s үй беті: <%s>"
+
+#: src/programs/pkaction.c:143 src/programs/pkcheck.c:496
+#: src/programs/pkttyagent.c:137
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr "%s: «%s» күтілмеген аргументі\n"
+
+#: src/programs/pkcheck.c:32
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent "
+"if necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations "
+"for current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Қолданылуы:\n"
+"  pkcheck [ОПЦИЯ...]\n"
+"\n"
+"Көмек опциялары:\n"
+"  -h, --help                         Көмек опцияларын көрсету\n"
+"\n"
+"Қолданба опциялары:\n"
+"  -a, --action-id=ӘРЕКЕТ             ӘРЕКЕТ-ті орындау үшін авторландыруды "
+"тексеру\n"
+"  -u, --allow-user-interaction       Қажет болса, пайдаланушымен өзара "
+"әрекеттесу\n"
+"  -d, --details=КІЛТ МӘН             Әрекет туралы ақпаратқа (КІЛТ, МӘН) "
+"қосу\n"
+"  --enable-internal-agent            Қажет болса, ішкі аутентификация "
+"агентін пайдалану\n"
+"  --list-temp                        Ағымдағы сессия үшін уақытша "
+"авторландыруларды тізімдеу\n"
+"  -p, --process=PID[,START_TIME,UID] Көрсетілген процестің авторландыруын "
+"тексеру\n"
+"  --revoke-temp                      Ағымдағы сессия үшін барлық уақытша "
+"авторландыруларды қайтару\n"
+"  -s, --system-bus-name=ШИНА_АТЫ     ШИНА_АТЫ иесінің авторландыруын "
+"тексеру\n"
+"  --version                          Нұсқасын көрсету\n"
+"\n"
+"Қателер туралы мында хабарлаңыз: %s\n"
+"%s үй беті: <%s>\n"
+
+#: src/programs/pkcheck.c:396 src/programs/pkcheck.c:429
+#: src/programs/pkcheck.c:441
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr "%s: «%s» соңынан аргумент күтіледі\n"
+
+#: src/programs/pkcheck.c:419
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr "%s: «--process» мәні қате: «%s»\n"
+
+#: src/programs/pkcheck.c:456 src/programs/pkcheck.c:465
+#, c-format
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr "%s: «--detail, -d» соңынан екі аргумент күтіледі\n"
+
+#: src/programs/pkcheck.c:526
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr "%s: Субъект көрсетілмеген\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#: src/programs/pkexec.c:887
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr ""
+"«$(cmdline_short)» командасын әкімші ретінде орындау үшін аутентификация "
+"қажет"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#: src/programs/pkexec.c:897
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
+msgstr ""
+"«$(cmdline_short)» командасын $(user.display) пайдаланушысы ретінде орындау "
+"үшін аутентификация қажет"
+
+#: src/programs/pkttyagent.c:83
+msgid "Don't replace existing agent if any"
+msgstr "Егер бар болса, ағымдағы агентті алмастырмау"
+
+#: src/programs/pkttyagent.c:87
+msgid "Close FD when the agent is registered"
+msgstr "Агент тіркелген кезде FD-ны жабу"
+
+#: src/programs/pkttyagent.c:87
+msgid "FD"
+msgstr "FD"
+
+#: src/programs/pkttyagent.c:91
+msgid "Register the agent for the specified process"
+msgstr "Агентті көрсетілген процесс үшін тіркеу"
+
+#: src/programs/pkttyagent.c:92
+msgid "PID[,START_TIME]"
+msgstr "PID[,START_TIME]"
+
+#: src/programs/pkttyagent.c:96
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Агентті ШИНА_АТАУЫ иесі үшін тіркеу"
+
+#: src/programs/pkttyagent.c:96
+msgid "BUS_NAME"
+msgstr "ШИНА_АТАУЫ"
+
+#: src/programs/pkttyagent.c:151
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr ""
+"%s: --process және --system-bus-name опцияларын бірге қолдануға болмайды\n"
+
+#: src/programs/pkttyagent.c:175
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr "%s: Процесс идентификаторы қате: «%s»\n"
