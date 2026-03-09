@@ -508,25 +508,10 @@ System Context         |                        |
       <literal>polkit</literal> object (of type <type>Polkit</type>).
     </para>
     <para>
-      While the JavaScript interpreter used in particular versions of
-      polkit may support non-standard features (such as the
-      <emphasis>let</emphasis> keyword), authorization rules must
+      Authorization rules must
       conform to
       <ulink url="http://en.wikipedia.org/wiki/ECMAScript#ECMAScript.2C_5th_Edition">ECMA-262 edition 5</ulink>
-      (in other words, the JavaScript interpreter used may change in future versions of polkit).
-    </para>
-
-    <para>
-      Authorization rules are intended for two specific audiences
-    </para>
-    <itemizedlist mark='opencircle' spacing='compact'>
-      <listitem><para>System Administrators</para></listitem>
-      <listitem><para>Special-purpose Operating Systems / Environments</para></listitem>
-    </itemizedlist>
-    <para>
-      and those audiences only. In particular, applications,
-      mechanisms and general-purpose operating systems must never
-      include any authorization rules.
+      as this version is only supported by the current Javascript interpreter used in polkit.
     </para>
 
     <refsect2 id="polkit-rules-polkit">
