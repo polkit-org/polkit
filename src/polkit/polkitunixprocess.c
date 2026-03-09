@@ -390,7 +390,6 @@ polkit_unix_process_constructed (GObject *object)
       if (pidfd >= 0)
         {
           process->pidfd = pidfd;
-          process->pid = 0;
         }
     }
 
@@ -1060,8 +1059,9 @@ static guint
 polkit_unix_process_hash (PolkitSubject *subject)
 {
   PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
+  guint hash_value = process->pid + process->start_time;
 
-  return g_direct_hash (GSIZE_TO_POINTER ((polkit_unix_process_get_pid(process) + process->start_time))) ;
+  return g_direct_hash (GSIZE_TO_POINTER (hash_value)) ;
 }
 
 static gboolean
@@ -1076,8 +1076,8 @@ polkit_unix_process_equal (PolkitSubject *a,
   process_a = POLKIT_UNIX_PROCESS (a);
   process_b = POLKIT_UNIX_PROCESS (b);
 
-  pid_a = polkit_unix_process_get_pid(process_a);
-  pid_b = polkit_unix_process_get_pid(process_b);
+  pid_a = process_a->pid;
+  pid_b = process_b->pid;
 
   pidfd_a = polkit_unix_process_get_pidfd(process_a);
   pidfd_b = polkit_unix_process_get_pidfd(process_b);
@@ -1142,6 +1142,14 @@ polkit_unix_process_exists_sync (PolkitSubject   *subject,
   return ret;
 }
 
+static gboolean
+polkit_unix_process_check (PolkitSubject *subject)
+{
+  PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
+  gint pid = polkit_unix_process_get_pid(process);
+  return (pid > 0 && pid == process->pid);
+}
+
 static void
 polkit_unix_process_exists (PolkitSubject       *subject,
                             GCancellable        *cancellable,
@@ -1181,6 +1189,7 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
   subject_iface->exists        = polkit_unix_process_exists;
   subject_iface->exists_finish = polkit_unix_process_exists_finish;
   subject_iface->exists_sync   = polkit_unix_process_exists_sync;
+  subject_iface->check         = polkit_unix_process_check;
 }
 
 #ifdef HAVE_SOLARIS
