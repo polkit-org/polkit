@@ -540,3 +540,10 @@ polkit_subject_new_for_gvariant (GVariant  *variant,
 {
   return polkit_subject_new_for_gvariant_invocation (variant, NULL, error);
 }
+
+gboolean
+polkit_subject_state_check (PolkitSubject *subject)
+{
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), 0);
+  return POLKIT_SUBJECT_GET_IFACE (subject)->check (subject);
+}

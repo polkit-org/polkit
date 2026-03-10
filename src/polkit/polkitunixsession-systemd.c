@@ -370,6 +370,12 @@ polkit_unix_session_exists_sync (PolkitSubject   *subject,
   return ret;
 }
 
+static gboolean
+polkit_unix_session_check (PolkitSubject   *subject)
+{
+  return TRUE;
+}
+
 static void
 exists_in_thread_func (GSimpleAsyncResult *res,
                        GObject            *object,
@@ -437,6 +443,7 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
   subject_iface->exists        = polkit_unix_session_exists;
   subject_iface->exists_finish = polkit_unix_session_exists_finish;
   subject_iface->exists_sync   = polkit_unix_session_exists_sync;
+  subject_iface->check         = polkit_unix_session_check;
 }
 
 static gboolean
