@@ -35,6 +35,9 @@ DOCKER_TIMEOUT_SECONDS = 300
 DOCKER_MEMORY_LIMIT = "512m"
 MAX_COMMENT_LENGTH = 65536
 
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+
 # ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
@@ -112,7 +115,7 @@ class GeminiClient:
             try:
                 resp = self._session.post(
                     url,
-                    params={"key": self.api_key},
+                    headers={"x-goog-api-key": self.api_key},
                     json=body,
                     timeout=120,
                 )
@@ -226,11 +229,10 @@ def _safe_parse_json(text: str, context: str) -> dict | None:
 def assess(gemini: GeminiClient, issue: dict) -> AssessmentResult | None:
     log.info("Assessing issue #%s: %s", issue["number"], issue["title"])
     prompt = PROMPT_ASSESS.format(
-        polkit_summary=POLKIT_SUMMARY,
         issue_title=issue["title"],
         issue_body=issue.get("body", "") or "",
     )
-    raw = gemini.generate(prompt)
+    raw = gemini.generate(prompt, system_instruction=POLKIT_SUMMARY)
     data = _safe_parse_json(raw, "assess")
     if data is None:
         return None
@@ -275,7 +277,7 @@ def label(
             "affected_components": assessment.affected_components,
         }, indent=2),
     )
-    raw = gemini.generate(prompt)
+    raw = gemini.generate(prompt, system_instruction=POLKIT_SUMMARY)
     data = _safe_parse_json(raw, "label")
     if data is None:
         return []
@@ -311,7 +313,7 @@ def elicit(
         issue_body=issue.get("body", "") or "",
         missing_info="\n".join(f"- {item}" for item in assessment.missing_info),
     )
-    comment_text = gemini.generate(prompt)
+    comment_text = gemini.generate(prompt, system_instruction=POLKIT_SUMMARY)
     github.post_comment(issue["number"], comment_text)
     return comment_text
 
@@ -327,7 +329,6 @@ def design_reproducer(
 ) -> ReproducerDesign | None:
     log.info("Designing reproducer for issue #%s", issue["number"])
     prompt = PROMPT_DESIGN_REPRODUCER.format(
-        polkit_summary=POLKIT_SUMMARY,
         issue_title=issue["title"],
         issue_body=issue.get("body", "") or "",
         assessment_json=json.dumps({
@@ -336,7 +337,7 @@ def design_reproducer(
             "affected_components": assessment.affected_components,
         }, indent=2),
     )
-    raw = gemini.generate(prompt)
+    raw = gemini.generate(prompt, system_instruction=POLKIT_SUMMARY)
     data = _safe_parse_json(raw, "design_reproducer")
     if data is None:
         return None
@@ -357,7 +358,6 @@ def design_solution(
 ) -> SolutionDesign | None:
     log.info("Designing solution for issue #%s", issue["number"])
     prompt = PROMPT_DESIGN_SOLUTION.format(
-        polkit_summary=POLKIT_SUMMARY,
         issue_title=issue["title"],
         issue_body=issue.get("body", "") or "",
         assessment_json=json.dumps({
@@ -366,7 +366,7 @@ def design_solution(
             "affected_components": assessment.affected_components,
         }, indent=2),
     )
-    raw = gemini.generate(prompt)
+    raw = gemini.generate(prompt, system_instruction=POLKIT_SUMMARY)
     data = _safe_parse_json(raw, "design_solution")
     if data is None:
         return None
@@ -477,7 +477,9 @@ def validate(
         extra_packages=", ".join(repro.extra_packages) if repro.extra_packages else "none",
         script_filename=repro.script_filename,
     )
-    dockerfile_content = gemini.generate(dockerfile_prompt)
+    dockerfile_content = gemini.generate(
+        dockerfile_prompt, system_instruction=POLKIT_SUMMARY
+    )
     dockerfile_content = dockerfile_content.strip()
     if dockerfile_content.startswith("```"):
         first_nl = dockerfile_content.index("\n")
@@ -601,8 +603,6 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--issue-number", type=int, required=True, help="GitHub issue number")
     parser.add_argument("--repo", required=True, help="owner/repo (e.g. polkit-org/polkit)")
-    parser.add_argument("--gemini-api-key", required=True, help="Gemini API key")
-    parser.add_argument("--github-token", required=True, help="GitHub token")
     parser.add_argument(
         "--model", default="gemini-2.0-flash",
         help="Gemini model name (default: gemini-2.0-flash)",
@@ -618,8 +618,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def run_pipeline(args: argparse.Namespace) -> None:
-    gemini = GeminiClient(api_key=args.gemini_api_key, model=args.model)
-    github = GitHubClient(token=args.github_token, repo=args.repo)
+    gemini = GeminiClient(api_key=GEMINI_API_KEY, model=args.model)
+    github = GitHubClient(token=GITHUB_TOKEN, repo=args.repo)
 
     issue = github.get_issue(args.issue_number)
     log.info("Fetched issue #%d: %s", args.issue_number, issue["title"])
