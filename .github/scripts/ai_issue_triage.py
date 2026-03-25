@@ -11,7 +11,7 @@ import tempfile
 import textwrap
 import time
 from dataclasses import dataclass, field
-
+import re
 import requests
 
 from polkit_context import (
@@ -37,6 +37,21 @@ MAX_COMMENT_LENGTH = 65536
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+
+_TRIAGE_MARKER = "Issue triaged by AI assistant"
+_TRIAGE_MARKER_BOT = "github-actions[bot]"
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+
+_FENCE_RE = re.compile(r"^```[^\n]*\n(.*?)```\s*$", re.DOTALL)
+
+def _stripc_fences(text: str) -> str:
+    m = _FENCE_RE.search(text.strip())
+    return m.group(1).strip() if m else text.strip()
+
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -159,6 +174,11 @@ class GitHubClient:
         resp.raise_for_status()
         return resp.json()
 
+    def get_issue_comments(self, number: int) -> list[dict]:
+        resp = self._session.get(f"{self._base}/issues/{number}/comments", timeout=30)
+        resp.raise_for_status()
+        return resp.json()
+
     def add_labels(self, number: int, labels: list[str]) -> None:
         if not labels:
             return
@@ -204,13 +224,7 @@ class GitHubClient:
 
 def _parse_json_response(text: str) -> dict:
     """Extract a JSON object from Gemini's response, tolerating markdown fences."""
-    text = text.strip()
-    if text.startswith("```"):
-        first_nl = text.index("\n")
-        text = text[first_nl + 1:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
+    text = _stripc_fences(text)
     return json.loads(text)
 
 
@@ -408,10 +422,12 @@ def design(
 def _issue_already_has_reproducer(issue: dict) -> bool:
     """Heuristic: check if the issue body contains code blocks that look like a reproducer."""
     body = (issue.get("body") or "").lower()
+    comments = github.get_issue_comments(issue["number"])
+    sources = body + [comment["body"] for comment in comments]
     code_indicators = ["```", "#!/bin/", "reproducer", "steps to reproduce"]
     script_indicators = ["pkexec", "pkcheck", "busctl", "gdbus", "dbus-send"]
-    has_code = any(ind in body for ind in code_indicators)
-    has_polkit_tool = any(ind in body for ind in script_indicators)
+    has_code = any(ind in sources for ind in code_indicators)
+    has_polkit_tool = any(ind in sources for ind in script_indicators)
     return has_code and has_polkit_tool
 
 
@@ -480,13 +496,7 @@ def validate(
     dockerfile_content = gemini.generate(
         dockerfile_prompt, system_instruction=POLKIT_SUMMARY
     )
-    dockerfile_content = dockerfile_content.strip()
-    if dockerfile_content.startswith("```"):
-        first_nl = dockerfile_content.index("\n")
-        dockerfile_content = dockerfile_content[first_nl + 1:]
-        if dockerfile_content.endswith("```"):
-            dockerfile_content = dockerfile_content[:-3]
-        dockerfile_content = dockerfile_content.strip()
+    dockerfile_content = _stripc_fences(dockerfile_content)
 
     result = ValidationResult()
 
@@ -628,6 +638,17 @@ def run_pipeline(args: argparse.Namespace) -> None:
     applied_labels: list[str] = []
     design_result: DesignResult | None = None
 
+    # Stage 0: Check if issue is already triaged
+    comments = github.get_issue_comments(args.issue_number)
+    
+    if any(
+        comment["user"]["login"] == _TRIAGE_MARKER_BOT
+        and _TRIAGE_MARKER in comment["body"]
+        for comment in comments
+    ):
+        log.info("Issue #%d already triaged", args.issue_number)
+        return
+
     # Stage 1: Assess
     if args.assess:
         try:
@@ -649,6 +670,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
             log.info("Applied labels: %s", applied_labels)
         except Exception:
             log.exception("Labeling failed")
+    else:
+        log.info("Skipping labeling: no assessment result")
 
     # Stage 3: Elicit
     if args.elicit and assessment:
@@ -656,6 +679,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
             elicit(gemini, github, issue, assessment)
         except Exception:
             log.exception("Elicitation failed")
+    else:
+        log.info("Skipping elicitation: no assessment result")
 
     # Stage 4: Design
     if args.design and assessment:
@@ -665,6 +690,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
                 log.info("Design complete: kind=%s", design_result.kind)
         except Exception:
             log.exception("Design failed")
+    else:
+        log.info("Skipping design: no assessment result")
 
     # Stage 5: Communicate
     if args.communicate and design_result:
@@ -672,6 +699,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
             communicate(github, issue, design_result)
         except Exception:
             log.exception("Communication failed")
+    else:
+        log.info("Skipping communication: no design result")
 
     # Stage 6: Validate
     if args.validate and design_result:
@@ -681,8 +710,12 @@ def run_pipeline(args: argparse.Namespace) -> None:
                 log.info("Validation: success=%s exit_code=%d", result.success, result.exit_code)
         except Exception:
             log.exception("Validation failed")
+    else:
+        log.info("Skipping validation: no design result")   
 
     log.info("Pipeline complete for issue #%d", args.issue_number)
+
+    github.post_comment(args.issue_number, _TRIAGE_MARKER)
 
 
 def main() -> None:
