@@ -189,14 +189,15 @@ Respond with ONLY a JSON object (no markdown fencing):
 PROMPT_VALIDATE_DOCKERFILE = """\
 Generate a Dockerfile that:
 1. Starts FROM {base_image}
-2. Installs packages needed to build polkit from source for this distro. \
+2. Installs packages needed to build polkit from source for this distro, \
+   including git. \
    polkit build-requires: meson (>=1.4.0), ninja, gcc, glib2-devel, \
    gobject-introspection-devel, expat-devel, pam-devel, duktape-devel, \
    systemd-devel, dbus-devel, gettext. Adjust package names for the distro.
 3. Installs these additional packages: {extra_packages}
-4. Copies the polkit source tree into /polkit
+4. Copies the polkit source tree from {repo_url} into /polkit
 5. Builds polkit: cd /polkit && meson setup builddir && ninja -C builddir
-6. Copies the reproducer script to /reproducer/{script_filename}
+6. Copies the reproducer script from the build context to /reproducer/{script_filename}
 7. Makes the reproducer executable
 8. Sets the CMD to run the reproducer
 

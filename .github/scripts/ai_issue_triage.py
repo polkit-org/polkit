@@ -41,6 +41,8 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 _TRIAGE_MARKER = "Issue triaged by AI assistant"
 _TRIAGE_MARKER_BOT = "github-actions[bot]"
 
+_REPO_URL = "https://github.com/polkit-org/polkit.git"
+
 # ---------------------------------------------------------------------------
 # Helper functions
 # ---------------------------------------------------------------------------
@@ -492,6 +494,7 @@ def validate(
         base_image=repro.base_image,
         extra_packages=", ".join(repro.extra_packages) if repro.extra_packages else "none",
         script_filename=repro.script_filename,
+        repo_url=_REPO_URL
     )
     dockerfile_content = gemini.generate(
         dockerfile_prompt, system_instruction=POLKIT_SUMMARY
@@ -511,7 +514,6 @@ def validate(
             f.write(repro.reproducer_script)
         os.chmod(reproducer_path, 0o755)
 
-        repo_root = _find_repo_root()
         tag = f"polkit-validate-{issue['number']}"
 
         try:
@@ -520,13 +522,11 @@ def validate(
                     "docker", "build",
                     "-t", tag,
                     "-f", dockerfile_path,
-                    "--build-arg", f"POLKIT_SRC={repo_root}",
                     tmpdir,
                 ],
                 capture_output=True,
                 text=True,
                 timeout=DOCKER_TIMEOUT_SECONDS,
-                cwd=repo_root,
             )
             if build_proc.returncode != 0:
                 log.error("Docker build failed:\n%s", build_proc.stderr[-2000:])
@@ -568,18 +568,6 @@ def validate(
     _post_validation_results(github, issue, result)
     return result
 
-
-def _find_repo_root() -> str:
-    """Locate the polkit repo root (where meson.build lives)."""
-    candidate = os.environ.get("GITHUB_WORKSPACE", "")
-    if candidate and os.path.isfile(os.path.join(candidate, "meson.build")):
-        return candidate
-    here = os.path.dirname(os.path.abspath(__file__))
-    for _ in range(5):
-        if os.path.isfile(os.path.join(here, "meson.build")):
-            return here
-        here = os.path.dirname(here)
-    return os.getcwd()
 
 
 def _post_validation_results(
