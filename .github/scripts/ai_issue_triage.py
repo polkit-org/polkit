@@ -618,6 +618,7 @@ def build_parser() -> argparse.ArgumentParser:
 def run_pipeline(args: argparse.Namespace) -> None:
     gemini = GeminiClient(api_key=GEMINI_API_KEY, model=args.model)
     github = GitHubClient(token=GITHUB_TOKEN, repo=args.repo)
+    ret_val = 0
 
     issue = github.get_issue(args.issue_number)
     log.info("Fetched issue #%d: %s", args.issue_number, issue["title"])
@@ -635,7 +636,8 @@ def run_pipeline(args: argparse.Namespace) -> None:
         for comment in comments
     ):
         log.info("Issue #%d already triaged", args.issue_number)
-        return
+        ret_val = 1
+        return ret_val
 
     # Stage 1: Assess
     if args.assess:
@@ -650,7 +652,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
                 log.warning("Assessment returned no result")
         except Exception:
             log.exception("Assessment failed")
-
+            ret_val = 2
     # Stage 2: Label
     if args.label and assessment:
         try:
@@ -658,6 +660,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
             log.info("Applied labels: %s", applied_labels)
         except Exception:
             log.exception("Labeling failed")
+            ret_val = 2
     else:
         log.info("Skipping labeling: no assessment result")
 
@@ -667,6 +670,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
             elicit(gemini, github, issue, assessment)
         except Exception:
             log.exception("Elicitation failed")
+            ret_val = 2
     else:
         log.info("Skipping elicitation: no assessment result")
 
@@ -678,6 +682,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
                 log.info("Design complete: kind=%s", design_result.kind)
         except Exception:
             log.exception("Design failed")
+            ret_val = 2
     else:
         log.info("Skipping design: no assessment result")
 
@@ -687,6 +692,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
             communicate(github, issue, design_result)
         except Exception:
             log.exception("Communication failed")
+            ret_val = 2
     else:
         log.info("Skipping communication: no design result")
 
@@ -698,6 +704,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
                 log.info("Validation: success=%s exit_code=%d", result.success, result.exit_code)
         except Exception:
             log.exception("Validation failed")
+            ret_val = 2
     else:
         log.info("Skipping validation: no design result")   
 
@@ -705,12 +712,14 @@ def run_pipeline(args: argparse.Namespace) -> None:
 
     github.post_comment(args.issue_number, _TRIAGE_MARKER)
 
+    return ret_val
+
 
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
-    run_pipeline(args)
-
+    ret_val = run_pipeline(args)
+    sys.exit(ret_val)
 
 if __name__ == "__main__":
     main()
