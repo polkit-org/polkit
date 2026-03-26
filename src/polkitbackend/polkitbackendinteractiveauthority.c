@@ -1349,20 +1349,26 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   temporary_authorization = temporary_authorization_store_get_authorization (priv->temporary_authorization_store,
                                                                              subject,
                                                                              action_id);
-  if (temporary_authorization != NULL &&
-      temporary_authorization_is_valid (authority,
-                                        temporary_authorization,
-                                        caller,
-                                        subject,
-                                        user_of_subject,
-                                        action_id,
-                                        details))
+  if (temporary_authorization != NULL)
     {
-      g_debug (" is authorized (has temporary authorization)");
-      polkit_details_insert (details, "polkit.temporary_authorization_id",
-                             temporary_authorization_get_id (temporary_authorization));
-      result = polkit_authorization_result_new (TRUE, FALSE, details);
-      goto out;
+      if (temporary_authorization_is_valid (authority,
+                                            temporary_authorization,
+                                            caller,
+                                            subject,
+                                            user_of_subject,
+                                            action_id,
+                                            details))
+        {
+          g_debug (" is authorized (has temporary authorization)");
+          polkit_details_insert (details, "polkit.temporary_authorization_id",
+                                 temporary_authorization_get_id (temporary_authorization));
+          result = polkit_authorization_result_new (TRUE, FALSE, details);
+          goto out;
+        }
+
+      temporary_authorization_store_remove_authorization (priv->temporary_authorization_store,
+                                                          temporary_authorization,
+                                                          TRUE);
     }
 
   /* then see if implied by another action that the subject is authorized for
