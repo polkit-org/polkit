@@ -56,14 +56,14 @@
 /* ---------------------------------------------------------------------------------------------------- */
 
 typedef struct TemporaryAuthorizationStore TemporaryAuthorizationStore;
+typedef struct TemporaryAuthorization TemporaryAuthorization;
 
 static TemporaryAuthorizationStore *temporary_authorization_store_new (PolkitBackendInteractiveAuthority *authority);
 static void                         temporary_authorization_store_free (TemporaryAuthorizationStore *store);
 
-static gboolean temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *store,
-                                                                 PolkitSubject               *subject,
-                                                                 const gchar                 *action_id,
-                                                                 const gchar                **out_tmp_authz_id);
+static TemporaryAuthorization *temporary_authorization_store_get_authorization (TemporaryAuthorizationStore *store,
+                                                                                PolkitSubject               *subject,
+                                                                                const gchar                 *action_id);
 
 static const gchar *temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *store,
                                                                      guint                        expiration_seconds,
@@ -73,6 +73,8 @@ static const gchar *temporary_authorization_store_add_authorization (TemporaryAu
 
 static void temporary_authorization_store_remove_authorizations_for_system_bus_name (TemporaryAuthorizationStore *store,
                                                                                      const gchar *name);
+
+static const char *temporary_authorization_get_id (TemporaryAuthorization *authorization);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -1216,13 +1218,13 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   PolkitAuthorizationResult *result;
   PolkitIdentity *user_of_subject;
   PolkitSubject *session_for_subject;
+  TemporaryAuthorization *temporary_authorization;
   gchar *subject_str;
   GList *groups_of_user;
   PolkitActionDescription *action_desc;
   gboolean session_is_local;
   gboolean session_is_active;
   PolkitImplicitAuthorization implicit_authorization;
-  const gchar *tmp_authz_id;
   GList *actions;
   GList *l;
 
@@ -1326,14 +1328,14 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
     }
 
   /* then see if there's a temporary authorization for the subject */
-  if (temporary_authorization_store_has_authorization (priv->temporary_authorization_store,
-                                                       subject,
-                                                       action_id,
-                                                       &tmp_authz_id))
+  temporary_authorization = temporary_authorization_store_get_authorization (priv->temporary_authorization_store,
+                                                                             subject,
+                                                                             action_id);
+  if (temporary_authorization != NULL)
     {
-
       g_debug (" is authorized (has temporary authorization)");
-      polkit_details_insert (details, "polkit.temporary_authorization_id", tmp_authz_id);
+      polkit_details_insert (details, "polkit.temporary_authorization_id",
+                             temporary_authorization_get_id (temporary_authorization));
       result = polkit_authorization_result_new (TRUE, FALSE, details);
       goto out;
     }
@@ -3188,8 +3190,6 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-typedef struct TemporaryAuthorization TemporaryAuthorization;
-
 struct TemporaryAuthorizationStore
 {
   GList *authorizations;
@@ -3475,23 +3475,29 @@ error:
   return TRUE;
 }
 
-static gboolean
-temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *store,
+
+static G_ALWAYS_INLINE inline const char *
+temporary_authorization_get_id (TemporaryAuthorization *authorization)
+{
+  return authorization->id;
+}
+
+static TemporaryAuthorization *
+temporary_authorization_store_get_authorization (TemporaryAuthorizationStore *store,
                                                  PolkitSubject               *subject,
-                                                 const gchar                 *action_id,
-                                                 const gchar                **out_tmp_authz_id)
+                                                 const gchar                 *action_id)
 {
   GList *l;
-  gboolean ret;
+  TemporaryAuthorization *ret;
   PolkitSubject *subject_to_use;
 
-  g_return_val_if_fail (store != NULL, FALSE);
-  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), FALSE);
-  g_return_val_if_fail (action_id != NULL, FALSE);
+  g_return_val_if_fail (store != NULL, NULL);
+  g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), NULL);
+  g_return_val_if_fail (action_id != NULL, NULL);
 
   subject_to_use = convert_temporary_authorization_subject (subject);
 
-  ret = FALSE;
+  ret = NULL;
 
   for (l = store->authorizations; l != NULL; l = l->next) {
     TemporaryAuthorization *authorization = l->data;
@@ -3499,9 +3505,7 @@ temporary_authorization_store_has_authorization (TemporaryAuthorizationStore *st
     if (strcmp (action_id, authorization->action_id) == 0 &&
         subject_equal_for_authz (subject_to_use, authorization->subject))
       {
-        ret = TRUE;
-        if (out_tmp_authz_id != NULL)
-          *out_tmp_authz_id = authorization->id;
+        ret = authorization;
         goto out;
       }
   }
@@ -3628,7 +3632,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   g_return_val_if_fail (store != NULL, NULL);
   g_return_val_if_fail (POLKIT_IS_SUBJECT (subject), NULL);
   g_return_val_if_fail (action_id != NULL, NULL);
-  g_return_val_if_fail (!temporary_authorization_store_has_authorization (store, subject, action_id, NULL), NULL);
+  g_return_val_if_fail (!temporary_authorization_store_get_authorization (store, subject, action_id), NULL);
 
   subject_to_use = convert_temporary_authorization_subject (subject);
 
