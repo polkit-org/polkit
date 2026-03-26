@@ -2476,42 +2476,24 @@ get_users_in_net_group (PolkitIdentity                    *group,
 
 /* ---------------------------------------------------------------------------------------------------- */
 
-static void
-authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
-                                         PolkitSubject               *subject,
-                                         PolkitIdentity              *user_of_subject,
-                                         PolkitBackendInteractiveAuthority *authority,
-                                         const gchar                 *action_id,
-                                         PolkitDetails               *details,
-                                         PolkitSubject               *caller,
-                                         PolkitImplicitAuthorization  implicit_authorization,
-                                         GCancellable                *cancellable,
-                                         AuthenticationAgentCallback  callback,
-                                         gpointer                     user_data)
+static GList *
+get_user_identities_for_subject (PolkitBackendInteractiveAuthority *authority,
+                                 PolkitSubject                     *caller,
+                                 PolkitSubject                     *subject,
+                                 PolkitIdentity                    *user_of_subject,
+                                 const gchar                       *action_id,
+                                 PolkitDetails                     *details,
+                                 PolkitImplicitAuthorization        implicit_authorization)
 {
-  PolkitBackendInteractiveAuthorityPrivate *priv = polkit_backend_interactive_authority_get_instance_private (authority);
-  AuthenticationSession *session;
-  GList *l;
-  GList *identities;
-  gchar *localized_message;
-  gchar *localized_icon_name;
-  PolkitDetails *localized_details;
+  GList *identities = NULL;
   GList *user_identities = NULL;
-  GVariantBuilder identities_builder;
-  GVariant *parameters;
+  PolkitBackendInteractiveAuthority *interactive_authority;
+  PolkitBackendInteractiveAuthorityPrivate *priv;
 
-  get_localized_data_for_challenge (authority,
-                                    caller,
-                                    subject,
-                                    user_of_subject,
-                                    action_id,
-                                    details,
-                                    agent->locale,
-                                    &localized_message,
-                                    &localized_icon_name,
-                                    &localized_details);
+  g_return_val_if_fail (POLKIT_BACKEND_IS_INTERACTIVE_AUTHORITY (authority), NULL);
 
-  identities = NULL;
+  interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
+  priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
 
   /* select admin user if required by the implicit authorization */
   if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED ||
@@ -2547,7 +2529,7 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
 
   /* expand groups/netgroups to users */
   user_identities = NULL;
-  for (l = identities; l != NULL; l = l->next)
+  for (GList *l = identities; l != NULL; l = l->next)
     {
       PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
       if (POLKIT_IS_UNIX_USER (identity))
@@ -2566,11 +2548,59 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
         {
           g_warning ("Unsupported identity");
         }
+
+      g_clear_object (&identity);
     }
+  g_clear_pointer (&identities, g_list_free);
 
   /* Fall back to uid 0 if no users are available (rhbz #834494) */
   if (user_identities == NULL)
     user_identities = g_list_prepend (NULL, polkit_unix_user_new (0));
+
+  return g_steal_pointer (&user_identities);
+}
+
+static void
+authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
+                                         PolkitSubject               *subject,
+                                         PolkitIdentity              *user_of_subject,
+                                         PolkitBackendInteractiveAuthority *authority,
+                                         const gchar                 *action_id,
+                                         PolkitDetails               *details,
+                                         PolkitSubject               *caller,
+                                         PolkitImplicitAuthorization  implicit_authorization,
+                                         GCancellable                *cancellable,
+                                         AuthenticationAgentCallback  callback,
+                                         gpointer                     user_data)
+{
+  AuthenticationSession *session;
+  GList *l;
+  gchar *localized_message;
+  gchar *localized_icon_name;
+  PolkitDetails *localized_details;
+  GList *user_identities = NULL;
+  GVariantBuilder identities_builder;
+  GVariant *parameters;
+
+  get_localized_data_for_challenge (authority,
+                                    caller,
+                                    subject,
+                                    user_of_subject,
+                                    action_id,
+                                    details,
+                                    agent->locale,
+                                    &localized_message,
+                                    &localized_icon_name,
+                                    &localized_details);
+
+  user_identities = get_user_identities_for_subject (authority,
+                                                     caller,
+                                                     subject,
+                                                     user_of_subject,
+                                                     action_id,
+                                                     details,
+                                                     implicit_authorization);
+
 
   session = authentication_session_new (agent,
                                         subject,
@@ -2619,8 +2649,6 @@ authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                      session);
 
   g_list_free_full (user_identities, g_object_unref);
-  g_list_foreach (identities, (GFunc) g_object_unref, NULL);
-  g_list_free (identities);
 
   g_free (localized_message);
   g_free (localized_icon_name);
