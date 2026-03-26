@@ -2501,7 +2501,7 @@ get_user_identities_for_subject (PolkitBackendInteractiveAuthority *authority,
     {
       gboolean is_local = FALSE;
       gboolean is_active = FALSE;
-      PolkitSubject *session_for_subject = NULL;
+      g_autoptr (PolkitSubject) session_for_subject = NULL;
 
       session_for_subject = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
                                                                                     subject,
@@ -2520,7 +2520,6 @@ get_user_identities_for_subject (PolkitBackendInteractiveAuthority *authority,
                                                                               is_active,
                                                                               action_id,
                                                                               details);
-      g_clear_object (&session_for_subject);
     }
   else
     {
@@ -2532,9 +2531,10 @@ get_user_identities_for_subject (PolkitBackendInteractiveAuthority *authority,
   for (GList *l = identities; l != NULL; l = l->next)
     {
       PolkitIdentity *identity = POLKIT_IDENTITY (l->data);
+
       if (POLKIT_IS_UNIX_USER (identity))
         {
-          user_identities = g_list_append (user_identities, g_object_ref (identity));
+          user_identities = g_list_append (user_identities, g_steal_pointer (&identity));
         }
       else if (POLKIT_IS_UNIX_GROUP (identity))
         {
