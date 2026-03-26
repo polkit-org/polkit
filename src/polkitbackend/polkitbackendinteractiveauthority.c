@@ -3983,7 +3983,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorization_by_id (Polki
   gboolean ret;
   GList *l;
   GList *ll;
-  guint num_removed;
+  gboolean removed;
 
   interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
   priv = polkit_backend_interactive_authority_get_instance_private (interactive_authority);
@@ -4003,7 +4003,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorization_by_id (Polki
       goto out;
     }
 
-  num_removed = 0;
+  removed = FALSE;
   for (l = priv->temporary_authorization_store->authorizations; l != NULL; l = ll)
     {
       TemporaryAuthorization *ta = l->data;
@@ -4025,10 +4025,11 @@ polkit_backend_interactive_authority_revoke_temporary_authorization_by_id (Polki
       priv->temporary_authorization_store->authorizations = g_list_remove (priv->temporary_authorization_store->authorizations, ta);
       temporary_authorization_free (ta);
 
-      num_removed++;
+      removed = TRUE;
+      break;
     }
 
-  if (num_removed > 0)
+  if (removed)
     {
       g_signal_emit_by_name (authority, "changed");
     }
