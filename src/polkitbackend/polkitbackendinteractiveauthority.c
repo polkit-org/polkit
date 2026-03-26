@@ -69,12 +69,21 @@ static const gchar *temporary_authorization_store_add_authorization (TemporaryAu
                                                                      guint                        expiration_seconds,
                                                                      PolkitSubject               *subject,
                                                                      PolkitSubject               *session,
+                                                                     PolkitIdentity              *administrator_identity,
                                                                      const gchar                 *action_id);
 
 static void temporary_authorization_store_remove_authorizations_for_system_bus_name (TemporaryAuthorizationStore *store,
                                                                                      const gchar *name);
 
 static const char *temporary_authorization_get_id (TemporaryAuthorization *authorization);
+
+static gboolean temporary_authorization_is_valid (PolkitBackendAuthority *authority,
+                                                  TemporaryAuthorization *authorization,
+                                                  PolkitSubject          *caller,
+                                                  PolkitSubject          *subject,
+                                                  PolkitIdentity         *user_of_subject,
+                                                  const char             *action_id,
+                                                  PolkitDetails          *details);
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -815,14 +824,19 @@ check_authorization_challenge_cb (AuthenticationAgent         *agent,
       if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_AUTHENTICATION_REQUIRED_RETAINED ||
           implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
         {
+          PolkitIdentity *administrator_identity = NULL;
           const gchar *id;
 
           is_temp = TRUE;
+
+          if (implicit_authorization == POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED)
+            administrator_identity = authenticated_identity;
 
           id = temporary_authorization_store_add_authorization (priv->temporary_authorization_store,
                                                                 priv->expiration_seconds,
                                                                 subject,
                                                                 authentication_agent_get_scope (agent),
+                                                                administrator_identity,
                                                                 action_id);
 
           polkit_details_insert (details, "polkit.temporary_authorization_id", id);
@@ -1331,7 +1345,14 @@ check_authorization_sync (PolkitBackendAuthority         *authority,
   temporary_authorization = temporary_authorization_store_get_authorization (priv->temporary_authorization_store,
                                                                              subject,
                                                                              action_id);
-  if (temporary_authorization != NULL)
+  if (temporary_authorization != NULL &&
+      temporary_authorization_is_valid (authority,
+                                        temporary_authorization,
+                                        caller,
+                                        subject,
+                                        user_of_subject,
+                                        action_id,
+                                        details))
     {
       g_debug (" is authorized (has temporary authorization)");
       polkit_details_insert (details, "polkit.temporary_authorization_id",
@@ -3230,6 +3251,7 @@ struct TemporaryAuthorization
   TemporaryAuthorizationStore *store;
   PolkitSubject *subject;
   PolkitSubject *scope;
+  PolkitIdentity *administrator_identity;
   gchar *id;
   gchar *action_id;
   /* both of these are obtained using g_get_monotonic_time(),
@@ -3247,6 +3269,7 @@ temporary_authorization_free (TemporaryAuthorization *authorization)
   g_free (authorization->id);
   g_object_unref (authorization->subject);
   g_object_unref (authorization->scope);
+  g_clear_object (&authorization->administrator_identity);
   g_free (authorization->action_id);
   if (authorization->expiration_timeout_id > 0)
     g_source_remove (authorization->expiration_timeout_id);
@@ -3503,6 +3526,71 @@ error:
   return TRUE;
 }
 
+static gboolean
+temporary_authorization_is_valid (PolkitBackendAuthority *authority,
+                                  TemporaryAuthorization *authorization,
+                                  PolkitSubject          *caller,
+                                  PolkitSubject          *subject,
+                                  PolkitIdentity         *user_of_subject,
+                                  const char             *action_id,
+                                  PolkitDetails          *details)
+{
+  g_autofree char *admin_identity_string = NULL;
+  GList *user_identities = NULL;
+  gboolean ret = FALSE;
+
+  if (authorization->administrator_identity == NULL)
+    {
+      /* If no administrator identity is set it means that the retained request
+       * was done for the same subject as the one of the caller, so we can skip
+       * the check for administrator identity.
+       */
+      return TRUE;
+    }
+
+  admin_identity_string = polkit_identity_to_string (authorization->administrator_identity);
+  g_debug ("Temporary authorization admin identity is %s", admin_identity_string);
+
+  user_identities = get_user_identities_for_subject (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
+                                                     caller,
+                                                     subject,
+                                                     user_of_subject,
+                                                     action_id,
+                                                     details,
+                                                     POLKIT_IMPLICIT_AUTHORIZATION_ADMINISTRATOR_AUTHENTICATION_REQUIRED_RETAINED);
+
+  for (GList *l = user_identities; l != NULL; l = l->next)
+    {
+      PolkitIdentity *i = POLKIT_IDENTITY (l->data);
+
+      if (polkit_identity_equal (i, authorization->administrator_identity))
+        {
+          g_autofree char *identity_string = NULL;
+
+          identity_string = polkit_identity_to_string (i);
+          g_debug ("Valid temporary authorization for administrator identity %s",
+                   identity_string);
+
+          ret = TRUE;
+          break;
+        }
+    }
+
+  g_list_free_full (g_steal_pointer (&user_identities), g_object_unref);
+
+  if (!ret)
+    {
+      g_autofree char *subject_string = NULL;
+
+      subject_string = polkit_subject_to_string (authorization->subject);
+
+      g_warning ("Invalid temporary authorization: administrator identity %s "
+                 "not a valid identity for subject %s (%s)",
+                 admin_identity_string, subject_string, action_id);
+    }
+
+  return ret;
+}
 
 static G_ALWAYS_INLINE inline const char *
 temporary_authorization_get_id (TemporaryAuthorization *authorization)
@@ -3652,6 +3740,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
                                                  guint                        expiration_seconds,
                                                  PolkitSubject               *subject,
                                                  PolkitSubject               *scope,
+                                                 PolkitIdentity              *administrator_identity,
                                                  const gchar                 *action_id)
 {
   TemporaryAuthorization *authorization;
@@ -3669,6 +3758,7 @@ temporary_authorization_store_add_authorization (TemporaryAuthorizationStore *st
   authorization->store = store;
   authorization->subject = g_object_ref (subject_to_use);
   authorization->scope = g_object_ref (scope);
+  g_set_object (&authorization->administrator_identity, administrator_identity);
   authorization->action_id = g_strdup (action_id);
   /* store monotonic time and convert to secs-since-epoch when returning TemporaryAuthorization structs */
   authorization->time_granted = g_get_monotonic_time ();
