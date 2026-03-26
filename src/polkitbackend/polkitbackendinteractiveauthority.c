@@ -72,6 +72,10 @@ static const gchar *temporary_authorization_store_add_authorization (TemporaryAu
                                                                      PolkitIdentity              *administrator_identity,
                                                                      const gchar                 *action_id);
 
+static void temporary_authorization_store_remove_authorization (TemporaryAuthorizationStore *store,
+                                                                TemporaryAuthorization      *authorization,
+                                                                gboolean                     emit_changed);
+
 static void temporary_authorization_store_remove_authorizations_for_system_bus_name (TemporaryAuthorizationStore *store,
                                                                                      const gchar *name);
 
@@ -3278,6 +3282,18 @@ temporary_authorization_free (TemporaryAuthorization *authorization)
   g_free (authorization);
 }
 
+static void
+temporary_authorization_store_remove_authorization (TemporaryAuthorizationStore *store,
+                                                    TemporaryAuthorization      *authorization,
+                                                    gboolean                     emit_changed)
+{
+  store->authorizations = g_list_remove (store->authorizations, authorization);
+  temporary_authorization_free (authorization);
+
+  if (emit_changed)
+    g_signal_emit_by_name (store->authority, "changed");
+}
+
 static TemporaryAuthorizationStore *
 temporary_authorization_store_new (PolkitBackendInteractiveAuthority *authority)
 {
@@ -3645,11 +3661,8 @@ on_expiration_timeout (gpointer user_data)
            s);
   g_free (s);
 
-  authorization->store->authorizations = g_list_remove (authorization->store->authorizations,
-                                                        authorization);
   authorization->expiration_timeout_id = 0;
-  g_signal_emit_by_name (authorization->store->authority, "changed");
-  temporary_authorization_free (authorization);
+  temporary_authorization_store_remove_authorization (authorization->store, authorization, TRUE);
 
   /* remove source */
   return FALSE;
@@ -3684,10 +3697,7 @@ on_unix_process_check_vanished_timeout (gpointer user_data)
                    s);
           g_free (s);
 
-          authorization->store->authorizations = g_list_remove (authorization->store->authorizations,
-                                                                authorization);
-          g_signal_emit_by_name (authorization->store->authority, "changed");
-          temporary_authorization_free (authorization);
+          temporary_authorization_store_remove_authorization (authorization->store, authorization, TRUE);
         }
     }
 
@@ -3725,8 +3735,7 @@ temporary_authorization_store_remove_authorizations_for_system_bus_name (Tempora
                s);
       g_free (s);
 
-      store->authorizations = g_list_remove (store->authorizations, ta);
-      temporary_authorization_free (ta);
+      temporary_authorization_store_remove_authorization (store, ta, FALSE);
 
       num_removed++;
     }
@@ -3951,8 +3960,7 @@ polkit_backend_interactive_authority_revoke_temporary_authorizations (PolkitBack
       if (!polkit_subject_equal (ta->scope, subject))
         continue;
 
-      priv->temporary_authorization_store->authorizations = g_list_remove (priv->temporary_authorization_store->authorizations, ta);
-      temporary_authorization_free (ta);
+      temporary_authorization_store_remove_authorization (priv->temporary_authorization_store, ta, FALSE);
 
       num_removed++;
     }
@@ -4022,18 +4030,12 @@ polkit_backend_interactive_authority_revoke_temporary_authorization_by_id (Polki
           goto out;
         }
 
-      priv->temporary_authorization_store->authorizations = g_list_remove (priv->temporary_authorization_store->authorizations, ta);
-      temporary_authorization_free (ta);
-
+      temporary_authorization_store_remove_authorization (priv->temporary_authorization_store, ta, TRUE);
       removed = TRUE;
       break;
     }
 
-  if (removed)
-    {
-      g_signal_emit_by_name (authority, "changed");
-    }
-  else
+  if (!removed)
     {
       g_set_error (error,
                    POLKIT_ERROR,
