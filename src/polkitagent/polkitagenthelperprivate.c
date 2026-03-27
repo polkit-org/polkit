@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <unistd.h>
 
 #ifndef HAVE_CLEARENV
@@ -59,21 +60,25 @@ read_cookie (int argc, char **argv)
     return strdup (argv[2]);
   else
     {
-      char *ret = NULL;
-      size_t n = 0;
-      ssize_t r = getline (&ret, &n, stdin);
-      if (r == -1)
+      #define POLKIT_AGENT_MAX_COOKIE 4096
+      char buf[POLKIT_AGENT_MAX_COOKIE + 2]; /* +1 for newline, +1 for NUL */
+      if (fgets (buf, sizeof(buf), stdin) == NULL)
         {
           if (!feof (stdin))
-            perror ("getline");
-          free (ret);
+            perror ("fgets");
           return NULL;
         }
-      else
+      if (buf[strlen (buf) - 1] != '\n')
         {
-          g_strchomp (ret);
-          return ret;
+          /* Cookie too long - drain remaining input and reject */
+          int c;
+          while ((c = getchar ()) != '\n' && c != EOF)
+            ;
+          errno = EOVERFLOW;
+          return NULL;
         }
+      g_strchomp (buf);
+      return strdup (buf);
     }
 }
 
