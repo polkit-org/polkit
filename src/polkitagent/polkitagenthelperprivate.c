@@ -48,6 +48,7 @@ _polkit_clearenv (void)
 char *
 read_cookie (int argc, char **argv)
 {
+  char buf[200];
   /* As part of CVE-2015-4625, we started passing the cookie
    * on standard input, to ensure it's not visible to other
    * processes.  However, to ensure that things continue
@@ -59,19 +60,18 @@ read_cookie (int argc, char **argv)
     return strdup (argv[2]);
   else
     {
-      char *ret = NULL;
-      size_t n = 0;
+      char *ret = buf;
+      size_t n = sizeof(buf);
       ssize_t r = getline (&ret, &n, stdin);
       if (r == -1)
         {
           if (!feof (stdin))
             perror ("getline");
-          free (ret);
           return NULL;
         }
       else
         {
-          g_strchomp (ret);
+          g_strchomp (strdup(ret));
           return ret;
         }
     }
