@@ -141,8 +141,12 @@ server_register (Server   *server,
 
   ret = FALSE;
 
-  locale = g_getenv ("LANG");
-  if (locale == NULL)
+  locale = g_getenv ("LC_ALL");
+  if (locale == NULL || *locale == '\0')
+    locale = g_getenv ("LC_MESSAGES");
+  if (locale == NULL || *locale == '\0')
+    locale = g_getenv ("LANG");
+  if (locale == NULL || *locale == '\0')
     locale = "en_US.UTF-8";
 
   local_error = NULL;
