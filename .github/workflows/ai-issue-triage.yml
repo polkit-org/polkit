@@ -3,8 +3,8 @@
 
 name: AI Issue Triage
 on:
-  issues:
-    types: [opened]
+  issue_comment:
+    types: [created]
 
 permissions:
   issues: write
@@ -13,6 +13,7 @@ permissions:
 jobs:
   triage:
     runs-on: ubuntu-latest
+    if: github.event.comment.body == '@ai-triage'
     steps:
       - name: Repository checkout
         uses: actions/checkout@v6
