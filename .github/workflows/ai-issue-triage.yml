@@ -13,7 +13,9 @@ permissions:
 jobs:
   triage:
     runs-on: ubuntu-latest
-    if: github.event.comment.body == '@ai-triage'
+    if: |
+      contains(github.event.comment.body, '@ai-triage') &&
+      contains(fromJSON('["MEMBER","OWNER","COLLABORATOR"]'), github.event.comment.author_association)
     steps:
       - name: Repository checkout
         uses: actions/checkout@v6
@@ -33,6 +35,4 @@ jobs:
         run: |
           python .github/scripts/ai_issue_triage.py \
             --repo "${{ github.repository }}" \
-            --issue-number "${{ github.event.issue.number }}" \
-            --gemini-api-key "$GEMINI_API_KEY" \
-            --github-token "$GITHUB_TOKEN"
+            --issue-number "${{ github.event.issue.number }}"
