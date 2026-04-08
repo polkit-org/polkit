@@ -108,7 +108,7 @@ class ValidationResult:
 class GeminiClient:
     """Thin wrapper around the Gemini REST API with retry logic."""
 
-    def __init__(self, api_key: str, model: str = "gemini-2.0-flash"):
+    def __init__(self, api_key: str, model: str = "gemini-2.5-flash"):
         self.api_key = api_key
         self.model = model
         self._session = requests.Session()
@@ -421,11 +421,11 @@ def design(
 # Feature 5: Communicate
 # ---------------------------------------------------------------------------
 
-def _issue_already_has_reproducer(issue: dict) -> bool:
+def _issue_already_has_reproducer(github: GitHubClient, issue: dict) -> bool:
     """Heuristic: check if the issue body contains code blocks that look like a reproducer."""
     body = (issue.get("body") or "").lower()
     comments = github.get_issue_comments(issue["number"])
-    sources = body + [comment["body"] for comment in comments]
+    sources = body + " ".join((comment.get("body") or "").lower() for comment in comments)
     code_indicators = ["```", "#!/bin/", "reproducer", "steps to reproduce"]
     script_indicators = ["pkexec", "pkcheck", "busctl", "gdbus", "dbus-send"]
     has_code = any(ind in sources for ind in code_indicators)
@@ -441,7 +441,7 @@ def communicate(
     if design_result.kind != "reproducer" or design_result.reproducer is None:
         return None
 
-    if _issue_already_has_reproducer(issue):
+    if _issue_already_has_reproducer(github, issue):
         log.info("Issue #%s already contains a reproducer, skipping", issue["number"])
         return None
 
@@ -602,8 +602,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--issue-number", type=int, required=True, help="GitHub issue number")
     parser.add_argument("--repo", required=True, help="owner/repo (e.g. polkit-org/polkit)")
     parser.add_argument(
-        "--model", default="gemini-2.0-flash",
-        help="Gemini model name (default: gemini-2.0-flash)",
+        "--model", default="gemini-2.5-flash",
+        help="Gemini model name (default: gemini-2.5-flash)",
     )
 
     for feat in ("assess", "label", "elicit", "design", "communicate", "validate"):
