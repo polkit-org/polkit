@@ -1,0 +1,207 @@
+# Serbian translation for polkit.
+# Copyright (C) 2026 polkit's COPYRIGHT HOLDER
+# This file is distributed under the same license as the polkit package.
+# Marko Kostić <marko.m.kostic@gmail.com>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: polkit main\n"
+"Report-Msgid-Bugs-To: https://github.com/polkit-org/polkit/issues\n"
+"POT-Creation-Date: 2025-09-16 16:36+0000\n"
+"PO-Revision-Date: 2026-04-11 11:30+0200\n"
+"Last-Translator: Marko Kostić <marko.m.kostic@gmail.com>\n"
+"Language-Team: Serbian <Serbian>\n"
+"Language: sr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=n==1? 3 : n%10==1 && n%100!=11 ? 0 : "
+"n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
+"X-Generator: Poedit 3.9\n"
+
+#: actions/org.freedesktop.policykit.policy.in:12
+msgid "Run a program as another user"
+msgstr "Pokreni program kao drugi korisnik"
+
+#: actions/org.freedesktop.policykit.policy.in:13
+msgid "Authentication is required to run a program as another user"
+msgstr "Potrebno je potvrđivanje identiteta za pokretanje programa kao drugi korisnik"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:10
+msgid "Run the polkit example program Frobnicate"
+msgstr "Pokreni polkit primer programa Frobnicate"
+
+#: src/examples/org.freedesktop.policykit.examples.pkexec.policy.in:11
+msgid ""
+"Authentication is required to run the polkit example program Frobnicate "
+"(user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), "
+"program=$(program), command_line=$(command_line))"
+msgstr "Potrebno je potvrđivanje identiteta za pokretanje polkit primera programa Frobnicate (user=$(user), user.gecos=$(user.gecos), user.display=$(user.display), program=$(program), command_line=$(command_line))"
+
+#: src/programs/pkaction.c:97
+msgid "Only output information about ACTION"
+msgstr "Samo ispiši podatke o RADNJI"
+
+#: src/programs/pkaction.c:97
+msgid "ACTION"
+msgstr "RADNJA"
+
+#: src/programs/pkaction.c:101
+msgid "Output detailed action information"
+msgstr "Ispiši opširne podatke o radnji"
+
+#: src/programs/pkaction.c:105 src/programs/pkttyagent.c:100
+msgid "Show version"
+msgstr "Prikaži izdanje"
+
+#: src/programs/pkaction.c:128
+msgid "[--action-id ACTION]"
+msgstr "[--action-id RADNJA]"
+
+#: src/programs/pkaction.c:129 src/programs/pkttyagent.c:123
+#, c-format
+msgid ""
+"Report bugs to: %s\n"
+"%s home page: <%s>"
+msgstr ""
+"Prijavi greške na: %s\n"
+"%s početna stranica: <%s>"
+
+#: src/programs/pkaction.c:143 src/programs/pkcheck.c:496
+#: src/programs/pkttyagent.c:137
+#, c-format
+msgid "%s: Unexpected argument `%s'\n"
+msgstr ""
+"%s: Neočekivani argument „%s“\n"
+
+#: src/programs/pkcheck.c:32
+#, c-format
+msgid ""
+"Usage:\n"
+"  pkcheck [OPTION...]\n"
+"\n"
+"Help Options:\n"
+"  -h, --help                         Show help options\n"
+"\n"
+"Application Options:\n"
+"  -a, --action-id=ACTION             Check authorization to perform ACTION\n"
+"  -u, --allow-user-interaction       Interact with the user if necessary\n"
+"  -d, --details=KEY VALUE            Add (KEY, VALUE) to information about "
+"the action\n"
+"  --enable-internal-agent            Use an internal authentication agent if "
+"necessary\n"
+"  --list-temp                        List temporary authorizations for "
+"current session\n"
+"  -p, --process=PID[,START_TIME,UID] Check authorization of specified "
+"process\n"
+"  --revoke-temp                      Revoke all temporary authorizations for "
+"current session\n"
+"  -s, --system-bus-name=BUS_NAME     Check authorization of owner of "
+"BUS_NAME\n"
+"  --version                          Show version\n"
+"\n"
+"Report bugs to: %s\n"
+"%s home page: <%s>\n"
+msgstr ""
+"Upotreba:\n"
+"  pkcheck [OPCIJA...]\n"
+"\n"
+"Opcije pomoći:\n"
+"  -h, --help                         Prikaži opcije pomoći\n"
+"\n"
+"Opcije aplikacije:\n"
+"  -a, --action-id=RADNJA              Proveri ovlašćenje za izvršavanje RADNJE\n"
+"  -u, --allow-user-interaction       Komuniciraj sa korisnikom ako je potrebno\n"
+"  -d, --details=KLJUČ VREDNOST        Dodaj (KLJUČ, VREDNOST) podacima o radnji\n"
+"  --enable-internal-agent            Koristi unutrašnjeg zastupnika za potvrđivanje identiteta ako je potrebno\n"
+"  --list-temp                        Ispiši privremena ovlašćenja za tekuću sesiju\n"
+"  -p, --process=PID[,START_TIME,UID] Proveri ovlašćenje navedenog procesa\n"
+"  --revoke-temp                      Opozovi sva privremena ovlašćenja za tekuću sesiju\n"
+"  -s, --system-bus-name=BUS_NAME     Proveri ovlašćenje vlasnika BUS_NAME\n"
+"  --version                          Prikaži izdanje\n"
+"\n"
+"Prijavi greške na: %s\n"
+"%s početna stranica: <%s>\n"
+
+#: src/programs/pkcheck.c:396 src/programs/pkcheck.c:429
+#: src/programs/pkcheck.c:441
+#, c-format
+msgid "%s: Argument expected after `%s'\n"
+msgstr ""
+"%s: Očekuje se argument nakon „%s“\n"
+
+#: src/programs/pkcheck.c:419
+#, c-format
+msgid "%s: Invalid --process value `%s'\n"
+msgstr ""
+"%s: Neispravna --process vrednost „%s“\n"
+
+#: src/programs/pkcheck.c:456 src/programs/pkcheck.c:465
+#, c-format
+msgid "%s: Two arguments expected after `--detail, -d'\n"
+msgstr ""
+"%s: Očekuju se dva argumenta nakon „--detail, -d“\n"
+
+#: src/programs/pkcheck.c:526
+#, c-format
+msgid "%s: Subject not specified\n"
+msgstr ""
+"%s: Subjekat nije naveden\n"
+
+#. Translators: message shown when trying to run a program as root. Do not
+#. * translate the $(program) fragment - it will be expanded to the path
+#. * of the program e.g.  /bin/bash.
+#.
+#: src/programs/pkexec.c:887
+msgid "Authentication is needed to run `$(cmdline_short)' as the super user"
+msgstr "Potrebno je potvrđivanje identiteta za pokretanje „$(cmdline_short)“ kao superkorisnik"
+
+#. Translators: message shown when trying to run a program as another user.
+#. * Do not translate the $(program) or $(user) fragments - the former will
+#. * be expanded to the path of the program e.g. "/bin/bash" and the latter
+#. * to the user e.g. "John Doe (johndoe)" or "johndoe".
+#.
+#: src/programs/pkexec.c:897
+msgid ""
+"Authentication is needed to run `$(cmdline_short)' as user $(user.display)"
+msgstr "Potrebno je potvrđivanje identiteta za pokretanje „$(cmdline_short)“ kao korisnik $(user.display)"
+
+#: src/programs/pkttyagent.c:83
+msgid "Don't replace existing agent if any"
+msgstr "Ne zamenjuj postojećeg zastupnika ako postoji"
+
+#: src/programs/pkttyagent.c:87
+msgid "Close FD when the agent is registered"
+msgstr "Zatvori OD kada se zastupnik registruje"
+
+#: src/programs/pkttyagent.c:87
+msgid "FD"
+msgstr "OD"
+
+#: src/programs/pkttyagent.c:91
+msgid "Register the agent for the specified process"
+msgstr "Registruj zastupnika za navedeni proces"
+
+#: src/programs/pkttyagent.c:92
+msgid "PID[,START_TIME]"
+msgstr "PID[,START_TIME]"
+
+#: src/programs/pkttyagent.c:96
+msgid "Register the agent for the owner of BUS_NAME"
+msgstr "Registrujte zastupnika za vlasnika NAZIVA_SABIRNICE"
+
+#: src/programs/pkttyagent.c:96
+msgid "BUS_NAME"
+msgstr "NAZIV_SABIRNICE"
+
+#: src/programs/pkttyagent.c:151
+#, c-format
+msgid "%s: Options --process and --system-bus-name are mutually exclusive\n"
+msgstr ""
+"%s: Opcije --process i --system-bus-name se međusobno isključuju\n"
+
+#: src/programs/pkttyagent.c:175
+#, c-format
+msgid "%s: Invalid process specifier `%s'\n"
+msgstr ""
+"%s: Neispravan odrednik procesa „%s“\n"
