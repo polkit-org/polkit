@@ -252,9 +252,8 @@ fdwalk_close_on_exec (guint fd_bottom)
 #ifdef __linux__
   GDir *dir;
   const gchar *file;
-  GError *error;
 
-  dir = g_dir_open ("/proc/self/fd/", 0, &error);
+  dir = g_dir_open ("/proc/self/fd/", 0, NULL);
   if (dir != NULL)
     {
       while ((file = g_dir_read_name (dir)) != NULL)
