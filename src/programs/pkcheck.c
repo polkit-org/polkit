@@ -526,6 +526,11 @@ main (int argc, char *argv[])
       g_printerr (_("%s: Subject not specified\n"), g_get_prgname ());
       goto out;
     }
+  else if (action_id == NULL)
+    {
+      g_printerr (_("%s: Action ID not specified\n"), g_get_prgname ());
+      goto out;
+    }
 
   error = NULL;
   authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
