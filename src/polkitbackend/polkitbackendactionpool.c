@@ -544,6 +544,7 @@ ensure_file (PolkitBackendActionPool *pool,
   basename = NULL;
 
  out:
+  g_clear_error (&error);
   g_free (basename);
   g_free (path);
 }
