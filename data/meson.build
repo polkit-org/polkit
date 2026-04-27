@@ -1,6 +1,7 @@
 service_conf = {
   'libprivdir': pk_prefix / pk_libprivdir,
   'polkitd_user': polkitd_user,
+  'polkitd_user_lock': polkitd_user_lock,
   'polkitd_uid': polkitd_uid,
 }
 
