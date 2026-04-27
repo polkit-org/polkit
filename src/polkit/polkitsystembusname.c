@@ -271,6 +271,12 @@ polkit_system_bus_name_exists_sync (PolkitSubject   *subject,
   return ret;
 }
 
+static gboolean
+polkit_system_bus_name_check (PolkitSubject   *subject)
+{
+  return TRUE;
+}
+
 static void
 exists_in_thread_func (GSimpleAsyncResult *res,
                        GObject            *object,
@@ -338,6 +344,7 @@ subject_iface_init (PolkitSubjectIface *subject_iface)
   subject_iface->exists        = polkit_system_bus_name_exists;
   subject_iface->exists_finish = polkit_system_bus_name_exists_finish;
   subject_iface->exists_sync   = polkit_system_bus_name_exists_sync;
+  subject_iface->check         = polkit_system_bus_name_check;
 }
 
 /* ---------------------------------------------------------------------------------------------------- */

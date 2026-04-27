@@ -112,6 +112,8 @@ typedef void (*AuthenticationAgentCallback) (AuthenticationAgent         *agent,
 
 static AuthenticationAgent *authentication_agent_ref   (AuthenticationAgent *agent);
 static void                 authentication_agent_unref (AuthenticationAgent *agent);
+static void                 check_agent_subject        (AuthenticationAgent *agent, 
+                                                        PolkitSubject *subject);
 
 static void                authentication_agent_initiate_challenge (AuthenticationAgent         *agent,
                                                                     PolkitSubject               *subject,
@@ -1818,6 +1820,16 @@ authentication_agent_unref (AuthenticationAgent *agent)
     }
 }
 
+static void
+check_agent_subject (AuthenticationAgent *agent, PolkitSubject *subject)
+{
+  gboolean is_subject_correct = polkit_subject_state_check(subject);
+  if (is_subject_correct == FALSE)
+  {
+    agent = NULL;
+  }
+}
+
 static AuthenticationAgent *
 authentication_agent_new (guint64      serial,
                           PolkitSubject *scope,
@@ -1904,6 +1916,8 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
 
   agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
 
+  check_agent_subject (agent, subject);
+
   if (agent == NULL && POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
       PolkitSubject *process;
@@ -1948,6 +1962,8 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
 
   agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, session_for_subject);
 
+  check_agent_subject (agent, subject);
+
   /* use fallback, if available */
   if (agent == NULL && agent_fallback != NULL)
     agent = agent_fallback;
@@ -1967,6 +1983,7 @@ get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority
   PolkitBackendInteractiveAuthorityPrivate *priv;
   GHashTableIter hash_iter;
   AuthenticationAgent *agent;
+  PolkitSubject *subject;
   AuthenticationSession *result;
 
   result = NULL;
@@ -1976,7 +1993,7 @@ get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority
   priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
-  while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
+  while (g_hash_table_iter_next (&hash_iter, (gpointer) &subject, (gpointer) &agent))
     {
       GList *l;
 
@@ -1991,6 +2008,9 @@ get_authentication_session_for_uid_and_cookie (PolkitBackendInteractiveAuthority
        * who is using our own setuid helper will automatically be updated
        * to the new API.
        */
+      
+      check_agent_subject(agent, subject);
+      
       if (uid != (uid_t)-1)
         {
           if (agent->creator_uid != uid)
@@ -2019,6 +2039,7 @@ get_authentication_sessions_initiated_by_system_bus_unique_name (PolkitBackendIn
 {
   PolkitBackendInteractiveAuthorityPrivate *priv;
   GHashTableIter hash_iter;
+  PolkitSubject *subject;
   AuthenticationAgent *agent;
   GList *result;
 
@@ -2029,9 +2050,11 @@ get_authentication_sessions_initiated_by_system_bus_unique_name (PolkitBackendIn
   priv = polkit_backend_interactive_authority_get_instance_private (authority);
 
   g_hash_table_iter_init (&hash_iter, priv->hash_scope_to_authentication_agent);
-  while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
+  while (g_hash_table_iter_next (&hash_iter, (gpointer) &subject, (gpointer) &agent))
     {
       GList *l;
+
+      check_agent_subject(agent, subject);
 
       for (l = agent->active_sessions; l != NULL; l = l->next)
         {
@@ -2824,6 +2847,7 @@ polkit_backend_interactive_authority_register_authentication_agent (PolkitBacken
     }
 
   agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, subject);
+  check_agent_subject (agent, subject);
   if (agent != NULL)
     {
       g_set_error (error,
@@ -3184,14 +3208,14 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
 
       agent = get_authentication_agent_by_unique_system_bus_name (interactive_authority, name);
       if (agent != NULL)
-        {
+      {
           gchar *scope_str;
-
+          
           scope_str = polkit_subject_to_string (agent->scope);
           g_debug ("Removing authentication agent for %s at name %s, object path %s (disconnected from bus)",
-                   scope_str,
-                   agent->unique_system_bus_name,
-                   agent->object_path);
+            scope_str,
+            agent->unique_system_bus_name,
+            agent->object_path);
 
           {
             gchar *locale_safe = sanitize_for_log (agent->locale);
