@@ -102,34 +102,31 @@ polkit_backend_js_authority_init (PolkitBackendJsAuthority *authority)
 static gchar **
 rules_dirs_from_environment (void)
 {
-  const gchar *rules_dirs;
+  const gchar *rules_dirs_env;
   gchar **split_rules_dirs;
-  GPtrArray *ret;
-  guint n;
+  guint read_index, write_index;
 
-  rules_dirs = g_getenv (POLKIT_RULES_DIRS_ENV_VAR);
-  if (rules_dirs == NULL || rules_dirs[0] == '\0')
+  rules_dirs_env = g_getenv (POLKIT_RULES_DIRS_ENV_VAR);
+  if (rules_dirs_env == NULL || rules_dirs_env[0] == '\0')
     return NULL;
 
-  split_rules_dirs = g_strsplit (rules_dirs, G_SEARCHPATH_SEPARATOR_S, -1);
-  ret = g_ptr_array_new ();
-
-  for (n = 0; split_rules_dirs != NULL && split_rules_dirs[n] != NULL; n++)
+  split_rules_dirs = g_strsplit (rules_dirs_env, G_SEARCHPATH_SEPARATOR_S, -1);
+  for (read_index = 0, write_index = 0; split_rules_dirs[read_index] != NULL; read_index++)
     {
-      if (split_rules_dirs[n][0] != '\0')
-        g_ptr_array_add (ret, g_strdup (split_rules_dirs[n]));
+      if (split_rules_dirs[read_index][0] == '\0')
+        g_free (split_rules_dirs[read_index]);
+      else
+        split_rules_dirs[write_index++] = split_rules_dirs[read_index];
     }
+  split_rules_dirs[write_index] = NULL;
 
-  g_strfreev (split_rules_dirs);
-
-  if (ret->len == 0)
+  if (write_index == 0)
     {
-      g_ptr_array_free (ret, TRUE);
+      g_strfreev (split_rules_dirs);
       return NULL;
     }
 
-  g_ptr_array_add (ret, NULL);
-  return (gchar **) g_ptr_array_free (ret, FALSE);
+  return split_rules_dirs;
 }
 
 static void

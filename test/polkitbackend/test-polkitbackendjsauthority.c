@@ -185,7 +185,7 @@ test_rules_dirs_from_environment (void)
   g_assert_no_error (error);
 
   old_rules_dirs_env = g_strdup (g_getenv ("POLKIT_RULES_DIRS"));
-  rules_dirs_env = g_strdup (rules_dir);
+  rules_dirs_env = g_strjoin (G_SEARCHPATH_SEPARATOR_S, "", rules_dir, "", NULL);
   g_setenv ("POLKIT_RULES_DIRS", rules_dirs_env, TRUE);
 
   authority = g_object_new (POLKIT_BACKEND_TYPE_JS_AUTHORITY, NULL);

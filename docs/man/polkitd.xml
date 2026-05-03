@@ -69,7 +69,7 @@
           <para>
             If set, overrides the default directories used to load JavaScript
             authorization rules. The value is a colon-separated list of
-            directories.
+            directories. Empty path elements are ignored.
           </para>
         </listitem>
       </varlistentry>
