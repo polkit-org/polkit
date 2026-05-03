@@ -22,6 +22,7 @@
  */
 
 #include "glib.h"
+#include <glib/gstdio.h>
 
 #include <locale.h>
 #include <string.h>
@@ -152,6 +153,78 @@ test_get_admin_identities (void)
       test_get_admin_identities_for_action_id (test_cases[n].action_id,
                                                test_cases[n].expected_admins);
     }
+}
+
+static void
+test_rules_dirs_from_environment (void)
+{
+  PolkitBackendJsAuthority *authority = NULL;
+  PolkitSubject *caller = NULL;
+  PolkitSubject *subject = NULL;
+  PolkitIdentity *user_for_subject = NULL;
+  PolkitDetails *details = NULL;
+  GError *error = NULL;
+  PolkitImplicitAuthorization result;
+  gchar *rules_dir = NULL;
+  gchar *rules_file = NULL;
+  gchar *rules_dirs_env = NULL;
+  gchar *old_rules_dirs_env = NULL;
+  const gchar *rules =
+    "polkit.addRule(function(action, subject) {\n"
+    "    if (action.id == \"net.company.env_rules_dirs\") {\n"
+    "        return polkit.Result.YES;\n"
+    "    }\n"
+    "});\n";
+
+  rules_dir = g_dir_make_tmp ("polkit-rules-dir-XXXXXX", &error);
+  g_assert_no_error (error);
+  g_assert (rules_dir != NULL);
+
+  rules_file = g_build_filename (rules_dir, "10-environment.rules", NULL);
+  g_file_set_contents (rules_file, rules, -1, &error);
+  g_assert_no_error (error);
+
+  old_rules_dirs_env = g_strdup (g_getenv ("POLKIT_RULES_DIRS"));
+  rules_dirs_env = g_strdup (rules_dir);
+  g_setenv ("POLKIT_RULES_DIRS", rules_dirs_env, TRUE);
+
+  authority = g_object_new (POLKIT_BACKEND_TYPE_JS_AUTHORITY, NULL);
+
+  if (old_rules_dirs_env != NULL)
+    g_setenv ("POLKIT_RULES_DIRS", old_rules_dirs_env, TRUE);
+  else
+    g_unsetenv ("POLKIT_RULES_DIRS");
+
+  caller = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+  subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+  user_for_subject = polkit_identity_from_string ("unix-user:root", &error);
+  g_assert_no_error (error);
+
+  details = polkit_details_new ();
+
+  result = polkit_backend_interactive_authority_check_authorization_sync (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
+                                                                          caller,
+                                                                          subject,
+                                                                          user_for_subject,
+                                                                          TRUE,
+                                                                          TRUE,
+                                                                          "net.company.env_rules_dirs",
+                                                                          details,
+                                                                          POLKIT_IMPLICIT_AUTHORIZATION_UNKNOWN);
+  g_assert_cmpint (result, ==, POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED);
+
+  g_clear_object (&details);
+  g_clear_object (&user_for_subject);
+  g_clear_object (&subject);
+  g_clear_object (&caller);
+  g_clear_object (&authority);
+
+  g_remove (rules_file);
+  g_rmdir (rules_dir);
+  g_free (old_rules_dirs_env);
+  g_free (rules_dirs_env);
+  g_free (rules_file);
+  g_free (rules_dir);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -508,6 +581,7 @@ main (int argc, char *argv[])
   //polkit_test_redirect_logs ();
 
   g_test_add_func ("/PolkitBackendJsAuthority/get_admin_identities", test_get_admin_identities);
+  g_test_add_func ("/PolkitBackendJsAuthority/rules_dirs_from_environment", test_rules_dirs_from_environment);
   add_rules_tests ();
 
   return g_test_run ();
