@@ -544,7 +544,7 @@ else
   ret = TRUE;
 
  out:
-  if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
+  if (POLKIT_IS_SYSTEM_BUS_NAME (subject) && process != NULL)
     g_object_unref (process);
   free (session_str);
   free (seat_str);
