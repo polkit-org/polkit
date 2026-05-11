@@ -2108,6 +2108,24 @@ get_authentication_agent_by_unique_system_bus_name (PolkitBackendInteractiveAuth
 }
 
 static void
+remove_authentication_agent (GHashTable          *hash_table,
+                             AuthenticationAgent *agent_to_remove)
+{
+    GHashTableIter hash_iter;
+    AuthenticationAgent *agent;
+
+    g_hash_table_iter_init (&hash_iter, hash_table);
+    while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &agent))
+      {
+        if (agent == agent_to_remove)
+          {
+            g_hash_table_iter_remove (&hash_iter);
+            return;
+          }
+      }
+}
+
+static void
 authentication_agent_begin_cb (GDBusProxy   *proxy,
                                GAsyncResult *res,
                                gpointer      user_data)
@@ -3053,7 +3071,7 @@ polkit_backend_interactive_authority_unregister_authentication_agent (PolkitBack
   authentication_agent_cancel_all_sessions (agent);
   /* this works because we have exactly one agent per session */
   /* this frees agent... */
-  g_hash_table_remove (priv->hash_scope_to_authentication_agent, agent->scope);
+  remove_authentication_agent (priv->hash_scope_to_authentication_agent, agent);
 
   g_signal_emit_by_name (authority, "changed");
 
@@ -3212,7 +3230,7 @@ polkit_backend_interactive_authority_system_bus_name_owner_changed (PolkitBacken
           authentication_agent_cancel_all_sessions (agent);
           /* this works because we have exactly one agent per session */
           /* this frees agent... */
-          g_hash_table_remove (priv->hash_scope_to_authentication_agent, agent->scope);
+          remove_authentication_agent (priv->hash_scope_to_authentication_agent, agent);
 
           g_signal_emit_by_name (authority, "changed");
         }
