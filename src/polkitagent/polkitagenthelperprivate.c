@@ -70,10 +70,6 @@ read_cookie (int argc, char **argv)
         }
       if (buf[strlen (buf) - 1] != '\n')
         {
-          /* Cookie too long - drain remaining input and reject */
-          int c;
-          while ((c = getchar ()) != '\n' && c != EOF)
-            ;
           errno = EOVERFLOW;
           return NULL;
         }
