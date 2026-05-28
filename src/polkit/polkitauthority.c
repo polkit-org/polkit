@@ -934,7 +934,7 @@ polkit_authority_check_authorization (PolkitAuthority               *authority,
   g_dbus_proxy_call (authority->proxy,
                      "CheckAuthorization",
                      g_variant_new ("(@(sa{sv})s@a{ss}us)",
-                                    polkit_subject_to_gvariant (subject), /* A floating value */
+                                    polkit_subject_to_gvariant (subject, NULL), /* A floating value */
                                     action_id,
                                     polkit_details_to_gvariant (details), /* A floating value */
                                     flags,
@@ -1084,7 +1084,7 @@ polkit_authority_register_authentication_agent (PolkitAuthority      *authority,
   g_dbus_proxy_call (authority->proxy,
                      "RegisterAuthenticationAgent",
                      g_variant_new ("(@(sa{sv})ss)",
-                                    polkit_subject_to_gvariant (subject), /* A floating value */
+                                    polkit_subject_to_gvariant (subject, NULL), /* A floating value */
                                     locale,
                                     object_path),
                      G_DBUS_CALL_FLAGS_NONE,
@@ -1229,7 +1229,7 @@ polkit_authority_register_authentication_agent_with_options (PolkitAuthority    
   g_return_if_fail (g_variant_is_object_path (object_path));
   g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
 
-  subject_value = polkit_subject_to_gvariant (subject);
+  subject_value = polkit_subject_to_gvariant (subject, NULL);
   g_variant_ref_sink (subject_value);
   if (options != NULL)
     {
@@ -1395,7 +1395,7 @@ polkit_authority_unregister_authentication_agent (PolkitAuthority      *authorit
   g_dbus_proxy_call (authority->proxy,
                      "UnregisterAuthenticationAgent",
                      g_variant_new ("(@(sa{sv})s)",
-                                    polkit_subject_to_gvariant (subject), /* A floating value */
+                                    polkit_subject_to_gvariant (subject, NULL), /* A floating value */
                                     object_path),
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
@@ -1536,7 +1536,7 @@ polkit_authority_authentication_agent_response_with_subject (PolkitAuthority    
                      g_variant_new ("(s@(sa{sv})@(sa{sv}))",
                                     cookie,
                                     polkit_identity_to_gvariant (identity), /* Floating value */
-                                    polkit_subject_to_gvariant (subject)), /* Floating value */
+                                    polkit_subject_to_gvariant (subject, NULL)), /* Floating value */
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
@@ -1771,7 +1771,7 @@ polkit_authority_enumerate_temporary_authorizations (PolkitAuthority     *author
   g_dbus_proxy_call (authority->proxy,
                      "EnumerateTemporaryAuthorizations",
                      g_variant_new ("(@(sa{sv}))",
-                                    polkit_subject_to_gvariant (subject)), /* A floating value */
+                                    polkit_subject_to_gvariant (subject, NULL)), /* A floating value */
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
@@ -1920,7 +1920,7 @@ polkit_authority_revoke_temporary_authorizations (PolkitAuthority     *authority
   g_dbus_proxy_call (authority->proxy,
                      "RevokeTemporaryAuthorizations",
                      g_variant_new ("(@(sa{sv}))",
-                                    polkit_subject_to_gvariant (subject)), /* A floating value */
+                                    polkit_subject_to_gvariant (subject, NULL)), /* A floating value */
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
                      cancellable,
