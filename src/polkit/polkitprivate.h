@@ -62,7 +62,8 @@ PolkitTemporaryAuthorization *polkit_temporary_authorization_new    (const gchar
                                                                      guint64                       time_expires);
 PolkitTemporaryAuthorization *polkit_temporary_authorization_new_for_gvariant (GVariant *value,
                                                                                GError   **error);
-GVariant *polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization);
+GVariant *polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization,
+    GUnixFDList *fd_list);
 
 GVariant *polkit_details_to_gvariant (PolkitDetails *details);
 PolkitDetails *polkit_details_new_for_gvariant (GVariant *value);

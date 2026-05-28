@@ -210,12 +210,12 @@ polkit_temporary_authorization_new_for_gvariant (GVariant  *value,
 
 /* Note that this returns a floating value. */
 GVariant *
-polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization)
+polkit_temporary_authorization_to_gvariant (PolkitTemporaryAuthorization *authorization, GUnixFDList *fd_list)
 {
   return g_variant_new ("(ss@(sa{sv})tt)",
                         authorization->id,
                         authorization->action_id,
-                        polkit_subject_to_gvariant (authorization->subject, NULL), /* A floating value */
+                        polkit_subject_to_gvariant (authorization->subject, fd_list), /* A floating value */
                         authorization->time_obtained,
                         authorization->time_expires);
 }
