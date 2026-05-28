@@ -1525,26 +1525,31 @@ polkit_authority_authentication_agent_response_with_subject (PolkitAuthority    
    * this one is called from a socket-activated service, rather than a
    * setuid helper invoked directly by the authenticating process.
    */
+  GUnixFDList *fd_list;
   g_return_if_fail (POLKIT_IS_AUTHORITY (authority));
   g_return_if_fail (cookie != NULL);
   g_return_if_fail (POLKIT_IS_IDENTITY (identity));
   g_return_if_fail (POLKIT_IS_SUBJECT (subject));
   g_return_if_fail (cancellable == NULL || G_IS_CANCELLABLE (cancellable));
 
-  g_dbus_proxy_call (authority->proxy,
+  fd_list = g_unix_fd_list_new();
+  g_dbus_proxy_call_with_unix_fd_list (authority->proxy,
                      "AuthenticationAgentResponse3",
                      g_variant_new ("(s@(sa{sv})@(sa{sv}))",
                                     cookie,
                                     polkit_identity_to_gvariant (identity), /* Floating value */
-                                    polkit_subject_to_gvariant (subject, NULL)), /* Floating value */
+                                    polkit_subject_to_gvariant (subject, fd_list)), /* Floating value */
                      G_DBUS_CALL_FLAGS_NONE,
                      -1,
+                     fd_list,
                      cancellable,
                      generic_async_cb,
                      g_simple_async_result_new (G_OBJECT (authority),
                                                 callback,
                                                 user_data,
                                                 polkit_authority_authentication_agent_response));
+
+  g_object_unref(fd_list);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
