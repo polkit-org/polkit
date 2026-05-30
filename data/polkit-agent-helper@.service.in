@@ -15,6 +15,7 @@ LockPersonality=yes
 MemoryDenyWriteExecute=yes
 NoNewPrivileges=yes
 PrivateDevices=yes
+DeviceAllow=char-tpm rw
 PrivateNetwork=yes
 PrivateTmp=yes
 ProtectControlGroups=yes
