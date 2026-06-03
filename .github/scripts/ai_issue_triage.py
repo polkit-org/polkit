@@ -38,10 +38,10 @@ MAX_COMMENT_LENGTH = 65536
 
 # Agentic reproducer constants
 AGENT_CONTAINER_IMAGE = {
-    "fedora": "ghcr.io/vmihalko/polkit-ai-skills:fedora",
-    "ubuntu": "ghcr.io/vmihalko/polkit-ai-skills:ubuntu",
+    "fedora": "ghcr.io/polkit-org/polkit-ai-reproducer-tools:fedora",
+    "ubuntu": "ghcr.io/polkit-org/polkit-ai-reproducer-tools:ubuntu",
 }
-SKILLS_REPO = "https://github.com/vmihalko/polkit-ai-skills.git"
+SKILLS_REPO = "https://github.com/polkit-org/polkit-ai-reproducer-tools.git"
 POLKIT_SOURCE_REPO = "https://github.com/vmihalko/polkit.git"
 AGENT_TIMEOUT_SECONDS = 900
 
@@ -671,7 +671,7 @@ def _wait_for_systemd(container_name: str, retries: int = 15) -> None:
 
 
 def _create_skill_pr(skills_dir: str, issue_number: int) -> str | None:
-    """Open a PR to polkit-ai-skills with new skill files the agent discovered."""
+    """Open a PR to polkit-ai-reproducer-tools with new skill files the agent discovered."""
     if not SKILLS_REPO_TOKEN:
         log.info("No SKILLS_REPO_TOKEN, skipping skill PR")
         return None
@@ -692,7 +692,7 @@ def _create_skill_pr(skills_dir: str, issue_number: int) -> str | None:
 
     with tempfile.TemporaryDirectory(prefix="polkit-skills-pr-") as tmpdir:
         # Clone skills repo with the PAT
-        clone_url = f"https://x-access-token:{SKILLS_REPO_TOKEN}@github.com/vmihalko/polkit-ai-skills.git"
+        clone_url = f"https://x-access-token:{SKILLS_REPO_TOKEN}@github.com/polkit-org/polkit-ai-reproducer-tools.git"
         clone_proc = subprocess.run(
             ["git", "clone", "--depth=1", clone_url, tmpdir],
             capture_output=True, text=True, timeout=60,
@@ -742,7 +742,7 @@ def _create_skill_pr(skills_dir: str, issue_number: int) -> str | None:
             "\n".join(f"- `skills/{rel}`" for rel, _ in new_files)
         )
         pr_resp = requests.post(
-            "https://api.github.com/repos/vmihalko/polkit-ai-skills/pulls",
+            "https://api.github.com/repos/polkit-org/polkit-ai-reproducer-tools/pulls",
             headers={
                 "Authorization": f"Bearer {SKILLS_REPO_TOKEN}",
                 "Accept": "application/vnd.github+json",
@@ -832,15 +832,15 @@ def run_agent(
         subprocess.run(
             ["docker", "exec", container_name,
              "git", "clone", "--depth=1", SKILLS_REPO,
-             "/workspace/polkit-ai-skills"],
+             "/workspace/polkit-ai-reproducer-tools"],
             capture_output=True, text=True, timeout=60,
         )
         # GEMINI.md at workspace root; .gemini/ to both workspace and home
         subprocess.run(
             ["docker", "exec", container_name, "bash", "-c",
-             "cp /workspace/polkit-ai-skills/GEMINI.md /workspace/GEMINI.md && "
-             "cp -r /workspace/polkit-ai-skills/.gemini /workspace/.gemini && "
-             "cp -r /workspace/polkit-ai-skills/.gemini /root/.gemini"],
+             "cp /workspace/polkit-ai-reproducer-tools/GEMINI.md /workspace/GEMINI.md && "
+             "cp -r /workspace/polkit-ai-reproducer-tools/.gemini /workspace/.gemini && "
+             "cp -r /workspace/polkit-ai-reproducer-tools/.gemini /root/.gemini"],
             capture_output=True, text=True, timeout=10,
         )
         subprocess.run(
@@ -887,7 +887,7 @@ def run_agent(
             f"Reproduce the bug reported at "
             f"https://github.com/{repo}/issues/{issue['number']}. "
             f"Follow the instructions in /workspace/GEMINI.md. "
-            f"Read the skill files in /workspace/polkit-ai-skills/skills/ "
+            f"Read the skill files in /workspace/polkit-ai-reproducer-tools/skills/ "
             f"for domain knowledge about polkit."
         )
         log.info("Launching Gemini CLI agent for issue #%s", issue["number"])
