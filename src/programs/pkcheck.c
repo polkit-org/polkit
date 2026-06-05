@@ -526,6 +526,11 @@ main (int argc, char *argv[])
       g_printerr (_("%s: Subject not specified\n"), g_get_prgname ());
       goto out;
     }
+  else if (action_id == NULL)
+    {
+      g_printerr (_("%s: Action ID not specified\n"), g_get_prgname ());
+      goto out;
+    }
 
   error = NULL;
   authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
@@ -550,10 +555,12 @@ main (int argc, char *argv[])
                                                       &error);
   if (result == NULL)
     {
+      g_assert(error != NULL);
       g_printerr ("Error checking for authorization %s: %s\n",
                   action_id,
-                  error ? error->message : "Could not verify; error object not present.");
+                  error->message);
       ret = 127;
+      g_error_free (error);
       goto out;
     }
 

@@ -541,7 +541,7 @@ polkit_backend_common_pidfd_to_systemd_unit (gint      pidfd,
   GError *error = NULL;
   GDBusConnection *connection = NULL;
   GMainContext *tmp_context = NULL;
-  GVariant *result = NULL, *no_new_privs_result = NULL, *no_new_privis_value;
+  GVariant *result = NULL, *no_new_privs_result = NULL, *no_new_privs_value = NULL;
   GUnixFDList *fd_list = NULL;
   const char *unit_path, *unit;
   int fd_id;
@@ -631,14 +631,14 @@ polkit_backend_common_pidfd_to_systemd_unit (gint      pidfd,
           goto out;
         }
 
-      g_variant_get (no_new_privs_result, "(v)", &no_new_privis_value);
-      if (no_new_privis_value == NULL)
+      g_variant_get (no_new_privs_result, "(v)", &no_new_privs_value);
+      if (no_new_privs_value == NULL)
         {
           g_warning ("Error getting value for NoNewPrivileges property for unit %s", unit);
           goto out;
         }
 
-     *ret_no_new_privs = g_variant_get_boolean (no_new_privis_value);
+     *ret_no_new_privs = g_variant_get_boolean (no_new_privs_value);
     }
   else
     *ret_no_new_privs = FALSE;
@@ -662,6 +662,8 @@ polkit_backend_common_pidfd_to_systemd_unit (gint      pidfd,
     g_variant_unref (result);
   if (no_new_privs_result != NULL)
     g_variant_unref (no_new_privs_result);
+  if (no_new_privs_value != NULL)
+    g_variant_unref (no_new_privs_value);
   if (fd_list != NULL)
     g_object_unref (fd_list);
   if (error)

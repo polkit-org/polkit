@@ -544,6 +544,7 @@ ensure_file (PolkitBackendActionPool *pool,
   basename = NULL;
 
  out:
+  g_clear_error (&error);
   g_free (basename);
   g_free (path);
 }
@@ -585,7 +586,7 @@ ensure_all_files (PolkitBackendActionPool *pool)
     else
     {
       GFileInfo *file_info;
-      while ((file_info = g_file_enumerator_next_file (enumerator, NULL, &error)) != NULL)
+      while ((file_info = g_file_enumerator_next_file (enumerator, NULL, NULL)) != NULL)
       {
         const gchar *name = g_file_info_get_name (file_info);
         /* only consider files with the right suffix */

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <locale.h>
 #include <signal.h>
 #include <termios.h>
 #include <glib/gi18n.h>
@@ -72,6 +73,8 @@ static void tty_attrs_changed(PolkitAgentListener *listener G_GNUC_UNUSED,
 int
 main (int argc, char *argv[])
 {
+  setlocale (LC_ALL, "");
+
   gboolean opt_show_version = FALSE;
   gboolean opt_fallback = FALSE;
   gchar *opt_process = NULL;
