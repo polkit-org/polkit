@@ -2,6 +2,7 @@
 """AI-powered issue triage for the polkit project using Gemini."""
 
 import argparse
+import base64
 import json
 import logging
 import os
@@ -691,10 +692,9 @@ def _create_skill_pr(skills_dir: str, issue_number: int) -> str | None:
              len(new_files), [f[0] for f in new_files])
 
     with tempfile.TemporaryDirectory(prefix="polkit-skills-pr-") as tmpdir:
-        # Clone skills repo with the PAT
-        clone_url = f"https://x-access-token:{SKILLS_REPO_TOKEN}@github.com/polkit-org/polkit-ai-reproducer-tools.git"
+        # Clone skills repo (public, no token needed)
         clone_proc = subprocess.run(
-            ["git", "clone", "--depth=1", clone_url, tmpdir],
+            ["git", "clone", "--depth=1", SKILLS_REPO, tmpdir],
             capture_output=True, text=True, timeout=60,
         )
         if clone_proc.returncode != 0:
@@ -726,9 +726,17 @@ def _create_skill_pr(skills_dir: str, issue_number: int) -> str | None:
              "commit", "-m", commit_msg],
             capture_output=True, text=True,
         )
+        auth_header = f"Authorization: Basic {base64.b64encode(f'x-access-token:{SKILLS_REPO_TOKEN}'.encode()).decode()}"
+        push_env = {
+            **os.environ,
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "http.extraHeader",
+            "GIT_CONFIG_VALUE_0": auth_header,
+        }
         push_proc = subprocess.run(
             ["git", "-C", tmpdir, "push", "origin", branch],
             capture_output=True, text=True, timeout=30,
+            env=push_env,
         )
         if push_proc.returncode != 0:
             log.error("Failed to push skill branch: %s", push_proc.stderr[-500:])
