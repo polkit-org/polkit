@@ -28,6 +28,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <errno.h>
+#include <sys/auxv.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>
@@ -302,7 +303,8 @@ static gchar *
 find_action_for_path (PolkitAuthority *authority,
                       const gchar     *path,
                       const gchar     *argv1,
-                      gboolean        *allow_gui)
+                      gboolean        *allow_gui,
+                      gchar           **keep_env)
 {
   GList *l;
   GList *actions;
@@ -313,6 +315,7 @@ find_action_for_path (PolkitAuthority *authority,
   action_id = NULL;
   error = NULL;
   *allow_gui = FALSE;
+  *keep_env = NULL;
 
   actions = polkit_authority_enumerate_actions_sync (authority,
                                                      NULL,
@@ -330,6 +333,7 @@ find_action_for_path (PolkitAuthority *authority,
       const gchar *argv1_for_action;
       const gchar *path_for_action;
       const gchar *allow_gui_annotation;
+      const gchar *keep_env_annotation;
 
       path_for_action = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.path");
       if (path_for_action == NULL)
@@ -352,6 +356,11 @@ find_action_for_path (PolkitAuthority *authority,
 
           if (allow_gui_annotation != NULL && strlen (allow_gui_annotation) > 0)
             *allow_gui = TRUE;
+
+          keep_env_annotation = polkit_action_description_get_annotation (action_desc, "org.freedesktop.policykit.exec.keep_env");
+
+          if (keep_env_annotation != NULL && strlen(keep_env_annotation) > 0)
+              *keep_env = g_strdup (keep_env_annotation);
 
           goto out;
         }
@@ -414,7 +423,8 @@ is_valid_shell (const gchar *shell)
 
 static gboolean
 validate_environment_variable (const gchar *key,
-                               const gchar *value)
+                               const gchar *value,
+                               gboolean keep_env)
 {
   gboolean ret;
 
@@ -443,7 +453,7 @@ validate_environment_variable (const gchar *key,
           goto out;
         }
     }
-  else if ((g_strcmp0 (key, "XAUTHORITY") != 0 && strstr (value, "/") != NULL) ||
+  else if ((g_strcmp0 (key, "XAUTHORITY") != 0 && !keep_env && strstr (value, "/") != NULL) ||
            strstr (value, "%") != NULL ||
            strstr (value, "..") != NULL)
     {
@@ -461,6 +471,15 @@ validate_environment_variable (const gchar *key,
   return ret;
 }
 
+static gboolean
+check_at_secure (void)
+{
+#ifdef HAVE_GETAUXVAL
+    return getauxval (AT_SECURE) != 0;
+#else
+    return (getuid () != geteuid ()) || (getgid () != getegid ());
+#endif
+}
 
 /* ---------------------------------------------------------------------------------------------------- */
 
@@ -481,6 +500,8 @@ main (int argc, char *argv[])
   GError *error;
   gchar *action_id;
   gboolean allow_gui;
+  gchar *keep_env = NULL;
+  gchar **saved_environ = NULL;
   gchar **exec_argv;
   gchar *path_abs;
   gchar *path;
@@ -744,7 +765,7 @@ main (int argc, char *argv[])
        * environment variable passed through - this is to attempt to avoid
        * exploits in (potentially broken) programs launched via pkexec(1).
        */
-      if (!validate_environment_variable (key, value))
+      if (!validate_environment_variable (key, value, FALSE))
         goto out;
 
       g_ptr_array_add (saved_env, g_strdup (key));
@@ -772,6 +793,9 @@ main (int argc, char *argv[])
           g_ptr_array_add (saved_env, g_build_filename (home, ".Xauthority", NULL));
         }
     }
+
+  /* save environ for some callers. Known unsecure ones will still be sanitized */
+   saved_environ = g_get_environ ();
 
   /* Nuke the environment to get a well-known and sanitized environment to avoid attacks
    * via e.g. the DBUS_SYSTEM_BUS_ADDRESS environment variable and similar.
@@ -847,7 +871,8 @@ main (int argc, char *argv[])
   action_id = find_action_for_path (authority,
                                     path,
                                     exec_argv[1],
-                                    &allow_gui);
+                                    &allow_gui,
+                                    &keep_env);
   g_assert (action_id != NULL);
 
   details = polkit_details_new ();
@@ -974,6 +999,30 @@ main (int argc, char *argv[])
                       "This incident has been reported.\n");
         }
       goto out;
+    }
+
+  /* We will keep the safe list by overwriting after this but will still
+   * try to allow the envs defined in the action. This should be sanitized enough
+   * by the AT_SECURE check where glibc clears unsecvars. */
+
+  if (keep_env != NULL && check_at_secure ())
+    {
+      gchar **names = g_strsplit_set (keep_env, ", \t\n\r", -1);
+
+      for (n = 0; names[n] != NULL; n++)
+        {
+          const gchar *key = names[n];
+          const gchar *value = g_environ_getenv (saved_environ, key);
+
+          if (key[0] == '\0' || value == NULL)
+              continue;
+          if (!validate_environment_variable (key, value, TRUE))
+              goto out;
+
+          g_ptr_array_add (saved_env, g_strdup (key));
+          g_ptr_array_add (saved_env, g_strdup (value));
+        }
+      g_strfreev (names);
     }
 
   /* Set PATH to a safe list */
@@ -1141,6 +1190,10 @@ main (int argc, char *argv[])
       g_ptr_array_free (saved_env, TRUE);
     }
 
+  if (saved_environ != NULL)
+      g_strfreev (saved_environ);
+
+  g_free (keep_env);
   g_free (original_cwd);
   g_free (path_abs);
   g_free (path);
