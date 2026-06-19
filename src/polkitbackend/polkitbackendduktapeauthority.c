@@ -412,8 +412,14 @@ push_subject (duk_context               *cx,
       goto out;
     }
 
-  if (!duk_get_global_string (cx, "Subject"))
+  if (!duk_get_global_string (cx, "Subject")) {
+    duk_pop (cx); /* duk_get_global_string pushes undefined on failure; discard it */
+    g_set_error (error,
+                 POLKIT_ERROR,
+                 POLKIT_ERROR_FAILED,
+                 "JS global 'Subject' constructor not found in Duktape context");
     goto out;
+  }
 
   duk_new (cx, 0);
 
@@ -574,6 +580,7 @@ push_action_and_details (duk_context               *cx,
   guint n;
 
   if (!duk_get_global_string (cx, "Action")) {
+    duk_pop (cx); /* duk_get_global_string pushes undefined on failure; discard it */
     return FALSE;
   }
 
@@ -947,7 +954,7 @@ polkit_backend_common_js_authority_get_admin_auth_identities (PolkitBackendInter
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     LOG_LEVEL_ERROR,
                                     "Error converting subject to JS object: %s",
-                                    error->message);
+                                    error != NULL ? error->message : "(no error message)");
       g_clear_error (&error);
       goto out;
     }
@@ -1029,7 +1036,7 @@ polkit_backend_common_js_authority_check_authorization_sync (PolkitBackendIntera
       polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                     LOG_LEVEL_ERROR,
                                     "Error converting subject to JS object: %s",
-                                    error->message);
+                                    error != NULL ? error->message : "(no error message)");
       g_clear_error (&error);
       goto out;
     }
