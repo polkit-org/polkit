@@ -68,7 +68,10 @@ read_cookie (int argc, char **argv)
             perror ("fgets");
           return NULL;
         }
-      if (buf[strlen (buf) - 1] != '\n')
+      /* Guard against a leading NUL byte causing strlen() to return 0,
+       * which would make buf[len-1] a one-byte read below the buffer. */
+      size_t len = strlen (buf);
+      if (len == 0 || buf[len - 1] != '\n')
         {
           /* Cookie too long - drain remaining input and reject */
           int c;
@@ -97,16 +100,18 @@ send_dbus_message (const char *cookie, const char *user, int pidfd, int uid)
   authority = polkit_authority_get_sync (NULL /* GCancellable* */, &error);
   if (authority == NULL)
     {
-      g_printerr ("Error getting authority: %s\n", error->message);
-      g_error_free (error);
+      g_printerr ("Error getting authority: %s\n",
+                  error != NULL ? error->message : "(no error message)");
+      g_clear_error (&error);
       goto out;
     }
 
   identity = polkit_unix_user_new_for_name (user, &error);
   if (identity == NULL)
     {
-      g_printerr ("Error constructing identity: %s\n", error->message);
-      g_error_free (error);
+      g_printerr ("Error constructing identity: %s\n",
+                  error != NULL ? error->message : "(no error message)");
+      g_clear_error (&error);
       goto out;
     }
 
@@ -128,8 +133,9 @@ send_dbus_message (const char *cookie, const char *user, int pidfd, int uid)
                                                               &error);
   if (!ret)
     {
-      g_printerr ("polkit-agent-helper-1: error response to PolicyKit daemon: %s\n", error->message);
-      g_error_free (error);
+      g_printerr ("polkit-agent-helper-1: error response to PolicyKit daemon: %s\n",
+                  error != NULL ? error->message : "(no error message)");
+      g_clear_error (&error);
       goto out;
     }
 

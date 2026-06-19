@@ -737,6 +737,64 @@ pd_unref_data (ParserData *pd)
   pd->global_icon_name = NULL;
 }
 
+/* Validates a PolicyKit action identifier.
+ *
+ * Action IDs follow reverse-DNS notation: one or more dot-separated
+ * components where each component starts with an ASCII letter (upper or
+ * lower) and continues with ASCII letters, digits, or hyphens.
+ * Examples: "org.freedesktop.policykit.exec", "org.freedesktop.PolicyKit1.test"
+ *
+ * Returns: TRUE if @action_id is valid, FALSE otherwise.
+ */
+static gboolean
+_validate_action_id (const gchar *action_id)
+{
+  gsize n;
+  gsize len;
+  gboolean at_component_start;
+
+  if (action_id == NULL)
+    return FALSE;
+
+  len = strlen (action_id);
+  if (len == 0)
+    return FALSE;
+
+  /* Must contain at least one dot (reverse-DNS requires >= 2 components) */
+  if (strchr (action_id, '.') == NULL)
+    return FALSE;
+
+  at_component_start = TRUE;
+  for (n = 0; n < len; n++)
+    {
+      gchar c = action_id[n];
+
+      if (c == '.')
+        {
+          /* No leading, trailing, or consecutive dots */
+          if (n == 0 || n == len - 1 || action_id[n - 1] == '.')
+            return FALSE;
+          at_component_start = TRUE;
+          continue;
+        }
+
+      if (at_component_start)
+        {
+          /* Each component must start with an ASCII letter (upper or lower) */
+          if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')))
+            return FALSE;
+          at_component_start = FALSE;
+          continue;
+        }
+
+      /* Subsequent chars: ASCII letter, digit, or hyphen */
+      if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-'))
+        return FALSE;
+    }
+
+  return TRUE;
+}
+
 static void
 _start (void *data, const char *el, const char **attr)
 {
@@ -773,6 +831,12 @@ _start (void *data, const char *el, const char **attr)
 
           //if (!polkit_action_validate_id (attr[1]))
           //        goto error;
+
+          if (!_validate_action_id (attr[1]))
+            {
+              g_warning ("Action id '%s' is invalid", attr[1]);
+              goto error;
+            }
 
           pd_unref_action_data (pd);
           pd->action_id = g_strdup (attr[1]);
