@@ -134,6 +134,37 @@ test_comparison (const void *_data)
 }
 
 
+static void
+test_overflow_reject (const void *_subject)
+{
+  const gchar *subject = (const gchar *) _subject;
+
+  PolkitIdentity *identity;
+  GError *error = NULL;
+
+  /* Out-of-range numeric uid/gid must be rejected with an error, not silently truncated */
+  identity = polkit_identity_from_string (subject, &error);
+  g_assert (identity == NULL);
+  g_assert_error (error, POLKIT_ERROR, POLKIT_ERROR_FAILED);
+  g_clear_error (&error);
+}
+
+
+static void
+test_overflow_accept (const void *_subject)
+{
+  const gchar *subject = (const gchar *) _subject;
+  PolkitIdentity *identity;
+  GError *error = NULL;
+
+  /* Values at or below G_MAXINT must be accepted */
+  identity = polkit_identity_from_string (subject, &error);
+  g_assert (error == NULL);
+  g_assert (identity != NULL);
+  g_object_unref (identity);
+}
+
+
 /* Test helpers */
 
 struct ComparisonTestData comparison_test_data [] = {
@@ -195,6 +226,32 @@ main (int argc, char *argv[])
   g_test_add_data_func ("/PolkitIdentity/group_gvariant", "unix-group:root", test_gvariant);
 
   add_comparison_tests ();
+
+  /* uid/gid values exceeding G_MAXINT must be rejected, not silently truncated.
+   * Values where val % 2^32 == 0 (e.g. 4294967296) previously wrapped to uid=0 (root).
+   * Values in (G_MAXINT, G_MAXUINT32] previously wrapped to negative gint values. */
+  g_test_add_data_func ("/PolkitIdentity/uid_overflow_wrap_to_root",
+                        "unix-user:4294967296", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/uid_overflow_wrap_to_root_2",
+                        "unix-user:8589934592", test_overflow_reject);
+  /* 2147483648 = G_MAXINT+1: valid 32-bit UID, accepted (casts to negative gint
+   * but polkit_unix_user_new only guards against -1, not all negatives) */
+  g_test_add_data_func ("/PolkitIdentity/uid_highuid_maxint_plus1",
+                        "unix-user:2147483648", test_overflow_accept);
+  g_test_add_data_func ("/PolkitIdentity/uid_overflow_maxuint32",
+                        "unix-user:4294967295", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/gid_overflow_wrap_to_root",
+                        "unix-group:4294967296", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/gid_highuid_maxint_plus1",
+                        "unix-group:2147483648", test_overflow_accept);
+  g_test_add_data_func ("/PolkitIdentity/gid_overflow_wrap_to_root_2",
+                        "unix-group:8589934592", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/gid_overflow_maxuint32",
+                        "unix-group:4294967295", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/uid_maxint_valid",
+                        "unix-user:2147483647", test_overflow_accept);
+  g_test_add_data_func ("/PolkitIdentity/gid_maxint_valid",
+                        "unix-group:2147483647", test_overflow_accept);
 
   return g_test_run ();
 }
