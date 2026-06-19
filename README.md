@@ -74,4 +74,12 @@ I WANT TO CONTRIBUTE
 ====================
 Your pull requests and patch suggestions are welcome! If you want to contribute, a pull request on this GitHub project is a preferred way, yet not the only one. Please consult other options with this upsteam's maintainers.
 
+AI-ASSISTED CONTRIBUTIONS
+-------------------------
+If you use an AI tool (such as a language model or code assistant) to help write code, draft a bug report, or otherwise prepare your contribution, please state this in the description of your pull request or issue. A brief note mentioning which tool was used and the extent of its involvement is sufficient.
+
+Please use AI assistance thoughtfully and with consideration for the reviewers. A large volume of auto-generated content — code, comments, or descriptions — tends to increase the review burden rather than reduce it, and may slow down rather than speed up the acceptance of your contribution.
+
+Please keep in mind that you remain fully responsible for any AI-generated content you submit. By contributing it, you confirm that you have reviewed it and stand behind its correctness.
+
 Thank you in advance.
