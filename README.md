@@ -80,6 +80,6 @@ If you use an AI tool (such as a language model or code assistant) to help write
 
 Please use AI assistance thoughtfully and with consideration for the reviewers. A large volume of auto-generated content — code, comments, or descriptions — tends to increase the review burden rather than reduce it, and may slow down rather than speed up the acceptance of your contribution.
 
-Please keep in mind that you remain fully responsible for any AI-generated content you submit. By contributing it, you confirm that you have reviewed it and stand behind its correctness.
+Please keep in mind that **you remain fully responsible for any AI-generated content you submit**. By contributing it, you confirm that you have reviewed it and stand behind its correctness.
 
 Thank you in advance.
