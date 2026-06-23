@@ -83,6 +83,8 @@ struct _PolkitSubjectIface
   gboolean (*exists_sync)   (PolkitSubject       *subject,
                              GCancellable        *cancellable,
                              GError             **error);
+
+  gboolean (*check)         (PolkitSubject       *subject);
 };
 
 GType          polkit_subject_get_type      (void) G_GNUC_CONST;
@@ -102,6 +104,7 @@ gboolean       polkit_subject_exists_finish (PolkitSubject       *subject,
 gboolean       polkit_subject_exists_sync   (PolkitSubject       *subject,
                                              GCancellable        *cancellable,
                                              GError             **error);
+gboolean       polkit_subject_state_check   (PolkitSubject       *subject);
 
 G_END_DECLS
 
