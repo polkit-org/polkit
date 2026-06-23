@@ -222,12 +222,19 @@ if systemd_dep.found()
     # FIXME: systemd.pc file does not use variables with relative paths, so `define_variable` cannot be used
     systemdsystemunitdir = systemd_dep.get_variable(pkgconfig : 'systemdsystemunitdir')
   endif
+  # systemd supports locked system accounts since version 257; use if available
+  if systemd_dep.version().version_compare('>=257')
+    polkitd_user_lock = '!'
+  else
+    polkitd_user_lock = ''
+  endif
   sysusers_dir = systemd_dep.get_variable(pkgconfig : 'sysusers_dir')
   tmpfiles_dir = systemd_dep.get_variable(pkgconfig : 'tmpfiles_dir')
 else
   if systemdsystemunitdir == ''
     systemdsystemunitdir = '/usr/lib/systemd/system'
   endif
+  polkitd_user_lock = ''
   sysusers_dir = '/usr/lib/sysusers.d'
   tmpfiles_dir = '/usr/lib/tmpfiles.d'
 endif
