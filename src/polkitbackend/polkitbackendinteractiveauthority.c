@@ -1008,6 +1008,7 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
 {
   PolkitBackendInteractiveAuthority *interactive_authority;
   PolkitBackendInteractiveAuthorityPrivate *priv;
+  PolkitSubject *local_caller = NULL;
   gchar *caller_str;
   gchar *subject_str;
   PolkitIdentity *user_of_caller;
@@ -1045,7 +1046,8 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
       /* TODO: this is kind of a hack */
       GDBusConnection *system_bus;
       system_bus = g_bus_get_sync (G_BUS_TYPE_SYSTEM, NULL, NULL);
-      caller = polkit_system_bus_name_new (g_dbus_connection_get_unique_name (system_bus));
+      local_caller = polkit_system_bus_name_new (g_dbus_connection_get_unique_name (system_bus));
+      caller = local_caller;
       g_object_unref (system_bus);
     }
 
@@ -1216,6 +1218,9 @@ polkit_backend_interactive_authority_check_authorization (PolkitBackendAuthority
 
   if (result != NULL)
     g_object_unref (result);
+
+  if (local_caller != NULL)
+    g_object_unref (local_caller);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
