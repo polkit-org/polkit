@@ -308,6 +308,7 @@ main (int    argc,
   GOptionContext *opt_context;
   guint name_owner_id;
   guint sigint_id;
+  guint sigterm_id;
   guint sighup_id;
   guint expiration_seconds;
 
@@ -315,6 +316,7 @@ main (int    argc,
   opt_context = NULL;
   name_owner_id = 0;
   sigint_id = 0;
+  sigterm_id = 0;
   sighup_id = 0;
   registration_id = NULL;
 
@@ -372,9 +374,9 @@ main (int    argc,
                                  on_sigint_sigterm,
                                  "SIGINT");
 
-  sigint_id = g_unix_signal_add (SIGTERM,
-                                 on_sigint_sigterm,
-                                 "SIGTERM");
+  sigterm_id = g_unix_signal_add (SIGTERM,
+                                  on_sigint_sigterm,
+                                  "SIGTERM");
 
   sighup_id = g_unix_signal_add (SIGHUP,
                                  on_sighup,
@@ -410,6 +412,8 @@ main (int    argc,
  out:
   if (sigint_id > 0)
     g_source_remove (sigint_id);
+  if (sigterm_id > 0)
+    g_source_remove (sigterm_id);
   if (sighup_id > 0)
     g_source_remove (sighup_id);
   if (name_owner_id != 0)
