@@ -61,6 +61,21 @@
     </para>
   </refsect1>
 
+  <refsect1 id="polkitd-environment"><title>ENVIRONMENT</title>
+    <variablelist>
+      <varlistentry>
+        <term><envar>POLKIT_RULES_DIRS</envar></term>
+        <listitem>
+          <para>
+            If set, overrides the default directories used to load JavaScript
+            authorization rules. The value is a colon-separated list of
+            directories. Empty path elements are ignored.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
   <refsect1 id="polkitd-author"><title>AUTHOR</title>
     <para>
       Written by David Zeuthen <email>davidz@redhat.com</email> with
