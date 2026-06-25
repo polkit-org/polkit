@@ -436,7 +436,7 @@ passwd = getpwuid (uid);
 if (passwd == NULL)
   {
     user_name = g_strdup_printf ("%d", (gint) uid);
-    g_warning ("Error looking up info for uid %d: %m", (gint) uid);
+    g_warning ("Error looking up info for uid %d", (gint) uid);
   }
 else
   {
@@ -474,7 +474,7 @@ else
                             gids,
                             &num_gids) < 0)
             {
-              g_warning ("Error looking up groups for uid %d: %m", (gint) uid);
+              g_warning ("Error looking up groups for uid %d: %s", (gint) uid, g_strerror(errno));
             }
           else
             {
