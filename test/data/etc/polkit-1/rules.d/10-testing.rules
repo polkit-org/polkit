@@ -140,7 +140,7 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.spawning.successful_helper") {
         try {
-            polkit.spawn(["/bin/true"]);
+            polkit.spawn(["true"]);
             return polkit.Result.YES;
         } catch (error) {
             return polkit.Result.NO;
@@ -151,7 +151,7 @@ polkit.addRule(function(action, subject) {
 polkit.addRule(function(action, subject) {
     if (action.id == "net.company.spawning.failing_helper") {
         try {
-            polkit.spawn(["/bin/false"]);
+            polkit.spawn(["false"]);
             return polkit.Result.NO;
         } catch (error) {
             return polkit.Result.YES;
