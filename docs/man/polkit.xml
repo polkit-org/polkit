@@ -214,6 +214,16 @@ System Context         |                        |
       <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
       helper so the user can authenticate using a textual interface.
     </para>
+
+    <para>
+      The <command>polkit-agent-helper-1</command> binary performs the
+      privileged credential verification on behalf of the agent.  When
+      run as a systemd socket-activated service it operates in a
+      restricted sandbox; PAM module creators that need additional
+      access should consult the
+      <link linkend="polkit-agent-helper.8"><citerefentry><refentrytitle>polkit-agent-helper</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      man page for guidance on shipping drop-in overrides.
+    </para>
   </refsect1>
 
   <refsect1 id="polkit-declaring-actions"><title>DECLARING ACTIONS</title>
