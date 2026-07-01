@@ -23,7 +23,7 @@ jobs:
 
       - name: Generate app token for skills repo
         id: app-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.SKILLREPO_TOKEN_APP_ID }}
           private-key: ${{ secrets.SKILLREPO_TOKEN_APP_PRIVATE_KEY }}
