@@ -1,0 +1,202 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "../version.xml">
+]>
+<refentry id="polkit-agent-helper.8">
+  <refentryinfo>
+    <title>polkit-agent-helper</title>
+    <date>June 2025</date>
+    <productname>polkit</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>polkit-agent-helper</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="version"></refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>polkit-agent-helper</refname>
+    <refpurpose>polkit authentication agent helper</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>polkit-agent-helper-1</command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id="polkit-agent-helper-description"><title>DESCRIPTION</title>
+    <para>
+      <command>polkit-agent-helper-1</command> is a privileged helper
+      binary used internally by polkit authentication agents.  It is
+      not intended to be invoked directly by users or administrators.
+      The helper is called by the authentication agent (via
+      <emphasis>PolkitAgentSession</emphasis>) associated with the
+      user session that initiated the authorization request.  Its
+      purpose is to verify the user's credentials through the system's
+      authentication framework and relay authentication prompts between
+      the agent and the authentication back-end.
+    </para>
+
+    <para>
+      Multiple variants of this helper exist, one of which is selected
+      at build time depending on the target platform's authentication
+      infrastructure:
+    </para>
+
+    <variablelist>
+      <varlistentry>
+        <term>PAM</term>
+        <listitem><para>
+          Used on Linux systems with Pluggable Authentication Modules.
+          This is the most common variant.
+        </para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>BSD Auth</term>
+        <listitem><para>
+          Used on OpenBSD systems with native BSD authentication.
+        </para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>Shadow</term>
+        <listitem><para>
+          Used on systems without PAM that rely on shadow password
+          databases for credential verification.
+        </para></listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>
+      Regardless of the variant, the installed binary is always named
+      <command>polkit-agent-helper-1</command> and resides in
+      <filename class="directory">/usr/lib/polkit-1/</filename>.
+    </para>
+
+    <para>
+      See the <link
+      linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      man page for an overview of how authentication agents interact
+      with the rest of the polkit architecture.
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkit-agent-helper-sandboxing"><title>SANDBOXING</title>
+    <para>
+      When the <filename>polkit-agent-helper.socket</filename>
+      systemd socket unit is enabled (i.e. not masked or disabled),
+      <command>polkit-agent-helper-1</command> is socket-activated
+      and runs as a systemd service
+      (<filename>polkit-agent-helper@.service</filename>) started directly
+      by systemd, removing the need for the SUID bit on the
+      binary. This service operates in a tightly restricted
+      sandbox. The service unit enables, among
+      others, the following security directives:
+      <literal>PrivateDevices=yes</literal>,
+      <literal>ProtectHome=yes</literal>,
+      <literal>PrivateNetwork=yes</literal>,
+      <literal>PrivateTmp=yes</literal>,
+      <literal>ProtectSystem=strict</literal>, and
+      <literal>DevicePolicy=closed</literal>.
+      See
+      <citerefentry><refentrytitle>systemd.exec</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+      for details on each directive.
+    </para>
+
+    <para>
+      This sandboxing is intentional and significantly reduces the
+      attack surface of the authentication helper. However, PAM
+      modules that require access to hardware devices (e.g. USB
+      security keys, TPM chips, fingerprint readers), user home
+      directories (e.g. <filename>~/.config</filename> key files), or
+      other resources restricted by the sandbox will not function
+      correctly under this configuration.
+    </para>
+
+    <para>
+      The recommended approach is for <emphasis>PAM module
+      creators</emphasis> to ship a systemd drop-in override file for
+      the <filename>polkit-agent-helper@.service</filename> unit that
+      relaxes only the specific directives their module requires.
+      PAM module creators are in the best position to know what access
+      their module needs, and maintaining the override alongside the
+      module ensures it stays up to date as the module evolves.
+    </para>
+
+    <para>
+      A drop-in override provided by the package vendor is a
+      file placed in the directory
+      <filename class="directory">/usr/lib/systemd/system/polkit-agent-helper@.service.d/</filename>.
+      It should be prefixed with the owning module's name. It must have the extension
+      <filename class="extension">.conf</filename>
+      and contain only the directives to be overridden, prefixed with
+      a <literal>[Service]</literal> section header. For example, a
+      PAM module that needs access to TPM devices would install the
+      following file:
+    </para>
+
+    <programlisting><![CDATA[
+# /usr/lib/systemd/system/polkit-agent-helper@.service.d/pinpam-tpm-access.conf
+[Service]
+DevicePolicy=auto
+DeviceAllow=char-tpm rw
+PrivateDevices=no
+]]></programlisting>
+
+    <para>
+      Similarly, a module that needs to read files from the
+      authenticating user's home directory would install:
+    </para>
+
+    <programlisting><![CDATA[
+# /usr/lib/systemd/system/polkit-agent-helper@.service.d/home-access.conf
+[Service]
+ProtectHome=read-only
+]]></programlisting>
+
+    <para>
+      Only the directives that need to change should be included in
+      the override; all other sandboxing remains in effect.
+      Administrators may also place site-specific overrides in
+      <filename class="directory">/etc/systemd/system/polkit-agent-helper@.service.d/</filename>,
+      which take precedence over vendor-supplied drop-ins.
+    </para>
+
+    <para>
+      Note that without such an override, affected PAM modules will
+      fail silently or fall back to password authentication, which can
+      be difficult to diagnose. If a PAM module works with
+      <citerefentry><refentrytitle>sudo</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      or login services but not with polkit, the agent helper sandbox
+      is the likely cause.
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkit-agent-helper-author"><title>AUTHOR</title>
+    <para>
+      Written by David Zeuthen, the polkit team and many kind contributors.
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkit-agent-helper-bugs">
+    <title>BUGS</title>
+    <para>
+      Please send bug reports to either the distribution or the
+      polkit-devel mailing list,
+      see <ulink url="https://github.com/polkit-org/polkit#bugs-and-development"/>.
+    </para>
+  </refsect1>
+
+  <refsect1 id="polkit-agent-helper-see-also">
+    <title>SEE ALSO</title>
+    <para>
+      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <citerefentry><refentrytitle>systemd.exec</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+    </para>
+  </refsect1>
+</refentry>
