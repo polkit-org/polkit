@@ -129,7 +129,7 @@
       A drop-in override provided by the package vendor is a
       file placed in the directory
       <filename class="directory">/usr/lib/systemd/system/polkit-agent-helper@.service.d/</filename>.
-      It must have the extension
+      It should be prefixed with the owning module's name. It must have the extension
       <filename class="extension">.conf</filename>
       and contain only the directives to be overridden, prefixed with
       a <literal>[Service]</literal> section header. For example, a
@@ -138,7 +138,7 @@
     </para>
 
     <programlisting><![CDATA[
-# /usr/lib/systemd/system/polkit-agent-helper@.service.d/tpm-access.conf
+# /usr/lib/systemd/system/polkit-agent-helper@.service.d/pinpam-tpm-access.conf
 [Service]
 DevicePolicy=auto
 DeviceAllow=char-tpm rw
@@ -153,7 +153,7 @@ PrivateDevices=no
     <programlisting><![CDATA[
 # /usr/lib/systemd/system/polkit-agent-helper@.service.d/home-access.conf
 [Service]
-ProtectHome=no
+ProtectHome=read-only
 ]]></programlisting>
 
     <para>
