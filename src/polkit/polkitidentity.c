@@ -19,6 +19,7 @@
  * Author: David Zeuthen <davidz@redhat.com>
  */
 
+#include <errno.h>
 #include <string.h>
 
 #include "polkitidentity.h"
@@ -156,22 +157,46 @@ polkit_identity_from_string  (const gchar   *str,
 
   if (g_str_has_prefix (str, "unix-user:"))
     {
+      errno = 0;
       val = g_ascii_strtoull (str + sizeof "unix-user:" - 1,
                               &endptr,
                               10);
       if (*endptr == '\0')
-        identity = polkit_unix_user_new ((gint) val);
+        {
+          if (errno == ERANGE || val > G_MAXUINT32)
+            {
+              g_set_error (error,
+                           POLKIT_ERROR,
+                           POLKIT_ERROR_FAILED,
+                           "UID value '%s' is out of range",
+                           str + sizeof "unix-user:" - 1);
+            }
+          else
+            identity = polkit_unix_user_new ((gint) val);
+        }
       else
         identity = polkit_unix_user_new_for_name (str + sizeof "unix-user:" - 1,
                                                  error);
     }
   else if (g_str_has_prefix (str, "unix-group:"))
     {
+      errno = 0;
       val = g_ascii_strtoull (str + sizeof "unix-group:" - 1,
                               &endptr,
                               10);
       if (*endptr == '\0')
-        identity = polkit_unix_group_new ((gint) val);
+        {
+          if (errno == ERANGE || val > G_MAXUINT32)
+            {
+              g_set_error (error,
+                           POLKIT_ERROR,
+                           POLKIT_ERROR_FAILED,
+                           "GID value '%s' is out of range",
+                           str + sizeof "unix-group:" - 1);
+            }
+          else
+            identity = polkit_unix_group_new ((gint) val);
+        }
       else
         identity = polkit_unix_group_new_for_name (str + sizeof "unix-group:" - 1,
                                                   error);
