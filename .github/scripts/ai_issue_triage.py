@@ -77,6 +77,8 @@ class AssessmentResult:
     summary: str = ""
     missing_info: list[str] = field(default_factory=list)
     affected_components: list[str] = field(default_factory=list)
+    migrated: bool = False
+    test_against_head: bool = False
 
 
 @dataclass
@@ -329,6 +331,8 @@ def assess(gemini: GeminiClient, issue: dict) -> AssessmentResult | None:
         summary=data.get("summary", ""),
         missing_info=data.get("missing_info", []),
         affected_components=data.get("affected_components", []),
+        migrated=bool(data.get("migrated", False)),
+        test_against_head=bool(data.get("test_against_head", False)),
     )
 
 
@@ -891,12 +895,21 @@ def run_agent(
         # Redirect output to files inside container so we can always read
         # them, even if the process times out or gets killed.
         repo = github.repo
+        head_note = ""
+        if assessment.test_against_head:
+            head_note = (
+                " This is a migrated or old issue — do NOT use the "
+                "distro-packaged polkit. Instead, build polkit from "
+                "source at /workspace/polkit-src/ (meson setup build && "
+                "ninja -C build && ninja -C build install) and test "
+                "against the current HEAD to check if the bug still exists."
+            )
         agent_prompt = (
             f"Reproduce the bug reported at "
             f"https://github.com/{repo}/issues/{issue['number']}. "
             f"Follow the instructions in /workspace/GEMINI.md. "
             f"Read the skill files in /workspace/polkit-ai-reproducer-tools/skills/ "
-            f"for domain knowledge about polkit."
+            f"for domain knowledge about polkit.{head_note}"
         )
         log.info("Launching Gemini CLI agent for issue #%s", issue["number"])
         agent_cmd = (
@@ -1268,15 +1281,18 @@ def run_pipeline(args: argparse.Namespace) -> None:
     else:
         log.info("Skipping labeling: no assessment result")
 
-    # Stage 3: Elicit
-    if args.elicit and assessment:
+    # Stage 3: Elicit (skip for migrated/old issues — original reporter won't respond)
+    if args.elicit and assessment and not assessment.test_against_head:
         try:
             elicit(gemini, github, issue, assessment)
         except Exception:
             log.exception("Elicitation failed")
             ret_val = 2
     else:
-        log.info("Skipping elicitation: no assessment result")
+        if assessment and assessment.test_against_head:
+            log.info("Skipping elicitation: migrated/old issue, will test against HEAD")
+        else:
+            log.info("Skipping elicitation: no assessment result")
 
     # Stage 4+5+6: Bug path → agentic reproducer; feature path → design+validate
     agent_result: AgentResult | None = None
