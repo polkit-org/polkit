@@ -123,7 +123,7 @@ pkg.generate(
 if enable_introspection
   libpolkit_gobject_gir = gnome.generate_gir(
     libpolkit_gobject,
-    sources: sources + headers,
+    sources: sources + headers + files('polkittypes.h'),
     extra_args: c_flags,
     nsversion: pk_gir_version,
     namespace: pk_gir_ns,
