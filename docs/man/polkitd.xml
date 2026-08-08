@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
+<!ENTITY % local.citerefentry.attrib "linkend CDATA #IMPLIED">
 ]>
 <refentry id="polkitd.8">
   <refentryinfo>
@@ -41,8 +42,8 @@
     </para>
 
     <para>
-      <command>polkitd</command> may be configured via the <link
-      linkend="polkitd.conf.5"><citerefentry><refentrytitle>polkitd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry></link>
+      <command>polkitd</command> may be configured via the
+      <citerefentry linkend="polkitd.conf.5"><refentrytitle>polkitd.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>
       configuration file.
     </para>
 
@@ -54,8 +55,7 @@
     </para>
 
     <para>
-      See the <link
-      linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      See the <citerefentry linkend="polkit.8"><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       man page for more information.
 
     </para>
@@ -80,11 +80,11 @@
   <refsect1 id="polkitd-see-also">
     <title>SEE ALSO</title>
     <para>
-      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend="pkaction.1"><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <citerefentry linkend="polkit.8"><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry linkend="pkaction.1"><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkcheck.1"><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkexec.1"><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkttyagent.1"><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>dbus-daemon</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>
     </para>

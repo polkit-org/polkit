@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
+<!ENTITY % local.citerefentry.attrib "linkend CDATA #IMPLIED">
 ]>
 <refentry id="polkit-agent-helper.8">
   <refentryinfo>
@@ -76,8 +77,7 @@
     </para>
 
     <para>
-      See the <link
-      linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      See the <citerefentry linkend="polkit.8"><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       man page for an overview of how authentication agents interact
       with the rest of the polkit architecture.
     </para>
@@ -192,9 +192,9 @@ ProtectHome=read-only
   <refsect1 id="polkit-agent-helper-see-also">
     <title>SEE ALSO</title>
     <para>
-      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
+      <citerefentry linkend="polkit.8"><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry linkend="polkitd.8"><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry linkend="pkttyagent.1"><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>systemd.exec</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>pam</refentrytitle><manvolnum>8</manvolnum></citerefentry>
     </para>

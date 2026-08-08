@@ -2,6 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
+<!ENTITY % local.citerefentry.attrib "linkend CDATA #IMPLIED">
+<!ENTITY % local.literal.attrib "linkend CDATA #IMPLIED">
 ]>
 <refentry id="pkttyagent.1" xmlns:xi="http://www.w3.org/2003/XInclude">
   <refentryinfo>
@@ -77,8 +79,8 @@
     </para>
     <para>
       To get notified when the authentication agent has been
-      registered either listen to the <link
-      linkend="eggdbus-signal-org.freedesktop.PolicyKit1.Authority::Changed">Changed</link>
+      registered either listen to the <literal
+      linkend="eggdbus-signal-org.freedesktop.PolicyKit1.Authority::Changed">Changed</literal>
       D-Bus signal or use <option>--notify-fd</option> to pass the
       number of a file descriptor that has been passed to the
       program. This file descriptor will then be closed when the
@@ -145,11 +147,11 @@
   <refsect1 id="pkttyagent-see-also">
     <title>SEE ALSO</title>
     <para>
-      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend="pkaction.1"><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+      <citerefentry linkend="polkit.8"><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry linkend="polkitd.8"><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry linkend="pkaction.1"><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkcheck.1"><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkexec.1"><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
     </para>
   </refsect1>
 </refentry>
