@@ -52,6 +52,12 @@
     </refsect2>
   </refsect1>
 
+  <refsect1 id="polkitd-conf-author"><title>AUTHOR</title>
+    <para>
+      Written by the polkit contributors.
+    </para>
+  </refsect1>
+
   <refsect1 id="polkitd-conf-see-also">
     <title>SEE ALSO</title>
     <para>
