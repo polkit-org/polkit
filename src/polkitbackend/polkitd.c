@@ -201,6 +201,15 @@ on_sigint_sigterm (gpointer user_data)
   return TRUE;
 }
 
+#ifdef HAVE_LIBSYSTEMD
+static gboolean
+on_watchdog_timeout (gpointer user_data)
+{
+  sd_notify (0, "WATCHDOG=1");
+  return G_SOURCE_CONTINUE;
+}
+#endif
+
 static gboolean
 on_sighup (gpointer user_data)
 {
@@ -312,6 +321,10 @@ main (int    argc,
   guint sigterm_id;
   guint sighup_id;
   guint expiration_seconds;
+  guint watchdog_id;
+#ifdef HAVE_LIBSYSTEMD
+  uint64_t watchdog_usec;
+#endif
 
   loop = NULL;
   opt_context = NULL;
@@ -320,6 +333,7 @@ main (int    argc,
   sigterm_id = 0;
   sighup_id = 0;
   registration_id = NULL;
+  watchdog_id = 0;
 
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
@@ -397,6 +411,21 @@ main (int    argc,
     polkit_backend_interactive_authority_set_expiration_seconds (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
                                                                  expiration_seconds);
 
+#ifdef HAVE_LIBSYSTEMD
+  if (sd_watchdog_enabled (0, &watchdog_usec) > 0)
+    {
+      guint watchdog_interval_msec = (guint) MAX (MIN (watchdog_usec / 2 / 1000, G_MAXUINT), 1);
+      /* Failure to ping means service termination, so set high priority for the event */
+      watchdog_id = g_timeout_add_full (G_PRIORITY_HIGH,
+                                        watchdog_interval_msec,
+                                        on_watchdog_timeout,
+                                        NULL,
+                                        NULL);
+
+      g_print ("Enabled watchdog ping every %u msec\n", watchdog_interval_msec);
+    }
+#endif
+
   g_print ("Entering main event loop\n");
 
 #ifdef HAVE_LIBSYSTEMD
@@ -417,6 +446,8 @@ main (int    argc,
     g_source_remove (sigterm_id);
   if (sighup_id > 0)
     g_source_remove (sighup_id);
+  if (watchdog_id > 0)
+    g_source_remove (watchdog_id);
   if (name_owner_id != 0)
     g_bus_unown_name (name_owner_id);
   if (registration_id != NULL)
