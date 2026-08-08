@@ -2,6 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
+<!ENTITY % local.citerefentry.attrib "linkend CDATA #IMPLIED">
 ]>
 <refentry id="polkitd.conf.5">
   <refentryinfo>
@@ -61,8 +62,8 @@
   <refsect1 id="polkitd-conf-see-also">
     <title>SEE ALSO</title>
     <para>
-      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend="polkit.8"><citerefentry><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+      <citerefentry linkend="polkitd.8"><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry linkend="polkit.8"><refentrytitle>polkit</refentrytitle><manvolnum>8</manvolnum></citerefentry>
     </para>
   </refsect1>
 </refentry>

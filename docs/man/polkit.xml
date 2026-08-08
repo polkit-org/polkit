@@ -2,6 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY version SYSTEM "../version.xml">
+<!ENTITY % local.citerefentry.attrib "linkend CDATA #IMPLIED">
+<!ENTITY % local.type.attrib "linkend CDATA #IMPLIED">
 ]>
 <refentry id="polkit.8" xmlns:xi="http://www.w3.org/2003/XInclude">
   <refentryinfo>
@@ -36,7 +38,7 @@
 
     <para>
       The polkit authority is implemented as an system daemon,
-      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
+      <citerefentry linkend="polkitd.8"><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       which itself has little privilege as it is running as the
       <emphasis>polkitd</emphasis> system user. Mechanisms, subjects
       and authentication agents communicate with the authority using
@@ -125,8 +127,8 @@ System Context         |                        |
       program as well as higher-level languages supporting <ulink
       url="https://live.gnome.org/GObjectIntrospection">GObjectIntrospection</ulink>
       such as JavaScript and Python.  A mechanism can also use the
-      D-Bus API or the <link
-      linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+      D-Bus API or the
+      <citerefentry linkend="pkcheck.1"><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       command to check authorizations. The
       <literal>libpolkit-agent-1</literal> library provides an
       abstraction of the native authentication system, e.g.
@@ -208,10 +210,10 @@ System Context         |                        |
       example, if launched from an
       <citerefentry><refentrytitle>ssh</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       login) may not have an authentication agent associated with
-      them. Such applications may use the <link
-      linkend="PolkitAgentTextListener-struct">PolkitAgentTextListener</link>
+      them. Such applications may use the <type
+      linkend="PolkitAgentTextListener-struct">PolkitAgentTextListener</type>
       type or the
-      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+      <citerefentry linkend="pkttyagent.1"><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       helper so the user can authenticate using a textual interface.
     </para>
 
@@ -221,7 +223,7 @@ System Context         |                        |
       run as a systemd socket-activated service it operates in a
       restricted sandbox; PAM module creators that need additional
       access should consult the
-      <link linkend="polkit-agent-helper.8"><citerefentry><refentrytitle>polkit-agent-helper</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>
+      <citerefentry linkend="polkit-agent-helper.8"><refentrytitle>polkit-agent-helper</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       man page for guidance on shipping drop-in overrides.
     </para>
   </refsect1>
@@ -443,7 +445,7 @@ System Context         |                        |
     </para>
     <para>
       To list installed polkit actions, use the
-      <link linkend="pkaction.1"><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+      <citerefentry linkend="pkaction.1"><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>
       command.
     </para>
 
@@ -453,7 +455,7 @@ System Context         |                        |
         The <literal>org.freedesktop.policykit.exec.path</literal>
         annotation is used by the <command>pkexec</command> program
         shipped with polkit - see the
-        <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+        <citerefentry linkend="pkexec.1"><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         man page for details.
       </para>
       <para>
@@ -474,8 +476,8 @@ System Context         |                        |
         this annotation is not specified, then only root can query
         whether a client running as a different user is authorized for
         an action.  The value of this annotation is a string
-        containing a space-separated list of <link
-        linkend="PolkitIdentity-struct">PolkitIdentity</link> entries,
+        containing a space-separated list of <type
+        linkend="PolkitIdentity-struct">PolkitIdentity</type> entries,
         for example <literal>"unix-user:42
         unix-user:colord"</literal>.  A typical use of this annotation
         is for a daemon process that runs as a system user rather than
@@ -730,7 +732,7 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
       <para>
         The <function>lookup()</function> method is used to lookup the
         polkit variables passed from the mechanism. For example, the
-        <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+        <citerefentry linkend="pkexec.1"><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         mechanism sets the variable <parameter>program</parameter>
         which can be obtained in JavaScript using the expression
         <literal>action.lookup("program")</literal>. If there is
@@ -949,7 +951,7 @@ polkit.addRule(function(action, subject) {
       <para>
         The following example shows how the authorization decision
         can depend on variables passed by the
-        <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+        <citerefentry linkend="pkexec.1"><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>
         mechanism:
       </para>
       <programlisting><![CDATA[
@@ -1020,11 +1022,11 @@ polkit.addRule(function(action, subject) {
   <refsect1 id="polkit-see-also">
     <title>SEE ALSO</title>
     <para>
-      <link linkend="polkitd.8"><citerefentry><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry></link>,
-      <link linkend="pkaction.1"><citerefentry><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkcheck.1"><citerefentry><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkexec.1"><citerefentry><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>,
-      <link linkend="pkttyagent.1"><citerefentry><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry></link>
+      <citerefentry linkend="polkitd.8"><refentrytitle>polkitd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry linkend="pkaction.1"><refentrytitle>pkaction</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkcheck.1"><refentrytitle>pkcheck</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkexec.1"><refentrytitle>pkexec</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry linkend="pkttyagent.1"><refentrytitle>pkttyagent</refentrytitle><manvolnum>1</manvolnum></citerefentry>
     </para>
   </refsect1>
 </refentry>
