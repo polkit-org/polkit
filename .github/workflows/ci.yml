@@ -43,7 +43,7 @@ jobs:
   alpine:
     runs-on: ubuntu-latest
     container:
-      image: alpine:latest
+      image: alpine:edge
       options: "--privileged"
     concurrency:
       group: alpine-${{ github.workflow }}-${{ github.ref }}-${{ matrix.phase }}
