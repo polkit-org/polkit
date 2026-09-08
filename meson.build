@@ -88,6 +88,7 @@ check_functions = [
   'clearenv',
   'fdatasync',
   'setnetgrent',
+  'getauxval',
 ]
 
 foreach func: check_functions
