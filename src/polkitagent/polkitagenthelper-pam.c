@@ -86,7 +86,6 @@ main (int argc, char *argv[])
 {
   int rc;
   int pidfd = -1;
-  int uid = -1;
   int errval = 1;
   const char *user_to_auth;
   char *user_to_auth_free = NULL;
@@ -145,9 +144,6 @@ main (int argc, char *argv[])
   if (argv[1] != NULL && strcmp (argv[1], "--socket-activated") == 0)
     {
       socklen_t socklen = sizeof(int);
-#ifdef SO_PEERCRED
-      struct ucred ucred;
-#endif
 
       user_to_auth_free = read_cookie (argc, argv);
       if (!user_to_auth_free)
@@ -171,22 +167,13 @@ main (int argc, char *argv[])
           goto error;
         }
 
-#ifdef SO_PEERCRED
-      socklen = sizeof(ucred);
-      rc = getsockopt(STDIN_FILENO, SOL_SOCKET, SO_PEERCRED, &ucred, &socklen);
-#else
-      rc = -1;
-#endif
-      if (rc < 0)
-        {
-          syslog (LOG_ERR, "Unable to get credentials from socket");
-          fprintf (stderr, "polkit-agent-helper-1: unable to get credentials from socket.\n");
-          goto error;
-        }
-
-#ifdef SO_PEERCRED
-      uid = ucred.uid;
-#endif
+      /* Deliberately do not take the uid from SO_PEERCRED: it reports the
+       * caller's *effective* uid, while polkitd identifies a process by its
+       * *real* uid (polkit_unix_process_get_racy_uid__()). The two differ for
+       * a setuid caller such as pkexec's built-in agent, and polkitd then
+       * fails to find the authentication session. Leave the uid unset so that
+       * PolkitUnixProcess derives it from the pidfd the same way polkitd does.
+       */
     }
   else
 #endif
@@ -288,7 +275,7 @@ main (int argc, char *argv[])
    * includes a) the cookie; b) the user we authenticated;
    * c) the pidfd and uid of the caller, if socket-activated
    */
-  if (!send_dbus_message (cookie, user_to_auth, pidfd, uid))
+  if (!send_dbus_message (cookie, user_to_auth, pidfd))
     {
 #ifdef PAH_DEBUG
       fprintf (stderr, "polkit-agent-helper-1: error sending D-Bus message to PolicyKit daemon\n");

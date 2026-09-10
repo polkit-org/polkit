@@ -84,7 +84,7 @@ read_cookie (int argc, char **argv)
 }
 
 gboolean
-send_dbus_message (const char *cookie, const char *user, int pidfd, int uid)
+send_dbus_message (const char *cookie, const char *user, int pidfd)
 {
   PolkitAuthority *authority = NULL;
   PolkitIdentity *identity = NULL;
@@ -111,9 +111,10 @@ send_dbus_message (const char *cookie, const char *user, int pidfd, int uid)
       goto out;
     }
 
-  if (pidfd >= 0 && uid >= 0)
+  if (pidfd >= 0)
     {
-      subject = polkit_unix_process_new_pidfd (pidfd, uid, NULL);
+      /* uid -1 lets PolkitUnixProcess derive the process owner from the pidfd */
+      subject = polkit_unix_process_new_pidfd (pidfd, -1, NULL);
       ret = polkit_authority_authentication_agent_response_with_subject_sync (authority,
                                                                               cookie,
                                                                               identity,
