@@ -30,6 +30,8 @@
 /* Built source and not too big to worry about deduplication */
 #include "initjs.h" /* init.js */
 
+#define POLKIT_RULES_DIRS_ENV_VAR "POLKIT_RULES_DIRS"
+
 /**
  * SECTION:polkitbackendjsauthority
  * @title: PolkitBackendJsAuthority
@@ -95,6 +97,36 @@ static void
 polkit_backend_js_authority_init (PolkitBackendJsAuthority *authority)
 {
   authority->priv = polkit_backend_js_authority_get_instance_private (authority);
+}
+
+static gchar **
+rules_dirs_from_environment (void)
+{
+  const gchar *rules_dirs_env;
+  gchar **split_rules_dirs;
+  guint read_index, write_index;
+
+  rules_dirs_env = g_getenv (POLKIT_RULES_DIRS_ENV_VAR);
+  if (rules_dirs_env == NULL || rules_dirs_env[0] == '\0')
+    return NULL;
+
+  split_rules_dirs = g_strsplit (rules_dirs_env, G_SEARCHPATH_SEPARATOR_S, -1);
+  for (read_index = 0, write_index = 0; split_rules_dirs[read_index] != NULL; read_index++)
+    {
+      if (split_rules_dirs[read_index][0] == '\0')
+        g_free (split_rules_dirs[read_index]);
+      else
+        split_rules_dirs[write_index++] = split_rules_dirs[read_index];
+    }
+  split_rules_dirs[write_index] = NULL;
+
+  if (write_index == 0)
+    {
+      g_strfreev (split_rules_dirs);
+      return NULL;
+    }
+
+  return split_rules_dirs;
 }
 
 static void
@@ -253,13 +285,17 @@ polkit_backend_common_js_authority_constructed (GObject *object)
 
   if (authority->priv->rules_dirs == NULL)
     {
-      authority->priv->rules_dirs = g_new0 (gchar *, 5);
-      authority->priv->rules_dirs[0] = g_strdup (PACKAGE_SYSCONF_DIR "/polkit-1/rules.d");
-      authority->priv->rules_dirs[1] = g_strdup ("/run/polkit-1/rules.d");
-      authority->priv->rules_dirs[2] = g_strdup ("/usr/local/share/polkit-1/rules.d");
-      if (g_strcmp0 (PACKAGE_DATA_DIR, "/usr/local/share") != 0)
+      authority->priv->rules_dirs = rules_dirs_from_environment ();
+      if (authority->priv->rules_dirs == NULL)
         {
-          authority->priv->rules_dirs[3] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
+          authority->priv->rules_dirs = g_new0 (gchar *, 5);
+          authority->priv->rules_dirs[0] = g_strdup (PACKAGE_SYSCONF_DIR "/polkit-1/rules.d");
+          authority->priv->rules_dirs[1] = g_strdup ("/run/polkit-1/rules.d");
+          authority->priv->rules_dirs[2] = g_strdup ("/usr/local/share/polkit-1/rules.d");
+          if (g_strcmp0 (PACKAGE_DATA_DIR, "/usr/local/share") != 0)
+            {
+              authority->priv->rules_dirs[3] = g_strdup (PACKAGE_DATA_DIR "/polkit-1/rules.d");
+            }
         }
     }
 
