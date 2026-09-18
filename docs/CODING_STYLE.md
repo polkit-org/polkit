@@ -1,12 +1,14 @@
 # Coding Style
 
-The project uses the following formatting conventions (also specified in `.editorconfig`).
+The project uses C99, as configured in `meson.build`.
+Formatting settings are also specified in `.editorconfig`.
 
 ## Formatting Rules
 
 - **Indentation:** 2 spaces (no tabs)
-- **Line length:** Soft limit of 109 characters
-- **Brace style:** Opening brace on the same line for `if`/`else`/`for`/`while`; opening brace on a new line for function bodies
+- **Line length:** Maximum 109 characters for C source and header files
+- **Brace style:** GNU/GLib style: opening braces on the next line, indented under control-flow statements;
+  function opening braces on the next line at the same indentation as the function definition
 - **Newlines:** LF only, with a final newline at end of file
 - **Trailing whitespace:** Not allowed
 
@@ -27,6 +29,8 @@ load_key_from_config_file (const gchar *filename,
 ```
 
 ## Naming Conventions
+
+All public API follows GObject conventions, with public function names prefixed with `polkit_`.
 
 - **Types:** `PascalCase` with project/module prefix — `PolkitAuthority`, `PolkitBackendSessionMonitor`
 - **Functions:** `snake_case` with full module prefix — `polkit_authority_check_authorization()`, `polkit_backend_session_monitor_get_user_for_subject()`
