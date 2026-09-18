@@ -262,6 +262,8 @@ The monitor is integrated into the GLib main loop via a custom `GSource` that wr
 
 The project uses Meson (>= 1.4.0) with C99 as the language standard.
 
+See [Building polkit](BUILDING.md) for dependencies, configuration commands, compilation, and installation.
+
 ### Top-level `meson.build`
 
 Configures project metadata, dependency detection, feature flags, and includes subdirectories. Key dependencies:

@@ -12,20 +12,12 @@ See also: the [AI-Assisted Contributions](README.md#ai-assisted-contributions) s
 
 ## Documentation
 
-Read these files before making changes:
+Read these files before making changes and follow their guidance:
 
+- [docs/BUILDING.md](docs/BUILDING.md) — Build dependencies, Meson configuration, compilation, installation, and CI builds.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Project architecture: daemon, client library, agent library, D-Bus integration, GLib/GObject patterns, systemd integration, meson build system, and directory layout.
 - [docs/CODING_STYLE.md](docs/CODING_STYLE.md) — Formatting rules, naming conventions, header guards, error handling patterns, brace style, and gtk-doc documentation format.
 - [docs/TESTING.md](docs/TESTING.md) — Unit test pipeline: GLib testing framework, wrapper.py harness (namespace isolation + dbusmock), test data fixtures, and how to run tests.
-
-## Key Rules
-
-- C99, 2-space indentation, no tabs, max 109 characters per line
-- GNU/GLib brace style: function braces on next line, control-flow braces on next line indented under the statement
-- All public API uses GObject conventions with `polkit_` prefix
-- Every public function must have gtk-doc documentation
-- Error handling uses `GError**` with `goto out` cleanup pattern
-- Build with Meson; test with `meson test -C builddir` (requires `-Dtests=true`)
 
 ## Existing Guidelines
 

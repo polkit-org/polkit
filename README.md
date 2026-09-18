@@ -59,16 +59,8 @@ Thank you.
 BUILD INSTRUCTIONS
 ==================
 
-**polkit** uses [meson build system](https://mesonbuild.com/) for configuration with *ninja* as backend and *gcc* as compiler.  
-To configure and compile your copy of polkit tarball, simply follow meson build instructions in the following manner:
-```
-$ meson setup [[-D option]...] target_directory
-$ meson compile -C target_directory
-...
-# meson install -C target_directory
-```
-
-List of available configuration options can be obtained with `meson configure` command.
+See [Building polkit](docs/BUILDING.md) for dependencies, Meson configuration,
+compilation, and installation instructions.
 
 I WANT TO CONTRIBUTE
 ====================
