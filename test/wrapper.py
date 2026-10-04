@@ -32,6 +32,11 @@ def setup_test_namespace(data_dir):
 
         # Overmount /etc with our own version
         subprocess.check_call(["mount", "--bind", os.path.join(data_dir, "etc"), "/etc"])
+    except OSError:
+        # Happens when running in QEMU due to
+        # https://gitlab.com/qemu-project/qemu/-/work_items/871
+        print("Failed to set up test harness, skipping")
+        sys.exit(77)
     except PermissionError:
         print("Lacking permissions to set up test harness, skipping")
         sys.exit(77)
