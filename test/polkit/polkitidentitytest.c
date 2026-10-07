@@ -60,6 +60,32 @@ test_string (const void *_subject)
 
 
 static void
+test_overflow_reject (const void *_subject)
+{
+  const gchar *subject = (const gchar *) _subject;
+  PolkitIdentity *identity;
+  GError *error = NULL;
+
+  identity = polkit_identity_from_string (subject, &error);
+  g_assert (identity == NULL);
+  g_assert_error (error, POLKIT_ERROR, POLKIT_ERROR_FAILED);
+  g_error_free (error);
+}
+
+static void
+test_overflow_accept (const void *_subject)
+{
+  const gchar *subject = (const gchar *) _subject;
+  PolkitIdentity *identity;
+  GError *error = NULL;
+
+  identity = polkit_identity_from_string (subject, &error);
+  g_assert (identity != NULL);
+  g_assert_no_error (error);
+  g_object_unref (identity);
+}
+
+static void
 test_gvariant (const void *_subject)
 {
   const gchar *subject = (const gchar *) _subject;
@@ -193,6 +219,32 @@ main (int argc, char *argv[])
 
   g_test_add_data_func ("/PolkitIdentity/user_gvariant", "unix-user:root", test_gvariant);
   g_test_add_data_func ("/PolkitIdentity/group_gvariant", "unix-group:root", test_gvariant);
+
+  /* UID overflow rejection tests */
+  g_test_add_data_func ("/PolkitIdentity/uid_overflow_wrap_to_root",
+                        "unix-user:4294967296", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/uid_overflow_wrap_to_root_2",
+                        "unix-user:8589934592", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/uid_overflow_maxuint32",
+                        "unix-user:4294967295", test_overflow_reject);
+
+  /* GID overflow rejection tests */
+  g_test_add_data_func ("/PolkitIdentity/gid_overflow_wrap_to_root",
+                        "unix-group:4294967296", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/gid_overflow_wrap_to_root_2",
+                        "unix-group:8589934592", test_overflow_reject);
+  g_test_add_data_func ("/PolkitIdentity/gid_overflow_maxuint32",
+                        "unix-group:4294967295", test_overflow_reject);
+
+  /* High UID/GID acceptance tests */
+  g_test_add_data_func ("/PolkitIdentity/uid_highuid_maxint_plus1",
+                        "unix-user:2147483648", test_overflow_accept);
+  g_test_add_data_func ("/PolkitIdentity/uid_highuid_maxint",
+                        "unix-user:2147483647", test_overflow_accept);
+  g_test_add_data_func ("/PolkitIdentity/gid_highuid_maxint_plus1",
+                        "unix-group:2147483648", test_overflow_accept);
+  g_test_add_data_func ("/PolkitIdentity/gid_highuid_maxint",
+                        "unix-group:2147483647", test_overflow_accept);
 
   add_comparison_tests ();
 
