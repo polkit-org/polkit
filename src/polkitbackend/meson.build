@@ -32,6 +32,9 @@ c_flags = [
 ]
 
 sources += files('polkitbackendduktapeauthority.c')
+if enable_caller_tag
+  sources += files('polkitbackendcallertag.c')
+endif
 deps += libm_dep
 deps += thread_dep
 
@@ -68,7 +71,7 @@ c_flags = [
   '-DPOLKIT_BACKEND_I_KNOW_API_IS_SUBJECT_TO_CHANGE',
 ]
 
-executable(
+polkitd_exe = executable(
   program,
   program + '.c',
   include_directories: top_inc,

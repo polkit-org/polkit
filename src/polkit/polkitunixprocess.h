@@ -62,6 +62,7 @@ GArray         *polkit_unix_process_get_gids       (PolkitUnixProcess *process);
 gint            polkit_unix_process_get_pid        (PolkitUnixProcess *process);
 gint            polkit_unix_process_get_ppid       (PolkitUnixProcess *process);
 guint64         polkit_unix_process_get_start_time (PolkitUnixProcess *process);
+const gchar    *polkit_unix_process_get_on_behalf_of (PolkitUnixProcess *process);
 gint            polkit_unix_process_get_uid        (PolkitUnixProcess *process);
 void            polkit_unix_process_set_gids       (PolkitUnixProcess *process,
                                                     GArray            *gids);

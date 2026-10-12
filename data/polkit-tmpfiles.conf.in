@@ -1,3 +1,11 @@
 # Pre-create the subdirectory so that administrator cannot forget to set appropriate mode and ownership.
 # It should have as minimal privileges as possible to ensure polkitd cannot change .rules files if it gets hijacked.
 d /etc/polkit-1/rules.d 0750 root @polkitd_user@ - -
+
+# polkitd reads polkitd.conf and actions from here
+d /run/polkit-1 0755 root root - -
+# Caller-tag providers register by binding a socket here, so only root may
+# write to it. The directory is setgid polkitd: a socket created in it gets
+# the polkitd group, and with mode 0660 polkitd can connect while nobody
+# else can.
+d /run/polkit-1/caller-tag-providers 02750 root @polkitd_user@ - -
