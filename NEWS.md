@@ -1,3 +1,46 @@
+## polkit 128
+
+### Highlights:
+- fix two authentication-helper input vulnerabilities (CVE-2026-4897 and CVE-2026-85498) [7e122c8, eea1729]
+- sanitize values written to syslog from authorization requests [9dca831]
+- fix a use-after-free in the authentication agent's session handling [6f3cec7]
+- revalidate the administrator behind cached `auth_admin_keep` authorizations [9a49bd6]
+- fix agent cleanup races, resource leaks, and several error-path leaks [148422b, 4e67dde, 8ceeed8, ac4d9ac, dae50d6]
+- support systemd watchdog notifications and locked system accounts with systemd 257+ [b3492d5, 13276c1]
+- improve FreeBSD and Solaris portability, including tests without Linux user namespaces [c3aefa7, 3111583, 72c2878, 0453c24]
+- add Kazakh, Serbian, and Serbian Latin translations; update Slovenian [6fe59cd, 8a797e5, 0d87075]
+- add a polkit-agent-helper manual page and expand contributor documentation [5195b3a, 3ee2927, 935f9cd, 46df56e, d3ba690]
+- remove the systemd service memory limits introduced in polkit 127 [44365bb]
+
+### People who made this version possible:
+Baurzhan Muftakhidinov
+Daeyoung Kang
+filmsi
+Frantisek Sumsal
+Gleb Popov
+Haeryong Park
+Hyuk Lim
+Jan Alexander Steffens (heftig)
+Jan Rybar
+Juthawong Naisanguansee
+Luca Boccassi
+Marco Trevisan (Treviño)
+Maryse47
+Pavel Kohout
+Seunghyun Yoon
+Simon
+Sunwoo Lee
+Thomas Klausner
+Tobias Stoeckmann
+Vincent Mihalkovic
+wangrong
+Марко М. Костић (Marko M. Kostić)
+
+**Many thanks to everyone who contributed to this release!**
+
+The polkit team & polkit community
+Oct 14, 2026
+
 ## polkit 127
 
 ### Highlights:
