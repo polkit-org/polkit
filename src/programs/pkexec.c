@@ -361,11 +361,6 @@ find_action_for_path (PolkitAuthority *authority,
   g_list_foreach (actions, (GFunc) g_object_unref, NULL);
   g_list_free (actions);
 
-  /* Fall back to org.freedesktop.policykit.exec */
-
-  if (action_id == NULL)
-    action_id = g_strdup ("org.freedesktop.policykit.exec");
-
   return action_id;
 }
 
@@ -705,16 +700,6 @@ main (int argc, char *argv[])
       }
     }
 
-  s = realpath(path, NULL);
-  if (s != NULL)
-    {
-      /* The called program resolved to the canonical location. We don't update
-       * argv[n] this time. The called program still sees the original
-       * called path. This is very important for multi-call binaries like
-       * busybox. */
-      g_free (path);
-      path = s;
-    }
   if (access (path, F_OK) != 0)
     {
       g_printerr ("Error accessing %s: %s\n", path, g_strerror (errno));
@@ -848,6 +833,32 @@ main (int argc, char *argv[])
                                     path,
                                     exec_argv[1],
                                     &allow_gui);
+
+  /* Also try the canonicalized path in case of merged-usr systems
+   * where PATH ordering might break finding the correct action.
+   */
+  if (action_id == NULL)
+    {
+      s = realpath(path, NULL);
+      if (s != NULL)
+        {
+          /* This intentionally doesn't change argv because
+           * multi-call binaries like busybox depend on it.
+           */
+          g_free (path);
+          path = s;
+
+          action_id = find_action_for_path (authority,
+                                            path,
+                                            exec_argv[1],
+                                            &allow_gui);
+        }
+    }
+
+  /* Fall back to org.freedesktop.policykit.exec */
+  if (action_id == NULL)
+    action_id = g_strdup ("org.freedesktop.policykit.exec");
+
   g_assert (action_id != NULL);
 
   details = polkit_details_new ();
