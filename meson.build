@@ -241,6 +241,7 @@ polkitd_gid = get_option('polkitd_gid')
 
 # Select which authentication framework to use
 auth_deps = []
+activated_helper = false
 
 auth_fw = get_option('authfw')
 enable_pam = (auth_fw == 'pam')
@@ -281,6 +282,7 @@ if enable_pam
   endif
 
   auth_deps += pam_dep
+  activated_helper = get_option('activated_helper')
 elif auth_fw == 'shadow'
   auth_deps += cc.find_library('crypt')
 endif
@@ -411,6 +413,7 @@ if not libs_only
     pk_pkgsysconfdir,
     polkitd_user,
     polkitd_gid,
+    activated_helper.to_string(),
   )
 endif
 
@@ -442,7 +445,8 @@ endif
 if polkitd_gid != '-'
   output += '        polkitd GID:              ' + polkitd_gid + '\n'
 endif
-output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
+output += '        PAM support:              ' + enable_pam.to_string() + '\n'
+output += '        Socket-activated helper:  ' + activated_helper.to_string() + '\n\n'
 if libs_only
   output += '    !!! Only building polkit libraries, not polkitd !!!\n\n'
 endif
