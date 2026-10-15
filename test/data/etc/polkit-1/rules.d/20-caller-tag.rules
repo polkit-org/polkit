@@ -1,0 +1,11 @@
+/* for test-caller-tag.py */
+polkit.addRule(function(action, subject) {
+    if (subject.on_behalf_of === undefined)
+        return polkit.Result.NOT_HANDLED;
+    if (subject.on_behalf_of === null)
+        return polkit.Result.NO;
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+        subject.on_behalf_of.caller == "test-caller")
+        return polkit.Result.YES;
+    return polkit.Result.NO;
+});

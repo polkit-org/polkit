@@ -170,6 +170,7 @@ struct _PolkitUnixProcess
   guint ctty;
   gboolean pidfd_is_safe;
   GArray *gids;
+  gchar *on_behalf_of;
 };
 
 struct _PolkitUnixProcessClass
@@ -187,6 +188,7 @@ enum
   PROP_UID,
   PROP_PIDFD,
   PROP_PIDFD_IS_SAFE,
+  PROP_ON_BEHALF_OF,
   PROP_PPIDFD,
   PROP_CTTY,
   PROP_GIDS,
@@ -260,6 +262,10 @@ polkit_unix_process_get_property (GObject    *object,
       g_value_set_int (value, unix_process->pidfd);
       break;
 
+    case PROP_ON_BEHALF_OF:
+      g_value_set_string (value, unix_process->on_behalf_of);
+      break;
+
     case PROP_PPIDFD:
       g_value_set_int (value, unix_process->ppidfd);
       break;
@@ -310,6 +316,11 @@ polkit_unix_process_set_property (GObject      *object,
 
     case PROP_PIDFD:
       polkit_unix_process_set_pidfd (unix_process, g_value_get_int (value));
+      break;
+
+    case PROP_ON_BEHALF_OF:
+      g_free (unix_process->on_behalf_of);
+      unix_process->on_behalf_of = g_value_dup_string (value);
       break;
 
     case PROP_START_TIME:
@@ -467,6 +478,8 @@ polkit_unix_process_finalize (GObject *object)
   if (process->gids)
     g_array_unref (process->gids);
 
+  g_free (process->on_behalf_of);
+
   if (G_OBJECT_CLASS (polkit_unix_process_parent_class)->finalize != NULL)
     G_OBJECT_CLASS (polkit_unix_process_parent_class)->finalize (object);
 }
@@ -576,6 +589,27 @@ polkit_unix_process_class_init (PolkitUnixProcessClass *klass)
                                                      G_PARAM_STATIC_NAME |
                                                      G_PARAM_STATIC_BLURB |
                                                      G_PARAM_STATIC_NICK));
+
+  /**
+   * PolkitUnixProcess:on-behalf-of:
+   *
+   * An opaque handle to the original caller, if the service reported
+   * one, for calls made via a proxy on behalf of another process.
+   * Currently this is a "caller-tag": an opaque handle which polkitd
+   * resolves through a caller-tag provider. It is a lookup key, not a
+   * credential.
+   */
+  g_object_class_install_property (gobject_class,
+                                   PROP_ON_BEHALF_OF,
+                                   g_param_spec_string ("on-behalf-of",
+                                                        "On behalf of",
+                                                        "Opaque per-connection tag to resolve via a provider",
+                                                        NULL,
+                                                        G_PARAM_CONSTRUCT |
+                                                        G_PARAM_READWRITE |
+                                                        G_PARAM_STATIC_NAME |
+                                                        G_PARAM_STATIC_BLURB |
+                                                        G_PARAM_STATIC_NICK));
 
   /**
    * PolkitUnixProcess:ppidfd:
@@ -808,6 +842,20 @@ polkit_unix_process_get_start_time (PolkitUnixProcess *process)
 {
   g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), 0);
   return process->start_time;
+}
+
+/**
+ * polkit_unix_process_get_on_behalf_of:
+ * @process: A #PolkitUnixProcess.
+ *
+ * Returns: (nullable): The "on-behalf-of" opaque handle for
+ * @process.
+ */
+const gchar *
+polkit_unix_process_get_on_behalf_of (PolkitUnixProcess *process)
+{
+  g_return_val_if_fail (POLKIT_IS_UNIX_PROCESS (process), NULL);
+  return process->on_behalf_of;
 }
 
 /**
@@ -1065,8 +1113,13 @@ static guint
 polkit_unix_process_hash (PolkitSubject *subject)
 {
   PolkitUnixProcess *process = POLKIT_UNIX_PROCESS (subject);
+  guint hash;
 
-  return g_direct_hash (GSIZE_TO_POINTER ((polkit_unix_process_get_pid(process) + process->start_time))) ;
+  hash = g_direct_hash (GSIZE_TO_POINTER ((polkit_unix_process_get_pid(process) + process->start_time))) ;
+  if (process->on_behalf_of != NULL)
+    hash ^= g_str_hash (process->on_behalf_of);
+
+  return hash;
 }
 
 static gboolean
@@ -1086,6 +1139,11 @@ polkit_unix_process_equal (PolkitSubject *a,
 
   pidfd_a = polkit_unix_process_get_pidfd(process_a);
   pidfd_b = polkit_unix_process_get_pidfd(process_b);
+
+  /* a proxy acting for different callers shares one pid; those callers
+   * must not share authorizations keyed on the subject */
+  if (g_strcmp0 (process_a->on_behalf_of, process_b->on_behalf_of) != 0)
+    return FALSE;
 
   return
     (pid_a > 0) &&

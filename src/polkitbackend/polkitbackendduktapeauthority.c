@@ -24,6 +24,9 @@
 #include <pthread.h>
 
 #include "polkitbackendcommon.h"
+#ifdef ENABLE_CALLER_TAG
+#include "polkitbackendcallertag.h"
+#endif
 
 #include "duktape.h"
 
@@ -414,6 +417,47 @@ push_subject (duk_context               *cx,
 
   pid_early = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
   pidfd = polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (process));
+
+#ifdef ENABLE_CALLER_TAG
+  if (POLKIT_IS_UNIX_PROCESS (subject))
+    {
+      const gchar *tag = polkit_unix_process_get_on_behalf_of (POLKIT_UNIX_PROCESS (subject));
+      if (tag != NULL)
+        {
+          /* one authorization builds the JS subject several times; resolve
+           * once per subject, failure included, or a slow provider is paid for each */
+          const gchar *raw = g_object_get_data (G_OBJECT (subject), "caller-tag-resolved");
+          if (raw == NULL)
+            {
+              GError *resolve_error = NULL;
+              gchar *fresh = polkit_backend_caller_tag_resolve (tag, POLKIT_UNIX_PROCESS (subject), &resolve_error);
+              if (fresh == NULL)
+                {
+                  /* any bus client can send a tag, so never log its content
+                   * and do not let a flood of them drown the journal */
+                  static gint64 last_warning;
+                  gint64 now = g_get_monotonic_time ();
+                  const gchar *msg = resolve_error != NULL ? resolve_error->message : "unknown";
+
+                  if (now - last_warning >= 60 * G_USEC_PER_SEC)
+                    {
+                      g_warning ("caller-tag for pid %d did not resolve: %s (similar messages suppressed for 60s)",
+                                 (gint) pid_early, msg);
+                      last_warning = now;
+                    }
+                  else
+                    g_debug ("caller-tag for pid %d did not resolve: %s", (gint) pid_early, msg);
+                  g_clear_error (&resolve_error);
+                  fresh = g_strdup ("");
+                }
+              g_object_set_data_full (G_OBJECT (subject), "caller-tag-resolved", fresh, g_free);
+              raw = fresh;
+            }
+          /* set even when empty: a tag that did not resolve must not look like no tag */
+          set_property_str (cx, "_on_behalf_of_raw", raw);
+        }
+    }
+#endif
 
 #ifdef HAVE_LIBSYSTEMD
 #if HAVE_SD_PIDFD_GET_SESSION

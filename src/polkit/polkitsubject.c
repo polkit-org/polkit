@@ -318,6 +318,9 @@ polkit_subject_to_gvariant (PolkitSubject *subject)
       if (polkit_unix_process_get_pidfd_is_safe(POLKIT_UNIX_PROCESS (subject)))
         g_variant_builder_add (&builder, "{sv}", "pidfd",
                                g_variant_new_handle (polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (subject))));
+      if (polkit_unix_process_get_on_behalf_of (POLKIT_UNIX_PROCESS (subject)) != NULL)
+        g_variant_builder_add (&builder, "{sv}", "on-behalf-of",
+                               g_variant_new_string (polkit_unix_process_get_on_behalf_of (POLKIT_UNIX_PROCESS (subject))));
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
@@ -479,6 +482,17 @@ polkit_subject_new_for_gvariant_invocation (GVariant              *variant,
           g_variant_unref (v);
 
           ret = polkit_unix_process_new_for_owner (pid, start_time, uid);
+        }
+
+      /* the "on-behalf-of" subject key is optional */
+      if (ret != NULL)
+        {
+          v = lookup_asv (details_gvariant, "on-behalf-of", G_VARIANT_TYPE_STRING, NULL);
+          if (v != NULL)
+            {
+              g_object_set (ret, "on-behalf-of", g_variant_get_string (v, NULL), NULL);
+              g_variant_unref (v);
+            }
         }
     }
   else if (g_strcmp0 (kind, "unix-session") == 0)
