@@ -1,8 +1,16 @@
+if activated_helper == 'true'
+  # Comment out polkit-agent-helper.socket's Install section
+  helper_install = '#'
+else
+  helper_install = ''
+endif
+
 service_conf = {
   'libprivdir': pk_prefix / pk_libprivdir,
   'polkitd_user': polkitd_user,
   'polkitd_uid': polkitd_uid,
   'polkitd_gid': polkitd_gid,
+  'helper_install': helper_install,
 }
 
 configure_file(
@@ -56,10 +64,21 @@ if not get_option('libs-only')
     install_dir: systemdsystemunitdir,
   )
 
-  install_data(
-    'polkit-agent-helper.socket',
+  configure_file(
+    input: 'polkit-agent-helper.socket.in',
+    output: '@BASENAME@',
+    configuration: service_conf,
+    install: true,
     install_dir: systemdsystemunitdir,
   )
+
+  if activated_helper == 'true'
+    install_symlink(
+      'polkit-agent-helper.socket',
+      install_dir: systemdsystemunitdir / 'sockets.target.wants',
+      pointing_to: '../polkit-agent-helper.socket',
+    )
+  endif
 
   if polkitd_gid != '-'
     sysusers_template = 'polkit.conf.in-with-gid'

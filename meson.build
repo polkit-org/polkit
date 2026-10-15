@@ -338,6 +338,12 @@ if privileged_group == ''
   endif
 endif
 
+# The way the helper is activated differs between distributions, set it accordingly if not specified
+activated_helper = get_option('activated_helper')
+if activated_helper == ''
+  activated_helper = 'false'
+endif
+
 pam_include = get_option('pam_include')
 if pam_include == ''
   if ['suse', 'solaris', 'openembedded'].contains(os_type)
@@ -420,6 +426,7 @@ if not libs_only
     pk_pkgsysconfdir,
     polkitd_user,
     polkitd_gid,
+    activated_helper,
   )
 endif
 
@@ -451,6 +458,7 @@ endif
 if polkitd_gid != '-'
   output += '        polkitd GID:              ' + polkitd_gid + '\n'
 endif
+output += '        Socket-activated helper:  ' + activated_helper + '\n'
 output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
 if libs_only
   output += '    !!! Only building polkit libraries, not polkitd !!!\n\n'

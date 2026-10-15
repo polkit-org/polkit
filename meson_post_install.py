@@ -21,6 +21,7 @@ pkglibdir = destdir_path(sys.argv[2])
 pkgsysconfdir = destdir_path(sys.argv[3])
 polkitd_user = sys.argv[4]
 polkitd_gid = sys.argv[5]
+activated_helper = sys.argv[6]
 
 if polkitd_gid == '-':
     try:
@@ -47,18 +48,14 @@ if not os.path.exists(dst):
     else:
         print(f'Owner of {dst} needs to be set to root and group to {polkitd_user} after installation')
 
-# polkit-agent-helper-1 need to be setuid root because it's used to
-# authenticate not only the invoking user, but possibly also root
-# and/or other users.
-dst = os.path.join(pkglibdir, 'polkit-agent-helper-1')
+if activated_helper != 'true':
+    # polkit-agent-helper-1 need to be setuid root because it's used to
+    # authenticate not only the invoking user, but possibly also root
+    # and/or other users.
+    dst = os.path.join(pkglibdir, 'polkit-agent-helper-1')
 
-if os.geteuid() == 0:
-    os.chown(dst, 0, -1)
-    os.chmod(dst, 0o4755)
-else:
-    print(
-        'Owner and mode of {} need to be setuid root (04755) after '
-        'installation'.format(
-            dst,
-        )
-    )
+    if os.geteuid() == 0:
+        os.chown(dst, 0, -1)
+        os.chmod(dst, 0o4755)
+    else:
+        print(f'Owner and mode of {dst} need to be setuid root (04755) after installation')
