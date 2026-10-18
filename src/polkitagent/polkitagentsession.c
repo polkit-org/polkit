@@ -444,6 +444,13 @@ io_watch_have_data (GIOChannel    *channel,
       g_warning ("in io_watch_have_data() but helper is not supposed to be running");
 
       complete_session (session, FALSE);
+      /* complete_session() emits ::completed, and handlers of that signal
+       * are documented to be allowed to drop the last reference to
+       * @session (see e.g. PolkitAgentTextListener's handler). NULL out
+       * our local pointer so we can never call complete_session() again
+       * on a possibly-freed @session below.
+       */
+      session = NULL;
       goto out;
     }
 
@@ -461,6 +468,7 @@ io_watch_have_data (GIOChannel    *channel,
       g_clear_error (&error);
 
       complete_session (session, FALSE);
+      session = NULL;
       goto out;
     }
 
@@ -504,15 +512,18 @@ io_watch_have_data (GIOChannel    *channel,
   else if (g_str_has_prefix (unescaped, "SUCCESS"))
     {
       complete_session (session, TRUE);
+      session = NULL;
     }
   else if (g_str_has_prefix (unescaped, "FAILURE"))
     {
       complete_session (session, FALSE);
+      session = NULL;
     }
   else
     {
       g_warning ("Unknown line '%s' from helper", line);
       complete_session (session, FALSE);
+      session = NULL;
       goto out;
     }
 
@@ -520,7 +531,7 @@ io_watch_have_data (GIOChannel    *channel,
   g_free (line);
   g_free (unescaped);
 
-  if (condition & (G_IO_ERR | G_IO_HUP))
+  if (session != NULL && (condition & (G_IO_ERR | G_IO_HUP)))
     complete_session (session, FALSE);
 
   /* keep the IOChannel around */

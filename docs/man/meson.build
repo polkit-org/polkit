@@ -12,6 +12,7 @@ xsltproc_cmd = [
 
 mans = [
   ['polkit', '8'],
+  ['polkit-agent-helper', '8'],
   ['polkitd', '8'],
   ['polkitd.conf', '5'],
   ['pkexec', '1'],

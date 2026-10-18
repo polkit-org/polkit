@@ -68,12 +68,13 @@ read_cookie (int argc, char **argv)
             perror ("fgets");
           return NULL;
         }
+      if (buf[0] == '\0')
+        {
+          errno = EINVAL;
+          return NULL;
+        }
       if (buf[strlen (buf) - 1] != '\n')
         {
-          /* Cookie too long - drain remaining input and reject */
-          int c;
-          while ((c = getchar ()) != '\n' && c != EOF)
-            ;
           errno = EOVERFLOW;
           return NULL;
         }

@@ -1,0 +1,13 @@
+root:*:0:root
+daemon:*:1:
+operator:*:5:root
+nogroup:*:65533:
+nobody:*:65534:
+messagebus:*:556:
+users:*:100:john,jane
+admin:*:101:sally,henry
+john:*:500:
+jane:*:501:
+sally:*:502:
+henry:*:503:
+highuid2:*:4000000000:

@@ -91,11 +91,25 @@ fencing, no extra text) with these fields:
   check for: OS/distro version, polkit version, desktop environment, \
   reproduction steps, log output (journalctl -u polkit.service). For feature \
   requests, check for: use case, desired behavior, alternatives considered. \
-  Return an empty list if nothing critical is missing.
+  Return an empty list if nothing critical is missing. \
+  IMPORTANT: If the issue was migrated from freedesktop.org (the body starts \
+  with "In gitlab.freedesktop.org by bugzilla-migration" or references \
+  bugs.freedesktop.org) or is older than ~2 years, do NOT ask for OS/distro \
+  version or polkit version — the original reporter is unlikely to respond. \
+  Instead, the reproducer should be tested against the current polkit source.
 - "affected_components": a list of polkit components likely involved, chosen \
   from: "polkitd", "pkexec", "pkcheck", "pkttyagent", "polkit-agent-helper", \
   "libpolkit-gobject", "libpolkit-agent", "pam", "duktape", "rules", \
   "session-monitor", "build-system", "ci-cd", "documentation"
+- "migrated": a boolean, true if the issue was migrated from \
+  gitlab.freedesktop.org or bugs.freedesktop.org (look for \
+  "bugzilla-migration", "gitlab.freedesktop.org", or "bugs.freedesktop.org" \
+  in the body). These issues were bulk-imported and may reference very old \
+  polkit versions. false otherwise.
+- "test_against_head": a boolean, true if the issue is old (>2 years) or \
+  migrated and should be tested against the current polkit source (HEAD) \
+  rather than the distro-packaged version. false for recent issues where \
+  the reporter's specific version matters.
 """
 
 PROMPT_LABEL = """\

@@ -20,6 +20,7 @@
  */
 
 #include <signal.h>
+#include <errno.h>
 #include <stdlib.h>
 
 #include <glib-unix.h>
@@ -200,6 +201,15 @@ on_sigint_sigterm (gpointer user_data)
   return TRUE;
 }
 
+#ifdef HAVE_LIBSYSTEMD
+static gboolean
+on_watchdog_timeout (gpointer user_data)
+{
+  sd_notify (0, "WATCHDOG=1");
+  return G_SOURCE_CONTINUE;
+}
+#endif
+
 static gboolean
 on_sighup (gpointer user_data)
 {
@@ -248,7 +258,7 @@ become_user (const gchar  *user,
   if (pw == NULL)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Error calling getpwnam(): %m");
+                   "Error calling getpwnam(): %s", g_strerror(errno));
       goto out;
     }
 
@@ -263,13 +273,13 @@ become_user (const gchar  *user,
   if (setgroups (0, NULL) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Error clearing groups: %m");
+                   "Error clearing groups: %s", g_strerror(errno));
       goto out;
     }
   if (initgroups (pw->pw_name, pw->pw_gid) != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Error initializing groups: %m");
+                   "Error initializing groups: %s", g_strerror(errno));
       goto out;
     }
 
@@ -279,16 +289,16 @@ become_user (const gchar  *user,
       (getegid () != pw->pw_gid) || (getgid () != pw->pw_gid))
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Error becoming real+effective uid %d and gid %d: %m",
-                   (int) pw->pw_uid, (int) pw->pw_gid);
+                   "Error becoming real+effective uid %d and gid %d: %s",
+                   (int) pw->pw_uid, (int) pw->pw_gid, g_strerror(errno));
       goto out;
     }
 
   if (chdir ("/") != 0)
     {
       g_set_error (error, G_IO_ERROR, G_IO_ERROR_FAILED,
-                   "Error changing to root directory %s: %m",
-                   pw->pw_dir);
+                   "Error changing to root directory %s: %s",
+                   pw->pw_dir, g_strerror(errno));
       goto out;
     }
 
@@ -308,15 +318,22 @@ main (int    argc,
   GOptionContext *opt_context;
   guint name_owner_id;
   guint sigint_id;
+  guint sigterm_id;
   guint sighup_id;
   guint expiration_seconds;
+  guint watchdog_id;
+#ifdef HAVE_LIBSYSTEMD
+  uint64_t watchdog_usec;
+#endif
 
   loop = NULL;
   opt_context = NULL;
   name_owner_id = 0;
   sigint_id = 0;
+  sigterm_id = 0;
   sighup_id = 0;
   registration_id = NULL;
+  watchdog_id = 0;
 
   /* Disable remote file access from GIO. */
   setenv ("GIO_USE_VFS", "local", 1);
@@ -346,7 +363,7 @@ main (int    argc,
         }
       else
         {
-          g_warning ("Error opening /dev/null: %m");
+          g_warning ("Error opening /dev/null: %s", g_strerror(errno));
         }
     }
 
@@ -372,9 +389,9 @@ main (int    argc,
                                  on_sigint_sigterm,
                                  "SIGINT");
 
-  sigint_id = g_unix_signal_add (SIGTERM,
-                                 on_sigint_sigterm,
-                                 "SIGTERM");
+  sigterm_id = g_unix_signal_add (SIGTERM,
+                                  on_sigint_sigterm,
+                                  "SIGTERM");
 
   sighup_id = g_unix_signal_add (SIGHUP,
                                  on_sighup,
@@ -394,6 +411,21 @@ main (int    argc,
     polkit_backend_interactive_authority_set_expiration_seconds (POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority),
                                                                  expiration_seconds);
 
+#ifdef HAVE_LIBSYSTEMD
+  if (sd_watchdog_enabled (0, &watchdog_usec) > 0)
+    {
+      guint watchdog_interval_msec = (guint) MAX (MIN (watchdog_usec / 2 / 1000, G_MAXUINT), 1);
+      /* Failure to ping means service termination, so set high priority for the event */
+      watchdog_id = g_timeout_add_full (G_PRIORITY_HIGH,
+                                        watchdog_interval_msec,
+                                        on_watchdog_timeout,
+                                        NULL,
+                                        NULL);
+
+      g_print ("Enabled watchdog ping every %u msec\n", watchdog_interval_msec);
+    }
+#endif
+
   g_print ("Entering main event loop\n");
 
 #ifdef HAVE_LIBSYSTEMD
@@ -410,8 +442,12 @@ main (int    argc,
  out:
   if (sigint_id > 0)
     g_source_remove (sigint_id);
+  if (sigterm_id > 0)
+    g_source_remove (sigterm_id);
   if (sighup_id > 0)
     g_source_remove (sighup_id);
+  if (watchdog_id > 0)
+    g_source_remove (watchdog_id);
   if (name_owner_id != 0)
     g_bus_unown_name (name_owner_id);
   if (registration_id != NULL)

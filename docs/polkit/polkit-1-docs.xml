@@ -57,7 +57,9 @@
   <part id="manpages">
     <title>Manual Pages</title>
     <xi:include href="../man/polkit.xml"/>
+    <xi:include href="../man/polkit-agent-helper.xml"/>
     <xi:include href="../man/polkitd.xml"/>
+    <xi:include href="../man/polkitd.conf.xml"/>
     <xi:include href="../man/pkcheck.xml"/>
     <xi:include href="../man/pkaction.xml"/>
     <xi:include href="../man/pkexec.xml"/>

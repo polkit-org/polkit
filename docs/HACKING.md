@@ -85,17 +85,7 @@ Committing code
 Coding Style
 ===
 
- - Please follow the coding style already used.
-
- - Write docs for all functions and structs and so on. We use gtkdoc format.
-
- - All external interfaces (network protocols, file formats, etc.)
-   should have documented specifications sufficient to allow an
-   alternative implementation to be written. Our implementation should
-   be strict about specification compliance (should not for example
-   heuristically parse a file and accept not-well-formed
-   data). Avoiding heuristics is also important for security reasons;
-   if it looks funny, ignore it (or exit, or disconnect).
+See [docs/CODING_STYLE.md](CODING_STYLE.md) for the full coding style guide.
 
 Code of Conduct
 ===
