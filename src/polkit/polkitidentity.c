@@ -136,9 +136,14 @@ parse_unix_id (const gchar  *str,
                gchar       **endptr,
                gint         *id)
 {
+  const gchar *number = str;
+
   errno = 0;
 
-  if (*str == '-')
+  while (g_ascii_isspace (*number))
+    number++;
+
+  if (*number == '-')
     {
       gint64 signed_val = g_ascii_strtoll (str, endptr, 10);
 

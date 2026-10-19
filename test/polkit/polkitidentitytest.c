@@ -117,6 +117,50 @@ test_gvariant (const void *_subject)
   g_object_unref (new_identity);
 }
 
+static void
+test_numeric_id_whitespace (void)
+{
+  const struct {
+    const gchar *subject;
+    gboolean valid;
+    gint id;
+  } cases[] = {
+    {"unix-user: -2", TRUE, -2},
+    {"unix-group:\t-2147483648", TRUE, G_MININT},
+    {"unix-user: -2147483649", FALSE, 0},
+    {"unix-group:\n-2147483649", FALSE, 0},
+    {"unix-user: -18446744073709550616", FALSE, 0},
+    {"unix-group:\t-18446744073709550616", FALSE, 0},
+    {"unix-user: 1000", TRUE, 1000},
+    {"unix-group:\t1000", TRUE, 1000},
+  };
+  guint i;
+
+  for (i = 0; i < G_N_ELEMENTS (cases); i++)
+    {
+      PolkitIdentity *identity;
+      GError *error = NULL;
+
+      identity = polkit_identity_from_string (cases[i].subject, &error);
+      if (cases[i].valid)
+        {
+          g_assert_no_error (error);
+          g_assert (identity != NULL);
+          if (POLKIT_IS_UNIX_USER (identity))
+            g_assert_cmpint (polkit_unix_user_get_uid (POLKIT_UNIX_USER (identity)), ==, cases[i].id);
+          else
+            g_assert_cmpint (polkit_unix_group_get_gid (POLKIT_UNIX_GROUP (identity)), ==, cases[i].id);
+          g_object_unref (identity);
+        }
+      else
+        {
+          g_assert (identity == NULL);
+          g_assert (error != NULL);
+          g_clear_error (&error);
+        }
+    }
+}
+
 
 static void
 test_comparison (const void *_data)
@@ -219,6 +263,7 @@ main (int argc, char *argv[])
 
   g_test_add_data_func ("/PolkitIdentity/user_gvariant", "unix-user:root", test_gvariant);
   g_test_add_data_func ("/PolkitIdentity/group_gvariant", "unix-group:root", test_gvariant);
+  g_test_add_func ("/PolkitIdentity/numeric_id_whitespace", test_numeric_id_whitespace);
 
   /* UID overflow rejection tests */
   g_test_add_data_func ("/PolkitIdentity/uid_overflow_wrap_to_root",
