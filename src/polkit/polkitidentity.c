@@ -129,6 +129,39 @@ polkit_identity_to_string (PolkitIdentity *identity)
   return POLKIT_IDENTITY_GET_IFACE (identity)->to_string (identity);
 }
 
+/* High 32-bit IDs are stored as negative gint values and can be serialized
+ * with that sign when no user or group name is available. */
+static gboolean
+parse_unix_id (const gchar  *str,
+               gchar       **endptr,
+               gint         *id)
+{
+  errno = 0;
+
+  if (*str == '-')
+    {
+      gint64 signed_val = g_ascii_strtoll (str, endptr, 10);
+
+      if (**endptr != '\0' || *endptr == str || errno == ERANGE ||
+          signed_val < G_MININT || signed_val >= -1)
+        return FALSE;
+
+      *id = (gint) signed_val;
+    }
+  else
+    {
+      guint64 val = g_ascii_strtoull (str, endptr, 10);
+
+      if (**endptr != '\0' || *endptr == str || errno == ERANGE ||
+          val >= G_MAXUINT32)
+        return FALSE;
+
+      *id = (gint) val;
+    }
+
+  return TRUE;
+}
+
 /**
  * polkit_identity_from_string:
  * @str: A string obtained from polkit_identity_to_string().
@@ -145,7 +178,7 @@ polkit_identity_from_string  (const gchar   *str,
                              GError       **error)
 {
   PolkitIdentity *identity;
-  guint64 val;
+  gint id;
   gchar *endptr;
 
   g_return_val_if_fail (str != NULL, NULL);
@@ -157,13 +190,12 @@ polkit_identity_from_string  (const gchar   *str,
 
   if (g_str_has_prefix (str, "unix-user:"))
     {
-      errno = 0;
-      val = g_ascii_strtoull (str + sizeof "unix-user:" - 1,
-                              &endptr,
-                              10);
+      gboolean valid = parse_unix_id (str + sizeof "unix-user:" - 1,
+                                       &endptr, &id);
+
       if (*endptr == '\0')
         {
-          if (errno == ERANGE || val > G_MAXUINT32)
+          if (!valid)
             {
               g_set_error (error,
                            POLKIT_ERROR,
@@ -172,7 +204,7 @@ polkit_identity_from_string  (const gchar   *str,
                            str + sizeof "unix-user:" - 1);
             }
           else
-            identity = polkit_unix_user_new ((gint) val);
+            identity = polkit_unix_user_new (id);
         }
       else
         identity = polkit_unix_user_new_for_name (str + sizeof "unix-user:" - 1,
@@ -180,13 +212,12 @@ polkit_identity_from_string  (const gchar   *str,
     }
   else if (g_str_has_prefix (str, "unix-group:"))
     {
-      errno = 0;
-      val = g_ascii_strtoull (str + sizeof "unix-group:" - 1,
-                              &endptr,
-                              10);
+      gboolean valid = parse_unix_id (str + sizeof "unix-group:" - 1,
+                                       &endptr, &id);
+
       if (*endptr == '\0')
         {
-          if (errno == ERANGE || val > G_MAXUINT32)
+          if (!valid)
             {
               g_set_error (error,
                            POLKIT_ERROR,
@@ -195,7 +226,7 @@ polkit_identity_from_string  (const gchar   *str,
                            str + sizeof "unix-group:" - 1);
             }
           else
-            identity = polkit_unix_group_new ((gint) val);
+            identity = polkit_unix_group_new (id);
         }
       else
         identity = polkit_unix_group_new_for_name (str + sizeof "unix-group:" - 1,
