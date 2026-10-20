@@ -7,5 +7,5 @@ Accept=yes
 RemoveOnStop=yes
 ListenStream=/run/polkit/agent-helper.socket
 
-[Install]
-WantedBy=sockets.target
+@helper_install@[Install]
+@helper_install@WantedBy=sockets.target
