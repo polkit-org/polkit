@@ -1,0 +1,5 @@
+summary: Authentication agents for processes without a login session
+test: ./test.sh
+require:
+  - python3-dbus
+  - python3-gobject
