@@ -191,6 +191,10 @@ on_name_acquired (GDBusConnection *connection,
   polkit_backend_authority_log (POLKIT_BACKEND_AUTHORITY (authority),
                                 LOG_LEVEL_INFO,
                                 "Acquired the name org.freedesktop.PolicyKit1 on the system bus");
+
+#ifdef HAVE_LIBSYSTEMD
+  sd_notify (0, "READY=1\nSTATUS=Processing requests...");
+#endif
 }
 
 static gboolean
@@ -427,10 +431,6 @@ main (int    argc,
 #endif
 
   g_print ("Entering main event loop\n");
-
-#ifdef HAVE_LIBSYSTEMD
-  sd_notify (0, "READY=1\nSTATUS=Processing requests...");
-#endif
 
   g_main_loop_run (loop);
 
