@@ -1405,9 +1405,15 @@ get_cgroupid_for_pidfd (gint    pidfd,
   if (!g_file_get_contents (filename, &contents, &length, error))
     goto out;
 
-  /* The format is '0::/cgroup/path\n */
-  p = strchr (contents, ':');
-  if (p == NULL)
+  /* Select the unified hierarchy when legacy controllers are also mounted. */
+  p = contents;
+  while (!g_str_has_prefix (p, "0::"))
+    {
+      p = strchr (p, '\n');
+      if (p == NULL || *++p == '\0')
+        break;
+    }
+  if (p == NULL || !g_str_has_prefix (p, "0::"))
     {
       g_set_error (error,
                    POLKIT_ERROR,
@@ -1416,7 +1422,7 @@ get_cgroupid_for_pidfd (gint    pidfd,
                    filename);
       goto out;
     }
-  p += 2; /* skip '::' */
+  p += 3; /* skip '0::' */
   if (p - contents >= (int) length)
     {
       g_set_error (error,
@@ -1427,7 +1433,7 @@ get_cgroupid_for_pidfd (gint    pidfd,
       goto out;
     }
 
-  contents[length - 1] = '\0'; /* remove the newline */
+  p[strcspn (p, "\n")] = '\0'; /* terminate the unified cgroup path */
 
   cgroup_path = g_strdup_printf ("/sys/fs/cgroup%s", p);
 
