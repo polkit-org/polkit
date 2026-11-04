@@ -1266,8 +1266,10 @@ server_handle_enumerate_temporary_authorizations (Server                 *server
   GList *authorizations;
   GList *l;
   GVariantBuilder builder;
+  GUnixFDList *fd_list;
 
   subject = NULL;
+  fd_list = NULL;
 
   g_variant_get (parameters,
                  "(@(sa{sv}))",
@@ -1296,20 +1298,25 @@ server_handle_enumerate_temporary_authorizations (Server                 *server
     }
 
   g_variant_builder_init (&builder, G_VARIANT_TYPE ("a(ss(sa{sv})tt)"));
+  fd_list = g_unix_fd_list_new();
   for (l = authorizations; l != NULL; l = l->next)
     {
       PolkitTemporaryAuthorization *a = POLKIT_TEMPORARY_AUTHORIZATION (l->data);
       g_variant_builder_add_value (&builder,
-                                   polkit_temporary_authorization_to_gvariant (a)); /* A floating value */
+                                   polkit_temporary_authorization_to_gvariant (a, fd_list)); /* A floating value */
     }
   g_list_foreach (authorizations, (GFunc) g_object_unref, NULL);
   g_list_free (authorizations);
-  g_dbus_method_invocation_return_value (invocation, g_variant_new ("(a(ss(sa{sv})tt))", &builder));
+  g_dbus_method_invocation_return_value_with_unix_fd_list (invocation,
+                                                           g_variant_new ("(a(ss(sa{sv})tt))", &builder),
+                                                           fd_list);
 
  out:
   g_variant_unref (subject_gvariant);
   if (subject != NULL)
     g_object_unref (subject);
+  if (fd_list != NULL)
+    g_object_unref(fd_list);
 }
 
 /* ---------------------------------------------------------------------------------------------------- */
