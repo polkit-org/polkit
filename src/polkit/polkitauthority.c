@@ -416,8 +416,8 @@ polkit_authority_get (void)
   if (ret == NULL)
     {
       g_warning ("polkit_authority_get: Error getting authority: %s",
-                 error->message);
-      g_error_free (error);
+                 error != NULL ? error->message : "(no error message)");
+      g_clear_error (&error);
     }
 
   return ret;
