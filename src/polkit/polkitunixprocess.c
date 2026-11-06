@@ -57,6 +57,31 @@
 #include "polkitprivate.h"
 #include "polkiterror.h"
 
+#ifdef __linux__
+/* From linux/pidfd.h (Linux 6.13+), not available in older kernel headers */
+#ifndef PIDFD_GET_INFO
+struct pidfd_info
+{
+  guint64 mask;
+  guint64 cgroupid;
+  guint32 pid;
+  guint32 tgid;
+  guint32 ppid;
+  guint32 ruid;
+  guint32 rgid;
+  guint32 euid;
+  guint32 egid;
+  guint32 suid;
+  guint32 sgid;
+  guint32 fsuid;
+  guint32 fsgid;
+  guint32 spare0[1];
+};
+#define PIDFD_GET_INFO _IOWR (0xFF, 11, struct pidfd_info)
+#define PIDFD_INFO_CGROUPID (1UL << 2)
+#endif
+#endif /* __linux__ */
+
 /**
  * SECTION:polkitunixprocess
  * @title: PolkitUnixProcess
@@ -1386,6 +1411,7 @@ get_cgroupid_for_pidfd (gint    pidfd,
   gchar *p;
   struct file_handle *fhp;
   int mount_id;
+  struct pidfd_info info;
 
   pid = 0;
   filename = NULL;
@@ -1395,6 +1421,13 @@ get_cgroupid_for_pidfd (gint    pidfd,
   fhp = NULL;
 
   g_return_val_if_fail (pidfd >= 0, 0);
+
+  /* Prefer asking the kernel directly via the pidfd. Resolving the cgroup path below needs
+   * search permission on every directory in it, which polkitd lacks when the directories were
+   * created with a restrictive umask (e.g. in a user's delegated cgroup subtree). */
+  info = (struct pidfd_info) { .mask = PIDFD_INFO_CGROUPID };
+  if (ioctl (pidfd, PIDFD_GET_INFO, &info) >= 0 && (info.mask & PIDFD_INFO_CGROUPID))
+    return info.cgroupid;
 
   pid = polkit_unix_process_get_pid_from_pidfd (pidfd, error);
   if (pid <= 0)
