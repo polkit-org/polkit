@@ -1,0 +1,2 @@
+g @polkitd_user@ @polkitd_gid@
+u! @polkitd_user@ @polkitd_uid@:@polkitd_user@ "User for polkitd"
