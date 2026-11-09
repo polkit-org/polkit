@@ -375,6 +375,20 @@ if enable_introspection
   dependency('gobject-introspection-1.0', version: '>= 0.6.2')
 endif
 
+# sd-varlink comes from whichever library provides the sd_* API (libelogind
+# replaces libsystemd outright)
+caller_tag_opt = get_option('caller_tag').require(enable_logind,
+  error_message: 'caller_tag needs the sd-varlink API, which ConsoleKit builds lack')
+enable_caller_tag = false
+if not caller_tag_opt.disabled()
+  enable_caller_tag = cc.has_header('systemd/sd-varlink.h', dependencies: logind_dep) and \
+                      cc.has_function('sd_varlink_connect_address', dependencies: logind_dep)
+  if caller_tag_opt.enabled() and not enable_caller_tag
+    error('caller_tag requested but the sd-varlink API was not found (libsystemd >= 257)')
+  endif
+endif
+config_data.set('ENABLE_CALLER_TAG', enable_caller_tag)
+
 gettext = get_option('gettext')
 if gettext
   config_data.set('ENABLE_GETTEXT', 1)
@@ -438,7 +452,8 @@ output += '        polkitd user:             ' + polkitd_user + ' \n'
 if polkitd_uid != '-'
   output += '        polkitd UID:              ' + polkitd_uid + ' \n'
 endif
-output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
+output += '        PAM support:              ' + enable_pam.to_string() + '\n'
+output += '        Caller tag providers:     ' + enable_caller_tag.to_string() + '\n\n'
 if libs_only
   output += '    !!! Only building polkit libraries, not polkitd !!!\n\n'
 endif
