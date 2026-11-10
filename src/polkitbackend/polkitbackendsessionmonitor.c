@@ -382,7 +382,14 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
 
   session = NULL;
 
-  if (POLKIT_IS_UNIX_PROCESS (subject))
+  if (POLKIT_IS_UNIX_SESSION (subject))
+    {
+      /* A session subject is its own session; there is no need to ask
+       * ConsoleKit for the session of a process. */
+      session = g_object_ref (subject);
+      goto out;
+    }
+  else if (POLKIT_IS_UNIX_PROCESS (subject))
     {
       const gchar *session_id;
       GVariant *result;

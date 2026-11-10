@@ -357,7 +357,14 @@ polkit_backend_session_monitor_get_session_for_subject (PolkitBackendSessionMoni
   int pidfd;
 #endif
 
-  if (POLKIT_IS_UNIX_PROCESS (subject))
+  if (POLKIT_IS_UNIX_SESSION (subject))
+    {
+      /* A session subject is its own session; there is no need to ask
+       * logind for the session of a process. */
+      session = g_object_ref (subject);
+      goto out;
+    }
+  else if (POLKIT_IS_UNIX_PROCESS (subject))
     process = POLKIT_UNIX_PROCESS (subject); /* We already have a process */
   else if (POLKIT_IS_SYSTEM_BUS_NAME (subject))
     {
