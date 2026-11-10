@@ -751,7 +751,7 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
       <para>
         The <parameter>subject</parameter> parameter passed to user
         functions is an object with information about the process
-        being checked. It is of type <type>Subject</type> and has the
+        (or session) being checked. It is of type <type>Subject</type> and has the
         following attributes
       </para>
 
@@ -760,7 +760,7 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
           <term><type>int</type> pid</term>
           <listitem>
             <para>
-              The process id.
+              The process id. Not set when the subject is a session.
             </para>
           </listitem>
         </varlistentry>
@@ -818,7 +818,8 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
               this can only match on system units, as user units can be created with any
               name without privileges (unlike system units which require root to create).
               A process running in a user unit will return the user session unit in this
-              attribute (e.g.: <literal>user-1000.service</literal>).
+              attribute (e.g.: <literal>user-1000.service</literal>). Not set when the
+              subject is a session.
             </para>
           </listitem>
         </varlistentry>
@@ -840,7 +841,7 @@ May 24 14:28:50 thinkpad polkitd[32217]: /etc/polkit-1/rules.d/10-test.rules:4: 
               <constant>true</constant> only if the referenced systemd service unit
               has the <parameter>NoNewPrivileges=</parameter> setting enabled. This
               ensures that the process cannot gain any new privileges via executing
-              setuid binaries.
+              setuid binaries. Not set when the subject is a session.
             </para>
           </listitem>
         </varlistentry>

@@ -124,6 +124,50 @@ polkit.addRule(function(action, subject) {
 });
 
 // ---------------------------------------------------------------------
+// unix-session subjects
+//
+// polkit passes a session subject to the rules when CheckAuthorization()
+// is called with a unix-session subject. There is no single process
+// associated with a session, so `subject.pid` is not set for them.
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.session.only_session_c1") {
+        if (subject.session == "c1") {
+            return polkit.Result.YES;
+        } else {
+            return polkit.Result.NO;
+        }
+    }
+});
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.session.user_local_active") {
+        if (subject.session == "c1" && subject.user == "john" &&
+            subject.local == true && subject.active == true) {
+            return polkit.Result.YES;
+        } else {
+            return polkit.Result.NO;
+        }
+    }
+});
+
+polkit.addRule(function(action, subject) {
+    if (action.id == "net.company.session.no_pid") {
+        if (subject.session == "c1" && subject.pid == undefined) {
+            return polkit.Result.YES;
+        } else {
+            return polkit.Result.NO;
+        }
+    }
+});
+
+polkit.addAdminRule(function(action, subject) {
+    if (action.id == "net.company.action_for_session_subject") {
+        return ["unix-group:admin", "unix-user:root"];
+    }
+});
+
+// ---------------------------------------------------------------------
 // spawning
 
 polkit.addRule(function(action, subject) {

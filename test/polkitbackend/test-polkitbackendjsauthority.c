@@ -28,6 +28,7 @@
 
 #include <polkit/polkit.h>
 #include <polkitbackend/polkitbackendjsauthority.h>
+#include <polkitbackend/polkitbackendsessionmonitor.h>
 #include <polkittesthelper.h>
 
 /* see test/data/etc/polkit-1/rules.d/10-testing.rules */
@@ -156,6 +157,92 @@ test_get_admin_identities (void)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static void
+test_get_admin_identities_for_session_subject (void)
+{
+  /* the same rules as for processes apply; session subjects used to abort
+   * on the g_assert_not_reached() in push_subject() */
+  const gchar *expected_admins[] = { "unix-group:admin", "unix-user:root", NULL };
+  const gchar *action_id = "net.company.action_for_session_subject";
+  PolkitBackendJsAuthority *authority = NULL;
+  PolkitBackendInteractiveAuthority *interactive_authority = NULL;
+  PolkitSubject *caller = NULL;
+  PolkitSubject *subject = NULL;
+  PolkitIdentity *user_for_subject = NULL;
+  PolkitDetails *details = NULL;
+  GError *error = NULL;
+  GList *admin_identities = NULL;
+  GList *l;
+  guint n;
+
+  authority = get_authority ();
+  interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
+
+  caller = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+  subject = polkit_unix_session_new ("c1");
+  user_for_subject = polkit_identity_from_string ("unix-user:john", &error);
+  g_assert_no_error (error);
+
+  details = polkit_details_new ();
+
+  admin_identities = polkit_backend_interactive_authority_get_admin_identities (interactive_authority,
+                                                                                caller,
+                                                                                subject,
+                                                                                user_for_subject,
+                                                                                TRUE, /* is_local */
+                                                                                TRUE, /* is_active */
+                                                                                action_id,
+                                                                                details);
+  for (l = admin_identities, n = 0; l != NULL; l = l->next, n++)
+    {
+      PolkitIdentity *test_identity = POLKIT_IDENTITY (l->data);
+      gchar *s;
+
+      g_assert (expected_admins[n] != NULL);
+
+      s = polkit_identity_to_string (test_identity);
+      g_assert_cmpstr (expected_admins[n], ==, s);
+      g_free (s);
+    }
+  g_assert_cmpstr (expected_admins[n], ==, NULL);
+
+  g_list_free_full (admin_identities, g_object_unref);
+  g_clear_object (&details);
+  g_clear_object (&user_for_subject);
+  g_clear_object (&subject);
+  g_clear_object (&caller);
+  g_clear_object (&authority);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
+static void
+test_session_monitor_get_session_for_session_subject (void)
+{
+  /* a unix-session subject maps to itself, so that the interactive
+   * authority can derive its locality and activity; this used to return
+   * NOT_SUPPORTED, which left subject.local and subject.active false for
+   * session subjects */
+  PolkitBackendSessionMonitor *monitor;
+  PolkitSubject *subject;
+  PolkitSubject *session;
+
+  monitor = polkit_backend_session_monitor_new ();
+  g_assert (monitor != NULL);
+
+  subject = polkit_unix_session_new ("c1");
+  session = polkit_backend_session_monitor_get_session_for_subject (monitor, subject, NULL);
+  g_assert (session != NULL);
+  g_assert (POLKIT_IS_UNIX_SESSION (session));
+  g_assert_cmpstr (polkit_unix_session_get_session_id (POLKIT_UNIX_SESSION (session)), ==, "c1");
+
+  g_clear_object (&session);
+  g_clear_object (&subject);
+  g_clear_object (&monitor);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 typedef struct RulesTestCase RulesTestCase;
 
 struct RulesTestCase
@@ -165,6 +252,7 @@ struct RulesTestCase
   const gchar *identity;
   const gchar *vars;
   PolkitImplicitAuthorization expected_result;
+  const gchar *subject_session_id; /* if not NULL, use a unix-session subject with this id */
 };
 
 static const RulesTestCase rules_test_cases[] = {
@@ -423,6 +511,56 @@ static const RulesTestCase rules_test_cases[] = {
     NULL,
     POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
   },
+
+  /* unix-session subjects; the JS authority used to abort the whole daemon
+   * (g_assert_not_reached) instead of handling them. See
+   * test/data/etc/polkit-1/rules.d/10-testing.rules for the matching rules.
+   */
+  {
+    /* a session subject exposes its session id */
+    "session_subject_session_attribute",
+    "net.company.session.only_session_c1",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    "c1",
+  },
+  {
+    /* ...and its user name, locality and activity */
+    "session_subject_user_local_active",
+    "net.company.session.user_local_active",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    "c1",
+  },
+  {
+    /* a session subject has no pid */
+    "session_subject_has_no_pid",
+    "net.company.session.no_pid",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    "c1",
+  },
+  {
+    /* a session subject belongs to the groups of its user, see test/etc/group */
+    "session_subject_group_membership",
+    "net.company.group.only_group_users",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED,
+    "c1",
+  },
+  {
+    /* a different session id does not match */
+    "session_subject_other_session",
+    "net.company.session.only_session_c1",
+    "unix-user:john",
+    NULL,
+    POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED,
+    "c2",
+  },
 };
 
 /* ---------------------------------------------------------------------------------------------------- */
@@ -442,7 +580,10 @@ rules_test_func (gconstpointer user_data)
   authority = get_authority ();
 
   caller = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
-  subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+  if (tc->subject_session_id != NULL)
+    subject = polkit_unix_session_new (tc->subject_session_id);
+  else
+    subject = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
   user_for_subject = polkit_identity_from_string (tc->identity, &error);
   g_assert_no_error (error);
 
@@ -508,6 +649,10 @@ main (int argc, char *argv[])
   //polkit_test_redirect_logs ();
 
   g_test_add_func ("/PolkitBackendJsAuthority/get_admin_identities", test_get_admin_identities);
+  g_test_add_func ("/PolkitBackendJsAuthority/get_admin_identities_for_session_subject",
+                   test_get_admin_identities_for_session_subject);
+  g_test_add_func ("/PolkitBackendSessionMonitor/get_session_for_session_subject",
+                   test_session_monitor_get_session_for_session_subject);
   add_rules_tests ();
 
   return g_test_run ();
