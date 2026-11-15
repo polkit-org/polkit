@@ -156,6 +156,78 @@ test_get_admin_identities (void)
 
 /* ---------------------------------------------------------------------------------------------------- */
 
+static void
+test_unsupported_subject (void)
+{
+  PolkitBackendJsAuthority *authority;
+  PolkitBackendInteractiveAuthority *interactive_authority;
+  PolkitSubject *caller;
+  PolkitSubject *subjects[2];
+  PolkitIdentity *user_for_subject;
+  PolkitDetails *details;
+  guint n;
+
+  authority = get_authority ();
+  interactive_authority = POLKIT_BACKEND_INTERACTIVE_AUTHORITY (authority);
+  caller = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+  user_for_subject = polkit_unix_user_new (0);
+  details = polkit_details_new ();
+  subjects[0] = polkit_unix_session_new ("unsupported-session");
+  subjects[1] = polkit_unix_process_new_for_owner (getpid (), 0, getuid ());
+
+  /* Reject the unsupported subject, then verify that the same authority
+   * still evaluates rules for a supported subject. */
+  for (n = 0; n < G_N_ELEMENTS (subjects); n++)
+    {
+      PolkitImplicitAuthorization result;
+      PolkitImplicitAuthorization implicit = POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED;
+      GList *admins;
+
+      result = polkit_backend_interactive_authority_check_authorization_sync (interactive_authority,
+                                                                            caller,
+                                                                            subjects[n],
+                                                                            user_for_subject,
+                                                                            TRUE,
+                                                                            TRUE,
+                                                                            "net.company.order0",
+                                                                            details,
+                                                                            implicit);
+      g_assert_cmpint (result, ==, n == 0 ? POLKIT_IMPLICIT_AUTHORIZATION_NOT_AUTHORIZED :
+                                          POLKIT_IMPLICIT_AUTHORIZATION_AUTHORIZED);
+
+      admins = polkit_backend_interactive_authority_get_admin_identities (interactive_authority,
+                                                                        caller,
+                                                                        subjects[n],
+                                                                        user_for_subject,
+                                                                        TRUE,
+                                                                        TRUE,
+                                                                        "net.company.action1",
+                                                                        details);
+      g_assert_cmpuint (g_list_length (admins), ==, 1);
+      if (n == 0)
+        {
+          /* Conversion failures retain the root authentication fallback. */
+          g_assert_true (POLKIT_IS_UNIX_USER (admins->data));
+          g_assert_cmpuint (polkit_unix_user_get_uid (admins->data), ==, 0);
+        }
+      else
+        {
+          g_assert_true (POLKIT_IS_UNIX_GROUP (admins->data));
+          g_assert_cmpuint (polkit_unix_group_get_gid (admins->data), ==, 101);
+        }
+      g_list_free_full (admins, g_object_unref);
+    }
+
+  for (n = 0; n < G_N_ELEMENTS (subjects); n++)
+    g_object_unref (subjects[n]);
+  g_object_unref (details);
+  g_object_unref (user_for_subject);
+  g_object_unref (caller);
+  g_object_unref (authority);
+}
+
+/* ---------------------------------------------------------------------------------------------------- */
+
 typedef struct RulesTestCase RulesTestCase;
 
 struct RulesTestCase
@@ -508,6 +580,7 @@ main (int argc, char *argv[])
   //polkit_test_redirect_logs ();
 
   g_test_add_func ("/PolkitBackendJsAuthority/get_admin_identities", test_get_admin_identities);
+  g_test_add_func ("/PolkitBackendJsAuthority/unsupported_subject", test_unsupported_subject);
   add_rules_tests ();
 
   return g_test_run ();

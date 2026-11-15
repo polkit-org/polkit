@@ -391,12 +391,6 @@ push_subject (duk_context               *cx,
   char *session_str = NULL;
   char *system_unit = NULL;
 
-  if (!duk_get_global_string (cx, "Subject")) {
-    return FALSE;
-  }
-
-  duk_new (cx, 0);
-
   if (POLKIT_IS_UNIX_PROCESS (subject))
     {
       process = subject;
@@ -409,8 +403,19 @@ push_subject (duk_context               *cx,
     }
   else
     {
-      g_assert_not_reached ();
+      g_set_error (error,
+                   POLKIT_ERROR,
+                   POLKIT_ERROR_NOT_SUPPORTED,
+                   "Cannot convert subject of type %s to JS object",
+                   g_type_name (G_TYPE_FROM_INSTANCE (subject)));
+      ret = FALSE;
+      goto out;
     }
+
+  if (!duk_get_global_string (cx, "Subject"))
+    goto out;
+
+  duk_new (cx, 0);
 
   pid_early = polkit_unix_process_get_pid (POLKIT_UNIX_PROCESS (process));
   pidfd = polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (process));
