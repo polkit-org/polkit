@@ -58,6 +58,26 @@ static gchar *command_line = NULL;
 static gchar *cmdline_short = NULL;
 static struct passwd *pw;
 
+/*
+ * Sanitize a string for safe inclusion in log output.
+ * Replaces control characters (< 0x20 and 0x7f) to prevent
+ * log injection (CWE-117). Tabs are replaced with spaces;
+ * all other control characters are replaced with '?'.
+ */
+static gchar *
+sanitize_for_log (const gchar *input)
+{
+  gchar *dup = input ? g_strdup (input) : g_strdup ("");
+  gchar *p;
+  for (p = dup; p && *p; p++)
+    {
+      guchar c = (guchar) *p;
+      if (c < 0x20 || c == 0x7f)
+        *p = (c == '\t') ? ' ' : '?';
+    }
+  return dup;
+}
+
 #ifndef HAVE_CLEARENV
 extern char **environ;
 
@@ -98,6 +118,12 @@ log_message (gint     level,
   va_list var_args;
   gchar *s;
   const gchar *tty;
+  gchar *s_safe;
+  gchar *original_user_name_safe;
+  gchar *pw_name_safe;
+  gchar *tty_safe;
+  gchar *original_cwd_safe;
+  gchar *command_line_safe;
 
   if (!is_log_open)
     {
@@ -115,15 +141,29 @@ log_message (gint     level,
   if (tty == NULL)
     tty = "unknown";
 
+  s_safe = sanitize_for_log (s);
+  original_user_name_safe = sanitize_for_log (original_user_name);
+  pw_name_safe = sanitize_for_log (pw != NULL ? pw->pw_name : NULL);
+  tty_safe = sanitize_for_log (tty);
+  original_cwd_safe = sanitize_for_log (original_cwd);
+  command_line_safe = sanitize_for_log (command_line);
+
   /* first complain to syslog */
   syslog (level,
           "%s: %s [USER=%s] [TTY=%s] [CWD=%s] [COMMAND=%s]",
-          original_user_name,
-          s,
-          pw->pw_name,
-          tty,
-          original_cwd,
-          command_line);
+          original_user_name_safe,
+          s_safe,
+          pw_name_safe,
+          tty_safe,
+          original_cwd_safe,
+          command_line_safe);
+
+  g_free (s_safe);
+  g_free (original_user_name_safe);
+  g_free (pw_name_safe);
+  g_free (tty_safe);
+  g_free (original_cwd_safe);
+  g_free (command_line_safe);
 
   /* and then on stderr */
   if (print_to_stderr)
