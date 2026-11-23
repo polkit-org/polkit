@@ -237,10 +237,11 @@ polkitd_user = get_option('polkitd_user')
 config_data.set_quoted('POLKITD_USER', polkitd_user)
 
 polkitd_uid = get_option('polkitd_uid')
-config_data.set('POLKITD_UID', polkitd_uid)
+polkitd_gid = get_option('polkitd_gid')
 
 # Select which authentication framework to use
 auth_deps = []
+activated_helper = false
 
 auth_fw = get_option('authfw')
 enable_pam = (auth_fw == 'pam')
@@ -281,6 +282,7 @@ if enable_pam
   endif
 
   auth_deps += pam_dep
+  activated_helper = get_option('activated_helper')
 elif auth_fw == 'shadow'
   auth_deps += cc.find_library('crypt')
 endif
@@ -304,6 +306,7 @@ if os_type == ''
     ['debian', '/etc/debian_version'],
     ['gentoo', '/etc/gentoo-release'],
     ['pardus', '/etc/pardus-release'],
+    ['arch', '/etc/arch-release'],
     ['lfs', '/etc/lfs-release'],
   ]
 
@@ -352,7 +355,7 @@ if pam_include == ''
       'PAM_FILE_INCLUDE_PASSWORD': 'system-password',
       'PAM_FILE_INCLUDE_SESSION': 'system-session',
     }
-  #if ['redhat', 'gentoo', 'pardus'].contains(os_type)
+  #if ['redhat', 'gentoo', 'pardus', 'arch'].contains(os_type)
   else
     pam_conf = {
       'PAM_FILE_INCLUDE_AUTH': 'system-auth',
@@ -410,6 +413,8 @@ if not libs_only
     pk_libprivdir,
     pk_pkgsysconfdir,
     polkitd_user,
+    polkitd_gid,
+    activated_helper.to_string(),
   )
 endif
 
@@ -434,11 +439,15 @@ output += '        system unit directory:    ' + systemdsystemunitdir + '\n'
 output += '        sysusers.d directory:     ' + sysusers_dir + '\n'
 output += '        tmpfiles.d directory:     ' + tmpfiles_dir + '\n'
 
-output += '        polkitd user:             ' + polkitd_user + ' \n'
+output += '        polkitd user:             ' + polkitd_user + '\n'
 if polkitd_uid != '-'
-  output += '        polkitd UID:              ' + polkitd_uid + ' \n'
+  output += '        polkitd UID:              ' + polkitd_uid + '\n'
 endif
-output += '        PAM support:              ' + enable_pam.to_string() + '\n\n'
+if polkitd_gid != '-'
+  output += '        polkitd GID:              ' + polkitd_gid + '\n'
+endif
+output += '        PAM support:              ' + enable_pam.to_string() + '\n'
+output += '        Socket-activated helper:  ' + activated_helper.to_string() + '\n\n'
 if libs_only
   output += '    !!! Only building polkit libraries, not polkitd !!!\n\n'
 endif

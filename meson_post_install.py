@@ -20,11 +20,16 @@ bindir = destdir_path(sys.argv[1])
 pkglibdir = destdir_path(sys.argv[2])
 pkgsysconfdir = destdir_path(sys.argv[3])
 polkitd_user = sys.argv[4]
+polkitd_gid = sys.argv[5]
+activated_helper = sys.argv[6] == 'true'
 
-try:
-    polkitd_gid = pwd.getpwnam(polkitd_user).pw_gid
-except KeyError:
-    polkitd_gid = None
+if polkitd_gid != '-':
+    polkitd_gid = int(polkitd_gid)
+else:
+    try:
+        polkitd_gid = pwd.getpwnam(polkitd_user).pw_gid
+    except KeyError:
+        polkitd_gid = None
 
 dst = os.path.join(bindir, 'pkexec')
 
@@ -52,18 +57,19 @@ if not os.path.exists(dst):
             )
         )
 
-# polkit-agent-helper-1 need to be setuid root because it's used to
-# authenticate not only the invoking user, but possibly also root
-# and/or other users.
-dst = os.path.join(pkglibdir, 'polkit-agent-helper-1')
+if not activated_helper:
+    # polkit-agent-helper-1 need to be setuid root because it's used to
+    # authenticate not only the invoking user, but possibly also root
+    # and/or other users.
+    dst = os.path.join(pkglibdir, 'polkit-agent-helper-1')
 
-if os.geteuid() == 0:
-    os.chown(dst, 0, -1)
-    os.chmod(dst, 0o4755)
-else:
-    print(
-        'Owner and mode of {} need to be setuid root (04755) after '
-        'installation'.format(
-            dst,
+    if os.geteuid() == 0:
+        os.chown(dst, 0, -1)
+        os.chmod(dst, 0o4755)
+    else:
+        print(
+            'Owner and mode of {} need to be setuid root (04755) after '
+            'installation'.format(
+                dst,
+            )
         )
-    )
