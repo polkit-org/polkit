@@ -45,6 +45,9 @@
 
 static int conversation_function (int n, const struct pam_message **msg, struct pam_response **resp, void *data);
 
+/* Set once the agent has answered a prompt, see conversation_function() */
+static gboolean answered = FALSE;
+
 static void
 send_to_helper (const gchar *str1,
                 const gchar *str2)
@@ -352,7 +355,24 @@ conversation_function (int n, const struct pam_message **msg, struct pam_respons
 
         conv1:
           if (fgets (buf, sizeof buf, stdin) == NULL)
-            goto error;
+            {
+              /* The agent hung up before answering anything: the authentication was
+               * cancelled. Failing the conversation here would make PAM treat it as a
+               * failed authentication (pam_faillock counts it), so just exit, as when
+               * the agent killed the helper (it can't kill a socket-activated one).
+               *
+               * Once a prompt was answered, a hang-up still fails the conversation:
+               * otherwise cancelling at a later prompt (e.g. an OTP after the password)
+               * would keep a wrong password from being counted.
+               */
+              if (!answered)
+                {
+                  fprintf (stderr, "polkit-agent-helper-1: agent hung up, authentication cancelled\n");
+                  _exit (2);
+                }
+              goto error;
+            }
+          answered = TRUE;
 
           if (strlen (buf) > 0 &&
               buf[strlen (buf) - 1] == '\n')

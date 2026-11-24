@@ -17,6 +17,8 @@ at_exit() {
     : "Cleanup"
     userdel -rf "$TEST_USER"
     rm -rf "$TMP_DIR" "$TEST_RULES" "$TEST_ACTIONS"
+    [[ -n "${DISABLE_FAILLOCK:-}" ]] && authselect disable-feature with-faillock
+    [[ -n "${STOP_HELPER_SOCKET:-}" ]] && systemctl stop polkit-agent-helper.socket
     systemctl restart polkit
 }
 
@@ -148,6 +150,41 @@ sudo -u "$TEST_USER" expect "$TMP_DIR/SIGTRAP-on-EOF.exp" | tee "$TMP_DIR/SIGTRA
 grep -q "AUTHENTICATION FAILED" "$TMP_DIR/SIGTRAP-on-EOF.log"
 grep -q "Not authorized" "$TMP_DIR/SIGTRAP-on-EOF.log"
 rm -f "$TMP_DIR/SIGTRAP-on-EOF.log"
+
+: "Cancelling the authentication is not a failed login"
+# See: https://github.com/polkit-org/polkit/issues/713
+# EOF in the password prompt makes pkexec's agent cancel the session. With the socket-activated
+# helper and pam_faillock in the PAM stack, that must not be recorded as a failed attempt, while
+# a wrong password still is
+if systemctl cat polkit-agent-helper.socket >/dev/null 2>&1 && authselect current >/dev/null 2>&1; then
+    if ! systemctl -q is-active polkit-agent-helper.socket; then
+        systemctl start polkit-agent-helper.socket
+        STOP_HELPER_SOCKET=1
+    fi
+    if ! authselect current | grep -q with-faillock; then
+        authselect enable-feature with-faillock
+        DISABLE_FAILLOCK=1
+    fi
+    faillock --user "$TEST_USER" --reset
+    sudo -u "$TEST_USER" expect "$TMP_DIR/SIGTRAP-on-EOF.exp" | tee "$TMP_DIR/cancel.log"
+    grep -q "AUTHENTICATION FAILED" "$TMP_DIR/cancel.log"
+    [[ "$(faillock --user "$TEST_USER" | grep -c polkit-1 || :)" -eq 0 ]]
+    # A wrong password is still counted
+    sudo -u "$TEST_USER" expect "$TMP_DIR/basic-auth.exp" "nope" true && ec=0 || ec=$?
+    [[ "$ec" -eq 127 ]]
+    [[ "$(faillock --user "$TEST_USER" | grep -c polkit-1 || :)" -eq 1 ]]
+    faillock --user "$TEST_USER" --reset
+    rm -f "$TMP_DIR/cancel.log"
+    # Back to the setup the other tests expect
+    if [[ -n "${DISABLE_FAILLOCK:-}" ]]; then
+        authselect disable-feature with-faillock
+        unset DISABLE_FAILLOCK
+    fi
+    if [[ -n "${STOP_HELPER_SOCKET:-}" ]]; then
+        systemctl stop polkit-agent-helper.socket
+        unset STOP_HELPER_SOCKET
+    fi
+fi
 
 : "Check path canonicalization - setup"
 cp -v "$(command -v bash)" "$TMP_DIR/test-binary"
