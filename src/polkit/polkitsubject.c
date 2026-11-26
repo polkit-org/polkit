@@ -297,10 +297,11 @@ polkit_subject_from_string  (const gchar   *str,
 
 /* Note that this returns a floating value. */
 GVariant *
-polkit_subject_to_gvariant (PolkitSubject *subject)
+polkit_subject_to_gvariant (PolkitSubject *subject, GUnixFDList *fd_list)
 {
   GVariantBuilder builder;
   GVariant *dict;
+  gint idx;
   const gchar *kind;
 
   kind = "";
@@ -315,9 +316,10 @@ polkit_subject_to_gvariant (PolkitSubject *subject)
                              g_variant_new_uint64 (polkit_unix_process_get_start_time (POLKIT_UNIX_PROCESS (subject))));
       g_variant_builder_add (&builder, "{sv}", "uid",
                              g_variant_new_int32 (polkit_unix_process_get_uid (POLKIT_UNIX_PROCESS (subject))));
-      if (polkit_unix_process_get_pidfd_is_safe(POLKIT_UNIX_PROCESS (subject)))
-        g_variant_builder_add (&builder, "{sv}", "pidfd",
-                               g_variant_new_handle (polkit_unix_process_get_pidfd (POLKIT_UNIX_PROCESS (subject))));
+      if (polkit_unix_process_get_pidfd_is_safe(POLKIT_UNIX_PROCESS (subject)) && fd_list) {
+        idx = g_unix_fd_list_append(fd_list, polkit_unix_process_get_pidfd(POLKIT_UNIX_PROCESS (subject)), NULL);
+        g_variant_builder_add (&builder, "{sv}", "pidfd", g_variant_new_handle (idx));
+      }
     }
   else if (POLKIT_IS_UNIX_SESSION (subject))
     {
