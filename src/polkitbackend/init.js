@@ -20,6 +20,22 @@ function Action() {
 };
 
 function Subject() {
+    // undefined: no tag. null: a tag the provider did not vouch for, which a
+    // rule must not mistake for an untagged caller. Lazy so that the common
+    // untagged subject costs nothing.
+    Object.defineProperty(this, "on_behalf_of", {
+        get: function() {
+            if (this._on_behalf_of_raw === undefined)
+                return undefined;
+            try {
+                var identity = JSON.parse(this._on_behalf_of_raw).identity;
+                return identity === undefined ? null : identity;
+            } catch (e) {
+                return null;
+            }
+        }
+    });
+
     this.isInGroup = function(group) {
         for (var n = 0; n < this.groups.length; n++) {
             if (this.groups[n] == group)
@@ -35,6 +51,9 @@ function Subject() {
     this.toString = function() {
         var ret = "[Subject";
         for (var i in this) {
+            // skip private state such as the raw provider reply
+            if (i.indexOf("_") == 0)
+                continue;
             if (typeof this[i] != "function") {
                 if (typeof this[i] == "string")
                     ret += " " + i + "='" + this[i] + "'";

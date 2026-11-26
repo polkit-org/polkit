@@ -13,6 +13,7 @@ option('pam_include', type: 'string', value: '', description: 'pam file to inclu
 option('pam_module_dir', type: 'string', value: '', description: 'directory to install PAM security module')
 option('pam_prefix', type: 'string', value: '', description: 'specify where pam files go')
 
+option('caller_tag', type: 'feature', value: 'auto', description: 'Resolve "on-behalf-of" caller tags on subjects via providers (needs libsystemd >= 257)')
 option('examples', type: 'boolean', value: false, description: 'Build example programs')
 option('tests', type: 'boolean', value: false, description: 'Build tests')
 option('introspection', type: 'boolean', value: true, description: 'Enable introspection for this build')

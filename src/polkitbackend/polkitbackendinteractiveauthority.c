@@ -3419,6 +3419,13 @@ static gboolean
 subject_equal_for_authz (PolkitSubject *a,
                          PolkitSubject *b)
 {
+  /* Two callers behind the same proxy pass every lineage check below
+   * (same uid, parent, cgroup, tty), so compare their tags first. */
+  if (POLKIT_IS_UNIX_PROCESS (a) && POLKIT_IS_UNIX_PROCESS (b) &&
+      g_strcmp0 (polkit_unix_process_get_on_behalf_of (POLKIT_UNIX_PROCESS (a)),
+                 polkit_unix_process_get_on_behalf_of (POLKIT_UNIX_PROCESS (b))) != 0)
+    return FALSE;
+
   if (!polkit_subject_equal (a, b))
     {
 #ifdef __linux__
