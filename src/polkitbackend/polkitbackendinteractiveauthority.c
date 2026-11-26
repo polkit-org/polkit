@@ -1948,10 +1948,8 @@ get_authentication_agent_for_subject (PolkitBackendInteractiveAuthority *authori
   session_for_subject = polkit_backend_session_monitor_get_session_for_subject (priv->session_monitor,
                                                                                 subject,
                                                                                 NULL);
-  if (session_for_subject == NULL)
-    goto out;
-
-  agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, session_for_subject);
+  if (session_for_subject != NULL)
+    agent = g_hash_table_lookup (priv->hash_scope_to_authentication_agent, session_for_subject);
 
   /* use fallback, if available */
   if (agent == NULL && agent_fallback != NULL)
