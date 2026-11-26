@@ -715,7 +715,10 @@ main (int argc, char *argv[])
 	 case below too */
       command_line = g_strdup (path);
       shell_argv = g_ptr_array_new ();
-      g_ptr_array_add (shell_argv, path);
+      /* It is important to not set use path here, as that is freed below in
+       * realpath resolution and we need it preserved at least until exec happens
+       */
+      g_ptr_array_add (shell_argv, command_line);
       g_ptr_array_add (shell_argv, NULL);
       exec_argv = (char**)g_ptr_array_free (shell_argv, FALSE);
     }
